@@ -21,7 +21,7 @@ What Vocabulary does *not* do is resolve a fuzzy label to a concept - it defines
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/vocabulary.ttl` | <https://www.nebularis.org/neuro-semantic/vocabulary> | <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> | <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> |
+| `spec/vocabulary.ttl` | <https://www.nebularis.org/neuro-semantic/vocabulary> | <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1> | <http://www.w3.org/2004/02/skos/core>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> |
 
 | Prefix | Namespace |
 |---|---|

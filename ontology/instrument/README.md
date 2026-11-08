@@ -45,14 +45,14 @@ Nothing in this version evaluates.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/instrument>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.21.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.21.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.21.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.21.1> .
 ```
 
 The vocabulary (`ins-voc:`) is `vocab/instrument-vocab.ttl`, in the namespace `https://www.nebularis.org/neuro-semantic/lattice/instrument/vocab#` (§19).
@@ -1080,8 +1080,8 @@ flowchart TB
 # @output-file "spec/instrument-acts.ttl"
 <https://www.nebularis.org/neuro-semantic/instrument-acts>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.21.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.21.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-acts/0.21.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.21.1> .
 ```
 
 ```turtle-spec
@@ -3134,8 +3134,8 @@ instrument as a whole as a value of `ins:ends` (§14.2).
 
 <https://www.nebularis.org/neuro-semantic/instrument-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.21.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.21.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/instrument-vocab/0.21.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/instrument/0.21.1> .
 
 ins-voc:ActivityContract a voc:SchemeContract ;
 	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/instrument-vocab> ;

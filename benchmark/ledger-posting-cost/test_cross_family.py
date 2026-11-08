@@ -92,6 +92,19 @@ def test_cf10_the_store_is_removed_when_the_run_ends_and_when_it_fails(tmp_path,
     assert not os.listdir(tmp_path)
 
 
+def test_cf12_a_read_that_fails_deep_in_the_run_still_lets_go_of_the_store(tmp_path, monkeypatch):
+    def failing(store, *rest):
+        raise RuntimeError("the read failed")
+
+    monkeypatch.setattr(cf, "read", failing)
+    with pytest.raises(RuntimeError, match="the read failed"):
+        cf.measure("refining", 500, 100, SMALL, directory=str(tmp_path))
+    assert not os.listdir(tmp_path)
+    monkeypatch.setattr(check, "release_store", lambda: None)
+    with pytest.raises(AssertionError, match="still open"):
+        cf.measure("refining", 500, 100, SMALL, directory=str(tmp_path))
+
+
 def test_cf11_the_report_is_written_where_asked(tmp_path):
     cf.write_report(cf.run((SMALL,)), tmp_path)
     data = json.loads((tmp_path / "cross_family.json").read_text(encoding="utf-8"))

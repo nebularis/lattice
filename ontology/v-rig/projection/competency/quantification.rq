@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+
+# question values: Which quantities state a numeric value?
+SELECT ?quantity ?value WHERE { ?quantity a qnt:Quantity ; qnt:numericValue ?value . }
+
+# question spaces: Which quantities state the value space, and so the unit, their value is in?
+SELECT ?quantity ?space WHERE { ?quantity a qnt:Quantity ; qnt:onSpace ?space . }
+
+# question unresolved: Which values are stated as not known?
+SELECT ?value WHERE { ?value a qnt:UnresolvedValue . }

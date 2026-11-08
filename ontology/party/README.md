@@ -27,8 +27,8 @@ The ontology header, stated here so the extracted document carries it.
 
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/party> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.1> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> .
 ```
 
 ## 3. How to Read This Document

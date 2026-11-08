@@ -26,9 +26,9 @@ Persistence targets classes, graphs and shapes by IRI reference only. It is opti
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.22.0> | none |
-| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.22.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.22.0> |
-| `spec/persistence-store.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store> | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.22.0> | none |
+| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.22.1> | none |
+| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.22.1> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.22.1> |
+| `spec/persistence-store.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store> | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.22.1> | none |
 
 | Prefix | Namespace |
 |---|---|

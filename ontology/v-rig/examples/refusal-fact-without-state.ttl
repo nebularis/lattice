@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused: a fact with a key and none of the three states, no value,
+# no item, no unknown marker and no empty marker. A fact that says nothing is
+# indistinguishable from a key that was never stated, and the representation
+# keeps those apart. Refused by the fact-state shape, which asks for exactly
+# one of a value or item, the unknown marker, or the empty marker.
+
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <urn:example:v-rig:refusal-fact-without-state:> .
+
+ex:doc-r a vrig:Document ;
+    vrig:rigId "doc-r" ;
+    vrig:formatVersion "1" ;
+    vrig:locator ex:loc-doc-r ;
+    vrig:digest "5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d" .
+
+ex:loc-doc-r a vrig:Locator ;
+    vrig:documentId "doc-r" ;
+    vrig:view vrig:Declared .
+
+ex:fact-limit a vrig:Fact ;
+    vrig:of ex:doc-r ;
+    vrig:key "limit" ;
+    vrig:locator ex:loc-limit ;
+    vrig:digest "6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e" .
+
+ex:loc-limit a vrig:Locator ;
+    vrig:documentId "doc-r" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "limit" .
+
+# Also refused: a fact that is both stated as not known and given a value.
+
+ex:fact-attachment a vrig:Fact ;
+    vrig:of ex:doc-r ;
+    vrig:key "attachment" ;
+    vrig:value 500000 ;
+    vrig:unknown true ;
+    vrig:locator ex:loc-attachment ;
+    vrig:digest "708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f" .
+
+ex:loc-attachment a vrig:Locator ;
+    vrig:documentId "doc-r" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "attachment" .

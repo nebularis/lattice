@@ -69,30 +69,33 @@ def measure(every: int, events: int) -> Point:
     with tempfile.TemporaryDirectory(prefix="ledger-graph-partition-") as tmp:
         start = time.perf_counter()
         store = ox.Store(tmp)
-        store.bulk_extend(c.quads_for(STRATEGY, accounts, stream, model, every))
-        store.flush()
-        store.optimize()
-        write = time.perf_counter() - start
-        quads = len(store)
-        (row,) = store.query("SELECT (COUNT(DISTINCT ?g) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } }")
-        graphs = int(row["n"].value)
-        sst, megabytes = store_files(tmp)
+        try:
+            store.bulk_extend(c.quads_for(STRATEGY, accounts, stream, model, every))
+            store.flush()
+            store.optimize()
+            write = time.perf_counter() - start
+            quads = len(store)
+            (row,) = store.query("SELECT (COUNT(DISTINCT ?g) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } }")
+            graphs = int(row["n"].value)
+            sst, megabytes = store_files(tmp)
 
-        ceiling = len(c.layers_of(accounts[programme])) * c.PROGRAMMES * -(-events // every)
-        if graphs > ceiling:
-            raise c.WrongResult(f"every={every}: {graphs} graphs, more than the {ceiling} layers times periods allow")
+            ceiling = len(c.layers_of(accounts[programme])) * c.PROGRAMMES * -(-events // every)
+            if graphs > ceiling:
+                raise c.WrongResult(f"every={every}: {graphs} graphs, more than the {ceiling} layers times periods allow")
 
-        balance, folded = c.read(STRATEGY, store, accounts[programme], point, every)
-        expected = model.at_points[point][programme]
-        if balance != expected:
-            raise c.WrongResult(f"every={every}: programme reads {balance}, the model gives {expected}")
+            balance, folded = c.read(STRATEGY, store, accounts[programme], point, every)
+            expected = model.at_points[point][programme]
+            if balance != expected:
+                raise c.WrongResult(f"every={every}: programme reads {balance}, the model gives {expected}")
 
-        times = []
-        for _ in range(REPS):
-            begin = time.perf_counter()
-            c.read(STRATEGY, store, accounts[programme], point, every)
-            times.append(time.perf_counter() - begin)
-        del store
+            times = []
+            for _ in range(REPS):
+                begin = time.perf_counter()
+                c.read(STRATEGY, store, accounts[programme], point, every)
+                times.append(time.perf_counter() - begin)
+        finally:
+            store = None
+            c.release_store()
 
         opens = []
         for _ in range(3):

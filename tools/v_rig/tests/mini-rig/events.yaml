@@ -1,0 +1,18 @@
+events:
+  - id: ev-001
+    programme: prog-001
+    summary: an invented occurrence during the period
+    facts:
+      date_of_loss: 2027-03-04
+      loss_amount: 2500000
+      notified: true
+    unknown: [prior_knowledge]
+  - id: ev-002
+    programme: prog-001
+    summary: an invented occurrence exhausting the primary
+    facts:
+      date_of_loss: 2027-07-19
+      loss_amount: 4500000
+      notified: true
+      prior_knowledge: false
+    author_note: for the author's use, carried as a fact

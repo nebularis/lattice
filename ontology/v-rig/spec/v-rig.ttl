@@ -1,0 +1,382 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/v-rig> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/v-rig/0.1.0> ;
+    dct:description """A verification rig is a directory of invented documents, each written as Markdown with YAML front matter, with programme files and an events file in YAML, in a stated format with a version. A tool reads a rig and produces one intermediate representation of each case, an RDF graph under the vocabulary here, from which every projection is generated, the graph over the layers, the generated theory, the test vectors and the findings. The vocabulary states what the representation holds and the shapes state what a well-formed representation is, so a consumer outside the repository can pin both at a tag and read, write or diff a representation without the tool.
+
+The vocabulary models no domain. A key of the rig's format is carried as a fact with its key name as a string, a token of the rig's own vocabulary is carried as an uninterpreted literal, and a reading of a legal concept is a fact whose value is a token. What a key or a token means is a mapping's business, never the vocabulary's, so adding a key or a token to a rig adds no term here.
+
+Every node carries a locator, which names the document, programme or events file it was read from, the view it was read in, and its position, and a digest the tool computes over the normalised text the node was read from. A fact has three states, stated with a value, stated as not known, and not stated, and the third is the absence of the fact. Front matter and the body of a document are two views of it, declared and blind, and a rendering of a document, a lossy text form of it, is a view of its own. A finding names what a run found, by kind, document and locator, under an identifier derived from those three and the key, so two runs of one rig revision give the same identifiers and a resolved finding disappears from a diff by id.""" ;
+    dct:creator <https://github.com/nebularis> .
+
+dct:creator a owl:AnnotationProperty .
+
+dct:description a owl:AnnotationProperty .
+
+vrig:BodyNode a owl:Class ;
+    rdfs:comment "One element of a document's text, a section, a clause, a definition, a declarations row, a list item or a paragraph, with a kind token, its text, its parent and its order among its siblings." ;
+    fnd:utility "Lift each element of the body, or of a rendering, to one body node under the view it was read in. The kind is a token of the format's layout conventions and is open." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:digest ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:kind ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:number ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:ordinal ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:parent ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:text ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:title ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], vrig:Located .
+
+vrig:Carrier a owl:Class ;
+    rdfs:comment "A node facts are stated of." ;
+    rdfs:subClassOf vrig:Located .
+
+vrig:DefinedTerm a owl:Class ;
+    rdfs:comment "A body node that defines a word for a scope, the document or one of its sections." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:scopedTo ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:term ; owl:cardinality "1"^^xsd:nonNegativeInteger ], vrig:BodyNode .
+
+vrig:Document a owl:Class ;
+    rdfs:comment "One document of a rig, with the id the rig gives it and the version of the format it is written in." ;
+    fnd:utility "The declared view's facts are stated of the document, and the body nodes of the blind view and of each rendering have the document as their root." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:digest ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:formatVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:rendered ; owl:allValuesFrom vrig:RenderingView ], [ a owl:Restriction ; owl:onProperty vrig:rigId ; owl:cardinality "1"^^xsd:nonNegativeInteger ], vrig:Carrier .
+
+vrig:Event a owl:Class ;
+    rdfs:comment "One event of a rig's events file, with the id the rig gives it. Its facts are what the event states, and the keys it states as not known are its facts with the unknown marker." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:rigId ; owl:cardinality "1"^^xsd:nonNegativeInteger ], vrig:Carrier .
+
+vrig:Fact a owl:Class ;
+    rdfs:comment "One key stated of a carrier, in one of three states, with one or more values or items, with the unknown marker, or with the empty marker." ;
+    fnd:utility "Lift every key of a front matter, a programme file or an event to one fact. A list of scalars is one fact whose one value is an RDF list of the scalars in the source's order. A list of mappings is one fact with one record item per entry. A key listed as not known is a fact with vrig:unknown true. A key whose value is null or an empty list is a fact with vrig:empty true. A key that is absent is no fact." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:digest ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:empty ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:key ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:of ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:unknown ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], vrig:Located .
+
+vrig:Finding a owl:Class ;
+    rdfs:comment "One thing a run found, named by its kind, the document and locator it concerns, and the key where one applies, with a message in generic words." ;
+    fnd:utility "The tool derives a finding's identifier from its kind, its locator's document id and canonical string, and its key (section 9). A message names no text of a rig." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:findingKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:fromRun ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:key ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:message ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], vrig:Located .
+
+vrig:FindingKind a owl:Class ;
+    rdfs:comment "The closed set of kinds a finding has." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( vrig:UnmappedKey vrig:UncertainMapping vrig:ShapeViolation vrig:EmptyQuery vrig:UnresolvedReference vrig:Disagreement vrig:ProseOnlyMeaning vrig:UnknownFact vrig:Inconsistent vrig:ReasonerUnavailable ) ] .
+
+vrig:Formula a owl:Class ;
+    rdfs:comment "A fact whose value is an expression over named inputs rather than a number, kept as written." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:expression ; owl:cardinality "1"^^xsd:nonNegativeInteger ], vrig:Fact .
+
+vrig:InputBinding a owl:Class ;
+    rdfs:comment "A declaration that a key of a rig's events carries one named input of an evaluation, stated by a mapping scheme or an extension, since the keys of an event's facts are the author's own and never a vocabulary." ;
+    fnd:utility "State one per input an evaluation asks for, on the scheme of a rig's extension. The tool reads an event's fact of the key as that input, in one of the three states, and an input no binding declares is absent from every projection." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:inputName ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:key ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+vrig:Layer a owl:Class ;
+    rdfs:comment "One layer of a programme, as the programme file lists it, with the number the file gives it." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:inProgramme ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:layerNumber ; owl:cardinality "1"^^xsd:nonNegativeInteger ], vrig:Record ;
+    owl:disjointWith vrig:Placement .
+
+vrig:Located a owl:Class ;
+    rdfs:comment "A node read from a rig, with the locator saying where and a digest of the text it was read from." ;
+    fnd:utility "Type every node the tool produces from a rig with one of the subclasses here. The locator is required and the digest is required of every node that has text, a document, a fact or a body node." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:digest ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:locator ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+vrig:Locator a owl:Class ;
+    rdfs:comment "Where a node was read from, the id of the document, programme or events file, the view, and a position in it." ;
+    fnd:utility "Give each located node its own locator. The position fields are optional and each is present only where it applies, a section and clause for a body node, a row for a declarations row or a list item, a key path for a fact of a YAML file. The line is informative and takes no part in the locator's canonical string (section 9)." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:clause ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:documentId ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:keyPath ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:line ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:row ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:section ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:view ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+vrig:Placement a owl:Class ;
+    rdfs:comment "One entry that places a contract, on a layer with an insurer, or in a programme without layers, as the programme file lists it. Its share, role and other keys are its facts." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:inProgramme ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:onLayer ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], vrig:Record .
+
+vrig:Programme a owl:Class ;
+    rdfs:comment "One programme of a rig, with the id the rig gives it." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:rigId ; owl:cardinality "1"^^xsd:nonNegativeInteger ], vrig:Carrier .
+
+vrig:ProseOnly a owl:Class ;
+    rdfs:comment "A body node whose meaning the layout conventions do not carry, so that only its prose says what it means." ;
+    fnd:utility "Every prose-only node is reported as a finding, since no projection can read it without a reader." ;
+    rdfs:subClassOf vrig:BodyNode .
+
+vrig:Reading a owl:Class ;
+    rdfs:comment "A fact whose key names a reading of a legal concept, so that its value is a token interpreted by a mapping and never by code." ;
+    fnd:utility "The mapping scheme that reads a rig's keys asserts this type on the facts of the keys it declares to carry readings. Two readings on one structure give two projections, never merged." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:value ; owl:cardinality "1"^^xsd:nonNegativeInteger ], vrig:Fact .
+
+vrig:Record a owl:Class ;
+    rdfs:comment "A structured value, one item of a fact's list or mapping, carrying facts of its own." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:index ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], vrig:Carrier .
+
+vrig:Reference a owl:Class ;
+    rdfs:comment "A cross-reference found in a body node, to a section, an item, a condition, an endorsement, a schedule or a part, of the same document or of another, resolved to what it names or left unresolved." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:external ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:inNode ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:referenceText ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:targetKind ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:targetNumber ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], vrig:Located .
+
+vrig:RenderingView a owl:Class ;
+    rdfs:comment "The view of one rendering of a document, a lossy text form of it, named as the manifest names it." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:renderingName ; owl:cardinality "1"^^xsd:nonNegativeInteger ], vrig:View .
+
+vrig:Run a owl:Class ;
+    rdfs:comment "One run of the tool, recording the digest of the rig it read, the format version, the commit of the checkout it ran in, the substrate release, and the versions of the vocabulary and the vector schema it wrote." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:checkoutCommit ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:formatVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:rigDigest ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:substrateRelease ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:vectorSchemaVersion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:vocabularyVersion ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+vrig:View a owl:Class ;
+    rdfs:comment "A source a node was read from, the declared view, the blind view or a rendering." ;
+    fnd:utility "Use the two individuals for the declared and the blind view, and a vrig:RenderingView for each rendering of a document." .
+
+vrig:about a owl:ObjectProperty ;
+    rdfs:comment "A node a finding concerns." ;
+    rdfs:domain vrig:Finding ;
+    rdfs:range vrig:Located .
+
+vrig:checkoutCommit a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The commit of the checkout the tool ran in." ;
+    rdfs:domain vrig:Run ;
+    rdfs:range xsd:string .
+
+vrig:clause a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The number of the clause a body node is or sits in." ;
+    rdfs:domain vrig:Locator ;
+    rdfs:range xsd:string .
+
+vrig:digest a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The SHA-256 digest, in lowercase hex, that the tool computed over the normalised text a node was read from (section 9)." ;
+    rdfs:domain vrig:Located ;
+    rdfs:range xsd:string .
+
+vrig:documentId a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The id of the document, programme or events file a locator's node was read from. For the events file it is the string events. For a finding about the encoding rather than about a rig, such as a competency query with no answer, it is the path within the module of the tracked file that asked." ;
+    rdfs:domain vrig:Locator ;
+    rdfs:range xsd:string .
+
+vrig:empty a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The marker of a fact stated with nothing, a null or an empty list in the source." ;
+    rdfs:domain vrig:Fact ;
+    rdfs:range xsd:boolean .
+
+vrig:expression a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "A formula's expression as the source writes it." ;
+    rdfs:domain vrig:Formula ;
+    rdfs:range xsd:string .
+
+vrig:external a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "Whether a reference points into another document, as when the text says of the underlying policy." ;
+    rdfs:domain vrig:Reference ;
+    rdfs:range xsd:boolean .
+
+vrig:findingKind a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The kind of a finding." ;
+    rdfs:domain vrig:Finding ;
+    rdfs:range vrig:FindingKind .
+
+vrig:formatVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The version of the rig format a document is written in, or a run read." ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( vrig:Document vrig:Run ) ] ;
+    rdfs:range xsd:string .
+
+vrig:fromRun a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The run that produced a finding." ;
+    rdfs:domain vrig:Finding ;
+    rdfs:range vrig:Run .
+
+vrig:inNode a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The body node a reference was found in." ;
+    rdfs:domain vrig:Reference ;
+    rdfs:range vrig:BodyNode .
+
+vrig:inProgramme a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The programme a layer or a placement belongs to." ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( vrig:Layer vrig:Placement ) ] ;
+    rdfs:range vrig:Programme .
+
+vrig:index a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The position of a record in the list it is an item of, counted from zero." ;
+    rdfs:domain vrig:Record ;
+    rdfs:range xsd:integer .
+
+vrig:input a owl:DatatypeProperty ;
+    rdfs:comment "A name a formula reads." ;
+    rdfs:domain vrig:Formula ;
+    rdfs:range xsd:string .
+
+vrig:inputBinding a owl:ObjectProperty ;
+    rdfs:comment "An input binding a scheme declares." ;
+    rdfs:range vrig:InputBinding .
+
+vrig:inputName a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The name of the evaluation input a binding carries." ;
+    rdfs:domain vrig:InputBinding ;
+    rdfs:range xsd:string .
+
+vrig:item a owl:ObjectProperty ;
+    rdfs:comment "A structured item of a fact's value, a record." ;
+    rdfs:domain vrig:Fact ;
+    rdfs:range vrig:Record .
+
+vrig:key a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The key of a fact as the source writes it, the key a finding concerns, or the key an input binding reads." ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( vrig:Fact vrig:Finding vrig:InputBinding ) ] ;
+    rdfs:range xsd:string .
+
+vrig:keyPath a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The path of a key in a YAML source, with list indices in brackets, for example layers[0].insurers[1].share." ;
+    rdfs:domain vrig:Locator ;
+    rdfs:range xsd:string .
+
+vrig:kind a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The kind token of a body node, such as section, clause, definition, row, item, label or paragraph. Open." ;
+    rdfs:domain vrig:BodyNode ;
+    rdfs:range xsd:string .
+
+vrig:layerNumber a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The number the programme file gives a layer." ;
+    rdfs:domain vrig:Layer ;
+    rdfs:range xsd:integer .
+
+vrig:line a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The line in the source file a node starts on. Informative only, and no part of the canonical locator string." ;
+    rdfs:domain vrig:Locator ;
+    rdfs:range xsd:integer .
+
+vrig:locator a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The locator of a node read from a rig." ;
+    rdfs:domain vrig:Located ;
+    rdfs:range vrig:Locator .
+
+vrig:message a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "A finding's message, in generic words that name no text of a rig." ;
+    rdfs:domain vrig:Finding ;
+    rdfs:range xsd:string .
+
+vrig:number a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The number a body node carries in the source, a section or endorsement number, a clause number or a row number." ;
+    rdfs:domain vrig:BodyNode ;
+    rdfs:range xsd:string .
+
+vrig:of a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The carrier a fact is stated of." ;
+    rdfs:domain vrig:Fact ;
+    rdfs:range vrig:Carrier .
+
+vrig:onLayer a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The layer a placement sits on." ;
+    rdfs:domain vrig:Placement ;
+    rdfs:range vrig:Layer .
+
+vrig:ordinal a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "A body node's position among its parent's children, counted from zero." ;
+    rdfs:domain vrig:BodyNode ;
+    rdfs:range xsd:integer .
+
+vrig:parent a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The node a body node sits under, a body node or the document." ;
+    rdfs:domain vrig:BodyNode ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( vrig:BodyNode vrig:Document ) ] .
+
+vrig:readingKey a owl:DatatypeProperty ;
+    rdfs:comment "A key a mapping scheme declares to carry a reading of a legal concept, stated on the scheme. The tool types the facts of such a key vrig:Reading." ;
+    rdfs:range xsd:string .
+
+vrig:referenceText a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The text of a reference as the source writes it." ;
+    rdfs:domain vrig:Reference ;
+    rdfs:range xsd:string .
+
+vrig:rendered a owl:ObjectProperty ;
+    rdfs:comment "A rendering view of a document." ;
+    rdfs:domain vrig:Document ;
+    rdfs:range vrig:RenderingView .
+
+vrig:renderingName a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The name the manifest gives a rendering." ;
+    rdfs:domain vrig:RenderingView ;
+    rdfs:range xsd:string .
+
+vrig:resolvesTo a owl:ObjectProperty ;
+    rdfs:comment "The node a fact's value or a reference names, where the tool found it. A fact or reference without it is unresolved." ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( vrig:Fact vrig:Reference ) ] ;
+    rdfs:range vrig:Located .
+
+vrig:rigDigest a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The digest of the whole rig a run read, over the digests of its files in path order (section 9)." ;
+    rdfs:domain vrig:Run ;
+    rdfs:range xsd:string .
+
+vrig:rigId a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The id a rig gives a document, a programme or an event, stable across the rig's revisions." ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( vrig:Document vrig:Programme vrig:Event ) ] ;
+    rdfs:range xsd:string .
+
+vrig:row a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The number or ordinal of a declarations row, a list item or a reference within its node." ;
+    rdfs:domain vrig:Locator ;
+    rdfs:range xsd:string .
+
+vrig:scopedTo a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The scope of a defined term, the document or a body node." ;
+    rdfs:domain vrig:DefinedTerm ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( vrig:BodyNode vrig:Document ) ] .
+
+vrig:section a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The number or title of the section a body node sits in." ;
+    rdfs:domain vrig:Locator ;
+    rdfs:range xsd:string .
+
+vrig:substrateRelease a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The substrate release of the checkout the tool ran in." ;
+    rdfs:domain vrig:Run ;
+    rdfs:range xsd:string .
+
+vrig:targetKind a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The kind of thing a reference names, section, item, condition, endorsement, schedule or part, as a token." ;
+    rdfs:domain vrig:Reference ;
+    rdfs:range xsd:string .
+
+vrig:targetNumber a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The number a reference names." ;
+    rdfs:domain vrig:Reference ;
+    rdfs:range xsd:string .
+
+vrig:term a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The word a defined term defines." ;
+    rdfs:domain vrig:DefinedTerm ;
+    rdfs:range xsd:string .
+
+vrig:text a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The text of a body node, normalised as section 9 says." ;
+    rdfs:domain vrig:BodyNode ;
+    rdfs:range xsd:string .
+
+vrig:title a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The title of a section or an endorsement." ;
+    rdfs:domain vrig:BodyNode ;
+    rdfs:range xsd:string .
+
+vrig:unknown a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The marker of a fact stated as not known. The source listed the key among those it does not know." ;
+    rdfs:domain vrig:Fact ;
+    rdfs:range xsd:boolean .
+
+vrig:value a owl:DatatypeProperty ;
+    rdfs:comment "A value of a fact, a literal typed as the source gives it, a string, a number, a date or a boolean, or an RDF list of such literals in the source's order where the source gives a list. A token of the rig's own vocabulary is a string." ;
+    rdfs:domain vrig:Fact .
+
+vrig:vectorSchemaVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The version of the test-vector schema a run wrote its vectors under." ;
+    rdfs:domain vrig:Run ;
+    rdfs:range xsd:string .
+
+vrig:view a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The view a locator's node was read in." ;
+    rdfs:domain vrig:Locator ;
+    rdfs:range vrig:View .
+
+vrig:vocabularyVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The version of this vocabulary a run wrote its representation under." ;
+    rdfs:domain vrig:Run ;
+    rdfs:range xsd:string .
+
+[ a owl:AllDifferent ; owl:distinctMembers ( vrig:Declared vrig:Blind ) ] .
+
+[ a owl:AllDifferent ; owl:distinctMembers ( vrig:UnmappedKey vrig:UncertainMapping vrig:ShapeViolation vrig:EmptyQuery vrig:UnresolvedReference vrig:Disagreement vrig:ProseOnlyMeaning vrig:UnknownFact vrig:Inconsistent vrig:ReasonerUnavailable ) ] .
+
+[ a owl:AllDisjointClasses ; owl:members ( vrig:Carrier vrig:Fact vrig:BodyNode vrig:Reference vrig:Finding ) ] .
+
+[ a owl:AllDisjointClasses ; owl:members ( vrig:Document vrig:Programme vrig:Event vrig:Record ) ] .
+
+[ a owl:AllDisjointClasses ; owl:members ( vrig:Located vrig:Locator vrig:View vrig:FindingKind vrig:Run vrig:InputBinding ) ] .

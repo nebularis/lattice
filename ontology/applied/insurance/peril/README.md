@@ -141,13 +141,13 @@ scheme (§7, §8):
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.9.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.9.1> ;
     rdfs:label "LATTICE reference peril vocabulary properties"@en ;
     rdfs:comment "The prl: properties and datatypes the reference peril vocabulary uses to say more than plain SKOS: kind and part links, directed triggering, non-subsuming overlap, characteristic links (mechanism, agency, onset, definition basis, accumulation class), and links to Quantification for intensity thresholds and event windows. Schemes and concepts are declared in vocab/peril-vocab.ttl, in the prl-voc: namespace (ADR-A98 decision 6). This document declares no scheme and no concept. See ADR-A99." ;
     owl:imports <http://www.w3.org/2004/02/skos/core> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.0> .
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.1> .
 
 #################################################################
 #    Kind and part (ADR-A99 decision 4, PV3). iso-thes: terms are
@@ -346,11 +346,11 @@ by `skos:editorialNote "Reference edition published by LATTICE. Not a market sta
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.9.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.1> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/0.9.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.1> .
 
 #################################################################
 #    The eight reference schemes (ADR-A99 §5, §6). Each is an
@@ -3981,9 +3981,9 @@ authority to cite, and its note says so.
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/intensity>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-intensity/0.9.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-intensity/0.9.1> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.1> .
 
 prl-voc:IntensityMeasureScheme a voc:ConceptScheme ;
     fnd:hasIdentity prl-voc:IntensityMeasureScheme-identity ;

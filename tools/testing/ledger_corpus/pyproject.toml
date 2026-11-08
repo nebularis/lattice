@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-testing-ledger-corpus"
+version = "0.1.0"
+description = "Generated account trees and passes for the ledger's tests and benchmarks (ADR-A125)"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+  "rdflib>=7",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

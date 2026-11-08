@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+PREFIX icm: <https://www.nebularis.org/neuro-semantic/lattice/insurance/common#>
+PREFIX ins: <https://www.nebularis.org/neuro-semantic/lattice/instrument#>
+PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+
+# question classes: Which instruments carry a class of business?
+SELECT ?instrument ?class WHERE { ?instrument a ins:Instrument ; icm:classOfBusiness ?class . }
+
+# question events: Which loss events have a temporal scope, the time they occurred?
+SELECT ?event ?from WHERE { ?event a icm:LossEvent ; fnd:hasTemporalScope/fnd:validFrom ?from . }
+
+# question perils: Which loss events carry a peril?
+SELECT ?event ?peril WHERE { ?event a icm:LossEvent ; icm:peril ?peril . }

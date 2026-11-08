@@ -37,9 +37,9 @@ Ledger accounts do not hold observed values such as prices or temperatures, whic
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/ledger.ttl` | <https://www.nebularis.org/neuro-semantic/ledger> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> |
-| `vocab/ledger-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.0> |
-| `spec/ledger-runtime.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-runtime> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-runtime/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.0> |
+| `spec/ledger.ttl` | <https://www.nebularis.org/neuro-semantic/ledger> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.1> |
+| `vocab/ledger-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.1> |
+| `spec/ledger-runtime.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-runtime> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-runtime/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.1> |
 
 | Prefix | Namespace |
 |---|---|
@@ -227,11 +227,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** An amount consumed and restored, as the terms state it.
 
-**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or
-budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a
-sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge rule always;
-state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion
-method only where the terms need them.
+**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge rule always, and state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion method only where the terms need them.
 
 **Restrictions.**
 
@@ -1013,15 +1009,13 @@ ldg:resetRecurrence owl:deprecated true .
 
 ### 7.2 Constraints
 
-`shapes/constraints.ttl` holds six SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's
-unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and
-`qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, a
-credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space.
+`shapes/constraints.ttl` holds six SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, a credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space. Each targets the class as one node (`sh:targetNode ldg:AccountDefinition`) and reads every definition in one query, as the runtime laws of section 7.3 do, so a validator that runs a constraint once per focus node runs each once rather than once per definition (TSD-23). A violation's `sh:value` names the definition.
 
 <!-- hidden: {"output-file": "shapes/constraints.ttl"}
 ```turtle-shapes
 # SHACL-SPARQL constraints for ldg:AccountDefinition (ADR-A131 decisions 2
 # and 3).
+# Each targets the class as one node and reads every definition in one query (TSD-23).
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
@@ -1029,25 +1023,27 @@ credit ceiling not below the stated amount, and a key dimension that is a concep
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 ldg:NoCycleThroughPartOfShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "An account definition must not be its own ancestor through any chain of ldg:partOf edges." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-			SELECT $this WHERE {
-				$this ldg:partOf+ $this .
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:partOf+ ?value .
 			}
 		"""
 	] .
 
 ldg:ChildUnitMatchesParentShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "An account definition's unit of account must equal its parent's." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-			SELECT $this WHERE {
-				$this ldg:partOf ?parent ;
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:partOf ?parent ;
 					  ldg:unitOfAccount ?childSpace .
 				?parent ldg:unitOfAccount ?parentSpace .
 				FILTER (?childSpace != ?parentSpace)
@@ -1056,14 +1052,15 @@ ldg:ChildUnitMatchesParentShape a sh:NodeShape ;
 	] .
 
 ldg:ExtensiveUnitOfAccountShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "An account definition's unit of account must be extensive, with Sum and Difference capabilities." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
 			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
-			SELECT $this WHERE {
-				$this ldg:unitOfAccount ?space .
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:unitOfAccount ?space .
 				OPTIONAL { ?space qnt:additivity qnt:Extensive . BIND(true AS ?extensive) }
 				OPTIONAL { ?space qnt:hasOperationCapability ?sumCap . ?sumCap qnt:operationKind qnt:Sum . BIND(true AS ?sum) }
 				OPTIONAL { ?space qnt:hasOperationCapability ?diffCap . ?diffCap qnt:operationKind qnt:Difference . BIND(true AS ?difference) }
@@ -1073,29 +1070,31 @@ ldg:ExtensiveUnitOfAccountShape a sh:NodeShape ;
 	] .
 
 ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "A proportional merge rule must state a rounding method and a residual allocation." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-			SELECT $this WHERE {
-				$this ldg:mergeRule ldg:Proportional .
-				OPTIONAL { $this ldg:roundingMethod ?rounding }
-				OPTIONAL { $this ldg:residualAllocation ?residual }
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:mergeRule ldg:Proportional .
+				OPTIONAL { ?value ldg:roundingMethod ?rounding }
+				OPTIONAL { ?value ldg:residualAllocation ?residual }
 				FILTER (!BOUND(?rounding) || !BOUND(?residual))
 			}
 		"""
 	] .
 
 ldg:CreditCeilingNotBelowStatedShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "A credit ceiling must not be below the account's stated amount." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
 			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
-			SELECT $this WHERE {
-				$this ldg:statedAmount ?stated ;
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:statedAmount ?stated ;
 					  ldg:creditCeiling ?ceiling .
 				?stated qnt:numericValue ?statedValue .
 				?ceiling qnt:numericValue ?ceilingValue .
@@ -1105,15 +1104,16 @@ ldg:CreditCeilingNotBelowStatedShape a sh:NodeShape ;
 	] .
 
 ldg:KeyDimensionTypeShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "A key dimension must be a skos:ConceptScheme or a qnt:ValueSpace." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
 			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
 			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-			SELECT $this WHERE {
-				$this ldg:keyDimension ?dim .
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:keyDimension ?dim .
 				FILTER NOT EXISTS { ?dim a skos:ConceptScheme }
 				FILTER NOT EXISTS { ?dim a qnt:ValueSpace }
 			}
@@ -1630,7 +1630,7 @@ Behaviour (ADR-A131 decision 1).
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
-- **Unreleased**.
+- **0.21.1**.
   - no effect. The runtime document, `ledger-runtime`: `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:BalanceRecord`, `ldg:MergeRecord`, `ldg:Grant` and `ldg:Checkpoint`, their properties, and the runtime laws of section 7.3 in `shapes/runtime.ttl`. Every term is new, so no record stated before is read differently.
   - no effect. New `ldg:periodRecurrence` and `ldg:closingRecurrence` on `ldg:AccountDefinition` (PDD-15), each at most one.
   - changes meaning (PDD-15). `ldg:resetRecurrence` is deprecated. A definition that states it still conforms, but nothing resets an account any more, so a periodic amount is one account per period under `ldg:periodRecurrence`.
@@ -1652,9 +1652,6 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 - **A purpose under a shared ancestor.** A draw naming a purpose writes a posting at the purpose-counting account too, and an ancestor of both would fold the draw twice. No example has such an ancestor, and the rule that prevents the double count is open (LF-Q18).
 - **A reinstatement under a capacity pool (LG-Q10).** A credit rolls up, so restoring an aggregate also restores the pool above it, and the insurance example debits the reinstatement at the pool to keep the pool the measure of capacity left. Whether a reinstatement is built that way, or the pool is stated otherwise, is the maintainer's.
 - **Persistence's record families** for postings, balance records and merge records, append-only, are not yet declared. The storage shape they take is what LG-6's fold investigation measures.
-- **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects
-  and threshold regimes drawing on and reading them (ADR-A131 decision 7).
-- **Allocation with conservation**, one amount split across several accounts by a merge rule, is not yet
-  specified.
-- **A benchmark** under `benchmark/ledger/`, at realistic volumes of accounts and draws, is not yet
-  written.
+- **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects and threshold regimes drawing on and reading them (ADR-A131 decision 7).
+- **Allocation with conservation**, one amount split across several accounts by a merge rule, is not yet specified.
+- **A benchmark** under `benchmark/ledger/`, at realistic volumes of accounts and draws, is not yet written.

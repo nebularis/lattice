@@ -1,0 +1,182 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. The body of a document is text laid out by convention, sections,
+# numbered clauses, definitions, declaration rows and paragraphs. The
+# representation lifts each to a body node with a kind token, its text, its
+# parent and its order among its siblings, in the blind view, where the front
+# matter is reduced to the document's id. A rendering of the same document, a
+# lossy text form of it, is a view of its own, and a node read from it says so.
+#
+# An invented document, doc-b, has a section holding one clause and one
+# definition, a reference the tool resolved to another section, a reference
+# into another document that nothing resolves, and a paragraph that carries
+# meaning in prose alone. One rendering of it yields one node under its view.
+#
+# | Construct                                   | Where                       |
+# |---------------------------------------------|-----------------------------|
+# | a body node of kind section                 | ex:sec-1, ex:sec-2          |
+# | a body node of kind clause, with its text   | ex:cl-1-1                   |
+# | a defined term scoped to the document       | ex:def-insured              |
+# | a reference resolved                        | ex:ref-1                    |
+# | a reference unresolved, into another document | ex:ref-2                  |
+# | a prose-only node                           | ex:para-1                   |
+# | a rendering view and a node read under it   | ex:view-ocr, ex:ocr-cl-1-1  |
+#
+# No clause text here is more than a placeholder, the digests are invented.
+
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <urn:example:v-rig:body-nodes:> .
+
+ex:doc-b a vrig:Document ;
+    vrig:rigId "doc-b" ;
+    vrig:formatVersion "1" ;
+    vrig:rendered ex:view-ocr ;
+    vrig:locator ex:loc-doc-b ;
+    vrig:digest "b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3" .
+
+ex:loc-doc-b a vrig:Locator ;
+    vrig:documentId "doc-b" ;
+    vrig:view vrig:Blind .
+
+# ---- Section 1 ---------------------------------------------------------------
+
+ex:sec-1 a vrig:BodyNode ;
+    vrig:kind "section" ;
+    vrig:number "1" ;
+    vrig:title "Insuring Agreement" ;
+    vrig:parent ex:doc-b ;
+    vrig:ordinal 0 ;
+    vrig:locator ex:loc-sec-1 ;
+    vrig:digest "c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4" .
+
+ex:loc-sec-1 a vrig:Locator ;
+    vrig:documentId "doc-b" ;
+    vrig:view vrig:Blind ;
+    vrig:section "1" ;
+    vrig:line 20 .
+
+ex:cl-1-1 a vrig:BodyNode ;
+    vrig:kind "clause" ;
+    vrig:number "1.1" ;
+    vrig:text "The Insurer will pay on behalf of the Insured, subject to Section 2." ;
+    vrig:parent ex:sec-1 ;
+    vrig:ordinal 0 ;
+    vrig:locator ex:loc-cl-1-1 ;
+    vrig:digest "d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5" .
+
+ex:loc-cl-1-1 a vrig:Locator ;
+    vrig:documentId "doc-b" ;
+    vrig:view vrig:Blind ;
+    vrig:section "1" ;
+    vrig:clause "1.1" ;
+    vrig:line 22 .
+
+# A reference inside clause 1.1, resolved to section 2 of the same document.
+
+ex:ref-1 a vrig:Reference ;
+    vrig:inNode ex:cl-1-1 ;
+    vrig:referenceText "Section 2" ;
+    vrig:targetKind "section" ;
+    vrig:targetNumber "2" ;
+    vrig:external false ;
+    vrig:resolvesTo ex:sec-2 ;
+    vrig:locator ex:loc-ref-1 ;
+    vrig:digest "e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6" .
+
+ex:loc-ref-1 a vrig:Locator ;
+    vrig:documentId "doc-b" ;
+    vrig:view vrig:Blind ;
+    vrig:section "1" ;
+    vrig:clause "1.1" ;
+    vrig:row "0" .
+
+# A reference into another document. Nothing here resolves it, and it stays
+# unresolved rather than guessed.
+
+ex:ref-2 a vrig:Reference ;
+    vrig:inNode ex:cl-1-1 ;
+    vrig:referenceText "Condition 4.2 of the Underlying Policy" ;
+    vrig:targetKind "condition" ;
+    vrig:targetNumber "4.2" ;
+    vrig:external true ;
+    vrig:locator ex:loc-ref-2 ;
+    vrig:digest "f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7" .
+
+ex:loc-ref-2 a vrig:Locator ;
+    vrig:documentId "doc-b" ;
+    vrig:view vrig:Blind ;
+    vrig:section "1" ;
+    vrig:clause "1.1" ;
+    vrig:row "1" .
+
+# ---- Section 2 ---------------------------------------------------------------
+
+ex:sec-2 a vrig:BodyNode ;
+    vrig:kind "section" ;
+    vrig:number "2" ;
+    vrig:title "Definitions" ;
+    vrig:parent ex:doc-b ;
+    vrig:ordinal 1 ;
+    vrig:locator ex:loc-sec-2 ;
+    vrig:digest "091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8" .
+
+ex:loc-sec-2 a vrig:Locator ;
+    vrig:documentId "doc-b" ;
+    vrig:view vrig:Blind ;
+    vrig:section "2" .
+
+# A definition is a body node that is also a defined term, scoped to the
+# document, since nothing narrows it to a section.
+
+ex:def-insured a vrig:BodyNode , vrig:DefinedTerm ;
+    vrig:kind "definition" ;
+    vrig:term "Insured" ;
+    vrig:scopedTo ex:doc-b ;
+    vrig:text "Insured means the entity named in Item 1 of the Declarations." ;
+    vrig:parent ex:sec-2 ;
+    vrig:ordinal 0 ;
+    vrig:locator ex:loc-def-insured ;
+    vrig:digest "1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809" .
+
+ex:loc-def-insured a vrig:Locator ;
+    vrig:documentId "doc-b" ;
+    vrig:view vrig:Blind ;
+    vrig:section "2" ;
+    vrig:row "0" .
+
+# A paragraph that is none of the recognised forms. Its meaning is in prose
+# alone, so it carries the prose-only marker and will be reported as such.
+
+ex:para-1 a vrig:BodyNode , vrig:ProseOnly ;
+    vrig:kind "paragraph" ;
+    vrig:text "Nothing in this section extends cover to any matter first notified before inception." ;
+    vrig:parent ex:sec-2 ;
+    vrig:ordinal 1 ;
+    vrig:locator ex:loc-para-1 ;
+    vrig:digest "2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a" .
+
+ex:loc-para-1 a vrig:Locator ;
+    vrig:documentId "doc-b" ;
+    vrig:view vrig:Blind ;
+    vrig:section "2" ;
+    vrig:row "1" .
+
+# ---- A rendering --------------------------------------------------------------
+
+ex:view-ocr a vrig:RenderingView ;
+    vrig:renderingName "ocr" .
+
+ex:ocr-cl-1-1 a vrig:BodyNode ;
+    vrig:kind "clause" ;
+    vrig:number "1.1" ;
+    vrig:text "The Insurer wiII pay on behalf of the Insured, subject to Section 2." ;
+    vrig:parent ex:doc-b ;
+    vrig:ordinal 0 ;
+    vrig:locator ex:loc-ocr-cl-1-1 ;
+    vrig:digest "3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b" .
+
+ex:loc-ocr-cl-1-1 a vrig:Locator ;
+    vrig:documentId "doc-b" ;
+    vrig:view ex:view-ocr ;
+    vrig:clause "1.1" .

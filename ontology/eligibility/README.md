@@ -15,8 +15,8 @@ Eligibility models admissibility by declaring reusable conditions, collecting ev
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/eligibility.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.0> |
-| `vocab/eligibility-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> |
+| `spec/eligibility.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.1> |
+| `vocab/eligibility-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/eligibility-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility-vocab/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.1> |
 
 | Prefix | Namespace |
 |---|---|

@@ -32,7 +32,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | ensemble | unit | ES | briefed | ES-0 | [plan](plans/ensemble.md), [status](status/ensemble.md), 2 Validation Packs |
 | formal-methods-track-b | phase | FMB | building 2026-10-09 | FMB-1 | [plan](plans/formal-methods-track-b.md), [status](status/formal-methods-track-b.md) |
 | formal-methods-track-c | phase | FMC | built 2026-10-27 | FMC-1 | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md), 1 Validation Packs |
-| formal-methods-track-e | phase | FME | built 2026-10-09 | FME-1.0 | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md) |
+| formal-methods-track-e | phase | FME | built 2026-10-09 | FME-0 | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md) |
 | formal-methods-track-h | phase | FMH | built 2026-11-01 | FMH-2.12 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md), 45 Validation Packs |
 | formal-methods | epic | FM | built 2026-11-02 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 1 Validation Packs |
 | git-hooks | unit | GH | built 2026-11-03 | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
@@ -81,7 +81,8 @@ Every unit with a status record, its state from the record's Status line, and it
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
 | temporal-binding-consumer-hardening | unit |  | built 2026-09-25 |  | [plan](plans/temporal-binding-consumer-hardening.md), [status](status/temporal-binding-consumer-hardening.md) |
 | toolchain-jdk25-python314 | unit |  | merged 2026-09-23 |  | [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) |
-| v-rig | unit | VR | building 2026-11-07 | VR-1 | [plan](plans/v-rig.md), [status](status/v-rig.md) |
+| v-rig-studio | multi-slice unit | VS | planned | VS-1 | [plan](plans/v-rig-studio.md), [status](status/v-rig-studio.md) |
+| v-rig | unit | VR | merged 2026-11-08 |  | [plan](plans/v-rig.md), [status](status/v-rig.md), 7 Validation Packs |
 | validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
@@ -263,6 +264,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FMC-2.3 | model `ADR-A116`'s own rule against HQ-4/IMA-D4a | formal-methods-track-c | planned 2026-10-08 |  | docs/developer/status/formal-methods-track-c.md#slices |
 | FMC-3 | slot exclusivity, SMT | formal-methods-track-c | planned | FMC-2 (done) | docs/developer/status/formal-methods-track-c.md#slices |
 | FMC-4 | a design model of ADR-A130, the Ensemble, in Alloy | formal-methods-track-c | built 2026-10-27 |  | docs/developer/status/formal-methods-track-c.md#slices |
+| FME-0 | the prelude session `tools/proofs/base/`, `LatticeBase` over the HOL-Library theories every layer's proofs reach for, every layer session parenting on it | formal-methods-track-e | planned |  | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-1.0 | home, generation tooling | formal-methods-track-e | built 2026-10-09 |  | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-1.1 | the kernel, for real | formal-methods-track-e | built 2026-10-06 |  | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-1.2 | rounding and residual theorem | formal-methods-track-e | dropped 2026-10-07 | track B's B4, which waits on CCS's C12 | docs/developer/status/formal-methods-track-e.md#slices |
@@ -412,6 +414,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | ledger | blocked | LG-4 | docs/developer/status/ledger.md#board |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | ledger | planned | LG-5 | docs/developer/status/ledger.md#board |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | ledger | built 2026-11-08 |  | docs/developer/status/ledger.md#board |
+| LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | ledger | planned | LG-Q14 | docs/developer/status/ledger.md#board |
 | MSC-1 | `platform/sparql-testkit`, `tools/testing/jena`, `tools/testing/sparql_probes` with the aggregate matrix executed on Jena (352 cells as recorded), `check:conformance`, CAP-91 to CAP-94, an A | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
 | MSC-2 | Jena in the persistence engines, `check:persistence-conformance` on rdflib, Oxigraph and Jena (4727 passed), nine Jena failures triaged into TSD-50 to TSD-53 with expectations per engine, on | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
 | MSC-3 | Jena in the compilers' engines, conformance per engine for the compilers and Eligibility's reference tests, all passing on Jena first time. TSD-60, TSD-61 (rdflib departures), TD-105 (the pr | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
@@ -521,13 +524,20 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-8 | a run that leaves no process behind when its test process is killed | studio-worker-liveness | built 2026-11-06 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-9 | a late `Failed` never replaces a `Succeeded` | studio-worker-liveness | built 2026-11-06 |  | docs/developer/status/studio-worker-liveness.md#position |
-| VR-1 | the module `ontology/v-rig/`, its vocabulary, shapes, Proposed ADR and catalogue entry | v-rig | building 2026-11-07 |  | docs/developer/status/v-rig.md#board |
-| VR-2 | the synthetic mini-rig, then the lifter with the declared and blind views | v-rig | planned | VR-1 | docs/developer/status/v-rig.md#board |
-| VR-3 | the tracked mapping scheme and the extension seam | v-rig | planned | VR-2 | docs/developer/status/v-rig.md#board |
-| VR-4 | P1, the layer graph against shapes, reasoner and competency queries | v-rig | planned | VR-3 | docs/developer/status/v-rig.md#board |
-| VR-5 | P2 and P3, the generated theory and the test vectors | v-rig | planned | VR-3 | docs/developer/status/v-rig.md#board |
-| VR-6 | P4, findings as RDF with stable ids and the report rendered from them | v-rig | planned | VR-4 | docs/developer/status/v-rig.md#board |
-| VR-7 | the seam for a read case | v-rig | planned | VR-2 | docs/developer/status/v-rig.md#board |
+| VS-1 | the `rig-run` job kind, the worker's rig registry and the job's artefacts | v-rig-studio | planned | VS-Q1, VS-Q2 | docs/developer/status/v-rig-studio.md#board |
+| VS-2 | the Rigs and Run views | v-rig-studio | planned | VS-1 | docs/developer/status/v-rig-studio.md#board |
+| VS-3 | the Diff view | v-rig-studio | planned | VS-2 | docs/developer/status/v-rig-studio.md#board |
+| VS-4 | the Case and Readings views | v-rig-studio | planned | VS-2, VS-Q5 | docs/developer/status/v-rig-studio.md#board |
+| VS-5 | the Read cases view | v-rig-studio | planned | VS-2 | docs/developer/status/v-rig-studio.md#board |
+| VS-6 | the Rulings part and view | v-rig-studio | planned | VS-2, VS-Q4 | docs/developer/status/v-rig-studio.md#board |
+| VS-7 | the Projection and Theory views and the local text route | v-rig-studio | planned | VS-2, VS-Q3, VS-Q6 | docs/developer/status/v-rig-studio.md#board |
+| VR-1 | the module `ontology/v-rig/`, its vocabulary, shapes, Proposed ADR and catalogue entry | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
+| VR-2 | the synthetic mini-rig, then the lifter with the declared and blind views | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
+| VR-3 | the tracked mapping scheme and the extension seam | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
+| VR-4 | P1, the layer graph against shapes, reasoner and competency queries | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
+| VR-5 | P2 and P3, the generated theory and the test vectors | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
+| VR-6 | P4, findings as RDF with stable ids and the report rendered from them | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
+| VR-7 | the seam for a read case | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
 | VTB-1 | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |

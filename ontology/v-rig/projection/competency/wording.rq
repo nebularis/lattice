@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+PREFIX wrd: <https://www.nebularis.org/neuro-semantic/lattice/wording#>
+
+# question trees: Which wordings comprise elements, and which of those have text?
+SELECT ?wording ?element ?text WHERE { ?wording a wrd:Wording ; wrd:directlyComprises ?element . OPTIONAL { ?element wrd:hasTextPart/wrd:partText ?text } }
+
+# question typed: Which elements carry an element type?
+SELECT ?element ?type WHERE { ?element a wrd:Element ; wrd:elementType ?type . }
+
+# question untyped: Which elements carry no element type?
+SELECT ?element WHERE { ?element a wrd:Element . FILTER NOT EXISTS { ?element wrd:elementType ?type } }
+
+# question references: Which text parts refer to another element or document, a cross-reference the wording resolves?
+SELECT ?part ?target WHERE { ?part a wrd:TextPart ; wrd:refersToObject ?target . }
+
+# question numbered: Which elements carry the number the document gives them?
+SELECT ?element ?number WHERE { ?element a wrd:Element ; wrd:objectId ?number . }

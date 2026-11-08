@@ -214,76 +214,79 @@ def measure(events: int, rate: float, reach_periods: int, directory: str | None 
 
     with tempfile.TemporaryDirectory(prefix="ledger-late-posting-", dir=directory) as tmp:
         store = ox.Store(tmp)
-        store.bulk_extend(quads(accounts, stream, effective, model))
-        store.flush()
-        stored = len(store)
-        if stored != expected_stored(events):
-            raise c.WrongResult(f"{where}: stored {stored} triples, expected {expected_stored(events)}")
-        (row,) = store.query("SELECT (COUNT(DISTINCT ?g) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } }")
-        if int(row["n"].value) != len(sizes):
-            raise c.WrongResult(f"{where}: {row['n'].value} graphs in the store, {len(sizes)} by the arithmetic")
+        try:
+            store.bulk_extend(quads(accounts, stream, effective, model))
+            store.flush()
+            stored = len(store)
+            if stored != expected_stored(events):
+                raise c.WrongResult(f"{where}: stored {stored} triples, expected {expected_stored(events)}")
+            (row,) = store.query("SELECT (COUNT(DISTINCT ?g) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } }")
+            if int(row["n"].value) != len(sizes):
+                raise c.WrongResult(f"{where}: {row['n'].value} graphs in the store, {len(sizes)} by the arithmetic")
 
-        plans = {}
-        for age, point in points.items():
-            want_effective = balances_as_of(accounts, stream, effective, point)
-            want_recorded = balances_as_of(accounts, stream, recorded, point)
-            after_close = max((p for p in model.at_checkpoints if p <= point), default=0)
-            upto = {"no reach cap": events, "declared reach cap": min(events, point + reach)}
-            held = {"no reach cap": counts_in(accounts, stream, effective, after_close, covered(upto["no reach cap"], events), point),
-                    "declared reach cap": counts_in(accounts, stream, effective, after_close, covered(upto["declared reach cap"], events), point)}
-            held_recorded = counts_in(accounts, stream, recorded, after_close, point, point)
-            for i, account in enumerate(accounts):
-                for label, cap in (("no reach cap", None), ("declared reach cap", reach)):
-                    balance, folded, _, _ = read_effective(store, account, point, events, cap)
-                    if balance != want_effective[i]:
-                        raise c.WrongResult(f"{where}: {account.iri.value} as of effective {point} with {label} reads {balance}, the model gives {want_effective[i]}")
-                    if folded != held[label][i]:
-                        raise c.WrongResult(f"{where}: {account.iri.value} as of effective {point} with {label} folded {folded}, the range holds {held[label][i]}")
-                balance, folded, _, _ = read_recorded(store, account, point)
-                if balance != want_recorded[i]:
-                    raise c.WrongResult(f"{where}: {account.iri.value} as of recorded {point} reads {balance}, the model gives {want_recorded[i]}")
-                if folded != held_recorded[i]:
-                    raise c.WrongResult(f"{where}: {account.iri.value} as of recorded {point} folded {folded}, the range holds {held_recorded[i]}")
-                if account.level >= 1:  # the floor is slow, so the layers and programmes only
-                    balance, folded = read_floor(store, account, point)
-                    whole = counts_in(accounts, stream, effective, 0, events, point)[i]
-                    if balance != want_effective[i]:
-                        raise c.WrongResult(f"{where}: the unpartitioned fold of {account.iri.value} as of effective {point} reads {balance}, the model gives {want_effective[i]}")
-                    if folded != whole:
-                        raise c.WrongResult(f"{where}: the unpartitioned fold of {account.iri.value} as of effective {point} folded {folded}, the stream holds {whole}")
+            plans = {}
+            for age, point in points.items():
+                want_effective = balances_as_of(accounts, stream, effective, point)
+                want_recorded = balances_as_of(accounts, stream, recorded, point)
+                after_close = max((p for p in model.at_checkpoints if p <= point), default=0)
+                upto = {"no reach cap": events, "declared reach cap": min(events, point + reach)}
+                held = {"no reach cap": counts_in(accounts, stream, effective, after_close, covered(upto["no reach cap"], events), point),
+                        "declared reach cap": counts_in(accounts, stream, effective, after_close, covered(upto["declared reach cap"], events), point)}
+                held_recorded = counts_in(accounts, stream, recorded, after_close, point, point)
+                for i, account in enumerate(accounts):
+                    for label, cap in (("no reach cap", None), ("declared reach cap", reach)):
+                        balance, folded, _, _ = read_effective(store, account, point, events, cap)
+                        if balance != want_effective[i]:
+                            raise c.WrongResult(f"{where}: {account.iri.value} as of effective {point} with {label} reads {balance}, the model gives {want_effective[i]}")
+                        if folded != held[label][i]:
+                            raise c.WrongResult(f"{where}: {account.iri.value} as of effective {point} with {label} folded {folded}, the range holds {held[label][i]}")
+                    balance, folded, _, _ = read_recorded(store, account, point)
+                    if balance != want_recorded[i]:
+                        raise c.WrongResult(f"{where}: {account.iri.value} as of recorded {point} reads {balance}, the model gives {want_recorded[i]}")
+                    if folded != held_recorded[i]:
+                        raise c.WrongResult(f"{where}: {account.iri.value} as of recorded {point} folded {folded}, the range holds {held_recorded[i]}")
+                    if account.level >= 1:  # the floor is slow, so the layers and programmes only
+                        balance, folded = read_floor(store, account, point)
+                        whole = counts_in(accounts, stream, effective, 0, events, point)[i]
+                        if balance != want_effective[i]:
+                            raise c.WrongResult(f"{where}: the unpartitioned fold of {account.iri.value} as of effective {point} reads {balance}, the model gives {want_effective[i]}")
+                        if folded != whole:
+                            raise c.WrongResult(f"{where}: the unpartitioned fold of {account.iri.value} as of effective {point} folded {folded}, the stream holds {whole}")
 
-        measured = []
-        for age, point in points.items():
-            account = accounts[programme]
-            by_read = {}
-            for label, cap in (("as-of-effective, no reach cap", None), ("as-of-effective, declared reach cap", reach)):
-                _, folded, names, after = read_effective(store, account, point, events, cap)
-                upto = events if cap is None else min(events, point + cap)
-                by_read[label] = (after, folded, names, counts_in(accounts, stream, effective, point, covered(upto, events), point)[programme])
-            _, folded, names, after = read_recorded(store, account, point)
-            by_read["as-of-recorded"] = (after, folded, names, 0)
-            whole = counts_in(accounts, stream, effective, 0, events, point)[programme]
-            by_read["unpartitioned fold on effective"] = (-1, whole, [], counts_in(accounts, stream, effective, point, events, point)[programme])
-            if any(v[1] > whole for k, v in by_read.items() if k != "as-of-recorded" and k != "unpartitioned fold on effective"):
-                raise c.WrongResult(f"{where}: a partitioned effective read as of {point} folded more than the unpartitioned fold of {whole}")
-            measured.append((age, point, by_read))
-
-        times = {(age, label): [] for age, _, by_read in measured for label in by_read}
-        for _ in range(REPS):  # interleaved, so drift in the machine falls on every read alike
-            for age, point, _ in measured:
+            measured = []
+            for age, point in points.items():
                 account = accounts[programme]
-                for label, run in (("as-of-effective, no reach cap", lambda p: read_effective(store, account, p, events, None)),
-                                   ("as-of-effective, declared reach cap", lambda p: read_effective(store, account, p, events, reach)),
-                                   ("as-of-recorded", lambda p: read_recorded(store, account, p))):
+                by_read = {}
+                for label, cap in (("as-of-effective, no reach cap", None), ("as-of-effective, declared reach cap", reach)):
+                    _, folded, names, after = read_effective(store, account, point, events, cap)
+                    upto = events if cap is None else min(events, point + cap)
+                    by_read[label] = (after, folded, names, counts_in(accounts, stream, effective, point, covered(upto, events), point)[programme])
+                _, folded, names, after = read_recorded(store, account, point)
+                by_read["as-of-recorded"] = (after, folded, names, 0)
+                whole = counts_in(accounts, stream, effective, 0, events, point)[programme]
+                by_read["unpartitioned fold on effective"] = (-1, whole, [], counts_in(accounts, stream, effective, point, events, point)[programme])
+                if any(v[1] > whole for k, v in by_read.items() if k != "as-of-recorded" and k != "unpartitioned fold on effective"):
+                    raise c.WrongResult(f"{where}: a partitioned effective read as of {point} folded more than the unpartitioned fold of {whole}")
+                measured.append((age, point, by_read))
+
+            times = {(age, label): [] for age, _, by_read in measured for label in by_read}
+            for _ in range(REPS):  # interleaved, so drift in the machine falls on every read alike
+                for age, point, _ in measured:
+                    account = accounts[programme]
+                    for label, run in (("as-of-effective, no reach cap", lambda p: read_effective(store, account, p, events, None)),
+                                       ("as-of-effective, declared reach cap", lambda p: read_effective(store, account, p, events, reach)),
+                                       ("as-of-recorded", lambda p: read_recorded(store, account, p))):
+                        begin = time.perf_counter()
+                        run(point)
+                        times[(age, label)].append(time.perf_counter() - begin)
+            for _ in range(FLOOR_REPS):
+                for age, point, _ in measured:
                     begin = time.perf_counter()
-                    run(point)
-                    times[(age, label)].append(time.perf_counter() - begin)
-        for _ in range(FLOOR_REPS):
-            for age, point, _ in measured:
-                begin = time.perf_counter()
-                read_floor(store, accounts[programme], point)
-                times[(age, "unpartitioned fold on effective")].append(time.perf_counter() - begin)
-        del store
+                    read_floor(store, accounts[programme], point)
+                    times[(age, "unpartitioned fold on effective")].append(time.perf_counter() - begin)
+        finally:
+            store = None
+            c.release_store()
 
     rows = []
     for age, point, by_read in measured:

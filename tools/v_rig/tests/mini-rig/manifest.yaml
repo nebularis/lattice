@@ -1,0 +1,12 @@
+# The synthetic mini-rig. Every document, party, value and event here is invented from generic
+# premises for the repository's own tests. Nothing in it is drawn from any other rig.
+format_version: 1
+documents:
+  - id: prim-001
+    renderings: [renderings/prim-001-ocr.txt]
+  - id: xs1-001
+  - id: xs2-001
+  - id: xs2-002
+programmes:
+  - programmes/prog-001.yaml
+events: events.yaml

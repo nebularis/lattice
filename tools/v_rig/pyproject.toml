@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-v-rig"
+version = "0.1.0"
+description = "Reads a verification rig into the v-rig intermediate representation and generates its projections"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+  "rdflib>=7.0,<8",
+  "pyshacl>=0.26,<1",
+  "PyYAML>=6.0,<7",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

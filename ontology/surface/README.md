@@ -343,10 +343,10 @@ A contract must be able to name any class or property in the estate without impo
 
 <https://www.nebularis.org/neuro-semantic/surface>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.21.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface/0.21.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.1> .
 
 rdf:Property rdf:type owl:Class .
 rdfs:Class rdf:type owl:Class .
@@ -1048,8 +1048,8 @@ Injectivity is not assumed. `LocalNameFromValue` is injective only while value l
 
 <https://www.nebularis.org/neuro-semantic/surface-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.21.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/surface/0.21.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.21.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/surface/0.21.1> .
 
 srf:NominalClass a srf:IndexForm ; rdfs:comment "One generated class per value, defined as the carrier restricted to that value." .
 srf:MembershipAssertion a srf:IndexForm ; rdfs:comment "Asserted typing of each carrier instance into the generated class for its value." .

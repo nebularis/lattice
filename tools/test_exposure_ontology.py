@@ -163,18 +163,18 @@ def test_air42_01_spec_and_vocab_parse_every_import_resolves():
         f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
         f"https://www.nebularis.org/neuro-semantic/lattice/quantification/{RELEASE}",
         f"https://www.nebularis.org/neuro-semantic/lattice/party/{RELEASE}",
-        "https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.1",
         f"https://www.nebularis.org/neuro-semantic/lattice/eligibility/{RELEASE}",
     }
     vocab_imports = {str(o) for o in vocab.objects(None, OWL.imports)}
     assert vocab_imports == {
-        "https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.5.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.6.1",
         f"https://www.nebularis.org/neuro-semantic/lattice/vocabulary/{RELEASE}",
         f"https://www.nebularis.org/neuro-semantic/lattice/foundation/{RELEASE}",
-        "https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.0",
-        "https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.1",
+        "https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.1",
+        "https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.1",
+        "https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.1",
     }
 
 

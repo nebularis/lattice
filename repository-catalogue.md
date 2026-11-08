@@ -66,7 +66,7 @@ new number, and the versioning check holds every member to it.
 
 ```toml repository-catalogue
 [conventions.release]
-version = "0.21.0"
+version = "0.21.1"
 kinds = ["substrate"]
 ```
 
@@ -80,7 +80,7 @@ standalone modules, the applied modules, the examples and the scaffolds.
 schema = 1
 modules = [
     "foundation", "vocabulary", "quantification", "ledger", "party", "eligibility", "wording", "behaviour", "instrument",
-    "surface", "spc", "mork", "persistence",
+    "surface", "spc", "mork", "persistence", "v-rig",
     "applied/capacity", "applied/classification", "applied/asset-class",
     "applied/insurance/common", "applied/insurance/peril", "applied/insurance/exposure",
     "examples/insure-o",
@@ -249,6 +249,11 @@ import-names = ["surface"]
 reaches = ["contracts/config-studio", "ontology/surface", "test/conformance"]
 
 [[tools]]
+name = "testing/ledger_corpus"
+path = "tools/testing/ledger_corpus"
+import-names = ["ledger_corpus"]
+
+[[tools]]
 name = "testing/mem_check"
 path = "tools/testing/mem_check"
 import-names = ["mem_check"]
@@ -295,6 +300,11 @@ import-names = ["wording_assembler"]
 name = "mork_rdf"
 path = "tools/mork_rdf"
 import-names = ["mork_rdf"]
+
+[[tools]]
+name = "v_rig"
+path = "tools/v_rig"
+import-names = ["v_rig"]
 
 [[tools]]
 name = "mork_transforms"

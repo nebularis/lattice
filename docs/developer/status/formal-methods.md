@@ -119,6 +119,8 @@ status record.
 
 ## Log
 
+- 2026-11-08: FM-D18 decided, a prelude session over the `HOL-Library` theories the layer proofs reach for, which every layer session parents on, as (d) of the ledger plan's LG-Q14. Track E's FME-0 builds it after an ADR-A-FM2 addendum.
+
 - 2026-10-06: epic, sketches and the prover experiment drafted.
 - 2026-10-06: reviewed. Five headline findings accepted. The epic re-sequenced into tracks A to G with
   metrics and abandonment conditions. The spike narrowed to the kernel and L15 and L16 carried end to

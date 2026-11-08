@@ -1,0 +1,310 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/v-rig/vectors/1.0.0",
+  "title": "LATTICE verification rig test vectors",
+  "description": "One case of a rig under one reading, as the inputs a per-contract evaluation takes. Generated from the v-rig representation (ontology/v-rig) and never written by hand. A fact is in one of three states, stated with a value, stated as not known, or not stated, and each is its own shape. A limit written as a formula is stated with its expression and inputs rather than a value.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "vectorsFormat",
+    "case",
+    "reading",
+    "programme",
+    "documents",
+    "layers",
+    "events"
+  ],
+  "properties": {
+    "vectorsFormat": {
+      "const": "lattice-v-rig-vectors/1"
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "digest",
+        "rigDigest",
+        "documents"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "rigDigest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "reading": {
+      "description": "The reading of a legal concept this vector is under, a key and a token as the rig states them, with the documents that state it, or null where the case states no reading.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "token",
+            "statedBy"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "token": {
+              "type": "string"
+            },
+            "statedBy": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "programme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "currency",
+        "period"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "currency": {
+          "$ref": "#/$defs/fact"
+        },
+        "period": {
+          "$ref": "#/$defs/fact"
+        }
+      }
+    },
+    "documents": {
+      "type": "array",
+      "description": "The contracts of the case, each with the facts its own front matter states for the evaluation.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "limit",
+          "attachment",
+          "position",
+          "layerShare"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "limit": {
+            "$ref": "#/$defs/fact"
+          },
+          "attachment": {
+            "$ref": "#/$defs/fact"
+          },
+          "position": {
+            "$ref": "#/$defs/fact"
+          },
+          "layerShare": {
+            "$ref": "#/$defs/fact"
+          }
+        }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "layer",
+          "documents",
+          "attachment",
+          "limit",
+          "placements"
+        ],
+        "properties": {
+          "layer": {
+            "type": "integer"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "attachment": {
+            "$ref": "#/$defs/fact"
+          },
+          "limit": {
+            "$ref": "#/$defs/fact"
+          },
+          "placements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "share",
+                "role",
+                "document"
+              ],
+              "properties": {
+                "name": {
+                  "$ref": "#/$defs/fact"
+                },
+                "share": {
+                  "$ref": "#/$defs/fact"
+                },
+                "role": {
+                  "$ref": "#/$defs/fact"
+                },
+                "document": {
+                  "$ref": "#/$defs/fact"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "inputs"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "inputs": {
+            "type": "object",
+            "description": "One entry per input the extension's bindings declare, by input name.",
+            "additionalProperties": {
+              "$ref": "#/$defs/fact"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "scalar": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "value": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/scalar"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/value"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/fact"
+          }
+        }
+      ]
+    },
+    "fact": {
+      "description": "The three states of a fact, each its own shape. Stated with nothing, a null or an empty list in the source, is stated with the value null.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "value"
+          ],
+          "properties": {
+            "state": {
+              "const": "stated"
+            },
+            "value": {
+              "$ref": "#/$defs/value"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "formula",
+            "inputs"
+          ],
+          "properties": {
+            "state": {
+              "const": "stated"
+            },
+            "formula": {
+              "type": "string"
+            },
+            "inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ],
+          "properties": {
+            "state": {
+              "const": "unknown"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ],
+          "properties": {
+            "state": {
+              "const": "absent"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

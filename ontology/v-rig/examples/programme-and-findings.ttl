@@ -1,0 +1,278 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A programme places contracts on layers, an event puts facts to a
+# programme, and a run over the whole produces findings. The representation
+# carries the programme's structure as records, the layers and placements the
+# format guarantees, with every other key a fact. A key that names a reading
+# of a legal concept is carried as a token, never interpreted here. A limit
+# written as a formula is kept as its expression and the names it reads.
+#
+# An invented programme, prog-x, has two layers. The first holds one contract
+# placed with one insurer. The second's limit is a formula over the first's.
+# The primary document carries a reading token for how underlying cover is
+# used up. An event states one fact, states another as not known, and says
+# nothing of a third. A run records what it ran on, and three findings name
+# what it found, each by kind, document and locator.
+#
+# | Construct                                   | Where                       |
+# |---------------------------------------------|-----------------------------|
+# | a programme with its id                     | ex:prog-x                   |
+# | a layer, with facts of its own              | ex:layer-1, ex:layer-2      |
+# | a placement of a contract on a layer        | ex:place-1-0                |
+# | a limit stated as a formula                 | ex:fact-layer-2-limit       |
+# | a reading as a token                        | ex:fact-exhaustion          |
+# | an event with the three fact states         | ex:event-1                  |
+# | a run                                       | ex:run                      |
+# | findings of three kinds                     | ex:finding-1 to ex:finding-3|
+#
+# The digests, commit and release here are invented.
+
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <urn:example:v-rig:programme:> .
+
+# ---- The documents the programme places ---------------------------------------
+
+ex:doc-p a vrig:Document ;
+    vrig:rigId "doc-p" ;
+    vrig:formatVersion "1" ;
+    vrig:locator ex:loc-doc-p ;
+    vrig:digest "4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c" .
+
+ex:loc-doc-p a vrig:Locator ;
+    vrig:documentId "doc-p" ;
+    vrig:view vrig:Declared .
+
+# A reading of a legal concept, carried as a token with its locator. The
+# mapping that reads the key decides what the token means, and two tokens on
+# one structure give two layer graphs.
+
+ex:fact-exhaustion a vrig:Fact , vrig:Reading ;
+    vrig:of ex:doc-p ;
+    vrig:key "exhaustion" ;
+    vrig:value "reading-token-a" ;
+    vrig:locator ex:loc-exhaustion ;
+    vrig:digest "5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d" .
+
+ex:loc-exhaustion a vrig:Locator ;
+    vrig:documentId "doc-p" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "exhaustion" .
+
+ex:doc-x a vrig:Document ;
+    vrig:rigId "doc-x" ;
+    vrig:formatVersion "1" ;
+    vrig:locator ex:loc-doc-x ;
+    vrig:digest "6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e" .
+
+ex:loc-doc-x a vrig:Locator ;
+    vrig:documentId "doc-x" ;
+    vrig:view vrig:Declared .
+
+# ---- The programme -------------------------------------------------------------
+
+ex:prog-x a vrig:Programme ;
+    vrig:rigId "prog-x" ;
+    vrig:locator ex:loc-prog-x ;
+    vrig:digest "708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f" .
+
+ex:loc-prog-x a vrig:Locator ;
+    vrig:documentId "prog-x" ;
+    vrig:view vrig:Declared .
+
+ex:fact-currency a vrig:Fact ;
+    vrig:of ex:prog-x ;
+    vrig:key "currency" ;
+    vrig:value "XCD" ;
+    vrig:locator ex:loc-currency ;
+    vrig:digest "8192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f70" .
+
+ex:loc-currency a vrig:Locator ;
+    vrig:documentId "prog-x" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "currency" .
+
+ex:layer-1 a vrig:Layer ;
+    vrig:layerNumber 1 ;
+    vrig:inProgramme ex:prog-x ;
+    vrig:index 0 ;
+    vrig:locator ex:loc-layer-1 ;
+    vrig:digest "92a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7081" .
+
+ex:loc-layer-1 a vrig:Locator ;
+    vrig:documentId "prog-x" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "layers[0]" .
+
+ex:fact-layer-1-limit a vrig:Fact ;
+    vrig:of ex:layer-1 ;
+    vrig:key "limit" ;
+    vrig:value 2000000 ;
+    vrig:locator ex:loc-layer-1-limit ;
+    vrig:digest "a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192" .
+
+ex:loc-layer-1-limit a vrig:Locator ;
+    vrig:documentId "prog-x" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "layers[0].limit" .
+
+# The layer's document key names a document by id, and the tool resolved it.
+
+ex:fact-layer-1-document a vrig:Fact ;
+    vrig:of ex:layer-1 ;
+    vrig:key "document" ;
+    vrig:value "doc-p" ;
+    vrig:resolvesTo ex:doc-p ;
+    vrig:locator ex:loc-layer-1-document ;
+    vrig:digest "b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3" .
+
+ex:loc-layer-1-document a vrig:Locator ;
+    vrig:documentId "prog-x" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "layers[0].document" .
+
+# A placement: one insurer's entry on the layer, with its facts.
+
+ex:place-1-0 a vrig:Placement ;
+    vrig:inProgramme ex:prog-x ;
+    vrig:onLayer ex:layer-1 ;
+    vrig:index 0 ;
+    vrig:locator ex:loc-place-1-0 ;
+    vrig:digest "c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4" .
+
+ex:loc-place-1-0 a vrig:Locator ;
+    vrig:documentId "prog-x" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "layers[0].insurers[0]" .
+
+ex:fact-place-1-0-share a vrig:Fact ;
+    vrig:of ex:place-1-0 ;
+    vrig:key "share" ;
+    vrig:value 1.0 ;
+    vrig:locator ex:loc-place-1-0-share ;
+    vrig:digest "d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5" .
+
+ex:loc-place-1-0-share a vrig:Locator ;
+    vrig:documentId "prog-x" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "layers[0].insurers[0].share" .
+
+ex:layer-2 a vrig:Layer ;
+    vrig:layerNumber 2 ;
+    vrig:inProgramme ex:prog-x ;
+    vrig:index 1 ;
+    vrig:locator ex:loc-layer-2 ;
+    vrig:digest "e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6" .
+
+ex:loc-layer-2 a vrig:Locator ;
+    vrig:documentId "prog-x" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "layers[1]" .
+
+# A limit written as a formula. The expression is kept as written and the
+# names it reads are listed, so a projection can bind them.
+
+ex:fact-layer-2-limit a vrig:Fact , vrig:Formula ;
+    vrig:of ex:layer-2 ;
+    vrig:key "limit" ;
+    vrig:value "2 x layer_1_limit" ;
+    vrig:expression "2 x layer_1_limit" ;
+    vrig:input "layer_1_limit" ;
+    vrig:locator ex:loc-layer-2-limit ;
+    vrig:digest "f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7" .
+
+ex:loc-layer-2-limit a vrig:Locator ;
+    vrig:documentId "prog-x" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "layers[1].limit" .
+
+# ---- An event ------------------------------------------------------------------
+
+ex:event-1 a vrig:Event ;
+    vrig:rigId "event-1" ;
+    vrig:locator ex:loc-event-1 ;
+    vrig:digest "091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8" .
+
+ex:loc-event-1 a vrig:Locator ;
+    vrig:documentId "events" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "events[0]" .
+
+ex:fact-event-1-programme a vrig:Fact ;
+    vrig:of ex:event-1 ;
+    vrig:key "programme" ;
+    vrig:value "prog-x" ;
+    vrig:resolvesTo ex:prog-x ;
+    vrig:locator ex:loc-event-1-programme ;
+    vrig:digest "1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809" .
+
+ex:loc-event-1-programme a vrig:Locator ;
+    vrig:documentId "events" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "events[0].programme" .
+
+# Stated with a value, stated as not known, and a third key, say the date of
+# first notice, that the event does not mention at all.
+
+ex:fact-event-1-amount a vrig:Fact ;
+    vrig:of ex:event-1 ;
+    vrig:key "amount_claimed" ;
+    vrig:value 2500000 ;
+    vrig:locator ex:loc-event-1-amount ;
+    vrig:digest "2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a" .
+
+ex:loc-event-1-amount a vrig:Locator ;
+    vrig:documentId "events" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "events[0].facts.amount_claimed" .
+
+ex:fact-event-1-prior a vrig:Fact ;
+    vrig:of ex:event-1 ;
+    vrig:key "prior_knowledge" ;
+    vrig:unknown true ;
+    vrig:locator ex:loc-event-1-prior ;
+    vrig:digest "3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b" .
+
+ex:loc-event-1-prior a vrig:Locator ;
+    vrig:documentId "events" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "events[0].unknown[0]" .
+
+# ---- The run and its findings --------------------------------------------------
+
+ex:run a vrig:Run ;
+    vrig:rigDigest "4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c" ;
+    vrig:formatVersion "1" ;
+    vrig:checkoutCommit "0123456789abcdef0123456789abcdef01234567" ;
+    vrig:substrateRelease "0.21.0" ;
+    vrig:vocabularyVersion "0.1.0" ;
+    vrig:vectorSchemaVersion "lattice-v-rig-vectors/1" .
+
+# A key the mapping scheme has no row for.
+
+ex:finding-1 a vrig:Finding ;
+    vrig:findingKind vrig:UnmappedKey ;
+    vrig:key "currency" ;
+    vrig:about ex:fact-currency ;
+    vrig:message "No mapping row reads this key." ;
+    vrig:fromRun ex:run ;
+    vrig:locator ex:loc-currency .
+
+# A reference nothing resolved.
+
+ex:finding-2 a vrig:Finding ;
+    vrig:findingKind vrig:UnresolvedReference ;
+    vrig:about ex:fact-layer-1-document ;
+    vrig:message "The id named here is not a document of the rig." ;
+    vrig:fromRun ex:run ;
+    vrig:locator ex:loc-layer-1-document .
+
+# A value the declared view and a read case give differently.
+
+ex:finding-3 a vrig:Finding ;
+    vrig:findingKind vrig:Disagreement ;
+    vrig:key "limit" ;
+    vrig:about ex:fact-layer-1-limit ;
+    vrig:message "The declared value and the value read from the body differ." ;
+    vrig:fromRun ex:run ;
+    vrig:locator ex:loc-layer-1-limit .

@@ -253,50 +253,53 @@ def measure(scenario: str, old: int, new: int, events: int, directory: str | Non
 
     with tempfile.TemporaryDirectory(prefix="ledger-cross-family-", dir=directory) as tmp:
         store = ox.Store(tmp)
-        store.bulk_extend(quads(accounts, stream, model, schedule))
-        store.flush()
-        stored = len(store)
-        if stored != expected_stored(events, schedule):
-            raise c.WrongResult(f"{scenario} {events}: stored {stored} triples, expected {expected_stored(events, schedule)}")
-        (row,) = store.query("SELECT (COUNT(DISTINCT ?g) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } }")
-        if int(row["n"].value) != len(sizes):
-            raise c.WrongResult(f"{scenario} {events}: {row['n'].value} graphs in the store, {len(sizes)} by the schedule")
+        try:
+            store.bulk_extend(quads(accounts, stream, model, schedule))
+            store.flush()
+            stored = len(store)
+            if stored != expected_stored(events, schedule):
+                raise c.WrongResult(f"{scenario} {events}: stored {stored} triples, expected {expected_stored(events, schedule)}")
+            (row,) = store.query("SELECT (COUNT(DISTINCT ?g) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } }")
+            if int(row["n"].value) != len(sizes):
+                raise c.WrongResult(f"{scenario} {events}: {row['n'].value} graphs in the store, {len(sizes)} by the schedule")
 
-        for case in cases:  # every account, so the balance is checked beyond the one timed
-            for i, account in enumerate(accounts):
-                balance, folded, _ = read(store, account, case.point, schedule)
-                if balance != model.at_points[case.point][i]:
-                    raise c.WrongResult(f"{scenario} {events}: {account.iri.value} as of {case.point} reads {balance}, the model gives {model.at_points[case.point][i]}")
-                held = events_in(stream, accounts, i, latest_close(schedule, case.point), case.point)
-                if folded != held:
-                    raise c.WrongResult(f"{scenario} {events}: {account.iri.value} as of {case.point} folded {folded}, the range holds {held}")
+            for case in cases:  # every account, so the balance is checked beyond the one timed
+                for i, account in enumerate(accounts):
+                    balance, folded, _ = read(store, account, case.point, schedule)
+                    if balance != model.at_points[case.point][i]:
+                        raise c.WrongResult(f"{scenario} {events}: {account.iri.value} as of {case.point} reads {balance}, the model gives {model.at_points[case.point][i]}")
+                    held = events_in(stream, accounts, i, latest_close(schedule, case.point), case.point)
+                    if folded != held:
+                        raise c.WrongResult(f"{scenario} {events}: {account.iri.value} as of {case.point} folded {folded}, the range holds {held}")
 
-        cross = cases[0]
-        measured = []
-        for case in cases:
-            balance, folded, names = read(store, accounts[programme], case.point, schedule)
-            families = families_in(names)
-            if case.crossing != (len(families) > 1) or (not case.crossing and len(families) != 1):
-                raise c.WrongResult(f"{scenario} {events}: {case.name} names families {sorted(families)}")
-            measured.append((case, folded, names, latest_close(schedule, case.point)))
-        balance, whole = read_unpartitioned(store, accounts[programme], cross.point)
-        if balance != model.at_points[cross.point][programme]:
-            raise c.WrongResult(f"{scenario} {events}: the unpartitioned fold reads {balance}, the model gives {model.at_points[cross.point][programme]}")
-        if any(folded > whole for _, folded, _, _ in measured):
-            raise c.WrongResult(f"{scenario} {events}: a partitioned read folded more than the unpartitioned fold of {whole}")
-
-        times = {case.name: [] for case in cases}
-        unpartitioned = []
-        for _ in range(REPS):  # interleaved, so drift in the machine falls on every case alike
+            cross = cases[0]
+            measured = []
             for case in cases:
+                balance, folded, names = read(store, accounts[programme], case.point, schedule)
+                families = families_in(names)
+                if case.crossing != (len(families) > 1) or (not case.crossing and len(families) != 1):
+                    raise c.WrongResult(f"{scenario} {events}: {case.name} names families {sorted(families)}")
+                measured.append((case, folded, names, latest_close(schedule, case.point)))
+            balance, whole = read_unpartitioned(store, accounts[programme], cross.point)
+            if balance != model.at_points[cross.point][programme]:
+                raise c.WrongResult(f"{scenario} {events}: the unpartitioned fold reads {balance}, the model gives {model.at_points[cross.point][programme]}")
+            if any(folded > whole for _, folded, _, _ in measured):
+                raise c.WrongResult(f"{scenario} {events}: a partitioned read folded more than the unpartitioned fold of {whole}")
+
+            times = {case.name: [] for case in cases}
+            unpartitioned = []
+            for _ in range(REPS):  # interleaved, so drift in the machine falls on every case alike
+                for case in cases:
+                    begin = time.perf_counter()
+                    read(store, accounts[programme], case.point, schedule)
+                    times[case.name].append(time.perf_counter() - begin)
+            for _ in range(UNPARTITIONED_REPS):
                 begin = time.perf_counter()
-                read(store, accounts[programme], case.point, schedule)
-                times[case.name].append(time.perf_counter() - begin)
-        for _ in range(UNPARTITIONED_REPS):
-            begin = time.perf_counter()
-            read_unpartitioned(store, accounts[programme], cross.point)
-            unpartitioned.append(time.perf_counter() - begin)
-        del store
+                read_unpartitioned(store, accounts[programme], cross.point)
+                unpartitioned.append(time.perf_counter() - begin)
+        finally:
+            store = None
+            c.release_store()
 
     change = schedule[1][0]
     rows = [Row(scenario, events, change, case.name, case.point, after, len(families_in(names)), len(names), sum(sizes[g] for g in names), folded,

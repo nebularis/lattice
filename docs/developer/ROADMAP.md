@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 17 branches, the units' own state from this tree, the newest board day 2026-11-08.
+Built from the status records on 16 branches, the units' own state from this tree, the newest board day 2026-11-08.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -40,7 +40,7 @@ Built from the status records on 17 branches, the units' own state from this tre
 | [ensemble](plans/ensemble.md) | unit | briefed | ES-0 | 8 planned, 2 briefed |  |
 | [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
 | [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned |  |
-| [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-10-09 | FME-1.0 | 6 planned, 3 built, 1 dropped | docs/placement-vehicles-structure |
+| [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-10-09 | FME-0 | 6 planned, 3 built, 1 dropped |  |
 | [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 21 built, 15 merged, 11 planned, 6 verified, 1 briefed |  |
 | [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
 | [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 | GH-0 | 6 built |  |
@@ -49,7 +49,7 @@ Built from the status records on 17 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on fix/vyd-wrapper-passthrough, fml/isabelle-layers, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 4 planned, 2 merged, 2 built, 1 blocked | docs/placement-vehicles-structure |
+| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on fix/vyd-wrapper-passthrough, fml/isabelle-layers, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 4 planned, 2 merged, 2 built, 1 blocked |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -68,9 +68,9 @@ Built from the status records on 17 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
-| [v-rig](plans/v-rig.md) | unit | building 2026-11-07 · built 2026-11-08 on claude/adoring-torvalds-ce7ffe, docs/placement-vehicles-structure | VR-1 | 7 built | claude/adoring-torvalds-ce7ffe, docs/placement-vehicles-structure |
+| [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-08 · verified 2026-11-06 on air/asset-classes, claude/adoring-torvalds-ce7ffe, fix/vyd-wrapper-passthrough, tutorial/studio-guide, vyd-win, vyd-win2 | VM-0 | 9 verified, 1 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-08 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, fix/vyd-wrapper-passthrough, tutorial/studio-guide, vyd-win, vyd-win2 | VM-0 | 9 verified, 1 built |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -455,22 +455,6 @@ gantt
     WL-7 the status warning :wl7, 2026-11-05, 2026-11-06
     WL-8 a run that leaves no process :wl8, 2026-11-06, 2026-11-07
     WL-9 a late Failed never replaces :wl9, 2026-11-06, 2026-11-07
-```
-
-```mermaid
-%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
-gantt
-    title V-rig
-    dateFormat YYYY-MM-DD
-    axisFormat %d %b
-    section v-rig
-    VR-1 the module ontology v-rig :vr1, 2026-11-08, 2026-11-09
-    VR-2 the synthetic mini-rig :vr2, 2026-11-08, 2026-11-09
-    VR-3 the tracked mapping scheme and :vr3, 2026-11-08, 2026-11-09
-    VR-4 P1 :vr4, 2026-11-08, 2026-11-09
-    VR-5 P2 and P3 :vr5, 2026-11-08, 2026-11-09
-    VR-6 P4 :vr6, 2026-11-08, 2026-11-09
-    VR-7 the seam for a read case :vr7, 2026-11-08, 2026-11-09
 ```
 
 ```mermaid
@@ -872,8 +856,8 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
-| `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
-| `docs/placement-vehicles-structure` | 2026-11-08 | 23 | pushed | FME-0, LG-8, VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
+| `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
+| `docs/placement-vehicles-structure` | 2026-11-08 | 25 | pushed | no mark |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -908,7 +892,7 @@ flowchart LR
     CCS12 --> CLOSE["CCS-14 to CCS-17, epic close"]
     K16c --> CLOSE
     REST --> IMA3["IMA phase 3"]
-    VR4["v-rig VR-1 to VR-4,<br/>P1 against ledger and ensemble"] --> C4A["FM C4 Alloy model of A130"]
+    VR4["v-rig built 2026-11-08,<br/>a run on a rig and its triage"] --> C4A["FM C4 Alloy model of A130"]
     C4A --> A130["ADR-A130 accepted"]
     A130 --> ES012["Ensemble ES-0 to ES-2"]
     ES012 --> ES3C
@@ -927,7 +911,7 @@ flowchart LR
 - **AIR-3.3** is ready once AIR-3.3-Q1 is answered, since HQ-6a.2 has merged. It gates CCS-13 on the CCS board and NRS-1 on the NRS board, so relation plans wait on it twice over, and the evaluator does not.
 - **Ledger LG-3 and Ensemble ES-3** gate the evaluator, CCS-12, from outside CCS. LG-3 is planned, and the ensemble gained a status record on 2026-11-04 carrying all ten of its rows.
 - **The ledger does not gate the ensemble as a unit. One slice does.** Refreshed 2026-11-07. ES-3 waits on LG-2 alone, ES-4 on LG-2 with LG-Q3 and LG-Q4 answered, and LG-4 gates only ES-8, the last ensemble slice. LG-3, LG-5 and LG-6 have no ensemble dependency. Two slices move the substrate release and so cannot be concurrent, LG-2 and ES-1, which puts ES-1 behind LG-2's merge rather than behind its build.
-- **C4 is the ensemble's head gate, not the ledger.** ES-0 is blocked on ADR-A130's acceptance, which the ensemble plan places after the C4 Alloy model, so ES-0 to ES-2 cannot start whatever the ledger does. C4 is briefed in the track C plan with twelve checks as of 2026-11-07. Since 2026-11-07 it waits on [v-rig](plans/v-rig.md) VR-1 to VR-4, whose RDF projection of a verification rig's declared view is the requirements oracle for the ledger and ensemble drafts, so that ADR-A130's text settles before C4 models it rather than after.
+- **C4 is the ensemble's head gate, not the ledger.** ES-0 is blocked on ADR-A130's acceptance, which the ensemble plan places after the C4 Alloy model, so ES-0 to ES-2 cannot start whatever the ledger does. C4 is briefed in the track C plan with twelve checks as of 2026-11-07. Since 2026-11-07 it waits on [v-rig](plans/v-rig.md), whose RDF projection of a verification rig's declared view is the requirements oracle for the ledger and ensemble drafts, so that ADR-A130's text settles before C4 models it rather than after. The unit was built on 2026-11-08, every slice with its Validation Pack, and on its own mini-rig the layers refuse the projection 142 times, mostly for identities and units the format does not state, and 14 of 28 competency questions have no answer, among them that no term links an instrument to the account of its limit. What stands between C4 and its start is a run on a rig and the triage of its findings into the ledger, ensemble and programme plans, which is the maintainer's.
 - **ADR-A130** alone takes the three CCS held questions HQ-2 (second case), HQ-7 and HQ-12, and it is still Proposed. ADR-A131 is Accepted and Ledger's layer is on `main`, and Ledger takes PDD-07, not a CCS held question.
 - **AIR-7.1** waits on Ensemble ES-4 and ES-5 and on Ledger LG-2 and LG-3, along with AIR-7.0, P7-Q5 and CCS's Instrument tranche. The ADRs are not the gate, the slices are.
 - **AIR Phase 5** waits on Open CBAA's integration of phases 1 to 4 and on Ledger LG-3, which is planned. PDD-08, the evaluation context, is split and unowned per `status/ledger.md`, with its pieces going to a Quantification slice, LG-2 and PDD-13.
@@ -936,7 +920,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 105 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 108 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -976,6 +960,7 @@ Read from the registers in this tree: 34 Proposed decisions, 20 pending design d
 | [A-149](../architecture/decisions/ADR-A149-publication-from-the-studio.md) | Explicit publication from the studio: each aggregate a version under ADR-A51's IRIs in a r | Proposed, 2026-10-31 |
 | [A-151](../architecture/decisions/ADR-A151-the-work-board.md) | The work board: a slice's state written once on its home unit's board as a word and a day, | Proposed, 2026-11-02 |
 | [A-150](../architecture/decisions/ADR-A150-performance-integration-and-load-testing.md) | Benchmark reports kept in git, components measured alone, topologies started isolated from | Proposed, 2026-10-31 |
+| [A-153](../architecture/decisions/ADR-A153-verification-rig-module.md) | A standalone module for the verification rig's intermediate representation: located and di | Proposed, 2026-11-08 |
 
 ### 9.2 Pending design decisions
 
@@ -1013,12 +998,13 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 1. **Verify and merge `fix/studio-worker-heartbeat`**, which keeps the studio worker alive through a job of minutes, so validation no longer shows Validating without end and a compilation or a proposal finishes. Run `mise run check:config-studio`, `mise run studio:liveness` and `mise run test:config-studio-browser`, and note that the studio's stack now starts a second worker for the long queue.
 2. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work.
 3. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. **ADR-A130 is not among the ones to take now**, noted 2026-11-07: the ensemble plan gates its acceptance on the C4 Alloy model, which checks the claims it gained over four days of change, and C4 is briefed and unstarted, placed after [v-rig](plans/v-rig.md) VR-1 to VR-4 on 2026-11-07 so the rig's findings reach the text first. Accepting it earlier unblocks the whole ensemble unit and the three CCS held questions, and spends the check that was the reason to wait. The decision on ES-Q10, whether decision 5 states the positional-total-order condition its independence-of-order bullet rests on, belongs in the same text C4 checks.
-4. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
-5. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
-6. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
-7. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
-8. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
-9. **Verify `asset-class` on `air/asset-classes`** (plan [asset-class](plans/asset-class.md)), added 2026-11-08. Accept or reject the two proposed addenda of 2026-11-08, ADR-A98's for the cross-domain module and ADR-A126's for property columns in individuals tables, check the SNA 2008 codes in the edition's notes against Annex 1, and at merge add the register rows and tags for the module's 0.1.0.
+4. **Review the verification rig unit** ([plan](plans/v-rig.md), [status](status/v-rig.md)), built 2026-11-08 on `docs/placement-vehicles-structure` with one commit per slice. Accept or reject ADR-A153, create the module's four tags on the commit that added their register rows, `v-rig-v0.1.0`, `v-rig-projection-v0.1.0`, `v-rig-shapes-v0.1.0` and `v-rig-vocab-v0.1.0`, and run `mise run v-rig -- --rig <rig> --extension <the rig's extension>` on a rig, whose report under `.local/v-rig/<rig digest>/` is what C4 waits for. TD-157 asks whether the deny-terms check should read every list it is given.
+5. **Cut `fm/prelude-and-ledger-proofs` from `main` for machine S**, once this branch is squashed into it, with [its brief](notes/machine-s-brief-2026-11-08.md): FME-0, the prelude session every layer session parents on, then LG-8, the ledger proofs widened on HOL-Library. Isabelle work only, no benchmarks there.
+6. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
+7. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
+8. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
+9. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
+10. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
 
 ## 11. Completed units
 
@@ -1052,6 +1038,7 @@ Every unit whose Status line reads merged, tagged or dropped and that no branch 
 | surface-mork-unified-projection | unit | merged 2026-09-22 | 0 | 2026-09-22 |
 | surface-outstanding-items | unit | merged 2026-09-22 | 0 | 2026-09-22 |
 | [toolchain-jdk25-python314](plans/toolchain-jdk25-python314.md) | unit | merged 2026-09-23 | 0 | 2026-09-23 |
+| [v-rig](plans/v-rig.md) | unit | merged 2026-11-08 | 7 | 2026-11-08 |
 | validation-pause-handover | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
 | validation-status | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 
@@ -1076,6 +1063,22 @@ gantt
     MSC-3 Jena in the compilers :done, msc3, 2026-10-27, 2026-10-29
     MSC-4 benchmark persistence-store-p :done, msc4, 2026-10-27, 2026-10-29
     MSC-5 TSD-42 and TSD-43 on Jena :done, msc5, 2026-10-27, 2026-10-29
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
+    title V-rig
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section v-rig
+    VR-1 the module ontology v-rig :done, vr1, 2026-11-08, 2026-11-09
+    VR-2 the synthetic mini-rig :done, vr2, 2026-11-08, 2026-11-09
+    VR-3 the tracked mapping scheme and :done, vr3, 2026-11-08, 2026-11-09
+    VR-4 P1 :done, vr4, 2026-11-08, 2026-11-09
+    VR-5 P2 and P3 :done, vr5, 2026-11-08, 2026-11-09
+    VR-6 P4 :done, vr6, 2026-11-08, 2026-11-09
+    VR-7 the seam for a read case :done, vr7, 2026-11-08, 2026-11-09
 ```
 
 <!-- END GENERATED work-board-completed -->

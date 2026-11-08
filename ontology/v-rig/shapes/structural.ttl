@@ -1,0 +1,82 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+vrig:BodyNodeShape a sh:NodeShape ;
+    sh:targetClass vrig:BodyNode ;
+    sh:property [ sh:path vrig:digest ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:kind ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A body node has exactly one kind token." ], [ sh:path vrig:number ; sh:maxCount 1 ], [ sh:path vrig:ordinal ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:parent ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A body node has exactly one parent, a body node or the document." ], [ sh:path vrig:text ; sh:maxCount 1 ], [ sh:path vrig:title ; sh:maxCount 1 ] .
+
+vrig:DefinedTermShape a sh:NodeShape ;
+    sh:targetClass vrig:DefinedTerm ;
+    sh:property [ sh:path vrig:scopedTo ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:term ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+vrig:DocumentShape a sh:NodeShape ;
+    sh:targetClass vrig:Document ;
+    sh:property [ sh:path vrig:digest ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:formatVersion ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:rendered ; sh:class vrig:RenderingView ], [ sh:path vrig:rigId ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+vrig:EventShape a sh:NodeShape ;
+    sh:targetClass vrig:Event ;
+    sh:property [ sh:path vrig:rigId ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+vrig:FactShape a sh:NodeShape ;
+    sh:targetClass vrig:Fact ;
+    sh:property [ sh:path vrig:digest ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:empty ; sh:maxCount 1 ], [ sh:path vrig:key ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A fact has exactly one key." ], [ sh:path vrig:of ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A fact is stated of exactly one carrier." ], [ sh:path vrig:unknown ; sh:maxCount 1 ] .
+
+vrig:FindingShape a sh:NodeShape ;
+    sh:targetClass vrig:Finding ;
+    sh:property [ sh:path vrig:findingKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A finding has exactly one kind." ], [ sh:path vrig:fromRun ; sh:maxCount 1 ], [ sh:path vrig:key ; sh:maxCount 1 ], [ sh:path vrig:message ; sh:maxCount 1 ] .
+
+vrig:FormulaShape a sh:NodeShape ;
+    sh:targetClass vrig:Formula ;
+    sh:property [ sh:path vrig:expression ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+vrig:InputBindingShape a sh:NodeShape ;
+    sh:targetClass vrig:InputBinding ;
+    sh:property [ sh:path vrig:inputName ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:key ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+vrig:LayerShape a sh:NodeShape ;
+    sh:targetClass vrig:Layer ;
+    sh:property [ sh:path vrig:inProgramme ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:layerNumber ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+vrig:LocatedShape a sh:NodeShape ;
+    sh:targetClass vrig:Located ;
+    sh:property [ sh:path vrig:digest ; sh:maxCount 1 ], [ sh:path vrig:locator ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "Every node read from a rig has exactly one locator." ] .
+
+vrig:LocatorShape a sh:NodeShape ;
+    sh:targetClass vrig:Locator ;
+    sh:property [ sh:path vrig:clause ; sh:maxCount 1 ], [ sh:path vrig:documentId ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A locator names the id of the file its node was read from." ], [ sh:path vrig:keyPath ; sh:maxCount 1 ], [ sh:path vrig:line ; sh:maxCount 1 ], [ sh:path vrig:row ; sh:maxCount 1 ], [ sh:path vrig:section ; sh:maxCount 1 ], [ sh:path vrig:view ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A locator names the view its node was read in." ] .
+
+vrig:PlacementShape a sh:NodeShape ;
+    sh:targetClass vrig:Placement ;
+    sh:property [ sh:path vrig:inProgramme ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:onLayer ; sh:maxCount 1 ] .
+
+vrig:ProgrammeShape a sh:NodeShape ;
+    sh:targetClass vrig:Programme ;
+    sh:property [ sh:path vrig:rigId ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+vrig:ReadingShape a sh:NodeShape ;
+    sh:targetClass vrig:Reading ;
+    sh:property [ sh:path vrig:value ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "A reading is one token." ] .
+
+vrig:RecordShape a sh:NodeShape ;
+    sh:targetClass vrig:Record ;
+    sh:property [ sh:path vrig:index ; sh:maxCount 1 ] .
+
+vrig:ReferenceShape a sh:NodeShape ;
+    sh:targetClass vrig:Reference ;
+    sh:property [ sh:path vrig:external ; sh:maxCount 1 ], [ sh:path vrig:inNode ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:referenceText ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:targetKind ; sh:maxCount 1 ], [ sh:path vrig:targetNumber ; sh:maxCount 1 ] .
+
+vrig:RenderingViewShape a sh:NodeShape ;
+    sh:targetClass vrig:RenderingView ;
+    sh:property [ sh:path vrig:renderingName ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+vrig:RunShape a sh:NodeShape ;
+    sh:targetClass vrig:Run ;
+    sh:property [ sh:path vrig:checkoutCommit ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:formatVersion ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:rigDigest ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:substrateRelease ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:vectorSchemaVersion ; sh:maxCount 1 ], [ sh:path vrig:vocabularyVersion ; sh:minCount 1 ; sh:maxCount 1 ] .
