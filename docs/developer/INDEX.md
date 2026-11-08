@@ -80,6 +80,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
 | temporal-binding-consumer-hardening | unit |  | built 2026-09-25 |  | [plan](plans/temporal-binding-consumer-hardening.md), [status](status/temporal-binding-consumer-hardening.md) |
 | toolchain-jdk25-python314 | unit |  | merged 2026-09-23 |  | [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) |
+| v-rig-studio | multi-slice unit | VS | planned | VS-1 | [plan](plans/v-rig-studio.md), [status](status/v-rig-studio.md) |
 | v-rig | unit | VR | built 2026-11-08 | VR-1 | [plan](plans/v-rig.md), [status](status/v-rig.md), 7 Validation Packs |
 | validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
@@ -517,6 +518,13 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-8 | a run that leaves no process behind when its test process is killed | studio-worker-liveness | built 2026-11-06 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-9 | a late `Failed` never replaces a `Succeeded` | studio-worker-liveness | built 2026-11-06 |  | docs/developer/status/studio-worker-liveness.md#position |
+| VS-1 | the `rig-run` job kind, the worker's rig registry and the job's artefacts | v-rig-studio | planned | VS-Q1, VS-Q2 | docs/developer/status/v-rig-studio.md#board |
+| VS-2 | the Rigs and Run views | v-rig-studio | planned | VS-1 | docs/developer/status/v-rig-studio.md#board |
+| VS-3 | the Diff view | v-rig-studio | planned | VS-2 | docs/developer/status/v-rig-studio.md#board |
+| VS-4 | the Case and Readings views | v-rig-studio | planned | VS-2, VS-Q5 | docs/developer/status/v-rig-studio.md#board |
+| VS-5 | the Read cases view | v-rig-studio | planned | VS-2 | docs/developer/status/v-rig-studio.md#board |
+| VS-6 | the Rulings part and view | v-rig-studio | planned | VS-2, VS-Q4 | docs/developer/status/v-rig-studio.md#board |
+| VS-7 | the Projection and Theory views and the local text route | v-rig-studio | planned | VS-2, VS-Q3, VS-Q6 | docs/developer/status/v-rig-studio.md#board |
 | VR-1 | the module `ontology/v-rig/`, its vocabulary, shapes, Proposed ADR and catalogue entry | v-rig | built 2026-11-08 |  | docs/developer/status/v-rig.md#board |
 | VR-2 | the synthetic mini-rig, then the lifter with the declared and blind views | v-rig | built 2026-11-08 |  | docs/developer/status/v-rig.md#board |
 | VR-3 | the tracked mapping scheme and the extension seam | v-rig | built 2026-11-08 |  | docs/developer/status/v-rig.md#board |

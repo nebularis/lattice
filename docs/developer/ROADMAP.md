@@ -67,6 +67,7 @@ Built from the status records on 15 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
+| [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned | docs/placement-vehicles-structure |
 | [v-rig](plans/v-rig.md) | unit | built 2026-11-08 | VR-1 | 7 built | docs/placement-vehicles-structure |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
 | [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | verified 2026-11-06 | VM-0 | 9 verified |  |
@@ -861,7 +862,7 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
-| `docs/placement-vehicles-structure` | 2026-11-08 | 8 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7 |
+| `docs/placement-vehicles-structure` | 2026-11-08 | 9 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
