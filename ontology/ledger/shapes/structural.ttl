@@ -14,4 +14,32 @@
 
 ldg:AccountDefinitionShape a sh:NodeShape ;
     sh:targetClass ldg:AccountDefinition ;
-    sh:property [ sh:path ldg:admitsOwnerKind ; sh:minCount 1 ], [ sh:path ldg:conversionMethod ; sh:maxCount 1 ], [ sh:path ldg:creditCeiling ; sh:maxCount 1 ], [ sh:path ldg:keyDimension ; sh:maxCount 1 ], [ sh:path ldg:mergeRule ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOf ; sh:maxCount 1 ], [ sh:path ldg:resetRecurrence ; sh:maxCount 1 ], [ sh:path ldg:residualAllocation ; sh:maxCount 1 ], [ sh:path ldg:roundingMethod ; sh:maxCount 1 ], [ sh:path ldg:statedAmount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:unitOfAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path ldg:admitsOwnerKind ; sh:minCount 1 ], [ sh:path ldg:closingRecurrence ; sh:maxCount 1 ], [ sh:path ldg:conversionMethod ; sh:maxCount 1 ], [ sh:path ldg:creditCeiling ; sh:maxCount 1 ], [ sh:path ldg:keyDimension ; sh:maxCount 1 ], [ sh:path ldg:mergeRule ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOf ; sh:maxCount 1 ], [ sh:path ldg:periodRecurrence ; sh:maxCount 1 ], [ sh:path ldg:resetRecurrence ; sh:maxCount 1 ], [ sh:path ldg:residualAllocation ; sh:maxCount 1 ], [ sh:path ldg:roundingMethod ; sh:maxCount 1 ], [ sh:path ldg:statedAmount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:unitOfAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+ldg:AccountShape a sh:NodeShape ;
+    sh:targetClass ldg:Account ;
+    sh:property [ sh:path ldg:accountKey ; sh:maxCount 1 ], [ sh:path ldg:forOwner ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:ofDefinition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOfAccount ; sh:maxCount 1 ], [ sh:path ldg:periodKey ; sh:maxCount 1 ] .
+
+ldg:BalanceRecordShape a sh:NodeShape ;
+    sh:targetClass ldg:BalanceRecord ;
+    sh:property [ sh:path ldg:availableValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:inPass ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:remainingValue ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+ldg:CheckpointShape a sh:NodeShape ;
+    sh:targetClass ldg:Checkpoint ;
+    sh:property [ sh:path ldg:balanceValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:closePosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+ldg:GrantShape a sh:NodeShape ;
+    sh:targetClass ldg:Grant ;
+    sh:property [ sh:path ldg:forProposal ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:grantedValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:proportionDenominator ; sh:maxCount 1 ], [ sh:path ldg:proportionNumerator ; sh:maxCount 1 ], [ sh:path ldg:requestedValue ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+ldg:MergeRecordShape a sh:NodeShape ;
+    sh:targetClass ldg:MergeRecord ;
+    sh:property [ sh:path ldg:availableBefore ; sh:maxCount 1 ], [ sh:path ldg:effectivePosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:inPass ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:refusalReason ; sh:maxCount 1 ] .
+
+ldg:PassShape a sh:NodeShape ;
+    sh:targetClass ldg:Pass ;
+    sh:property [ sh:path ldg:passPosition ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+ldg:PostingShape a sh:NodeShape ;
+    sh:targetClass ldg:Posting ;
+    sh:property [ sh:path ldg:amountAsDrawn ; sh:maxCount 1 ], [ sh:path ldg:amountValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:conversionUsed ; sh:maxCount 1 ], [ sh:path ldg:direction ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:effectivePosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:forPurpose ; sh:maxCount 1 ], [ sh:path ldg:inPass ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:microPosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:recordedPosition ; sh:minCount 1 ; sh:maxCount 1 ] .

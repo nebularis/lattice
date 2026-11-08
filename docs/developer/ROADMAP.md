@@ -551,7 +551,7 @@ gantt
     section ledger
     LG-0 examples :done, lg0, 2026-10-27, 2026-10-28
     LG-1 the configuration document :done, lg1, 2026-10-27, 2026-10-28
-    LG-2 :lg2, 2026-10-27, 2026-10-28
+    LG-2 the runtime document :lg2, 2026-10-27, 2026-11-08
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
     section normative-rule-substrate
     NRS-4 Deontic extension of :done, nrs4, 2026-09-30, 2026-10-01
@@ -793,6 +793,8 @@ Ensemble is proposed on `docs/placement-vehicles-structure`, with its sketch and
 
 **LG-7 was built on 2026-11-08**, on machine S. `tools/proofs/ledger/` proves sixteen ledger laws under the gate from definitions in section 10 of the ledger README, among them the four allocation axioms for the proportional and priority rules, conservation with a residual over the account tree, settlement at one position independent of the order of proposal, and exact rounding by giving the residual to the first keys in order. LG-2's laws as tests and LG-4's conservation shape can cite them. WPG-Q1 was answered the same day, (a) holds, so the uniqueness argument is general once the body is a parameter that reads only its declared predecessors.
 
+**LG-2 was built on 2026-11-08**, on machine S, after LG-7. Ledger has a runtime document: named account instances, passes, postings at the drawn account only with an effective and a recorded position, balance records, merge records with their grants, and checkpoints. Sixteen SHACL-SPARQL shapes check recorded values against the laws LG-7 proved, among them the fold over a subtree, availability as the least balance along the path, the credit ceiling and a proportional merge's conservation, and a pass of 5,000 postings and 10,000 balance records validates in under a minute on rdflib. A periodic amount is one account per period (PDD-15). The `owl:rational` probe found no store compares the literal by value (TSD-70), so an exact share is two integers. Two questions are open for the maintainer, LG-Q9 on the running balance under post-once and LG-Q10 on a reinstatement under a capacity pool.
+
 | | Ensemble | Ledger |
 |---|---|---|
 | Prefix and home | `ens:`, `ontology/ensemble/` | `ldg:`, `ontology/ledger/` |
@@ -914,7 +916,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 106 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 104 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 

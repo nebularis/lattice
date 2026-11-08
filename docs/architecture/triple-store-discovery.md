@@ -546,3 +546,11 @@ Nothing in the registers rests on it.
 [The finding at v0.1.0](https://github.com/nebularis/vyvid-triple-stores/blob/v0.1.0/findings.md#tsd-69-jena-keeps-no-empty-named-graph-from-a-trig-body).
 
 Nothing in the registers rests on it.
+
+### TSD-70. No store compares an `owl:rational` literal by value
+
+Recorded in the domain on 2026-11-08, after `v0.1.0`, so it has no tagged link yet. `mise run graph:ask -- read TSD-70` prints it from the domain's clone.
+
+**What it means for LATTICE.** Ledger records an exact share as two integers, `ldg:proportionNumerator` and `ldg:proportionDenominator`, rather than one `owl:rational` (LG-Q6, LG-2), since its runtime shapes compare and sum grants and no store compares the literal. LG2-01 in `tools/test_ledger.py` runs the probe on each engine present, so an engine that starts comparing by value fails there.
+
+Nothing in the registers rests on it.

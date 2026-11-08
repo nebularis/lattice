@@ -43,7 +43,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
 | lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-0 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
-| ledger | unit | LG | building 2026-11-08 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 4 Validation Packs |
+| ledger | unit | LG | built 2026-11-08 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 4 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
@@ -402,7 +402,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | TUT-10 | the guide's modules 12, 13 and the quick reference | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
-| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | ledger | building 2026-11-08 |  | docs/developer/status/ledger.md#board |
+| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | ledger | built 2026-11-08 |  | docs/developer/status/ledger.md#board |
 | LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | ledger | planned | LG-2 | docs/developer/status/ledger.md#board |
 | LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | ledger | planned | LG-3 | docs/developer/status/ledger.md#board |
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | ledger | blocked | LG-4 | docs/developer/status/ledger.md#board |

@@ -34,19 +34,20 @@ ex:facility a ldg:AccountDefinition ;
 
 A relational design usually holds a `balance` column and updates it in place. Ledger records each draw or repayment as a fact of its own, a **posting**, and derives the balance by adding the postings up. If you have built an accounting journal, an event store or a fact table of transactions, the idea is the same, and so is the benefit. The history cannot be lost, and any balance can be read as of any point.
 
-Postings are ordered by a whole number, the **position**, not by a clock, since clocks on two machines rarely agree closely enough to order two claims. The first drawing, at position 1, looks like this in the example.
+Postings are ordered by whole numbers, **positions**, not by a clock, since clocks on two machines rarely agree closely enough to order two claims. A posting names the account instance it is on, the borrower's facility, and the pass that wrote it. Its effective position says where the fact sits in the agreement, and its recorded position says where it sits in its own account's sequence. The first drawing, at position 1, looks like this in the example.
 
 <!-- source: ontology/ledger/examples/revolving-facility.ttl -->
 ```turtle
 ex:draw-1-posting a ldg:Posting ;
-    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
     ldg:amountAsDrawn ex:q-draw-1-eur ; ldg:conversionUsed ex:fx-2027-06-01 ;
     prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-grant .
 ex:balance-1 a ldg:BalanceRecord ;
-    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass ex:pass-1 ;
     ldg:remainingValue "9995000"^^xsd:decimal ; ldg:availableValue "9995000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:draw-1-posting .
 ```

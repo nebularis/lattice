@@ -85,18 +85,19 @@ ex:draw-1-grant a ldg:Grant ;
     ldg:forProposal ex:draw-1-proposal ;
     ldg:requestedValue "10005000"^^xsd:decimal ; ldg:grantedValue "10005000"^^xsd:decimal .
 ex:draw-1-merge a ldg:MergeRecord ;
-    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
     ldg:grant ex:draw-1-grant .
 ex:draw-1-posting a ldg:Posting ;
-    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
     ldg:amountAsDrawn ex:q-draw-1-eur ; ldg:conversionUsed ex:fx-2027-06-01 ;
     prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-grant .
 ex:balance-1 a ldg:BalanceRecord ;
-    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
-    ldg:atPosition "1"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass ex:pass-1 ;
     ldg:remainingValue "9995000"^^xsd:decimal ; ldg:availableValue "9995000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:draw-1-posting .
 
@@ -104,14 +105,15 @@ ex:balance-1 a ldg:BalanceRecord ;
 
 ex:q-repayment-eur a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "5000000"^^xsd:decimal ; qnt:inUnit ex:EUR .
 ex:repayment-posting a ldg:Posting ;
-    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
-    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:integer ;
+    ldg:recordedPosition "2"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Credit ; ldg:amountValue "4400000"^^xsd:decimal ;
     ldg:amountAsDrawn ex:q-repayment-eur ; ldg:conversionUsed ex:fx-2027-09-01 ;
     prov:wasDerivedFrom ex:fx-2027-09-01 .
 ex:balance-2 a ldg:BalanceRecord ;
-    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
-    ldg:atPosition "2"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass ex:pass-2 ;
     ldg:remainingValue "14395000"^^xsd:decimal ; ldg:availableValue "14395000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:repayment-posting .
 
@@ -124,17 +126,27 @@ ex:revaluation-grant a ldg:Grant ;
     ldg:forProposal ex:revaluation-proposal ;
     ldg:requestedValue "245000"^^xsd:decimal ; ldg:grantedValue "245000"^^xsd:decimal .
 ex:revaluation-merge a ldg:MergeRecord ;
-    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
-    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:integer ;
     ldg:grant ex:revaluation-grant .
 ex:revaluation-posting a ldg:Posting ;
-    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
-    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:integer ;
+    ldg:recordedPosition "3"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "245000"^^xsd:decimal ;
     ldg:amountAsDrawn ex:q-outstanding-eur ; ldg:conversionUsed ex:fx-2027-12-31 ;
     prov:wasDerivedFrom ex:revaluation-merge , ex:revaluation-grant .
 ex:balance-3 a ldg:BalanceRecord ;
-    ldg:onAccount ex:facility ; ldg:forOwner ex:borrower ;
-    ldg:atPosition "3"^^xsd:integer ; ldg:atMicroPosition "0"^^xsd:integer ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass ex:pass-3 ;
     ldg:remainingValue "14150000"^^xsd:decimal ; ldg:availableValue "14150000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:revaluation-posting .
+
+# ==== The account instances and the passes ===================================
+
+ex:account-facility a ldg:Account ;
+    ldg:ofDefinition ex:facility ; ldg:forOwner ex:borrower .
+ex:borrower a ex:Borrower .
+ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
+ex:pass-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer .
+ex:pass-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:integer .

@@ -3,16 +3,16 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** building 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 built. LG-2 building.
+**Status:** built 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 and LG-2 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
-**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md)
+**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
 
 ---
 
 ## Is this unit complete?
 
-**No.** LG-0 (examples first) and LG-1 (the configuration document) are built, verified and committed. LG-5 (benchmark) is part built, ahead of the LG-2 it depends on. LG-2 (runtime document) is briefed in the plan, unblocked, and not started. LG-3 (Behaviour's migration) and LG-4 (allocation) are not briefed.
+**No.** LG-0 (examples first) and LG-1 (the configuration document) are built, verified and committed. LG-7 (the laws mechanised) and LG-2 (the runtime document) are built on machine S and committed locally, waiting for the maintainer's verification. LG-5 (benchmark) is part built, ahead of the LG-4 it depends on. LG-3 (Behaviour's migration) and LG-4 (allocation) are not briefed.
 
 ## Current state
 
@@ -34,8 +34,8 @@ Since then the work has been design rather than build, and it has answered the w
 
 | | What | Owner |
 |---|---|---|
-| PDD-15 | **decided (a), 2026-10-28.** A periodic amount becomes one account per period, keyed by the recurrence bin the effective position falls in, with no reset credit. Three rules came with it: the period key is derived at write and never supplied by a draw, one period recurrence holds along a path with a keyed child part of its parent's instance under the same bin key, and a draw whose effective position cannot be binned is Undetermined. `ldg:resetRecurrence` is renamed, since nothing resets | LG-2 and LG-3 to build |
-| TD-97, TD-98 | `licence-seats.ttl` models the reset the decision removes, and `ldg:keyDimension`'s OWL range is narrower than its prose and its shape. Both wait on the slice that implements PDD-15 rather than preceding it | LG-2 and LG-3 |
+| PDD-15 | **decided (a), 2026-10-28.** A periodic amount becomes one account per period, keyed by the recurrence bin the effective position falls in, with no reset credit. Three rules came with it: the period key is derived at write and never supplied by a draw, one period recurrence holds along a path with a keyed child part of its parent's instance under the same bin key, and a draw whose effective position cannot be binned is Undetermined. LG-2 built the first two, with `ldg:periodRecurrence` beside a deprecated `ldg:resetRecurrence` rather than a rename | LG-3, and the evaluator for the third |
+| LG-Q9, LG-Q10 | raised by LG-2 in the plan. Which balance a posting's running balance states under post-once (LF-Q17 is answered (b) and not yet built), and how a pool that caps an aggregate's reinstatements is built now that a credit rolls up | the maintainer |
 | the restatement read's partition | PDD-15's claim that an old period's later books hold only stragglers holds where the partition root is the keyed instance, which the benchmark does not yet partition by. The next measurement, not a blocker | benchmark |
 | MS-Q4 | **answered (a)**, with no persistence addendum owed. A scratch dataset is a dataset, so the restore is an ordinary whole-dataset one of a small dataset and `dal:EpochProfile` needs no change | closed |
 | MS-Q11 and LF-Q21 | **both answered**, and they never competed. Evaluation before commitment is a lifecycle boundary LATTICE does not implement, and a droppable graph governs evaluation against committed record | closed |
@@ -46,9 +46,9 @@ Since then the work has been design rather than build, and it has answered the w
 | TD-95 | **the form is settled, the debt stays.** Conservation states recoveries plus residual equal the amount drawn, with the residual explicit, which an external Isabelle development proves claim by claim for every well-formed contract list and every allocator satisfying the axioms ([sketch](../sketches/waterfall-proofs-and-the-generality-gap.md) §5.1). Open until LG-4 writes the shape | LG-4 |
 | the allocation axioms | **four, not five.** Exactness, boundedness by each part's own amount, non-negativity, and allocating the whole returns the whole. Zero at zero follows. **Monotonicity is dropped**, since no law in that development needed it, and LG-4 adds it back only by naming the law that needs it | LG-4 |
 | WPG-Q2 | **open, leaning (a).** Where the declared ceiling lives: on `ldg:AccountDefinition` as a per-account availability bound, on the draw term, or in Quantification beside LF-Q22(a)'s maximum magnitude per value space. The bound is a property of the account, and LF-Q22's is about a value space, so the two are different things that happen to be upper bounds | the maintainer, then LG-4 |
-| the `owl:rational` probe | LG-Q6's answer requires it before both ES-5 and LG-4, and nobody owns it. **Jena added 2026-11-07**, so it covers rdflib, Oxigraph and Jena, since the store comparison already runs on TDB2 (CAP-85). Small, and it gates two strands | unowned |
+| the `owl:rational` probe | **done by LG-2**, TSD-70. rdflib, Oxigraph and Jena keep the literal and none compares it by value, so a proportion is two integers. ES-5 can rely on the finding | closed |
 
-**Next action:** LG-2, briefed against PDD-15's derived period key rather than the reset it replaces, its laws as tests citing LG-7's claims, with LG-3 following for Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and now waits on LG-2 rather than on an open question.
+**Next action:** the maintainer's verification of LG-7 and LG-2 from their packs, and LG-Q9 and LG-Q10. Then LG-3, Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and no longer waits on LG-2.
 
 ## 2026-10-22, LG-1 built and verified
 
@@ -103,12 +103,13 @@ Results sections. In short:
 |---|---|---|---|
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | merged 2026-10-27, built 2026-10-27 |  |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | merged 2026-10-27, built 2026-10-27 |  |
-| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | building 2026-11-08, briefed 2026-10-27 |  |
+| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | built 2026-11-08, building 2026-11-08, briefed 2026-10-27 |  |
 | LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | planned | LG-2 |
 | LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | planned | LG-3 |
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | blocked | LG-4 |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | built 2026-11-08, building 2026-11-08 |  |
+- 2026-11-08: LG-2 built on machine S, with its [Validation Pack](../validation/LG-2.md)'s handoff. The runtime document `spec/ledger-runtime.ttl`, sixteen runtime laws in `shapes/runtime.ttl`, the examples carrying their records, `licence-seats.ttl` under PDD-15, and TSD-70 from the `owl:rational` probe, so an exact share is two integers. `tools/test_ledger.py` passes 35 tests, and LG2-10's pass of 5,000 postings and 10,000 balance records validates in 56.6 s. TD-97 and TD-98 paid. LG-Q9 (the running balance under post-once) and LG-Q10 (a reinstatement under a capacity pool) raised in the plan. Versions not bumped, as `check:ontology-versioning` reports.
 - 2026-11-08: LG-2 picked up on machine S, after LG-7, under the same go-ahead. This mark was committed after the README's first runtime edits rather than before them, a lapse the pack's handoff records.
 - 2026-11-08: LG-7 built on machine S, with its [Validation Pack](../validation/LG-7.md)'s handoff. Section 10 of the ledger README states the definitions, `tools/proofs/ledger/` proves sixteen claims under the gate, LA1 to LA4, LC1 to LC4, LD1 to LD4, LO1, LR1, LR2 and LN1, and `check:proofs -- ledger`, `check:formal-freshness` and `check:ontology-versioning -- --base-ref main` pass. Two adversarial probes failed as they should, a credit with no ceiling at LD3 and a weakened LN1 at the gate's digest. WPG-Q1 answered 2026-11-08, (a) holds, in a scratch session that was not kept. `ldg:LargestRemainder` is not proved, and RE-Q4 leans to it.
 - 2026-11-08: LG-7 picked up on machine S, on the maintainer's go-ahead to build LG-7 and then the next ledger slice autonomously, committing locally and never pushing.
