@@ -46,7 +46,7 @@ run = "python tools/hooks.py install --bootstrap"
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring,studio]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/wording_assembler[test]\" -e \"./tools/mork_rdf[test]\" -e \"./tools/v_rig[test]\" -e \"./tools/mork_transforms[test]\" -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/studio_harness[test]\" -e \"./tools/testing/jena[test]\" -e \"./tools/testing/sparql_probes[test]\" -e \"./tools/testing/mem_check[test]\" -e \"./tools/testing/requires[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring,studio]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/wording_assembler[test]\" -e \"./tools/mork_rdf[test]\" -e \"./tools/v_rig[test]\" -e \"./tools/mork_transforms[test]\" -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/studio_harness[test]\" -e \"./tools/testing/jena[test]\" -e \"./tools/testing/sparql_probes[test]\" -e \"./tools/testing/ledger_corpus[test]\" -e \"./tools/testing/mem_check[test]\" -e \"./tools/testing/requires[test]\""
 
 # The knowledge index, after the packages it needs (ADR-A134 decision 13). The first build fetches
 # the embedding model, and where that is blocked it notes why and still builds, so bootstrap never
@@ -136,6 +136,11 @@ run = [
   { task = "check:reference-eligibility-conformance" },
   { task = "check:sparql-probes-conformance" },
 ]
+
+[tasks."bootstrap:testing-ledger-corpus"]
+depends = ["bootstrap:pip"]
+description = "Install ledger_corpus, the generated account trees and passes the ledger's tests and benchmarks validate (ADR-A125)"
+run = "python -m pip install -e \"./tools/testing/ledger_corpus[test]\""
 
 [tasks."bootstrap:testing-mem-check"]
 depends = ["bootstrap:pip"]
@@ -427,8 +432,8 @@ env = { PYTHONPATH = "{{config_root}}/tools" }
 run = ["python -m pytest benchmark/mork-candidate-ranking -q -p no:cacheprovider", "python benchmark/mork-candidate-ranking/check.py"]
 
 [tasks."check:ledger-posting-cost"]
-depends = ["bootstrap:testing-oxigraph"]
-description = "Measure the storage and read cost of recording a draw on an account tree five ways on Oxigraph (ADR-A124): at every level, at the drawn account only, with checkpoints, with a running balance, and with each period's postings in a named graph. Run on demand, not part of check. Fails on a wrong balance or count, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size, LEDGER_COST_PROBE=N runs one size of its own"
+depends = ["bootstrap:testing-oxigraph", "bootstrap:testing-ledger-corpus"]
+description = "Measure the storage and read cost of recording a draw on an account tree five ways on Oxigraph (ADR-A124): at every level, at the drawn account only, with checkpoints, with a running balance, and with each period's postings in a named graph, and run the ledger's shapes on a tree of 10,000 definitions and a pass of 5,000 postings with their times recorded (STD-155). Run on demand, not part of check. Fails on a wrong balance, count or shape result, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size, LEDGER_COST_PROBE=N runs one size of its own"
 run = ["python -m pytest benchmark/ledger-posting-cost -q -p no:cacheprovider", "python benchmark/ledger-posting-cost/check.py"]
 
 [tasks."check:vocabulary"]

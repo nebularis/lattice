@@ -1013,15 +1013,13 @@ ldg:resetRecurrence owl:deprecated true .
 
 ### 7.2 Constraints
 
-`shapes/constraints.ttl` holds six SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's
-unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and
-`qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, a
-credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space.
+`shapes/constraints.ttl` holds six SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, a credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space. Each targets the class as one node (`sh:targetNode ldg:AccountDefinition`) and reads every definition in one query, as the runtime laws of section 7.3 do, so a validator that runs a constraint once per focus node runs each once rather than once per definition (TSD-23). A violation's `sh:value` names the definition.
 
 <!-- hidden: {"output-file": "shapes/constraints.ttl"}
 ```turtle-shapes
 # SHACL-SPARQL constraints for ldg:AccountDefinition (ADR-A131 decisions 2
 # and 3).
+# Each targets the class as one node and reads every definition in one query (TSD-23).
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
@@ -1029,25 +1027,27 @@ credit ceiling not below the stated amount, and a key dimension that is a concep
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 ldg:NoCycleThroughPartOfShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "An account definition must not be its own ancestor through any chain of ldg:partOf edges." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-			SELECT $this WHERE {
-				$this ldg:partOf+ $this .
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:partOf+ ?value .
 			}
 		"""
 	] .
 
 ldg:ChildUnitMatchesParentShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "An account definition's unit of account must equal its parent's." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-			SELECT $this WHERE {
-				$this ldg:partOf ?parent ;
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:partOf ?parent ;
 					  ldg:unitOfAccount ?childSpace .
 				?parent ldg:unitOfAccount ?parentSpace .
 				FILTER (?childSpace != ?parentSpace)
@@ -1056,14 +1056,15 @@ ldg:ChildUnitMatchesParentShape a sh:NodeShape ;
 	] .
 
 ldg:ExtensiveUnitOfAccountShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "An account definition's unit of account must be extensive, with Sum and Difference capabilities." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
 			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
-			SELECT $this WHERE {
-				$this ldg:unitOfAccount ?space .
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:unitOfAccount ?space .
 				OPTIONAL { ?space qnt:additivity qnt:Extensive . BIND(true AS ?extensive) }
 				OPTIONAL { ?space qnt:hasOperationCapability ?sumCap . ?sumCap qnt:operationKind qnt:Sum . BIND(true AS ?sum) }
 				OPTIONAL { ?space qnt:hasOperationCapability ?diffCap . ?diffCap qnt:operationKind qnt:Difference . BIND(true AS ?difference) }
@@ -1073,29 +1074,31 @@ ldg:ExtensiveUnitOfAccountShape a sh:NodeShape ;
 	] .
 
 ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "A proportional merge rule must state a rounding method and a residual allocation." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-			SELECT $this WHERE {
-				$this ldg:mergeRule ldg:Proportional .
-				OPTIONAL { $this ldg:roundingMethod ?rounding }
-				OPTIONAL { $this ldg:residualAllocation ?residual }
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:mergeRule ldg:Proportional .
+				OPTIONAL { ?value ldg:roundingMethod ?rounding }
+				OPTIONAL { ?value ldg:residualAllocation ?residual }
 				FILTER (!BOUND(?rounding) || !BOUND(?residual))
 			}
 		"""
 	] .
 
 ldg:CreditCeilingNotBelowStatedShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "A credit ceiling must not be below the account's stated amount." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
 			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
-			SELECT $this WHERE {
-				$this ldg:statedAmount ?stated ;
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:statedAmount ?stated ;
 					  ldg:creditCeiling ?ceiling .
 				?stated qnt:numericValue ?statedValue .
 				?ceiling qnt:numericValue ?ceilingValue .
@@ -1105,15 +1108,16 @@ ldg:CreditCeilingNotBelowStatedShape a sh:NodeShape ;
 	] .
 
 ldg:KeyDimensionTypeShape a sh:NodeShape ;
-	sh:targetClass ldg:AccountDefinition ;
+	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
 		sh:message "A key dimension must be a skos:ConceptScheme or a qnt:ValueSpace." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
 			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
 			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-			SELECT $this WHERE {
-				$this ldg:keyDimension ?dim .
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:keyDimension ?dim .
 				FILTER NOT EXISTS { ?dim a skos:ConceptScheme }
 				FILTER NOT EXISTS { ?dim a qnt:ValueSpace }
 			}

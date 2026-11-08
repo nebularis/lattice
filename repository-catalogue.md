@@ -249,6 +249,11 @@ import-names = ["surface"]
 reaches = ["contracts/config-studio", "ontology/surface", "test/conformance"]
 
 [[tools]]
+name = "testing/ledger_corpus"
+path = "tools/testing/ledger_corpus"
+import-names = ["ledger_corpus"]
+
+[[tools]]
 name = "testing/mem_check"
 path = "tools/testing/mem_check"
 import-names = ["mem_check"]
