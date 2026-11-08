@@ -350,8 +350,10 @@ def checks() -> list[Check]:
 # ---- installation -----------------------------------------------------------------------------
 
 def hooks_dir(root: Path) -> Path:
-    path = Path(git("rev-parse", "--git-path", "hooks", cwd=root).strip())
-    return path if path.is_absolute() else root / path
+    """The repository's own hooks folder, shared by every worktree. It is never `core.hooksPath`, which a user may point at a
+    folder of their own, such as the shims Вивід's guard writes, and which run this repository's hooks from here."""
+    common = Path(git("rev-parse", "--git-common-dir", cwd=root).strip())
+    return (common if common.is_absolute() else root / common) / "hooks"
 
 
 def install(root: Path, bootstrap: bool = False) -> list[str]:
