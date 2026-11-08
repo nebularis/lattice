@@ -1,0 +1,13 @@
+{
+  "subject": "LA4",
+  "statedAs": "Allocation.lawful_rules_differ",
+  "statementDigest": "sha256:0985521b5d48de0bc841c2def8b592765c9761939ce52fe3efe737e18a054162",
+  "method": "Proof",
+  "scope": "OneArrangement",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

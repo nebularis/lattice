@@ -3,10 +3,10 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** building 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 building. LG-2 unblocked, briefed and not started.
+**Status:** built 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 built. LG-2 unblocked, briefed and not started.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
-**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md)
+**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md)
 
 ---
 
@@ -48,7 +48,7 @@ Since then the work has been design rather than build, and it has answered the w
 | WPG-Q2 | **open, leaning (a).** Where the declared ceiling lives: on `ldg:AccountDefinition` as a per-account availability bound, on the draw term, or in Quantification beside LF-Q22(a)'s maximum magnitude per value space. The bound is a property of the account, and LF-Q22's is about a value space, so the two are different things that happen to be upper bounds | the maintainer, then LG-4 |
 | the `owl:rational` probe | LG-Q6's answer requires it before both ES-5 and LG-4, and nobody owns it. **Jena added 2026-11-07**, so it covers rdflib, Oxigraph and Jena, since the store comparison already runs on TDB2 (CAP-85). Small, and it gates two strands | unowned |
 
-**Next action:** LG-2, briefed against PDD-15's derived period key rather than the reset it replaces, with LG-3 following for Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and now waits on LG-2 rather than on an open question.
+**Next action:** LG-2, briefed against PDD-15's derived period key rather than the reset it replaces, its laws as tests citing LG-7's claims, with LG-3 following for Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and now waits on LG-2 rather than on an open question.
 
 ## 2026-10-22, LG-1 built and verified
 
@@ -108,7 +108,8 @@ Results sections. In short:
 | LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | planned | LG-3 |
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | blocked | LG-4 |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
-| LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | building 2026-11-08 |  |
+| LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | built 2026-11-08, building 2026-11-08 |  |
+- 2026-11-08: LG-7 built on machine S, with its [Validation Pack](../validation/LG-7.md)'s handoff. Section 10 of the ledger README states the definitions, `tools/proofs/ledger/` proves sixteen claims under the gate, LA1 to LA4, LC1 to LC4, LD1 to LD4, LO1, LR1, LR2 and LN1, and `check:proofs -- ledger`, `check:formal-freshness` and `check:ontology-versioning -- --base-ref main` pass. Two adversarial probes failed as they should, a credit with no ceiling at LD3 and a weakened LN1 at the gate's digest. WPG-Q1 answered 2026-11-08, (a) holds, in a scratch session that was not kept. `ldg:LargestRemainder` is not proved, and RE-Q4 leans to it.
 - 2026-11-08: LG-7 picked up on machine S, on the maintainer's go-ahead to build LG-7 and then the next ledger slice autonomously, committing locally and never pushing.
 - 2026-11-07: WPG-Q4 answered by the maintainer, (b) for the general core and (a) for the reinsurance instance, recorded in the [waterfall proofs sketch](../sketches/waterfall-proofs-and-the-generality-gap.md) and promoted to ADR-A-FM2's addendum of the same day. LG-7 is the first slice under it. No slice changed state.
 - 2026-11-07: LG-7 added and briefed, the ledger laws mechanised in `tools/proofs/ledger/` ahead of LG-2, with its [Validation Pack](../validation/LG-7.md). The maintainer decided the same day that it runs before LG-2 on a machine they assign, that it builds on the domain-neutral core of the external development the waterfall proofs sketch reads, renamed and re-proved under the terms the plan states, and that the composition law stays with E4b. The plan's E4a row now says it started as LG-7. The row is planned, since this session is not the one that builds it.

@@ -63,7 +63,34 @@ The composition law, uniqueness of a solution and the least fixpoint over the in
 
 ## Handoff
 
-Written by the building machine when the work is ready for the maintainer to commit. It lists each claim with its outcome, the build time and the Isabelle version, the result of both commands read in full, the version check's report on the README change, and anything the brief said that the theories could not keep.
+Built on machine S, 2026-11-08, on the branch the maintainer created from `main` after the squash of `docs/placement-vehicles-structure`, committed locally and not pushed.
+
+**What was built.** Section 10 of `ontology/ledger/README.md` now states the laws' definitions in an `isabelle-spec` block, extracted to `tools/proofs/ledger/Kernel.thy`. The session `Ledger`, `session Ledger = HOL +` with `document = false` and `quick_and_dirty = false`, holds `Allocation.thy`, `Draws.thy` and `Rounding.thy`, sixteen claim records under `claims/`, and a session README with what is proved, what is assumed, what is not covered and the provenance. The kernel imports `Complex_Main`, which is part of the HOL session and is where the rationals are, and nothing from `HOL-Library`.
+
+**Isabelle.** Isabelle2025-2, native, on Windows 11 through its bundled Cygwin. A clean build of the session gives `Finished Ledger (0:00:04 elapsed time)`, 1.9 s of theory time on 8 threads, and no `***` line.
+
+**What was run, in full.**
+
+- `mise run check:proofs -- ledger`: exit 0. The law report lists LA1 to LA4, LC1 to LC4, LD1 to LD4, LN1, LO1, LR1 and LR2, each `Proof passed`, then `Assumption audit: clean, no sorry/oops/admit/oracle/by-eval found` and `GATE: pass`.
+- `mise run check:formal-freshness`: exit 0, `3 formal-methods artefact(s) consistent with their literate READMEs`.
+- `mise run check:ontology-versioning -- --base-ref main`: exit 0, `50 in-scope ontology document(s) checked against main: no unbumped changes`. The README change adds no term and moves no extracted document, so nothing is bumped. The same run asks for the tag `persistence-store-v0.19.0`, which this slice did not cause.
+- `mise run check:proofs -- eligibility`, before any edit: exit 0, `GATE: pass`, so the shared gate was working on this machine.
+
+**Adversarial probes.** Two, each restored afterwards. Removing the ceiling from `credit` in the README's block and rebuilding fails LD3's first conclusion at `Draws.thy` line 103. Weakening LN1's `<` to `\<le>` without its claim record gives `[STATEMENT DIGEST MISMATCH, unreviewed restatement]` and `GATE: fail`.
+
+**Deviations from the brief, with reasons.**
+
+- **LG1 and LG2 have no claim record.** They are the two commands above rather than theorems, so they are checked by running them.
+- **LO1 and LR2's order independence is over two lists without repeats that hold the same proposals**, rather than over multisets, since multisets are in `HOL-Library`. A second order of the same proposals is exactly such a pair.
+- **LR2 proves `ldg:ToFirstInOrder` only.** `ldg:LargestRemainder` is not proved, and the reference evaluator sketch's RE-Q4 leans to it as the default, so it is the next rounding theorem to write.
+- **The refinement between `rat` and `int`** is one lemma, `Rounding.floor_part_refines`, putting a floor part within one unit below the exact share. Nothing more of the refinement was cheap.
+- **LC3 bounds the first posting by its account's availability** and proves no balance in the tree goes below zero over the whole sequence, which is the same law stated for every step.
+- **Positions.** The kernel's `before` is proved a strict total order and is used by no claim, since every claim here is about one position.
+- **The examples come first** in `Allocation.thy` and `Rounding.thy` as `value` checks, and each positive one is also a lemma proved by `simp`, since a `value` prints and checks nothing.
+
+**WPG-Q1, answered (a).** With the body a parameter carrying only the congruence, the uniqueness, existence and exactly-one proofs went through, in a scratch session outside the repository on 2026-11-08. The scratch session and its build log were deleted.
+
+**What to check first.** The four axioms in the README's block against ADR-A131 decision 6 and the sketch's L2, and the hypotheses of LC1 to LC3, which are what LG-2's laws as tests and LG-4's conservation shape will cite.
 
 ## Results
 

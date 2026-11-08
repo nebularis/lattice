@@ -1,0 +1,13 @@
+{
+  "subject": "LO1",
+  "statedAs": "Draws.settled_the_same_in_every_order_of_proposal",
+  "statementDigest": "sha256:187824ea2cefd6c554e11c2dcdbfcc5c3d29565ca46103e6b110409c0eeea3d0",
+  "method": "Proof",
+  "scope": "EveryReorderedProposalList",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

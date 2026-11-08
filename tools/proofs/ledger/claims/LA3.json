@@ -1,0 +1,13 @@
+{
+  "subject": "LA3",
+  "statedAs": "Allocation.lawful_split_of_zero",
+  "statementDigest": "sha256:2c4f5078992f93545893bcd33d2c14ecaa0de56240fb02b51ed01d8feda38b45",
+  "method": "Proof",
+  "scope": "EveryLawfulRule",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

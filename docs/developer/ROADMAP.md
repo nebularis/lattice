@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 14 branches, the units' own state from this tree, the newest board day 2026-11-07.
+Built from the status records on 16 branches, the units' own state from this tree, the newest board day 2026-11-08.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -48,7 +48,7 @@ Built from the status records on 14 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | merged 2026-10-27 | LG-2 | 4 planned, 2 merged, 1 built, 1 blocked | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
+| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on docs/placement-vehicles-structure, fix/vyd-wrapper-passthrough, fml/isabelle-layers, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 3 planned, 2 merged, 2 built, 1 blocked | ccs-trunk, ccs/board-corrections, pvs-fml-foo, realign/config-authoring-studio |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -67,7 +67,7 @@ Built from the status records on 14 branches, the units' own state from this tre
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
-| [v-rig](plans/v-rig.md) | unit | building 2026-11-07 | VR-1 | 6 planned, 1 building |  |
+| [v-rig](plans/v-rig.md) | unit | building 2026-11-07 · building 2026-11-08 on docs/placement-vehicles-structure | VR-1 | 4 planned, 2 built, 1 building | docs/placement-vehicles-structure |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
 | [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | verified 2026-11-06 | VM-0 | 9 verified |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
@@ -552,6 +552,7 @@ gantt
     LG-0 examples :done, lg0, 2026-10-27, 2026-10-28
     LG-1 the configuration document :done, lg1, 2026-10-27, 2026-10-28
     LG-2 :lg2, 2026-10-27, 2026-10-28
+    LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
     section normative-rule-substrate
     NRS-4 Deontic extension of :done, nrs4, 2026-09-30, 2026-10-01
     NRS-5 Closure declarations A-105 :done, nrs5, 2026-10-10, 2026-10-11
@@ -567,7 +568,9 @@ gantt
     SQ-1 the harness :sq1, 2026-10-31, 2026-11-01
     SQ-2 reports in git :sq2, 2026-10-31, 2026-11-01
     section v-rig
-    VR-1 the module ontology v-rig :active, vr1, 2026-11-07, 2026-11-08
+    VR-1 the module ontology v-rig :vr1, 2026-11-08, 2026-11-09
+    VR-2 the synthetic mini-rig :vr2, 2026-11-08, 2026-11-09
+    VR-3 the tracked mapping scheme and :active, vr3, 2026-11-08, 2026-11-09
     section vocabulary-temporal-binding
     VTB-1 ADR-A85 proposal :vtb1, 2026-09-25, 2026-09-26
     VTB-2 12 fixtures 11 :vtb2, 2026-09-25, 2026-09-26
@@ -788,6 +791,8 @@ Ensemble is proposed on `docs/placement-vehicles-structure`, with its sketch and
 
 **A design pass on 2026-11-07** briefed LG-4, ES-3 and ES-8 further and raised ES-Q10 and WPG-Q2, from an external Isabelle development of a reinsurance inurement waterfall read as background ([sketch](sketches/waterfall-proofs-and-the-generality-gap.md)). No slice changed state. LG-4 takes conservation with an explicit residual term, which settles the open half of TD-95 in an instance, the allocation axioms corrected from five to four with monotonicity dropped, the merge rule as declared data never a default, and attribution across parties as a second conservation law. ES-3 takes the separation of uniqueness from computability, the positional total order as the condition ADR-A130 decision 5's independence-of-order bullet rests on, a unit reading only its declared predecessors as load-bearing, and a conformance case for schedule completeness, since conservation cannot see a unit that never ran. ES-8 carries a withdrawal: that development bears nothing on decision 5's criterion for admitting a cyclic component, because its counterexample solves a cycle over determined values while decision 5's least fixpoint is over the information order. The ledger does not gate the ensemble as a unit, only LG-2 does, and the ensemble's own head gate is C4 (section 8). WPG-Q4 was answered the same day: an applied development's general core is rebuilt under `tools/proofs/<layer>/` and the development itself stays outside the repository, now ADR-A-FM2's addendum, with LG-7 the first slice under it.
 
+**LG-7 was built on 2026-11-08**, on machine S. `tools/proofs/ledger/` proves sixteen ledger laws under the gate from definitions in section 10 of the ledger README, among them the four allocation axioms for the proportional and priority rules, conservation with a residual over the account tree, settlement at one position independent of the order of proposal, and exact rounding by giving the residual to the first keys in order. LG-2's laws as tests and LG-4's conservation shape can cite them. WPG-Q1 was answered the same day, (a) holds, so the uniqueness argument is general once the body is a parameter that reads only its declared predecessors.
+
 | | Ensemble | Ledger |
 |---|---|---|
 | Prefix and home | `ens:`, `ontology/ensemble/` | `ldg:`, `ontology/ledger/` |
@@ -847,7 +852,7 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4, LG-2 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4, LG-2 |
-| `docs/placement-vehicles-structure` | 2026-11-07 | 127 | pushed | no mark |
+| `docs/placement-vehicles-structure` | 2026-11-08 | 3 | pushed | VR-1, VR-2, VR-3 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
