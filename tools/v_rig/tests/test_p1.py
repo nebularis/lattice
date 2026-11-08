@@ -168,8 +168,8 @@ def test_the_extension_scheme_runs_after_the_tracked_one(projection):
 
 def test_every_key_no_scheme_reads_is_a_finding_and_readings_are_not(projection):
     unmapped = {key for kind, _, key, _, _ in projection.findings if kind == VRIG.UnmappedKey}
-    assert {"custom_note_key", "trigger", "governing_law", "loss_amount"} <= unmapped
-    assert not {"limit", "lines", "share", "exhaustion", "drop_down"} & unmapped
+    assert {"custom_note_key", "trigger", "governing_law", "notified"} <= unmapped
+    assert not {"limit", "lines", "share", "exhaustion", "drop_down", "loss_amount", "prior_knowledge"} & unmapped, "reading keys and bound inputs are read"
 
 
 def test_a_lookup_nothing_answers_is_an_uncertain_mapping_at_its_node(projection):

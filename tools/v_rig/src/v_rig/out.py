@@ -15,6 +15,7 @@ from pathlib import Path
 from rdflib import RDF, Graph, Literal
 
 from .lift import VRIG, blind, canonical_turtle, findings_graph
+from .report import render
 from .rig import Rig
 
 log = logging.getLogger("v_rig")
@@ -96,6 +97,8 @@ def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict, projection=
     written["blind"].write_text(canonical_turtle(blind(graph)), encoding="utf-8")
     written["findings"].write_text(canonical_turtle(findings_graph(graph)), encoding="utf-8")
     written["run"].write_text(json.dumps(run_info, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    written["report"] = out / "report.md"
+    written["report"].write_text(render(graph, run_info), encoding="utf-8")
     header = ["# Generated from a rig by the v-rig tool. Feed it to the deny-terms check with",
               f"# LATTICE_DENY_TERMS={written['deny-terms']} mise run check:deny-terms", ""]
     written["deny-terms"].write_text("\n".join(header + deny_terms(graph)) + "\n", encoding="utf-8")

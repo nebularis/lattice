@@ -80,7 +80,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
 | temporal-binding-consumer-hardening | unit |  | built 2026-09-25 |  | [plan](plans/temporal-binding-consumer-hardening.md), [status](status/temporal-binding-consumer-hardening.md) |
 | toolchain-jdk25-python314 | unit |  | merged 2026-09-23 |  | [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) |
-| v-rig | unit | VR | building 2026-11-08 | VR-1 | [plan](plans/v-rig.md), [status](status/v-rig.md), 5 Validation Packs |
+| v-rig | unit | VR | building 2026-11-08 | VR-1 | [plan](plans/v-rig.md), [status](status/v-rig.md), 6 Validation Packs |
 | validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
@@ -522,8 +522,8 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | VR-3 | the tracked mapping scheme and the extension seam | v-rig | built 2026-11-08 |  | docs/developer/status/v-rig.md#board |
 | VR-4 | P1, the layer graph against shapes, reasoner and competency queries | v-rig | built 2026-11-08 |  | docs/developer/status/v-rig.md#board |
 | VR-5 | P2 and P3, the generated theory and the test vectors | v-rig | built 2026-11-08 |  | docs/developer/status/v-rig.md#board |
-| VR-6 | P4, findings as RDF with stable ids and the report rendered from them | v-rig | building 2026-11-08 |  | docs/developer/status/v-rig.md#board |
-| VR-7 | the seam for a read case | v-rig | planned |  | docs/developer/status/v-rig.md#board |
+| VR-6 | P4, findings as RDF with stable ids and the report rendered from them | v-rig | built 2026-11-08 |  | docs/developer/status/v-rig.md#board |
+| VR-7 | the seam for a read case | v-rig | building 2026-11-08 |  | docs/developer/status/v-rig.md#board |
 | VTB-1 | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |

@@ -68,7 +68,7 @@ def reading_keys(graphs: list[Graph]) -> tuple[str, ...]:
 
 
 def keys_read(graphs: list[Graph]) -> frozenset[str]:
-    """Every key a scheme reads, by a key: edge in a path or template, or by a guard on vrig:key."""
+    """Every key a scheme reads, by a key: edge in a path or template, or by a guard on vrig:key. A key an input binding reads counts as mapped too, and is added by the caller."""
     found: set[str] = set()
     for g in graphs:
         for obj in g.objects(None, None):
@@ -95,7 +95,8 @@ def project(graph: Graph, extensions: list[Path] = (), *, target: Graph | None =
     schemes = [tracked] + extension_graphs
     target = target if target is not None else target_vocabulary()
     source = mapping_source(graph)
-    result = P1Result(source=source, layers=Graph(), compiled_text="", reading_keys=reading_keys(schemes), mapped_keys=keys_read(schemes))
+    bound = {str(k) for g in extension_graphs for b in g.subjects(RDF.type, VRIG.InputBinding) for k in g.objects(b, VRIG.key)}
+    result = P1Result(source=source, layers=Graph(), compiled_text="", reading_keys=reading_keys(schemes), mapped_keys=keys_read(schemes) | bound)
     for prefix, namespace in (("vrig", VRIG), ("key", KEY)):
         result.layers.bind(prefix, str(namespace))
     texts: list[str] = []
