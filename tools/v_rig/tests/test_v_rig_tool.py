@@ -131,9 +131,11 @@ def test_provenance_is_dropped_at_the_gate(graph):
     assert "test author" not in graph.serialize(format="turtle")
 
 
-def test_list_key_is_one_fact_with_several_values(graph):
+def test_list_key_is_one_fact_with_one_ordered_list(graph):
     (fact,) = _facts(graph, "prim-001", "lines")
-    assert {str(v) for v in graph.objects(fact, VRIG.value)} == {"general-liability", "products"}
+    (head,) = graph.objects(fact, VRIG.value)
+    assert [str(item) for item in graph.items(head)] == ["general-liability", "products"]
+    assert isinstance(head, URIRef), "list cells are IRIs, so the output has no blank node"
 
 
 def test_structured_values_are_records_with_facts(graph):

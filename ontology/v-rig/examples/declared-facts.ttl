@@ -54,12 +54,12 @@ ex:loc-limit a vrig:Locator ;
     vrig:keyPath "limit" ;
     vrig:line 12 .
 
-# A list key is one fact with several values. Order carries no meaning here.
+# A list key is one fact whose value is an RDF list, in the source's order.
 
 ex:fact-lines a vrig:Fact ;
     vrig:of ex:doc-a ;
     vrig:key "lines" ;
-    vrig:value "line-token-1" , "line-token-2" ;
+    vrig:value ( "line-token-1" "line-token-2" ) ;
     vrig:locator ex:loc-lines ;
     vrig:digest "2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a" .
 

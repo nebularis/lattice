@@ -11,6 +11,7 @@ import logging
 import re
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import Iterable
 
 from rdflib import RDF, XSD, Graph, Literal, Namespace, URIRef
 
@@ -109,6 +110,10 @@ class Lifter:
         else:
             g.add((node, VRIG.digest, Literal(canon.fact_digest(key, value))))
             items = value if isinstance(value, list) else [value]
+            scalars = [item for item in items if not isinstance(item, dict)]
+            if isinstance(value, list) and scalars:
+                g.add((node, VRIG.value, self.rdf_list(node, scalars)))
+                strings.extend(item for item in scalars if isinstance(item, str))
             for index, item in enumerate(items):
                 if isinstance(item, dict):
                     record, _ = self.locate(document_id, "declared", key_path=f"{key_path}[{index}]")
@@ -118,7 +123,7 @@ class Lifter:
                     g.add((node, VRIG.item, record))
                     for sub_key, sub_value in item.items():
                         self.fact(record, document_id, str(sub_key), sub_value, f"{key_path}[{index}].{sub_key}")
-                else:
+                elif not isinstance(value, list):
                     g.add((node, VRIG.value, _literal(item)))
                     if isinstance(item, str):
                         strings.append(item)
@@ -129,6 +134,17 @@ class Lifter:
                     g.add((node, VRIG.input, Literal(name)))
         self.facts.append((node, document_id, strings))
         return node
+
+    def rdf_list(self, fact: URIRef, scalars: list) -> URIRef:
+        """An RDF list of literals whose cells are IRIs under the fact's, so the output has no blank node."""
+        g = self.graph
+        head = URIRef(f"{fact}/list/0")
+        for index, item in enumerate(scalars):
+            cell = URIRef(f"{fact}/list/{index}")
+            g.add((cell, RDF.first, _literal(item)))
+            following = URIRef(f"{fact}/list/{index + 1}") if index + 1 < len(scalars) else RDF.nil
+            g.add((cell, RDF.rest, following))
+        return head
 
     def facts_of(self, carrier: URIRef, document_id: str, mapping: dict, prefix: str, skip: tuple[str, ...]) -> None:
         for key, value in mapping.items():
@@ -357,8 +373,9 @@ class Lifter:
             g.add((self.run_node, VRIG.vectorSchemaVersion, Literal(self.run.vector_schema_version)))
 
 
-def lift(rig: Rig, run: RunInfo) -> Graph:
-    """The whole representation of a rig, both views, with the run and the lifter's own findings."""
+def lift(rig: Rig, run: RunInfo, reading_keys: Iterable[str] = ()) -> Graph:
+    """The whole representation of a rig, both views, with the run and the lifter's own findings. `reading_keys` are the
+    keys a mapping scheme declares to carry a reading of a legal concept, whose facts are typed `vrig:Reading`."""
     lifter = Lifter(rig, run)
     lifter.run_record()
     for document in rig.documents:
@@ -368,7 +385,48 @@ def lift(rig: Rig, run: RunInfo) -> Graph:
     lifter.events()
     lifter.resolve()
     lifter.findings()
+    mark_readings(lifter.graph, reading_keys)
     return lifter.graph
+
+
+def mark_readings(graph: Graph, reading_keys: Iterable[str]) -> int:
+    """Type every fact of a declared reading key `vrig:Reading`. Returns how many."""
+    keys = {Literal(k) for k in reading_keys}
+    count = 0
+    for fact in list(graph.subjects(RDF.type, VRIG.Fact)):
+        if graph.value(fact, VRIG.key) in keys:
+            graph.add((fact, RDF.type, VRIG.Reading))
+            count += 1
+    return count
+
+
+KEY = "urn:lattice-v-rig:v1:key:"
+
+
+def key_iri(key: str) -> URIRef:
+    return URIRef(KEY + canon.percent(key))
+
+
+def mapping_source(graph: Graph) -> Graph:
+    """The representation with one derived edge per fact for a mapping to read, `<carrier> key:<name> <value>`: each
+    literal value, the head of an ordered list, each record item, each node an id-valued fact resolves to, or the fact
+    node itself where the fact is stated as not known or stated with nothing. The representation never holds these."""
+    out = Graph()
+    for prefix, namespace in PREFIXES.items():
+        out.bind(prefix, namespace)
+    out.bind("key", KEY)
+    out += graph
+    for fact in graph.subjects(RDF.type, VRIG.Fact):
+        carrier, key = graph.value(fact, VRIG.of), graph.value(fact, VRIG.key)
+        if carrier is None or key is None:
+            continue
+        predicate = key_iri(str(key))
+        objects = list(graph.objects(fact, VRIG.value)) + list(graph.objects(fact, VRIG["item"])) + list(graph.objects(fact, VRIG.resolvesTo))
+        if not objects:
+            objects = [fact]
+        for obj in objects:
+            out.add((carrier, predicate, obj))
+    return out
 
 
 BLIND_TYPES = (VRIG.Document, VRIG.BodyNode, VRIG.Reference, VRIG.RenderingView, VRIG.Run)

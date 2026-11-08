@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# Reference data the tracked scheme's lookups read, loaded beside a rig's extension. The kind tokens a body is
+# lifted to are matched to the Wording layer's element types by notation. A kind with no row here, such as a
+# declarations row, a list item or a paragraph, reaches no element type, and the run reports it.
+
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix wrd-voc: <https://www.nebularis.org/neuro-semantic/lattice/wording/vocab#> .
+
+wrd-voc:Section a skos:Concept ; skos:notation "section" .
+wrd-voc:Clause a skos:Concept ; skos:notation "clause" .
+wrd-voc:Definition a skos:Concept ; skos:notation "definition" .
+wrd-voc:Schedule a skos:Concept ; skos:notation "schedule" .
+wrd-voc:Annex a skos:Concept ; skos:notation "annex" .
+wrd-voc:Endorsement a skos:Concept ; skos:notation "endorsement" .

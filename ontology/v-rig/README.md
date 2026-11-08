@@ -40,6 +40,7 @@ Every node carries a locator, which names the document, programme or events file
 - The hidden block of section 7 generates `shapes/constraints.ttl`, naming its file.
 - Extraction rewrites the class diagram (section 4) and the Axiom Index (6.7), which are never edited by hand.
 - `turtle-example` blocks are illustrative only.
+- `projection/` holds the mapping scheme from the representation to the layers, its reference data and the competency queries, hand-written, versioned together by the directory's `.version`.
 
 ```bash
 mise exec -- python tools/literate_extract.py ontology/v-rig/README.md --layer v-rig --root . --check
@@ -50,7 +51,7 @@ The module's entry in the [repository catalogue](../../repository-catalogue.md) 
 ```toml repository-catalogue
 [module]
 kind = "standalone"
-roles = ["examples", "shapes", "spec", "vocab"]
+roles = ["examples", "projection", "shapes", "spec", "vocab"]
 imports = []
 
 [module.extract]
@@ -94,7 +95,7 @@ classDiagram
         key, exactly one
         of, exactly one
         unknown, at most one
-        value (rdfs:Literal)
+        value
     }
     class Finding {
         findingKind, exactly one
@@ -198,6 +199,7 @@ classDiagram
     class DatatypeProperty_formatVersion["Datatype Property - formatVersion"]
     class ObjectProperty_inProgramme["Object Property - inProgramme"]
     class DatatypeProperty_key["Datatype Property - key"]
+    class DatatypeProperty_readingKey["Datatype Property - readingKey"]
     class ObjectProperty_resolvesTo["Object Property - resolvesTo"]
     class DatatypeProperty_rigId["Datatype Property - rigId"]
 ```
@@ -218,6 +220,7 @@ A **run** records what the tool ran over and on, and a **finding** names what it
 
 - **No domain terms.** The representation carries the format's structure and nothing of insurance or of any field. A limit is a fact with the key `limit`, a line of business is a token, and a reading is a token. Meaning is given by a mapping that reads the representation, which is where a domain term belongs.
 - **Facts of carriers, not properties.** Every key of the front matter, a programme file and an events file is a `vrig:Fact` of the node it is stated of, with its key as a string. A new key in a rig is a new fact and no new term. The format's guaranteed structures, the layers of a programme and the entries that place a contract with an insurer, are typed records so that a mapping can find them without reading key names.
+- **Lists keep their order.** A list of scalars in the source is one RDF list, so a period's two dates or a list of tokens reach a mapping in the order written, which a set of values would lose.
 - **Three states, two markers.** A fact stated with a value has one or more values or items. A fact stated as not known has the unknown marker. A fact stated with nothing, a null or an empty list in the source, has the empty marker. A fact that is not stated is absent. The constraint of section 7 refuses any other combination.
 - **Views on the locator.** Which source a node was read from is part of where it was read, so the view is a field of the locator, not of the node. A body node read from a rendering carries that rendering's view and nothing else distinguishes it.
 - **Body nodes carry a kind token, not an element type.** The kinds a body is laid out in are the format's, and open. A mapping maps a kind token to the Wording layer's element types when it projects the representation onto the layers.
@@ -371,7 +374,7 @@ A programme file lists two layers. The tool lifts the programme to a `vrig:Progr
 
 **Definition.** One key stated of a carrier, in one of three states, with one or more values or items, with the unknown marker, or with the empty marker.
 
-**Utility.** Lift every key of a front matter, a programme file or an event to one fact. A list of scalars is one fact with several values. A list of mappings is one fact with one record item per entry. A key listed as not known is a fact with `vrig:unknown true`. A key whose value is null or an empty list is a fact with `vrig:empty true`. A key that is absent is no fact.
+**Utility.** Lift every key of a front matter, a programme file or an event to one fact. A list of scalars is one fact whose one value is an RDF list of the scalars in the source's order. A list of mappings is one fact with one record item per entry. A key listed as not known is a fact with `vrig:unknown true`. A key whose value is null or an empty list is a fact with `vrig:empty true`. A key that is absent is no fact.
 
 **Subclass of.** `vrig:Located`
 
@@ -754,11 +757,9 @@ A programme file lists two layers. The tool lifts the programme to a `vrig:Progr
 
 #### `vrig:value`
 
-**Definition.** A value of a fact, a literal typed as the source gives it, a string, a number, a date or a boolean. A token of the rig's own vocabulary is a string.
+**Definition.** A value of a fact, a literal typed as the source gives it, a string, a number, a date or a boolean, or an RDF list of such literals in the source's order where the source gives a list. A token of the rig's own vocabulary is a string.
 
 **Domain.** `vrig:Fact`
-
-**Range.** `rdfs:Literal`
 
 #### `vrig:unknown`
 
@@ -968,6 +969,12 @@ A programme file lists two layers. The tool lifts the programme to a `vrig:Progr
 
 **Characteristics.** functional
 
+#### `vrig:readingKey`
+
+**Definition.** A key a mapping scheme declares to carry a reading of a legal concept, stated on the scheme. The tool types the facts of such a key `vrig:Reading`.
+
+**Range.** `xsd:string`
+
 #### `vrig:vectorSchemaVersion`
 
 **Definition.** The version of the test-vector schema a run wrote its vectors under.
@@ -1079,6 +1086,7 @@ None.
 | `vrig:message` | Datatype property | Domain `vrig:Finding`. Range `xsd:string`. Functional. |
 | `vrig:number` | Datatype property | Domain `vrig:BodyNode`. Range `xsd:string`. Functional. |
 | `vrig:ordinal` | Datatype property | Domain `vrig:BodyNode`. Range `xsd:integer`. Functional. |
+| `vrig:readingKey` | Datatype property | Range `xsd:string`. |
 | `vrig:referenceText` | Datatype property | Domain `vrig:Reference`. Range `xsd:string`. Functional. |
 | `vrig:renderingName` | Datatype property | Domain `vrig:RenderingView`. Range `xsd:string`. Functional. |
 | `vrig:rigDigest` | Datatype property | Domain `vrig:Run`. Range `xsd:string`. Functional. |
@@ -1092,7 +1100,7 @@ None.
 | `vrig:text` | Datatype property | Domain `vrig:BodyNode`. Range `xsd:string`. Functional. |
 | `vrig:title` | Datatype property | Domain `vrig:BodyNode`. Range `xsd:string`. Functional. |
 | `vrig:unknown` | Datatype property | Domain `vrig:Fact`. Range `xsd:boolean`. Functional. |
-| `vrig:value` | Datatype property | Domain `vrig:Fact`. Range `rdfs:Literal`. |
+| `vrig:value` | Datatype property | Domain `vrig:Fact`. |
 | `vrig:vectorSchemaVersion` | Datatype property | Domain `vrig:Run`. Range `xsd:string`. Functional. |
 | `vrig:vocabularyVersion` | Datatype property | Domain `vrig:Run`. Range `xsd:string`. Functional. |
 | `vrig:Blind` | Individual | Type `owl:NamedIndividual`, `vrig:View`. Different from `vrig:Declared`. |
@@ -1172,7 +1180,7 @@ None. The module imports no other.
 ## 12. Release Notes
 
 - **0.1.0**.
-  - First version. Located nodes and locators, views, carriers (document, programme, event, record, layer, placement), facts in three states with readings and formulas, body nodes with defined terms and prose-only nodes, references, runs, findings and the closed set of finding kinds. Structural shapes generated from section 6 and the fact-state constraint (section 7). The canonicalisation rules of section 9, versioned `v1`.
+  - First version. Located nodes and locators, views, carriers (document, programme, event, record, layer, placement), facts in three states with readings, formulas and ordered lists, body nodes with defined terms and prose-only nodes, references, runs, findings and the closed set of finding kinds. Structural shapes generated from section 6 and the fact-state constraint (section 7). The canonicalisation rules of section 9, versioned `v1`.
 
 ## 13. Open Issues
 

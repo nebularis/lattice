@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The mini-rig's extension, tracked beside it and named at run time with --extension. It carries what the tracked
+# scheme never enumerates, the mini-rig's own tokens as concepts the lookups find by notation, and a mapping scheme
+# for the keys of its events' facts, run after the tracked scheme on the same source. Everything here is invented.
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix key:  <urn:lattice-v-rig:v1:key:> .
+@prefix ext:  <urn:example:v-rig:mini-rig-extension#> .
+
+# ---- the tokens of the mini-rig as concepts ----------------------------------------------------------------------
+
+ext:Lines a skos:ConceptScheme .
+ext:GeneralLiability a skos:Concept ; skos:inScheme ext:Lines ; skos:notation "general-liability" ; skos:prefLabel "general liability" .
+ext:Products a skos:Concept ; skos:inScheme ext:Lines ; skos:notation "products" ; skos:prefLabel "products" .
+
+ext:Sole a pty:Role ; skos:notation "sole" .
+ext:Lead a pty:Role ; skos:notation "lead" .
+ext:Follow a pty:Role ; skos:notation "follow" .
+
+# ---- a mapping scheme for the keys of the mini-rig's events ------------------------------------------------------
+
+ext:MiniRig a mork:MappingScheme ;
+    mork:compilationMode mork:DraftMode ;
+    sh:declare [ sh:prefix "vrig" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/v-rig#"^^xsd:anyURI ] ,
+               [ sh:prefix "key" ; sh:namespace "urn:lattice-v-rig:v1:key:"^^xsd:anyURI ] .
+
+vrig:Event a mork:Entity .
+ext:C_Event a mork:DataConcept ; mork:representedAs vrig:Event .
+ext:C_Same a mork:DataConcept .
+ext:Cls_LossEvent a mork:DataMapping ; mork:mappingScheme ext:MiniRig ; mork:exactTBoxMatch <https://www.nebularis.org/neuro-semantic/lattice/insurance/common#LossEvent> .
+ext:Cls_Scope a mork:DataMapping ; mork:mappingScheme ext:MiniRig ; mork:exactTBoxMatch fnd:TemporalScope .
+
+ext:Map_Event a mork:DataMapping , mork:Datum ; mork:mappingScheme ext:MiniRig ;
+    mork:mappingFor ext:C_Event ; mork:deferredMapping ext:Cls_LossEvent ;
+    mork:conceptFQNameTemplate "event/{$vrig:rigId}" ;
+    mork:compositeNarrowerMapping ext:Map_EventScope .
+
+ext:Map_EventScope a mork:DataMapping ; mork:mappingScheme ext:MiniRig ;
+    mork:broaderApplicative ext:Map_Event ; mork:mappingFor ext:C_Same ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path key:date_of_loss ; sh:minCount 1 ] ] ;
+    mork:deferredMapping ext:Cls_Scope ; mork:inverseRBoxMatch fnd:hasTemporalScope ;
+    mork:conceptFQNameTemplate "scope/event/{$vrig:rigId}" ;
+    mork:compositeNarrowerMapping ext:Map_EventDate .
+
+ext:Map_EventDate a mork:DataMapping ; mork:mappingScheme ext:MiniRig ; mork:exactRBoxMatch fnd:validFrom ; mork:dataRef "key:date_of_loss" .

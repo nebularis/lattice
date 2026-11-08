@@ -1,0 +1,274 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+#
+# The tracked mapping scheme from the v-rig representation to the layers, compiled and run by tools/mork_rdf.
+#
+# Its source is the representation plus one derived edge per fact, <carrier> key:<name> <value>, where the value
+# is each literal, the head of an ordered list, each record item, each node an id-valued fact resolves to, or the
+# fact node itself where the fact is stated as not known or stated with nothing. The tool adds those edges to the
+# source at run time and the representation itself never holds them. A key of the format is read either by that
+# edge, for a value, or by a fact datum guarded on vrig:key, for a node. A contextual datum's exact R-Box match
+# writes its own target as the subject and its parent's target as the value, and the inverse match the other way.
+#
+# The scheme maps the format's keys, which are the format contract, and never a rig's tokens. A token reaches a
+# concept through a lookup over reference data, and the reference data is the rig's own extension, loaded at run
+# time. The scheme declares the keys that carry a reading of a legal concept with vrig:readingKey.
+#
+# What the layers cannot say is left out here on purpose and found by the competency queries: no term links an
+# instrument to the account definition of its limit, or to the quantity of its attachment.
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix ins:  <https://www.nebularis.org/neuro-semantic/lattice/instrument#> .
+@prefix wrd:  <https://www.nebularis.org/neuro-semantic/lattice/wording#> .
+@prefix pty:  <https://www.nebularis.org/neuro-semantic/lattice/party#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix icm:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/common#> .
+@prefix key:  <urn:lattice-v-rig:v1:key:> .
+@prefix mm:   <urn:lattice-v-rig:v1:scheme:layers#> .
+
+mm:Layers a mork:MappingScheme ;
+    mork:compilationMode mork:DraftMode ;
+    vrig:readingKey "exhaustion" , "drop_down" ;
+    sh:declare [ sh:prefix "vrig" ; sh:namespace "https://www.nebularis.org/neuro-semantic/lattice/v-rig#"^^xsd:anyURI ] ,
+               [ sh:prefix "key" ; sh:namespace "urn:lattice-v-rig:v1:key:"^^xsd:anyURI ] ,
+               [ sh:prefix "rdf" ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] .
+
+# ---- the source side ---------------------------------------------------------------------------------------------
+
+vrig:Document a mork:Entity .
+vrig:BodyNode a mork:Entity .
+vrig:DefinedTerm a mork:Entity .
+vrig:Programme a mork:Entity .
+vrig:Layer a mork:Entity .
+vrig:Placement a mork:Entity .
+vrig:Event a mork:Entity .
+vrig:Fact a mork:Entity .
+
+mm:C_Document a mork:DataConcept ; mork:representedAs vrig:Document .
+mm:C_BodyNode a mork:DataConcept ; mork:representedAs vrig:BodyNode .
+mm:C_DefinedTerm a mork:DataConcept ; mork:representedAs vrig:DefinedTerm .
+mm:C_Programme a mork:DataConcept ; mork:representedAs vrig:Programme .
+mm:C_Layer a mork:DataConcept ; mork:representedAs vrig:Layer .
+mm:C_Placement a mork:DataConcept ; mork:representedAs vrig:Placement .
+mm:C_Event a mork:DataConcept ; mork:representedAs vrig:Event .
+mm:C_Fact a mork:DataConcept ; mork:representedAs vrig:Fact .
+mm:C_Same a mork:DataConcept .
+mm:C_Parent a mork:DataConcept ; mork:path "vrig:parent" .
+mm:C_Scope a mork:DataConcept ; mork:path "vrig:scopedTo" .
+mm:C_OnLayer a mork:DataConcept ; mork:path "vrig:onLayer" .
+mm:C_LayerDocument a mork:DataConcept ; mork:path "key:document" .
+mm:C_LayerDocuments a mork:DataConcept ; mork:path "key:documents" .
+
+# ---- the target classes ------------------------------------------------------------------------------------------
+
+mm:Cls_Instrument a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch ins:Instrument .
+mm:Cls_Wording a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch wrd:Wording .
+mm:Cls_Element a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch wrd:Element .
+mm:Cls_Text a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch wrd:Text .
+mm:Cls_TextPart a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch wrd:TextPart .
+mm:Cls_Definition a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch ins:Definition .
+mm:Cls_Programme a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch vrig:Programme .
+mm:Cls_Group a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch pty:ParticipationGroup .
+mm:Cls_Membership a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch pty:GroupMembership .
+mm:Cls_Occupancy a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch pty:RoleOccupancy .
+mm:Cls_Actor a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch pty:Actor .
+mm:Cls_Account a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch ldg:AccountDefinition .
+mm:Cls_Quantity a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch qnt:Quantity .
+mm:Cls_Unresolved a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch qnt:UnresolvedValue .
+mm:Cls_Scope a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch fnd:TemporalScope .
+mm:Cls_LossEvent a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactTBoxMatch icm:LossEvent .
+
+# ---- a document is an instrument expressed in a wording ------------------------------------------------------------
+
+mm:Map_Document a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_Document ; mork:deferredMapping mm:Cls_Instrument ;
+    mork:conceptFQNameTemplate "instrument/{$vrig:rigId}" ;
+    mork:compositeNarrowerMapping mm:Map_Title , mm:Map_Wording , mm:Map_Lines .
+
+mm:Map_Title a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch rdfs:label ; mork:dataRef "key:title" .
+
+mm:Map_Wording a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Document ; mork:mappingFor mm:C_Same ; mork:deferredMapping mm:Cls_Wording ;
+    mork:inverseRBoxMatch ins:expressedIn ; mork:conceptFQNameTemplate "wording/{$vrig:rigId}" .
+
+# A token of the format's open vocabulary reaches a concept through the rig's own reference data.
+mm:Map_Lines a mork:DataMapping , mork:Lookup ; mork:mappingScheme mm:Layers ;
+    mork:exactRBoxMatch icm:classOfBusiness ; mork:exactTBoxMatch skos:Concept ;
+    mork:referenceDataPath skos:notation ; mork:lookupDatatype xsd:string ;
+    mork:dataRef "key:lines/rdf:rest*/rdf:first" .
+
+# ---- a body node is an element of the wording --------------------------------------------------------------------
+
+mm:Map_Element a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_BodyNode ; mork:deferredMapping mm:Cls_Element ;
+    mork:conceptFQNameTemplate "element/{$vrig:locator}" ;
+    mork:compositeNarrowerMapping mm:Map_ObjectId , mm:Map_RankKey , mm:Map_ElementType , mm:Map_ParentWording , mm:Map_ParentElement , mm:Map_TextPart .
+
+mm:Map_ObjectId a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch wrd:objectId ; mork:dataRef "vrig:number" .
+mm:Map_RankKey a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch wrd:rankKey ; mork:dataRef "vrig:ordinal" .
+
+mm:Map_ElementType a mork:DataMapping , mork:Lookup ; mork:mappingScheme mm:Layers ;
+    mork:exactRBoxMatch wrd:elementType ; mork:exactTBoxMatch skos:Concept ;
+    mork:referenceDataPath skos:notation ; mork:lookupDatatype xsd:string ;
+    mork:dataRef "vrig:kind" .
+
+mm:Map_ParentWording a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Element ; mork:mappingFor mm:C_Parent ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path rdf:type ; sh:hasValue vrig:Document ] ] ;
+    mork:deferredMapping mm:Cls_Wording ; mork:exactRBoxMatch wrd:directlyComprises ;
+    mork:conceptFQNameTemplate "wording/{$vrig:rigId}" .
+
+mm:Map_ParentElement a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Element ; mork:mappingFor mm:C_Parent ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path rdf:type ; sh:hasValue vrig:BodyNode ] ] ;
+    mork:deferredMapping mm:Cls_Element ; mork:exactRBoxMatch wrd:directlyComprises ;
+    mork:conceptFQNameTemplate "element/{$vrig:locator}" .
+
+mm:Map_TextPart a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Element ; mork:mappingFor mm:C_Same ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path vrig:text ; sh:minCount 1 ] ] ;
+    mork:deferredMapping mm:Cls_TextPart ; mork:inverseRBoxMatch wrd:hasTextPart ;
+    mork:conceptFQNameTemplate "part/{$vrig:locator}" ;
+    mork:compositeNarrowerMapping mm:Map_PartIndex , mm:Map_PartText .
+
+mm:Map_PartIndex a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch wrd:partIndex ; mork:dataInline "0"^^xsd:nonNegativeInteger .
+mm:Map_PartText a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch wrd:partText ; mork:dataRef "vrig:text" .
+
+# An element with text is a text, under the same identity as the element.
+mm:Map_TextElement a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_BodyNode ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path vrig:text ; sh:minCount 1 ] ] ;
+    mork:deferredMapping mm:Cls_Text ; mork:conceptFQNameTemplate "element/{$vrig:locator}" .
+
+# ---- a defined term is a definition bound in the instrument ------------------------------------------------------
+
+mm:Map_Definition a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_DefinedTerm ; mork:deferredMapping mm:Cls_Definition ;
+    mork:conceptFQNameTemplate "definition/{$vrig:locator}" ;
+    mork:compositeNarrowerMapping mm:Map_DefinitionLabel , mm:Map_DefinitionElement , mm:Map_DefinitionBoundIn .
+
+mm:Map_DefinitionLabel a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch rdfs:label ; mork:dataRef "vrig:term" .
+
+mm:Map_DefinitionElement a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Definition ; mork:mappingFor mm:C_Same ; mork:deferredMapping mm:Cls_Element ;
+    mork:inverseRBoxMatch ins:alsoExpressedIn ; mork:conceptFQNameTemplate "element/{$vrig:locator}" .
+
+mm:Map_DefinitionBoundIn a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Definition ; mork:mappingFor mm:C_Scope ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path rdf:type ; sh:hasValue vrig:Document ] ] ;
+    mork:deferredMapping mm:Cls_Instrument ; mork:inverseRBoxMatch ins:boundIn ;
+    mork:conceptFQNameTemplate "instrument/{$vrig:rigId}" .
+
+# ---- a limit is an account definition with its stated amount, an attachment a quantity. A limit written as a
+# formula is neither, since its amount is not a number until its inputs are bound, which is a projection's work ----
+
+mm:Map_Limit a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_Fact ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path vrig:key ; sh:hasValue "limit" ] , [ sh:path vrig:unknown ; sh:maxCount 0 ] , [ sh:path vrig:empty ; sh:maxCount 0 ] ; sh:not [ sh:property [ sh:path rdf:type ; sh:hasValue vrig:Formula ] ] ] ;
+    mork:deferredMapping mm:Cls_Account ; mork:conceptFQNameTemplate "account/{$vrig:locator}" ;
+    mork:compositeNarrowerMapping mm:Map_LimitAmount .
+
+mm:Map_LimitAmount a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Limit ; mork:mappingFor mm:C_Same ; mork:deferredMapping mm:Cls_Quantity ;
+    mork:inverseRBoxMatch ldg:statedAmount ; mork:conceptFQNameTemplate "quantity/{$vrig:locator}" ;
+    mork:compositeNarrowerMapping mm:Map_LimitValue .
+
+mm:Map_LimitValue a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch qnt:numericValue ; mork:dataRef "vrig:value" .
+
+mm:Map_Attachment a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_Fact ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path vrig:key ; sh:hasValue "attachment" ] , [ sh:path vrig:unknown ; sh:maxCount 0 ] , [ sh:path vrig:empty ; sh:maxCount 0 ] ; sh:not [ sh:property [ sh:path rdf:type ; sh:hasValue vrig:Formula ] ] ] ;
+    mork:deferredMapping mm:Cls_Quantity ; mork:conceptFQNameTemplate "quantity/{$vrig:locator}" ;
+    mork:compositeNarrowerMapping mm:Map_AttachmentValue .
+
+mm:Map_AttachmentValue a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch qnt:numericValue ; mork:dataRef "vrig:value" .
+
+# A fact stated as not known is an unresolved value, never an absent one.
+mm:Map_AttachmentUnknown a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_Fact ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path vrig:key ; sh:hasValue "attachment" ] , [ sh:path vrig:unknown ; sh:hasValue true ] ] ;
+    mork:deferredMapping mm:Cls_Unresolved ; mork:conceptFQNameTemplate "unresolved/{$vrig:locator}" .
+
+# ---- a layer is a participation group, each member for its own share, party to the instrument it places -----------
+
+mm:Map_Group a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_Layer ; mork:deferredMapping mm:Cls_Group ;
+    mork:conceptFQNameTemplate "group/{$vrig:locator}" ;
+    mork:compositeNarrowerMapping mm:Map_GroupRule , mm:Map_GroupParty , mm:Map_GroupParties .
+
+mm:Map_GroupRule a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch pty:hasCompositionRule ; mork:exactABoxMatch pty:EachForOwnShare .
+
+mm:Map_GroupParty a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Group ; mork:mappingFor mm:C_LayerDocument ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path rdf:type ; sh:hasValue vrig:Document ] ] ;
+    mork:deferredMapping mm:Cls_Instrument ; mork:exactRBoxMatch ins:party ;
+    mork:conceptFQNameTemplate "instrument/{$vrig:rigId}" .
+
+mm:Map_GroupParties a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Group ; mork:mappingFor mm:C_LayerDocuments ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path rdf:type ; sh:hasValue vrig:Document ] ] ;
+    mork:deferredMapping mm:Cls_Instrument ; mork:exactRBoxMatch ins:party ;
+    mork:conceptFQNameTemplate "instrument/{$vrig:rigId}" .
+
+# ---- a placement is a membership of the group, an occupancy of a role by an actor, with its share ---------------
+
+mm:Map_Membership a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_Placement ; mork:deferredMapping mm:Cls_Membership ;
+    mork:conceptFQNameTemplate "membership/{$vrig:locator}" ;
+    mork:compositeNarrowerMapping mm:Map_Share , mm:Map_MemberOf , mm:Map_Occupancy .
+
+mm:Map_Share a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch pty:outwardShare ; mork:dataRef "key:share" .
+
+mm:Map_MemberOf a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Membership ; mork:mappingFor mm:C_OnLayer ; mork:deferredMapping mm:Cls_Group ;
+    mork:inverseRBoxMatch pty:memberOf ; mork:conceptFQNameTemplate "group/{$vrig:locator}" .
+
+mm:Map_Occupancy a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Membership ; mork:mappingFor mm:C_Same ; mork:deferredMapping mm:Cls_Occupancy ;
+    mork:inverseRBoxMatch pty:memberOccupancy ; mork:conceptFQNameTemplate "occupancy/{$vrig:locator}" ;
+    mork:compositeNarrowerMapping mm:Map_Actor , mm:Map_Role .
+
+mm:Map_Actor a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Occupancy ; mork:mappingFor mm:C_Same ; mork:deferredMapping mm:Cls_Actor ;
+    mork:inverseRBoxMatch pty:occupiedBy ; mork:conceptFQNameTemplate "actor/{$key:name}" ;
+    mork:compositeNarrowerMapping mm:Map_ActorLabel .
+
+mm:Map_ActorLabel a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch rdfs:label ; mork:dataRef "key:name" .
+
+mm:Map_Role a mork:DataMapping , mork:Lookup ; mork:mappingScheme mm:Layers ;
+    mork:exactRBoxMatch pty:inRole ; mork:exactTBoxMatch pty:Role ;
+    mork:referenceDataPath skos:notation ; mork:lookupDatatype xsd:string ;
+    mork:dataRef "key:role" .
+
+# ---- a programme stays a programme, with its period as a temporal scope -------------------------------------------
+
+mm:Map_Programme a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_Programme ; mork:deferredMapping mm:Cls_Programme ;
+    mork:conceptFQNameTemplate "programme/{$vrig:rigId}" ;
+    mork:compositeNarrowerMapping mm:Map_Period .
+
+mm:Map_Period a mork:DataMapping ; mork:mappingScheme mm:Layers ;
+    mork:broaderApplicative mm:Map_Programme ; mork:mappingFor mm:C_Same ;
+    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path key:period ; sh:minCount 1 ] ] ;
+    mork:deferredMapping mm:Cls_Scope ; mork:inverseRBoxMatch fnd:hasTemporalScope ;
+    mork:conceptFQNameTemplate "scope/{$vrig:rigId}" ;
+    mork:compositeNarrowerMapping mm:Map_PeriodFrom , mm:Map_PeriodTo .
+
+mm:Map_PeriodFrom a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch fnd:validFrom ; mork:dataRef "key:period/rdf:first" .
+mm:Map_PeriodTo a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch fnd:validTo ; mork:dataRef "key:period/rdf:rest/rdf:first" .
+
+# ---- an event is a loss event. The keys of its facts are the rig's own, mapped by its extension ------------------
+
+mm:Map_Event a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
+    mork:mappingFor mm:C_Event ; mork:deferredMapping mm:Cls_LossEvent ;
+    mork:conceptFQNameTemplate "event/{$vrig:rigId}" ;
+    mork:compositeNarrowerMapping mm:Map_EventLabel .
+
+mm:Map_EventLabel a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch rdfs:label ; mork:dataRef "key:summary" .

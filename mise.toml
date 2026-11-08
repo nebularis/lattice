@@ -609,6 +609,11 @@ run = "python -m pip install -e \"./tools/v_rig[test]\""
 description = "Run the verification rig tool's tests on the synthetic mini-rig: the three fact states, the two views, the rig unchanged, no rig text in a log line, outputs byte-stable and conforming to the module's shapes, and the refusals. Needs the package installed, which bootstrap:python does"
 run = "python -m pytest tools/v_rig -q"
 
+[tasks."v-rig"]
+description = "Run the verification rig tool on a rig named at run time: mise run v-rig -- --rig <path> [--extension <ttl>]... [--out <ignored path>]. Reads the rig in place and writes under .local/v-rig/<rig digest>/ by default"
+env = { PYTHONPATH = "{{config_root}}/tools" }
+run = "python -m v_rig"
+
 [tasks."check:wording-assembler"]
 description = "Run the Wording assembler's tests: the baseline model's decisions, slots, optional elements, determinism (WA5), refusal without a record (WA6), re-assembly and the rendered document (ADR-A139, ADR-A140). Needs the package installed, which bootstrap:python does"
 run = "python -m pytest tools/wording_assembler -q"

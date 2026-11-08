@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from rdflib import RDF, Graph
+from rdflib import RDF, Graph, Literal
 
 from .lift import VRIG, blind, canonical_turtle, findings_graph
 from .rig import Rig
@@ -63,16 +63,23 @@ def deny_terms(graph: Graph) -> list[str]:
     """One regular expression per line a staged change must not carry: every id, title, string value and body text of the
     rig, escaped, longest first, so that no rig text reaches a tracked line."""
     terms: set[str] = set()
-    for predicate in (VRIG.rigId, VRIG["title"], VRIG.text, VRIG["term"], VRIG.value, VRIG.expression, VRIG.referenceText):
+    for predicate in (VRIG.rigId, VRIG["title"], VRIG.text, VRIG["term"], VRIG.value, VRIG.expression, VRIG.referenceText, RDF.first):
         for obj in graph.objects(None, predicate):
+            if not isinstance(obj, Literal):
+                continue
             text = str(obj)
             if len(text) >= 4 and not re.fullmatch(r"[\d.,:\- ]+", text):
                 terms.add(re.escape(text))
     return sorted(terms, key=lambda t: (-len(t), t))
 
 
-def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict) -> dict[str, Path]:
+def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict, projection=None) -> dict[str, Path]:
     out.mkdir(parents=True, exist_ok=True)
+    if projection is not None:
+        (out / "p1").mkdir(exist_ok=True)
+        (out / "p1" / "source.ttl").write_text(canonical_turtle(projection.source), encoding="utf-8")
+        (out / "p1" / "layers.ttl").write_text(canonical_turtle(projection.layers), encoding="utf-8")
+        (out / "p1" / "compiled.sparql").write_text(projection.compiled_text + "\n", encoding="utf-8")
     written = {
         "ir": out / "ir.ttl",
         "blind": out / "blind.ttl",
@@ -87,6 +94,8 @@ def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict) -> dict[str
     header = ["# Generated from a rig by the v-rig tool. Feed it to the deny-terms check with",
               f"# LATTICE_DENY_TERMS={written['deny-terms']} mise run check:deny-terms", ""]
     written["deny-terms"].write_text("\n".join(header + deny_terms(graph)) + "\n", encoding="utf-8")
+    if projection is not None:
+        written.update({"p1 source": out / "p1" / "source.ttl", "p1 layers": out / "p1" / "layers.ttl", "p1 compiled": out / "p1" / "compiled.sparql"})
     log.info("wrote %d file(s) under %s", len(written), out)
     return written
 
