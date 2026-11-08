@@ -1,0 +1,21 @@
+Primary LiabiIity Policy
+
+This document is invented for the repository's tests and binds no one.
+
+## Declarations
+
+| Item | Entry |
+|---|---|
+| 1. Insured | Invented HoIdings Limited |
+| 2. Policy Period | 2027-01-01 to 2027-12-31 |
+| 3. Limit of Liability | XCD 1,000,000 each occurrence and in the aggregate |
+
+## Section 1 Insuring Agreement
+
+1.1 The Insurer wiII pay on behalf of the Insured those sums the Insured becomes legally obligated to pay as damages because of bodily injury or property damage to which this policy applies, subject to Section 3 and to the Limit of Liability in Item 3.
+
+## Section 3 Exclusions
+
+The Insurer will not pay for damages arising out of any of the following.
+
+1. Liability the Insured assumes under a contract.

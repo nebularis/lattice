@@ -297,6 +297,11 @@ path = "tools/mork_rdf"
 import-names = ["mork_rdf"]
 
 [[tools]]
+name = "v_rig"
+path = "tools/v_rig"
+import-names = ["v_rig"]
+
+[[tools]]
 name = "mork_transforms"
 path = "tools/mork_transforms"
 import-names = ["mork_transforms"]

@@ -46,7 +46,7 @@ run = "python tools/hooks.py install --bootstrap"
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring,studio]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/wording_assembler[test]\" -e \"./tools/mork_rdf[test]\" -e \"./tools/mork_transforms[test]\" -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/studio_harness[test]\" -e \"./tools/testing/jena[test]\" -e \"./tools/testing/sparql_probes[test]\" -e \"./tools/testing/mem_check[test]\" -e \"./tools/testing/requires[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring,studio]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/wording_assembler[test]\" -e \"./tools/mork_rdf[test]\" -e \"./tools/v_rig[test]\" -e \"./tools/mork_transforms[test]\" -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/studio_harness[test]\" -e \"./tools/testing/jena[test]\" -e \"./tools/testing/sparql_probes[test]\" -e \"./tools/testing/mem_check[test]\" -e \"./tools/testing/requires[test]\""
 
 # The knowledge index, after the packages it needs (ADR-A134 decision 13). The first build fetches
 # the embedding model, and where that is blocked it notes why and still builds, so bootstrap never
@@ -599,6 +599,15 @@ run = "python -m pip install -e \"./tools/mork_rdf[test]\""
 [tasks."check:mork-rdf"]
 description = "Run the MORK RDF-to-RDF compiler's tests: property paths, every construct of the catalogue example, the checks, determinism over shuffled inputs, rdflib against Oxigraph, time and governance, and one refusal per code. Needs the package installed, which bootstrap:python does"
 run = "python -m pytest tools/mork_rdf -q"
+
+[tasks."bootstrap:v-rig"]
+depends = ["bootstrap:pip"]
+description = "Install the verification rig tool"
+run = "python -m pip install -e \"./tools/v_rig[test]\""
+
+[tasks."check:v-rig"]
+description = "Run the verification rig tool's tests on the synthetic mini-rig: the three fact states, the two views, the rig unchanged, no rig text in a log line, outputs byte-stable and conforming to the module's shapes, and the refusals. Needs the package installed, which bootstrap:python does"
+run = "python -m pytest tools/v_rig -q"
 
 [tasks."check:wording-assembler"]
 description = "Run the Wording assembler's tests: the baseline model's decisions, slots, optional elements, determinism (WA5), refusal without a record (WA6), re-assembly and the rendered document (ADR-A139, ADR-A140). Needs the package installed, which bootstrap:python does"

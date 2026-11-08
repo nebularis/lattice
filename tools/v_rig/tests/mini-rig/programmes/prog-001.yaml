@@ -1,0 +1,34 @@
+id: prog-001
+name: Invented Holdings liability programme
+insured: Invented Holdings Limited
+period: [2027-01-01, 2027-12-31]
+currency: XCD
+basis: occurrence
+towers: 1
+attachment_chained: true
+note: an authoring note the tool carries as a fact and never interprets
+layers:
+  - layer: 1
+    document: prim-001
+    position: primary
+    attachment: 0
+    limit: 1000000
+    insurers:
+      - { name: Invented Insurer One, share: 1.0, role: sole }
+  - layer: 2
+    document: xs1-001
+    position: excess
+    attachment: 1000000
+    limit: 2000000
+    insurers:
+      - { name: Invented Insurer Two, share: 1.0, role: sole }
+  - layer: 3
+    documents: [xs2-001, xs2-002]
+    position: excess
+    attachment: 3000000
+    limit: 3000000
+    insurers:
+      - { name: Invented Insurer Three, share: 0.6, role: lead, document: xs2-001 }
+      - { name: Invented Insurer Four, share: 0.4, role: follow, document: xs2-002 }
+related_documents:
+  - { document: xs9-999, relation: summary, target: null }
