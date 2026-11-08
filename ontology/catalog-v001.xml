@@ -68,6 +68,10 @@
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/spc/0.20.0" uri="spc/spec/spc.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/surface-vocab/0.21.0" uri="surface/vocab/surface-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/surface/0.21.0" uri="surface/spec/surface.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/v-rig" uri="v-rig/spec/v-rig.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/v-rig-vocab" uri="v-rig/vocab/v-rig-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/v-rig-vocab/0.1.0" uri="v-rig/vocab/v-rig-vocab.ttl"/>
+    <uri name="https://www.nebularis.org/neuro-semantic/lattice/v-rig/0.1.0" uri="v-rig/spec/v-rig.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0" uri="vocabulary/spec/vocabulary.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.21.0" uri="wording/vocab/wording-vocab.ttl"/>
     <uri name="https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.0" uri="wording/spec/wording.ttl"/>

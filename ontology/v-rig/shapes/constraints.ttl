@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# The three states of a fact. Stated with a value, stated as not known, stated
+# with nothing. Exactly one holds, and a fact that is not stated is absent.
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+vrig:FactStateShape a sh:NodeShape ;
+	sh:targetClass vrig:Fact ;
+	sh:message "A fact is stated with a value or an item, stated as not known, or stated with nothing, and exactly one of these holds." ;
+	sh:xone (
+		[ sh:or (
+			[ sh:path vrig:value ; sh:minCount 1 ]
+			[ sh:path vrig:item ; sh:minCount 1 ]
+		) ]
+		[ sh:property [ sh:path vrig:unknown ; sh:hasValue true ] ]
+		[ sh:property [ sh:path vrig:empty ; sh:hasValue true ] ]
+	) .

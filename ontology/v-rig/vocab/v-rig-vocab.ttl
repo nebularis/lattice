@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/v-rig-vocab> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/v-rig-vocab/0.1.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/v-rig/0.1.0> ;
+    dct:description """A verification rig is a directory of invented documents, each written as Markdown with YAML front matter, with programme files and an events file in YAML, in a stated format with a version. A tool reads a rig and produces one intermediate representation of each case, an RDF graph under the vocabulary here, from which every projection is generated, the graph over the layers, the generated theory, the test vectors and the findings. The vocabulary states what the representation holds and the shapes state what a well-formed representation is, so a consumer outside the repository can pin both at a tag and read, write or diff a representation without the tool.
+
+The vocabulary models no domain. A key of the rig's format is carried as a fact with its key name as a string, a token of the rig's own vocabulary is carried as an uninterpreted literal, and a reading of a legal concept is a fact whose value is a token. What a key or a token means is a mapping's business, never the vocabulary's, so adding a key or a token to a rig adds no term here.
+
+Every node carries a locator, which names the document, programme or events file it was read from, the view it was read in, and its position, and a digest the tool computes over the normalised text the node was read from. A fact has three states, stated with a value, stated as not known, and not stated, and the third is the absence of the fact. Front matter and the body of a document are two views of it, declared and blind, and a rendering of a document, a lossy text form of it, is a view of its own. A finding names what a run found, by kind, document and locator, under an identifier derived from those three and the key, so two runs of one rig revision give the same identifiers and a resolved finding disappears from a diff by id.""" ;
+    dct:creator <https://github.com/nebularis> .
+
+dct:creator a owl:AnnotationProperty .
+
+dct:description a owl:AnnotationProperty .
+
+vrig:Blind a owl:NamedIndividual, vrig:View ;
+    rdfs:comment "The blind view, the body of a document alone, with the front matter reduced to the id." .
+
+vrig:Declared a owl:NamedIndividual, vrig:View ;
+    rdfs:comment "The declared view, the front matter and the programme and events files, taken as stated." .
+
+vrig:Disagreement a owl:NamedIndividual, vrig:FindingKind ;
+    rdfs:comment "A value the declared view and a read case give differently." .
+
+vrig:EmptyQuery a owl:NamedIndividual, vrig:FindingKind ;
+    rdfs:comment "A competency query that returns nothing because the encoding has no way to say the fact." .
+
+vrig:Inconsistent a owl:NamedIndividual, vrig:FindingKind ;
+    rdfs:comment "A projected graph a reasoner found inconsistent." .
+
+vrig:ProseOnlyMeaning a owl:NamedIndividual, vrig:FindingKind ;
+    rdfs:comment "A body node whose meaning only its prose carries." .
+
+vrig:ReasonerUnavailable a owl:NamedIndividual, vrig:FindingKind ;
+    rdfs:comment "A consistency check that did not run because no reasoner was available." .
+
+vrig:ShapeViolation a owl:NamedIndividual, vrig:FindingKind ;
+    rdfs:comment "A projected graph that a layer's shapes refuse." .
+
+vrig:UncertainMapping a owl:NamedIndividual, vrig:FindingKind ;
+    rdfs:comment "A key a mapping row reads under a stated doubt about the target term." .
+
+vrig:UnknownFact a owl:NamedIndividual, vrig:FindingKind ;
+    rdfs:comment "A fact an evaluation asked for that the source states as not known." .
+
+vrig:UnmappedKey a owl:NamedIndividual, vrig:FindingKind ;
+    rdfs:comment "A key no mapping row reads." .
+
+vrig:UnresolvedReference a owl:NamedIndividual, vrig:FindingKind ;
+    rdfs:comment "A reference or an id-valued fact nothing resolves." .

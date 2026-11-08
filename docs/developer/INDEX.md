@@ -80,7 +80,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
 | temporal-binding-consumer-hardening | unit |  | built 2026-09-25 |  | [plan](plans/temporal-binding-consumer-hardening.md), [status](status/temporal-binding-consumer-hardening.md) |
 | toolchain-jdk25-python314 | unit |  | merged 2026-09-23 |  | [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) |
-| v-rig | unit | VR | building 2026-11-07 | VR-1 | [plan](plans/v-rig.md), [status](status/v-rig.md) |
+| v-rig | unit | VR | building 2026-11-08 | VR-1 | [plan](plans/v-rig.md), [status](status/v-rig.md), 1 Validation Packs |
 | validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
@@ -517,8 +517,8 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | WL-7 | the status warning, `studio:status`, the operations guide, the ADR addendum | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-8 | a run that leaves no process behind when its test process is killed | studio-worker-liveness | built 2026-11-06 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-9 | a late `Failed` never replaces a `Succeeded` | studio-worker-liveness | built 2026-11-06 |  | docs/developer/status/studio-worker-liveness.md#position |
-| VR-1 | the module `ontology/v-rig/`, its vocabulary, shapes, Proposed ADR and catalogue entry | v-rig | building 2026-11-07 |  | docs/developer/status/v-rig.md#board |
-| VR-2 | the synthetic mini-rig, then the lifter with the declared and blind views | v-rig | planned | VR-1 | docs/developer/status/v-rig.md#board |
+| VR-1 | the module `ontology/v-rig/`, its vocabulary, shapes, Proposed ADR and catalogue entry | v-rig | built 2026-11-08 |  | docs/developer/status/v-rig.md#board |
+| VR-2 | the synthetic mini-rig, then the lifter with the declared and blind views | v-rig | building 2026-11-08 |  | docs/developer/status/v-rig.md#board |
 | VR-3 | the tracked mapping scheme and the extension seam | v-rig | planned | VR-2 | docs/developer/status/v-rig.md#board |
 | VR-4 | P1, the layer graph against shapes, reasoner and competency queries | v-rig | planned | VR-3 | docs/developer/status/v-rig.md#board |
 | VR-5 | P2 and P3, the generated theory and the test vectors | v-rig | planned | VR-3 | docs/developer/status/v-rig.md#board |
