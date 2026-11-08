@@ -5,7 +5,7 @@
 **Unit ID:** `v-rig`
 **Plan:** [v-rig.md](../plans/v-rig.md)
 **ADR:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), Proposed 2026-11-08
-**Status:** building 2026-11-08. VR-1 to VR-6 built, VR-7 picked up.
+**Status:** built 2026-11-08. VR-1 to VR-7 built, the unit awaits the maintainer's review, ADR-A153's acceptance and the module's four release tags.
 
 ## Board
 
@@ -17,7 +17,7 @@
 | VR-4 | P1, the layer graph against shapes, reasoner and competency queries | built 2026-11-08 |  |
 | VR-5 | P2 and P3, the generated theory and the test vectors | built 2026-11-08 |  |
 | VR-6 | P4, findings as RDF with stable ids and the report rendered from them | built 2026-11-08 |  |
-| VR-7 | the seam for a read case | building 2026-11-08 |  |
+| VR-7 | the seam for a read case | built 2026-11-08 |  |
 
 ## History
 
@@ -28,3 +28,4 @@
 - 2026-11-08: VR-4 built. `tools/v_rig/p1_checks.py` runs each target layer's shapes, the reasoning test kit's consistency check and the competency queries under `ontology/v-rig/projection/competency/` over P1, 52 tests passing. On the mini-rig the layers refuse the projection 142 times, the reasoner finds it inconsistent over a date where Foundation wants a dateTime, and 14 of 28 competency questions have no answer. The Validation Pack [VR-4](../validation/VR-4.md) names each group, the requirements they are for the ensemble, ledger and programme plans. VR-5 marked building in the same commit.
 - 2026-11-08: VR-5 built. `cases.py`, `p2.py` and `p3.py` in `tools/v_rig/`, the vector schema `contracts/v-rig/vectors.schema.json` at `lattice-v-rig-vectors/1`, and `vrig:InputBinding` in the vocabulary, 63 tests passing. The generated session built once on HOL in 2 seconds. The Validation Pack [VR-5](../validation/VR-5.md) records the checks and what waits for track E. VR-6 marked building in the same commit.
 - 2026-11-08: VR-6 built. `report.py` renders `report.md` from the findings graph, by document and locator, with the run's identifying lines first, 68 tests passing. A key an input binding reads now counts as mapped. The Validation Pack [VR-6](../validation/VR-6.md) records the checks. VR-7 marked building in the same commit.
+- 2026-11-08: VR-7 built, and with it the unit. `readcase.py` takes a Turtle graph in the vocabulary from outside, validates it and compares it with the declared view, 73 tests passing. The Validation Pack [VR-7](../validation/VR-7.md) records the checks and states the plan's Done when against the mini-rig. The unit waits on the maintainer for ADR-A153, the tags `v-rig-v0.1.0`, `v-rig-projection-v0.1.0`, `v-rig-shapes-v0.1.0` and `v-rig-vocab-v0.1.0`, and a run on a rig.

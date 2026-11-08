@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# A read case over the mini-rig, as a reader outside the repository might write one from the bodies alone. Invented, as
+# the mini-rig is. Two facts agree with the declared view, one disagrees on a value, one disagrees on a state, and one
+# states a key the declared view does not, which is no disagreement.
+
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rc:   <urn:example:v-rig:read-case:> .
+
+rc:prim a vrig:Document ; vrig:rigId "prim-001" ; vrig:formatVersion "1" ; vrig:locator rc:loc-prim ;
+    vrig:digest "0000000000000000000000000000000000000000000000000000000000000000" .
+rc:loc-prim a vrig:Locator ; vrig:documentId "prim-001" ; vrig:view vrig:Blind .
+
+# Agrees: the limit read from the declarations is the declared limit.
+rc:f1 a vrig:Fact ; vrig:of rc:prim ; vrig:key "limit" ; vrig:value 1000000 ; vrig:locator rc:l1 ;
+    vrig:digest "1111111111111111111111111111111111111111111111111111111111111111" .
+rc:l1 a vrig:Locator ; vrig:documentId "prim-001" ; vrig:view vrig:Blind ; vrig:section "Declarations" ; vrig:row "2" .
+
+# Agrees: the trigger.
+rc:f2 a vrig:Fact ; vrig:of rc:prim ; vrig:key "trigger" ; vrig:value "occurrence" ; vrig:locator rc:l2 ;
+    vrig:digest "2222222222222222222222222222222222222222222222222222222222222222" .
+rc:l2 a vrig:Locator ; vrig:documentId "prim-001" ; vrig:view vrig:Blind ; vrig:section "1" ; vrig:clause "1.2" .
+
+# Disagrees on a value: the reader took the retention row for the attachment.
+rc:f3 a vrig:Fact ; vrig:of rc:prim ; vrig:key "attachment" ; vrig:value 25000 ; vrig:locator rc:l3 ;
+    vrig:digest "3333333333333333333333333333333333333333333333333333333333333333" .
+rc:l3 a vrig:Locator ; vrig:documentId "prim-001" ; vrig:view vrig:Blind ; vrig:section "Declarations" ; vrig:row "3" .
+
+rc:xs1 a vrig:Document ; vrig:rigId "xs1-001" ; vrig:formatVersion "1" ; vrig:locator rc:loc-xs1 ;
+    vrig:digest "4444444444444444444444444444444444444444444444444444444444444444" .
+rc:loc-xs1 a vrig:Locator ; vrig:documentId "xs1-001" ; vrig:view vrig:Blind .
+
+# Disagrees on a state: the body does not say how underlying cover is used up, so the reader states it as not known.
+rc:f4 a vrig:Fact ; vrig:of rc:xs1 ; vrig:key "exhaustion" ; vrig:unknown true ; vrig:locator rc:l4 ;
+    vrig:digest "5555555555555555555555555555555555555555555555555555555555555555" .
+rc:l4 a vrig:Locator ; vrig:documentId "xs1-001" ; vrig:view vrig:Blind ; vrig:section "1" ; vrig:clause "1.2" .
+
+# States a key the declared view does not.
+rc:f5 a vrig:Fact ; vrig:of rc:xs1 ; vrig:key "notice_condition" ; vrig:value "replaces the underlying" ; vrig:locator rc:l5 ;
+    vrig:digest "6666666666666666666666666666666666666666666666666666666666666666" .
+rc:l5 a vrig:Locator ; vrig:documentId "xs1-001" ; vrig:view vrig:Blind ; vrig:section "2" ; vrig:row "1" .

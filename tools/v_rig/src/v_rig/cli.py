@@ -18,6 +18,7 @@ from . import p1_checks
 from . import p2 as p2_module
 from . import p3 as p3_module
 from .cases import input_bindings
+from . import readcase
 from .lift import RunInfo, lift, mark_readings
 from .out import OutError, counts, repository_root, resolve_out, write_outputs
 from .rig import RigError, read_rig
@@ -47,6 +48,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", help="the output directory, default .local/v-rig/<rig digest>/ in the checkout")
     parser.add_argument("--extension", action="append", default=[], metavar="TTL",
                         help="a rig's extension graph, its reference data and its own mapping schemes, run after the tracked scheme. Repeatable")
+    parser.add_argument("--case", action="append", default=[], metavar="TTL",
+                        help="a read case, a Turtle graph in the vrig vocabulary written outside the repository, validated and compared with the declared view. Repeatable")
     parser.add_argument("--no-reasoner", action="store_true", help="skip the consistency check, which is then a reasoner-unavailable finding")
     parser.add_argument("--build-theory", action="store_true", help="build the generated P2 session with Isabelle, one build on HOL alone")
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -61,7 +64,13 @@ def main(argv: list[str] | None = None) -> int:
         projection = p1_module.project(graph, [Path(e) for e in args.extension])
         mark_readings(graph, projection.reading_keys)
         checks = p1_checks.check_all(graph, projection.layers, reasoner=not args.no_reasoner)
-        p1_module.add_findings(graph, URIRef(canon.run_iri(rig.digest)), projection.findings + checks.findings)
+        disagreements = []
+        module_graphs = readcase.module_graphs() if args.case else None
+        for path in args.case:
+            case = readcase.load(Path(path), module_graphs)
+            disagreements += readcase.compare(graph, case)
+            readcase.add_read_case(graph, case)
+        p1_module.add_findings(graph, URIRef(canon.run_iri(rig.digest)), projection.findings + checks.findings + disagreements)
         bindings = input_bindings([Path(e) for e in args.extension])
         found_vectors = p3_module.vectors(graph, rig.digest, projection.reading_keys, bindings, rig.file_digests)
         p3_module.validate_vectors(found_vectors)
@@ -77,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
                    "consistent": checks.consistent, "competency": checks.competency},
             "p2": {"session": p2_module.SESSION, "built": None},
             "p3": {"vectors": sorted(found_vectors), "input_bindings": bindings},
+            "read_cases": {"files": [str(Path(p).name) for p in args.case], "disagreements": len(disagreements)},
         }
         if args.build_theory:
             p2_module.write_theory(theory_text, out)
@@ -88,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
         written = write_outputs(rig, graph, out, record, projection=projection, checks=checks)
         for path in p2_module.write_theory(theory_text, out) + p3_module.write_vectors(found_vectors, out):
             written[str(path.relative_to(out))] = path
-    except (RigError, OutError) as error:
+    except (RigError, OutError, readcase.ReadCaseError) as error:
         print(f"v_rig: {error}", file=sys.stderr)
         return 2
     print(f"rig digest        {rig.digest}")
