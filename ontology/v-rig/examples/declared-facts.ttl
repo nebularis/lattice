@@ -1,0 +1,169 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A document's front matter is the author's own summary of it, a set
+# of keys with values. The representation carries every key as a fact of the
+# document, in the declared view, and keeps three states apart: a fact stated
+# with a value, a fact stated as not known, and a key that is absent. Nothing
+# here collapses the last two into false or zero.
+#
+# An invented document, doc-a, of format version 1, states a limit, lists two
+# lines of business, states its attachment as not known, gives a placement of
+# two insurers as a list of small mappings, and says nothing at all about
+# exhaustion.
+#
+# | Construct                                   | Where                       |
+# |---------------------------------------------|-----------------------------|
+# | a document with its id and format version   | ex:doc-a                    |
+# | a fact stated with a value                  | ex:fact-limit               |
+# | a fact with several values, a list key      | ex:fact-lines               |
+# | a fact stated as not known                  | ex:fact-attachment          |
+# | a fact absent                               | no node carries the key "exhaustion" |
+# | a fact whose value is structured            | ex:fact-placement, ex:placement-0  |
+# | a locator in the declared view              | ex:loc-limit                |
+#
+# Every node carries a locator naming the document and the position in it, and
+# a digest the tool computed over the normalised text it was read from. The
+# digests here are the right length and invented.
+
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <urn:example:v-rig:declared-facts:> .
+
+ex:doc-a a vrig:Document ;
+    vrig:rigId "doc-a" ;
+    vrig:formatVersion "1" ;
+    vrig:locator ex:loc-doc-a ;
+    vrig:digest "0f3d2c1b0a9f8e7d6c5b4a3928170605f4e3d2c1b0a9f8e7d6c5b4a392817060" .
+
+ex:loc-doc-a a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared .
+
+# Stated with a value.
+
+ex:fact-limit a vrig:Fact ;
+    vrig:of ex:doc-a ;
+    vrig:key "limit" ;
+    vrig:value 1000000 ;
+    vrig:locator ex:loc-limit ;
+    vrig:digest "1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809" .
+
+ex:loc-limit a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "limit" ;
+    vrig:line 12 .
+
+# A list key is one fact with several values. Order carries no meaning here.
+
+ex:fact-lines a vrig:Fact ;
+    vrig:of ex:doc-a ;
+    vrig:key "lines" ;
+    vrig:value "line-token-1" , "line-token-2" ;
+    vrig:locator ex:loc-lines ;
+    vrig:digest "2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a" .
+
+ex:loc-lines a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "lines" .
+
+# Stated as not known. The key is present and its value is the unknown marker.
+
+ex:fact-attachment a vrig:Fact ;
+    vrig:of ex:doc-a ;
+    vrig:key "attachment" ;
+    vrig:unknown true ;
+    vrig:locator ex:loc-attachment ;
+    vrig:digest "3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b" .
+
+ex:loc-attachment a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "attachment" .
+
+# A structured value. The fact's items are records, each a carrier of facts of
+# its own, indexed by position in the list.
+
+ex:fact-placement a vrig:Fact ;
+    vrig:of ex:doc-a ;
+    vrig:key "placement" ;
+    vrig:item ex:placement-0 , ex:placement-1 ;
+    vrig:locator ex:loc-placement ;
+    vrig:digest "4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c" .
+
+ex:loc-placement a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "placement" .
+
+ex:placement-0 a vrig:Record ;
+    vrig:index 0 ;
+    vrig:locator ex:loc-placement-0 ;
+    vrig:digest "5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d" .
+
+ex:loc-placement-0 a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "placement[0]" .
+
+ex:fact-placement-0-insurer a vrig:Fact ;
+    vrig:of ex:placement-0 ;
+    vrig:key "insurer" ;
+    vrig:value "Invented Insurer One" ;
+    vrig:locator ex:loc-placement-0-insurer ;
+    vrig:digest "6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e" .
+
+ex:loc-placement-0-insurer a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "placement[0].insurer" .
+
+ex:fact-placement-0-share a vrig:Fact ;
+    vrig:of ex:placement-0 ;
+    vrig:key "share" ;
+    vrig:value 0.6 ;
+    vrig:locator ex:loc-placement-0-share ;
+    vrig:digest "708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f" .
+
+ex:loc-placement-0-share a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "placement[0].share" .
+
+ex:placement-1 a vrig:Record ;
+    vrig:index 1 ;
+    vrig:locator ex:loc-placement-1 ;
+    vrig:digest "8192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f70" .
+
+ex:loc-placement-1 a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "placement[1]" .
+
+ex:fact-placement-1-share a vrig:Fact ;
+    vrig:of ex:placement-1 ;
+    vrig:key "share" ;
+    vrig:value 0.4 ;
+    vrig:locator ex:loc-placement-1-share ;
+    vrig:digest "92a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7081" .
+
+ex:loc-placement-1-share a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "placement[1].share" .
+
+# A key whose value was empty in the source, a null or an empty list, is
+# stated and holds nothing. This is the third marker, distinct from unknown.
+
+ex:fact-underlying a vrig:Fact ;
+    vrig:of ex:doc-a ;
+    vrig:key "underlying" ;
+    vrig:empty true ;
+    vrig:locator ex:loc-underlying ;
+    vrig:digest "a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192" .
+
+ex:loc-underlying a vrig:Locator ;
+    vrig:documentId "doc-a" ;
+    vrig:view vrig:Declared ;
+    vrig:keyPath "underlying" .

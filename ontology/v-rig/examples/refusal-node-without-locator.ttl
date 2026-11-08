@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused: a body node with no locator. Every node the representation
+# holds says which document it came from and where in it, so a finding about
+# it can be placed and a run can be compared with the next. Refused by the
+# structural shape on located nodes, which asks for exactly one locator.
+
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <urn:example:v-rig:refusal-node-without-locator:> .
+
+ex:doc-r a vrig:Document ;
+    vrig:rigId "doc-r" ;
+    vrig:formatVersion "1" ;
+    vrig:locator ex:loc-doc-r ;
+    vrig:digest "8192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f70" .
+
+ex:loc-doc-r a vrig:Locator ;
+    vrig:documentId "doc-r" ;
+    vrig:view vrig:Blind .
+
+ex:cl-1-1 a vrig:BodyNode ;
+    vrig:kind "clause" ;
+    vrig:number "1.1" ;
+    vrig:text "A clause with no locator." ;
+    vrig:parent ex:doc-r ;
+    vrig:ordinal 0 ;
+    vrig:digest "92a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7081" .

@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused: a finding with a locator and a message but no kind. A
+# consumer triages findings by kind, document and locator, and derives each
+# finding's identifier from them, so a finding without a kind has no stable
+# identity. Refused by the structural shape on findings, which asks for
+# exactly one kind.
+
+@prefix vrig: <https://www.nebularis.org/neuro-semantic/lattice/v-rig#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <urn:example:v-rig:refusal-finding-without-kind:> .
+
+ex:doc-r a vrig:Document ;
+    vrig:rigId "doc-r" ;
+    vrig:formatVersion "1" ;
+    vrig:locator ex:loc-doc-r ;
+    vrig:digest "a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192" .
+
+ex:loc-doc-r a vrig:Locator ;
+    vrig:documentId "doc-r" ;
+    vrig:view vrig:Declared .
+
+ex:finding-1 a vrig:Finding ;
+    vrig:message "Something was found and not classified." ;
+    vrig:locator ex:loc-doc-r .
