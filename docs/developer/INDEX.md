@@ -260,7 +260,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FMC-2.3 | model `ADR-A116`'s own rule against HQ-4/IMA-D4a | formal-methods-track-c | planned 2026-10-08 |  | docs/developer/status/formal-methods-track-c.md#slices |
 | FMC-3 | slot exclusivity, SMT | formal-methods-track-c | planned | FMC-2 (done) | docs/developer/status/formal-methods-track-c.md#slices |
 | FMC-4 | a design model of ADR-A130, the Ensemble, in Alloy | formal-methods-track-c | built 2026-10-27 |  | docs/developer/status/formal-methods-track-c.md#slices |
-| FME-0 | the prelude session `tools/proofs/base/`, `LatticeBase` over the HOL-Library theories every layer's proofs reach for, every layer session parenting on it | formal-methods-track-e | planned | the ADR-A-FM2 addendum of 2026-11-08, drafted and proposed, one session that is not a layer's | docs/developer/status/formal-methods-track-e.md#slices |
+| FME-0 | the prelude session `tools/proofs/base/`, `LatticeBase` over the HOL-Library theories every layer's proofs reach for, every layer session parenting on it | formal-methods-track-e | planned |  | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-1.0 | home, generation tooling | formal-methods-track-e | built 2026-10-09 |  | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-1.1 | the kernel, for real | formal-methods-track-e | built 2026-10-06 |  | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-1.2 | rounding and residual theorem | formal-methods-track-e | dropped 2026-10-07 | track B's B4, which waits on CCS's C12 | docs/developer/status/formal-methods-track-e.md#slices |

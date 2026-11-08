@@ -93,7 +93,7 @@ No action needed on E1 until one of those two clears.
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| FME-0 | the prelude session `tools/proofs/base/`, `LatticeBase` over the HOL-Library theories every layer's proofs reach for, every layer session parenting on it | planned | the ADR-A-FM2 addendum of 2026-11-08, drafted and proposed, one session that is not a layer's |
+| FME-0 | the prelude session `tools/proofs/base/`, `LatticeBase` over the HOL-Library theories every layer's proofs reach for, every layer session parenting on it | planned |  |
 | FME-1.0 | home, generation tooling | built 2026-10-09 |  |
 | FME-1.1 | the kernel, for real | built 2026-10-06, folded into FME-1.0's pass |  |
 | FME-1.2 | rounding and residual theorem | dropped 2026-10-07, from this track's E1 — its real home is FME-3/E4, after track B's B4 (see Log, ) | track B's B4, which waits on CCS's C12 |
@@ -113,7 +113,7 @@ No action needed on E1 until one of those two clears.
 
 ## Log
 
-- 2026-11-08: FME-0 added and planned, the prelude session, after `HOL-Library` built on machine R under a memory limit and the maintainer decided the ledger plan's LG-Q14 as (d). The [HOL sessions survey](../sketches/hol-sessions-survey.md) names the nineteen theories it imports and why. Plan only. The same day the maintainer ruled that the heap is never built by `bootstrap` and is built on first use by the check that needs it, which is STD-324, with BL-17 for the test-kit jars.
+- 2026-11-08: FME-0 added and planned, the prelude session, after `HOL-Library` built on machine R under a memory limit and the maintainer decided the ledger plan's LG-Q14 as (d). The [HOL sessions survey](../sketches/hol-sessions-survey.md) names the nineteen theories it imports and why. Plan only. The ADR-A-FM2 addendum was accepted the same day. The same day the maintainer ruled that the heap is never built by `bootstrap` and is built on first use by the check that needs it, which is STD-324, with BL-17 for the test-kit jars.
 
 - 2026-10-06: sketch and plan written, following track D's close and ADR-A-FM1. E1 split into
   FME-1.0 (home and generation tooling, a prerequisite the epic's numbering does not name), FME-1.1 (the
