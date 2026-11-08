@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** verified 2026-11-06. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
+**Status:** building 2026-11-08. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
 
 ## Position
 
@@ -21,6 +21,7 @@
 | VM-6 | the moves, the page at the old path, TD-2 cleared | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
 | VM-7 | cloud sessions: the pin at `v0.2.14`, the setup script and its pasted lines, the hook | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
 | VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
+| VM-9 | the quanta by Вивід's own kind, the pin at v0.2.23 | building 2026-11-08 |  |
 
 ## Next action
 
@@ -48,6 +49,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-08: VM-9 begun on `vyvid-quanta-builtin` at the maintainer's word. Вивід 0.2.23 has the built-in `quanta` kind and a repository catalogue reader, and on this checkout and on `docs/placement-vehicles-structure` the kind gave exactly the entries the command extractor gives.
 - 2026-11-07: Вивід pinned at `v0.2.16`, at the maintainer's word. 0.2.15 makes `vyd` keep the stream's own encoding and never crash on output or a closed pipe, and decode a child's output as UTF-8, so a project under a folder with Chinese characters on a GBK machine is found rather than its identifier check passing falsely. 0.2.16 decodes git's paths as file names and reports a path the machine cannot name, proven on Linux with eight legacy locales installed.
 - 2026-11-07: Вивід pinned at `v0.2.17`, at the maintainer's word. 0.2.17 adds `vyd cloud script`, which writes a cloud environment's setup script holding the private domains a person names, always on there, and the public ones to clone. The script ends without `exit`, so the last two lines of `tools/claude-cloud-setup.sh`'s header can be pasted after it.
 - 2026-11-07: a setup that stalled for more than five minutes on the index and the dependencies, while a download host was failing, finished in 160 seconds when run by hand in a session. A step of the cloud setup now gets no standard input, since setup's own may be a pipe that never closes, and a step that waits on the network is stopped at `LATTICE_STEP_LIMIT`, 240 seconds by default, through `timeout`, which stops the processes it started too. A stopped dependency step is left for the session's hook, and a stopped index is a failed step. This reverses VM-8's rule that a step is never killed, at the maintainer's word. `test_vm8_07` and `test_vm8_08` each caught their fault when it was put back. The header gives the one command that writes the whole setup with private domains, through `vyd cloud script --run`.
