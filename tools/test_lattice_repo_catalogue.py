@@ -47,7 +47,7 @@ def test_rc1_t1_the_catalogue_lists_every_module_in_order() -> None:
     catalogue = rc.load(ROOT)
     names = list(catalogue.modules)
     assert names[:9] == ["foundation", "vocabulary", "quantification", "ledger", "party", "eligibility", "wording", "behaviour", "instrument"]
-    assert len(names) == 20 and names[-1] == "governance"
+    assert len(names) == 21 and names[-1] == "governance"
     assert catalogue.module("instrument").files("shapes") == tuple(
         Path("ontology/instrument/shapes") / f for f in ("structural.ttl", "constraints.ttl", "single-expression.ttl")
     )

@@ -79,6 +79,8 @@ def _vocab() -> Graph:
 
 
 PERIL = ROOT / "ontology" / "applied" / "insurance" / "peril"
+ASSET_CLASS = ROOT / "ontology" / "applied" / "asset-class"
+ASCV = Namespace("https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#")
 
 
 FIXTURE_PATHS = (
@@ -87,6 +89,8 @@ FIXTURE_PATHS = (
     PERIL / "spec" / "peril.ttl",
     PERIL / "vocab" / "peril-vocab.ttl",
     PERIL / "vocab" / "peril-intensity.ttl",
+    ASSET_CLASS / "spec" / "asset-class.ttl",
+    ASSET_CLASS / "vocab" / "asset-class-vocab.ttl",
     MODULE / "examples" / "core.ttl",
     MODULE / "examples" / "attributes.ttl",
 )
@@ -170,6 +174,7 @@ def test_air42_01_spec_and_vocab_parse_every_import_resolves():
         "https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.0",
         "https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.0",
         "https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.0",
+        "https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.0",
     }
 
 
@@ -247,6 +252,55 @@ def test_air41_06_asset_with_locatedat_and_presence_is_rejected():
     data.add((presence, AEO.presenceLocation, EX.warehouse))
     data.add((EX["factory-building"], AEO.presence, presence))
     assert ASSET in shapes_for(EX["factory-building"], data)
+
+
+# ---- ASC3-01 to ASC3-04: asset classes from the reference edition, and their mobility -----------
+
+
+@pytest.mark.parametrize("example", ["core.ttl", "versions.ttl", "units.ttl"])
+def test_asc3_01_every_example_asset_class_is_in_the_reference_edition(example: str) -> None:
+    data = _graph(ASSET_CLASS / "vocab" / "asset-class-vocab.ttl", MODULE / "examples" / example)
+    classes = set(data.objects(None, AEO.assetClass))
+    assert classes and all((c, SKOS.inScheme, ASCV.AssetClassScheme) in data for c in classes), classes
+
+
+def _with_presence(data: Graph, asset: URIRef) -> None:
+    presence = BNode()
+    data.add((presence, RDF.type, AEO.Presence))
+    data.add((presence, AEO.presenceLocation, EX.warehouse))
+    data.add((asset, AEO.presence, presence))
+
+
+def test_asc3_02_an_asset_of_a_mobile_class_with_one_location_is_rejected() -> None:
+    data = _fixture()
+    data.remove((EX["factory-building"], AEO.assetClass, None))
+    data.add((EX["factory-building"], AEO.assetClass, ASCV.Vessel))
+    assert ASSET in shapes_for(EX["factory-building"], data)
+
+
+def test_asc3_03_an_asset_of_a_stationary_class_with_presences_is_rejected() -> None:
+    data = _fixture()
+    data.remove((EX["factory-building"], AEO.locatedAt, None))
+    _with_presence(data, EX["factory-building"])
+    assert ASSET in shapes_for(EX["factory-building"], data)
+
+
+@pytest.mark.parametrize("located", [True, False])
+def test_asc3_04_an_asset_whose_class_states_no_mobility_may_have_either(located: bool) -> None:
+    data = _fixture()
+    data.remove((EX["factory-contents"], AEO.assetClass, None))
+    data.add((EX["factory-contents"], AEO.assetClass, ASCV.ComputerHardware))
+    if not located:
+        data.remove((EX["factory-contents"], AEO.locatedAt, None))
+        _with_presence(data, EX["factory-contents"])
+    assert ASSET not in shapes_for(EX["factory-contents"], data)
+    if not located:
+        mobile = _fixture()
+        mobile.remove((EX["factory-contents"], AEO.assetClass, None))
+        mobile.add((EX["factory-contents"], AEO.assetClass, ASCV.MobilePlant))
+        mobile.remove((EX["factory-contents"], AEO.locatedAt, None))
+        _with_presence(mobile, EX["factory-contents"])
+        assert ASSET not in shapes_for(EX["factory-contents"], mobile)
 
 
 # ---- AIR41-07: valuation with both, and with neither ----------------------------------------------

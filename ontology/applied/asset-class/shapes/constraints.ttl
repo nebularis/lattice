@@ -1,0 +1,103 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Constraints of the asset class module (README section 7). SHACL-SPARQL only,
+# so pySHACL's sh:sourceShape names the shape itself.
+
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix asc:     <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#> .
+@prefix asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#> .
+
+asc:ReferenceTreeShape a sh:NodeShape ;
+    sh:targetNode asc-voc:AssetClassScheme, asc-voc:MobilityScheme ;
+    sh:sparql [
+        sh:message "A top concept of a reference scheme is listed by the scheme as a top concept, and the other way round." ;
+        sh:select """
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT $this ?value WHERE {
+              { ?value skos:topConceptOf $this . FILTER NOT EXISTS { $this skos:hasTopConcept ?value } }
+              UNION
+              { $this skos:hasTopConcept ?value . FILTER NOT EXISTS { ?value skos:topConceptOf $this } }
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "A concept of a reference scheme other than a top concept has exactly one broader concept, in the same scheme." ;
+        sh:select """
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT $this ?value WHERE {
+              {
+                SELECT $this ?value (COUNT(DISTINCT ?b) AS ?n) (COUNT(DISTINCT ?c) AS ?m) WHERE {
+                  ?value skos:inScheme $this .
+                  FILTER NOT EXISTS { ?value skos:topConceptOf $this }
+                  OPTIONAL { ?value skos:broader ?b }
+                  OPTIONAL { ?value skos:broader ?c . ?c skos:inScheme $this }
+                } GROUP BY $this ?value
+              }
+              FILTER (?n != 1 || ?m != 1)
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "A top concept of a reference scheme has no broader concept." ;
+        sh:select """
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT $this ?value WHERE {
+              ?value skos:topConceptOf $this ; skos:broader ?b .
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "Every concept of a reference scheme reaches one of its top concepts through skos:broader." ;
+        sh:select """
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT $this ?value WHERE {
+              ?value skos:inScheme $this .
+              FILTER NOT EXISTS { ?value skos:broader* ?top . ?top skos:topConceptOf $this }
+            }
+        """ ] .
+
+asc:ReferenceDocumentationShape a sh:NodeShape ;
+    sh:targetNode asc-voc:AssetClassScheme, asc-voc:MobilityScheme ;
+    sh:sparql [
+        sh:message "Every concept of a reference scheme has one preferred label, one definition and at least one note, each in @en." ;
+        sh:select """
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            SELECT $this ?value WHERE {
+              {
+                SELECT $this ?value (COUNT(DISTINCT ?l) AS ?nl) (COUNT(DISTINCT ?d) AS ?nd) (COUNT(DISTINCT ?o) AS ?no) WHERE {
+                  ?value skos:inScheme $this .
+                  OPTIONAL { ?value skos:prefLabel ?l . FILTER (langMatches(lang(?l), "en")) }
+                  OPTIONAL { ?value skos:definition ?d . FILTER (langMatches(lang(?d), "en")) }
+                  OPTIONAL { ?value skos:note ?o . FILTER (langMatches(lang(?o), "en")) }
+                } GROUP BY $this ?value
+              }
+              FILTER (?nl != 1 || ?nd != 1 || ?no < 1)
+            }
+        """ ] .
+
+asc:MobilityValueShape a sh:NodeShape ;
+    sh:targetSubjectsOf asc:mobility ;
+    sh:sparql [
+        sh:message "A concept states at most one mobility, and its value is a concept of asc-voc:MobilityScheme." ;
+        sh:select """
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX asc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#>
+            PREFIX asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#>
+            SELECT $this ?value WHERE {
+              { $this asc:mobility ?value , ?other . FILTER (?other != ?value) }
+              UNION
+              { $this asc:mobility ?value . FILTER NOT EXISTS { ?value skos:inScheme asc-voc:MobilityScheme } }
+            }
+        """ ] .
+
+asc:MobilityInheritedShape a sh:NodeShape ;
+    sh:targetSubjectsOf asc:mobility ;
+    sh:sparql [
+        sh:message "Every narrower concept of a concept that states a mobility states the same one." ;
+        sh:select """
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX asc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#>
+            SELECT $this ?value WHERE {
+              $this asc:mobility ?m .
+              ?value skos:broader $this .
+              FILTER NOT EXISTS { ?value asc:mobility ?m }
+            }
+        """ ] .

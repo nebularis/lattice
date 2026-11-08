@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix asc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#> .
+@prefix asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#> .
+@prefix cls: <https://www.nebularis.org/neuro-semantic/lattice/applied/classification#> .
+@prefix cls-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.1.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ;
+    dct:description """Asset class publishes a reference edition of asset classes, the kinds of thing an asset can be, for any domain that classifies assets: what a policy covers, what secures a loan, what a fund holds. It binds the edition to cls-voc:AssetClassContract, so cls:assetClass and every property that specialises it take their values from it wherever a deployment has bound no scheme of its own.
+
+The edition is one SKOS scheme with a non-financial branch, produced and non-produced assets, and a financial branch. It follows the asset classification of the System of National Accounts 2008, the one international classification that spans both, and every concept cites the category it follows.
+
+It also states mobility, whether a thing of a class is kept at one location in its normal use or moves between locations, where that holds for the whole class, so a check can read it.
+
+Asset class answers what kind of thing an asset is, and nothing else. What the asset is used for, how it is built, which value of it is exposed, who holds a stake in it and the terms of a holding are other dimensions, held elsewhere. The module carries no domain vocabulary.""" ;
+    dct:creator <https://github.com/nebularis> .
+
+asc:mobility a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "mobility"@en ;
+    rdfs:comment "Whether a thing of an asset class is kept at one location in its normal use, or moves between locations." ;
+    fnd:utility "Subject: an asset class concept. Value: a concept of asc-voc:MobilityScheme. State it only where it holds for everything the concept covers, and then on every narrower concept too. A check reads it, for example to decide whether an asset has one location or a series of presences." ;
+    rdfs:domain skos:Concept ;
+    rdfs:range skos:Concept .
+
+dct:creator a owl:AnnotationProperty .
+
+dct:description a owl:AnnotationProperty .

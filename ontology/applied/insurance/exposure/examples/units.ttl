@@ -26,6 +26,7 @@
 
 @prefix aeo:      <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
 @prefix aeo-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
+@prefix asc-voc:  <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#> .
 @prefix prl-voc:  <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril/vocab#> .
 @prefix elg:      <https://www.nebularis.org/neuro-semantic/lattice/eligibility#> .
 @prefix fnd:      <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
@@ -67,13 +68,13 @@ ex:site-d-identity a aeo:LocationIdentity , fnd:PersistentIdentity .
 ex:site-d a aeo:Location ; fnd:hasIdentity ex:site-d-identity ; aeo:territory ex:great-britain .
 
 ex:building-a-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
-ex:building-a a aeo:Asset ; fnd:hasIdentity ex:building-a-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-a-identity .
+ex:building-a a aeo:Asset ; fnd:hasIdentity ex:building-a-identity ; aeo:assetClass asc-voc:NonResidentialBuilding ; aeo:locatedAt ex:site-a-identity .
 ex:building-b-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
-ex:building-b a aeo:Asset ; fnd:hasIdentity ex:building-b-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-b-identity .
+ex:building-b a aeo:Asset ; fnd:hasIdentity ex:building-b-identity ; aeo:assetClass asc-voc:NonResidentialBuilding ; aeo:locatedAt ex:site-b-identity .
 ex:building-c-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
-ex:building-c a aeo:Asset ; fnd:hasIdentity ex:building-c-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-c-identity .
+ex:building-c a aeo:Asset ; fnd:hasIdentity ex:building-c-identity ; aeo:assetClass asc-voc:NonResidentialBuilding ; aeo:locatedAt ex:site-c-identity .
 ex:building-d-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
-ex:building-d a aeo:Asset ; fnd:hasIdentity ex:building-d-identity ; aeo:assetClass aeo-voc:Building ; aeo:locatedAt ex:site-d-identity .
+ex:building-d a aeo:Asset ; fnd:hasIdentity ex:building-d-identity ; aeo:assetClass asc-voc:NonResidentialBuilding ; aeo:locatedAt ex:site-d-identity .
 
 ex:value-a a aeo:Valuation ; fnd:hasTemporalScope [ a fnd:TemporalScope ; fnd:validFrom "2027-01-01T00:00:00Z"^^xsd:dateTime ] ;
     aeo:valueOf ex:building-a-identity ; aeo:valueType aeo-voc:Building ; aeo:valuationBasis aeo-voc:ReplacementCost ;

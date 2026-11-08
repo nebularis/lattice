@@ -20,12 +20,9 @@ A module lives at the lowest level that covers every module using it, or planned
 Moving a module up a level changes its namespace and is MAJOR for every importer. The
 lowest-level rule keeps such moves rare and deliberate.
 
-## Dependency direction (ADR-A98 decision 5, as amended by its addendum)
+## Dependency direction (ADR-A98 decision 5, as amended by its addenda)
 
-Dependencies run one way. `classification/` imports the substrate only. A domain's `common/`
-module imports `classification/` and the substrate. Every other module in a domain imports its
-own `common/` module, directly or indirectly, and never a module of another domain. A
-cross-domain module never imports a domain module.
+Dependencies run one way. `classification/` imports the substrate only, and `asset-class/` imports the substrate and `classification/`. A domain's `common/` module imports `classification/` and the substrate. Every other module in a domain imports its own `common/` module, directly or indirectly, and never a module of another domain. A domain module may import `asset-class/`. A cross-domain module never imports a domain module.
 
 ## Namespaces and versioning
 
@@ -37,6 +34,7 @@ shapes change in one module never moves another module's number. Namespaces and 
 |---|---|---|
 | cross-domain `<module>` | `https://www.nebularis.org/neuro-semantic/lattice/applied/<module>#` | per module |
 | `classification/` | as above | `cls:` |
+| `asset-class/` | as above | `asc:`, and `asc-voc:` for its vocab |
 | domain `<module>` | `https://www.nebularis.org/neuro-semantic/lattice/<domain>/<module>#` | per module |
 
 A module's `vocab/` document, where it has one, uses the namespace without its `#` plus
@@ -48,6 +46,7 @@ A module's `vocab/` document, where it has one, uses the namespace without its `
 |---|---|---|
 | `capacity/` | cross-domain | present |
 | [`classification/`](classification/README.md) | cross-domain | present, `applied-insurance-reference` AIR-1.2 |
+| [`asset-class/`](asset-class/README.md) | cross-domain | present, the reference asset class edition, `asset-class` ASC-2 |
 | `insurance/` | domain | see [`insurance/domain-README.md`](insurance/domain-README.md) |
 
 Every applied module imports LATTICE layers and other applied modules by exact version IRI,
