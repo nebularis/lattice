@@ -3,8 +3,8 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** merged 2026-10-27. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-2 unblocked, briefed and not started.
-**Last updated:** 2026-10-29
+**Status:** building 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 building. LG-2 unblocked, briefed and not started.
+**Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md)
 
@@ -108,7 +108,8 @@ Results sections. In short:
 | LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | planned | LG-3 |
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | blocked | LG-4 |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
-| LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | planned |  |
+| LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | building 2026-11-08 |  |
+- 2026-11-08: LG-7 picked up on machine S, on the maintainer's go-ahead to build LG-7 and then the next ledger slice autonomously, committing locally and never pushing.
 - 2026-11-07: WPG-Q4 answered by the maintainer, (b) for the general core and (a) for the reinsurance instance, recorded in the [waterfall proofs sketch](../sketches/waterfall-proofs-and-the-generality-gap.md) and promoted to ADR-A-FM2's addendum of the same day. LG-7 is the first slice under it. No slice changed state.
 - 2026-11-07: LG-7 added and briefed, the ledger laws mechanised in `tools/proofs/ledger/` ahead of LG-2, with its [Validation Pack](../validation/LG-7.md). The maintainer decided the same day that it runs before LG-2 on a machine they assign, that it builds on the domain-neutral core of the external development the waterfall proofs sketch reads, renamed and re-proved under the terms the plan states, and that the composition law stays with E4b. The plan's E4a row now says it started as LG-7. The row is planned, since this session is not the one that builds it.
 - 2026-11-07: LG-4 briefed further and LG-Q6's probe widened, on `docs/placement-vehicles-structure`, from the [waterfall proofs sketch](../sketches/waterfall-proofs-and-the-generality-gap.md) §5.1. No slice changed state, since this was design on the plan rather than a slice picked up. Five things landed in LG-4. (1) Conservation with an explicit residual term as the form to take, which settles the open half of TD-95 in an instance. (2) The allocation axioms corrected from five to four, with monotonicity dropped because no law needed it, against a removed review note that listed five. (3) The merge rule as declared data with an identity and never a default, since two rules satisfying every axiom move different money on one arrangement, which makes LG-Q3's "refuse as the default" load-bearing. (4) Attribution across parties as a second conservation law with its own shape, shared with ES-5's K4. (5) The rule that nothing above the ledger may assume a balance is monotone in its input, since a franchise makes the residual fall as the input rises. LG-Q6's probe now covers Jena as well as rdflib and Oxigraph. WPG-Q2 raised, on where the declared ceiling lives.
