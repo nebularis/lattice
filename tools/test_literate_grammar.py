@@ -865,3 +865,52 @@ def test_d59_t13_a_block_in_6_6_may_add_statements_about_an_individual_a_6_4_tab
     assert (URIRef(X + "#Permitted"), URIRef(X + "#logicalKey"), Literal("root")) in g
     if fence == "turtle-vocab":
         assert (URIRef(X + "#Permitted"), RDF.type, URIRef(X + "#Outcome")) in g
+
+
+# ---- ASC-1: property columns in individuals tables (ADR-A126's addendum of 2026-11-08) -----------------------
+
+
+def scheme_readme(table: str) -> str:
+    rows = HEADER_TABLE + f"\n| `vocab/x-vocab.ttl` | <{X}-vocab> | <{X}-vocab/0.1.0> | |"
+    return readme(section2=rows + "\n\n" + PREFIXES_EX_FND, section6=six(individuals=table))
+
+
+SCHEME_TABLE = """| Individual | Type | Preferred label | `skos:inScheme` | `skos:broader` | `skos:notation` | `skos:note` |
+|---|---|---|---|---|---|---|
+| `ex:Building` | `skos:Concept` | "Building"@en | `ex:Scheme` | | | "Follows AN.111, and AN.1121."@en |
+| `ex:Dwelling` | `skos:Concept` | "Dwelling"@en | `ex:Scheme`, `ex:Other` | `ex:Building` | "AN.111"^^xsd:string, 7 | |"""
+
+
+def test_asc1_01_to_04_a_curie_column_states_its_property_for_each_row() -> None:
+    out = extract(scheme_readme(SCHEME_TABLE))["ontology/x/vocab/x-vocab.ttl"]
+    assert isomorphic(body(out), expected("""
+        ex:Building a skos:Concept ; skos:prefLabel "Building"@en ; skos:inScheme ex:Scheme ;
+            skos:note "Follows AN.111, and AN.1121."@en .
+        ex:Dwelling a skos:Concept ; skos:prefLabel "Dwelling"@en ; skos:inScheme ex:Scheme, ex:Other ;
+            skos:broader ex:Building ; skos:notation "AN.111"^^xsd:string, 7 .
+    """))
+
+
+@pytest.mark.parametrize("header,cell,message", [
+    ("`zz:p`", "`ex:a`", "needs the prefix zz:"),
+    ("`skos:note`", "Follows AN.111.", "neither a CURIE nor a Turtle literal"),
+    ("`skos:note`", '"x"^^zz:t', "needs the prefix zz:"),
+    ("`skos:prefLabel`", '"A"@en', "states what the Type or an annotation column states"),
+    ("`rdf:type`", "`ex:A`", "states what the Type or an annotation column states"),
+    ("`ex:p some ex:A`", "`ex:a`", "is not one CURIE"),
+    ("Colour", "red", "neither one of"),
+])
+def test_asc1_05_to_07_a_malformed_property_column_is_refused(header: str, cell: str, message: str) -> None:
+    table = f"| Individual | Type | {header} |\n|---|---|---|\n| `ex:a` | `skos:Concept` | {cell} |"
+    with pytest.raises(lg.GrammarError, match=message):
+        compile_readme(scheme_readme(table))
+
+
+def test_asc1_07_a_property_in_two_columns_is_refused() -> None:
+    table = "| Individual | Type | `skos:note` | `skos:note` |\n|---|---|---|---|\n| `ex:a` | `skos:Concept` | | |"
+    with pytest.raises(lg.GrammarError, match="in two columns"):
+        compile_readme(scheme_readme(table))
+
+
+def test_asc1_split_values_keeps_commas_inside_literals() -> None:
+    assert lg.split_values('"a, b"@en, ex:c,  "d \\" , e" ') == ['"a, b"@en', "ex:c", '"d \\" , e"']

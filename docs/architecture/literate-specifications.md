@@ -192,9 +192,17 @@ file, which may not be `shapes/structural.ttl`. In a README in the layout every 
 
 ### Individuals, disjointness and other axioms
 
-Section 6.4 lists individuals in tables whose first two columns are Individual and Type, followed by any of
-the annotation columns Label, Preferred label, Definition, Utility and Scope note. Type holds one or more
-names, separated by commas, so an individual that is also an `owl:NamedIndividual` says so. Section 6.5 holds
+Section 6.4 lists individuals in tables whose first two columns are Individual and Type, followed by any of the annotation columns Label, Preferred label, Definition, Utility, Scope note and Meaning bearing. Type holds one or more names, separated by commas, so an individual that is also an `owl:NamedIndividual` says so.
+
+A further column may be headed by one CURIE in backticks, whose prefix section 2 declares, and states that property for every row ([ADR-A126](decisions/ADR-A126-literate-specification-layout-and-grammar.md)'s addendum of 2026-11-08). Its cells hold CURIEs and Turtle literals, `"…"@en`, `"…"^^xsd:string`, a number, `true` or `false`, separated by commas, and each becomes one statement. A comma inside a quoted literal is part of it, and an empty cell states nothing. A cell entry that is neither a CURIE nor a literal is refused, so a note or a notation is written in quotes. A column may not state `rdf:type` or a property an annotation column states, and a table states each property in one column. This is how a SKOS scheme is written, for example:
+
+| Individual | Type | Preferred label | Definition | `skos:inScheme` | `skos:broader` | `skos:note` |
+|---|---|---|---|---|---|---|
+| `asc-voc:Dwelling` | `skos:Concept` | "Dwelling"@en | A building used wholly or mainly as a residence. | `asc-voc:AssetClassScheme` | `asc-voc:Building` | "Follows SNA 2008 AN.111, dwellings."@en |
+
+The same columns state a governed scheme's `fnd:hasIdentity` and `fnd:hasGovernanceState`, a scheme's `skos:hasTopConcept` and a module's own characteristics of a concept.
+
+Section 6.5 holds
 `**All disjoint.**` paragraphs, each naming two classes or more, which become one `owl:AllDisjointClasses`
 with its members in the order written, `**Disjoint.**` paragraphs, each naming exactly two, which become
 an `owl:disjointWith`, and `**All different.**` paragraphs, each naming two individuals or more, which become

@@ -129,6 +129,28 @@ aeo:AssetShape a sh:NodeShape ;
               $this aeo:locatedAt ?l .
               FILTER NOT EXISTS { ?l a aeo:LocationIdentity }
             }
+        """ ] ;
+    sh:sparql [
+        sh:message "An asset whose class is mobile has presences, not one aeo:locatedAt." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX asc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#>
+            PREFIX asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#>
+            SELECT $this ?value WHERE {
+              $this aeo:assetClass ?value ; aeo:locatedAt ?l .
+              ?value asc:mobility asc-voc:Mobile .
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "An asset whose class is stationary has one aeo:locatedAt, not presences." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX asc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#>
+            PREFIX asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#>
+            SELECT $this ?value WHERE {
+              $this aeo:assetClass ?value ; aeo:presence ?p .
+              ?value asc:mobility asc-voc:Stationary .
+            }
         """ ] .
 
 aeo:InterestShape a sh:NodeShape ;

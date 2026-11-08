@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# Well-formed use of the reference asset class edition (README section 8).
+# A few things classified by the edition through cls:assetClass, and a
+# deployment's own scheme whose concepts state mobility consistently and
+# map to the edition. Validated with the vocab document, the module's
+# constraints and Vocabulary's shapes by tools/test_asset_class.py.
+
+@prefix ex:      <https://example.org/asset-class#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix cls:     <https://www.nebularis.org/neuro-semantic/lattice/applied/classification#> .
+@prefix asc:     <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#> .
+@prefix asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#> .
+
+ex:warehouse cls:assetClass asc-voc:NonResidentialBuilding .
+ex:tanker cls:assetClass asc-voc:Vessel .
+ex:pressLine cls:assetClass asc-voc:PlantAndMachinery .
+ex:licence cls:assetClass asc-voc:ComputerSoftware .
+ex:bond cls:assetClass asc-voc:DebtSecurity .
+
+# A deployment's own, finer scheme. Its concepts state the mobility of the
+# reference concept they map to, the same at every level.
+ex:FleetScheme a voc:ConceptScheme ;
+    fnd:hasIdentity ex:FleetScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Fleet classes"@en ;
+    skos:hasTopConcept ex:Harbourcraft .
+
+ex:Harbourcraft a skos:Concept ;
+    skos:inScheme ex:FleetScheme ;
+    skos:topConceptOf ex:FleetScheme ;
+    skos:prefLabel "Harbour craft"@en ;
+    skos:broadMatch asc-voc:Vessel ;
+    asc:mobility asc-voc:Mobile .
+
+ex:Tug a skos:Concept ;
+    skos:inScheme ex:FleetScheme ;
+    skos:broader ex:Harbourcraft ;
+    skos:prefLabel "Tug"@en ;
+    asc:mobility asc-voc:Mobile .

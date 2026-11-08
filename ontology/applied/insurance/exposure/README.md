@@ -163,7 +163,7 @@ schedule versions, not one snapshot.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.5.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.6.0> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
     rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations, with zones, attributes, dependencies, losses, requirements, cover and liability in further regions. No class here says what a contract insures, which is the contract module's." ;
     owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
@@ -1547,6 +1547,8 @@ bound as its `voc:boundScheme`, declared as `insurance/peril`'s contracts are.
 `aeo:territory`, `aeo:domicile`, `aeo:assetClass` and `aeo:industry` use the `cls-voc:` contracts
 through their super-properties, so no contract is declared for them here.
 
+The asset class contract is bound to the reference edition of the cross-domain [asset class module](../../asset-class/README.md), which the vocab document imports, so an asset's class is a concept such as `asc-voc:NonResidentialBuilding`, `asc-voc:PlantAndMachinery` or `asc-voc:Vessel`. A value type says which value of an asset is exposed, and is never its class: a building's contents are valued with the value type `Contents` against the building, or are an asset of their own class.
+
 The value types cite the Open Exposure Data (OED) location fields they correspond to
 (`Building`→`BuildingTIV`, `Contents`→`ContentsTIV`, `GrossProfit`/`Revenue`/`Rental`→`BITIV`,
 `Machinery`/`Stock`/`OtherValue`→`OtherTIV`), noting where OED is coarser. The legal forms are
@@ -1574,13 +1576,14 @@ thousands.
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.5.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.5.0> ,
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.6.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.6.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.0> ,
                 <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.0> .
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.0> .
 
 #################################################################
 #    Reference schemes, each the unscoped fallback
@@ -3995,7 +3998,7 @@ the shape itself since `sh:sparql`'s value is a constraint, not a nested propert
 |---|---|
 | `aeo:ExposureSetShape` | exactly one identity, one reporting unit, one temporal scope, one governance state. Every identity named by `aeo:locatedAt` of a listed asset, and by `aeo:valueOf` of a listed valuation, resolves to exactly one listed location or asset |
 | `aeo:LocationShape` | exactly one identity, at least one territory. A location with a geometry has a geo precision |
-| `aeo:AssetShape` | exactly one identity and one asset class. Not both `aeo:locatedAt` and `aeo:presence`. `aeo:locatedAt` names an `aeo:LocationIdentity` |
+| `aeo:AssetShape` | exactly one identity and one asset class. Not both `aeo:locatedAt` and `aeo:presence`. `aeo:locatedAt` names an `aeo:LocationIdentity`. An asset whose class states `asc:mobility asc-voc:Mobile` has no `aeo:locatedAt`, and one whose class states `asc-voc:Stationary` has no `aeo:presence` |
 | `aeo:InterestShape` | exactly one holder, one asset and one kind |
 | `aeo:ValuationShape` | exactly one `aeo:valueOf`, an `aeo:AssetIdentity` or `aeo:LocationIdentity`, one value type and one basis. Either one amount, or one rate and one horizon, never both and never neither |
 | `aeo:ControlRelationShape` | exactly one controller and one controlled, and no cycle through `aeo:controller` / `aeo:controlled` |
@@ -4168,6 +4171,28 @@ aeo:AssetShape a sh:NodeShape ;
             SELECT $this WHERE {
               $this aeo:locatedAt ?l .
               FILTER NOT EXISTS { ?l a aeo:LocationIdentity }
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "An asset whose class is mobile has presences, not one aeo:locatedAt." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX asc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#>
+            PREFIX asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#>
+            SELECT $this ?value WHERE {
+              $this aeo:assetClass ?value ; aeo:locatedAt ?l .
+              ?value asc:mobility asc-voc:Mobile .
+            }
+        """ ] ;
+    sh:sparql [
+        sh:message "An asset whose class is stationary has one aeo:locatedAt, not presences." ;
+        sh:select """
+            PREFIX aeo: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#>
+            PREFIX asc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#>
+            PREFIX asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#>
+            SELECT $this ?value WHERE {
+              $this aeo:assetClass ?value ; aeo:presence ?p .
+              ?value asc:mobility asc-voc:Stationary .
             }
         """ ] .
 
@@ -5205,6 +5230,7 @@ scales or sources it follows, how it follows them, and where it departs from the
 - English and US proximate cause authorities (Leyland Shipping v Norwich Union, Wayne Tank v Employers
   Liability, Sabella v Wisler), for the cause position concepts
 - IAS 1 and IFRS 15, for the financial metric kinds, and RFC 2119 as an analogy for requirement strength
+- the asset class module's sources, for asset classes, which this module takes from its reference edition
 - for geographic precision, control kind, interest kind, valuation basis and valuation method,
   which the above do not cover, common catastrophe-modelling and property market usage, stated
   neutrally
@@ -5238,6 +5264,9 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 
 ## 10. Release notes
 
+- **0.6.0**.
+  - may invalidate. The vocab document imports the asset class module's vocab document at 0.1.0, which binds `cls-voc:AssetClassContract` to the reference asset class edition, and `aeo:AssetShape` refuses an asset of a mobile class with an `aeo:locatedAt`, and one of a stationary class with an `aeo:presence`. A graph that loads the edition and states such an asset now fails.
+  - no effect. The examples name asset classes from the edition, where they named value types.
 - **0.5.0**.
   - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.4.0**.

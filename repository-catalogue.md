@@ -81,7 +81,7 @@ schema = 1
 modules = [
     "foundation", "vocabulary", "quantification", "ledger", "party", "eligibility", "wording", "behaviour", "instrument",
     "surface", "spc", "mork", "persistence", "v-rig",
-    "applied/capacity", "applied/classification",
+    "applied/capacity", "applied/classification", "applied/asset-class",
     "applied/insurance/common", "applied/insurance/peril", "applied/insurance/exposure",
     "examples/insure-o",
     "governance",

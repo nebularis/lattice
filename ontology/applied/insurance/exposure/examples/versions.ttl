@@ -17,6 +17,7 @@
 
 @prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
 @prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
+@prefix asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
@@ -67,7 +68,7 @@ ex:factory-building-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
 
 ex:factory-building a aeo:Asset ;
     fnd:hasIdentity ex:factory-building-identity ;
-    aeo:assetClass aeo-voc:Building ;
+    aeo:assetClass asc-voc:NonResidentialBuilding ;
     aeo:locatedAt ex:factory-identity .
 
 ex:building-valuation a aeo:Valuation ;
@@ -83,7 +84,7 @@ ex:warehouse-stock-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
 
 ex:warehouse-stock a aeo:Asset ;
     fnd:hasIdentity ex:warehouse-stock-identity ;
-    aeo:assetClass aeo-voc:Stock ;
+    aeo:assetClass asc-voc:Inventory ;
     aeo:locatedAt ex:warehouse-identity .
 
 ex:stock-valuation a aeo:Valuation ;

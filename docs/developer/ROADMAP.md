@@ -27,12 +27,13 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 17 branches, the units' own state from this tree, the newest board day 2026-11-08.
+Built from the status records on 16 branches, the units' own state from this tree, the newest board day 2026-11-08.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
 | [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | built 2026-11-02 | AIR-3.3 | 55 planned, 10 built, 5 merged |  |
 | [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-09-25 | AOR-1 | 18 built |  |
+| [asset-class](plans/asset-class.md) | unit | built 2026-11-08 | ASC-1 | 3 built |  |
 | [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 | CCS-0 | 18 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged, 3 verified | realign/config-authoring-studio |
 | [documentation-link-repair](plans/documentation-link-repair.md) | unit | planned |  | no board |  |
 | [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
@@ -48,7 +49,7 @@ Built from the status records on 17 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | building 2026-11-08 · merged 2026-10-27 on fix/vyd-wrapper-passthrough, fml/isabelle-layers, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration · built 2026-10-27 on ccs-trunk, ccs/board-corrections · built 2026-11-08 on air/asset-classes, claude/adoring-torvalds-ce7ffe, vyvid-quanta-builtin | LG-2 | 4 planned, 2 merged, 2 built, 1 blocked | docs/placement-vehicles-structure |
+| [ledger](plans/ledger.md) | unit | building 2026-11-08 · merged 2026-10-27 on fix/vyd-wrapper-passthrough, fml/isabelle-layers, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration · built 2026-10-27 on ccs-trunk, ccs/board-corrections · built 2026-11-08 on claude/adoring-torvalds-ce7ffe, vyvid-quanta-builtin | LG-2 | 4 planned, 2 merged, 2 built, 1 blocked | docs/placement-vehicles-structure |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -70,7 +71,7 @@ Built from the status records on 17 branches, the units' own state from this tre
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned | claude/adoring-torvalds-ce7ffe, docs/placement-vehicles-structure |
 | [v-rig](plans/v-rig.md) | unit | built 2026-11-08 | VR-1 | 7 built | claude/adoring-torvalds-ce7ffe, docs/placement-vehicles-structure |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-08 · verified 2026-11-06 on air/asset-classes, claude/adoring-torvalds-ce7ffe, fix/vyd-wrapper-passthrough, tutorial/studio-guide, vyd-win, vyd-win2 | VM-0 | 9 verified, 1 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-08 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, fix/vyd-wrapper-passthrough, tutorial/studio-guide, vyd-win, vyd-win2 | VM-0 | 9 verified, 1 built |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -558,6 +559,10 @@ gantt
     title The smaller units
     dateFormat YYYY-MM-DD
     axisFormat %d %b
+    section asset-class
+    ASC-1 the literate grammar :asc1, 2026-11-08, 2026-11-09
+    ASC-2 the module :asc2, 2026-11-08, 2026-11-09
+    ASC-3 exposure adopts the edition :asc3, 2026-11-08, 2026-11-09
     section ensemble
     ES-0 examples first :es0, 2026-10-21, 2026-10-22
     ES-1 the layer its README :es1, 2026-10-21, 2026-10-22
@@ -869,7 +874,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
 | `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
-| `docs/placement-vehicles-structure` | 2026-11-08 | 19 | pushed | FME-0, LG-8, VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
+| `docs/placement-vehicles-structure` | 2026-11-08 | 23 | pushed | FME-0, LG-8, VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -932,7 +937,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 107 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 108 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 

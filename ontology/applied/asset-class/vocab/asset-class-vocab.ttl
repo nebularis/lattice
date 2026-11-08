@@ -1,0 +1,725 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix asc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#> .
+@prefix asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#> .
+@prefix cls: <https://www.nebularis.org/neuro-semantic/lattice/applied/classification#> .
+@prefix cls-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix voc: <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab> a owl:Ontology ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.1.0>, <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.0> ;
+    dct:description """Asset class publishes a reference edition of asset classes, the kinds of thing an asset can be, for any domain that classifies assets: what a policy covers, what secures a loan, what a fund holds. It binds the edition to cls-voc:AssetClassContract, so cls:assetClass and every property that specialises it take their values from it wherever a deployment has bound no scheme of its own.
+
+The edition is one SKOS scheme with a non-financial branch, produced and non-produced assets, and a financial branch. It follows the asset classification of the System of National Accounts 2008, the one international classification that spans both, and every concept cites the category it follows.
+
+It also states mobility, whether a thing of a class is kept at one location in its normal use or moves between locations, where that holds for the whole class, so a check can read it.
+
+Asset class answers what kind of thing an asset is, and nothing else. What the asset is used for, how it is built, which value of it is exposed, who holds a stake in it and the terms of a holding are other dimensions, held elsewhere. The module carries no domain vocabulary.""" ;
+    dct:creator <https://github.com/nebularis> .
+
+asc-voc:AccountsReceivable a skos:Concept ;
+    skos:prefLabel "Other accounts receivable"@en ;
+    skos:broader asc-voc:FinancialAsset ;
+    skos:definition "Trade credit and advances, and other amounts due to be received."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.8, other accounts receivable."@en .
+
+asc-voc:ActivityPermit a skos:Concept ;
+    skos:prefLabel "Permit to undertake specific activities"@en ;
+    skos:broader asc-voc:ContractLeaseOrLicence ;
+    skos:definition "A permit limited in number that lets its holder earn more than it could without, and that its holder can sell on."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.223, permits to undertake specific activities."@en .
+
+asc-voc:Aircraft a skos:Concept ;
+    skos:prefLabel "Aircraft"@en ;
+    asc:mobility asc-voc:Mobile ;
+    skos:broader asc-voc:TransportEquipment ;
+    skos:definition "An aeroplane, helicopter or other craft for use in the air."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1131, transport equipment, at the grain of the aircraft of IAS 16."@en .
+
+asc-voc:AnimalResource a skos:Concept ;
+    skos:prefLabel "Animal resource yielding repeat products"@en ;
+    skos:broader asc-voc:CultivatedBiologicalResource ;
+    skos:definition "Animals kept for what they yield repeatedly, such as breeding stock, dairy cattle, draught animals and sheep for wool."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1151, animal resources yielding repeat products."@en .
+
+asc-voc:ArtAndAntiques a skos:Concept ;
+    skos:prefLabel "Antiques and other art objects"@en ;
+    skos:broader asc-voc:Valuable ;
+    skos:definition "Paintings, sculptures and other objects recognised as works of art, and antiques."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.132, antiques and other art objects."@en .
+
+asc-voc:ArtisticOriginal a skos:Concept ;
+    skos:prefLabel "Entertainment, literary or artistic original"@en ;
+    skos:broader asc-voc:IntellectualPropertyProduct ;
+    skos:definition "The original film, sound recording, manuscript, tape or model on which a performance, broadcast, literary or artistic work is recorded."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1174, entertainment, literary or artistic originals."@en .
+
+asc-voc:AssetClassScheme a voc:ConceptScheme ;
+    skos:prefLabel "Reference asset classes"@en ;
+    fnd:hasGovernanceState fnd:Active ;
+    fnd:hasIdentity asc-voc:AssetClassScheme-identity ;
+    skos:definition "The kinds of thing an asset can be, after the asset classification of the System of National Accounts 2008."@en ;
+    skos:editorialNote "Reference edition published by LATTICE. Not a statistical or market standard. A scheme a deployment binds to cls-voc:AssetClassContract takes precedence."@en ;
+    skos:hasTopConcept asc-voc:FinancialAsset, asc-voc:NonFinancialAsset .
+
+asc-voc:Building a skos:Concept ;
+    skos:prefLabel "Building"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:BuildingOrStructure ;
+    skos:definition "An enclosed structure with a roof and walls, used as a residence or for any other purpose."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Groups SNA 2008 AN.111, dwellings, and AN.1121, buildings other than dwellings, which SNA places under different parents."@en .
+
+asc-voc:BuildingOrStructure a skos:Concept ;
+    skos:prefLabel "Building or structure"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:FixedAsset ;
+    skos:definition "A building or another structure, or an improvement to land."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Groups SNA 2008 AN.111, dwellings, and AN.112, other buildings and structures, which SNA places side by side."@en .
+
+asc-voc:ComputerHardware a skos:Concept ;
+    skos:prefLabel "Computer hardware"@en ;
+    skos:broader asc-voc:IctEquipment ;
+    skos:definition "Computers, and their peripheral and storage devices."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.11321, computer hardware."@en .
+
+asc-voc:ComputerSoftware a skos:Concept ;
+    skos:prefLabel "Computer software"@en ;
+    skos:broader asc-voc:SoftwareAndDatabases ;
+    skos:definition "Computer programs, with their descriptions and supporting materials, for systems and applications."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.11731, computer software."@en .
+
+asc-voc:ContractLeaseOrLicence a skos:Concept ;
+    skos:prefLabel "Contract, lease or licence"@en ;
+    skos:broader asc-voc:NonProducedAsset ;
+    skos:definition "An agreement giving its holder a right whose value is its own, distinct from the value of what it concerns."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.22, contracts, leases and licences."@en .
+
+asc-voc:CultivatedBiologicalResource a skos:Concept ;
+    skos:prefLabel "Cultivated biological resource"@en ;
+    skos:broader asc-voc:FixedAsset ;
+    skos:definition "Animals and plants yielding repeat products, whose natural growth and regeneration is under the direct control of an owner."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.115, cultivated biological resources."@en .
+
+asc-voc:CultivatedWorkInProgress a skos:Concept ;
+    skos:prefLabel "Work in progress on cultivated biological resources"@en ;
+    skos:broader asc-voc:WorkInProgress ;
+    skos:definition "Livestock raised for what it yields on slaughter, and trees and crops yielding once only, not yet slaughtered or harvested."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1221, work in progress on cultivated biological resources."@en .
+
+asc-voc:Currency a skos:Concept ;
+    skos:prefLabel "Currency"@en ;
+    skos:broader asc-voc:CurrencyAndDeposit ;
+    skos:definition "Notes and coins of fixed nominal value issued or authorised by a central bank or government."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.21, currency."@en .
+
+asc-voc:CurrencyAndDeposit a skos:Concept ;
+    skos:prefLabel "Currency and deposits"@en ;
+    skos:broader asc-voc:FinancialAsset ;
+    skos:definition "Notes and coins, and claims on a deposit-taking institution."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.2, currency and deposits."@en .
+
+asc-voc:Database a skos:Concept ;
+    skos:prefLabel "Database"@en ;
+    skos:broader asc-voc:SoftwareAndDatabases ;
+    skos:definition "A file of data organised for efficient access and use."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.11732, databases."@en .
+
+asc-voc:DebtSecurity a skos:Concept ;
+    skos:prefLabel "Debt security"@en ;
+    skos:broader asc-voc:FinancialAsset ;
+    skos:definition "A negotiable instrument serving as evidence of a debt, such as a bill, bond or note."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.3, debt securities, without its split by original maturity, which is a term of the holding and not a kind."@en .
+
+asc-voc:DerivativeAndEmployeeOption a skos:Concept ;
+    skos:prefLabel "Financial derivatives and employee stock options"@en ;
+    skos:broader asc-voc:FinancialAsset ;
+    skos:definition "Instruments linked to another instrument, an indicator or a commodity, through which a risk can be traded in its own right, and options granted to employees on their employer's equity."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.7, financial derivatives and employee stock options."@en .
+
+asc-voc:Dwelling a skos:Concept ;
+    skos:prefLabel "Dwelling"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:Building ;
+    skos:definition "A building, or a designated part of one, used wholly or mainly as a residence."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.111, dwellings, less the houseboats, mobile homes and caravans SNA counts as dwellings by their use, which this edition classes as vessels and road vehicles."@en .
+
+asc-voc:EmployeeStockOption a skos:Concept ;
+    skos:prefLabel "Employee stock option"@en ;
+    skos:broader asc-voc:DerivativeAndEmployeeOption ;
+    skos:definition "An option an employer grants an employee to buy the employer's equity at a stated price within a stated period."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.72, employee stock options."@en .
+
+asc-voc:Equity a skos:Concept ;
+    skos:prefLabel "Equity"@en ;
+    skos:broader asc-voc:EquityAndFundShare ;
+    skos:definition "A claim on the residual value of a corporation after the claims of all its creditors."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.51, equity."@en .
+
+asc-voc:EquityAndFundShare a skos:Concept ;
+    skos:prefLabel "Equity and investment fund shares"@en ;
+    skos:broader asc-voc:FinancialAsset ;
+    skos:definition "Claims on the residual value of a corporation or a fund after the claims of all its creditors."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.5, equity and investment fund shares."@en .
+
+asc-voc:FinancialAsset a skos:Concept ;
+    skos:prefLabel "Financial asset"@en ;
+    skos:definition "A financial claim on another party, or gold held by a monetary authority as a reserve asset."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF, financial assets, and the IMF Classification of Financial Assets and Liabilities 2017."@en ;
+    skos:topConceptOf asc-voc:AssetClassScheme .
+
+asc-voc:FinancialDerivative a skos:Concept ;
+    skos:prefLabel "Financial derivative"@en ;
+    skos:broader asc-voc:DerivativeAndEmployeeOption ;
+    skos:definition "An instrument linked to another instrument, an indicator or a commodity, through which a specific financial risk can be traded in its own right."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.71, financial derivatives."@en .
+
+asc-voc:FinishedGoods a skos:Concept ;
+    skos:prefLabel "Finished goods"@en ;
+    skos:broader asc-voc:Inventory ;
+    skos:definition "Goods produced and not yet sold or otherwise supplied."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.123, finished goods."@en .
+
+asc-voc:FixedAsset a skos:Concept ;
+    skos:prefLabel "Fixed asset"@en ;
+    skos:broader asc-voc:ProducedAsset ;
+    skos:definition "A produced asset used repeatedly or continuously in production for more than one year."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.11, fixed assets."@en .
+
+asc-voc:ForwardTypeContract a skos:Concept ;
+    skos:prefLabel "Forward-type contract"@en ;
+    skos:broader asc-voc:FinancialDerivative ;
+    skos:definition "An unconditional contract by which two parties agree to exchange an underlying item at an agreed price and date."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.712, forward-type contracts."@en .
+
+asc-voc:FurnitureAndFittings a skos:Concept ;
+    skos:prefLabel "Furniture, fixtures and fittings"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:OtherMachineryAndEquipment ;
+    skos:definition "Furniture, and the fixtures and fittings attached to a building that are not part of its structure."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1139, other machinery and equipment, at the grain of the furniture and fixtures of IAS 16."@en .
+
+asc-voc:Future a skos:Concept ;
+    skos:prefLabel "Future"@en ;
+    skos:broader asc-voc:ForwardTypeContract ;
+    skos:definition "A forward-type contract traded on an organised exchange, on standard terms and margined daily."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.712, forward-type contracts, which names futures in its description, and the futures category of ISO 10962."@en .
+
+asc-voc:FutureGoodsEntitlement a skos:Concept ;
+    skos:prefLabel "Entitlement to future goods and services on an exclusive basis"@en ;
+    skos:broader asc-voc:ContractLeaseOrLicence ;
+    skos:definition "A right to future goods or services that no one else may have, which its holder can sell on."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.224, entitlement to future goods and services on an exclusive basis."@en .
+
+asc-voc:GoodsForResale a skos:Concept ;
+    skos:prefLabel "Goods for resale"@en ;
+    skos:broader asc-voc:Inventory ;
+    skos:definition "Goods acquired to be resold without further processing."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.125, goods for resale."@en .
+
+asc-voc:GoodwillAndMarketingAsset a skos:Concept ;
+    skos:prefLabel "Purchased goodwill and marketing assets"@en ;
+    skos:broader asc-voc:NonProducedAsset ;
+    skos:definition "What is paid for an enterprise as a going concern above its net assets, and marketing assets such as brand names and trademarks sold apart from it."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.23, purchases less sales of goodwill and marketing assets."@en .
+
+asc-voc:IctEquipment a skos:Concept ;
+    skos:prefLabel "Information and communication equipment"@en ;
+    skos:broader asc-voc:MachineryAndEquipment ;
+    skos:definition "Devices using electronic controls, and their electronic components, such as computers and telecommunications equipment."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1132, ICT equipment."@en .
+
+asc-voc:InsuranceAndPensionClaim a skos:Concept ;
+    skos:prefLabel "Insurance, pension and standardised guarantee schemes"@en ;
+    skos:broader asc-voc:FinancialAsset ;
+    skos:definition "The claims of policyholders, beneficiaries, scheme members and guarantee holders on the reserves held for them."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.6, insurance, pension and standardised guarantee schemes."@en .
+
+asc-voc:IntellectualPropertyProduct a skos:Concept ;
+    skos:prefLabel "Intellectual property product"@en ;
+    skos:broader asc-voc:FixedAsset ;
+    skos:definition "The result of research, development, investigation or innovation, whose use is restricted by law or other means, used in production for more than one year."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.117, intellectual property products."@en .
+
+asc-voc:Inventory a skos:Concept ;
+    skos:prefLabel "Inventory"@en ;
+    skos:broader asc-voc:ProducedAsset ;
+    skos:definition "Produced goods and services held for sale, for use in production or for other use at a later date."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.12, inventories."@en .
+
+asc-voc:InvestmentFundShare a skos:Concept ;
+    skos:prefLabel "Investment fund share"@en ;
+    skos:broader asc-voc:EquityAndFundShare ;
+    skos:definition "A share or unit in a collective investment undertaking."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.52, investment fund shares or units, without its split into money market fund and other fund shares, since a fund's strategy is a term of the fund and not a kind."@en .
+
+asc-voc:Land a skos:Concept ;
+    skos:prefLabel "Land"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:NaturalResource ;
+    skos:definition "The ground, with its soil and any associated surface water, without the buildings, structures, crops, trees, animals and subsoil assets on or under it."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.211, land."@en .
+
+asc-voc:LandImprovement a skos:Concept ;
+    skos:prefLabel "Land improvement"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:BuildingOrStructure ;
+    skos:definition "Work that improves the quantity, quality or productivity of land, such as clearance, contouring, drainage or irrigation."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1123, land improvements."@en .
+
+asc-voc:LifeAndAnnuityEntitlement a skos:Concept ;
+    skos:prefLabel "Life insurance and annuity entitlements"@en ;
+    skos:broader asc-voc:InsuranceAndPensionClaim ;
+    skos:definition "The claims of life policyholders and annuitants on the reserves held for them."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.62, life insurance and annuity entitlements."@en .
+
+asc-voc:Loan a skos:Concept ;
+    skos:prefLabel "Loan"@en ;
+    skos:broader asc-voc:FinancialAsset ;
+    skos:definition "A claim created when a creditor lends funds directly to a debtor, evidenced by a document that is not negotiable."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.4, loans, without its split by original maturity, which is a term of the holding and not a kind."@en .
+
+asc-voc:MachineryAndEquipment a skos:Concept ;
+    skos:prefLabel "Machinery and equipment"@en ;
+    skos:broader asc-voc:FixedAsset ;
+    skos:definition "Transport equipment, information and communication equipment, and other machinery and equipment used in production."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.113, machinery and equipment."@en .
+
+asc-voc:MarketableOperatingLease a skos:Concept ;
+    skos:prefLabel "Marketable operating lease"@en ;
+    skos:broader asc-voc:ContractLeaseOrLicence ;
+    skos:definition "A lease of another party's asset whose holder can realise its value by subletting it."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.221, marketable operating leases."@en .
+
+asc-voc:MaterialsAndSupplies a skos:Concept ;
+    skos:prefLabel "Materials and supplies"@en ;
+    skos:broader asc-voc:Inventory ;
+    skos:definition "Goods held to be used as inputs into production."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.121, materials and supplies."@en .
+
+asc-voc:MilitaryInventory a skos:Concept ;
+    skos:prefLabel "Military inventory"@en ;
+    skos:broader asc-voc:Inventory ;
+    skos:definition "Single-use items delivered by weapons, such as ammunition, missiles, rockets and bombs."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.124, military inventories."@en .
+
+asc-voc:MineralAndEnergyReserve a skos:Concept ;
+    skos:prefLabel "Mineral and energy reserve"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:NaturalResource ;
+    skos:definition "A known deposit of minerals or energy that can be exploited commercially at current prices and technology."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.212, mineral and energy reserves."@en .
+
+asc-voc:MineralExploration a skos:Concept ;
+    skos:prefLabel "Mineral exploration and evaluation"@en ;
+    skos:broader asc-voc:IntellectualPropertyProduct ;
+    skos:definition "The exploration for mineral and energy deposits, and the evaluation of what is found."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1172, mineral exploration and evaluation."@en .
+
+asc-voc:Mobile a skos:Concept ;
+    skos:prefLabel "Mobile"@en ;
+    skos:definition "Moves between locations in its normal use."@en ;
+    skos:inScheme asc-voc:MobilityScheme ;
+    skos:note "A thing of a mobile class has a location for each period, not one."@en ;
+    skos:topConceptOf asc-voc:MobilityScheme .
+
+asc-voc:MobilePlant a skos:Concept ;
+    skos:prefLabel "Mobile plant"@en ;
+    asc:mobility asc-voc:Mobile ;
+    skos:broader asc-voc:OtherMachineryAndEquipment ;
+    skos:definition "Self-propelled or transportable machinery that works at changing sites, such as cranes, excavators and agricultural machinery."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1139, other machinery and equipment, apart from installed plant by its mobility."@en .
+
+asc-voc:MobilityScheme a voc:ConceptScheme ;
+    skos:prefLabel "Reference mobility"@en ;
+    fnd:hasGovernanceState fnd:Active ;
+    fnd:hasIdentity asc-voc:MobilityScheme-identity ;
+    skos:definition "Whether a thing is kept at one location in its normal use, or moves between locations."@en ;
+    skos:editorialNote "Reference edition published by LATTICE."@en ;
+    skos:hasTopConcept asc-voc:Mobile, asc-voc:Stationary .
+
+asc-voc:MonetaryGold a skos:Concept ;
+    skos:prefLabel "Monetary gold"@en ;
+    skos:broader asc-voc:MonetaryGoldAndSdr ;
+    skos:definition "Gold to which a monetary authority has title and which it holds as a reserve asset."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.11, monetary gold."@en .
+
+asc-voc:MonetaryGoldAndSdr a skos:Concept ;
+    skos:prefLabel "Monetary gold and special drawing rights"@en ;
+    skos:broader asc-voc:FinancialAsset ;
+    skos:definition "Gold held by a monetary authority as a reserve asset, and the international reserve assets the IMF creates."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.1, monetary gold and SDRs."@en .
+
+asc-voc:NaturalResource a skos:Concept ;
+    skos:prefLabel "Natural resource"@en ;
+    skos:broader asc-voc:NonProducedAsset ;
+    skos:definition "Land, mineral and energy reserves, biological resources, water and other resources occurring in nature over which ownership can be enforced."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.21, natural resources."@en .
+
+asc-voc:NaturalResourcePermit a skos:Concept ;
+    skos:prefLabel "Permit to use natural resources"@en ;
+    skos:broader asc-voc:ContractLeaseOrLicence ;
+    skos:definition "A right to use a natural resource, apart from owning it, that its holder can sell on."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.222, permits to use natural resources."@en .
+
+asc-voc:NonCultivatedBiologicalResource a skos:Concept ;
+    skos:prefLabel "Non-cultivated biological resource"@en ;
+    skos:broader asc-voc:NaturalResource ;
+    skos:definition "Animals and plants whose natural growth is not under the direct control of an owner, such as wild forests and fish stocks, over which ownership can be enforced."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.213, non-cultivated biological resources."@en .
+
+asc-voc:NonFinancialAsset a skos:Concept ;
+    skos:prefLabel "Non-financial asset"@en ;
+    skos:definition "An asset that is not a financial claim: a thing produced, or a natural resource, contract, lease, licence or goodwill that was not."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN, non-financial assets."@en ;
+    skos:topConceptOf asc-voc:AssetClassScheme .
+
+asc-voc:NonLifeReserve a skos:Concept ;
+    skos:prefLabel "Non-life insurance technical reserves"@en ;
+    skos:broader asc-voc:InsuranceAndPensionClaim ;
+    skos:definition "Prepaid premiums and reserves against outstanding claims, held for non-life policyholders and beneficiaries."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.61, non-life insurance technical reserves."@en .
+
+asc-voc:NonPensionBenefitEntitlement a skos:Concept ;
+    skos:prefLabel "Entitlement to non-pension benefits"@en ;
+    skos:broader asc-voc:InsuranceAndPensionClaim ;
+    skos:definition "The claims of members of a social insurance scheme on its funds for benefits other than pensions."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.65, entitlements to non-pension benefits."@en .
+
+asc-voc:NonProducedAsset a skos:Concept ;
+    skos:prefLabel "Non-produced asset"@en ;
+    skos:broader asc-voc:NonFinancialAsset ;
+    skos:definition "A non-financial asset that came into existence other than through production: a natural resource, a contract, lease or licence, or goodwill and marketing assets."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.2, non-produced non-financial assets."@en .
+
+asc-voc:NonResidentialBuilding a skos:Concept ;
+    skos:prefLabel "Non-residential building"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:Building ;
+    skos:definition "A building other than a dwelling, for example a factory, warehouse, office, shop, school or hospital."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1121, buildings other than dwellings."@en .
+
+asc-voc:Option a skos:Concept ;
+    skos:prefLabel "Option"@en ;
+    skos:broader asc-voc:FinancialDerivative ;
+    skos:definition "A contract giving its purchaser the right, but not the obligation, to buy or sell an underlying item at a stated price on or before a stated date."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.711, options."@en .
+
+asc-voc:OtherDeposit a skos:Concept ;
+    skos:prefLabel "Other deposit"@en ;
+    skos:broader asc-voc:CurrencyAndDeposit ;
+    skos:definition "A deposit that is not transferable, such as a savings or fixed-term deposit."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.29, other deposits."@en .
+
+asc-voc:OtherEquity a skos:Concept ;
+    skos:prefLabel "Other equity"@en ;
+    skos:broader asc-voc:Equity ;
+    skos:definition "Equity that is not in shares, such as in a partnership, a quasi-corporation or an international organisation."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.519, other equity."@en .
+
+asc-voc:OtherIntellectualProperty a skos:Concept ;
+    skos:prefLabel "Other intellectual property product"@en ;
+    skos:broader asc-voc:IntellectualPropertyProduct ;
+    skos:definition "An intellectual property product of no other class."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1179, other intellectual property products."@en .
+
+asc-voc:OtherMachineryAndEquipment a skos:Concept ;
+    skos:prefLabel "Other machinery and equipment"@en ;
+    skos:broader asc-voc:MachineryAndEquipment ;
+    skos:definition "Machinery and equipment that is neither transport nor information and communication equipment."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1139, other machinery and equipment."@en .
+
+asc-voc:OtherNaturalResource a skos:Concept ;
+    skos:prefLabel "Other natural resource"@en ;
+    skos:broader asc-voc:NaturalResource ;
+    skos:definition "A natural resource of no other class, such as a radio spectrum."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.215, other natural resources."@en .
+
+asc-voc:OtherReceivable a skos:Concept ;
+    skos:prefLabel "Other receivable"@en ;
+    skos:broader asc-voc:AccountsReceivable ;
+    skos:definition "An amount due to be received of no other class, such as taxes, dividends, rent or wages accrued and not yet paid."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.89, other accounts receivable."@en .
+
+asc-voc:OtherStructure a skos:Concept ;
+    skos:prefLabel "Other structure"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:BuildingOrStructure ;
+    skos:definition "A structure other than a building, for example a road, bridge, tunnel, railway, pipeline, power or communication line, dam or harbour."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1122, other structures."@en .
+
+asc-voc:OtherValuable a skos:Concept ;
+    skos:prefLabel "Other valuable"@en ;
+    skos:broader asc-voc:Valuable ;
+    skos:definition "A valuable of no other class, such as a collection, or jewellery of significant value."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.133, other valuables."@en .
+
+asc-voc:OtherWorkInProgress a skos:Concept ;
+    skos:prefLabel "Other work in progress"@en ;
+    skos:broader asc-voc:WorkInProgress ;
+    skos:definition "Work in progress other than on cultivated biological resources, such as partly completed goods."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1222, other work in progress."@en .
+
+asc-voc:PensionEntitlement a skos:Concept ;
+    skos:prefLabel "Pension entitlement"@en ;
+    skos:broader asc-voc:InsuranceAndPensionClaim ;
+    skos:definition "The claims of current and future pensioners on a pension scheme."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.63, pension entitlements."@en .
+
+asc-voc:PensionManagerClaim a skos:Concept ;
+    skos:prefLabel "Claim of a pension fund on its pension manager"@en ;
+    skos:broader asc-voc:InsuranceAndPensionClaim ;
+    skos:definition "A pension fund's claim on the employer that manages it, for a shortfall."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.64, claims of pension funds on pension managers."@en .
+
+asc-voc:PlantAndMachinery a skos:Concept ;
+    skos:prefLabel "Plant and machinery"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:OtherMachineryAndEquipment ;
+    skos:definition "Machinery installed at a site to produce, process, generate or distribute, such as production lines, machine tools, generators, boilers and lifts."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1139, other machinery and equipment, at the grain of the machinery of IAS 16."@en .
+
+asc-voc:PlantResource a skos:Concept ;
+    skos:prefLabel "Tree, crop and plant resource yielding repeat products"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:CultivatedBiologicalResource ;
+    skos:definition "Trees, vines and shrubs cultivated for what they yield repeatedly, such as orchards, vineyards and plantations."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1152, tree, crop and plant resources yielding repeat products."@en .
+
+asc-voc:PreciousMetalsAndStones a skos:Concept ;
+    skos:prefLabel "Precious metals and stones"@en ;
+    skos:broader asc-voc:Valuable ;
+    skos:definition "Precious metals and stones held as stores of value, and not as monetary gold or as inputs into production."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.131, precious metals and stones."@en .
+
+asc-voc:ProducedAsset a skos:Concept ;
+    skos:prefLabel "Produced asset"@en ;
+    skos:broader asc-voc:NonFinancialAsset ;
+    skos:definition "A non-financial asset that came into existence as the output of production: a fixed asset, an inventory or a valuable."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1, produced non-financial assets."@en .
+
+asc-voc:RailVehicle a skos:Concept ;
+    skos:prefLabel "Rail vehicle"@en ;
+    asc:mobility asc-voc:Mobile ;
+    skos:broader asc-voc:TransportEquipment ;
+    skos:definition "A locomotive, carriage or wagon for use on rails."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1131, transport equipment, at the grain of rolling stock."@en .
+
+asc-voc:ResearchAndDevelopment a skos:Concept ;
+    skos:prefLabel "Research and development"@en ;
+    skos:broader asc-voc:IntellectualPropertyProduct ;
+    skos:definition "Creative work undertaken to increase the stock of knowledge and to devise new applications of it."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1171, research and development."@en .
+
+asc-voc:RoadVehicle a skos:Concept ;
+    skos:prefLabel "Road vehicle"@en ;
+    asc:mobility asc-voc:Mobile ;
+    skos:broader asc-voc:TransportEquipment ;
+    skos:definition "A motor vehicle, trailer or semi-trailer for use on roads, including a mobile home or caravan."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1131, transport equipment, at the grain of the motor vehicles of IAS 16."@en .
+
+asc-voc:Share a skos:Concept ;
+    skos:prefLabel "Share"@en ;
+    skos:broader asc-voc:Equity ;
+    skos:definition "A share in a corporation, listed or not."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Groups SNA 2008 AF.511, listed shares, and AF.512, unlisted shares, since listing is a term that can change while the share stays the same."@en .
+
+asc-voc:SoftwareAndDatabases a skos:Concept ;
+    skos:prefLabel "Computer software and databases"@en ;
+    skos:broader asc-voc:IntellectualPropertyProduct ;
+    skos:definition "Computer programs with their descriptions and supporting materials, and files of data organised for efficient access and use."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1173, computer software and databases."@en .
+
+asc-voc:Spacecraft a skos:Concept ;
+    skos:prefLabel "Spacecraft"@en ;
+    asc:mobility asc-voc:Mobile ;
+    skos:broader asc-voc:TransportEquipment ;
+    skos:definition "A satellite, launch vehicle or other craft for use in space."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1131, transport equipment."@en .
+
+asc-voc:SpecialDrawingRight a skos:Concept ;
+    skos:prefLabel "Special drawing right"@en ;
+    skos:broader asc-voc:MonetaryGoldAndSdr ;
+    skos:definition "An international reserve asset created by the IMF and allocated to its members."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.12, special drawing rights."@en .
+
+asc-voc:StandardisedGuaranteeProvision a skos:Concept ;
+    skos:prefLabel "Provisions for calls under standardised guarantees"@en ;
+    skos:broader asc-voc:InsuranceAndPensionClaim ;
+    skos:definition "The claims of the holders of many similar guarantees, such as of export credit or student loans, on the guarantor's reserves."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.66, provisions for calls under standardised guarantees."@en .
+
+asc-voc:Stationary a skos:Concept ;
+    skos:prefLabel "Stationary"@en ;
+    skos:definition "Kept at one location in its normal use."@en ;
+    skos:inScheme asc-voc:MobilityScheme ;
+    skos:note "A thing of a stationary class has one location."@en ;
+    skos:topConceptOf asc-voc:MobilityScheme .
+
+asc-voc:Swap a skos:Concept ;
+    skos:prefLabel "Swap"@en ;
+    skos:broader asc-voc:ForwardTypeContract ;
+    skos:definition "A forward-type contract by which two parties exchange streams of payments, or currencies, on agreed terms over a period."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.712, forward-type contracts, which names swaps in its description, and the swaps category of ISO 10962."@en .
+
+asc-voc:TelecommunicationsEquipment a skos:Concept ;
+    skos:prefLabel "Telecommunications equipment"@en ;
+    skos:broader asc-voc:IctEquipment ;
+    skos:definition "Equipment for transmitting and receiving signals, such as switching and transmission equipment and telephones."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.11322, telecommunications equipment."@en .
+
+asc-voc:TradeCreditAndAdvance a skos:Concept ;
+    skos:prefLabel "Trade credit and advances"@en ;
+    skos:broader asc-voc:AccountsReceivable ;
+    skos:definition "Credit extended directly by suppliers to buyers of goods and services, and advances for work in progress or to be undertaken."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.81, trade credit and advances."@en .
+
+asc-voc:TransferableDeposit a skos:Concept ;
+    skos:prefLabel "Transferable deposit"@en ;
+    skos:broader asc-voc:CurrencyAndDeposit ;
+    skos:definition "A deposit exchangeable on demand at par and usable directly for payments."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AF.22, transferable deposits."@en .
+
+asc-voc:TransportEquipment a skos:Concept ;
+    skos:prefLabel "Transport equipment"@en ;
+    asc:mobility asc-voc:Mobile ;
+    skos:broader asc-voc:MachineryAndEquipment ;
+    skos:definition "Equipment for moving people or objects."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1131, transport equipment."@en .
+
+asc-voc:Valuable a skos:Concept ;
+    skos:prefLabel "Valuable"@en ;
+    skos:broader asc-voc:ProducedAsset ;
+    skos:definition "A produced good of considerable value acquired and held mainly as a store of value, and not for production or consumption."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.13, valuables."@en .
+
+asc-voc:Vessel a skos:Concept ;
+    skos:prefLabel "Vessel"@en ;
+    asc:mobility asc-voc:Mobile ;
+    skos:broader asc-voc:TransportEquipment ;
+    skos:definition "A ship, boat or other craft for use on or under water, including a houseboat."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.1131, transport equipment, at the grain of the ships of IAS 16."@en .
+
+asc-voc:WaterResource a skos:Concept ;
+    skos:prefLabel "Water resource"@en ;
+    asc:mobility asc-voc:Stationary ;
+    skos:broader asc-voc:NaturalResource ;
+    skos:definition "Surface and ground water whose scarcity gives rise to ownership or use rights and a market value."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.214, water resources."@en .
+
+asc-voc:WeaponsSystem a skos:Concept ;
+    skos:prefLabel "Weapons system"@en ;
+    skos:broader asc-voc:FixedAsset ;
+    skos:definition "Vehicles and other equipment used continuously in providing defence, such as warships, military aircraft, tanks and missile launchers."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.114, weapons systems."@en .
+
+asc-voc:WorkInProgress a skos:Concept ;
+    skos:prefLabel "Work in progress"@en ;
+    skos:broader asc-voc:Inventory ;
+    skos:definition "Output produced but not yet processed far enough to be supplied to others."@en ;
+    skos:inScheme asc-voc:AssetClassScheme ;
+    skos:note "Follows SNA 2008 AN.122, work in progress."@en .
+
+dct:creator a owl:AnnotationProperty .
+
+dct:description a owl:AnnotationProperty .
+
+cls-voc:AssetClassContract voc:boundScheme asc-voc:AssetClassScheme .

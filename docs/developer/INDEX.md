@@ -23,6 +23,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | DESIGN_SKETCHES_INDEX | unit |  | dropped 2026-09-20 |  | [status](status/DESIGN_SKETCHES_INDEX.md) |
 | applied-insurance-reference | epic | AIR | built 2026-11-02 | AIR-3.3 | [plan](plans/applied-insurance-reference.md), [status](status/applied-insurance-reference.md), [review](review/applied-insurance-reference-review.md), 24 Validation Packs |
 | applied-ontology-readiness | unit | AOR | built 2026-09-25 | AOR-1 | [plan](plans/applied-ontology-readiness.md), [status](status/applied-ontology-readiness.md), [review](review/applied-ontology-readiness-review.md), 12 Validation Packs |
+| asset-class | unit | ASC | built 2026-11-08 | ASC-1 | [plan](plans/asset-class.md), [status](status/asset-class.md), 3 Validation Packs |
 | computable-contract-substrate | multi-slice unit | CCS, HQ | verified 2026-10-29 | CCS-0 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), 22 Validation Packs |
 | config-studio | unit |  | merged 2026-10-30 |  | [plan](plans/config-studio.md), [status](status/config-studio.md) |
 | design-sketches-validation-summary | unit |  | merged 2026-09-20 |  | [status](status/design-sketches-validation-summary.md) |
@@ -185,6 +186,9 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | AOR-15 | to AOR-16 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
 | AOR-16 | to AOR-16 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
 | AOR-17 | AOR-17 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| ASC-1 | the literate grammar's property columns in individuals tables, the conventions document and their tests | asset-class | built 2026-11-08 |  | docs/developer/status/asset-class.md#board |
+| ASC-2 | the module `applied/asset-class/`, its README, spec, vocab, shapes, examples, tests and catalogue entries | asset-class | built 2026-11-08 |  | docs/developer/status/asset-class.md#board |
+| ASC-3 | exposure adopts the edition, its examples and the asset shape's mobility rules | asset-class | built 2026-11-08 |  | docs/developer/status/asset-class.md#board |
 | CCS-0 | A-112, A-113, A-01 and ADR-A-C2 addenda | computable-contract-substrate | verified 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-1 | A-104 | computable-contract-substrate | verified 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-2 | A-106 | computable-contract-substrate | verified 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |

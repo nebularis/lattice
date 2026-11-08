@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# Refused (README section 8): a deployment's scheme states a stationary
+# concept below a mobile one, so asc:MobilityInheritedShape reports
+# ex:Vehicle with the value ex:ParkedTrailer.
+
+@prefix ex:      <https://example.org/asset-class#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:     <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix asc:     <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#> .
+@prefix asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#> .
+
+ex:VehicleScheme a voc:ConceptScheme ;
+    fnd:hasIdentity ex:VehicleScheme-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Vehicle classes"@en ;
+    skos:hasTopConcept ex:Vehicle .
+
+ex:Vehicle a skos:Concept ;
+    skos:inScheme ex:VehicleScheme ;
+    skos:topConceptOf ex:VehicleScheme ;
+    skos:prefLabel "Vehicle"@en ;
+    asc:mobility asc-voc:Mobile .
+
+ex:ParkedTrailer a skos:Concept ;
+    skos:inScheme ex:VehicleScheme ;
+    skos:broader ex:Vehicle ;
+    skos:prefLabel "Parked trailer"@en ;
+    asc:mobility asc-voc:Stationary .

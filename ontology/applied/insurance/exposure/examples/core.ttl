@@ -16,6 +16,7 @@
 @prefix aeo:     <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure#> .
 @prefix aeo-voc: <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab#> .
 @prefix cls-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/vocab#> .
+@prefix asc-voc: <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab#> .
 @prefix fnd:     <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix qnt:     <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix pty:     <https://www.nebularis.org/neuro-semantic/lattice/party#> .
@@ -100,14 +101,14 @@ ex:factory-building-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
 
 ex:factory-building a aeo:Asset ;
     fnd:hasIdentity ex:factory-building-identity ;
-    aeo:assetClass aeo-voc:Building ;
+    aeo:assetClass asc-voc:NonResidentialBuilding ;
     aeo:locatedAt ex:factory-identity .
 
 ex:factory-contents-identity a aeo:AssetIdentity , fnd:PersistentIdentity .
 
 ex:factory-contents a aeo:Asset ;
     fnd:hasIdentity ex:factory-contents-identity ;
-    aeo:assetClass aeo-voc:Machinery ;
+    aeo:assetClass asc-voc:PlantAndMachinery ;
     aeo:locatedAt ex:factory-identity ;
     aeo:partOf ex:factory-building .
 

@@ -156,6 +156,10 @@ Enumerated classes written `**Equivalent to.** { ... }` as an `owl:oneOf` are un
 
 Rule 11 is amended. Every release in which the layer changed has an entry, not every released version, since the release register records which documents each release holds. The entry's form is the versioning policy's: one bullet per release, newest first, one sub-bullet per change opening with its ADR-A129 class, and `Unreleased` for a change whose number is not yet assigned. Two units had written pending notes as "Next release", a phrase that in English names the release after the current one, in two styles and in two places in one list, which the 0.20.0 cut made visible.
 
+## Addendum 2026-11-08 (proposed 2026-11-08)
+
+**Widens decision 3 for individuals.** A 6.4 table had a name column, a types column and a fixed set of annotation columns, so a SKOS scheme's membership, top concepts, hierarchy, notations and notes, and Vocabulary's identity and governance state for a governed scheme, could only be written as 6.6 blocks beside the table. A column whose header is one CURIE in backticks, with its prefix declared in section 2, now states that property for each row. A cell holds a comma-separated list of CURIEs and Turtle literals, each becoming one statement, and an empty cell states nothing. A cell entry that is neither is an error, so a notation or a note is written as a Turtle literal. The annotation columns are unchanged, and a property one of them already states may not also be a CURIE column. No generated file of a module that does not use the columns changes.
+
 ## Provenance
 
 **Unit:** [`improved-ontology-documentation`](../../developer/plans/improved-ontology-documentation.md) (plan)

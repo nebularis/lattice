@@ -88,3 +88,13 @@ decision D11, reversing D10). No `applied/scheme-profile/` module exists. Decisi
 lists two cross-domain modules, `capacity/` and `classification/`, and decision 5 reads:
 `classification/` imports the substrate only, and `insurance/common/` imports it and the
 substrate. Every other decision stands.
+
+## Addendum (2026-11-08): the asset class module (proposed, for the maintainer's review)
+
+**Widens decisions 2, 5 and 6.** `cls-voc:AssetClassContract` has had no scheme bound, so exposure borrowed value types as asset classes. Asset classes are used by insurance now and by lending and investment as planned, so the reference edition sits at the cross-domain level ([asset class sketch](../../developer/sketches/asset-class-vocabulary.md), ASC-Q1, answered 2026-11-08).
+
+1. Decision 2 lists three cross-domain modules: `capacity/`, `classification/` and `asset-class/`. `asset-class/` publishes the reference asset class edition, an `asc:mobility` characteristic, and the binding of `cls-voc:AssetClassContract` to the edition.
+2. Decision 5 adds: `asset-class/` imports the substrate and `classification/`. A domain module may import it, and no cross-domain module imports a domain module.
+3. Decision 6 adds the prefixes `asc:` and `asc-voc:` for `https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class#` and its vocab namespace.
+
+Every other decision stands. The edition follows ADR-A99's decision 1: it is the unscoped fallback a deployment's own scheme takes precedence over, and it says so in an editorial note.

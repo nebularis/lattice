@@ -591,6 +591,29 @@ def split_top_level(text: str) -> List[str]:
     return parts
 
 
+CURIE_VALUE_RE = re.compile(r"^[A-Za-z][\w.-]*:[A-Za-z_][\w.-]*$")
+NUMBER_RE = re.compile(r"^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$")
+
+
+def split_values(text: str) -> List[str]:
+    """``text`` split at the commas outside quoted literals, each part stripped."""
+    parts, current, quoted, escaped = [], [], False, False
+    for char in text:
+        if escaped:
+            escaped = False
+        elif char == "\\" and quoted:
+            escaped = True
+        elif char == '"':
+            quoted = not quoted
+        elif char == "," and not quoted:
+            parts.append("".join(current).strip())
+            current = []
+            continue
+        current.append(char)
+    parts.append("".join(current).strip())
+    return [p for p in parts if p]
+
+
 # ---- section 6, the Description Logic Encoding --------------------------------------------------
 
 SUBSECTIONS = ("classes", "object properties", "datatype properties", "individuals", "disjointness and keys",
@@ -785,11 +808,12 @@ class Section6:
             if not paragraph.is_table:
                 continue
             header, rows = table(paragraph)
-            if header[:2] != ["individual", "type"] or any(h not in ANNOTATIONS for h in header[2:]):
+            if header[:2] != ["individual", "type"]:
                 raise GrammarError(
                     f"line {paragraph.line}: an individuals table's columns are Individual | Type, then any of "
-                    f"{', '.join(a.capitalize() for a in ANNOTATIONS)}"
+                    f"{', '.join(a.capitalize() for a in ANNOTATIONS)}, or a property as a CURIE in backticks"
                 )
+            predicates = self.individual_columns(paragraph)
             document = self.document(paragraph.line, "vocab")
             for number, row in rows:
                 subject = self.curie(row[0], number)
@@ -798,9 +822,62 @@ class Section6:
                 self.subjects.add(subject)
                 for kind in split_top_level(row[1]):
                     document.add(subject, "rdf:type", self.curie(kind, number))
-                for column, value in zip(header[2:], row[2:]):
-                    if value.strip():
-                        document.add(subject, ANNOTATIONS[column], self.annotation(value, number))
+                for (predicate, is_annotation), value in zip(predicates, row[2:]):
+                    if not value.strip():
+                        continue
+                    if is_annotation:
+                        document.add(subject, predicate, self.annotation(value, number))
+                    else:
+                        for obj in self.property_values(value, number):
+                            document.add(subject, predicate, obj)
+
+    def individual_columns(self, paragraph: Paragraph) -> List[Tuple[str, bool]]:
+        """Each column after Individual and Type, as its predicate and whether it is an annotation column.
+        A header that is one CURIE in backticks states that property (ADR-A126's addendum of 2026-11-08)."""
+        text = paragraph.lines[0].strip()
+        raw = [cell.strip() for cell in text[1 if text.startswith("|") else 0: -1 if text.endswith("|") else None].split("|")]
+        columns: List[Tuple[str, bool]] = []
+        for cell in raw[2:]:
+            code = CODE_RE.fullmatch(cell)
+            where = f"line {paragraph.line}"
+            if code is None:
+                name = cell.casefold()
+                if name not in ANNOTATIONS:
+                    raise GrammarError(
+                        f"{where}: an individuals table's column {cell!r} is neither one of "
+                        f"{', '.join(a.capitalize() for a in ANNOTATIONS)} nor a property as a CURIE in backticks"
+                    )
+                columns.append((ANNOTATIONS[name], True))
+                continue
+            if not CURIE_VALUE_RE.match(code.group(1)):
+                raise GrammarError(f"{where}: the column {cell} is not one CURIE")
+            self.prefix_of(code.group(1), where)
+            predicate = self.curie(code.group(1), paragraph.line)
+            if predicate == "rdf:type" or predicate in ANNOTATIONS.values():
+                raise GrammarError(f"{where}: the column {cell} states what the Type or an annotation column states")
+            columns.append((predicate, False))
+        predicates = [p for p, _ in columns]
+        if len(set(predicates)) != len(predicates):
+            raise GrammarError(f"line {paragraph.line}: an individuals table states a property in two columns")
+        return columns
+
+    def property_values(self, text: str, line: int) -> List[str]:
+        """A property column's cell: comma-separated CURIEs and Turtle literals, commas inside quotes kept."""
+        values = []
+        for part in split_values(text):
+            if TURTLE_LITERAL_RE.match(part):
+                typed = re.search(r'"\^\^([^"]+)$', part)
+                if typed:
+                    self.prefix_of(typed.group(1), f"line {line}")
+                values.append(part)
+            elif NUMBER_RE.match(part) or part in ("true", "false"):
+                values.append(part)
+            elif CURIE_VALUE_RE.match(part):
+                self.prefix_of(part, f"line {line}")
+                values.append(self.curie(part, line))
+            else:
+                raise GrammarError(f"line {line}: {part!r} in a property column is neither a CURIE nor a Turtle literal")
+        return values
 
     def disjointness(self, start: int, end: int) -> None:
         for paragraph in self.readme.paragraphs(start, end):
