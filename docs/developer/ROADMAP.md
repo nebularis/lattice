@@ -70,7 +70,7 @@ Built from the status records on 17 branches, the units' own state from this tre
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig](plans/v-rig.md) | unit | building 2026-11-07 · built 2026-11-08 on claude/adoring-torvalds-ce7ffe, docs/placement-vehicles-structure | VR-1 | 7 built | claude/adoring-torvalds-ce7ffe, docs/placement-vehicles-structure |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-08 · verified 2026-11-06 on air/asset-classes, claude/adoring-torvalds-ce7ffe, docs/placement-vehicles-structure, fix/vyd-wrapper-passthrough, tutorial/studio-guide, vyd-win, vyd-win2 | VM-0 | 9 verified, 1 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-08 · verified 2026-11-06 on air/asset-classes, claude/adoring-torvalds-ce7ffe, fix/vyd-wrapper-passthrough, tutorial/studio-guide, vyd-win, vyd-win2 | VM-0 | 9 verified, 1 built |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -873,7 +873,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
 | `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
-| `docs/placement-vehicles-structure` | 2026-11-08 | 19 | pushed | FME-0, LG-8, VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
+| `docs/placement-vehicles-structure` | 2026-11-08 | 23 | pushed | FME-0, LG-8, VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -936,7 +936,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 104 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 105 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
