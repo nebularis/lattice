@@ -6,7 +6,7 @@
 
 ## The branch
 
-One branch, `fm/prelude-and-ledger-proofs`, cut from `main` once `docs/placement-vehicles-structure` has been squash-merged into it, since the briefs this note points at, the survey and the ADR-A-FM2 addendum live on that branch. Both slices below are built on it, in order, one commit per mark and one per slice at least, each with the trailers [GENAI_CONTRIBUTION.md](../../../GENAI_CONTRIBUTION.md) requires and a `Placement: T0, substrate proofs` trailer where the guard asks for one. Commit locally as LG-7 and LG-2 were, and push only when the maintainer says so. The maintainer merges.
+One branch, `fm/prelude-and-ledger-proofs`, cut from `main` at 04eb11d1 on 2026-11-08, after `docs/placement-vehicles-structure` was squash-merged into it, and pushed, so the briefs this note points at, the survey and the ADR-A-FM2 addendum are on it. Both slices below are built on it, in order, one commit per mark and one per slice at least, each with the trailers [GENAI_CONTRIBUTION.md](../../../GENAI_CONTRIBUTION.md) requires and a `Placement: T0, substrate proofs` trailer where the guard asks for one. Commit locally as LG-7 and LG-2 were, and push only when the maintainer says so. The maintainer merges.
 
 ## What machine S does and does not do
 
