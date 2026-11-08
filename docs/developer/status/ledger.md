@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 and LG-2 built.
+**Status:** building 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 and LG-2 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -103,12 +103,13 @@ Results sections. In short:
 |---|---|---|---|
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | merged 2026-10-27, built 2026-10-27 |  |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | merged 2026-10-27, built 2026-10-27 |  |
-| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | built 2026-11-08, building 2026-11-08, briefed 2026-10-27 |  |
+| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | building 2026-11-08, built 2026-11-08, building 2026-11-08, briefed 2026-10-27 |  |
 | LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | planned | LG-2 |
 | LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | planned | LG-3 |
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | blocked | LG-4 |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | built 2026-11-08, building 2026-11-08 |  |
+- 2026-11-08: LG-2 picked up again on `docs/placement-vehicles-structure`, on the maintainer's approval of how the suite's findings are handled: the two 10,000-definition scale tests move under `benchmark/ledger-posting-cost/` with small correctness versions left in `tools/test_ledger.py` (STD-155, PRI-65), the six LG-1 constraints are retargeted at the class as the runtime shapes are (TSD-23), the cycle test's narrowing stands, and TD-158 is folded into the rework LG-Q9 decides.
 - 2026-11-08: built, with no slice of its own, the speed of `tools/test_ledger.py` and the release of the on-disk Oxigraph store before its temporary folder is removed in `benchmark/ledger-posting-cost/`, where on Windows the deletion error replaced the expected one. The suite went from 57 s to 41 s without parallelism (the median of three runs each on one machine), by running LG1-09 on the cycle shape alone and thirteen of the sixteen runtime shapes of LG2-10 on Oxigraph. The other three stay with pySHACL, two because they find nothing on Oxigraph (TD-158) and one because it costs 38.7 s there (TD-159). Every store is now let go before its folder goes, and a probe in the benchmark tests makes an open store fail the removal on any platform.
 - 2026-11-08: LG-2 built on machine S, with its [Validation Pack](../validation/LG-2.md)'s handoff. The runtime document `spec/ledger-runtime.ttl`, sixteen runtime laws in `shapes/runtime.ttl`, the examples carrying their records, `licence-seats.ttl` under PDD-15, and TSD-70 from the `owl:rational` probe, so an exact share is two integers. `tools/test_ledger.py` passes 35 tests, and LG2-10's pass of 5,000 postings and 10,000 balance records validates in 56.6 s. TD-97 and TD-98 paid. LG-Q9 (the running balance under post-once) and LG-Q10 (a reinstatement under a capacity pool) raised in the plan. Versions not bumped, as `check:ontology-versioning` reports.
 - 2026-11-08: LG-2 picked up on machine S, after LG-7, under the same go-ahead. This mark was committed after the README's first runtime edits rather than before them, a lapse the pack's handoff records.
