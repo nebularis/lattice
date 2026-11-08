@@ -112,8 +112,9 @@ def install_hook(cwd: Path) -> str:
         finally:
             sys.path.pop(0)
         return "\n".join(hooks.install(cwd))
-    hooks = Path(git("rev-parse", "--git-path", "hooks", cwd=cwd).strip())
-    hook = (cwd / hooks / "pre-commit") if not hooks.is_absolute() else hooks / "pre-commit"
+    # The repository's own hooks folder and never core.hooksPath, which a user's shims may occupy and run this one from here.
+    common = Path(git("rev-parse", "--git-common-dir", cwd=cwd).strip())
+    hook = (common if common.is_absolute() else cwd / common) / "hooks" / "pre-commit"
     if hook.exists() and HOOK_MARK not in hook.read_text(encoding="utf-8", errors="replace"):
         raise SystemExit(f"{hook} exists and was not installed by this task. Add the check to it by hand.")
     hook.parent.mkdir(parents=True, exist_ok=True)

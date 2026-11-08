@@ -10,11 +10,10 @@ Markdown stays the source of truth. Everything derived from it holds no content 
 
 | File | Holds |
 |---|---|
-| `quanta.py` | the architectural quanta of the data and software views, derived from coupling and never declared ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), addendum of 2026-10-25) |
-| `extractor.py` | LATTICE's extractor for Вивід, the command `vyvid.toml` declares. `vyd build` runs it in the checkout with one JSON request, and it writes the quanta as quads and the catalogue's units, so an Owner cell that names a module becomes an edge |
+| `extractor.py` | LATTICE's extractor for Вивід, the command `vyvid.toml` declares. `vyd build` runs it in the checkout with one JSON request, and it writes the catalogue's units, so an Owner cell that names a module, a tool package, a root or an area becomes an edge. The architectural quanta are Вивід's own `quanta` kind, which `vyvid.toml` declares over the catalogue |
 | `identifier-exceptions.txt` | identifiers that are mentioned but defined nowhere, each with its reason. The baseline `vyd check identifiers` measures a new break against |
 | `test_knowledge_base.py` | the knowledge base proven consistent against the store `vyd build` writes: closed values, stable pointers, a check or a reason for each structural standard, every question an entry, every signpost resolving |
-| `test_quanta.py`, `test_extractor.py` | the rules of a quantum, and the extractor run on this checkout |
+| `test_extractor.py` | the extractor run on this checkout |
 
 ## Tasks
 
@@ -72,7 +71,7 @@ The structural facets, kind, audience, phase, stratum and the quanta's views, ar
 
 **Every path comes from the catalogue reader.** The extractor reads the modules, the tool packages and the areas from it, so a moved module is one catalogue edit and the extractor runs from any worktree (STD-273). The files it reads are the ones `vyvid.toml` names, and an edit to them or to its own code rebuilds the index of the checkout it is in.
 
-**A quantum is derived, never declared, and separately in each view.** The data view reads the imports between the ontology documents, the software view each deployment's compose file, and the same module falls into different quanta in different views.
+**A quantum is derived, never declared, and separately in each view.** The data view reads the imports between the ontology documents, the software view each deployment's compose file, and the same module falls into different quanta in different views. The rules are Вивід's, in its `quanta` kind ([ADR-A134](../../docs/architecture/decisions/ADR-A134-knowledge-index-and-design-shape-vocabulary.md), addendum of 2026-10-25).
 
 **The extractor writes into its own graphs alone, and a failure costs only its entries.** Вивід refuses the whole output of a run that writes outside the index graph, or exits non-zero, and reports it, so a broken extractor never corrupts the rest of the index.
 

@@ -541,3 +541,14 @@ def test_vm2_04_the_identifiers_check_fails_a_mention_nothing_defines_where_vyd_
     assert any("STD-99" in line for line in check(change, []))
     standards.write_text("# Standards\n\n| ID | Claim |\n|---|---|\n| STD-01 | **A rule.** |\n\nSee STD-01.\n")
     assert check(change, []) == []
+
+
+def test_gh1_install_writes_the_repositorys_own_hooks_whatever_core_hookspath_says(repo: Path, tmp_path_factory) -> None:
+    """A user may point core.hooksPath at shims of their own, which run the repository's hooks from its own folder. The
+    installer writes there, so it never overwrites a shim, and the dispatcher still runs."""
+    shims = tmp_path_factory.mktemp("shims")
+    (shims / "pre-commit").write_text("#!/bin/sh\nexit 0\n")
+    sh(repo, "git", "config", "core.hooksPath", str(shims))
+    assert hooks.hooks_dir(repo) == (repo / ".git" / "hooks").resolve() or hooks.hooks_dir(repo) == repo / ".git" / "hooks"
+    hooks.install(repo)
+    assert (repo / ".git" / "hooks" / "pre-commit").is_file() and (shims / "pre-commit").read_text() == "#!/bin/sh\nexit 0\n"
