@@ -14,8 +14,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.1.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.1.1> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1> ;
     dct:description """Asset class publishes a reference edition of asset classes, the kinds of thing an asset can be, for any domain that classifies assets: what a policy covers, what secures a loan, what a fund holds. It binds the edition to cls-voc:AssetClassContract, so cls:assetClass and every property that specialises it take their values from it wherever a deployment has bound no scheme of its own.
 
 The edition is one SKOS scheme with a non-financial branch, produced and non-produced assets, and a financial branch. It follows the asset classification of the System of National Accounts 2008, the one international classification that spans both, and every concept cites the category it follows.

@@ -163,15 +163,15 @@ schedule versions, not one snapshot.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.6.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.6.1> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
     rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations, with zones, attributes, dependencies, losses, requirements, cover and liability in further regions. No class here says what a contract insures, which is the contract module's." ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.1> .
 
 #################################################################
 #    Identity classes. Each versioned class below has
@@ -1576,14 +1576,14 @@ thousands.
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.6.0> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.6.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.0> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.0> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.6.1> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.6.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.1> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.1> .
 
 #################################################################
 #    Reference schemes, each the unscoped fallback

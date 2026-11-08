@@ -16,8 +16,8 @@ A compiler reads the mapping graph and writes executable artefacts, such as RML 
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/Mork.ttl` | <http://www.nebularis.org/ontologies/Mork> | <http://www.nebularis.org/ontologies/Mork/0.21.0> | <http://www.w3.org/2004/02/skos/core>, <http://www.w3.org/ns/shacl>, <http://www.w3.org/2003/11/swrl>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> |
-| `spec/Executable.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/executable> | <https://www.nebularis.org/neuro-semantic/lattice/executable/0.21.0> | <http://www.nebularis.org/ontologies/Mork>, <http://www.w3.org/ns/prov-o-20130430>, <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> |
+| `spec/Mork.ttl` | <http://www.nebularis.org/ontologies/Mork> | <http://www.nebularis.org/ontologies/Mork/0.21.1> | <http://www.w3.org/2004/02/skos/core>, <http://www.w3.org/ns/shacl>, <http://www.w3.org/2003/11/swrl>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> |
+| `spec/Executable.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/executable> | <https://www.nebularis.org/neuro-semantic/lattice/executable/0.21.1> | <http://www.nebularis.org/ontologies/Mork>, <http://www.w3.org/ns/prov-o-20130430>, <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.1> |
 
 | Prefix | Namespace |
 |---|---|

@@ -37,9 +37,9 @@ Ledger accounts do not hold observed values such as prices or temperatures, whic
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/ledger.ttl` | <https://www.nebularis.org/neuro-semantic/ledger> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> |
-| `vocab/ledger-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.0> |
-| `spec/ledger-runtime.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-runtime> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-runtime/0.21.0> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.0> |
+| `spec/ledger.ttl` | <https://www.nebularis.org/neuro-semantic/ledger> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.1> |
+| `vocab/ledger-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.1> |
+| `spec/ledger-runtime.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-runtime> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-runtime/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.1> |
 
 | Prefix | Namespace |
 |---|---|
@@ -227,11 +227,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** An amount consumed and restored, as the terms state it.
 
-**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or
-budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a
-sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge rule always;
-state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion
-method only where the terms need them.
+**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge rule always, and state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion method only where the terms need them.
 
 **Restrictions.**
 
@@ -1634,7 +1630,7 @@ Behaviour (ADR-A131 decision 1).
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
-- **Unreleased**.
+- **0.21.1**.
   - no effect. The runtime document, `ledger-runtime`: `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:BalanceRecord`, `ldg:MergeRecord`, `ldg:Grant` and `ldg:Checkpoint`, their properties, and the runtime laws of section 7.3 in `shapes/runtime.ttl`. Every term is new, so no record stated before is read differently.
   - no effect. New `ldg:periodRecurrence` and `ldg:closingRecurrence` on `ldg:AccountDefinition` (PDD-15), each at most one.
   - changes meaning (PDD-15). `ldg:resetRecurrence` is deprecated. A definition that states it still conforms, but nothing resets an account any more, so a periodic amount is one account per period under `ldg:periodRecurrence`.
@@ -1656,9 +1652,6 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 - **A purpose under a shared ancestor.** A draw naming a purpose writes a posting at the purpose-counting account too, and an ancestor of both would fold the draw twice. No example has such an ancestor, and the rule that prevents the double count is open (LF-Q18).
 - **A reinstatement under a capacity pool (LG-Q10).** A credit rolls up, so restoring an aggregate also restores the pool above it, and the insurance example debits the reinstatement at the pool to keep the pool the measure of capacity left. Whether a reinstatement is built that way, or the pool is stated otherwise, is the maintainer's.
 - **Persistence's record families** for postings, balance records and merge records, append-only, are not yet declared. The storage shape they take is what LG-6's fold investigation measures.
-- **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects
-  and threshold regimes drawing on and reading them (ADR-A131 decision 7).
-- **Allocation with conservation**, one amount split across several accounts by a merge rule, is not yet
-  specified.
-- **A benchmark** under `benchmark/ledger/`, at realistic volumes of accounts and draws, is not yet
-  written.
+- **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects and threshold regimes drawing on and reading them (ADR-A131 decision 7).
+- **Allocation with conservation**, one amount split across several accounts by a merge rule, is not yet specified.
+- **A benchmark** under `benchmark/ledger/`, at realistic volumes of accounts and draws, is not yet written.

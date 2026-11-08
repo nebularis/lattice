@@ -86,12 +86,12 @@ Behaviour distinguishes four tiers:
 
 <https://www.nebularis.org/neuro-semantic/behaviour>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.21.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/party/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.21.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/party/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.1> .
 
 bhv:StateSpace a owl:Class ;
 	rdfs:subClassOf fnd:Versioned ;
@@ -262,8 +262,8 @@ configuration document, at the same version.
 
 <https://www.nebularis.org/neuro-semantic/behaviour-runtime>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.21.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.21.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-runtime/0.21.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.21.1> .
 ```
 
 ```turtle-spec
@@ -609,8 +609,8 @@ stateDiagram-v2
 
 <https://www.nebularis.org/neuro-semantic/behaviour-vocab>
 	a owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.21.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.21.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/behaviour-vocab/0.21.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/behaviour/0.21.1> .
 
 bhv:ExternalStimulus a bhv:TriggerKind .
 bhv:ScheduledTrigger a bhv:TriggerKind .

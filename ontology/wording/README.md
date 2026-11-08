@@ -99,11 +99,11 @@ ex:cl-4-1-p4 a wrd:TextPart ; wrd:partIndex 4 ; wrd:partText " per annum." .
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/wording>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.0> ,
-				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.1> ,
+				<https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.1> .
 ```
 
 ### 5.2 Wordings and elements
@@ -713,8 +713,8 @@ use, and is not closed: a deployment binds a scheme of its own, which may extend
 
 <https://www.nebularis.org/neuro-semantic/wording-vocab>
 	rdf:type owl:Ontology ;
-	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.21.0> ;
-	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.0> .
+	owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/wording-vocab/0.21.1> ;
+	owl:imports <https://www.nebularis.org/neuro-semantic/lattice/wording/0.21.1> .
 
 wrd-voc:ElementTypeContract a voc:SchemeContract ;
 	rdfs:isDefinedBy <https://www.nebularis.org/neuro-semantic/wording-vocab> ;

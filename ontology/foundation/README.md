@@ -50,7 +50,7 @@ The ontology header, with the version every importer pins (ADR-A86):
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/foundation>
     a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.0> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1> ;
     owl:imports <http://www.w3.org/ns/prov-o-20130430> .
 ```
 
