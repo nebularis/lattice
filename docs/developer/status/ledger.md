@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 built. LG-2 unblocked, briefed and not started.
+**Status:** building 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 built. LG-2 building.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md)
@@ -103,12 +103,13 @@ Results sections. In short:
 |---|---|---|---|
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | merged 2026-10-27, built 2026-10-27 |  |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | merged 2026-10-27, built 2026-10-27 |  |
-| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | briefed 2026-10-27 |  |
+| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | building 2026-11-08, briefed 2026-10-27 |  |
 | LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | planned | LG-2 |
 | LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | planned | LG-3 |
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | blocked | LG-4 |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | built 2026-11-08, building 2026-11-08 |  |
+- 2026-11-08: LG-2 picked up on machine S, after LG-7, under the same go-ahead. This mark was committed after the README's first runtime edits rather than before them, a lapse the pack's handoff records.
 - 2026-11-08: LG-7 built on machine S, with its [Validation Pack](../validation/LG-7.md)'s handoff. Section 10 of the ledger README states the definitions, `tools/proofs/ledger/` proves sixteen claims under the gate, LA1 to LA4, LC1 to LC4, LD1 to LD4, LO1, LR1, LR2 and LN1, and `check:proofs -- ledger`, `check:formal-freshness` and `check:ontology-versioning -- --base-ref main` pass. Two adversarial probes failed as they should, a credit with no ceiling at LD3 and a weakened LN1 at the gate's digest. WPG-Q1 answered 2026-11-08, (a) holds, in a scratch session that was not kept. `ldg:LargestRemainder` is not proved, and RE-Q4 leans to it.
 - 2026-11-08: LG-7 picked up on machine S, on the maintainer's go-ahead to build LG-7 and then the next ledger slice autonomously, committing locally and never pushing.
 - 2026-11-07: WPG-Q4 answered by the maintainer, (b) for the general core and (a) for the reinsurance instance, recorded in the [waterfall proofs sketch](../sketches/waterfall-proofs-and-the-generality-gap.md) and promoted to ADR-A-FM2's addendum of the same day. LG-7 is the first slice under it. No slice changed state.
