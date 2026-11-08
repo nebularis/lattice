@@ -120,6 +120,10 @@ classDiagram
         expression, exactly one
         input (xsd:string)
     }
+    class InputBinding {
+        inputName, exactly one
+        key, exactly one
+    }
     class Layer {
         inProgramme, exactly one
         layerNumber, exactly one
@@ -198,6 +202,7 @@ classDiagram
     View <|-- RenderingView
     class DatatypeProperty_formatVersion["Datatype Property - formatVersion"]
     class ObjectProperty_inProgramme["Object Property - inProgramme"]
+    class ObjectProperty_inputBinding["Object Property - inputBinding"]
     class DatatypeProperty_key["Datatype Property - key"]
     class DatatypeProperty_readingKey["Datatype Property - readingKey"]
     class ObjectProperty_resolvesTo["Object Property - resolvesTo"]
@@ -503,6 +508,19 @@ A programme file lists two layers. The tool lifts the programme to a `vrig:Progr
 | `vrig:message` | max 1 |  |  |
 | `vrig:fromRun` | max 1 |  |  |
 
+#### `vrig:InputBinding`
+
+**Definition.** A declaration that a key of a rig's events carries one named input of an evaluation, stated by a mapping scheme or an extension, since the keys of an event's facts are the author's own and never a vocabulary.
+
+**Utility.** State one per input an evaluation asks for, on the scheme of a rig's extension. The tool reads an event's fact of the key as that input, in one of the three states, and an input no binding declares is absent from every projection.
+
+**Restrictions.**
+
+| Property | Values | Asserted in | Message |
+|---|---|---|---|
+| `vrig:inputName` | exactly 1 |  |  |
+| `vrig:key` | exactly 1 |  |  |
+
 #### `vrig:FindingKind`
 
 **Definition.** The closed set of kinds a finding has.
@@ -614,6 +632,12 @@ A programme file lists two layers. The tool lifts the programme to a `vrig:Progr
 **Domain.** `(vrig:Fact or vrig:Reference)`
 
 **Range.** `vrig:Located`
+
+#### `vrig:inputBinding`
+
+**Definition.** An input binding a scheme declares.
+
+**Range.** `vrig:InputBinding`
 
 #### `vrig:findingKind`
 
@@ -747,9 +771,9 @@ A programme file lists two layers. The tool lifts the programme to a `vrig:Progr
 
 #### `vrig:key`
 
-**Definition.** The key of a fact as the source writes it, or the key a finding concerns.
+**Definition.** The key of a fact as the source writes it, the key a finding concerns, or the key an input binding reads.
 
-**Domain.** `(vrig:Fact or vrig:Finding)`
+**Domain.** `(vrig:Fact or vrig:Finding or vrig:InputBinding)`
 
 **Range.** `xsd:string`
 
@@ -969,6 +993,16 @@ A programme file lists two layers. The tool lifts the programme to a `vrig:Progr
 
 **Characteristics.** functional
 
+#### `vrig:inputName`
+
+**Definition.** The name of the evaluation input a binding carries.
+
+**Domain.** `vrig:InputBinding`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
 #### `vrig:readingKey`
 
 **Definition.** A key a mapping scheme declares to carry a reading of a legal concept, stated on the scheme. The tool types the facts of such a key `vrig:Reading`.
@@ -1011,7 +1045,7 @@ A programme file lists two layers. The tool lifts the programme to a `vrig:Progr
 
 ### 6.5 Disjointness and Keys
 
-**All disjoint.** `vrig:Located`, `vrig:Locator`, `vrig:View`, `vrig:FindingKind`, `vrig:Run`
+**All disjoint.** `vrig:Located`, `vrig:Locator`, `vrig:View`, `vrig:FindingKind`, `vrig:Run`, `vrig:InputBinding`
 
 **All disjoint.** `vrig:Carrier`, `vrig:Fact`, `vrig:BodyNode`, `vrig:Reference`, `vrig:Finding`
 
@@ -1040,11 +1074,12 @@ None.
 | `vrig:Event` | Class | Subclass of `vrig:Carrier`. Disjoint with `vrig:Document`, `vrig:Programme`, `vrig:Record`. Restrictions `vrig:rigId` exactly 1. |
 | `vrig:Fact` | Class | Subclass of `vrig:Located`. Disjoint with `vrig:BodyNode`, `vrig:Carrier`, `vrig:Finding`, `vrig:Reference`. Restrictions `vrig:digest` exactly 1, `vrig:empty` max 1, `vrig:key` exactly 1, `vrig:of` exactly 1, `vrig:unknown` max 1. |
 | `vrig:Finding` | Class | Subclass of `vrig:Located`. Disjoint with `vrig:BodyNode`, `vrig:Carrier`, `vrig:Fact`, `vrig:Reference`. Restrictions `vrig:findingKind` exactly 1, `vrig:fromRun` max 1, `vrig:key` max 1, `vrig:message` max 1. |
-| `vrig:FindingKind` | Class | Equivalent to {`vrig:UnmappedKey`, `vrig:UncertainMapping`, `vrig:ShapeViolation`, `vrig:EmptyQuery`, `vrig:UnresolvedReference`, `vrig:Disagreement`, `vrig:ProseOnlyMeaning`, `vrig:UnknownFact`, `vrig:Inconsistent`, `vrig:ReasonerUnavailable`}. Disjoint with `vrig:Located`, `vrig:Locator`, `vrig:Run`, `vrig:View`. |
+| `vrig:FindingKind` | Class | Equivalent to {`vrig:UnmappedKey`, `vrig:UncertainMapping`, `vrig:ShapeViolation`, `vrig:EmptyQuery`, `vrig:UnresolvedReference`, `vrig:Disagreement`, `vrig:ProseOnlyMeaning`, `vrig:UnknownFact`, `vrig:Inconsistent`, `vrig:ReasonerUnavailable`}. Disjoint with `vrig:InputBinding`, `vrig:Located`, `vrig:Locator`, `vrig:Run`, `vrig:View`. |
 | `vrig:Formula` | Class | Subclass of `vrig:Fact`. Restrictions `vrig:expression` exactly 1. |
+| `vrig:InputBinding` | Class | Disjoint with `vrig:FindingKind`, `vrig:Located`, `vrig:Locator`, `vrig:Run`, `vrig:View`. Restrictions `vrig:inputName` exactly 1, `vrig:key` exactly 1. |
 | `vrig:Layer` | Class | Subclass of `vrig:Record`. Disjoint with `vrig:Placement`. Restrictions `vrig:inProgramme` exactly 1, `vrig:layerNumber` exactly 1. |
-| `vrig:Located` | Class | Disjoint with `vrig:FindingKind`, `vrig:Locator`, `vrig:Run`, `vrig:View`. Restrictions `vrig:digest` max 1, `vrig:locator` exactly 1. |
-| `vrig:Locator` | Class | Disjoint with `vrig:FindingKind`, `vrig:Located`, `vrig:Run`, `vrig:View`. Restrictions `vrig:clause` max 1, `vrig:documentId` exactly 1, `vrig:keyPath` max 1, `vrig:line` max 1, `vrig:row` max 1, `vrig:section` max 1, `vrig:view` exactly 1. |
+| `vrig:Located` | Class | Disjoint with `vrig:FindingKind`, `vrig:InputBinding`, `vrig:Locator`, `vrig:Run`, `vrig:View`. Restrictions `vrig:digest` max 1, `vrig:locator` exactly 1. |
+| `vrig:Locator` | Class | Disjoint with `vrig:FindingKind`, `vrig:InputBinding`, `vrig:Located`, `vrig:Run`, `vrig:View`. Restrictions `vrig:clause` max 1, `vrig:documentId` exactly 1, `vrig:keyPath` max 1, `vrig:line` max 1, `vrig:row` max 1, `vrig:section` max 1, `vrig:view` exactly 1. |
 | `vrig:Placement` | Class | Subclass of `vrig:Record`. Disjoint with `vrig:Layer`. Restrictions `vrig:inProgramme` exactly 1, `vrig:onLayer` max 1. |
 | `vrig:Programme` | Class | Subclass of `vrig:Carrier`. Disjoint with `vrig:Document`, `vrig:Event`, `vrig:Record`. Restrictions `vrig:rigId` exactly 1. |
 | `vrig:ProseOnly` | Class | Subclass of `vrig:BodyNode`. |
@@ -1052,13 +1087,14 @@ None.
 | `vrig:Record` | Class | Subclass of `vrig:Carrier`. Disjoint with `vrig:Document`, `vrig:Event`, `vrig:Programme`. Restrictions `vrig:index` max 1. |
 | `vrig:Reference` | Class | Subclass of `vrig:Located`. Disjoint with `vrig:BodyNode`, `vrig:Carrier`, `vrig:Fact`, `vrig:Finding`. Restrictions `vrig:external` max 1, `vrig:inNode` exactly 1, `vrig:referenceText` exactly 1, `vrig:targetKind` max 1, `vrig:targetNumber` max 1. |
 | `vrig:RenderingView` | Class | Subclass of `vrig:View`. Restrictions `vrig:renderingName` exactly 1. |
-| `vrig:Run` | Class | Disjoint with `vrig:FindingKind`, `vrig:Located`, `vrig:Locator`, `vrig:View`. Restrictions `vrig:checkoutCommit` exactly 1, `vrig:formatVersion` exactly 1, `vrig:rigDigest` exactly 1, `vrig:substrateRelease` exactly 1, `vrig:vectorSchemaVersion` max 1, `vrig:vocabularyVersion` exactly 1. |
-| `vrig:View` | Class | Disjoint with `vrig:FindingKind`, `vrig:Located`, `vrig:Locator`, `vrig:Run`. |
+| `vrig:Run` | Class | Disjoint with `vrig:FindingKind`, `vrig:InputBinding`, `vrig:Located`, `vrig:Locator`, `vrig:View`. Restrictions `vrig:checkoutCommit` exactly 1, `vrig:formatVersion` exactly 1, `vrig:rigDigest` exactly 1, `vrig:substrateRelease` exactly 1, `vrig:vectorSchemaVersion` max 1, `vrig:vocabularyVersion` exactly 1. |
+| `vrig:View` | Class | Disjoint with `vrig:FindingKind`, `vrig:InputBinding`, `vrig:Located`, `vrig:Locator`, `vrig:Run`. |
 | `vrig:about` | Object property | Domain `vrig:Finding`. Range `vrig:Located`. |
 | `vrig:findingKind` | Object property | Domain `vrig:Finding`. Range `vrig:FindingKind`. Functional. |
 | `vrig:fromRun` | Object property | Domain `vrig:Finding`. Range `vrig:Run`. Functional. |
 | `vrig:inNode` | Object property | Domain `vrig:Reference`. Range `vrig:BodyNode`. Functional. |
 | `vrig:inProgramme` | Object property | Domain `vrig:Layer` or `vrig:Placement`. Range `vrig:Programme`. Functional. |
+| `vrig:inputBinding` | Object property | Range `vrig:InputBinding`. |
 | `vrig:item` | Object property | Domain `vrig:Fact`. Range `vrig:Record`. |
 | `vrig:locator` | Object property | Domain `vrig:Located`. Range `vrig:Locator`. Functional. |
 | `vrig:of` | Object property | Domain `vrig:Fact`. Range `vrig:Carrier`. Functional. |
@@ -1078,7 +1114,8 @@ None.
 | `vrig:formatVersion` | Datatype property | Domain `vrig:Document` or `vrig:Run`. Range `xsd:string`. Functional. |
 | `vrig:index` | Datatype property | Domain `vrig:Record`. Range `xsd:integer`. Functional. |
 | `vrig:input` | Datatype property | Domain `vrig:Formula`. Range `xsd:string`. |
-| `vrig:key` | Datatype property | Domain `vrig:Fact` or `vrig:Finding`. Range `xsd:string`. Functional. |
+| `vrig:inputName` | Datatype property | Domain `vrig:InputBinding`. Range `xsd:string`. Functional. |
+| `vrig:key` | Datatype property | Domain `vrig:Fact` or `vrig:Finding` or `vrig:InputBinding`. Range `xsd:string`. Functional. |
 | `vrig:keyPath` | Datatype property | Domain `vrig:Locator`. Range `xsd:string`. Functional. |
 | `vrig:kind` | Datatype property | Domain `vrig:BodyNode`. Range `xsd:string`. Functional. |
 | `vrig:layerNumber` | Datatype property | Domain `vrig:Layer`. Range `xsd:integer`. Functional. |
@@ -1180,7 +1217,7 @@ None. The module imports no other.
 ## 12. Release Notes
 
 - **0.1.0**.
-  - First version. Located nodes and locators, views, carriers (document, programme, event, record, layer, placement), facts in three states with readings, formulas and ordered lists, body nodes with defined terms and prose-only nodes, references, runs, findings and the closed set of finding kinds. Structural shapes generated from section 6 and the fact-state constraint (section 7). The canonicalisation rules of section 9, versioned `v1`.
+  - First version. Located nodes and locators, views, carriers (document, programme, event, record, layer, placement), facts in three states with readings, formulas and ordered lists, input bindings, body nodes with defined terms and prose-only nodes, references, runs, findings and the closed set of finding kinds. Structural shapes generated from section 6 and the fact-state constraint (section 7). The canonicalisation rules of section 9, versioned `v1`.
 
 ## 13. Open Issues
 

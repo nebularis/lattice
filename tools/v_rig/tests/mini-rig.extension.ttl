@@ -50,3 +50,10 @@ ext:Map_EventScope a mork:DataMapping ; mork:mappingScheme ext:MiniRig ;
     mork:compositeNarrowerMapping ext:Map_EventDate .
 
 ext:Map_EventDate a mork:DataMapping ; mork:mappingScheme ext:MiniRig ; mork:exactRBoxMatch fnd:validFrom ; mork:dataRef "key:date_of_loss" .
+
+# ---- the inputs an evaluation asks for, bound to the keys of the mini-rig's events ---------------------------------
+
+ext:MiniRig vrig:inputBinding ext:LossInput , ext:PriorInput , ext:NoticeInput .
+ext:LossInput a vrig:InputBinding ; vrig:inputName "loss" ; vrig:key "loss_amount" .
+ext:PriorInput a vrig:InputBinding ; vrig:inputName "prior" ; vrig:key "prior_knowledge" .
+ext:NoticeInput a vrig:InputBinding ; vrig:inputName "notice" ; vrig:key "date_of_first_notice" .

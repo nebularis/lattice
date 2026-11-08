@@ -37,6 +37,10 @@ vrig:FormulaShape a sh:NodeShape ;
     sh:targetClass vrig:Formula ;
     sh:property [ sh:path vrig:expression ; sh:minCount 1 ; sh:maxCount 1 ] .
 
+vrig:InputBindingShape a sh:NodeShape ;
+    sh:targetClass vrig:InputBinding ;
+    sh:property [ sh:path vrig:inputName ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:key ; sh:minCount 1 ; sh:maxCount 1 ] .
+
 vrig:LayerShape a sh:NodeShape ;
     sh:targetClass vrig:Layer ;
     sh:property [ sh:path vrig:inProgramme ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path vrig:layerNumber ; sh:minCount 1 ; sh:maxCount 1 ] .

@@ -15,11 +15,14 @@ from rdflib import OWL, Graph, URIRef
 from . import canon
 from . import p1 as p1_module
 from . import p1_checks
+from . import p2 as p2_module
+from . import p3 as p3_module
+from .cases import input_bindings
 from .lift import RunInfo, lift, mark_readings
 from .out import OutError, counts, repository_root, resolve_out, write_outputs
 from .rig import RigError, read_rig
 
-VECTOR_SCHEMA_VERSION = None  # set by the vectors projection when it exists
+VECTOR_SCHEMA_VERSION = p3_module.VECTOR_SCHEMA_VERSION
 
 
 def _commit(root: Path) -> str:
@@ -45,6 +48,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--extension", action="append", default=[], metavar="TTL",
                         help="a rig's extension graph, its reference data and its own mapping schemes, run after the tracked scheme. Repeatable")
     parser.add_argument("--no-reasoner", action="store_true", help="skip the consistency check, which is then a reasoner-unavailable finding")
+    parser.add_argument("--build-theory", action="store_true", help="build the generated P2 session with Isabelle, one build on HOL alone")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING, format="%(levelname)s %(message)s", stream=sys.stderr)
@@ -58,6 +62,10 @@ def main(argv: list[str] | None = None) -> int:
         mark_readings(graph, projection.reading_keys)
         checks = p1_checks.check_all(graph, projection.layers, reasoner=not args.no_reasoner)
         p1_module.add_findings(graph, URIRef(canon.run_iri(rig.digest)), projection.findings + checks.findings)
+        bindings = input_bindings([Path(e) for e in args.extension])
+        found_vectors = p3_module.vectors(graph, rig.digest, projection.reading_keys, bindings, rig.file_digests)
+        p3_module.validate_vectors(found_vectors)
+        theory_text = p2_module.theory(graph, rig.digest, projection.reading_keys, bindings, rig.file_digests)
         record = {
             "rig_digest": rig.digest, "format_version": rig.format_version, "checkout_commit": info.checkout_commit,
             "substrate_release": info.substrate_release, "vocabulary_version": info.vocabulary_version,
@@ -67,8 +75,19 @@ def main(argv: list[str] | None = None) -> int:
             "p1": {"reading_keys": list(projection.reading_keys), "mapped_keys": sorted(projection.mapped_keys),
                    "compile_findings": projection.compile_findings, "layer_triples": len(projection.layers),
                    "consistent": checks.consistent, "competency": checks.competency},
+            "p2": {"session": p2_module.SESSION, "built": None},
+            "p3": {"vectors": sorted(found_vectors), "input_bindings": bindings},
         }
+        if args.build_theory:
+            p2_module.write_theory(theory_text, out)
+            built, output = p2_module.build(out)
+            record["p2"]["built"] = built
+            (out / "p2" / "build.log").write_text(output, encoding="utf-8")
+            if not built:
+                print(f"v_rig: the P2 build failed, see {out / 'p2' / 'build.log'}", file=sys.stderr)
         written = write_outputs(rig, graph, out, record, projection=projection, checks=checks)
+        for path in p2_module.write_theory(theory_text, out) + p3_module.write_vectors(found_vectors, out):
+            written[str(path.relative_to(out))] = path
     except (RigError, OutError) as error:
         print(f"v_rig: {error}", file=sys.stderr)
         return 2

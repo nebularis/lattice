@@ -61,6 +61,11 @@ vrig:Formula a owl:Class ;
     rdfs:comment "A fact whose value is an expression over named inputs rather than a number, kept as written." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:expression ; owl:cardinality "1"^^xsd:nonNegativeInteger ], vrig:Fact .
 
+vrig:InputBinding a owl:Class ;
+    rdfs:comment "A declaration that a key of a rig's events carries one named input of an evaluation, stated by a mapping scheme or an extension, since the keys of an event's facts are the author's own and never a vocabulary." ;
+    fnd:utility "State one per input an evaluation asks for, on the scheme of a rig's extension. The tool reads an event's fact of the key as that input, in one of the three states, and an input no binding declares is absent from every projection." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:inputName ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:key ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
 vrig:Layer a owl:Class ;
     rdfs:comment "One layer of a programme, as the programme file lists it, with the number the file gives it." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vrig:inProgramme ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty vrig:layerNumber ; owl:cardinality "1"^^xsd:nonNegativeInteger ], vrig:Record ;
@@ -189,14 +194,23 @@ vrig:input a owl:DatatypeProperty ;
     rdfs:domain vrig:Formula ;
     rdfs:range xsd:string .
 
+vrig:inputBinding a owl:ObjectProperty ;
+    rdfs:comment "An input binding a scheme declares." ;
+    rdfs:range vrig:InputBinding .
+
+vrig:inputName a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The name of the evaluation input a binding carries." ;
+    rdfs:domain vrig:InputBinding ;
+    rdfs:range xsd:string .
+
 vrig:item a owl:ObjectProperty ;
     rdfs:comment "A structured item of a fact's value, a record." ;
     rdfs:domain vrig:Fact ;
     rdfs:range vrig:Record .
 
 vrig:key a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:comment "The key of a fact as the source writes it, or the key a finding concerns." ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( vrig:Fact vrig:Finding ) ] ;
+    rdfs:comment "The key of a fact as the source writes it, the key a finding concerns, or the key an input binding reads." ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( vrig:Fact vrig:Finding vrig:InputBinding ) ] ;
     rdfs:range xsd:string .
 
 vrig:keyPath a owl:DatatypeProperty, owl:FunctionalProperty ;
@@ -365,4 +379,4 @@ vrig:vocabularyVersion a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 [ a owl:AllDisjointClasses ; owl:members ( vrig:Document vrig:Programme vrig:Event vrig:Record ) ] .
 
-[ a owl:AllDisjointClasses ; owl:members ( vrig:Located vrig:Locator vrig:View vrig:FindingKind vrig:Run ) ] .
+[ a owl:AllDisjointClasses ; owl:members ( vrig:Located vrig:Locator vrig:View vrig:FindingKind vrig:Run vrig:InputBinding ) ] .
