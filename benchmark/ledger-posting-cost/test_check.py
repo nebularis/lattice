@@ -77,6 +77,20 @@ def test_lc8_the_store_is_removed_when_the_run_ends_and_when_it_fails(tmp_path, 
     assert not os.listdir(tmp_path)
 
 
+def test_lc14_a_read_that_fails_deep_in_the_run_still_lets_go_of_the_store(tmp_path, monkeypatch):
+    """The failing run's traceback holds the frame of the read, and the read holds the store. Without `release_store` the folder's removal finds the store open."""
+    def failing(strategy, store, *rest):
+        raise RuntimeError("the read failed")
+
+    monkeypatch.setattr(check, "read", failing)
+    with pytest.raises(RuntimeError, match="the read failed"):
+        check.run_strategy("post-once", SMALL, EVERY, directory=str(tmp_path))
+    assert not os.listdir(tmp_path)
+    monkeypatch.setattr(check, "release_store", lambda: None)
+    with pytest.raises(AssertionError, match="still open"):
+        check.run_strategy("post-once", SMALL, EVERY, directory=str(tmp_path))
+
+
 def test_lc9_the_report_is_written_where_asked(tmp_path):
     check.write_report(check.run((SMALL,), EVERY), tmp_path)
     data = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))

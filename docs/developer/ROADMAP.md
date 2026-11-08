@@ -48,7 +48,7 @@ Built from the status records on 15 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on fix/vyd-wrapper-passthrough, fml/isabelle-layers, pvs-fml-foo, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 3 planned, 2 merged, 2 built, 1 blocked |  |
+| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on fix/vyd-wrapper-passthrough, fml/isabelle-layers, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 3 planned, 2 merged, 2 built, 1 blocked |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -867,7 +867,7 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
-| `docs/placement-vehicles-structure` | 2026-11-08 | 10 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
+| `docs/placement-vehicles-structure` | 2026-11-08 | 12 | pushed | VR-1, VR-2, VR-3, VR-4, VR-5, VR-6, VR-7, VS-1, VS-2, VS-3, VS-4, VS-5, VS-6, VS-7 |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -929,7 +929,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 105 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 107 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 

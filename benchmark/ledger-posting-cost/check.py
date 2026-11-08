@@ -24,6 +24,7 @@ a temporary directory that is removed when the run ends, including on failure.""
 
 from __future__ import annotations
 
+import gc
 import json
 import os
 import platform
@@ -31,6 +32,7 @@ import random
 import sys
 import tempfile
 import time
+import traceback
 from functools import cache
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -57,6 +59,15 @@ SEED = 20261024
 
 class WrongResult(AssertionError):
     """A balance that is not the model's, or a stored count that is not the strategy's arithmetic. The one way the check fails."""
+
+
+def release_store() -> None:
+    """Let go of an on-disk store before its folder is removed. Call it in the `finally` of the block that opened the store, after setting
+    the block's own name for the store to None. pyoxigraph's `Store` has no `close`: the store, and its `LOCK` file, go when the last
+    reference does. Windows cannot delete an open `LOCK`, and the deletion error would replace the error the run failed with. On a
+    failing run the traceback keeps the finished frames below the block, and their locals, alive, so their locals are cleared too."""
+    traceback.clear_frames(sys.exc_info()[2])
+    gc.collect()
 
 
 def n(name: str) -> ox.NamedNode:
@@ -320,26 +331,29 @@ def run_strategy(strategy: str, count: int, every: int = CHECKPOINT_EVERY, direc
     model = run_model(count, every, points, accounts, stream)
     with tempfile.TemporaryDirectory(prefix="ledger-posting-cost-", dir=directory) as tmp:
         store = ox.Store(tmp)
-        start = time.perf_counter()
-        store.bulk_extend(quads_for(strategy, accounts, stream, model, every))
-        store.flush()
-        write = time.perf_counter() - start
-        stored = len(store)
-        if stored != expected_stored(strategy, count, every):
-            raise WrongResult(f"{strategy} {count}: stored {stored} triples, expected {expected_stored(strategy, count, every)}")
-        m = Measurement(strategy, count, stored, stored / count, write, {name: LevelRead() for name in LEVELS})
-        folded_by: dict[tuple[int, int], int] = {}
-        for point in points:
-            for i, account in enumerate(accounts):
-                begin = time.perf_counter()
-                balance, folded = read(strategy, store, account, point, every)
-                seconds = time.perf_counter() - begin
-                if balance != model.at_points[point][i]:
-                    raise WrongResult(f"{strategy} {count}: {account.iri.value} as of {point} reads {balance}, the model gives {model.at_points[point][i]}")
-                r = m.reads[LEVELS[account.level]]
-                r.reads, r.seconds, r.folded = r.reads + 1, r.seconds + seconds, r.folded + folded
-                folded_by[(i, point)] = folded
-        del store
+        try:
+            start = time.perf_counter()
+            store.bulk_extend(quads_for(strategy, accounts, stream, model, every))
+            store.flush()
+            write = time.perf_counter() - start
+            stored = len(store)
+            if stored != expected_stored(strategy, count, every):
+                raise WrongResult(f"{strategy} {count}: stored {stored} triples, expected {expected_stored(strategy, count, every)}")
+            m = Measurement(strategy, count, stored, stored / count, write, {name: LevelRead() for name in LEVELS})
+            folded_by: dict[tuple[int, int], int] = {}
+            for point in points:
+                for i, account in enumerate(accounts):
+                    begin = time.perf_counter()
+                    balance, folded = read(strategy, store, account, point, every)
+                    seconds = time.perf_counter() - begin
+                    if balance != model.at_points[point][i]:
+                        raise WrongResult(f"{strategy} {count}: {account.iri.value} as of {point} reads {balance}, the model gives {model.at_points[point][i]}")
+                    r = m.reads[LEVELS[account.level]]
+                    r.reads, r.seconds, r.folded = r.reads + 1, r.seconds + seconds, r.folded + folded
+                    folded_by[(i, point)] = folded
+        finally:
+            store = None
+            release_store()
     return m, folded_by
 
 

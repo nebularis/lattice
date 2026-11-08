@@ -130,6 +130,19 @@ def test_lp14_the_store_is_removed_when_the_run_ends_and_when_it_fails(tmp_path,
     assert not os.listdir(tmp_path)
 
 
+def test_lp16_a_read_that_fails_deep_in_the_run_still_lets_go_of_the_store(tmp_path, monkeypatch):
+    def failing(store, *rest):
+        raise RuntimeError("the read failed")
+
+    monkeypatch.setattr(lp, "read_effective", failing)
+    with pytest.raises(RuntimeError, match="the read failed"):
+        lp.measure(SMALL, RATE, REACH, directory=str(tmp_path))
+    assert not os.listdir(tmp_path)
+    monkeypatch.setattr(check, "release_store", lambda: None)
+    with pytest.raises(AssertionError, match="still open"):
+        lp.measure(SMALL, RATE, REACH, directory=str(tmp_path))
+
+
 def test_lp15_the_report_is_written_where_asked(tmp_path, monkeypatch):
     monkeypatch.setattr(lp, "RATES", (0.0, 0.05))
     monkeypatch.setattr(lp, "REACHES", (1,))
