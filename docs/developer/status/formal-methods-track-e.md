@@ -113,7 +113,7 @@ No action needed on E1 until one of those two clears.
 
 ## Log
 
-- 2026-11-08: FME-0 added and planned, the prelude session, after `HOL-Library` built on machine R under a memory limit and the maintainer decided the ledger plan's LG-Q14 as (d). The [HOL sessions survey](../sketches/hol-sessions-survey.md) names the nineteen theories it imports and why. Plan only.
+- 2026-11-08: FME-0 added and planned, the prelude session, after `HOL-Library` built on machine R under a memory limit and the maintainer decided the ledger plan's LG-Q14 as (d). The [HOL sessions survey](../sketches/hol-sessions-survey.md) names the nineteen theories it imports and why. Plan only. The same day the maintainer ruled that the heap is never built by `bootstrap` and is built on first use by the check that needs it, which is STD-324, with BL-17 for the test-kit jars.
 
 - 2026-10-06: sketch and plan written, following track D's close and ADR-A-FM1. E1 split into
   FME-1.0 (home and generation tooling, a prerequisite the epic's numbering does not name), FME-1.1 (the
