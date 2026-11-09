@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 and LG-2 built.
+**Status:** building 2026-11-09. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 and LG-2 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -49,6 +49,10 @@ Since then the work has been design rather than build, and it has answered the w
 | the `owl:rational` probe | **done by LG-2**, TSD-70. rdflib, Oxigraph and Jena keep the literal and none compares it by value, so a proportion is two integers. ES-5 can rely on the finding | closed |
 
 **Next action:** the maintainer's verification of LG-7 and LG-2 from their packs, and LG-Q9 and LG-Q10. Then LG-3, Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and no longer waits on LG-2.
+
+## 2026-11-09, LG-8 marked building
+
+On machine S, branch `fm/prelude-and-ledger-proofs`, per the [machine S brief](../notes/machine-s-brief-2026-11-08.md), after track E's FME-0 built the prelude the session parents on. LG-Q14 is decided (d) and LG-Q11 is open, so LM1 is left out.
 
 ## 2026-10-22, LG-1 built and verified
 
@@ -109,7 +113,7 @@ Results sections. In short:
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | blocked | LG-4 |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | built 2026-11-08, building 2026-11-08 |  |
-| LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | planned | LG-Q14 |
+| LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | building 2026-11-09 |  |
 - 2026-11-08: LG-2 handed back at built, the scale tests under benchmark, the LG-1 constraints class-targeted and the ledger_corpus package, squash-merged into `main` with the substrate at 0.21.1. Its verification and LG-Q9's rework are still to come.
 - 2026-11-08: LG-Q14 decided (d) by the maintainer, a prelude session every layer session parents on, track E's FME-0, after the HOL sessions survey. LG-8 parents on it.
 - 2026-11-08: LG-8 added and planned, the proofs widened on HOL-Library, after the library built on machine R under a memory limit. LG-Q14 raised in the plan, how the session reaches the library, leaning a `sessions` clause that loads the theories from source so no other machine needs the heap. Plan only, nothing under `tools/proofs/` changed.
