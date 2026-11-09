@@ -386,7 +386,7 @@ Added 2026-11-09, after the ruling on B1, as the settings where reading (iii) of
 | D | 12,000,000 | 4,800,000 | 4,800,000 |
 | E | 8,000,050 | 3,200,020 | 3,200,000, 20 shares to the residual |
 | F | 4,999,950 | 1,999,980 | 1,999,900, 80 shares to the residual |
-| others | 0 | | |
+| in all | 25,000,000 | 10,000,000 | 9,999,900, a residual of 100, one lot |
 
 **What a bare proportional split does not carry.**
 
