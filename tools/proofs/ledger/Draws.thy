@@ -3,11 +3,12 @@
 (* The account tree and its draws: a draw succeeds whole or changes nothing, availability is the
    least along the path, a credit stops at the ceiling, a purpose debits a second path in the same
    operation, draws at one position settle the same in every order of proposal, and an amount
-   drawn across several accounts in turn is conserved with its residual (plan ledger, LG-7).
-   Hand-written on the Kernel extracted from ontology/ledger/README.md section 10. *)
+   drawn across several accounts in turn is conserved with its residual (plan ledger, LG-7, widened
+   by LG-8 on HOL-Library's multisets). Hand-written on the Kernel extracted from
+   ontology/ledger/README.md section 10. *)
 
 theory Draws
-imports Allocation
+imports Allocation "HOL-Library.Multiset"
 begin
 
 section \<open>Paths and availability\<close>
@@ -139,11 +140,26 @@ lemma requested_reordered:
 lemma proposers_reordered: "set ps = set ps' \<Longrightarrow> proposers ps = proposers ps'"
   by (simp add: proposers_def)
 
+lemma requested_mset: "mset ps = mset ps' \<Longrightarrow> requested ps = requested ps'"
+proof -
+  assume eq: "mset ps = mset ps'"
+  show "requested ps = requested ps'"
+  proof
+    fix k
+    have "mset (map snd (filter (\<lambda>q. fst q = k) ps)) = mset (map snd (filter (\<lambda>q. fst q = k) ps'))"
+      using eq by simp
+    then have "sum_list (map snd (filter (\<lambda>q. fst q = k) ps))
+               = sum_list (map snd (filter (\<lambda>q. fst q = k) ps'))"
+      by (metis sum_mset_sum_list)
+    then show "requested ps k = requested ps' k" by (simp add: requested_def)
+  qed
+qed
+
 (* GATE:BEGIN LO1 *)
 theorem settled_the_same_in_every_order_of_proposal:
-  assumes "distinct ps" "distinct ps'" "set ps = set ps'"
+  assumes "mset ps = mset ps'"
   shows "settle_at rule parent a ps bal = settle_at rule parent a ps' bal"
-  using requested_reordered[OF assms] proposers_reordered[OF assms(3)]
+  using requested_mset[OF assms] proposers_reordered[OF mset_eq_setD[OF assms]]
   by (simp add: settle_at_def merge_def)
 (* GATE:END *)
 
@@ -321,37 +337,84 @@ next
   then show ?case using Cons.IH[OF _ v1nn bal1nn rec] out by simp
 qed
 
+lemma available_nonneg:
+  assumes tr: "tree A parent" and aA: "a \<in> A" and bal0: "\<forall>b\<in>A. 0 \<le> bal b"
+  shows "0 \<le> available parent bal a"
+proof -
+  obtain b where "b \<in> path parent a" "available parent bal a = bal b"
+    using available_attained[OF tr aA] by blast
+  moreover have "b \<in> A" using path_in_tree[OF tr aA] \<open>b \<in> path parent a\<close> by blast
+  ultimately show ?thesis using bal0 by simp
+qed
+
+text \<open>The posting at step \<open>i\<close> is the rule applied to what is still requested after the first
+  \<open>i\<close> accounts, at the availability the first \<open>i\<close> accounts left. The state after the first
+  \<open>i\<close> accounts is \<open>spread\<close> over the first \<open>i\<close> accounts.\<close>
+
+lemma spread_step:
+  "i < length accts \<Longrightarrow> spread K R parent accts bal v = (ps, r, bal') \<Longrightarrow>
+     spread K R parent (take i accts) bal v = (qs, ri, bi) \<Longrightarrow>
+     ps ! i = R ri (min (total K ri) (max 0 (available parent bi (accts ! i))))"
+proof (induction accts arbitrary: i bal v ps r bal' qs ri bi)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons a rest)
+  define x where "x = min (total K v) (max 0 (available parent bal a))"
+  define p where "p = R v x"
+  define bal1 where "bal1 = debit (path parent a) x bal"
+  define v1 where "v1 = less v p"
+  obtain ps1 r1 bal2 where rec: "spread K R parent rest bal1 v1 = (ps1, r1, bal2)"
+    by (metis prod_cases3)
+  have out: "ps = p # ps1"
+    using Cons.prems(2) rec by (simp add: x_def p_def bal1_def v1_def Let_def)
+  show ?case
+  proof (cases i)
+    case 0
+    then have "ri = v" "bi = bal" using Cons.prems(3) by simp_all
+    then show ?thesis using out 0 by (simp add: p_def x_def)
+  next
+    case (Suc j)
+    have j: "j < length rest" using Cons.prems(1) Suc by simp
+    obtain qs1 rj bj where pre: "spread K R parent (take j rest) bal1 v1 = (qs1, rj, bj)"
+      by (metis prod_cases3)
+    have "spread K R parent (take i (a # rest)) bal v = (p # qs1, rj, bj)"
+      using pre Suc by (simp add: x_def p_def bal1_def v1_def Let_def)
+    then have "ri = rj" "bi = bj" using Cons.prems(3) by simp_all
+    moreover have "ps1 ! j = R rj (min (total K rj) (max 0 (available parent bj (rest ! j))))"
+      by (rule Cons.IH[OF j rec pre])
+    ultimately show ?thesis using out Suc by simp
+  qed
+qed
+
 (* GATE:BEGIN LC3 *)
 theorem nothing_posted_beyond_availability:
   assumes fin: "finite K" and ok: "lawful K R" and tr: "tree A parent"
       and sub: "set accts \<subseteq> A" and nn: "nonneg_on K v" and bal0: "\<forall>b\<in>A. 0 \<le> bal b"
       and sp: "spread K R parent accts bal v = (ps, r, bal')"
   shows "(\<forall>b\<in>A. 0 \<le> bal' b) \<and> nonneg_on K r"
-    and "accts = a # rest \<Longrightarrow> total K (hd ps) \<le> available parent bal a"
+    and "i < length accts \<Longrightarrow>
+           total K (ps ! i) \<le> available parent (snd (snd (spread K R parent (take i accts) bal v))) (accts ! i)"
 proof -
   show "(\<forall>b\<in>A. 0 \<le> bal' b) \<and> nonneg_on K r"
     using spread_keeps_balances[OF fin ok tr sub nn bal0 sp] spread_invariant[OF fin ok nn sp]
     by blast
 next
-  assume ac: "accts = a # rest"
-  define x where "x = min (total K v) (max 0 (available parent bal a))"
-  have aA: "a \<in> A" using sub ac by simp
-  have x0: "0 \<le> x" using total_nonneg[OF nn] by (simp add: x_def)
-  have xv: "x \<le> total K v" by (simp add: x_def)
-  obtain ps1 r1 bal2
-    where rec: "spread K R parent rest (debit (path parent a) x bal) (less v (R v x)) = (ps1, r1, bal2)"
+  assume i: "i < length accts"
+  obtain qs ri bi where pre: "spread K R parent (take i accts) bal v = (qs, ri, bi)"
     by (metis prod_cases3)
-  have hd: "hd ps = R v x"
-    using sp ac rec by (auto simp: x_def Let_def)
-  have av0: "0 \<le> available parent bal a"
-  proof -
-    obtain b where "b \<in> path parent a" "available parent bal a = bal b"
-      using available_attained[OF tr aA] by blast
-    moreover have "b \<in> A" using path_in_tree[OF tr aA] \<open>b \<in> path parent a\<close> by blast
-    ultimately show ?thesis using bal0 by simp
-  qed
-  show "total K (hd ps) \<le> available parent bal a"
-    using lawful_exact[OF ok nn x0 xv] av0 by (simp add: hd x_def)
+  have subi: "set (take i accts) \<subseteq> A" using sub set_take_subset by fast
+  have rinn: "nonneg_on K ri" using spread_invariant[OF fin ok nn pre] by blast
+  have bi0: "\<forall>b\<in>A. 0 \<le> bi b" using spread_keeps_balances[OF fin ok tr subi nn bal0 pre] .
+  have aA: "accts ! i \<in> A" using sub i nth_mem by blast
+  have av0: "0 \<le> available parent bi (accts ! i)" by (rule available_nonneg[OF tr aA bi0])
+  define x where "x = min (total K ri) (max 0 (available parent bi (accts ! i)))"
+  have x0: "0 \<le> x" using total_nonneg[OF rinn] by (simp add: x_def)
+  have xr: "x \<le> total K ri" by (simp add: x_def)
+  have "ps ! i = R ri x" unfolding x_def by (rule spread_step[OF i sp pre])
+  then have "total K (ps ! i) = x" using lawful_exact[OF ok rinn x0 xr] by simp
+  then show "total K (ps ! i) \<le> available parent (snd (snd (spread K R parent (take i accts) bal v))) (accts ! i)"
+    using av0 pre by (simp add: x_def)
 qed
 (* GATE:END *)
 

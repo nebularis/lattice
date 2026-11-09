@@ -123,4 +123,23 @@ definition to_first :: "int \<Rightarrow> 'k::linorder set \<Rightarrow> ('k \<R
 definition weights :: "('k \<times> int) list \<Rightarrow> 'k \<Rightarrow> int" where
   "weights ps = (\<lambda>k. sum_list (map snd (filter (\<lambda>q. fst q = k) ps)))"
 
+definition remainder :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "remainder t K w k = (t * w k) mod (\<Sum>j\<in>K. w j)"
+
+definition largest_remainder :: "int \<Rightarrow> 'k::linorder set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "largest_remainder t K w k =
+     floor_part t K w k
+     + (if k \<in> set (take (nat (leftover t K w))
+                       (sort_key (\<lambda>j. - remainder t K w j) (sorted_list_of_set K))) then 1 else 0)"
+
+fun spread_int ::
+  "'k set \<Rightarrow> (int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int) \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> 'a list
+     \<Rightarrow> ('a \<Rightarrow> int) \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> ('k \<Rightarrow> int) list \<times> ('k \<Rightarrow> int) \<times> ('a \<Rightarrow> int)" where
+  "spread_int K R parent [] bal v = ([], v, bal)"
+| "spread_int K R parent (a # rest) bal v =
+     (let x = min (\<Sum>k\<in>K. v k) (max 0 (Min (bal ` path parent a))); p = R x K v
+      in case spread_int K R parent rest (\<lambda>b. if b \<in> path parent a then bal b - x else bal b)
+                (\<lambda>k. v k - p k) of
+           (ps, r, bal') \<Rightarrow> (p # ps, r, bal'))"
+
 end

@@ -1,7 +1,7 @@
 {
   "subject": "LD2",
   "statedAs": "Draws.availability_is_the_least_along_the_path",
-  "statementDigest": "sha256:c1bd14666d881d6c31c83d57c0ecfc06565ae5857fc227339c3d3dbeea87d294",
+  "statementDigest": "sha256:59ab972d03cdc1eb552c9731c5c452e9f048d8f9c25545c8995d389eba34367e",
   "method": "Proof",
   "scope": "EveryTree",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

@@ -5,19 +5,19 @@
 **Unit ID:** `v-rig`
 **Plan:** [v-rig.md](../plans/v-rig.md)
 **ADR:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), Proposed 2026-11-08
-**Status:** built 2026-11-08. VR-1 to VR-7 built, the unit awaits the maintainer's review, ADR-A153's acceptance and the module's four release tags.
+**Status:** merged 2026-11-08. VR-1 to VR-7 built, the unit awaits the maintainer's review, ADR-A153's acceptance and the module's four release tags.
 
 ## Board
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| VR-1 | the module `ontology/v-rig/`, its vocabulary, shapes, Proposed ADR and catalogue entry | built 2026-11-08 |  |
-| VR-2 | the synthetic mini-rig, then the lifter with the declared and blind views | built 2026-11-08 |  |
-| VR-3 | the tracked mapping scheme and the extension seam | built 2026-11-08 |  |
-| VR-4 | P1, the layer graph against shapes, reasoner and competency queries | built 2026-11-08 |  |
-| VR-5 | P2 and P3, the generated theory and the test vectors | built 2026-11-08 |  |
-| VR-6 | P4, findings as RDF with stable ids and the report rendered from them | built 2026-11-08 |  |
-| VR-7 | the seam for a read case | built 2026-11-08 |  |
+| VR-1 | the module `ontology/v-rig/`, its vocabulary, shapes, Proposed ADR and catalogue entry | merged 2026-11-08, built 2026-11-08 |  |
+| VR-2 | the synthetic mini-rig, then the lifter with the declared and blind views | merged 2026-11-08, built 2026-11-08 |  |
+| VR-3 | the tracked mapping scheme and the extension seam | merged 2026-11-08, built 2026-11-08 |  |
+| VR-4 | P1, the layer graph against shapes, reasoner and competency queries | merged 2026-11-08, built 2026-11-08 |  |
+| VR-5 | P2 and P3, the generated theory and the test vectors | merged 2026-11-08, built 2026-11-08 |  |
+| VR-6 | P4, findings as RDF with stable ids and the report rendered from them | merged 2026-11-08, built 2026-11-08 |  |
+| VR-7 | the seam for a read case | merged 2026-11-08, built 2026-11-08 |  |
 
 ## History
 

@@ -1,7 +1,7 @@
 {
   "subject": "LD3",
   "statedAs": "Draws.credit_stops_at_the_ceiling",
-  "statementDigest": "sha256:b93f797ee51345d2ad59a5330cc71fe96826cfcc1393da1572b1612d736665f9",
+  "statementDigest": "sha256:59ace003fb9343caa3e6e888a315c48a940ebfd0567782760ebc2080d96279bc",
   "method": "Proof",
   "scope": "EveryParentFunction",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
