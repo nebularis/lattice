@@ -51,6 +51,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-09: Вивід pinned at `v0.2.29`, at the maintainer's word. 0.2.29 lets `vyd read` and `vyd node` print a quantum, such as `vyd read data/substrate`, and `vyd find --kind quantum` list quanta alone.
 - 2026-11-09: Вивід pinned at `v0.2.28`, at the maintainer's word. 0.2.28 treats a read that lost its review like an unreviewed domain, which this project does not use and a project that carries a read's skills meets at its next pin.
 - 2026-11-09: VM-11 built. Вивід pinned at `v0.2.27`. With the domains at trust `knowledge`, `vyd check skills` exits 2 naming each domain and its review line, and the task's wrapper turns that into a note and exit 0, so a fresh contributor's `mise run check` no longer fails on it. `vyd install --project` deletes no skill then. TD-163 is removed, section 6 of the getting-started guide says the check does not run until each domain is reviewed, and `AGENTS.md` no longer forbids `vyd install --project` but still tells an agent to ask the maintainer to review a domain and never to run `vyd trust` or `vyd domain trust` itself.
 - 2026-11-09: VM-11 begun on `main` at the maintainer's word, with no other session building here. Вивід 0.2.27 answers TD-163, which the maintainer asked to be fixed in Вивід first.
