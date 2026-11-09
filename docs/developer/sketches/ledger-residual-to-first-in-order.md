@@ -134,6 +134,6 @@ Nothing mechanised covers the second row, and the repository's one example of a 
 
 ## 10. What this sketch asks for
 
-- **LG-Q15**, how `ldg:ToFirstInOrder` treats a key of zero weight, leaning (b). The vocabulary table's whole-residual wording is corrected under every option.
+- **LG-Q15**, how `ldg:ToFirstInOrder` treats a key of zero weight, leaning (b). Since the maintainer's ruling of 2026-11-09 on scenario C1, "in order" throughout this sketch means the declared order, never the keys' own (TD-161, LG-Q18). The vocabulary table's whole-residual wording is corrected under every option.
 - **LG-Q16**, what a rounding method means beside a residual rule, and whether a negative residual is defined, open with no leaning yet beyond wanting it settled before LG-4.
 - The change under (b) batched with the next substrate change, since any move of the substrate release cascades to every importing module.
