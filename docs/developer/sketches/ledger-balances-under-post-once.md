@@ -71,6 +71,8 @@ The triple counts for a year are arithmetic from the per-draw counts and the sce
 
 ### 2.2 Leaning
 
+Design C is not needed for a regulator's read, which is answered from history when it is asked, from a checkpoint, an archive restored to a scratch dataset or a store fed by the event stream (PRI-81, the [multi-store runtime sketch](multi-store-runtime.md) §5.3), so C is weighed on the hot path's reads alone.
+
 B, which is the design as decided, with LG-Q9 answered (a) and the pass-wide order rule stated as a standard. `ldg:BalanceRecord` per pass leaves the runtime document, `ldg:Checkpoint` stays as the balance at a close, and the running balance goes onto `ldg:Posting`. The remaining and available values a balance record carries are then read, not stored, except at a checkpoint. A's one gain, that an ancestor's balance now is a lookup, is what C buys for *d* triples a posting without a node, and whether its ordered seek is flat is the one measurement this sketch asks for before C is preferred to B.
 
 ## 3. The fold that applies the ceiling once

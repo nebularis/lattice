@@ -80,7 +80,7 @@ ldg:RoundingMethods a skos:ConceptScheme ;
     rdfs:comment "How a proportional merge's exact shares round to the account's unit." .
 
 ldg:ToFirstInOrder a skos:Concept ;
-    rdfs:comment "The residual is allocated to the first proposal in order." .
+    rdfs:comment "The residual is allocated one unit at a time to the first proposals in order." .
 
 ldg:TowardZero a skos:Concept ;
     rdfs:comment "Truncates toward zero." .

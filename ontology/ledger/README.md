@@ -908,7 +908,7 @@ in a scheme of its own. `ldg:PostingDirections` is used only by the runtime term
 | Individual | Type | Definition |
 |---|---|---|
 | `ldg:LargestRemainder` | `skos:Concept` | The residual is allocated to the proposal(s) with the largest rounding remainder, ties broken by the total order of the proposals. |
-| `ldg:ToFirstInOrder` | `skos:Concept` | The residual is allocated to the first proposal in order. |
+| `ldg:ToFirstInOrder` | `skos:Concept` | The residual is allocated one unit at a time to the first proposals in order. |
 
 ### 6.5 Disjointness and Keys
 
