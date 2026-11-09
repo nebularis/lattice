@@ -408,12 +408,12 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | TUT-10 | the guide's modules 12, 13 and the quick reference | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
-| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | ledger | built 2026-11-08 |  | docs/developer/status/ledger.md#board |
+| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | ledger | verified 2026-11-09 |  | docs/developer/status/ledger.md#board |
 | LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | ledger | planned | LG-2 | docs/developer/status/ledger.md#board |
 | LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | ledger | planned | LG-3 | docs/developer/status/ledger.md#board |
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | ledger | blocked | LG-4 | docs/developer/status/ledger.md#board |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | ledger | planned | LG-5 | docs/developer/status/ledger.md#board |
-| LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | ledger | built 2026-11-08 |  | docs/developer/status/ledger.md#board |
+| LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | ledger | verified 2026-11-09 |  | docs/developer/status/ledger.md#board |
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | ledger | merged 2026-11-09 |  | docs/developer/status/ledger.md#board |
 | LG-9 | the proofs' second widening, LR2 over multisets, an executable path, the running balance, a merge over whole units, and the parts that wait on LG-Q11, LG-Q12, LG-Q13, LG-Q15 and LG-Q16 | ledger | planned |  | docs/developer/status/ledger.md#board |
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | ledger | built 2026-11-09 |  | docs/developer/status/ledger.md#board |

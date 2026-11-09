@@ -112,17 +112,18 @@ Results sections. In short:
 |---|---|---|---|
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | merged 2026-10-27, built 2026-10-27 |  |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | merged 2026-10-27, built 2026-10-27 |  |
-| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | built 2026-11-08, building 2026-11-08, built 2026-11-08, building 2026-11-08, briefed 2026-10-27 |  |
+| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | verified 2026-11-09, built 2026-11-08, building 2026-11-08, built 2026-11-08, building 2026-11-08, briefed 2026-10-27 |  |
 | LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | planned | LG-2 |
 | LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | planned | LG-3 |
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | blocked | LG-4 |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
-| LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | built 2026-11-08, building 2026-11-08 |  |
+| LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | verified 2026-11-09, built 2026-11-08, building 2026-11-08 |  |
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | merged 2026-11-09, built 2026-11-09, building 2026-11-09 |  |
 | LG-9 | the proofs' second widening, LR2 over multisets, an executable path, the running balance, a merge over whole units, and the parts that wait on LG-Q11, LG-Q12, LG-Q13, LG-Q15 and LG-Q16 | planned |  |
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | built 2026-11-09, building 2026-11-09 |  |
 | LG-11 | conversion leaves the ledger, the conversion terms removed | planned |  |
 | LG-12 | which draws an account accepts, a shape for compatibility and representability | planned | LG-Q20 |
+- 2026-11-09: LG-7 and LG-2 verified by the maintainer. LG-7's kernel changes under TD-161 in LG-9's LK, since the kernel exists to prove the semantics in use. LG-2's balance record per pass gives way to the design agreed and benchmarked, by LG-Q9's decision, in its rework.
 - 2026-11-09: ADR-A131's addendum of the same day accepted by the maintainer, so LG-11 is unblocked and takes the conversion terms out. The refusal of an incompatible draw moves to LG-12, after LG-Q20, raised from the maintainer's point that a non-monetary account, a pool of licences drawn by a percentage, needs compatibility and representability settled. `authority-aggregate.ttl` takes `ldg:TowardZero`, the maintainer's choice.
 - 2026-11-09: LG-Q8 reversed to (a) by the maintainer, ruling on scenario C4: a draw not in its account's unit is refused and the ledger never converts, since applying a rate is a duty kept apart from the ledger. ADR-A131's addendum of the same day drafted, proposed. LG-11 added and planned to take the conversion terms out, blocked on the addendum's acceptance. A conversion that overruns the target unit fails before the ledger and is out of scope.
 - 2026-11-09: LG-Q16 decided by the maintainer, refusal by default of rounding to the nearest beside a residual rule, with the floor-then-residual or a signed residual where the wording states one, the take-back ordered by a declared order. `authority-aggregate.ttl` will need a stated treatment.

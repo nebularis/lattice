@@ -99,4 +99,4 @@ LG-Q9 decides the rework that answers all three, with LG-Q10 for a reinstatement
 - the runtime document's terms, the ledger README's section 6 from `ldg:Account` to `ldg:Checkpoint`, and the laws table of section 7.3
 - `ontology/ledger/examples/insurance-aggregate.ttl`, positions 3 and 4, for the reinstatement
 
-**The maintainer's verdict** is written here when given. The row on the board moves to `verified` with it.
+**Verified 2026-11-09 by the maintainer.** The three findings above stand and are answered by the rework LG-Q9 decided (a), the design agreed and benchmarked, which the maintainer is fully confident in: a running balance on the posting at the drawn account, the balance record per pass removed, and the fold shapes rewritten, which also pays TD-158.
