@@ -224,7 +224,9 @@ The law recorded for it, to be checked against the judgments. Where claims excee
 | (ii) first in order among those with a stake | 0 | 1 | 0 |
 | (iii) largest remainder | 0 | 1 | 0 |
 
-**Bears on** LG-Q15. **Ruling.** The maintainer, 2026-11-09. Answered by the ruling on C1: the keys' order is never the right choice, so reading (i), first in key order whatever the weight, is wrong (TD-161). With the order declared, the scenario still asks whether the first lender in the declared order, who has nothing outstanding, takes the unit, which is LG-Q15's zero-weight question and is open.
+**Bears on** LG-Q15. **Ruling.** The maintainer, 2026-11-09. Answered by the ruling on C1: the keys' order is never the right choice, so reading (i), first in key order whatever the weight, is wrong (TD-161). With the order declared, the scenario still asks whether the first lender in the declared order, who has nothing outstanding, takes the unit, which is LG-Q15's zero-weight question.
+
+The maintainer, on that question, 2026-11-09. No, and the clue is in the wording. A fee shared among three lenders by their outstanding loans names lenders with outstanding loans, so a lender with none has no share in the fee and is not a party to the split. Had the wording shared the fee among all the lenders of the syndicate, lender 1 would take the unit under (i), since (i) is valid for whatever order the syndicate defines. So the keys of a split are the stated meaning's, never a rule's filter (LG-Q15 decided, LG-Q19 raised).
 
 The maintainer, further, 2026-11-09. Under (iii), largest remainder, lenders 2 and 3 have equal remainders, so the rule needs a tie-breaker. The wording governs (ii) against (iii), and where it gives no tie-breaker the ledger refuses, since the outcome is Undetermined. With the order a declared input (LK), that is a guard before the rule: where the rule needs an order and the declared order does not rank every proposal it would have to choose between, the merge is refused with that reason, and no rule ever chooses by identifier.
 
