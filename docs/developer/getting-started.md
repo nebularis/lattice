@@ -89,10 +89,10 @@ mise run check:formal-smoke
    mise exec -- vyd trust
    ```
 
-3. **Review each domain you will rely on.** A domain added with trust `knowledge` gives an index and a board and gives agents no skills, so `mise run check:skills` fails until you review each of them: `lifecycle`, `tools`, `python`, `triple-stores` and `rdf-modelling`. Read a domain's rules and skills in its clone, then record the commit you read. `vyd context` lists every domain's folder.
+3. **Review each domain you will rely on.** A domain added with trust `knowledge` gives an index and a board and gives agents no skills, so `mise run check:skills` does not run, and says which domains it is waiting for, until you review each of them: `lifecycle`, `tools`, `python`, `triple-stores` and `rdf-modelling`. `vyd setup` printed each one's folder and its review line at the commit it cloned. Read a domain's rules and skills in its clone, then run its line.
 
    ```bash
-   mise exec -- vyd domain trust lifecycle reviewed --commit <the clone's HEAD>
+   mise exec -- vyd domain trust lifecycle reviewed --commit <the commit your setup printed>
    ```
 
    A new commit of a domain needs a new review, which is `vyd domain trust` again.
@@ -110,7 +110,7 @@ mise run check:formal-smoke
    mise run work:board
    ```
 
-`mise run check:skills` now passes, and the composed skills under `.claude/skills` match their sources. A later `mise run bootstrap` leaves the configuration as it is, and `vyd setup` run again changes nothing once the domains are configured.
+`mise run check:skills` now runs and passes, and the composed skills under `.claude/skills` match their sources. Until every domain is reviewed `vyd install --project` writes what it can and deletes no skill, so a mistake there cannot remove the committed ones. A later `mise run bootstrap` leaves the configuration as it is, and `vyd setup` run again changes nothing once the domains are configured.
 
 ## 7. Where to go next
 

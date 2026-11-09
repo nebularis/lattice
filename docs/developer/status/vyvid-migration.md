@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** building 2026-11-09. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
+**Status:** built 2026-11-09. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
 
 ## Position
 
@@ -23,7 +23,7 @@
 | VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
 | VM-9 | the quanta by Вивід's own kind, the pin at v0.2.23 | built 2026-11-08, building 2026-11-08 |  |
 | VM-10 | the getting-started guide names the local setup of Вивід | built 2026-11-09, building 2026-11-09 |  |
-| VM-11 | the pin at v0.2.27, and the documents follow it | building 2026-11-09 |  |
+| VM-11 | the pin at v0.2.27, and the documents follow it | built 2026-11-09, building 2026-11-09 |  |
 
 ## Next action
 
@@ -51,6 +51,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-09: VM-11 built. Вивід pinned at `v0.2.27`. With the domains at trust `knowledge`, `vyd check skills` exits 2 naming each domain and its review line, and the task's wrapper turns that into a note and exit 0, so a fresh contributor's `mise run check` no longer fails on it. `vyd install --project` deletes no skill then. TD-163 is removed, section 6 of the getting-started guide says the check does not run until each domain is reviewed, and `AGENTS.md` no longer forbids `vyd install --project` but still tells an agent to ask the maintainer to review a domain and never to run `vyd trust` or `vyd domain trust` itself.
 - 2026-11-09: VM-11 begun on `main` at the maintainer's word, with no other session building here. Вивід 0.2.27 answers TD-163, which the maintainer asked to be fixed in Вивід first.
 - 2026-11-09: VM-10 built. `getting-started.md` gains section 6, the knowledge index and the work board: `vyd setup`, the direct `vyd trust`, the review of each domain, the index and the board, and "Where to go next" is section 7. Run against a clean home, `mise run vyd -- setup` set the knowledge base and cloned the five domains, `mise run check:skills` failed with 13 problems while the domains were at trust `knowledge`, and passed with 15 composed once each was recorded as reviewed at its commit. The two steps that need a person at a terminal, `vyd trust` and `vyd domain trust ... reviewed`, were not run here, and the review was written into the configuration by hand for the check. The report that raised this is TD-161 and TD-162 on `tutorial/studio-guide`, which the branch can close once it merges.
 - 2026-11-09: VM-10 begun on `getting-started-vyd` at the maintainer's word, since `vyd setup` in 0.2.26 answers the gap that a contributor's report of setting up on Windows named, a first local setup with no documented path past `bootstrap:vyvid`.
