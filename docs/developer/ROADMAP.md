@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 17 branches, the units' own state from this tree, the newest board day 2026-11-09.
+Built from the status records on 18 branches, the units' own state from this tree, the newest board day 2026-11-09.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -872,7 +872,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
 | `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
-| `docs/placement-vehicles-structure` | 2026-11-09 | 27 | pushed | LG-10 |
+| `docs/placement-vehicles-structure` | 2026-11-09 | 31 | pushed | LG-10 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -1015,7 +1015,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 2. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work.
 3. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. **ADR-A130 is not among the ones to take now**, noted 2026-11-07: the ensemble plan gates its acceptance on the C4 Alloy model, which checks the claims it gained over four days of change, and C4 is briefed and unstarted, placed after [v-rig](plans/v-rig.md) VR-1 to VR-4 on 2026-11-07 so the rig's findings reach the text first. Accepting it earlier unblocks the whole ensemble unit and the three CCS held questions, and spends the check that was the reason to wait. The decision on ES-Q10, whether decision 5 states the positional-total-order condition its independence-of-order bullet rests on, belongs in the same text C4 checks.
 4. **Review the verification rig unit** ([plan](plans/v-rig.md), [status](status/v-rig.md)), built 2026-11-08 on `docs/placement-vehicles-structure` with one commit per slice. Accept or reject ADR-A153, create the module's four tags on the commit that added their register rows, `v-rig-v0.1.0`, `v-rig-projection-v0.1.0`, `v-rig-shapes-v0.1.0` and `v-rig-vocab-v0.1.0`, and run `mise run v-rig -- --rig <rig> --extension <the rig's extension>` on a rig, whose report under `.local/v-rig/<rig digest>/` is what C4 waits for. TD-157 asks whether the deny-terms check should read every list it is given.
-5. **Close the verification of machine S's proofs, and point it at `fm/ledger-proofs-second-widening`.** FME-0 and LG-8 are on `main`, their Results sections and those of LG-7 and LG-2 record the proofs run of 2026-11-09 and list what is left to read. The new branch is cut from `main` with [its brief](notes/machine-s-brief-2026-11-09.md) for LG-9, four parts that wait on nothing and five that each wait on a question, so decide LG-Q11, LG-Q15 and LG-Q16 while it runs. LG-Q9 was decided (a) on 2026-11-09, so LG-2's rework is due, and machine S stays dormant until the questions are settled.
+5. **Close the verification of machine S's proofs, and point it at `fm/ledger-proofs-second-widening`.** FME-0 and LG-8 are on `main`, their Results sections and those of LG-7 and LG-2 record the proofs run of 2026-11-09 and list what is left to read. The new branch is cut from `main` with [its brief](notes/machine-s-brief-2026-11-09.md) for LG-9, four parts that wait on nothing and five that each wait on a question, so decide LG-Q15 and LG-Q16 while it runs. LG-Q9 was decided (a) on 2026-11-09, so LG-2's rework is due, and machine S stays dormant until the questions are settled.
 6. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 7. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
 8. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
