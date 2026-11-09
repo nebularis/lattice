@@ -164,7 +164,7 @@ Three properties of the wording decide among the rows, each stated meaning, neve
 | (ii) materials is held unposted until labour is decided | a pending state the ledger does not have |
 | (iii) materials funds, and a reversal is posted at position 2 | two postings and a reversal |
 
-**Bears on** a bundle across positions, which you placed out of scope on 2026-11-09. Ruling only if you want it recorded. **Ruling.**
+**Bears on** a bundle across positions, which you placed out of scope on 2026-11-09. Ruling only if you want it recorded. **Ruling.** The maintainer, 2026-11-09. Reading (i) depends on the wording, as B1's does. Reading (ii) is a different kind of behaviour, an alternative state in which some postings are held until another state is entered, and how the instrument states it is open. Reading (iii) is a recovery, which is common, but the account is not at its centre: new terms govern it, under a regime or an obligation of its own, and the money may come back in part, late, or only after a judgment. Out of scope, sketched in the [sketch on requests across positions](../sketches/ledger-bundles-across-positions.md), with BL-20 to proceed or drop it.
 
 ### B3. Matched funding (research grants)
 
