@@ -63,7 +63,9 @@ pool: 7 left       A asks 5 (whole or not at all)
 
 **Question.** Is the choice of who is served a rule the account declares, and is the key order contractual data or an accident of identifiers?
 
-**Bears on** LG-Q17, LG-Q12. **Ruling.**
+**Bears on** LG-Q17, LG-Q12. **Ruling.** The maintainer, 2026-11-09. The order is contractual data. Reading (i) holds where the wording says requests are served in an order, for example in the order notified, and reading (ii) where it says they are served by size. Reading (iii), the combination that leaves the least residual, does not stand as a rule a contract states. Where an allocation like it arises, an allocator chooses it before the ledger sees the requests, as an arranger sizes lenders' tickets or an issuer allots shares in round lots, and the ledger merges what was chosen.
+
+Two points of English law bear on the order and are recorded for modelling, to be checked against the judgments before any wording relies on them. Under liability insurance with a limit too small for every claim, claims exhaust the cover in the order the insured's liability is ascertained, by judgment, award or settlement, and neither the insured nor the insurer chooses another order (*Teal Assurance v W R Berkley* [2013] UKSC 57, following *Post Office v Norwich Union* [1968] and *Bradley v Eagle Star* [1989]). An insurer paying claims chronologically from a limited fund was held legitimate (*Cox v Bankside Members Agency* [1995] 2 Lloyd's Rep 437). So a contract may state an order, and where it states none the law supplies one, which the ledger needs to name as a default and not leave to identifiers. In an insurer's winding up, insurance debts rank after preferential debts and equally among themselves (the Insurers (Reorganisation and Winding Up) Regulations 2004, regulation 21), so no order applies there, and a payment chosen to favour some creditors as insolvency approaches risks being set aside as a preference (Insolvency Act 1986 section 239, *Re M C Bacon* [1990]) and engages the directors' duty to consider creditors (*BTI 2014 v Sequana* [2022] UKSC 25).
 
 ### A3. A minimum participation (syndicated lending)
 
