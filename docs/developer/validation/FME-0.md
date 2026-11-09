@@ -74,3 +74,19 @@ So the prelude's first build on machine S is about 1 min 31 s for `LatticeBase` 
 | FME0-04 | pass, 33 and 16 claims as before |
 | FME0-05 | pass |
 | FME0-06 | pass |
+
+## Results
+
+**Recorded 2026-11-09, verification not yet closed.**
+
+**What was run.** On 2026-11-09 the maintainer ran `mise run check:proofs` on machine R, in a checkout of machine S's branch, and read its output. `Finished LatticeBase (0:01:12 elapsed time)`, `GATE: nothing to gate`. `Finished Eligibility (0:00:02 elapsed time)`, 33 claim rows each `Proof passed`, `GATE: pass`. `Finished Ledger (0:00:05 elapsed time)`, nineteen claim rows, LA1 to LA4, LC1 to LC4, LD1 to LD4, LN1, LO1 and LR1 to LR5, each `Proof passed`, `Assumption audit: clean, no sorry/oops/admit/oracle/by-eval found`, `GATE: pass`. That covers rows FME0-02 and FME0-04. `mise run check:formal-freshness`, run on the merged tree the same day in the session that wrote this section: `3 formal-methods artefact(s) consistent with their literate READMEs`. That covers row FME0-06.
+
+**A defect found in that run, and its fix.** The prelude was built twice. The first step printed `Running LatticeBase ... Finished LatticeBase (0:01:12 elapsed time)` and the eligibility build then printed `Building LatticeBase ... Finished LatticeBase (0:01:13 elapsed time)`. A build without `-b` checks a session and saves no heap, so the first layer had to build the prelude again, this time saving it. The handoff's second finding met the same rebuild and put it down to the directory's name. `tools/proofs/check.py` now builds the prelude with `-b`. A cold run on machine R on 2026-11-09, with the prelude's heap and log moved aside, printed `Building LatticeBase ... Finished LatticeBase (0:01:33 elapsed time)` once, then `Finished Eligibility (0:00:02 elapsed time)` and `Finished Ledger (0:00:06 elapsed time)` with no rebuild, exit 0, and a second run rebuilt nothing, two seconds a session. That is row FME0-03 on this machine, and the prelude's first build time here, which the pack's non-coverage left unmeasured. Row FME0-05, the probe, was machine S's and was not repeated.
+
+**What the maintainer reads to close it.**
+
+- `tools/proofs/base/ROOT` and `Prelude.thy`, against the survey's section 7 table, [HOL sessions survey](../sketches/hol-sessions-survey.md)
+- `tools/proofs/check.py`, the order of builds, the `-d` arguments and the `-b` on the prelude alone
+- the two findings of the handoff above, each of which changed the design as ADR-A-FM2's addendum of 2026-11-08 stated it: a session's timeout lives in its `ROOT`, and every build runs from `tools/proofs/`
+
+**The maintainer's verdict** is written here when given. The row on the board moves to `verified` with it.

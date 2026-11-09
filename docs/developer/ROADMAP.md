@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 17 branches, the units' own state from this tree, the newest board day 2026-11-09.
+Built from the status records on 16 branches, the units' own state from this tree, the newest board day 2026-11-09.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -40,7 +40,7 @@ Built from the status records on 17 branches, the units' own state from this tre
 | [ensemble](plans/ensemble.md) | unit | briefed | ES-0 | 8 planned, 2 briefed |  |
 | [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
 | [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned |  |
-| [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-11-09 | FME-0 | 5 planned, 4 built, 1 dropped |  |
+| [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-11-09 | FME-1.0 | 5 planned, 3 built, 1 merged, 1 dropped | docs/placement-vehicles-structure |
 | [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 21 built, 15 merged, 11 planned, 6 verified, 1 briefed |  |
 | [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
 | [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 | GH-0 | 6 built |  |
@@ -49,7 +49,7 @@ Built from the status records on 17 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-09 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 3 built, 3 planned, 2 merged, 1 blocked |  |
+| [ledger](plans/ledger.md) | unit | built 2026-11-09 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 4 planned, 3 merged, 2 built, 1 blocked | docs/placement-vehicles-structure |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -142,7 +142,7 @@ gantt
     FMC-2.3 model ADR-A116 own rule :fmc23, 2026-10-08, 2026-10-09
     FMC-4 a design model of ADR-A130 :fmc4, 2026-10-27, 2026-10-28
     section formal-methods-track-e
-    FME-0 the prelude session :fme0, 2026-11-09, 2026-11-10
+    FME-0 the prelude session :done, fme0, 2026-11-09, 2026-11-10
     FME-1.0 home generation tooling :fme10, 2026-10-09, 2026-10-10
     FME-1.1 the kernel for real :fme11, 2026-10-06, 2026-10-07
     FME-1.2 rounding and residual theorem :done, fme12, 2026-10-07, 2026-10-08
@@ -342,7 +342,7 @@ gantt
     LG-1 the configuration document :done, lg1, 2026-10-27, 2026-10-28
     LG-2 the runtime document :lg2, 2026-10-27, 2026-11-08
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
-    LG-8 the proofs widened on :lg8, 2026-11-09, 2026-11-10
+    LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-10
 ```
 
 ```mermaid
@@ -871,8 +871,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
 | `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
-| `docs/placement-vehicles-structure` | 2026-11-08 | 25 | pushed | no mark |
-| `fm/prelude-and-ledger-proofs` | 2026-11-09 | 5 | pushed | no mark |
+| `docs/placement-vehicles-structure` | 2026-11-09 | 26 | pushed | FME-0, LG-8, LG-9 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -1015,7 +1014,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 2. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work.
 3. **Accept or reject ADR-A151**, and the Proposed decisions section 9 lists, oldest first. **ADR-A130 is not among the ones to take now**, noted 2026-11-07: the ensemble plan gates its acceptance on the C4 Alloy model, which checks the claims it gained over four days of change, and C4 is briefed and unstarted, placed after [v-rig](plans/v-rig.md) VR-1 to VR-4 on 2026-11-07 so the rig's findings reach the text first. Accepting it earlier unblocks the whole ensemble unit and the three CCS held questions, and spends the check that was the reason to wait. The decision on ES-Q10, whether decision 5 states the positional-total-order condition its independence-of-order bullet rests on, belongs in the same text C4 checks.
 4. **Review the verification rig unit** ([plan](plans/v-rig.md), [status](status/v-rig.md)), built 2026-11-08 on `docs/placement-vehicles-structure` with one commit per slice. Accept or reject ADR-A153, create the module's four tags on the commit that added their register rows, `v-rig-v0.1.0`, `v-rig-projection-v0.1.0`, `v-rig-shapes-v0.1.0` and `v-rig-vocab-v0.1.0`, and run `mise run v-rig -- --rig <rig> --extension <the rig's extension>` on a rig, whose report under `.local/v-rig/<rig digest>/` is what C4 waits for. TD-157 asks whether the deny-terms check should read every list it is given.
-5. **Verify `fm/prelude-and-ledger-proofs` from machine S**, built 2026-11-09 under [its brief](notes/machine-s-brief-2026-11-08.md): FME-0, the prelude session every layer session parents on, and LG-8, the ledger proofs widened on HOL-Library, from their packs ([FME-0](validation/FME-0.md), [LG-8](validation/LG-8.md)). Run `mise run check:proofs` once to build the prelude's heap, and decide whether `ldg:ToFirstInOrder` keeps a positive-weight condition or gives way to largest remainder.
+5. **Close the verification of machine S's proofs, and point it at `fm/ledger-proofs-second-widening`.** FME-0 and LG-8 are on `main`, their Results sections and those of LG-7 and LG-2 record the proofs run of 2026-11-09 and list what is left to read. The new branch is cut from `main` with [its brief](notes/machine-s-brief-2026-11-09.md) for LG-9, four parts that wait on nothing and five that each wait on a question, so decide LG-Q9, LG-Q11, LG-Q15 and LG-Q16 while it runs.
 6. **Remove the worktrees the squash merges came from**, `ccs-board-corrections` and the rehearsal clone `hook-profile`, and run the ours-merge on `ccs-trunk` its agent proposed.
 7. **Decide `persistence-mbt`**, its sections 5.5 and 5.6 against the conformance suite.
 8. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
