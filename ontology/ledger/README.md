@@ -1490,7 +1490,7 @@ The definitions name no domain. An amount is an exact rational, as decision 6's 
 
 The account tree is a parent function over a finite set of accounts. An account's path is the account and every ancestor, and its availability is the least remaining balance along that path. A draw debits every account on its path, and every account on the path of an account that counts the draw's purpose, as one operation that succeeds whole or changes nothing. A credit restores along the path and stops at each account's ceiling. Draws proposed at one position are merged by the account's rule from the requests taken together, and settled in the order of their keys. An amount drawn across several accounts in turn is split at each one by the rule, and what no account takes is the residual. A position is a pair of whole numbers, the position and the micro-position, ordered by the first and then the second.
 
-Rounding is over whole minor units, as integers. Floor division of a total by weights leaves a residual below the number of parts, and allocating that residual one unit at a time to the first parts in key order, `ldg:ToFirstInOrder`, makes the parts sum exactly to the total.
+Rounding is over whole minor units, as integers. Floor division of a total by weights leaves a residual below the number of parts, and allocating that residual one unit at a time to the first parts in key order, `ldg:ToFirstInOrder`, makes the parts sum exactly to the total. `ldg:LargestRemainder` allocates it one unit at a time to the parts whose floor division left the largest remainders instead, taking ties in key order. The same split of an amount drawn across several accounts in turn is stated over whole minor units too, with a rounding rule in place of an exact one, so that the rounded split can be compared with the exact one account by account.
 
 ```isabelle-spec
 theory Kernel
@@ -1615,6 +1615,25 @@ definition to_first :: "int \<Rightarrow> 'k::linorder set \<Rightarrow> ('k \<R
 
 definition weights :: "('k \<times> int) list \<Rightarrow> 'k \<Rightarrow> int" where
   "weights ps = (\<lambda>k. sum_list (map snd (filter (\<lambda>q. fst q = k) ps)))"
+
+definition remainder :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "remainder t K w k = (t * w k) mod (\<Sum>j\<in>K. w j)"
+
+definition largest_remainder :: "int \<Rightarrow> 'k::linorder set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "largest_remainder t K w k =
+     floor_part t K w k
+     + (if k \<in> set (take (nat (leftover t K w))
+                       (sort_key (\<lambda>j. - remainder t K w j) (sorted_list_of_set K))) then 1 else 0)"
+
+fun spread_int ::
+  "'k set \<Rightarrow> (int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int) \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> 'a list
+     \<Rightarrow> ('a \<Rightarrow> int) \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> ('k \<Rightarrow> int) list \<times> ('k \<Rightarrow> int) \<times> ('a \<Rightarrow> int)" where
+  "spread_int K R parent [] bal v = ([], v, bal)"
+| "spread_int K R parent (a # rest) bal v =
+     (let x = min (\<Sum>k\<in>K. v k) (max 0 (Min (bal ` path parent a))); p = R x K v
+      in case spread_int K R parent rest (\<lambda>b. if b \<in> path parent a then bal b - x else bal b)
+                (\<lambda>k. v k - p k) of
+           (ps, r, bal') \<Rightarrow> (p # ps, r, bal'))"
 
 end
 ```

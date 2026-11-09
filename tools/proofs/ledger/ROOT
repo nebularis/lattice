@@ -1,8 +1,8 @@
 (* The ledger laws, ADR-A131 decisions 3, 4 and 6, over the kernel extracted from
    ontology/ledger/README.md section 10 (ADR-A-FM2, plan ledger, LG-7). *)
 
-session Ledger = HOL +
-  options [document = false, quick_and_dirty = false]
+session Ledger = LatticeBase +
+  options [document = false, quick_and_dirty = false, timeout = 90]
   theories
     Kernel
     Allocation

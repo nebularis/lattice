@@ -1,0 +1,13 @@
+{
+  "subject": "LR5",
+  "statedAs": "Rounding.rounded_part_within_one_unit, rounded_spread_takes_what_the_exact_takes",
+  "statementDigest": "sha256:245e463d6a5296888b80ba107f3aa4960872dd6740303c8722bf35c0bb29b7c0",
+  "method": "Proof",
+  "scope": "EveryLawfulRuleTreeAndSequence",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

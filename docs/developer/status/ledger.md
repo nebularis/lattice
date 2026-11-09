@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-08. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7 and LG-2 built.
+**Status:** built 2026-11-09. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -12,7 +12,7 @@
 
 ## Is this unit complete?
 
-**No.** LG-0 (examples first) and LG-1 (the configuration document) are built, verified and committed. LG-7 (the laws mechanised) and LG-2 (the runtime document) are built on machine S and committed locally, waiting for the maintainer's verification. LG-5 (benchmark) is part built, ahead of the LG-4 it depends on. LG-3 (Behaviour's migration) and LG-4 (allocation) are not briefed.
+**No.** LG-0 (examples first) and LG-1 (the configuration document) are built, verified and committed. LG-8 (the proofs widened on HOL-Library) is built on machine S and committed locally on `fm/prelude-and-ledger-proofs`, waiting for the maintainer's verification, without LM1, which waits on LG-Q11. LG-7 (the laws mechanised) and LG-2 (the runtime document) are built on machine S and committed locally, waiting for the maintainer's verification. LG-5 (benchmark) is part built, ahead of the LG-4 it depends on. LG-3 (Behaviour's migration) and LG-4 (allocation) are not briefed.
 
 ## Current state
 
@@ -35,6 +35,7 @@ Since then the work has been design rather than build, and it has answered the w
 | | What | Owner |
 |---|---|---|
 | PDD-15 | **decided (a), 2026-10-28.** A periodic amount becomes one account per period, keyed by the recurrence bin the effective position falls in, with no reset credit. Three rules came with it: the period key is derived at write and never supplied by a draw, one period recurrence holds along a path with a keyed child part of its parent's instance under the same bin key, and a draw whose effective position cannot be binned is Undetermined. LG-2 built the first two, with `ldg:periodRecurrence` beside a deprecated `ldg:resetRecurrence` rather than a rename | LG-3, and the evaluator for the third |
+| the to-first-in-order rule | raised by LG-8. `ldg:ToFirstInOrder` can give a residual unit to a key of weight zero, past its bound, so it is lawful over whole units only on positive weights. Whether a shape refuses a zero-weight key under it, or largest remainder is the only residual rule for a proportional merge, is open | the maintainer, then LG-4 |
 | LG-Q9, LG-Q10 | raised by LG-2 in the plan. Which balance a posting's running balance states under post-once (LF-Q17 is answered (b) and not yet built), and how a pool that caps an aggregate's reinstatements is built now that a credit rolls up | the maintainer |
 | the restatement read's partition | PDD-15's claim that an old period's later books hold only stragglers holds where the partition root is the keyed instance, which the benchmark does not yet partition by. The next measurement, not a blocker | benchmark |
 | MS-Q4 | **answered (a)**, with no persistence addendum owed. A scratch dataset is a dataset, so the restore is an ordinary whole-dataset one of a small dataset and `dal:EpochProfile` needs no change | closed |
@@ -49,6 +50,14 @@ Since then the work has been design rather than build, and it has answered the w
 | the `owl:rational` probe | **done by LG-2**, TSD-70. rdflib, Oxigraph and Jena keep the literal and none compares it by value, so a proportion is two integers. ES-5 can rely on the finding | closed |
 
 **Next action:** the maintainer's verification of LG-7 and LG-2 from their packs, and LG-Q9 and LG-Q10. Then LG-3, Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and no longer waits on LG-2.
+
+## 2026-11-09, LG-8 built
+
+On machine S, branch `fm/prelude-and-ledger-proofs`, committed locally, [its pack](../validation/LG-8.md). The session parents on track E's prelude, LO1 holds over multisets, LC3 bounds every step, and LR3 to LR5 prove `ldg:LargestRemainder`, both integer rules lawful over whole units, and the rounded split of an amount across accounts against the exact one, each a gated claim. LM1 is not built, since LG-Q11 is open. Three findings for the maintainer. `ldg:ToFirstInOrder` is lawful only on positive weights, since it can give a residual unit to a key of weight zero, so LR4 states it under that hypothesis and largest remainder carries the integer spread. Rounding moves amounts between keys and never between accounts, so the rounded balances equal the exact ones rather than lying within a unit per posting. Per key, the two splits are compared at one part only.
+
+## 2026-11-09, LG-8 marked building
+
+On machine S, branch `fm/prelude-and-ledger-proofs`, per the [machine S brief](../notes/machine-s-brief-2026-11-08.md), after track E's FME-0 built the prelude the session parents on. LG-Q14 is decided (d) and LG-Q11 is open, so LM1 is left out.
 
 ## 2026-10-22, LG-1 built and verified
 
@@ -109,7 +118,7 @@ Results sections. In short:
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | blocked | LG-4 |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | built 2026-11-08, building 2026-11-08 |  |
-| LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | planned | LG-Q14 |
+| LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | built 2026-11-09, building 2026-11-09 |  |
 - 2026-11-08: LG-2 handed back at built, the scale tests under benchmark, the LG-1 constraints class-targeted and the ledger_corpus package, squash-merged into `main` with the substrate at 0.21.1. Its verification and LG-Q9's rework are still to come.
 - 2026-11-08: LG-Q14 decided (d) by the maintainer, a prelude session every layer session parents on, track E's FME-0, after the HOL sessions survey. LG-8 parents on it.
 - 2026-11-08: LG-8 added and planned, the proofs widened on HOL-Library, after the library built on machine R under a memory limit. LG-Q14 raised in the plan, how the session reaches the library, leaning a `sessions` clause that loads the theories from source so no other machine needs the heap. Plan only, nothing under `tools/proofs/` changed.

@@ -1,0 +1,13 @@
+{
+  "subject": "LR3",
+  "statedAs": "Rounding.largest_remainder_sums_exactly, largest_remainder_takes_the_largest, largest_remainder_is_the_same_in_every_order",
+  "statementDigest": "sha256:e4dfd27853e3d8cc3ea607d00f11577c258ea0c7359a94df2f53125827315399",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySet",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}
