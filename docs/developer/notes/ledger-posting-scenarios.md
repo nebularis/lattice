@@ -178,7 +178,18 @@ Three properties of the wording decide among the rows, each stated meaning, neve
 | (ii) scale both to what the smaller allows | 150k | 150k | 300k |
 | (iii) each takes what it can | 200k | 150k | 350k, the match broken |
 
-**Bears on** LG-Q12, an allocation across accounts that commits whole. **Ruling.**
+**Bears on** LG-Q12, an allocation across accounts that commits whole. **Ruling.** The maintainer, 2026-11-09. Entirely the wording's. Any of (i), (ii) or (iii) can be right, depending on how the stated meaning of the matching rule is defined.
+
+What each reading asks of the ledger, if a wording states it.
+
+| Reading | How a wording states it | What the ledger needs |
+|---|---|---|
+| (i) both or neither | the grant's obligation to pay arises only where the institution's matching amount is paid at the same time, an `ins:OnCondition` on the match | an allocation across the two accounts that commits whole or changes nothing, LG-Q12's (a) |
+| (ii) both scaled to what the smaller allows | the grant pays its stated share of what is actually matched, a qualifier tying the grant's amount to the match | the two amounts drawn in a fixed ratio, the larger cut to keep it, which is a rule across accounts that no merge rule on one account states |
+| (iii) each takes what it can | the grant and the institution each owe their share separately, with no condition between them | two independent draws, which the ledger does now |
+
+So the ledger has to support all three where a wording asks for them. (iii) is there now, (i) is LG-Q12's allocation that commits whole, and (ii) is the one that needs something new, two accounts drawn in a stated ratio.
+
 
 ## C. Rounding and the residual
 
