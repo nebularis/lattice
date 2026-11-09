@@ -224,7 +224,7 @@ The law recorded for it, to be checked against the judgments. Where claims excee
 | (ii) first in order among those with a stake | 0 | 1 | 0 |
 | (iii) largest remainder | 0 | 1 | 0 |
 
-**Bears on** LG-Q15. **Ruling.**
+**Bears on** LG-Q15. **Ruling.** The maintainer, 2026-11-09. Answered by the ruling on C1: the keys' order is never the right choice, so reading (i), first in key order whatever the weight, is wrong (TD-161). With the order declared, the scenario still asks whether the first lender in the declared order, who has nothing outstanding, takes the unit, which is LG-Q15's zero-weight question and is open.
 
 ### C3. Rounding to the nearest overshoots (insurance, a quota share)
 
