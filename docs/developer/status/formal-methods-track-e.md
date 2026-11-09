@@ -3,7 +3,7 @@
 # Formal Methods, Track E: Status
 
 **Unit ID:** `formal-methods-track-e` (phase, within the `formal-methods` epic)
-**Status:** built 2026-10-09. FME-1.0 and FME-1.1 done, 2026-10-06, native route only (our instruction). FME-1.2's
+**Status:** building 2026-11-09. FME-1.0 and FME-1.1 done, 2026-10-06, native route only (our instruction). FME-1.2's
 blocker is resolved by reading track B's sketch (2026-10-07): the rounding/residual theorem
 belongs to B4/E3-E4, not Quantification, so FME-1.2 itself is retargeted, not merely unblocked. FME-1.3
 remains blocked (see Log). **FME-1.4 done, 2026-10-09**, on branch `fm/eligibility-pass` (machine S),
@@ -93,7 +93,7 @@ No action needed on E1 until one of those two clears.
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| FME-0 | the prelude session `tools/proofs/base/`, `LatticeBase` over the HOL-Library theories every layer's proofs reach for, every layer session parenting on it | planned |  |
+| FME-0 | the prelude session `tools/proofs/base/`, `LatticeBase` over the HOL-Library theories every layer's proofs reach for, every layer session parenting on it | building 2026-11-09 |  |
 | FME-1.0 | home, generation tooling | built 2026-10-09 |  |
 | FME-1.1 | the kernel, for real | built 2026-10-06, folded into FME-1.0's pass |  |
 | FME-1.2 | rounding and residual theorem | dropped 2026-10-07, from this track's E1 — its real home is FME-3/E4, after track B's B4 (see Log, ) | track B's B4, which waits on CCS's C12 |
@@ -112,6 +112,8 @@ No action needed on E1 until one of those two clears.
 | the Isabelle image | does not exist; needed before epic E9's "image route only" rule applies to track E's recorded claims, not before E1 itself | maintainer, timing deferred 2026-10-06 to conserve tokens, confirmed again when E1 started (native/local explicitly requested) |
 
 ## Log
+
+- 2026-11-09: FME-0 marked building on machine S, branch `fm/prelude-and-ledger-proofs`, per the [machine S brief](../notes/machine-s-brief-2026-11-08.md).
 
 - 2026-11-08: FME-0 added and planned, the prelude session, after `HOL-Library` built on machine R under a memory limit and the maintainer decided the ledger plan's LG-Q14 as (d). The [HOL sessions survey](../sketches/hol-sessions-survey.md) names the nineteen theories it imports and why. Plan only. The ADR-A-FM2 addendum was accepted the same day. The same day the maintainer ruled that the heap is never built by `bootstrap` and is built on first use by the check that needs it, which is STD-324, with BL-17 for the test-kit jars.
 
