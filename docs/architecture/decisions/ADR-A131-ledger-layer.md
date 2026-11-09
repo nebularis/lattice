@@ -258,9 +258,9 @@ Three consequences follow, and each removes a question rather than adding a mech
 
 What it buys is the only tractable form of a reading as of an effective position. Every posting in a period closed at or before the read point is effective at or before it, so the read starts from that close's checkpoint and folds only the later periods, picking up whatever was backdated into them. Without the bound a checkpoint would also over-count postings effective after the read point, and a summed checkpoint cannot be filtered, so the read would scan the whole history. The cost of that fold is measured separately and this addendum does not assume it is cheap.
 
-## Addendum (proposed 2026-11-09): every draw arrives in its account's unit
+## Addendum (2026-11-09): every draw arrives in its account's unit
 
-**Status of this addendum:** Proposed, for the maintainer's acceptance. It reverses the paragraph "Other value spaces" of decision 3.
+Accepted by the maintainer on 2026-11-09. It reverses the paragraph "Other value spaces" of decision 3.
 
 Decision 3 converted a draw in another value space than the account's on its posting, by the method the terms state or an outside rule, and had the posting record the amount drawn, the converted amount and the conversion's context. That made the ledger responsible for conversion rates. Choosing and applying a rate is a duty of its own, kept apart from recording what an account gave up, as the segregation of duties that fiduciary work requires keeps them, and a rate held inside the ledger has no clear owner when it is wrong.
 
