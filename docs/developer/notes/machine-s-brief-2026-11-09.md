@@ -28,10 +28,11 @@ Every definition goes in the ledger README's `isabelle-spec` block and reaches `
 
 1. **LR2 over multisets.** The smallest, and a warm-up for the gate.
 2. **LX1, an executable path.** After it, the examples of every later part can be evaluated.
-3. **LB1, LB1n and LB2, the running balance.** The law LG-2's rework will cite, whichever way LG-Q9 goes.
+3. **LB1, LB1n and LB2, the running balance.** The law LG-2's rework will cite, now that LG-Q9 is decided (a), a running balance on the posting at the drawn account.
 4. **LM2, a merge at one position over whole units**, with `largest_remainder`.
+5. **LM1, a merge that refuses**, as LG-Q11 decided on 2026-11-09: an explicit result, grants or a refusal with its reason, the refusal a guard by the declared `ldg:Refuse` policy before any rule, never zero grants. LM2's merge returns the same result, so build LM1 first or restate LM2 with it.
 
-**The parts that wait on a question, in this order.** LG-Q15, then LG-Q11, then LG-Q16, then LG-Q13, then LG-Q12, each as the plan's brief states it. Under LG-Q15 (b) the vocabulary table's definition of `ldg:ToFirstInOrder` in the README's section 6 changes too, which moves an extracted document, so `mise run check:ontology-versioning -- --base-ref main` will report it unbumped. That report is expected and is not acted on, since versions move at the merge into `main`.
+**The parts that wait on a question, in this order.** LG-Q15, then LG-Q16, then LG-Q13, then LG-Q12, each as the plan's brief states it. Under LG-Q15 (b) the vocabulary table's definition of `ldg:ToFirstInOrder` in the README's section 6 changes too, which moves an extracted document, so `mise run check:ontology-versioning -- --base-ref main` will report it unbumped. That report is expected and is not acted on, since versions move at the merge into `main`.
 
 **The pack.** `docs/developer/validation/LG-9.md`, in the lifecycle skill's form, a row per claim, the parts left out named with the question each waits on, and a handoff with every command's output read in full.
 
