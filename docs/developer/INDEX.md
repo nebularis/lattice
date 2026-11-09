@@ -44,7 +44,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
 | lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-0 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
-| ledger | unit | LG | building 2026-11-09 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 4 Validation Packs |
+| ledger | unit | LG | built 2026-11-09 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 5 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
@@ -414,7 +414,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | ledger | blocked | LG-4 | docs/developer/status/ledger.md#board |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | ledger | planned | LG-5 | docs/developer/status/ledger.md#board |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | ledger | built 2026-11-08 |  | docs/developer/status/ledger.md#board |
-| LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | ledger | building 2026-11-09 |  | docs/developer/status/ledger.md#board |
+| LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | ledger | built 2026-11-09 |  | docs/developer/status/ledger.md#board |
 | MSC-1 | `platform/sparql-testkit`, `tools/testing/jena`, `tools/testing/sparql_probes` with the aggregate matrix executed on Jena (352 cells as recorded), `check:conformance`, CAP-91 to CAP-94, an A | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
 | MSC-2 | Jena in the persistence engines, `check:persistence-conformance` on rdflib, Oxigraph and Jena (4727 passed), nine Jena failures triaged into TSD-50 to TSD-53 with expectations per engine, on | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
 | MSC-3 | Jena in the compilers' engines, conformance per engine for the compilers and Eligibility's reference tests, all passing on Jena first time. TSD-60, TSD-61 (rdflib departures), TD-105 (the pr | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
