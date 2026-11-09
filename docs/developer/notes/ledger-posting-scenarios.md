@@ -348,3 +348,73 @@ pool 20M         after the loss: 10M left
 **Question.** Is this one position, merged, or two, the first recorded winning?
 
 **Bears on** the pass-wide order rule of LG-Q9 (a), pass position then micro-position. **Ruling.**
+
+## G. Scaling every request by one ratio
+
+Added 2026-11-09, after the ruling on B1, as the settings where reading (iii) of B1 is the right behaviour. In each, requests from different parties exceed what is available at one position, and every request is scaled by the same ratio, which is the ledger's proportional merge rule. Each also has a complication that a bare proportional split does not carry, and that is what to rule on.
+
+### G1. An insolvent estate's dividend (insolvency)
+
+**Premise.** Creditors of one rank share a fund in proportion to what each is owed.
+
+**Instance.** An estate has £1,000,000 for its unsecured creditors. Three creditors have proved, for £1,200,000, £600,000 and £200,000, £2,000,000 in all, so the dividend is 50p in the pound.
+
+| Creditor | Proved | Dividend at 50p |
+|---|---|---|
+| A | £1,200,000 | £600,000 |
+| B | £600,000 | £300,000 |
+| C | £200,000 | £100,000 |
+
+**What a bare proportional split does not carry.**
+
+- **Ranks.** Secured and preferential creditors are paid before the unsecured, and creditors of one rank share equally. That is a priority between ranks and a proportional split within each, a rule over a tree of accounts or a rule of two levels.
+- **Several dividends over time.** An estate often pays an interim dividend and later a final one. A creditor who proves after an interim dividend is commonly paid first out of the next one, to catch up with the others, before the rest is shared. Each dividend is a merge at its own position, and the catch-up reads what earlier positions paid.
+- **Rounding.** A dividend to the penny over thousands of creditors leaves a residual, and which creditors take the odd pennies is LG-Q15's question.
+
+**Questions for a ruling.** Is a rank a parent account, or a rule of two levels on one account? Is the catch-up a priority the rule reads from earlier grants, or a request of its own at the later position?
+
+**Ruling.**
+
+### G2. An oversubscribed share issue (capital markets)
+
+**Premise.** Applications for a fixed quantity exceed it, and each is scaled back by the same ratio.
+
+**Instance.** An issuer offers 10,000,000 shares. Applications total 25,000,000, so each is scaled back to 40% of what was applied for. Shares are allotted in lots of 100.
+
+| Applicant | Applied for | 40% exactly | In whole lots of 100 |
+|---|---|---|---|
+| D | 12,000,000 | 4,800,000 | 4,800,000 |
+| E | 8,000,050 | 3,200,020 | 3,200,000, 20 shares to the residual |
+| F | 4,999,950 | 1,999,980 | 1,999,900, 80 shares to the residual |
+| others | 0 | | |
+
+**What a bare proportional split does not carry.**
+
+- **The unit is the lot.** The account's unit of account is a lot of 100 shares, so rounding is in lots, and the residual of 100 shares goes to one applicant by the declared residual rule.
+- **A minimum allocation first.** Issues often give every applicant a first lot, or give retail applicants a set amount, before scaling the rest. That is a priority tier then a proportional split, as G1's ranks are.
+- **A ballot.** Where even one lot each is more than the issue holds, lots are allotted by ballot, which is random and not a rule over the requests. A ballot is a party's act whose result the ledger records, as A2's ruling put the least-residual choice.
+
+**Questions for a ruling.** Is a minimum first lot a tier of the rule, or a separate account drawn first? Is a ballot always an act recorded upstream, never a merge rule?
+
+**Ruling.**
+
+### G3. A capped grant scheme (research grants)
+
+**Premise.** Approved awards exceed a fund, and every award is scaled back by the same ratio.
+
+**Instance.** A scheme has £2,000,000. A panel approves awards totalling £2,500,000, so each is scaled to 80%. The scheme's terms say no award is made below £50,000, since a smaller one cannot fund the project.
+
+| Award | Approved | 80% | Note |
+|---|---|---|---|
+| G | £1,500,000 | £1,200,000 | |
+| H | £940,000 | £752,000 | |
+| J | £60,000 | £48,000 | below the £50,000 floor |
+
+**What a bare proportional split does not carry.**
+
+- **A floor on the scaled award.** J falls below the floor. The award can be withdrawn and the £48,000 shared between G and H, or J paid £50,000 and the others scaled a little further, or the scaling done again without J. That is A3's floor met in a proportional split, and the same matrix of how the terms state the floor applies.
+- **Commitment over time.** A grant is often awarded now and paid in instalments later, so the fund is drawn at the award and the account of each award is drawn at each instalment. The scaling happens once, at the award.
+
+**Questions for a ruling.** Where scaling leaves an award below a floor, which of the three treatments does the scheme's wording need to say, and is any of them the default?
+
+**Ruling.**
