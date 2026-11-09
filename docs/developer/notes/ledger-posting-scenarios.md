@@ -371,6 +371,21 @@ Added 2026-11-09, after the ruling on B1, as the settings where reading (iii) of
 - **Several dividends over time.** An estate often pays an interim dividend and later a final one. A creditor who proves after an interim dividend is commonly paid first out of the next one, to catch up with the others, before the rest is shared. Each dividend is a merge at its own position, and the catch-up reads what earlier positions paid.
 - **Rounding.** A dividend to the penny over thousands of creditors leaves a residual, and which creditors take the odd pennies is LG-Q15's question.
 
+**The law, in England and Wales.** Statute supplies the terms, not the parties. Classes are paid in a fixed order, each in full before the next: fixed-charge holders, the expenses of the insolvency, ordinary preferential creditors, secondary preferential creditors (since December 2020, HMRC for certain taxes), the prescribed part set aside from floating-charge realisations for the unsecured, floating-charge holders, unsecured creditors, statutory interest, then members (Insolvency Act 1986 sections 175, 176A and 176ZA, and the Insolvency (England and Wales) Rules 2016). Within a class, debts rank equally and abate in equal proportion where the fund falls short, which is pari passu. A dividend is declared by the office-holder, not paid automatically. A creditor who proves late cannot disturb a dividend already paid, and is entitled to be paid what it missed out of money available for a further dividend before that money goes to the next dividend (the Rules, rule 14.40, read from a partial extract and to be checked). Mutual dealings are set off before anything is proved, so the amounts that are divided are already net. The Rules state no rounding rule, so the treatment of odd pennies is the office-holder's practice.
+
+**How an instrument states it.**
+
+| What | Instrument terms |
+|---|---|
+| the scheme of distribution | implied terms, `ins:Term` supplied by statute, with no clause and so no stated meaning of the parties' own, bound from a statutory source |
+| declaring a dividend | an `ins:Power` held by the office-holder's role, whose exercise (`ins:OnExercise`) is the position at which the fund is merged |
+| the payment of each creditor's dividend | an `ins:Obligation`, obligor the estate through the office-holder, obligee each proving creditor, arising on the declaration, its amount the creditor's share |
+| ranks | an order of classes, so a fund drawn across rank accounts in order, each rank's account merging its creditors proportionally, which is the allocation across accounts of LG-4 with a proportional merge at each |
+| the late prover's catch-up | at the next declaration, the missed amounts drawn first in priority, then the rest proportionally, a priority tier then a proportional split |
+| set-off | applied by the instrument before the proved amount is a request, never by the ledger |
+
+**What it means for the ledger.** No new mechanism, if ranks are accounts drawn in order and each rank merges proportionally. A catch-up and G2's first lot both put a priority tier before a proportional split at one account, which is a rule of two levels or a sub-account drawn first. That is the choice G1 and G2 ask you to make.
+
 **Questions for a ruling.** Is a rank a parent account, or a rule of two levels on one account? Is the catch-up a priority the rule reads from earlier grants, or a request of its own at the later position?
 
 **Ruling.**
@@ -394,6 +409,23 @@ Added 2026-11-09, after the ruling on B1, as the settings where reading (iii) of
 - **A minimum allocation first.** Issues often give every applicant a first lot, or give retail applicants a set amount, before scaling the rest. That is a priority tier then a proportional split, as G1's ranks are.
 - **A ballot.** Where even one lot each is more than the issue holds, lots are allotted by ballot, which is random and not a rule over the requests. A ballot is a party's act whose result the ledger records, as A2's ruling put the least-residual choice.
 
+**The law, in England and Wales.** A prospectus invites applications, an application is the applicant's offer, and allotment is the issuer's acceptance, so an applicant has no right to any shares until allotted. Offer documents reserve the issuer's right to scale back and to choose the basis of allocation, and brokers' published policies say an applicant may receive less than applied for, by pro rata or first come first served. The basis is announced with the results, so it is often a discretion exercised once rather than a formula fixed in advance. The Royal Mail sale of 2013 gave every retail applicant for up to £10,000 the same fixed allotment and turned larger applications away, which shows a tier and a cut-off instead of a ratio. Section 578 of the Companies Act 2006 governs the other side, an issue not fully subscribed, which may be allotted only if the offer's terms say so, with application monies repaid if not. Money for shares not allotted is returned to the applicant.
+
+A rights issue is different and closer to a fixed rule. Shareholders are entitled to new shares in proportion to what they hold, under the pre-emption rights of the Companies Act 2006 and the listing rules. Fractions are rounded down, aggregated and sold, and the proceeds go to the holder unless worth £5 or less net of expenses, when they may be sold for the company's benefit (UKLR 9.4). That is a residual rule of a kind the ledger does not yet have: the residual goes to neither key nor stays unallocated, but is turned into a sale whose proceeds are distributed or kept.
+
+**How an instrument states it.**
+
+| What | Instrument terms |
+|---|---|
+| the right to allot and to scale back | an `ins:Power` of the issuer, its exercise the allotment |
+| the basis of allocation, where fixed in advance | a qualifier or a stated rule on that power, read as the merge rule of the shares account |
+| the basis, where exercised as a discretion | the issuer's act, whose result reaches the ledger already sized, as A2's ruling put an allocator's choice |
+| a ballot | an act recorded with its provenance, never a merge rule |
+| returning money for shares not allotted | an `ins:Obligation` of the issuer to each applicant, arising on the allotment, its amount the application less what was allotted |
+| a rights issue's entitlement | an `ins:Obligation` to offer each holder its proportion, a proportional rule with the residual sold |
+
+**What it means for the ledger.** The lot as the unit of account works as it stands. The rights issue's fractions are a fourth treatment of a residual beside giving it to keys in order, to the largest remainders, or leaving it explicit (LG-Q17): sending it to a declared account whose own rule says what becomes of it. That bears on LG-Q15 to LG-Q17 together.
+
 **Questions for a ruling.** Is a minimum first lot a tier of the rule, or a separate account drawn first? Is a ballot always an act recorded upstream, never a merge rule?
 
 **Ruling.**
@@ -415,6 +447,35 @@ Added 2026-11-09, after the ruling on B1, as the settings where reading (iii) of
 - **A floor on the scaled award.** J falls below the floor. The award can be withdrawn and the £48,000 shared between G and H, or J paid £50,000 and the others scaled a little further, or the scaling done again without J. That is A3's floor met in a proportional split, and the same matrix of how the terms state the floor applies.
 - **Commitment over time.** A grant is often awarded now and paid in instalments later, so the fund is drawn at the award and the account of each award is drawn at each instalment. The scaling happens once, at the award.
 
+**The law, in England and Wales.** A grant scheme's published rules govern the funder, and an award becomes binding when the award letter or grant agreement is made, or by statute for a grant determination to a public body. The government's grants functional standard (GovS 015) expects competitions assessed against published criteria with the reasons for decisions documented. Scaling back is safe where the published rules reserve it. Where they do not, a funder that departs from its published scheme risks a judicial review argument of legitimate expectation, which needs a clear and unambiguous representation, and courts have found such expectations defeated in some grant schemes and not arising in others. *R (Knot Builders) v Construction Industry Training Board* [2024] EWHC 115 (Admin) raised the argument against a departure from a published grant scheme, and its outcome was not read here. So the scheme's own words decide whether scaling back is allowed, whether a floor applies, and what happens to an award that falls below it.
+
+**How an instrument states it.**
+
+| What | Instrument terms |
+|---|---|
+| the scheme rules | a rule imposed on every award of the scheme, the case the maintainer named in the ruling on B1, stated from the scheme's wording or configured directly, and bound into each award |
+| approving and awarding | an `ins:Power` of the funder, its exercise the award, at which the fund is merged |
+| scaling back | the merge rule of the fund, proportional, where the rules reserve it, and no scaling where they do not, so an oversubscribed fund refuses or the panel approves less |
+| the floor | the matrix of A3, with the scheme rules choosing among withdrawing the award, paying the floor, or rescaling without it |
+| paying in instalments | an `ins:Obligation` of the funder with `ins:due` and `ins:recurrence`, each instalment a draw on the award's own account, conditions of payment as its scope, and clawback a regime entered on breach |
+
+**What it means for the ledger.** The scaling happens once, at the award, and the instalments draw on accounts already sized. A floor met inside a proportional split is A3's question again, and LG-Q17's if the answer is to withdraw the award and leave its share as a residual.
+
 **Questions for a ruling.** Where scaling leaves an award below a floor, which of the three treatments does the scheme's wording need to say, and is any of them the default?
 
 **Ruling.**
+
+### Sources for section G
+
+Read from search summaries, statute extracts and practitioners' notes, not full judgments or the full current text of every rule, so each point is to be checked before any wording relies on it.
+
+- Insolvency (England and Wales) Rules 2016, rule 14.40, legislation.gov.uk/uksi/2016/1024/rule/14.40/made
+- R3, creditor order of priority, r3.org.uk/about-r3-insolvency-restructuring/about-insolvency-and-restructuring/the-insolvency-framework/creditor-order-of-priority/
+- Clifford Chance, the partial restoration of crown preference from 1 December 2020
+- Companies Act 2006 section 578, legislation.gov.uk/ukpga/2006/46/section/578
+- FCA Handbook, UKLR 9.4, handbook.fca.org.uk/handbook/UKLR/9/4.html
+- Barclays, allocation policy for IPOs and new share issues, and Redmayne Bentley, allocation
+- City AM on the Royal Mail allotment of 2013
+- Government Functional Standard GovS 015, guidance for general grants, gov.uk
+- *R (Knot Builders) v CITB* [2024] EWHC 115 (Admin), caselaw.nationalarchives.gov.uk/ewhc/admin/2024/115
+
