@@ -243,7 +243,7 @@ The maintainer, further, 2026-11-09. Under (iii), largest remainder, lenders 2 a
 | (iii) round to nearest, then take one unit back, from the share rounded up the most | 67, 67, 66, the tie broken by key order |
 | (iv) refuse a half-even method beside a residual rule | the configuration is invalid |
 
-**Bears on** LG-Q16. **Ruling.**
+**Bears on** LG-Q16. **Ruling.** The maintainer, 2026-11-09. Up to the wording of the contract all the participants sign. Reading (iii) cannot rely on the keys' order and takes its tie-breaker from an order passed in. Reading (iv), refusing the configuration, is the default unless the wording provides for (i), (ii) or (iii) (LG-Q16 decided).
 
 ### C4. A drawing in another currency (multi-currency lending)
 
