@@ -226,6 +226,8 @@ The law recorded for it, to be checked against the judgments. Where claims excee
 
 **Bears on** LG-Q15. **Ruling.** The maintainer, 2026-11-09. Answered by the ruling on C1: the keys' order is never the right choice, so reading (i), first in key order whatever the weight, is wrong (TD-161). With the order declared, the scenario still asks whether the first lender in the declared order, who has nothing outstanding, takes the unit, which is LG-Q15's zero-weight question and is open.
 
+The maintainer, further, 2026-11-09. Under (iii), largest remainder, lenders 2 and 3 have equal remainders, so the rule needs a tie-breaker. The wording governs (ii) against (iii), and where it gives no tie-breaker the ledger refuses, since the outcome is Undetermined. With the order a declared input (LK), that is a guard before the rule: where the rule needs an order and the declared order does not rank every proposal it would have to choose between, the merge is refused with that reason, and no rule ever chooses by identifier.
+
 ### C3. Rounding to the nearest overshoots (insurance, a quota share)
 
 **Premise.** Rounding each share to the nearest unit can sum to more than the whole.
