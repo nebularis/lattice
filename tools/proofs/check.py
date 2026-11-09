@@ -4,8 +4,10 @@
 The prelude, tools/proofs/base/'s LatticeBase, is built first, and every layer's build is given
 `-d base` beside its own directory, so its sessions find the prelude they parent on (ADR-A-FM2's
 addendum of 2026-11-08).
-`isabelle build` builds the prelude's heap where it is missing and rebuilds it where its sources
-changed, by its own digests, so `-f` is never passed (STD-324).
+The prelude is built with `-b`, which saves its heap, since a build without it only checks the
+session and each layer's build would then build the prelude again. `isabelle build` builds the
+heap where it is missing and rebuilds it where its sources changed, by its own digests, so `-f` is
+never passed (STD-324).
 
 For each layer subdirectory with a ROOT file: parses the session name(s) it declares, builds
 each with `isabelle build` on the native route (spikes/formal-prover/env/driver.py's existing
@@ -42,12 +44,14 @@ def layers(selected: list[str]) -> list[Path]:
     return sorted(p.parent for p in HERE.glob("*/ROOT") if p.parent != BASE)
 
 
-def build(directory: Path, session: str, dirs: list[str]) -> bool:
+def build(directory: Path, session: str, dirs: list[str], save_heap: bool = False) -> bool:
     # Every build runs from tools/proofs and names the prelude as `-d base`. A build run from the
     # prelude's own directory as `-d .` was not taken to be the same session as `-d ../base` from a
     # layer's, so each layer rebuilt the prelude's heap (FME-0's Validation Pack).
     print(f"-- building {directory.name}/{session} (native) --", flush=True)
     args = ["isabelle", "build"]
+    if save_heap:
+        args.append("-b")
     for d in dirs:
         args += ["-d", d]
     result = subprocess.run(
@@ -65,7 +69,7 @@ def gate(directory: Path) -> bool:
 def main(argv: list[str]) -> int:
     ok = True
     for session in session_names(BASE / "ROOT"):
-        ok = build(BASE, session, ["base"]) and ok
+        ok = build(BASE, session, ["base"], save_heap=True) and ok
     ok = gate(BASE) and ok
     if not ok:
         print("the prelude did not build, so no layer session was built", file=sys.stderr)

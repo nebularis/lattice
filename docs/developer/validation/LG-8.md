@@ -90,4 +90,17 @@ Built on machine S, 2026-11-09, Isabelle2025-2 through its bundled Cygwin, after
 
 ## Results
 
-Filled at verification.
+**Recorded 2026-11-09, verification not yet closed.**
+
+**What was run.** On 2026-11-09 the maintainer ran `mise run check:proofs` on machine R, in a checkout of machine S's branch, and read its output. `Finished LatticeBase (0:01:12 elapsed time)`, `GATE: nothing to gate`. `Finished Eligibility (0:00:02 elapsed time)`, 33 claim rows each `Proof passed`, `GATE: pass`. `Finished Ledger (0:00:05 elapsed time)`, nineteen claim rows, LA1 to LA4, LC1 to LC4, LD1 to LD4, LN1, LO1 and LR1 to LR5, each `Proof passed`, `Assumption audit: clean, no sorry/oops/admit/oracle/by-eval found`, `GATE: pass`. The ledger's report names every theorem this slice gated: LO1 `settled_the_same_in_every_order_of_proposal`, LC3 `nothing_posted_beyond_availability`, LR3 with its three theorems, LR4 with `largest_remainder_lawful` and `to_first_lawful_on_positive_weights`, and LR5 with `rounded_part_within_one_unit` and `rounded_spread_takes_what_the_exact_takes`. That covers row LG8-g. `mise run check:formal-freshness`, run on the merged tree the same day in the session that wrote this section: `3 formal-methods artefact(s) consistent with their literate READMEs`. That covers row LG8-f. The two probes, LG8-p1 and LG8-p2, were machine S's and were not repeated.
+
+**What review found.** The statements were read against the sketch that sized them. LO1, LC3 and LR3 are what was asked. LR5 is stronger than asked on one point and narrower on another, both rightly: an account's rounded balance equals its exact balance, where the sketch asked for within one unit, and the per-key bound of one unit holds at a single part only, so the per-key statement is exact conservation. The handoff's first finding is a decision, raised as LG-Q15 with LG-Q16 beside it in the [sketch on the residual to the first in order](../sketches/ledger-residual-to-first-in-order.md). What is left for LG-9: LR2's order independence over multisets, a merge at one position over whole units, and LM1 once LG-Q11 is answered.
+
+**What the maintainer reads to close it.**
+
+- the ledger README's section 10, the new prose and the definitions `remainder`, `largest_remainder` and `spread_int`
+- the statements of LR3, LR4 and LR5 and the definition `int_lawful` in `tools/proofs/ledger/Rounding.thy`, and of LO1 and LC3 in `Draws.thy`, each between its gate markers
+- the three findings of the handoff above
+- the [sketch on the residual to the first in order](../sketches/ledger-residual-to-first-in-order.md), for LG-Q15 and LG-Q16
+
+**The maintainer's verdict** is written here when given. The row on the board moves to `verified` with it.

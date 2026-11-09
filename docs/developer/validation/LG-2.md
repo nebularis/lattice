@@ -81,4 +81,22 @@ Built on machine S, 2026-11-08, after LG-7 and on the same branch, `pvs-fml-foo`
 
 ## Results
 
-Written at verification.
+**Recorded 2026-11-09, verification open and waiting on LG-Q9.**
+
+**What was run.** `mise exec -- python -m pytest tools/test_ledger.py`, on the merged tree on 2026-11-09: `36 passed in 5.08s`. The suite is the pack's rows LG2-01 to LG2-09 and the mutations, with LG2-10 at 200 leaves. LG2-10 at the plan's size is `benchmark/ledger-posting-cost/test_shape_scale.py`, run on machine R on 2026-11-08 with the benchmark folder's 50 tests passing: every shape on 5,000 postings and 10,000 balance records in 27.3 s through pySHACL on rdflib, the sixteen runtime laws in 36.7 s on Oxigraph, and a broken record found. `mise run check:ontology-catalog` on 2026-11-08, at the merge into `main`: `1318 passed`.
+
+**What review found.** The handoff's figures of 77 s and 56.6 s are machine S's and are superseded by the above, after the scale tests moved under the benchmark and the six LG-1 constraints were retargeted at the class. Three findings stop this slice being verified as it stands.
+
+- **The one-cap fold is not the law.** `ldg:BalanceFoldShape` applies the credit ceiling once to the whole fold, where a credit is stopped at the ceiling when it is posted. A history of a debit, a credit that is cut and a later debit gives a true balance the shape refuses and a wrong one it accepts ([sketch on balances under post-once](../sketches/ledger-balances-under-post-once.md) §3).
+- **The two fold shapes find nothing on a strict engine**, since they sum an expression that errors on rows that are not postings (TD-158).
+- **The balance record per account per pass is not the design the benchmark measured**, a running balance on the posting at the drawn account (the same sketch, §1 and §2, LG-Q9).
+
+LG-Q9 decides the rework that answers all three, with LG-Q10 for a reinstatement under a pool and LG-Q11 to LG-Q13 for a merge that refuses, an allocation across accounts and a purpose on one. TD-159 records what the heavy shapes cost.
+
+**What the maintainer reads to close it**, once the rework lands.
+
+- the [sketch on balances under post-once](../sketches/ledger-balances-under-post-once.md), sections 1 to 4, for LG-Q9 and LG-Q10
+- the runtime document's terms, the ledger README's section 6 from `ldg:Account` to `ldg:Checkpoint`, and the laws table of section 7.3
+- `ontology/ledger/examples/insurance-aggregate.ttl`, positions 3 and 4, for the reinstatement
+
+**The maintainer's verdict** is written here when given. The row on the board moves to `verified` with it.

@@ -49,15 +49,9 @@ mise run check:proofs
 | Linux, x86_64 or arm64 | downloads the Linux release the same way | `~/.local/share/lattice-formal/Isabelle2025-2` |
 | Windows | runs `spikes/formal-prover/env/install-isabelle.ps1`, which unpacks the Windows installer with 7-Zip (`7z` on `PATH`) and initialises Isabelle's bundled Cygwin | `C:/fmx/Isabelle2025-2` |
 
-`LATTICE_FORMAL_ROOT` moves the install directory on every platform. On Windows keep it short, since
-long paths fail there. The release includes prebuilt Pure and HOL heaps, so the first check does not
-build HOL. A Claude Code cloud session gets Isabelle from `tools/claude-cloud-setup.sh` instead, in
-`/opt/Isabelle2025-2`.
+`LATTICE_FORMAL_ROOT` moves the install directory on every platform. On Windows keep it short, since long paths fail there. The release includes prebuilt Pure and HOL heaps, so the first check does not build HOL. A Claude Code cloud session gets Isabelle from `tools/claude-cloud-setup.sh` instead, in `/opt/Isabelle2025-2`.
 
-`check:proofs` runs each session through `spikes/formal-prover/env/driver.py`, which finds Isabelle
-through `FMX_ISABELLE` (its home directory), then the install directory above, then
-`/opt/Isabelle2025-2`, then `isabelle` on `PATH`. On Windows it runs Isabelle through the bundled
-Cygwin bash. It builds the prelude first and every build runs from `tools/proofs/` with `-d base`, so every build names the prelude the same way and finds the one heap. The first run on a machine builds the prelude's heap from source, about a minute and a half on machine S, and a later run finds it current in seconds. Each `ROOT` states its session's own `timeout`, and nothing passes `-o timeout=` or `-f`, either of which would rebuild the prelude.
+`check:proofs` runs each session through `spikes/formal-prover/env/driver.py`, which finds Isabelle through `FMX_ISABELLE` (its home directory), then the install directory above, then `/opt/Isabelle2025-2`, then `isabelle` on `PATH`. On Windows it runs Isabelle through the bundled Cygwin bash. It builds the prelude first, with `-b` so its heap is saved for the layers to parent on, and every build runs from `tools/proofs/` with `-d base`, so every build names the prelude the same way and finds the one heap. The first run on a machine builds the prelude's heap from source, about a minute and a half on machine S, and a later run finds it current in seconds. Each `ROOT` states its session's own `timeout`, and nothing passes `-o timeout=` or `-f`, either of which would rebuild the prelude.
 
 To build one session by hand, from `tools/proofs/`, on macOS or Linux with `isabelle` on `PATH`:
 
