@@ -2,7 +2,7 @@
 
 # Which draws an account accepts: compatible value spaces
 
-**Status:** sketch, 2026-11-09, for LG-Q20 of the [ledger plan](../plans/ledger.md). **Raised by** the maintainer on approving ADR-A131's addendum of 2026-11-09, which bars a draw in another value space than its account's. Money makes that rule matter most, but a non-monetary account raises cases the bare rule does not settle, for example a draw of 50% on a pool of 10 licences. **Reads** the Quantification README, sections 5.1.2 to 5.1.7, MEC-12, MEC-13 and MEC-17, ADR-A93, ADR-A131 decision 2 and its addendum of 2026-11-09, and PRI-75.
+**Status:** sketch, 2026-11-09, for LG-Q20 of the [ledger plan](../plans/ledger.md), **decided (a) by the maintainer the same day**. **Raised by** the maintainer on approving ADR-A131's addendum of 2026-11-09, which bars a draw in another value space than its account's. Money makes that rule matter most, but a non-monetary account raises cases the bare rule does not settle, for example a draw of 50% on a pool of 10 licences. **Reads** the Quantification README, sections 5.1.2 to 5.1.7, MEC-12, MEC-13 and MEC-17, ADR-A93, ADR-A131 decision 2 and its addendum of 2026-11-09, and PRI-75.
 
 ## 1. What already exists
 
