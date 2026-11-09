@@ -253,7 +253,7 @@ The maintainer, further, 2026-11-09. Under (iii), largest remainder, lenders 2 a
 
 **Question.** Which rounding applies, the conversion's or the facility's, and where does any difference go, to the borrower, the facility, or a residual account?
 
-**Bears on** LG-Q16, and LG-Q8 on conversion. **Ruling.**
+**Bears on** LG-Q16, and LG-Q8 on conversion. **Ruling.** The maintainer, 2026-11-09. Barred completely. No draw takes place in a unit other than the one the account's value space requires. Converting would make the ledger responsible for conversion rates, a failure to separate concerns that would fall foul of the segregation of duties most industries require where fiduciary responsibility needs clear boundaries. The request is logged, a rate applied, a record of the rate written somewhere outside the ledger, and only then the draw made in the right unit. A conversion that overruns the target unit's limits fails long before any data reaches the ledger, and is out of scope. LG-Q8 reversed to (a), ADR-A131's addendum of 2026-11-09 proposed, LG-11 planned.
 
 ## D. Allocation across several accounts
 
