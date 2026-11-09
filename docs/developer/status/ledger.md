@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-09. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** building 2026-11-09. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -120,6 +120,8 @@ Results sections. In short:
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | built 2026-11-08, building 2026-11-08 |  |
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | merged 2026-11-09, built 2026-11-09, building 2026-11-09 |  |
 | LG-9 | the proofs' second widening, LR2 over multisets, an executable path, the running balance, a merge over whole units, and the parts that wait on LG-Q11, LG-Q12, LG-Q13, LG-Q15 and LG-Q16 | planned |  |
+| LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | building 2026-11-09 |  |
+- 2026-11-09: LG-10 added and picked up on `docs/placement-vehicles-structure`, at the maintainer's word to correct the residual rule's published definition first, ahead of LG-Q15.
 - 2026-11-09: LG-9 added and planned, the proofs' second widening, for machine S on one branch with a brief. The Results sections of LG-7, LG-2 and LG-8 record the maintainer's proofs run of the day and what is left to read. LG-Q15 and LG-Q16 raised from LG-8's first finding, in a sketch on the residual to the first in order. The prelude's double build on a first run is fixed in `tools/proofs/check.py`, and LG-8's row reads merged.
 - 2026-11-08: LG-2 handed back at built, the scale tests under benchmark, the LG-1 constraints class-targeted and the ledger_corpus package, squash-merged into `main` with the substrate at 0.21.1. Its verification and LG-Q9's rework are still to come.
 - 2026-11-08: LG-Q14 decided (d) by the maintainer, a prelude session every layer session parents on, track E's FME-0, after the HOL sessions survey. LG-8 parents on it.
