@@ -82,7 +82,34 @@ Two points of English law bear on the order and are recorded for modelling, to b
 | (iii) the whole drawing is refused | 0 | 0 | 0 | 0 |
 | (iv) the floor applies to the lender's commitment, not its share, so C funds 1M | 6M | 3M | 1M | 10M |
 
-**Bears on** LG-Q17, and whether a floor is a rule's parameter or a guard per request. **Ruling.**
+**Bears on** LG-Q17, and whether a floor is a rule's parameter or a guard per request. **Ruling.** The maintainer, 2026-11-09. It depends on the wording, and the ledger never decides it. Where the floor gates the lenders' obligation to pay and nothing in the wording says what follows, choosing between (i) and (iii) would be arbitrary, so the drawing is not funded, with a referral to a person who may put a remedy in place, since paying when it is unclear how lender C's obligation behaves is not defensible. Where the wording says what happens when a lender cannot pay, or when a lender's commitment falls below the minimum, that wording's stated meaning decides, bound per instrument, and (i), (ii) or (iii) may each be right. Whether (iv) differs from the others depends on how the wording defines commitment and share, which is stated meaning too.
+
+#### A3 worked through: how an instrument can state the floor
+
+The instrument layer states a clause as legal relations, each with one modal verb, and a relation applies to a case only when it exists, its gate is open and its scope admits the case. The table names each way the floor of A3 can be stated in those terms, and which outcomes of A3 each allows. *Yes* means the form yields that outcome by itself. *With* names what else the wording must state.
+
+| How the floor is stated | Instrument terms | (i) C funds 0, drawing 9M | (ii) A and B take up C's share | (iii) the drawing is not funded | (iv) C funds 1M |
+|---|---|---|---|---|---|
+| F1. A prohibition on the lender, "no lender shall fund a participation below 2M" | `ins:Prohibition`, obligor the lender, `ins:scope` the participation below the floor | yes | with an obligation on the others to take up a shortfall | with a condition on the borrower's drawing that every lender funds | no, C must not |
+| F2. The lender's obligation does not reach a small participation, "each lender shall fund its participation, if it is 2M or more" | `ins:Obligation`, `ins:scope` the participation at or above the floor | yes | with a take-up obligation | with the drawing conditioned on every lender funding | only if C chooses to, which no relation obliges, so it is C's act and not an outcome the evaluator reaches |
+| F3. The lender is excused, "a lender need not fund a participation below 2M" | `ins:Exclusion`, holder the lender, `ins:excepts` its obligation | if C does not act | with a take-up obligation | with the drawing conditioned on every lender funding | if C elects to fund, an `ins:OnAct` by C |
+| F4. A minimum on the obligation's amount | `ins:Qualifier` qualifying the obligation to fund | not without more, since a qualifier bounds an amount and does not say what happens below it | with a take-up obligation | the reading where an obligation whose amount cannot meet its qualifier is not performed, which the evaluator cannot choose alone | only if the qualifier bounds the commitment and not the participation, by definition |
+| F5. A condition on the borrower's power to draw, "a utilisation may be requested only if every lender's participation is 2M or more" | `ins:Power` of the borrower, `ins:scope` every participation at or above the floor | no | no | yes, the drawing is never validly requested | no |
+| F6. A regime with a state for a lender below the floor, "if any lender's commitment falls below 2M, no utilisation may be made until the majority lenders consent" | `ins:Regime`, `ins:OnCondition`, the borrower's power gated by `ins:appliesInState`, and a `ins:Power` of the majority lenders to consent | after consent, if the consent says so | after consent, if the consent says so | yes, while the regime is in that state | after consent, if the consent says so |
+| F7. Silence, the floor stated and its effect not | any of F1 to F4, chosen by whoever binds the meaning | arbitrary | arbitrary | the maintainer's ruling, not funded with a referral | arbitrary |
+
+Three properties of the wording decide among the rows, each stated meaning, never the ledger's.
+
+| Property | Where it is stated | What it does to A3 |
+|---|---|---|
+| what the floor is measured on, the commitment or the participation in the drawing | `ins:Definition` of each word | decides whether (iv) is a different outcome at all. Where commitment and participation are defined apart and the floor reads the commitment, C, whose commitment may be above 2M, funds its 1M participation |
+| how the lenders act together, each for its own share or jointly | `ins:actingRule` on the lenders' participation group | under each for its own share, one lender's failure does not oblige the others, so (ii) needs an express obligation to take up a shortfall. Under jointly, (ii) is the default |
+| which relation the floor attaches to, the lender's obligation or the borrower's power | the relation's obligor or holder | on the lender, F1 to F4, the drawing proceeds unless something else stops it. On the borrower, F5 and F6, the drawing does not proceed |
+
+**What the matrix rules out.** No outcome is invalid under every form. (iii) is reached by F5 and F6, and by the ruling for silence. (i) is reached by F1 to F3. (ii) needs a take-up obligation or a joint acting rule. (iv) needs a definition that separates commitment from participation, or an exclusion and C's own act. So each of the four is right for some wording, which confirms the ruling: the outcome is the bound meaning's, and the ledger merges only what the instrument says applies.
+
+**What the matrix says about the ledger.** The floor never reaches a merge rule. By the time requests reach a merge at one position, the instrument has decided which lenders' obligations apply to this drawing and for how much. A drawing the instrument leaves Undetermined, as F7 does, or gates closed, as F6 does, is never a merge's refusal, which LG-Q11 kept to the account's own refuse policy when requests exceed availability. The referral the ruling asks for is the instrument's Undetermined with its reason, and the remedy is a regime state left by an act, as F6 shows. No term in the repository names a referral as such, so whether one is needed beside Undetermined with a reason is a question for the instrument layer.
+
 
 ## B. Requests that stand or fall together
 
