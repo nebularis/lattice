@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 17 branches, the units' own state from this tree, the newest board day 2026-11-08.
+Built from the status records on 18 branches, the units' own state from this tree, the newest board day 2026-11-09.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -49,7 +49,7 @@ Built from the status records on 17 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on fix/vyd-wrapper-passthrough, fml/isabelle-layers, tutorial/studio-guide, vyd-win, vyd-win2, vyvid-migration | LG-2 | 4 planned, 2 merged, 2 built, 1 blocked |  |
+| [ledger](plans/ledger.md) | unit | built 2026-11-08 · merged 2026-10-27 on fix/vyd-wrapper-passthrough, fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 4 planned, 2 merged, 2 built, 1 blocked |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -70,7 +70,7 @@ Built from the status records on 17 branches, the units' own state from this tre
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-08 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, fix/vyd-wrapper-passthrough, tutorial/studio-guide, vyd-win, vyd-win2 | VM-0 | 9 verified, 1 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-09 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, fix/vyd-wrapper-passthrough, vyd-win, vyd-win2 | VM-0 | 9 verified, 2 built |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -466,6 +466,7 @@ gantt
     section vyvid-migration
     VM-0 the sketch rewritten :vm0, 2026-11-05, 2026-11-06
     VM-1 the binding :vm1, 2026-11-05, 2026-11-06
+    VM-10 the getting-started guide :vm10, 2026-11-09, 2026-11-10
     VM-2 the index tasks and hooks over :vm2, 2026-11-05, 2026-11-06
     VM-3 the quanta and owners :vm3, 2026-11-05, 2026-11-06
     VM-4 the board tasks and the work :vm4, 2026-11-05, 2026-11-06
@@ -860,8 +861,10 @@ Branches with a commit `main` lacks, from the same reading.
 | `docs/placement-vehicles-structure` | 2026-11-08 | 25 | pushed | no mark |
 | `fix/vyd-wrapper-passthrough` | 2026-11-06 | 2 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
+| `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
+| `tutorial/studio-guide` | 2026-11-09 | 1 | pushed | no mark |
 | `vyvid-migration` | 2026-11-05 | 34 | pushed | no mark |
 | `vyvid-quanta-builtin` | 2026-11-08 | 3 | pushed | no mark |
 
@@ -920,7 +923,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 108 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 109 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
