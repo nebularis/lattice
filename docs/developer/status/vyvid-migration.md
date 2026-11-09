@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-08. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
+**Status:** building 2026-11-09. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
 
 ## Position
 
@@ -22,6 +22,7 @@
 | VM-7 | cloud sessions: the pin at `v0.2.14`, the setup script and its pasted lines, the hook | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
 | VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
 | VM-9 | the quanta by Вивід's own kind, the pin at v0.2.23 | built 2026-11-08, building 2026-11-08 |  |
+| VM-10 | the getting-started guide names the local setup of Вивід | building 2026-11-09 |  |
 
 ## Next action
 
@@ -49,6 +50,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-09: VM-10 begun on `getting-started-vyd` at the maintainer's word, since `vyd setup` in 0.2.26 answers the gap that a contributor's report of setting up on Windows named, a first local setup with no documented path past `bootstrap:vyvid`.
 - 2026-11-09: Вивід pinned at `v0.2.26`, at the maintainer's word. 0.2.26 adds `vyd setup`, which writes a first local configuration, and `vyd trust` and `vyd kb accept` refuse at once where their question could not be seen and print the command to run, which answers TD-161 and TD-162 on `tutorial/studio-guide`.
 - 2026-11-08: Вивід pinned at `v0.2.24`, at the maintainer's word. 0.2.24 says in the guide how a quantum is asked for and fixes the guard's wording for missing hooks.
 - 2026-11-08: VM-9 built. `vyvid.toml` declares the catalogue and Вивід's `quanta` kind, with `skip_kinds` for the scaffold kind, and the pin is `v0.2.23`. The index holds the same 15 quanta before and after, entry for entry in claim, pointer and parts. The command extractor is now `lattice-units`, writes no quads and keeps the catalogue's units, so `quanta.py` and `test_quanta.py` are deleted, their rules and tests being Вивід's. `tools/hooks.py` and `tools/deny_terms.py` install into the repository's own hooks folder and never `core.hooksPath`, since Вивід's guard points that at shims which run this repository's hooks from there, and `check:agent-guidance` had refused to overwrite a shim. A person runs `vyd trust` in the checkout, because the extractor's kind and the file changed, and until then the index lacks the owners and `check:knowledge`'s test of the build's notes fails on them.
