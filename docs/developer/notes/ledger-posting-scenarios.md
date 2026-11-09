@@ -127,7 +127,30 @@ Three properties of the wording decide among the rows, each stated meaning, neve
 | (ii) the bundle is a property of these requests, the account otherwise splits proportionally | nothing funds, because the bundle cannot be met whole |
 | (iii) the account splits proportionally, and the bundle condition is the borrower's problem | 3.56M, 2.67M and 1.78M fund |
 
-**Bears on** LG-Q11 as decided, and whether a bundle is ever declared on requests rather than on the account. **Ruling.**
+**Bears on** LG-Q11 as decided, and whether a bundle is ever declared on requests rather than on the account. **Ruling.** The maintainer, 2026-11-09. Reading (i) is the account's wording, since a refuse policy is stated on the account and never on a request. Reading (ii) is possible, since a request may carry terms of its own, but the mechanism needs designing, and this instance cannot tell (ii) from (i), because a drawing is asked for whole as a quote is. The answer is again the wording's, and what varies between uses is where that wording comes from. The maintainer gave a better instance, worked through below.
+
+#### B1 worked through: a dental claim with line items
+
+**The limits.** An annual aggregate of £5,000. An annual sub-limit for orthodontic work of £550. A per-claim limit of £500 on all authorised work together. A write-back puts 50% of treatment at a participating dentist back onto the aggregate.
+
+**The history.** £4,300 has been paid this year, none of it orthodontic, so £700 of the aggregate remains.
+
+| Step | Claim | Lines | Outcome | Aggregate left | Orthodontic left |
+|---|---|---|---|---|---|
+| 1 | £700 | orthodontic £200, other treatment £300, hygiene £200 | refused, over the per-claim limit, although it fits the aggregate and the orthodontic sub-limit | £700 | £550 |
+| 2 | £500, resubmitted without the hygiene line | orthodontic £200, other treatment £300 | paid | £700 − £500 = £200 | £350 |
+| 3 | write-back of 50% of the £500 | | credited to the aggregate | £200 + £250 = £450 | £350 |
+| 4 | £400 | orthodontic £400 | refused, or £350 paid, as the wording or a rule imposed on such instruments says | £450, or £100 | £350, or £0 |
+
+**What each step exercises in the ledger.**
+
+- **The claim is the bundle.** Its lines are drawn at one position, each on its own path, the orthodontic line through the orthodontic sub-limit to the aggregate, and every line through the claim's own per-claim account, an account per claim by a key dimension (LG-Q7). Step 1 refuses the whole claim because one account on one path cannot take it, which is a draw that succeeds whole or changes nothing (LD1), applied to every line of the claim together. That is an allocation across accounts that commits whole, LG-Q12's (a), with the commitment declared by the claim's terms.
+- **Pay up to, or refuse, is the account's rule even for one request.** At step 4 one request exceeds availability. The kernel's merge already treats one request exactly as several: a proportional or in-priority rule grants what is available, £350, and the refuse policy refuses. So the choice the maintainer describes is the merge rule declared on the orthodontic sub-limit, and it needs no new mechanism. Under pay up to, which lines of a bundle are paid first is the declared order of A2's ruling.
+- **The write-back is a credit with a kind.** It restores the aggregate by a stated share of treatment, not by reversing a draw, and the credit ceiling stops it at the aggregate's stated amount. It is LG-Q10's question from another side, a credit that carries its kind, here a benefit and not a reinstatement, and it rolls up or stays as its kind says.
+- **The rule can come from two places.** The wording, "we will pay any claim for orthodontic work up to …" as an obligation to pay up to the limit, or "we will not pay any claim that exceeds the limits", as a refusal bound from the instrument. Or a rule imposed on every instrument of a kind, by the institution that uses the platform, for example in ODRL, that a claim exceeding any limit is always refused at first, or that an account always pays as much of a valid claim as it can. Either way the ledger reads one declared rule on the account. Where it came from is instantiation's, and which prevails where a wording and an imposed rule disagree is precedence between provisions, a question for the normative rule substrate and Ensemble, not the ledger. How a rule imposed on instruments is stated, from wordings or configured directly, is open.
+
+**Reading (iii) of B1, scaling every request by the same ratio**, is wrong here because it ignores the condition the requests carry. Where nothing on a request or the account forbids it, scaling by one ratio is the right behaviour in several real settings, all across requests from different parties: an insolvent estate's dividend paid pari passu to creditors, an oversubscribed share issue scaled back pro rata, and a capped grant scheme that scales back every approved award when the fund is oversubscribed. Within one party's request, the nearest real case is an insurer's condition of average, which scales every line of a claim by the ratio of the sum insured to the value at risk, but its ratio comes from underinsurance and not from what is left on an account, so it belongs to the instrument's meaning and not to a merge.
+
 
 ### B2. A bundle across positions (project finance)
 
