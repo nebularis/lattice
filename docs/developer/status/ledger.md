@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** building 2026-11-10. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** built 2026-11-10. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -123,7 +123,8 @@ Results sections. In short:
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | built 2026-11-09, building 2026-11-09 |  |
 | LG-11 | conversion leaves the ledger, the conversion terms removed | planned |  |
 | LG-12 | which draws an account accepts, a shape for compatibility and representability | planned | LG-11 |
-| LG-13 | the insurance example's cap named for what it is, annual-cap | building 2026-11-10 |  |
+| LG-13 | the insurance example's cap named for what it is, annual-cap | built 2026-11-10, building 2026-11-10 |  |
+- 2026-11-10: LG-13 built. `insurance-aggregate.ttl`'s `reinstatement-pool` and its account, balance records and posting are now `annual-cap`, with its comments, the README's worked reading and scenario E1 to match. `tools/test_ledger.py` passes. STD-325 added at the maintainer's word: a domain's label is never given to a different kind of thing. The scenarios note's sections D2 to G, lost by a truncating edit in 51140fba, are restored from the commit before.
 - 2026-11-10: LG-13 added and picked up, at the maintainer's word, to rename the insurance example's reinstatement pool as the annual cap it is.
 - 2026-11-09: LG-Q20 decided (a) by the maintainer, a draw only in its account's own value space and unit, representable. LG-12 now waits only on LG-11. ADR-A131's second addendum of the day drafted, proposed, for the semantics decided today under decision 8.
 - 2026-11-09: LG-Q11 widened again by the maintainer: a refusal may come from a guard before any rule or from the rule itself, for a reason it states where the case arises, so a tie refuses only where it actually occurs. Each rule's laws hold for every result that grants. LG-Q19 stays (a). Scenario D1 ruled, the waterfall's configuration decides, and the law holds a frozen share rather than passing it down.
