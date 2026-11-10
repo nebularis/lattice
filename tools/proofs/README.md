@@ -23,6 +23,8 @@ built on top of it (functions, laws, proofs) is hand-written directly in the `.t
 imports it. This is why a generated file and a hand-written file are never the same file: running
 the generator again must never silently discard a proof.
 
+**The prelude, `base/`.** One directory is not a layer's. `base/` holds `LatticeBase`, `session LatticeBase = HOL +` with `sessions "HOL-Library"`, whose one theory imports the `HOL-Library` theories the layers' proofs reach for and states no law (ADR-A-FM2's addendum of 2026-11-08). Every layer session parents on it, `session <Layer> = LatticeBase +`, so a library theory is checked once per machine into its heap and no machine builds the `HOL-Library` heap. A layer's `Kernel.thy` keeps importing `Main` or `Complex_Main`, and a library theory is imported by its theorem theories alone. [base/README.md](base/README.md) says why each theory is there.
+
 ## Shared infrastructure
 
 `gate.py` and `claim-schema.json` were carried over from `spikes/formal-prover/`, whose own copies were removed on 2026-11-07 so that one gate exists (ADR-A-FM2's addendum), unchanged in
@@ -47,28 +49,21 @@ mise run check:proofs
 | Linux, x86_64 or arm64 | downloads the Linux release the same way | `~/.local/share/lattice-formal/Isabelle2025-2` |
 | Windows | runs `spikes/formal-prover/env/install-isabelle.ps1`, which unpacks the Windows installer with 7-Zip (`7z` on `PATH`) and initialises Isabelle's bundled Cygwin | `C:/fmx/Isabelle2025-2` |
 
-`LATTICE_FORMAL_ROOT` moves the install directory on every platform. On Windows keep it short, since
-long paths fail there. The release includes prebuilt Pure and HOL heaps, so the first check does not
-build HOL. A Claude Code cloud session gets Isabelle from `tools/claude-cloud-setup.sh` instead, in
-`/opt/Isabelle2025-2`.
+`LATTICE_FORMAL_ROOT` moves the install directory on every platform. On Windows keep it short, since long paths fail there. The release includes prebuilt Pure and HOL heaps, so the first check does not build HOL. A Claude Code cloud session gets Isabelle from `tools/claude-cloud-setup.sh` instead, in `/opt/Isabelle2025-2`.
 
-`check:proofs` runs each session through `spikes/formal-prover/env/driver.py`, which finds Isabelle
-through `FMX_ISABELLE` (its home directory), then the install directory above, then
-`/opt/Isabelle2025-2`, then `isabelle` on `PATH`. On Windows it runs Isabelle through the bundled
-Cygwin bash.
+`check:proofs` runs each session through `spikes/formal-prover/env/driver.py`, which finds Isabelle through `FMX_ISABELLE` (its home directory), then the install directory above, then `/opt/Isabelle2025-2`, then `isabelle` on `PATH`. On Windows it runs Isabelle through the bundled Cygwin bash. It builds the prelude first, with `-b` so its heap is saved for the layers to parent on, and every build runs from `tools/proofs/` with `-d base`, so every build names the prelude the same way and finds the one heap. The first run on a machine builds the prelude's heap from source, about a minute and a half on machine S, and a later run finds it current in seconds. Each `ROOT` states its session's own `timeout`, and nothing passes `-o timeout=` or `-f`, either of which would rebuild the prelude.
 
-To build one session by hand, from the repository root, on macOS or Linux with `isabelle` on `PATH`:
+To build one session by hand, from `tools/proofs/`, on macOS or Linux with `isabelle` on `PATH`:
 
 ```bash
-isabelle build -d tools/proofs/<layer> -v <SessionName>
-python tools/proofs/gate.py tools/proofs/<layer>
+isabelle build -d base -d <layer> -v <SessionName>
+python gate.py <layer>
 ```
 
-On Windows, run the same `isabelle build` inside Isabelle's Cygwin shell
-(`C:/fmx/Isabelle2025-2/contrib/cygwin/bin/bash.exe --login`), or let `driver.py` do it:
+On Windows, run the same `isabelle build` inside Isabelle's Cygwin shell (`C:/fmx/Isabelle2025-2/contrib/cygwin/bin/bash.exe --login`), or let `driver.py` do it, from the repository root:
 
 ```powershell
-python spikes/formal-prover/env/driver.py --route native --workdir tools/proofs/<layer> isabelle build -d . -v <SessionName>
+python spikes/formal-prover/env/driver.py --route native --workdir tools/proofs isabelle build -d base -d <layer> -v <SessionName>
 python tools/proofs/gate.py tools/proofs/<layer>
 ```
 

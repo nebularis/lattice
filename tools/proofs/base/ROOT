@@ -1,0 +1,12 @@
+(* The prelude every layer session parents on (ADR-A-FM2's addendum of 2026-11-08, FM-D18, plan
+   formal-methods-track-e, FME-0). One theory importing the HOL-Library theories the layers' proofs
+   reach for, loaded from source and checked once per machine into this session's heap. No law,
+   no claim. Its first build loads the library theories from source and takes minutes, so its
+   timeout is wider than a layer's. *)
+
+session LatticeBase = HOL +
+  options [document = false, quick_and_dirty = false, timeout = 1800]
+  sessions
+    "HOL-Library"
+  theories
+    Prelude

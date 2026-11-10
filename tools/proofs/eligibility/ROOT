@@ -1,5 +1,5 @@
-session Eligibility = HOL +
-  options [document = false]
+session Eligibility = LatticeBase +
+  options [document = false, timeout = 90]
   theories
     Kernel
     KernelLaws

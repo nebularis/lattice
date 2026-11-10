@@ -128,6 +128,10 @@ def main() -> int:
 
     ok = True
     print(f"Law report: {track_dir.name}")
+    if not claims and not statements:
+        # A session that states no law, the prelude (ADR-A-FM2's addendum of 2026-11-08), has
+        # nothing to gate. Its theories are still scanned, so a sorry there fails as anywhere.
+        print("  no claim and no gated statement, nothing to gate")
     for claim in claims:
         subject = claim["subject"]
         recomputed = digest(statements[subject] + " " + definitions) if subject in statements else None
@@ -144,7 +148,7 @@ def main() -> int:
         for hit in banned:
             print(f"  {hit}")
 
-    print("GATE: " + ("pass" if ok else "fail"))
+    print("GATE: " + ("fail" if not ok else "nothing to gate" if not claims and not statements else "pass"))
     return 0 if ok else 1
 
 

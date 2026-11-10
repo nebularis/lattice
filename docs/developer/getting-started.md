@@ -72,7 +72,47 @@ mise run bootstrap:formal-images
 mise run check:formal-smoke
 ```
 
-## 6. Where to go next
+## 6. Set up the knowledge index and the work board
+
+`mise run bootstrap` installs Вивід, `vyd`, as a `uv` tool at the version `mise.toml` pins ([ADR-A152](../architecture/decisions/ADR-A152-vyvid-adoption.md)). It writes no configuration of yours, and the index, the work board and the composed skills need one. A first local setup is five steps, from the repository's root.
+
+1. **Write a first configuration.** `vyd setup` reads the domains `vyvid.toml` names, sets the knowledge base's folder in your own configuration, adds each published domain you lack with trust `knowledge`, and clones them. Look first with `--dry-run`.
+
+   ```bash
+   mise run vyd -- setup --dry-run
+   mise run vyd -- setup
+   ```
+
+2. **Trust `vyvid.toml`.** The file declares a command that builds the index's owners and glue, which run with your privileges, so you read what it lists and type `yes`. The command asks a question, so run it yourself and not through a task. A task that captures output would hide the question, and `vyd` refuses at once and says so.
+
+   ```bash
+   mise exec -- vyd trust
+   ```
+
+3. **Review each domain you will rely on.** A domain added with trust `knowledge` gives an index and a board and gives agents no skills, so `mise run check:skills` does not run, and says which domains it is waiting for, until you review each of them: `lifecycle`, `tools`, `python`, `triple-stores` and `rdf-modelling`. `vyd setup` printed each one's folder and its review line at the commit it cloned. Read a domain's rules and skills in its clone, then run its line.
+
+   ```bash
+   mise exec -- vyd domain trust lifecycle reviewed --commit <the commit your setup printed>
+   ```
+
+   A new commit of a domain needs a new review, which is `vyd domain trust` again.
+
+4. **Build the index.** The first build fetches an embedding model, and later ones take seconds.
+
+   ```bash
+   mise run build:knowledge
+   ```
+
+5. **Ask the index and the board.**
+
+   ```bash
+   mise run graph:ask -- find how do we name a new ontology term
+   mise run work:board
+   ```
+
+`mise run check:skills` now runs and passes, and the composed skills under `.claude/skills` match their sources. Until every domain is reviewed `vyd install --project` writes what it can and deletes no skill, so a mistake there cannot remove the committed ones. A later `mise run bootstrap` leaves the configuration as it is, and `vyd setup` run again changes nothing once the domains are configured.
+
+## 7. Where to go next
 
 - [Developer Guide](https://github.com/nebularis/lattice/blob/main/docs/developer/developer-guide.md) — every tool, what it is for, how the pieces fit together.
 - [AGENTS.md](../../AGENTS.md) — the rules AI agents follow here, and the skills they load (Developer Guide §8).

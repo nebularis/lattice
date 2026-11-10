@@ -94,4 +94,16 @@ Built on machine S, 2026-11-08, on the branch the maintainer created from `main`
 
 ## Results
 
-Filled at verification.
+**Recorded 2026-11-09, verification not yet closed.**
+
+**What was run.** On 2026-11-09 the maintainer ran `mise run check:proofs` on machine R, in a checkout of machine S's branch, and read its output. `Finished LatticeBase (0:01:12 elapsed time)`, `GATE: nothing to gate`. `Finished Eligibility (0:00:02 elapsed time)`, 33 claim rows each `Proof passed`, `GATE: pass`. `Finished Ledger (0:00:05 elapsed time)`, nineteen claim rows, LA1 to LA4, LC1 to LC4, LD1 to LD4, LN1, LO1 and LR1 to LR5, each `Proof passed`, `Assumption audit: clean, no sorry/oops/admit/oracle/by-eval found`, `GATE: pass`. That run is of the session as LG-8 widened it, so it covers LG-7's sixteen claims as they now stand: LA1 to LA4, LC1, LC2, LC4, LD1 to LD4, LN1, LR1 and LR2 with the statements LG-7 wrote, and LO1 and LC3 as LG-8 restated them. It covers row LG1. `mise run check:formal-freshness`, run on the merged tree the same day in the session that wrote this section: `3 formal-methods artefact(s) consistent with their literate READMEs`. That covers row LG2.
+
+**What review found, and where each went.** The pack's deviations were taken up one by one at the review of 2026-11-08. LR2 proving `ldg:ToFirstInOrder` only is closed by LG-8's LR3. The refinement being one lemma is closed by LG-8's LR5. LC3 bounding the first posting only is closed by LG-8's restatement for every step. LO1 over two lists without repeats is closed by LG-8's restatement over multisets, and LR2's own order independence is still over lists, which LG-9 restates. Two findings are open as questions in the plan: the kernel's `merge` cannot refuse (LG-Q11), and `ldg:ToFirstInOrder` can give a unit to a key of zero weight (LG-Q15, found by LG-8).
+
+**What the maintainer reads to close it.**
+
+- the four axioms of `lawful` in the ledger README's section 10 block, against ADR-A131 decision 6
+- the statements, not the proofs, of LA1 to LA4 in `tools/proofs/ledger/Allocation.thy` and of LC1, LC2 and LD1 to LD4 in `Draws.thy`, each between its gate markers, against the pack's test table
+- the session README's what-is-assumed and what-is-not-covered sections, `tools/proofs/ledger/README.md`
+
+**The maintainer's verdict** is written here when given. The row on the board moves to `verified` with it.
