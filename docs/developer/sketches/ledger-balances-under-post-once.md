@@ -100,45 +100,80 @@ flowchart LR
 
 A law shape that can refuse a correct record is not a law, so the one-cap fold should not stand as one. There are two exact forms. Under design B each posting carries a running balance and the shape checks one step, the predecessor's running balance plus or less this posting's amount, capped at the ceiling where it is a credit, which applies the ceiling exactly where the writer did. Under design A the shape chains passes, taking the previous pass's record as the base rather than the stated amount, which is exact across passes and leaves only a pass that holds both a cut credit and a later debit on one subtree, closed by a rule that within a pass credits are applied before debits or by the micro-position order.
 
-## 4. The capacity pool and position 4 of the insurance example
+## 4. The annual cap and position 4 of the insurance example
 
 ### 4.1 The arithmetic
 
-The example's pool is stated at twice the aggregate, as the hard cap across the original cover and one reinstatement. Its table reads so.
+The example's annual cap, named a reinstatement annual cap until LG-13 renamed it (STD-325), is stated at twice the aggregate, as the hard cap across the original cover and one reinstatement. Its table reads so.
 
-| Position | Event | Aggregate | Pool |
+| Position | Event | Aggregate | Annual cap |
 |---|---|---|---|
 | before | | 10,000,000 | 20,000,000 |
 | 1 | flood loss 700,000 | 9,300,000 | 19,300,000 |
 | 2 | recovery 300,000 | 9,600,000 | 19,600,000 |
 | 3 | loss 9,600,000 | 0 | 10,000,000 |
-| 4 | reinstatement | 10,000,000 | 20,000,000 rolled up, then 10,000,000 after the pool's own debit |
+| 4 | reinstatement | 10,000,000 | 20,000,000 rolled up, then 10,000,000 after the annual cap's own debit |
 
-The arithmetic is right. Capacity used across the two lives is 700,000 less 300,000 plus 9,600,000, which is 10,000,000, so 10,000,000 is left and the aggregate stands restored. What the example does to reach it is two postings in one pass, a credit of 10,000,000 at the aggregate, which rolls up to the pool under the fold, and a debit of 10,000,000 at the pool, so that the roll-up is undone.
+The arithmetic is right. Capacity used across the two lives is 700,000 less 300,000 plus 9,600,000, which is 10,000,000, so 10,000,000 is left and the aggregate stands restored. What the example does to reach it is two postings in one pass, a credit of 10,000,000 at the aggregate, which rolls up to the annual cap under the fold, and a debit of 10,000,000 at the annual cap, so that the roll-up is undone.
 
 ### 4.2 What the two postings say
 
-Read as modelling, the second posting is a correction of the first. The credit is a reinstatement, and a reinstatement restores the aggregate without adding to the capacity the pool measures, so the credit should never have reached the pool. The example makes it reach the pool and then takes it back, because the fold treats every credit alike. That is the structural mismatch LG-Q10 is about, and the pool debit is its symptom.
+Read as modelling, the second posting is a correction of the first. The credit is a reinstatement, and a reinstatement restores the aggregate without adding to the capacity the annual cap measures, so the credit should never have reached the annual cap. The example makes it reach the annual cap and then takes it back, because the fold treats every credit alike. That is the structural mismatch LG-Q10 is about, and the annual cap debit is its symptom.
 
-The pool debit is also a posting at an ancestor, which LF-Q18 (c) allows for a purpose-counting account only, and it is the first posting any ancestor's book carries. Under post-once an ancestor's book holds checkpoints alone, so sealing it at a close is sealing a derived record. A posting in the pool's book makes the pool's own period and close matter for a posting, and a reinstatement effective after the pool's close lands in PDD-14's case, a posting effective inside a sealed period. That is the sense in which the pool debit runs against sealed periods.
+The annual cap debit is also a posting at an ancestor, which LF-Q18 (c) allows for a purpose-counting account only, and it is the first posting any ancestor's book carries. Under post-once an ancestor's book holds checkpoints alone, so sealing it at a close is sealing a derived record. A posting in the annual cap's book makes the annual cap's own period and close matter for a posting, and a reinstatement effective after the annual cap's close lands in PDD-14's case, a posting effective inside a sealed period. That is the sense in which the annual cap debit runs against sealed periods.
 
 ### 4.3 The options
 
 | | What it is | Terms added | Postings per reinstatement | Posts at an ancestor | What else changes |
 |---|---|---|---|---|---|
-| (a) | the pool is also debited, as built | none | 2 | yes | LF-Q18 (c) gains an exception that is not a purpose |
-| (b) | the pool is not an ancestor but an account a reinstatement draws on by purpose | none | 2 | no | every loss must name the purpose too, or the pool no longer falls with losses, which positions 1 to 3 need |
-| (c) | a credit ceiling on the pool's subtree fold | a ceiling | 1 | no | does not work alone. After position 3 the pool is at 10,000,000, the roll-up takes it to 20,000,000, and 20,000,000 is the ceiling, so nothing is cut |
-| (d) | the pool stays the ancestor, and the reinstatement is a draw that names a purpose the pool counts | a purpose | 2 | yes, as a purpose posting, which LF-Q18 (c) allows | the pool is both ancestor and purpose-counting account for the aggregate |
+| (a) | the annual cap is also debited, as built | none | 2 | yes | LF-Q18 (c) gains an exception that is not a purpose |
+| (b) | the annual cap is not an ancestor but an account a reinstatement draws on by purpose | none | 2 | no | every loss must name the purpose too, or the annual cap no longer falls with losses, which positions 1 to 3 need |
+| (c) | a credit ceiling on the annual cap's subtree fold | a ceiling | 1 | no | does not work alone. After position 3 the annual cap is at 10,000,000, the roll-up takes it to 20,000,000, and 20,000,000 is the ceiling, so nothing is cut |
+| (d) | the annual cap stays the ancestor, and the reinstatement is a draw that names a purpose the annual cap counts | a purpose | 2 | yes, as a purpose posting, which LF-Q18 (c) allows | the annual cap is both ancestor and purpose-counting account for the aggregate |
 | (e) | a credit carries its kind, and a reinstatement is a kind of credit that restores its account and does not fold upward | a kind on a credit, two values | 1 | no | the fold shape and the kernel's `credit` take the kind, so a reinstatement stops at its own account |
 
-On (d), an earlier reading of this sketch's author put a double-count cost on it, and that was wrong. The double count §13 names arises where a draw at an account X names a purpose counted by an ancestor P of X, so the posting at X folds to P and the purpose posting at P counts it again. A reinstatement under (d) is a draw at the pool itself with no posting at a descendant, so nothing folds twice. The double count is a separate open case, and the kernel already answers it, since `reach` is a set union and `debit` debits each account in it once, so the runtime rule it needs is that a purpose posting is not written at an account already on the drawn account's path.
+On (d), an earlier reading of this sketch's author put a double-count cost on it, and that was wrong. The double count §13 names arises where a draw at an account X names a purpose counted by an ancestor P of X, so the posting at X folds to P and the purpose posting at P counts it again. A reinstatement under (d) is a draw at the annual cap itself with no posting at a descendant, so nothing folds twice. The double count is a separate open case, and the kernel already answers it, since `reach` is a set union and `debit` debits each account in it once, so the runtime rule it needs is that a purpose posting is not written at an account already on the drawn account's path.
 
 On cost in time and space, the options do not differ. A reinstatement is a handful of events per contract a year, so two postings against one is noise beside the losses, and the kind in (e) is one triple on those postings alone. The decision is on meaning and on which laws change. (a) and (d) keep the fold as it is and add a posting at an ancestor. (e) keeps post-once intact, changes the fold's treatment of one kind of credit, and is the only option that says what a reinstatement is, which is PRI-12's test. Its cost is that LD3's `credit` gains a kind, and the fold shape a filter, which is a change to what LG-7 and LG-2 built.
 
-### 4.4 Leaning
+### 4.4 Leaning, as first written
 
 (e), examined before (d), on the priority PRI-80 states, correctness before performance before churn. The maintainer's question of whether a reinstatement is built as the example builds it is LG-Q10, and the sketch does not decide it.
+
+### 4.5 Revised 2026-11-10: the kind is the world's, and the account decides
+
+**The table above shows remaining balances, not availability.** At position 3 sublimit A1 still holds 600,000 of its own, but its availability is the least remaining along its path, min(600,000, 5,600,000, 0, 10,000,000) = 0 (LD2), so nothing more can be paid from it, as the maintainer pointed out: once a fire aggregate is used up, no further fire loss is paid, whatever an equipment-fire sublimit beneath it still holds.
+
+**What was wrong with (e).** As written, a reinstatement's kind meant that the credit stops at its own account. That encodes the tree into the posting, so a poster would have to know the parent is a cap, and it fails where a fire sublimit's reinstatement should restore the property aggregate above it. The maintainer's point is that recovery and reinstatement differ in the world, money recovered against a restoration of a limit by a trigger in the wording, and which accounts respond to which is each account's own concern.
+
+**Two designs the maintainer proposed, tested.**
+
+| | P1, the poster states the real-world kind and each account declares the kinds that restore it | P2, a dual-value account, balance tracked apart from what was posted in each direction, the poster stating nothing |
+|---|---|---|
+| correct on the annual cap | yes, it accepts recoveries and not reinstatements | no as stated: a recovery and a reinstatement reach the aggregate as equal credits, so with nothing stated no configuration can tell them apart. The nearest working form posts a recovery as a reversal of a draw, which is the real-world kind again |
+| correct on a term commitment | yes, it accepts nothing, since repaid amounts cannot be redrawn | a reversal would wrongly restore it, so a policy per account is needed anyway |
+| the poster knows | what happened, a recovery, a reinstatement, a repayment, a seat returned | the same, as a direction |
+| space | one triple per credit for its kind, one per restricted account definition | a second running value on every posting, under LG-Q9's running balance |
+| time | one filter on kind in an ancestor's fold where its policy restricts kinds | a second dimension in every read |
+| ease for us | one concept | a second dimension throughout |
+
+| Account | Restored by | Why |
+|---|---|---|
+| annual cap | recoveries, not reinstatements | it measures net paid across the year |
+| aggregate, or a fire sublimit | recoveries and reinstatements | a reinstatement restores the limit |
+| property aggregate above a fire sublimit | recoveries and reinstatements | the maintainer's example |
+| revolving facility | repayments | repaid amounts may be drawn again |
+| term commitment | nothing | repaid amounts may not be drawn again |
+| licence pool | seats returned | a returned seat may be used again |
+
+**The proposal, for the maintainer's decision under LG-Q10.**
+
+1. A credit carries its kind, a concept from a scheme whose contract Ledger declares and an applied module binds, so insurance supplies recovery, reinstatement and write-back and Ledger names no domain's kinds.
+2. Each account declares the kinds that restore it, all by default, so a revolving account needs nothing. No credits at all is the empty list, and recoveries only is a list of one, bound from the wording, which the terms may override.
+3. An ancestor's balance folds the debits of its subtree and the credits whose kind it accepts, each account applying its own ceiling.
+4. A credit with no kind, on a path where an account restricts kinds, is refused as Undetermined by a guard, never taken to restore.
+
+The poster needs neither the tree nor the history. A reinstatement in full is posted at the stated amount, and the credit ceiling already cuts it to what was used (LD3). The multi-year worry, that "less everything drawn" reaches back past a year, does not arise, since a periodic amount is one account per period (PDD-15). How many reinstatements a contract allows is the instrument's regime, and the annual cap makes a further one impossible. Position 4 becomes one posting, a reinstatement credit at the aggregate, and the annual cap stays at 10,000,000.
 
 ## 5. `draw` and `spread`, two refusal semantics
 
