@@ -15,6 +15,7 @@ Each engine departure from the SPARQL 1.1 specification that the store-discovery
 | Report | Engine | Finding | State |
 |---|---|---|---|
 | [oxigraph-left-join-reads-every-graph](#oxigraph-left-join-reads-every-graph) | Oxigraph | TSD-42 | filed 2026-10-27 as [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008) |
+| [oxigraph-optional-inside-graph-reads-every-graph](#oxigraph-optional-inside-graph-reads-every-graph) | Oxigraph | TSD-71 | not filed, drafted 2026-11-11 as a comment on [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008), a second shape of that report |
 | [oxigraph-count-error](#oxigraph-count-error) | Oxigraph | TSD-43 | filed 2026-10-27 as [oxigraph/oxigraph#2009](https://github.com/oxigraph/oxigraph/issues/2009) |
 | [oxigraph-avg-all-unbound](#oxigraph-avg-all-unbound) | Oxigraph | TSD-43 | not filed |
 | [jena-avg-all-unbound](#jena-avg-all-unbound) | Apache Jena ARQ | TSD-43 | not filed |
@@ -97,6 +98,88 @@ def best(s):
 
 
 def test_a_graph_variable_bound_outside_an_optional_reads_one_graph():
+    ratio = best(store(100)) / best(store(1))
+    assert ratio < 10, f"100 graphs cost {ratio:.0f} times one graph"
+```
+
+### oxigraph-optional-inside-graph-reads-every-graph
+
+**0.5.13: `GRAPH ?g { ... OPTIONAL { ... } }` with `?g` bound outside reads every graph for the optional part**
+
+Oxigraph, TSD-71, not filed. Drafted 2026-11-11 as a comment on [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008), which reports the `OPTIONAL { GRAPH ?g { ... } }` shape and is open with no reply. A `GRAPH ?g { A OPTIONAL { B } }` is a left join whose right side is `B` in graph `?g`, so if the left join no longer passes `?g` into its right side, `B` is read in every graph, which is what the measurements below show. Not checked on 0.5.11 or 0.5.12, so whether it is the same regression is a hypothesis.
+
+**Version:** pyoxigraph 0.5.13, Python 3.14.7, macOS arm64.
+
+**Query:**
+
+```sparql
+SELECT (COUNT(*) AS ?n) WHERE { VALUES ?g { <urn:g:0> } GRAPH ?g { ?s <urn:p> ?o OPTIONAL { ?s <urn:q> ?x } } }
+```
+
+**What we measured.** Each graph holds 2,000 subjects, each with one `<urn:p>` triple and either a `<urn:q>` or a `<urn:r>` triple. The store held 1 graph and then 100, and every query reads only `<urn:g:0>` and returns 2,000 rows in both stores. Best of five:
+
+| Form | 1 graph | 100 graphs | Ratio |
+|---|---|---|---|
+| `VALUES ?g { <g> } GRAPH ?g { A OPTIONAL { B } }` | 0.88 ms | 87.62 ms | 100.1 |
+| `VALUES ?g { <g> } GRAPH ?g { A }`, no `OPTIONAL` | 0.28 ms | 0.30 ms | 1.1 |
+| `GRAPH <g> { A OPTIONAL { B } }`, a constant graph | 0.75 ms | 0.79 ms | 1.0 |
+| `VALUES ?g { <g> } GRAPH ?g { A { C } UNION { B } }`, a `UNION` in place of the `OPTIONAL` | 1.53 ms | 1.53 ms | 1.0 |
+
+So the cost of the optional part grows with the number of graphs in the store, not the one graph the query names, and only where the graph is a variable bound outside.
+
+**Why it matters.** A read over a named set of graphs that joins an optional property, for example a balance summed over the period graphs of one account's subtree with each credit's kind or applied amount joined optionally, costs in proportion to the whole store. In our benchmark it stopped a checkpoint from shortening the read: a read limited to the graphs after the last checkpoint cost 0.92 of the full read on Oxigraph, where every other engine and form fell to 0.02 to 0.05.
+
+**Possibly related.** #2008 (the `OPTIONAL { GRAPH ?g { ... } }` shape, 0.5.13), #1980 (slow `VALUES ?g` and `OPTIONAL` plans on many named graphs, 0.5.11), and the merged #1733, which re-optimises a left join's right side with the variables its left side provides.
+
+#### Comment for #2008, ready to paste
+
+> A second shape with the same symptom on 0.5.13, where the `OPTIONAL` is inside the `GRAPH` block rather than around it: `SELECT (COUNT(*) AS ?n) WHERE { VALUES ?g { <urn:g:0> } GRAPH ?g { ?s <urn:p> ?o OPTIONAL { ?s <urn:q> ?x } } }`. With 2,000 subjects per graph and only `<urn:g:0>` read, it takes 0.88 ms in a store of 1 graph and 87.6 ms in a store of 100 graphs, a ratio of 100. Without the `OPTIONAL` the ratio is 1.1, with a constant `GRAPH <urn:g:0>` it is 1.0, and with a `UNION` in place of the `OPTIONAL` it is 1.0. The result is the same in every case. `GRAPH ?g { A OPTIONAL { B } }` is a left join whose right side is `B` in `?g`, so this looks like the same missing pass of `?g` into the right side. Not checked on 0.5.12. A reproduction:
+>
+> (the test below)
+
+#### Tracker search
+
+Read 2026-11-11: #2008 is open, with no reply from the maintainers and no fix linked. No release after 0.5.13 with a change to left joins was found. A comment on #2008 keeps the two shapes together, and a new issue would duplicate it.
+
+#### Reproduction, `test_issue.py`
+
+```python
+"""Standalone. Fails on pyoxigraph 0.5.13. Run: python -m pytest test_issue.py
+
+A timing test, so it compares the same query over stores of 1 and of 100 graphs on one machine and allows a wide margin (the observed ratio on 0.5.13 is about 100)."""
+import time
+
+import pyoxigraph as ox
+
+ROWS = 2000
+QUERY = "SELECT (COUNT(*) AS ?n) WHERE { VALUES ?g { <urn:g:0> } GRAPH ?g { ?s <urn:p> ?o OPTIONAL { ?s <urn:q> ?x } } }"
+
+
+def store(graphs):
+    s = ox.Store()
+    p, q, r = ox.NamedNode("urn:p"), ox.NamedNode("urn:q"), ox.NamedNode("urn:r")
+    quads = []
+    for i in range(graphs):
+        g = ox.NamedNode(f"urn:g:{i}")
+        for j in range(ROWS):
+            subject = ox.NamedNode(f"urn:s{i}-{j}")
+            quads.append(ox.Quad(subject, p, ox.Literal(str(j)), g))
+            quads.append(ox.Quad(subject, q if j % 2 else r, ox.Literal("k"), g))
+    s.extend(quads)
+    return s
+
+
+def best(s):
+    fastest = float("inf")
+    for _ in range(5):
+        start = time.perf_counter()
+        n = int(next(iter(s.query(QUERY)))["n"].value)
+        fastest = min(fastest, time.perf_counter() - start)
+        assert n == ROWS
+    return fastest
+
+
+def test_an_optional_inside_a_graph_bound_outside_reads_one_graph():
     ratio = best(store(100)) / best(store(1))
     assert ratio < 10, f"100 graphs cost {ratio:.0f} times one graph"
 ```
