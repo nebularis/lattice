@@ -222,6 +222,30 @@ In case 1 the credit offered 50 but only 30 had been drawn from C1, so C1 takes 
 
 The first is the cheapest and the least general, since a contract whose credits may legitimately exceed what was drawn, an overpayment credited and held, would then need a ceiling equal to its stated amount and somewhere else to hold the surplus. The second keeps that generality and pays the ordered read only where it is needed, and the room on each account is configuration a check can read. The decision is the maintainer's under LG-Q23.
 
+### 4.7 Added 2026-11-11: checkpoints under credit kinds and clamped credits
+
+The maintainer asked whether the decisions of sections 4.5 and 4.6 stop the checkpoints designed earlier from working, or override them in another way. They do neither. A checkpoint is an account's balance at a close, and a read at a later point starts from the last checkpoint and folds only the postings recorded after it (ADR-A131's addenda of 2026-10-27, LF-Q17 (b), MS-Q6, MS-Q8). That works for any fold that can restart from a balance alone, and every fold the ledger now uses can.
+
+```mermaid
+flowchart LR
+  C["checkpoint at the close<br/>the account's own balance"] --> F["fold the postings recorded<br/>after the close, in the period graph"]
+  F --> B["the balance at the read point"]
+```
+
+| What changed | What the checkpoint holds | What a read after it does | Still bounded by the close |
+|---|---|---|---|
+| nothing, the design as benchmarked | the account's balance | sums the later postings | yes |
+| credit kinds (LG-Q10) | the account's balance under its own restoring kinds, which is the only balance an account has | sums the later debits and the later credits it accepts | yes |
+| a ceiling that can bind, read step by step (section 4.6) | the same | an ordered fold of the later postings, clamped at each step, which needs nothing from before the close but the balance, since a clamp depends only on the balance it starts from | yes |
+| credits recorded at the amount applied (LG-Q23 (a)) | the same | sums again, with no clamp at the ancestor where section 4.6's condition holds | yes |
+
+**What LG-15 measured.** A read from the checkpoint cost 0.02 to 0.05 of a read from the start on rdflib, on Jena in memory and on TDB2, for every fold, the stepwise fold included. The one exception was the stepwise read on Oxigraph, at 0.92, and a minimal probe traced it to Oxigraph 0.5.13 reading every graph for an `OPTIONAL` inside `GRAPH ?g` (TSD-71, the upstream report beside oxigraph/oxigraph#2008). The query asked only for the graphs after the close, and the engine read them all. That is a defect of the engine, not of the checkpoint, and a `UNION` form or a recording of the applied amount without an `OPTIONAL` avoids it.
+
+**What the decisions do change.** Two things, neither of them the mechanism.
+
+- **Which balance is checkpointed.** An account's balance is now its own fold under its own restoring kinds, so an ancestor that accepts recoveries only checkpoints that balance and not the sum of everything below it. A checkpoint is still one balance per account per close where the balance moved, so it costs no more triples.
+- **A change of configuration within a period.** Where an account's restoring kinds or ceiling change between closes, a new version of its definition, each posting after the checkpoint must be folded under the version in force when it took effect, never under today's. A stepwise fold does that naturally. A sum must group the later postings by the version in force, which is one more reason to pay TD-102 and to decide LG-Q22, so the version in force at any point can be read.
+
 ## 5. `draw` and `spread`, two refusal semantics
 
 LG-7's kernel has two ways an amount reaches the tree. `draw` takes one amount to one account, debits the path and the paths of every account counting its purpose as one operation, and either succeeds whole or changes nothing (LD1, LD4). That is ADR-A131 decision 3 and PRI-43. `spread` takes a request vector over keys and a list of accounts, and at each account takes the least of what is still requested and what the account can afford, splits it among the keys by the rule, debits the path, and carries the rest to the next account. What no account affords is the residual (LC1 to LC3).
