@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 18 branches, the units' own state from this tree, the newest board day 2026-11-09.
+Built from the status records on 18 branches, the units' own state from this tree, the newest board day 2026-11-11.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -49,7 +49,7 @@ Built from the status records on 18 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-09 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 4 planned, 3 merged, 3 built, 1 blocked | docs/placement-vehicles-structure |
+| [ledger](plans/ledger.md) | unit | built 2026-11-11 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 6 planned, 3 merged, 3 built, 2 verified, 1 blocked | docs/placement-vehicles-structure |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -341,7 +341,9 @@ gantt
     LG-0 examples :done, lg0, 2026-10-27, 2026-10-28
     LG-1 the configuration document :done, lg1, 2026-10-27, 2026-10-28
     LG-10 the residual rule published :lg10, 2026-11-09, 2026-11-10
-    LG-2 the runtime document :lg2, 2026-10-27, 2026-11-08
+    LG-13 the insurance example cap :lg13, 2026-11-10, 2026-11-11
+    LG-14 a benchmark of the credit :lg14, 2026-11-11, 2026-11-12
+    LG-2 the runtime document :lg2, 2026-10-27, 2026-11-09
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
     LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-10
 ```
@@ -872,12 +874,12 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
 | `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
-| `docs/placement-vehicles-structure` | 2026-11-09 | 31 | pushed | LG-10 |
+| `docs/placement-vehicles-structure` | 2026-11-11 | 62 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-2, LG-7 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
-| `tutorial/studio-guide` | 2026-11-09 | 1 | pushed | no mark |
+| `tutorial/studio-guide` | 2026-11-10 | 2 | pushed | no mark |
 | `vyvid-migration` | 2026-11-05 | 34 | pushed | no mark |
 | `vyvid-quanta-builtin` | 2026-11-08 | 3 | pushed | no mark |
 
@@ -936,7 +938,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 108 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 109 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
