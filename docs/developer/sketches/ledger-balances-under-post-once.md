@@ -175,6 +175,53 @@ On cost in time and space, the options do not differ. A reinstatement is a handf
 
 The poster needs neither the tree nor the history. A reinstatement in full is posted at the stated amount, and the credit ceiling already cuts it to what was used (LD3). The multi-year worry, that "less everything drawn" reaches back past a year, does not arise, since a periodic amount is one account per period (PDD-15). How many reinstatements a contract allows is the instrument's regime, and the annual cap makes a further one impossible. Position 4 becomes one posting, a reinstatement credit at the aggregate, and the annual cap stays at 10,000,000.
 
+### 4.6 Added 2026-11-11: where an ancestor's ceiling can bind
+
+LG-15 found that once a credit is clamped at the account it is posted to, and an ancestor folds the amount it was applied at, no ancestor's ceiling bound in its corpus. That makes an ancestor's balance a sum rather than an ordered read (TSD-72), which matters for cost. But the corpus set every ceiling equal to its account's stated amount, which the ledger does not require (`ldg:CreditCeilingNotBelowStatedShape` only keeps a ceiling from falling below it). This section shows when the finding holds and when it does not, for LG-Q23.
+
+**The reason it holds.** An ancestor's balance is its stated amount, less every debit in its subtree, plus every credit it accepts at the amount the credit was applied at. A credit is applied at its own account only up to that account's ceiling. Where that ceiling is the account's stated amount, a credit can only give back what was drawn from that account, so across the subtree the credits applied never exceed the debits, and the ancestor's balance never rises above its own stated amount. A kind filter only removes credits from the ancestor's fold, so it can only lower the balance. The ancestor's ceiling, at or above its stated amount, is never reached, and a plain or filtered sum gives the right balance.
+
+**Where it fails.** Where an account below the ancestor has a ceiling above its stated amount, a credit can lift that account past what was drawn from it, by up to the difference. That surplus folds into the ancestor, and if it exceeds the ancestor's own room above its stated amount, the ancestor's ceiling binds. Its balance is then a running balance clamped at its ceiling, where order matters, and a sum is wrong.
+
+```mermaid
+flowchart TB
+  subgraph One["Case 1: every ceiling equals its stated amount"]
+    A1["Ancestor A<br/>stated 100, ceiling 100"]
+    C11["Contract C1<br/>stated 60, ceiling 60"]
+    C12["Contract C2<br/>stated 40, ceiling 40"]
+    A1 --- C11
+    A1 --- C12
+    S11["1. debit 30 at C1<br/>C1 30, A 70"]
+    S12["2. credit 50 offered at C1<br/>applied 30, C1 back to 60"]
+    S13["A folds the 30 applied<br/>A 100, at its ceiling and never above"]
+    S11 --> S12 --> S13
+  end
+  subgraph Two["Case 2: C1's ceiling stands above its stated amount"]
+    A2["Ancestor A<br/>stated 100, ceiling 100"]
+    C21["Contract C1<br/>stated 60, ceiling 80"]
+    C22["Contract C2<br/>stated 40, ceiling 40"]
+    A2 --- C21
+    A2 --- C22
+    S21["1. debit 30 at C1<br/>C1 30, A 70"]
+    S22["2. credit 50 offered at C1<br/>applied 50, C1 to 80"]
+    S23["A folds the 50 applied<br/>a sum gives 120, above its ceiling"]
+    S24["clamped step by step, A is 100<br/>the ordered read is needed"]
+    S21 --> S22 --> S23 --> S24
+  end
+```
+
+In case 1 the credit offered 50 but only 30 had been drawn from C1, so C1 takes 30 and the ancestor folds 30, ending at 100, its ceiling, and no clamp at the ancestor is ever needed. In case 2 C1 may hold up to 80, so it takes all 50, and the ancestor's sum of 70 plus 50 is 120, which its ceiling of 100 must cut. A later debit of 10 at C2 then gives 90 under the clamp and 110 under the sum, so the error carries forward and the order of postings decides the answer.
+
+**What it means for LG-Q23.** Whether an ancestor's fold can be a sum is known from configuration alone, before any posting. An ancestor's ceiling can bind only where the room its descendants have above their stated amounts, added up, is more than its own room above its stated amount. Where it cannot, a sum is right and costs what LG-14 and LG-15 measured for the plain and filtered folds. Where it can, the ancestor needs the ordered read of TSD-72, or a checkpoint that bounds it, or the configuration is refused. That gives three readings beside LG-Q23's own options.
+
+| | What the ledger does with an ancestor whose ceiling can bind |
+|---|---|
+| refuse | a shape refuses a configuration in which descendants' room above their stated amounts exceeds an ancestor's, so every ancestor's fold is a sum |
+| read in order | such an ancestor is marked, by a shape or by derivation, and read in order, every other ancestor by a sum |
+| always in order | every ancestor is read in order, the simplest rule and the most costly read |
+
+The first is the cheapest and the least general, since a contract whose credits may legitimately exceed what was drawn, an overpayment credited and held, would then need a ceiling equal to its stated amount and somewhere else to hold the surplus. The second keeps that generality and pays the ordered read only where it is needed, and the room on each account is configuration a check can read. The decision is the maintainer's under LG-Q23.
+
 ## 5. `draw` and `spread`, two refusal semantics
 
 LG-7's kernel has two ways an amount reaches the tree. `draw` takes one amount to one account, debits the path and the paths of every account counting its purpose as one operation, and either succeeds whole or changes nothing (LD1, LD4). That is ADR-A131 decision 3 and PRI-43. `spread` takes a request vector over keys and a list of accounts, and at each account takes the least of what is still requested and what the account can afford, splits it among the keys by the rule, debits the path, and carries the rest to the next account. What no account affords is the residual (LC1 to LC3).
