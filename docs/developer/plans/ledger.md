@@ -104,6 +104,7 @@ Estimates are in tokens, for agent work, excluding review.
 | LG-12 | which draws an account accepts, as LG-Q20 decided (a): a shape refusing a draw whose value space and unit are not the account's, or whose amount is not representable by the space's density and datatype, with the reason Quantification gives, and its tests | LG-11 | 30k |
 | LG-13 | the insurance example's cap named for what it is: `reinstatement-pool` becomes `annual-cap` in `insurance-aggregate.ttl` and the README's worked reading, since a pool is a different kind of thing in insurance and a cap is not one (STD-325) | none | 5k |
 | LG-14 | a benchmark of the credit kinds' read cost, `benchmark/ledger-credit-kinds/`: an ancestor's balance read under post-once with period graphs, as a plain fold, with a filter on credit kind, and as a fold applying each account's ceiling step by step, against a model, on every backend the repository runs, failing only on a wrong result (ADR-A124) | LG-Q10 decided | 60k |
+| LG-15 | LG-14's gaps closed: a native Jena caller, in memory and on TDB2 on disk, with the stepwise fold in Java, reads from checkpoints at closings, the ceiling clamped at the drawn account as well as the ancestor, the stepwise loop timed apart from its sort and transfer, and the shortcut measured, a filtered sum checked against the stated amount with the stepwise fold only where the check fails | LG-14 | 80k |
 
 ```mermaid
 flowchart LR
