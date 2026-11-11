@@ -16,7 +16,7 @@ Each engine departure from the SPARQL 1.1 specification that the store-discovery
 |---|---|---|---|
 | [oxigraph-left-join-reads-every-graph](#oxigraph-left-join-reads-every-graph) | Oxigraph | TSD-42 | filed 2026-10-27 as [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008) |
 | [oxigraph-optional-inside-graph-reads-every-graph](#oxigraph-optional-inside-graph-reads-every-graph) | Oxigraph | TSD-71 | not filed. Drafted 2026-11-11 and amended the same day as a new issue, since it is on 0.5.11, 0.5.12 and 0.5.13 and so is not the 0.5.13 regression of [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008). It narrows [oxigraph/oxigraph#1980](https://github.com/oxigraph/oxigraph/issues/1980) to a cause and a suggested fix |
-| [oxigraph-count-error](#oxigraph-count-error) | Oxigraph | TSD-43 | filed 2026-10-27 as [oxigraph/oxigraph#2009](https://github.com/oxigraph/oxigraph/issues/2009) |
+| [oxigraph-count-error](#oxigraph-count-error) | Oxigraph | TSD-43 | filed 2026-10-27 as [oxigraph/oxigraph#2009](https://github.com/oxigraph/oxigraph/issues/2009), fixed by the merged [oxigraph/oxigraph#2025](https://github.com/oxigraph/oxigraph/pull/2025), not yet released, checked 2026-11-11 from a source build. One case as filed expects the wrong value, with a correction ready to paste |
 | [oxigraph-avg-all-unbound](#oxigraph-avg-all-unbound) | Oxigraph | TSD-43 | not filed |
 | [jena-avg-all-unbound](#jena-avg-all-unbound) | Apache Jena ARQ | TSD-43 | not filed |
 | [jena-str-of-blank-node](#jena-str-of-blank-node) | Apache Jena ARQ | TSD-43 | not filed |
@@ -106,7 +106,7 @@ def test_a_graph_variable_bound_outside_an_optional_reads_one_graph():
 
 **`VALUES ?g { … } GRAPH ?g { A OPTIONAL { B } }` reads every graph, because the LATERAL fitness check misreads the rewritten left join**
 
-Oxigraph, TSD-71, not filed. Drafted 2026-11-11 and amended the same day after testing 0.5.11, 0.5.12 and 0.5.13 in scratch environments: the defect is in all three, so it is a new issue and not a second shape of #2008, which is a regression in 0.5.13 alone. It is a narrow, statistics-free cause for part of #1980's first symptom. The fix suggested below was read from the source and **has not been compiled or tested**, since this machine has no Rust toolchain.
+Oxigraph, TSD-71, not filed. Drafted 2026-11-11 and amended the same day after testing 0.5.11, 0.5.12 and 0.5.13 in scratch environments: the defect is in all three, so it is a new issue and not a second shape of #2008, which is a regression in 0.5.13 alone. It is a narrow, statistics-free cause for part of #1980's first symptom. The fix suggested below was read from the source, then **compiled and checked on 2026-11-11** (rustc 1.95.0, release, in-memory store, on top of `v0.5.13`): the reported form's ratio fell from 99.5 to 1.0 with every result count unchanged across the eight forms of the table, and #2008's shape was unchanged at about 80, as expected of a different defect. No regression suite was run, since `sparopt` has no unit tests of its own and the W3C suite needs the RocksDB build. The merged [oxigraph/oxigraph#2025](https://github.com/oxigraph/oxigraph/pull/2025) does not touch `sparopt` and does not fix it, with ratios of 96.9 at its head and 86.6 at its parent.
 
 **Versions:** pyoxigraph 0.5.11, 0.5.12 and 0.5.13, Python 3.14.7, macOS arm64. Source read at tag `v0.5.13`.
 
@@ -156,7 +156,7 @@ Each measurement agrees with this. Without the `OPTIONAL` there is no rewritten 
          }
 ```
 
-It keeps the conflict test for a variable the left side may leave unbound, since `infer_graph_pattern_types` carries the `undef` flag, so a right side that could rebind a possibly unbound variable is still refused. A test for it would assert the plan of the reported query is a LATERAL from `VALUES` into the left join, or the timing test below. Untested, as said above.
+It keeps the conflict test for a variable the left side may leave unbound, since `infer_graph_pattern_types` carries the `undef` flag, so a right side that could rebind a possibly unbound variable is still refused. A test for it would assert the plan of the reported query is a LATERAL from `VALUES` into the left join, or the timing test below. Checked against the eight forms only, as said above.
 
 **Workarounds, until it is fixed.** Bind the graph inside the block, `GRAPH ?g { VALUES ?g { … } … }`, or pass `?g` through `substitutions`, or write the optional part as a `UNION` that keeps every row the `OPTIONAL` keeps.
 
@@ -170,7 +170,7 @@ It keeps the conflict test for a variable the left side may leave unbound, since
 >
 > Reading `sparopt/src/optimizer.rs` at v0.5.13: the left join is rewritten to `Lateral(A@?g, LeftJoin(EmptySingleton, B@?g))`. When the outer join with `VALUES ?g` checks `is_fit_for_for_loop_join`, the `Lateral` arm checks its right side with the same `global_input_types` as its left. The inner left join's conflict test then sees `B` binding `?g`, its own left side (the empty singleton) leaving `?g` undefined, and the entry binding `?g`, and refuses. Inside the lateral, `?g` is always bound by the left side, so there is no conflict. The outer join falls back to a hash join, and both quad patterns scan every graph.
 >
-> A possible fix, not compiled or tested on our side: in the `Lateral` arm, check `right` against `&infer_graph_pattern_types(left, global_input_types.clone())` instead of `global_input_types`. A standalone reproduction follows. Measurements for eight forms on the three versions are in the attached table.
+> A possible fix: in the `Lateral` arm, check `right` against `&infer_graph_pattern_types(left, global_input_types.clone())` instead of `global_input_types`. We built it on top of v0.5.13 with the in-memory store and it brings the reported form from about 100 to 1.0 with every result unchanged across the eight forms below. We have not run the W3C suite on it. It does not affect #2008's shape, and #2025 does not affect this one. A standalone reproduction follows. Measurements for eight forms on the three versions are in the attached table.
 >
 > (the test below, and the table above)
 
@@ -229,6 +229,10 @@ Oxigraph, TSD-43, filed 2026-10-27 as [oxigraph/oxigraph#2009](https://github.co
 
 **Version:** pyoxigraph 0.5.13 (also 0.5.11). Python 3.14, macOS arm64.
 
+**Fixed upstream, checked 2026-11-11.** [oxigraph/oxigraph#2025](https://github.com/oxigraph/oxigraph/pull/2025), "spareval: COUNT(expr) skips the solutions where expr is an error", merged into `main` as one commit, `96e22c912ba2f0059e4b6c454fb7fa38a7a5915f`, after 0.5.13 and not in a release yet. Built from source with the in-memory store (rustc 1.95.0, release), the pull request gives 1 for `COUNT(STR(?x))`, `COUNT(DISTINCT STR(?x))` and `COUNT(LCASE(STR(?x)))`, where 0.5.13 and the commit before the pull request give unbound. Over `VALUES ?x { 1 UNDEF }`, `COUNT(?x + 0)` and `COUNT(DISTINCT ?x + 0)` give 1 on the pull request and unbound on 0.5.13.
+
+**Correction, 2026-11-11.** The `COUNT(?x + 0)` case below, as filed, expects 1, and that is wrong. Over `VALUES ?x { <urn:a> UNDEF }`, `<urn:a> + 0` is a type error as well as the unbound row, so both rows are error elements and the count is 0, which the fixed build gives. The case is right over numeric rows, `VALUES ?x { 1 UNDEF }`, where only the unbound row errors and the count is 1. The tables and tests below keep the case as filed, marked, and a comment for the issue is ready to paste after them.
+
 **Query** (empty store):
 
 ```sparql
@@ -249,7 +253,7 @@ SELECT (COUNT(STR(?x)) AS ?n) WHERE { VALUES ?x { <urn:a> UNDEF } }
 | `COUNT(*)` | 2 | 2 |
 | `COUNT(STR(?x))` | unbound | 1 |
 | `COUNT(DISTINCT STR(?x))` | unbound | 1 |
-| `COUNT(?x + 0)` | unbound | 1 |
+| `COUNT(?x + 0)` | unbound | 1 as filed, which is wrong: 0, see the correction above |
 
 `COUNT(?x)` is right because a bare variable takes the internal `CountInternal` path. Any other expression falls back to `AccumulatorWrapper::Expression` or `DistinctExpression` in `lib/spareval/src/eval.rs`, whose `accumulate` sets the accumulator to `None` when the evaluator returns `None`, so the whole group's result is unbound. That suits `SUM`, `AVG` and `GROUP_CONCAT`, where §18.5.1 keeps the error, but `Count` removes it.
 
@@ -269,6 +273,7 @@ def count(expression):
     return None if solution["n"] is None else int(solution["n"].value)
 
 
+# As filed. "?x + 0" over <urn:a> should expect 0, see the correction above.
 @pytest.mark.parametrize("expression", ["STR(?x)", "DISTINCT STR(?x)", "?x + 0", "LCASE(STR(?x))"])
 def test_count_removes_error_elements(expression):
     assert count(expression) == 1
@@ -304,11 +309,16 @@ def test_controls(expression):
     assert count(expression) == (1 if expression == "?x" else 2)
 
 
+# As filed. "?x + 0" over <urn:a> should expect 0, see the correction above.
 @pytest.mark.parametrize("expression", ["STR(?x)", "DISTINCT STR(?x)", "?x + 0", "LCASE(STR(?x))"])
 def test_count_removes_error_elements(expression):
     # Count(M) removes error elements from Flatten(M), then takes its cardinality, so the answer is 1.
     assert count(expression) == 1, f"pyoxigraph {pyoxigraph.__version__}: COUNT({expression}) is unbound"
 ```
+
+#### Correction for #2009, ready to paste
+
+> A correction to one case in this report, and a confirmation of the fix. `COUNT(?x + 0)` over `VALUES ?x { <urn:a> UNDEF }` should be 0, not 1 as the report says: `<urn:a> + 0` is a type error too, so both rows are error elements, and #2025 gives 0. Over `VALUES ?x { 1 UNDEF }` only the unbound row errors, and #2025 gives 1 for `COUNT(?x + 0)` and `COUNT(DISTINCT ?x + 0)`, where 0.5.13 gives unbound. We built the merged commit 96e22c9 from source and checked the other cases too: `COUNT(STR(?x))`, `COUNT(DISTINCT STR(?x))` and `COUNT(LCASE(STR(?x)))` give 1, as SPARQL 1.1 §18.5.1.2 requires. Thank you for the fix.
 
 ### oxigraph-avg-all-unbound
 
