@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-10. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** building 2026-11-11. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -124,6 +124,8 @@ Results sections. In short:
 | LG-11 | conversion leaves the ledger, the conversion terms removed | planned |  |
 | LG-12 | which draws an account accepts, a shape for compatibility and representability | planned | LG-11 |
 | LG-13 | the insurance example's cap named for what it is, annual-cap | built 2026-11-10, building 2026-11-10 |  |
+| LG-14 | a benchmark of the credit kinds' read cost on every backend | building 2026-11-11 |  |
+- 2026-11-11: LG-Q10 decided by the maintainer as proposed in the balances sketch §4.5, a credit's real-world kind and each account's restoring kinds. LG-14 added and picked up, a benchmark of the read cost the kinds add, at the maintainer's word, built by a Sonnet subagent. PRI-80 amended at the maintainer's word: churn and ease of use for us share the third place with equal weight.
 - 2026-11-10: LG-13 built. `insurance-aggregate.ttl`'s `reinstatement-pool` and its account, balance records and posting are now `annual-cap`, with its comments, the README's worked reading and scenario E1 to match. `tools/test_ledger.py` passes. STD-325 added at the maintainer's word: a domain's label is never given to a different kind of thing. The scenarios note's sections D2 to G, lost by a truncating edit in 51140fba, are restored from the commit before.
 - 2026-11-10: LG-13 added and picked up, at the maintainer's word, to rename the insurance example's reinstatement pool as the annual cap it is.
 - 2026-11-09: LG-Q20 decided (a) by the maintainer, a draw only in its account's own value space and unit, representable. LG-12 now waits only on LG-11. ADR-A131's second addendum of the day drafted, proposed, for the semantics decided today under decision 8.

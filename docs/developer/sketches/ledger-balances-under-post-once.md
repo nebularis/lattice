@@ -166,7 +166,7 @@ On cost in time and space, the options do not differ. A reinstatement is a handf
 | term commitment | nothing | repaid amounts may not be drawn again |
 | licence pool | seats returned | a returned seat may be used again |
 
-**The proposal, for the maintainer's decision under LG-Q10.**
+**The proposal, decided by the maintainer on 2026-11-10 as LG-Q10's answer.**
 
 1. A credit carries its kind, a concept from a scheme whose contract Ledger declares and an applied module binds, so insurance supplies recovery, reinstatement and write-back and Ledger names no domain's kinds.
 2. Each account declares the kinds that restore it, all by default, so a revolving account needs nothing. No credits at all is the empty list, and recoveries only is a list of one, bound from the wording, which the terms may override.
