@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<!-- NB: This module has been produced using GenAI -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.nebularis.lattice.benchmark</groupId>
+  <artifactId>ledger-credit-kinds-jvm</artifactId>
+  <version>0.1.0</version>
+  <packaging>jar</packaging>
+  <name>Ledger credit kinds on native Jena</name>
+  <description>What a credit's kind, a stepwise ceiling, checkpoints and a shortcut cost an ancestor's balance read on Jena called from Java (ADR-A124).</description>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jena.version>5.1.0</jena.version>
+    <kinds.heap>2g</kinds.heap>
+    <kinds.dir>target/corpus</kinds.dir>
+    <kinds.report>report.json</kinds.report>
+    <kinds.forms>optional,union</kinds.forms>
+    <exec.mainClass>org.nebularis.lattice.benchmark.creditkinds.CreditKinds</exec.mainClass>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-tdb2</artifactId>
+      <version>${jena.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+      <version>2.0.16</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.1</version>
+        <configuration>
+          <executable>java</executable>
+          <arguments>
+            <argument>-Xmx${kinds.heap}</argument>
+            <argument>-Dkinds.dir=${kinds.dir}</argument>
+            <argument>-Dkinds.report=${kinds.report}</argument>
+            <argument>-Dkinds.forms=${kinds.forms}</argument>
+            <argument>-classpath</argument>
+            <classpath/>
+            <argument>${exec.mainClass}</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -414,8 +414,13 @@ run = ["python -m pytest benchmark/ledger-posting-cost/test_late_posting.py -q -
 
 [tasks."check:ledger-credit-kinds"]
 depends = ["bootstrap:testing-oxigraph", "bootstrap:testing-jena"]
-description = "Measure what a credit's kind filter and a stepwise credit ceiling add to an ancestor's balance fold over the period graphs, against the plain fold, on rdflib, Oxigraph and Jena (ADR-A124, LG-Q10, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. LEDGER_KINDS_MAX caps the postings, LEDGER_KINDS_QUICK=1 runs the smallest size"
+description = "Measure what a credit's kind filter and a stepwise credit ceiling add to an ancestor's balance fold over the period graphs, against the plain fold, on rdflib, Oxigraph and Jena, and what checkpoints, the clamp at the drawn account and a shortcut change (ADR-A124, LG-Q10, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. LEDGER_KINDS_MAX caps the postings, LEDGER_KINDS_QUICK=1 runs the smallest size, LEDGER_KINDS_FORM forces a kind join form"
 run = ["python -m pytest benchmark/ledger-credit-kinds -q -p no:cacheprovider", "python benchmark/ledger-credit-kinds/check.py"]
+
+[tasks."check:ledger-credit-kinds-jvm"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure what a credit's kind filter, a stepwise credit ceiling with the clamp at the drawn account, checkpoints and a shortcut add to an ancestor's balance fold over the period graphs, on Jena called natively from Java, in memory and on TDB2 (ADR-A124, LG-Q10, STD-176). Python writes the corpora and the model's balances and merges the timings into the report, the JVM runs the reads. Run on demand, not part of check. Fails on a wrong balance, never on time. LEDGER_KINDS_MAX caps the postings, LEDGER_KINDS_QUICK=1 runs the smallest size"
+run = ["python -m pytest benchmark/ledger-credit-kinds-jvm -q -p no:cacheprovider", "python benchmark/ledger-credit-kinds/check.py --emit benchmark/ledger-credit-kinds-jvm/target/corpus", "mvn -q -f benchmark/ledger-credit-kinds-jvm/pom.xml compile exec:exec", "python benchmark/ledger-credit-kinds/check.py --merge"]
 
 [tasks."check:ledger-store-comparison"]
 description = "Measure whether the ledger's period-graph partition bounds an aggregate read on Jena TDB2 as it does on Oxigraph, so the result is a property of naming the graphs rather than of one engine (ADR-A124, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. -Dledger.store.max caps the events"

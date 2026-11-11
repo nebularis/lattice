@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** building 2026-11-11. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** built 2026-11-11. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -125,7 +125,8 @@ Results sections. In short:
 | LG-12 | which draws an account accepts, a shape for compatibility and representability | planned | LG-11 |
 | LG-13 | the insurance example's cap named for what it is, annual-cap | built 2026-11-10, building 2026-11-10 |  |
 | LG-14 | a benchmark of the credit kinds' read cost on every backend | built 2026-11-11, building 2026-11-11 |  |
-| LG-15 | LG-14's gaps closed: native Jena on TDB2, checkpoints, the drawn account's clamp, the loop timed apart, the shortcut | building 2026-11-11 |  |
+| LG-15 | LG-14's gaps closed: native Jena on TDB2, checkpoints, the drawn account's clamp, the loop timed apart, the shortcut | built 2026-11-11, building 2026-11-11 |  |
+- 2026-11-11: LG-15 built, with its [Validation Pack](../validation/LG-15.md). Native Jena's stepwise read costs 1.7 to 2.6 times the plain read, about half the piped figure. A checkpoint cuts a read to 0.02 to 0.05 of a read from the start, except Oxigraph's stepwise read. The shortcut rarely pays. Clamping a credit where it is posted means no ancestor's ceiling binds where ceilings equal stated amounts, raised as LG-Q23.
 - 2026-11-11: LG-15 added and picked up at the maintainer's word, to close LG-14's gaps, built by a Sonnet subagent.
 - 2026-11-11: LG-14 built, `benchmark/ledger-credit-kinds/` with its [Validation Pack](../validation/LG-14.md). The kind filter costs 1.2 to 1.8 times the plain fold on rdflib, Oxigraph and Jena and does not grow with history. The stepwise ceiling fold costs about the same on rdflib and Oxigraph. The kind join's form is engine-specific.
 - 2026-11-11: LG-Q21 and LG-Q22 raised from the maintainer's questions on LG-Q10, in a sketch on accounts from instruments: no layer says how an account definition is derived from bound meaning, and a credit kind's scheme edition must be fixed for historical reads, which brings TD-102 in.

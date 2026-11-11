@@ -49,7 +49,7 @@ Built from the status records on 18 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-11 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 6 planned, 3 merged, 3 built, 2 verified, 1 blocked | docs/placement-vehicles-structure |
+| [ledger](plans/ledger.md) | unit | built 2026-11-11 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 6 planned, 4 built, 3 merged, 2 verified, 1 blocked | docs/placement-vehicles-structure |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -343,6 +343,7 @@ gantt
     LG-10 the residual rule published :lg10, 2026-11-09, 2026-11-10
     LG-13 the insurance example cap :lg13, 2026-11-10, 2026-11-11
     LG-14 a benchmark of the credit :lg14, 2026-11-11, 2026-11-12
+    LG-15 LG-14 gaps closed native :lg15, 2026-11-11, 2026-11-12
     LG-2 the runtime document :lg2, 2026-10-27, 2026-11-09
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
     LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-10
@@ -874,7 +875,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
 | `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
-| `docs/placement-vehicles-structure` | 2026-11-11 | 62 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-2, LG-7 |
+| `docs/placement-vehicles-structure` | 2026-11-11 | 65 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-2, LG-7 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |

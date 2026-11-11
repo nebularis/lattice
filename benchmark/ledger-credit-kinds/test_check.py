@@ -62,10 +62,16 @@ def test_ck5_a_filter_that_ignores_the_kind_fails_the_check(monkeypatch, backend
 
 
 @pytest.mark.parametrize("backend", BACKENDS)
-def test_ck6_a_fold_that_ignores_the_ceiling_fails_the_check(monkeypatch, backend):
-    monkeypatch.setattr(check, "apply_credit", lambda balance, amount, stated: balance + amount)
+def test_ck6_a_missing_clamp_at_the_drawn_account_fails_the_check(monkeypatch, backend):
+    monkeypatch.setattr(check, "clamp_at_drawn", lambda balance, amount, stated: amount)
     with pytest.raises(check.WrongResult, match="stepwise"):
         check.run_backend(backend, SMALL, HIGH)
+
+
+def test_ck6b_once_a_credit_is_clamped_where_it_is_drawn_no_ancestor_ceiling_binds():
+    for share in (LOW, HIGH):
+        model = check.run_model(check.stream(2000, share), [])
+        assert model.ancestor_binds == 0
 
 
 def test_ck7_a_wrong_stored_count_fails_the_check(monkeypatch):
@@ -107,3 +113,53 @@ def test_ck10_the_report_is_written_where_asked(tmp_path):
 def test_ck11_each_form_of_the_kind_join_reads_the_models_balance(monkeypatch, backend, form):
     monkeypatch.setenv("LEDGER_KINDS_FORM", form)
     assert check.run_backend(backend, SMALL, HIGH).form == form
+
+
+def test_ck12_the_corpus_has_credits_with_no_kind_only_where_no_account_restricts_kinds():
+    postings = check.stream(2000, HIGH)
+    kindless = [p for p in postings if not p.debit and p.kind is None]
+    assert kindless and all(check.unrestricted(p.contract) for p in kindless)
+    model = check.run_model(postings, [postings[-1].pos])
+    root = next(i for i, a in enumerate(check.TREE) if a.level == 3)
+    point = postings[-1].pos
+    assert model.rows[("kind-filtered", root, point)] == model.rows[("plain", root, point)]
+
+
+def test_ck13_a_join_that_drops_a_credit_with_no_kind_fails_the_check(monkeypatch):
+    monkeypatch.setenv("LEDGER_KINDS_FORM", "union")
+    monkeypatch.setitem(check.KIND_JOIN, "union", check.UNCORRECTED_UNION)
+    with pytest.raises(check.WrongResult, match="kind-filtered"):
+        check.run_backend("oxigraph", SMALL, HIGH)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck14_a_wrong_checkpoint_fails_the_check(monkeypatch, backend):
+    real = check.checkpoint_balances
+    monkeypatch.setattr(check, "checkpoint_balances", lambda model, positions: {k: (a, b, c + 1) for k, (a, b, c) in real(model, positions).items()})
+    with pytest.raises(check.WrongResult, match="checkpointed"):
+        check.run_backend(backend, 1000, HIGH)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck15_a_shortcut_that_skips_a_needed_fallback_fails_the_check(monkeypatch, backend):
+    monkeypatch.setattr(check, "shortcut_sound", lambda *a: True)
+    with pytest.raises(check.WrongResult, match="shortcut"):
+        check.run_backend(backend, SMALL, HIGH)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck16_the_shortcut_falls_back_from_the_start_and_less_from_a_checkpoint(backend):
+    m = check.run_backend(backend, 1000, LOW)
+    start = sum(r.fallbacks for (mode, _), r in m.shortcut.items() if mode == "full")
+    cp = sum(r.fallbacks for (mode, _), r in m.shortcut.items() if mode == "checkpointed")
+    reads = sum(r.reads for (mode, _), r in m.shortcut.items() if mode == "full")
+    assert start == reads and cp < reads
+
+
+def test_ck17_the_emitted_corpus_and_expected_balances_match_the_model(tmp_path):
+    check.emit(tmp_path, (SMALL,), (HIGH,))
+    data = json.loads((tmp_path / "expected.json").read_text(encoding="utf-8"))
+    (corpus,) = data["corpora"]
+    assert sum(1 for _ in open(tmp_path / corpus["file"], encoding="utf-8")) == corpus["stored"]
+    model = check.run_model(check.stream(SMALL, HIGH), corpus["points"])
+    assert all(r["balance"] == model.balance[(r["fold"], check.BY_IRI[r["account"]], r["point"])] for r in corpus["reads"] if not r["checkpointed"])
