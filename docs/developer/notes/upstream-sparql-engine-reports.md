@@ -15,7 +15,7 @@ Each engine departure from the SPARQL 1.1 specification that the store-discovery
 | Report | Engine | Finding | State |
 |---|---|---|---|
 | [oxigraph-left-join-reads-every-graph](#oxigraph-left-join-reads-every-graph) | Oxigraph | TSD-42 | filed 2026-10-27 as [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008) |
-| [oxigraph-optional-inside-graph-reads-every-graph](#oxigraph-optional-inside-graph-reads-every-graph) | Oxigraph | TSD-71 | not filed, drafted 2026-11-11 as a comment on [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008), a second shape of that report |
+| [oxigraph-optional-inside-graph-reads-every-graph](#oxigraph-optional-inside-graph-reads-every-graph) | Oxigraph | TSD-71 | not filed. Drafted 2026-11-11 and amended the same day as a new issue, since it is on 0.5.11, 0.5.12 and 0.5.13 and so is not the 0.5.13 regression of [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008). It narrows [oxigraph/oxigraph#1980](https://github.com/oxigraph/oxigraph/issues/1980) to a cause and a suggested fix |
 | [oxigraph-count-error](#oxigraph-count-error) | Oxigraph | TSD-43 | filed 2026-10-27 as [oxigraph/oxigraph#2009](https://github.com/oxigraph/oxigraph/issues/2009) |
 | [oxigraph-avg-all-unbound](#oxigraph-avg-all-unbound) | Oxigraph | TSD-43 | not filed |
 | [jena-avg-all-unbound](#jena-avg-all-unbound) | Apache Jena ARQ | TSD-43 | not filed |
@@ -104,11 +104,11 @@ def test_a_graph_variable_bound_outside_an_optional_reads_one_graph():
 
 ### oxigraph-optional-inside-graph-reads-every-graph
 
-**0.5.13: `GRAPH ?g { ... OPTIONAL { ... } }` with `?g` bound outside reads every graph for the optional part**
+**`VALUES ?g { … } GRAPH ?g { A OPTIONAL { B } }` reads every graph, because the LATERAL fitness check misreads the rewritten left join**
 
-Oxigraph, TSD-71, not filed. Drafted 2026-11-11 as a comment on [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008), which reports the `OPTIONAL { GRAPH ?g { ... } }` shape and is open with no reply. A `GRAPH ?g { A OPTIONAL { B } }` is a left join whose right side is `B` in graph `?g`, so if the left join no longer passes `?g` into its right side, `B` is read in every graph, which is what the measurements below show. Not checked on 0.5.11 or 0.5.12, so whether it is the same regression is a hypothesis.
+Oxigraph, TSD-71, not filed. Drafted 2026-11-11 and amended the same day after testing 0.5.11, 0.5.12 and 0.5.13 in scratch environments: the defect is in all three, so it is a new issue and not a second shape of #2008, which is a regression in 0.5.13 alone. It is a narrow, statistics-free cause for part of #1980's first symptom. The fix suggested below was read from the source and **has not been compiled or tested**, since this machine has no Rust toolchain.
 
-**Version:** pyoxigraph 0.5.13, Python 3.14.7, macOS arm64.
+**Versions:** pyoxigraph 0.5.11, 0.5.12 and 0.5.13, Python 3.14.7, macOS arm64. Source read at tag `v0.5.13`.
 
 **Query:**
 
@@ -116,37 +116,74 @@ Oxigraph, TSD-71, not filed. Drafted 2026-11-11 as a comment on [oxigraph/oxigra
 SELECT (COUNT(*) AS ?n) WHERE { VALUES ?g { <urn:g:0> } GRAPH ?g { ?s <urn:p> ?o OPTIONAL { ?s <urn:q> ?x } } }
 ```
 
-**What we measured.** Each graph holds 2,000 subjects, each with one `<urn:p>` triple and either a `<urn:q>` or a `<urn:r>` triple. The store held 1 graph and then 100, and every query reads only `<urn:g:0>` and returns 2,000 rows in both stores. Best of five:
+**What we measured.** Each graph holds 2,000 subjects, each with one `<urn:p>` triple and a `<urn:q>` or `<urn:r>` triple. The ratio is the best of five over a store of 100 graphs divided by the best of five over a store of 1 graph. Every form reads only `<urn:g:0>` and returns 2,000 rows in both stores.
 
-| Form | 1 graph | 100 graphs | Ratio |
+| Form | 0.5.11 | 0.5.12 | 0.5.13 |
 |---|---|---|---|
-| `VALUES ?g { <g> } GRAPH ?g { A OPTIONAL { B } }` | 0.88 ms | 87.62 ms | 100.1 |
-| `VALUES ?g { <g> } GRAPH ?g { A }`, no `OPTIONAL` | 0.28 ms | 0.30 ms | 1.1 |
-| `GRAPH <g> { A OPTIONAL { B } }`, a constant graph | 0.75 ms | 0.79 ms | 1.0 |
-| `VALUES ?g { <g> } GRAPH ?g { A { C } UNION { B } }`, a `UNION` in place of the `OPTIONAL` | 1.53 ms | 1.53 ms | 1.0 |
+| reported: `VALUES ?g` outside, `OPTIONAL` inside `GRAPH ?g` | 101.1 | 95.5 | 99.2 |
+| no `OPTIONAL`: `VALUES ?g { <g> } GRAPH ?g { A }` | 1.0 | 1.1 | 1.1 |
+| constant graph: `GRAPH <g> { A OPTIONAL { B } }` | 1.0 | 1.0 | 1.0 |
+| `UNION` in place of the `OPTIONAL` | 1.0 | 1.0 | 1.0 |
+| `VALUES ?g` moved inside the block: `GRAPH ?g { VALUES ?g { <g> } A OPTIONAL { B } }` | 1.0 | 1.0 | 1.0 |
+| `?g` given by the `substitutions` option instead of `VALUES` (with `?g` projected and grouped) | 1.0 | 1.0 | 1.0 |
+| `OPTIONAL` outside the block: `VALUES ?g { <g> } GRAPH ?g { A } OPTIONAL { GRAPH ?g { B } }` | 1.0 | 1.0 | 1.0 |
+| #2008's shape: `VALUES ?g { <g> } OPTIONAL { GRAPH ?g { ?s ?p ?o } }` | 1.0 | 1.0 | 77.9 |
 
-So the cost of the optional part grows with the number of graphs in the store, not the one graph the query names, and only where the graph is a variable bound outside.
+So the cost follows the number of graphs in the store only where `?g` is bound outside the `GRAPH` block and the block holds an `OPTIONAL`.
 
-**Why it matters.** A read over a named set of graphs that joins an optional property, for example a balance summed over the period graphs of one account's subtree with each credit's kind or applied amount joined optionally, costs in proportion to the whole store. In our benchmark it stopped a checkpoint from shortening the read: a read limited to the graphs after the last checkpoint cost 0.92 of the full read on Oxigraph, where every other engine and form fell to 0.02 to 0.05.
+**The cause, as read from the source.** All references are to `lib/sparopt/src/optimizer.rs` at `v0.5.13`, built with `sep-0006` as the `oxigraph` crate builds it.
 
-**Possibly related.** #2008 (the `OPTIONAL { GRAPH ?g { ... } }` shape, 0.5.13), #1980 (slow `VALUES ?g` and `OPTIONAL` plans on many named graphs, 0.5.11), and the merged #1733, which re-optimises a left join's right side with the variables its left side provides.
+1. `GRAPH ?g { A OPTIONAL { B } }` lowers to `LeftJoin(A@?g, B@?g)`, with `?g` as the graph name of both quad patterns (`algebra.rs`, `from_sparql_algebra`).
+2. `reorder_joins` on the outer `Join(VALUES ?g, LeftJoin(…))` first reorders each child with the outer input types, so the left join is planned without knowing that `VALUES` binds `?g`. In the `LeftJoin` arm the lateral estimate is under the hash estimate times 100, so it is rewritten to `Lateral(A@?g, LeftJoin(EmptySingleton, B@?g))`.
+3. Back in the outer join, `VALUES` is the smallest child and comes first, and the rewritten left join is joined to it as a LATERAL only if `is_fit_for_for_loop_join(next, input_types, output_types)` holds, with `?g` in `output_types`.
+4. In that check, the `Lateral` arm passes the same `global_input_types` to both sides: `is_fit_for_for_loop_join(left, …) && is_fit_for_for_loop_join(right, global_input_types, entry_types)`. The right side is the inner `LeftJoin(EmptySingleton, B@?g)`, whose conflict test asks whether `B` binds a variable that the left join's own left side leaves undefined and the entry binds. Its own left side is the empty singleton, which binds nothing, and the entry binds `?g`, so `?g` is reported as a conflict. But inside the `Lateral` the left side `A@?g` always binds `?g`, so `B`'s `?g` is a join with it, not a fresh binding, and there is no conflict.
+5. So the check fails, the outer join becomes `HashBuildLeftProbeRight`, and the rewritten left join is evaluated once with no binding for `?g`. Both `A@?g` and `B@?g` then read every graph.
 
-#### Comment for #2008, ready to paste
+Each measurement agrees with this. Without the `OPTIONAL` there is no rewritten left join, so the outer join stays a LATERAL. With `VALUES` inside the block, or `?g` substituted, the left join's own left side binds `?g` and no outer join needs the check. With the `OPTIONAL` outside the block, its left side binds both `?s` and `?g`.
 
-> A second shape with the same symptom on 0.5.13, where the `OPTIONAL` is inside the `GRAPH` block rather than around it: `SELECT (COUNT(*) AS ?n) WHERE { VALUES ?g { <urn:g:0> } GRAPH ?g { ?s <urn:p> ?o OPTIONAL { ?s <urn:q> ?x } } }`. With 2,000 subjects per graph and only `<urn:g:0>` read, it takes 0.88 ms in a store of 1 graph and 87.6 ms in a store of 100 graphs, a ratio of 100. Without the `OPTIONAL` the ratio is 1.1, with a constant `GRAPH <urn:g:0>` it is 1.0, and with a `UNION` in place of the `OPTIONAL` it is 1.0. The result is the same in every case. `GRAPH ?g { A OPTIONAL { B } }` is a left join whose right side is `B` in `?g`, so this looks like the same missing pass of `?g` into the right side. Not checked on 0.5.12. A reproduction:
+**A suggested fix.** In the `Lateral` arm of `is_fit_for_for_loop_join`, check the right side against the types the left side produces, so that a variable the left side always binds counts as bound for the right side's conflict test:
+
+```diff
+         #[cfg(feature = "sep-0006")]
+         GraphPattern::Lateral { left, right } => {
+             is_fit_for_for_loop_join(left, global_input_types, entry_types)
+-                && is_fit_for_for_loop_join(right, global_input_types, entry_types)
++                && is_fit_for_for_loop_join(
++                    right,
++                    &infer_graph_pattern_types(left, global_input_types.clone()),
++                    entry_types,
++                )
+         }
+```
+
+It keeps the conflict test for a variable the left side may leave unbound, since `infer_graph_pattern_types` carries the `undef` flag, so a right side that could rebind a possibly unbound variable is still refused. A test for it would assert the plan of the reported query is a LATERAL from `VALUES` into the left join, or the timing test below. Untested, as said above.
+
+**Workarounds, until it is fixed.** Bind the graph inside the block, `GRAPH ?g { VALUES ?g { … } … }`, or pass `?g` through `substitutions`, or write the optional part as a `UNION` that keeps every row the `OPTIONAL` keeps.
+
+**Why it matters.** A read over a named set of graphs that joins an optional property inside the `GRAPH` block, for example a balance summed over the period graphs of one account's subtree with each credit's kind or applied amount joined optionally, costs in proportion to the whole store. In our benchmark it stopped a checkpoint from shortening such a read: the read limited to the graphs after the last checkpoint cost 0.92 of the full read on Oxigraph, where every other engine fell to 0.02 to 0.05.
+
+#### Issue text, ready to paste
+
+> **Title:** `VALUES ?g { … } GRAPH ?g { A OPTIONAL { B } }` reads every graph: the LATERAL fitness check misreads the rewritten left join
 >
-> (the test below)
+> On 0.5.11, 0.5.12 and 0.5.13, `SELECT (COUNT(*) AS ?n) WHERE { VALUES ?g { <urn:g:0> } GRAPH ?g { ?s <urn:p> ?o OPTIONAL { ?s <urn:q> ?x } } }` costs about 100 times as much in a store of 100 graphs as in a store of one, though it reads one graph and returns the same rows. Without the `OPTIONAL`, with a constant graph, with `VALUES` inside the block, or with `?g` substituted, the ratio is 1.0. This looks like a statistics-free cause for part of the first symptom in #1980, and is a different defect from #2008, which regressed in 0.5.13 alone.
+>
+> Reading `sparopt/src/optimizer.rs` at v0.5.13: the left join is rewritten to `Lateral(A@?g, LeftJoin(EmptySingleton, B@?g))`. When the outer join with `VALUES ?g` checks `is_fit_for_for_loop_join`, the `Lateral` arm checks its right side with the same `global_input_types` as its left. The inner left join's conflict test then sees `B` binding `?g`, its own left side (the empty singleton) leaving `?g` undefined, and the entry binding `?g`, and refuses. Inside the lateral, `?g` is always bound by the left side, so there is no conflict. The outer join falls back to a hash join, and both quad patterns scan every graph.
+>
+> A possible fix, not compiled or tested on our side: in the `Lateral` arm, check `right` against `&infer_graph_pattern_types(left, global_input_types.clone())` instead of `global_input_types`. A standalone reproduction follows. Measurements for eight forms on the three versions are in the attached table.
+>
+> (the test below, and the table above)
 
 #### Tracker search
 
-Read 2026-11-11: #2008 is open, with no reply from the maintainers and no fix linked. No release after 0.5.13 with a change to left joins was found. A comment on #2008 keeps the two shapes together, and a new issue would duplicate it.
+Read 2026-11-11. #2008 is open, reports `OPTIONAL { GRAPH ?g { … } }` with `?g` bound outside, a regression in 0.5.13 alone, and is a different defect, as the table's last row shows. #1980 is open, reported on 0.5.11, with "`VALUES ?g` joined after `GRAPH ?g` block" among its symptoms, and the maintainer's reply of 2026-10-20 says the planner needs dataset statistics to fix it and that a backport of #1733 is expected to help. #1883 (`GROUP BY` over `OPTIONAL`) and #2004 (cost-based join ordering) are related and different. No report names the LATERAL fitness check. A new issue linking #1980 and #2008 is the clearer place, or a comment on #1980 if the maintainer prefers its scope.
 
 #### Reproduction, `test_issue.py`
 
 ```python
-"""Standalone. Fails on pyoxigraph 0.5.13. Run: python -m pytest test_issue.py
+"""Standalone. Fails on pyoxigraph 0.5.11, 0.5.12 and 0.5.13. Run: python -m pytest test_issue.py
 
-A timing test, so it compares the same query over stores of 1 and of 100 graphs on one machine and allows a wide margin (the observed ratio on 0.5.13 is about 100)."""
+A timing test, so it compares the same query over stores of 1 and of 100 graphs on one machine and allows a wide margin (the observed ratio is about 100)."""
 import time
 
 import pyoxigraph as ox
