@@ -278,6 +278,66 @@ The cut is part of the credit's own record in its period graph, never a posting 
 
 **What it means for the rulings.** The ruling on scenario E2, that an excess goes to a residual account and a ceiling above the stated amount is refused by default, stands as a statement of meaning. It no longer rests on cost, since with cuts a ceiling above the stated amount costs a read nothing. The residual account itself is an account that only receives and has no ancestor, so nothing binds above it, and how it is declared is for LG-Q16's treatment of a residual. LG-Q23 gains the cut as its option (d).
 
+### 4.9 Added 2026-11-12: a posting recorded after it takes effect, and what a read as of an effective day shows
+
+**What is settled and what is not.** A draw erodes an amount in the order draws are settled, never the order they occurred, and a late draw is decided against the balance as it stands when it is recorded (PDD-14, closed 2026-10-28, LG-Q9 (a)). The writer therefore settles in recorded order, the applied amounts and cuts of section 4.8 are facts of that order, and LG-17 found the sum with cuts equal to the recorded replay in every run with 5% and with 20% of the postings late. Nothing on the decision path is in question. What is open is what a report shows when it is asked for the balance as of an effective day that lies before some postings were recorded (STD-278 calls this a reporting read). It is raised as LG-Q26.
+
+**The example.** One account, stated at 100 with a ceiling of 100 and full at the start, and three postings. The credit is offered 50 while the account has room for 30, so 30 is applied. The debit of 80 is then recorded with an effective day before the credit's. The same thing happens at an ancestor through a cut.
+
+```mermaid
+flowchart TB
+    subgraph REC["Recorded order, the order the writer settled them"]
+        direction LR
+        r1["Debit 30<br/>effective day 1<br/>balance 70"] --> r2["Credit 50, applied 30<br/>effective day 4<br/>balance 100"] --> r3["Debit 80, recorded late<br/>effective day 2<br/>balance 20"]
+    end
+    subgraph EFF["Effective order, the order they took effect"]
+        direction LR
+        e1["Debit 30<br/>day 1"] --> e2["Debit 80<br/>day 2"] --> e3["Credit 50<br/>day 4"]
+    end
+    REC ~~~ EFF
+```
+
+The credit's applied amount of 30 was worked out before the late debit was known. A report by effective day has three readings to choose from.
+
+| Reading | End of day 1 | End of day 2 | End of day 4 | Ends at the ledger's balance of 20 |
+|---|---|---|---|---|
+| A, the recorded amounts placed on their effective days | 70 | -10 | 20 | yes |
+| B, every posting settled again in effective order, the debit of day 2 limited to the 70 available | 70 | 0 | 50 | no |
+| C, flows by effective day and no balance: debits, then credits offered | 30, 0 | 110, 0 | 110, 50 | not a balance |
+| the balance as known after each recording, which C reports beside the flows | 70 | 100 | 20 | yes |
+
+```mermaid
+xychart-beta
+    title "Balance at the end of each effective day: reading A dips below zero, reading B ends at 50"
+    x-axis ["day 1", "day 2", "day 4"]
+    y-axis "balance, ceiling 100" -20 --> 100
+    line [70, -10, 20]
+    line [70, 0, 50]
+```
+
+The first line is reading A and the second reading B. A shows a balance below zero on day 2, which no account ever held. B stays between zero and the ceiling and ends at 50, where the ledger holds 20, because the amounts it applies are not the amounts that were settled.
+
+| | A, recorded amounts by effective day | B, settled again in effective order | C, flows by effective day, balance by recorded order only | D, later cuts rewritten when a late posting arrives |
+|---|---|---|---|---|
+| what it claims | a balance on a day | the balance the day would have had, had every fact been known on its day | what was drawn and offered by a day, and the balance as it was known at a recording | A, made consistent |
+| can it show a balance no account held | yes, below zero or above the ceiling | no | no, since it shows no balance by day | no |
+| does it agree with statements already issued | at the last day only | no | yes, an earlier reading never changes | no, it rewrites them |
+| read | a sum over every period graph, no checkpoint (STD-278) | an ordered read over the whole history folded by the caller (TSD-72), no checkpoint | a sum over every period graph for the flows, and the recorded read for the balance | as A |
+| written | the effective position, one triple a posting | the amount offered kept beside the amount applied, one triple a credit | the effective position | a rewrite of every later cut on the path, in sealed periods |
+| measured by LG-17, 27 reads a row | impossible at 2 to 7 reads, differs from the recorded replay at 7 to 10 by up to 7,264, read at 1.3 to 1.4 times the recorded read from the start | differs from the recorded replay at 26 or 27 reads by up to 6,892 | not measured as such, its flows are the sums A reads without the clamp | not built |
+| standing | refused by the leaning | on request, named as a restatement | the leaning | refused 2026-10-28 with PDD-14, since a settled draw is not reversed |
+
+**Leaning, as a hypothesis.** C defines the read: an effective day says which account and period a posting belongs to and what was drawn and offered by then, and a balance is stated only as of a recorded position. B is offered on request under a name that says it is a restatement. A is refused, since its figure can be one no account held.
+
+**How the leaning is tested, before it is taken.**
+
+1. *Against practice in two fields* (ADR-A-C2), asked of a practitioner and not assumed. For insurance, whether figures by occurrence period are reported as known at a valuation date, which is C's two coordinates, and whether any statement issued shows a limit's erosion by occurrence date. For a second field, for example a lending facility, whether a value-dated balance is ever computed for an amount that a ceiling can cut, which would be a use for A.
+2. *Against the questions a reader asks.* Each question a regulator, an auditor or a counterparty puts to an effective-day read is added to the [posting scenarios note](../notes/ledger-posting-scenarios.md) with a late posting in it, and each reading is checked for whether it answers it. A question only A or only B answers counts against C.
+3. *By a property that tells the readings apart.* A reading is stable if a posting recorded later never changes a figure already reported for an earlier day as known at an earlier recording. C is stable by construction, since the flows are sums and the balance is keyed on the recorded position, and A and B are not. The benchmark can state it as a check on LG-17's late corpus, read once before and once after the late postings are added, and the proofs can state it as a law beside the sum with cuts.
+4. *By cost.* The flows by effective day read every period graph, so the read grows with the history, as PDD-14 measured for an effective read (3.0, 7.0 and 16.0 ms across a tenfold history against a flat 1.3 to 1.7 ms). Whether that is acceptable for a report, or asks for the late sub-book PDD-14 names, is measured on the same corpus.
+
+**For the README, once the design is settled.** The two diagrams above, or ones like them, belong in the worked reading of `ontology/ledger/README.md` beside the statement of the two orderings, with whichever reading LG-Q26 takes. They are not added before LG-Q23 and LG-Q26 are decided.
+
 ## 5. `draw` and `spread`, two refusal semantics
 
 LG-7's kernel has two ways an amount reaches the tree. `draw` takes one amount to one account, debits the path and the paths of every account counting its purpose as one operation, and either succeeds whole or changes nothing (LD1, LD4). That is ADR-A131 decision 3 and PRI-43. `spread` takes a request vector over keys and a list of accounts, and at each account takes the least of what is still requested and what the account can afford, splits it among the keys by the rule, debits the path, and carries the rest to the next account. What no account affords is the residual (LC1 to LC3).
@@ -329,4 +389,5 @@ LO1 as proved, over two lists without repeats with the same elements, is the mul
 - LG-Q10, leaning (e) examined before (d).
 - LG-Q11 to LG-Q13, raised in the plan from §5.
 - One measurement, the ordered seek of §2.1's design C, before C is preferred to B.
+- LG-Q26, raised from §4.9, what a read as of an effective day shows once a ceiling has cut a credit, leaning C, with the four tests of §4.9 run first. The two diagrams of §4.9 go to the ledger README once LG-Q23 and LG-Q26 are decided.
 - LG-Q14, how the session reaches HOL-Library now that it built on machine R, for LO1's statement and the integer `spread`, which LG-8 then proves.
