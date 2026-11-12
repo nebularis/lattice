@@ -28,9 +28,20 @@ For the root account's full read of the largest two-level corpus at 30% credits,
 | the probe (C1) | a counter triple. Each thread reads the counter N, sends `DELETE { N } INSERT { N+1 and its marker } WHERE { N }` as one update request in its own write transaction, and asks in a read transaction whether its marker exists, until the counter reaches 1,000. Then the increment in the store, 500 times a thread. 1, 2, 4 and 8 threads, three runs a cell |
 | the single writer | 500 writes on stores of 1,000, 5,000 and 20,000 postings, guarded and unguarded, with the time of each write split into path reads, settle, update and confirm |
 | the stress | 1, 2, 4 and 8 threads, 1,000 requests in all on a store of 5,000, guarded (three runs a cell at 2, 4 and 8) and once unguarded |
-| one writer per ledger (LG-18, written 2026-11-12 and not yet run) | producers hand the stress's requests to one writer through a queue. Closed runs with 1, 2, 4 and 8 producers, by a writer that reads its path and by one that keeps the balances it has settled. Backlog runs by both, by the keeper with no guard, and by the keeper writing batches of 10 and of 100 in one update. Every export is held to the replay |
+| one writer per ledger (LG-18, run 2026-11-12) | producers hand the stress's requests to one writer through a queue. Closed runs with 1, 2, 4 and 8 producers, by a writer that reads its path and by one that keeps the balances it has settled. Backlog runs by both, by the keeper with no guard, and by the keeper writing batches of 10 and of 100 in one update. Every export is held to the replay |
 
 The writer is the port of `writes.py`'s. It reads the revision and the sum with cuts of every account on the posting's path from the last checkpoint, in one read transaction, settles with the benchmark's arithmetic, refuses a debit larger than the balance of any account on its path, and writes the posting, its applied amount, kind and cuts and the new revision in one guarded update, confirmed by asking for its own posting. After each run the dataset is exported as gzipped N-Quads, and `writes.py --audit-jvm` loads each export into an in-memory Oxigraph and runs `audit` on it, the replay of the commits in revision order through the benchmark's writer. The replay is Python's and none is written in Java. A guarded run on a store is asserted against the replay only if the probe showed that store kept the guard in every guarded run at two threads or more, and is otherwise audited and reported. An unguarded run is never asserted.
+
+### Measured results, one writer per ledger (LG-18)
+
+Run on 2026-11-12 on a cloud machine with 4 cores, 15 GiB of memory and Linux amd64, with Java 25.0.5.0.3, Apache Jena 5.1.0 and a 2,048 MiB heap. All 26 queue exports were audited and every one equals the replay. Commits a second, 1,000 requests on Jena in memory and 200 on TDB2, with the guarded threads of the same run beside them.
+
+| store | guarded, 1 thread | guarded, 8 threads | reads, 8 producers | keeps, 8 producers | keeps, backlog | batches of 10 | batches of 100 |
+|---|---|---|---|---|---|---|---|
+| jena-memory | 61 | 38 to 40 | 62 | 1,709 | 2,019 | 3,492 | 4,275 |
+| jena-tdb2 | 36 | 18 to 21 | 35 | 74 | 80 | 477 | 1,700 |
+
+The writer that reads matches the guarded single thread and does not fall with producers, where the guarded writers lose a third to a half at 8 threads. The keeper is 28 to 33 times the guarded single thread on Jena in memory, and on TDB2 it is limited by the commit at about 80 a second until postings share a commit, then 477 and 1,700 a second at batches of 10 and 100. This is more than the 10 a second expected from LG-17's laptop figure, so a commit costs less on this machine. The mean wait at 8 producers is 119 ms for the writer that reads and 4 ms for the keeper on Jena in memory, and 224 and 106 ms on TDB2.
 
 ## Pass criterion
 

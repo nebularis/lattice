@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 19 branches, the units' own state from this tree, the newest board day 2026-11-12.
+Built from the status records on 21 branches, the units' own state from this tree, the newest board day 2026-11-12.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -45,11 +45,11 @@ Built from the status records on 19 branches, the units' own state from this tre
 | [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
 | [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 | GH-0 | 6 built |  |
 | [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
-| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 6 planned, 1 merged | docs/placement-vehicles-structure |
+| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 6 planned, 1 merged | docs/placement-vehicles-structure, docs/placement-vehicles-structure-h0e5v9 |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | building 2026-11-12 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · built 2026-10-27 on ccs-trunk, ccs/board-corrections · built 2026-11-08 on claude/adoring-torvalds-ce7ffe, getting-started-vyd, vyvid-quanta-builtin · built 2026-11-09 on ccr-242894ed-j78yu1, claude/modest-ramanujan-cgvs0p, fm/ledger-proofs-second-widening, tutorial/studio-guide | LG-2 | 6 built, 6 planned, 3 merged, 2 verified, 1 building, 1 blocked | docs/placement-vehicles-structure |
+| [ledger](plans/ledger.md) | unit | built 2026-11-12 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 7 built, 6 planned, 3 merged, 2 verified, 1 blocked | docs/placement-vehicles-structure, docs/placement-vehicles-structure-h0e5v9 |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -70,7 +70,7 @@ Built from the status records on 19 branches, the units' own state from this tre
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-09 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 | VM-0 | 9 verified, 4 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-09 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 · built 2026-11-12 on spi/sql-backend | VM-0 | 9 verified, 4 built |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -346,7 +346,7 @@ gantt
     LG-15 LG-14 gaps closed native :lg15, 2026-11-11, 2026-11-12
     LG-16 the cut the writer records :lg16, 2026-11-12, 2026-11-13
     LG-17 LG-16 gaps closed :lg17, 2026-11-12, 2026-11-13
-    LG-18 LG-17 follow-ups measured :active, lg18, 2026-11-12, 2026-11-13
+    LG-18 LG-17 follow-ups measured :lg18, 2026-11-12, 2026-11-13
     LG-2 the runtime document :lg2, 2026-10-27, 2026-11-09
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
     LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-10
@@ -880,11 +880,13 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
 | `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
 | `claude/modest-ramanujan-cgvs0p` | 2026-11-12 | 11 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B3, SVA-B4, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O3, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R5, SVA-S1, SVA-S2, SVA-S3 |
-| `docs/placement-vehicles-structure` | 2026-11-12 | 85 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-16, LG-17, LG-18, LG-2, LG-7, OD-DOC4 |
+| `docs/placement-vehicles-structure` | 2026-11-12 | 51 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-16, LG-17, LG-18, LG-2, LG-7, OD-DOC4 |
+| `docs/placement-vehicles-structure-h0e5v9` | 2026-11-12 | 51 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-16, LG-17, LG-18, LG-2, LG-7, OD-DOC4 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
+| `spi/sql-backend` | 2026-11-12 | 1 | pushed | no mark |
 | `tutorial/studio-guide` | 2026-11-10 | 2 | pushed | no mark |
 | `vyvid-migration` | 2026-11-05 | 34 | pushed | no mark |
 | `vyvid-quanta-builtin` | 2026-11-08 | 3 | pushed | no mark |
@@ -1030,7 +1032,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 9. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
 10. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
 11. **Start OD-DOC4, the layer interactions record**, once the ledger's design is settled (the scenarios note ruled through, LG-Q23 decided on LG-16's and LG-17's figures, machine S's brief written). One maintained architecture document on how the layers work together at design time and at runtime, with two events traced end to end, [briefed](plans/improved-ontology-documentation.md) with its inputs, and kept current by STD-326.
-12. **Settle the ledger's writer on LG-17's figures**, added 2026-11-12 ([pack](validation/LG-17.md)). Decide LG-Q23, which the measurements support as (a) with (d). Decide where single-writer is provided for Oxigraph on disk, which loses guarded writes by a design choice of Oxigraph 0.5.0 (TSD-73, TD-162), and file the [drafted report](notes/upstream-sparql-engine-reports.md#oxigraph-on-disk-store-loses-concurrent-updates), whose patch is built and tested on `v0.5.13` and on `main`. Decide whether the guard is one revision per owner or the ledger runs one writer, since retries lose throughput on every store measured. Run LG-18 in a cloud session ([pack](validation/LG-18.md), [brief](notes/cloud-brief-lg-18-2026-11-12.md)), whose two benchmarks are written and not yet run: one writer per ledger against the guarded writers, and the readings of a balance by effective day for LG-Q26, on which the maintainer has said that both a balance by day and the flows are needed.
+12. **Settle the ledger's writer on LG-17's figures**, added 2026-11-12 ([pack](validation/LG-17.md)). Decide LG-Q23, which the measurements support as (a) with (d). Decide where single-writer is provided for Oxigraph on disk, which loses guarded writes by a design choice of Oxigraph 0.5.0 (TSD-73, TD-162), and file the [drafted report](notes/upstream-sparql-engine-reports.md#oxigraph-on-disk-store-loses-concurrent-updates), whose patch is built and tested on `v0.5.13` and on `main`. Decide whether the guard is one revision per owner or the ledger runs one writer, since retries lose throughput on every store measured. Read LG-18, which ran in a cloud session on 2026-11-12 and is built, awaiting verification ([pack](validation/LG-18.md), [handoff](notes/lg-18-cloud-run-handoff.md)). Its figures bear on the writer: one writer per ledger matches the best guarded writer on each store and, keeping its balances, is 29 to 55 times its rate, and on Oxigraph on disk it equals the replay where guarded writers lose writes. Its readings of a late posting bear on LG-Q26, on which the maintainer has said that both a balance by day and the flows are needed, and none of it decides either question.
 
 ## 11. Completed units
 
