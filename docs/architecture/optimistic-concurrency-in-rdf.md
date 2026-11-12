@@ -187,7 +187,7 @@ These are a snapshot and should be checked against versions and release notes.
 | **MarkLogic** | Full multi-statement ACID (`POST /transactions`) plus document-level optimistic locking with ETag/`If-Match`; the easiest environment of the lot if triples live inside documents. |
 | **AllegroGraph** | Explicit begin/commit/rollback per session; verify the isolation level you're getting before trusting guards alone. |
 | **Oracle RDF, Jena/RDF4J on JDBC, Rya/Accumulo, Halyard/HBase** | Borrow the substrate's primitive: SQL `SELECT … FOR UPDATE`/`ORA_ROWSCN`, Accumulo `ConditionalWriter`, HBase `checkAndPut`. |
-| **Oxigraph, Qlever, in-process stores** | Usually a single-writer transaction API; wrap it, and lean on the single-writer queue pattern. |
+| **Oxigraph, Qlever, in-process stores** | Usually a single-writer transaction API. Wrap it, and lean on the single-writer queue pattern. Note, 2026-11-12. Oxigraph 0.5.13 on disk does not serialise concurrent updates, so the single-writer queue is required there and not a convenience (TSD-73). |
 
 ## Testing
 

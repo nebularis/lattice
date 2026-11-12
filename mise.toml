@@ -422,6 +422,11 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure what a credit's kind filter, a stepwise credit ceiling with the clamp at the drawn account, checkpoints and a shortcut add to an ancestor's balance fold over the period graphs, on Jena called natively from Java, in memory and on TDB2 (ADR-A124, LG-Q10, STD-176). Python writes the corpora and the model's balances and merges the timings into the report, the JVM runs the reads. Run on demand, not part of check. Fails on a wrong balance, never on time. LEDGER_KINDS_MAX caps the postings, LEDGER_KINDS_QUICK=1 runs the smallest size"
 run = ["python -m pytest benchmark/ledger-credit-kinds-jvm -q -p no:cacheprovider", "python benchmark/ledger-credit-kinds/check.py --emit benchmark/ledger-credit-kinds-jvm/target/corpus", "mvn -q -f benchmark/ledger-credit-kinds-jvm/pom.xml compile exec:exec", "python benchmark/ledger-credit-kinds/check.py --merge"]
 
+[tasks."check:ledger-credit-kinds-writes"]
+depends = ["bootstrap:testing-oxigraph", "bootstrap:testing-jena"]
+description = "Measure what a write costs the ledger's account tree (the path reads, the settle, one guarded SPARQL update and its confirmation, against the same write without the guard) on Oxigraph in memory and on disk and on Jena, test that one revision triple closes the race between concurrent writers, in fixed interleavings and in a stress of 2, 4 and 8 threads against one Oxigraph store, and compare the recorded sum, the effective sum and two replays where postings are recorded after they take effect (ADR-A124, STD-278, STD-294, PAT-21). Run on demand, not part of check. Fails on a wrong result, never on time. LEDGER_WRITES_QUICK=1 runs the smallest sizes, LEDGER_WRITES_REPORT_DIR writes the report elsewhere"
+run = ["python -m pytest benchmark/ledger-credit-kinds/test_writes.py -q -p no:cacheprovider", "python benchmark/ledger-credit-kinds/writes.py"]
+
 [tasks."check:ledger-store-comparison"]
 description = "Measure whether the ledger's period-graph partition bounds an aggregate read on Jena TDB2 as it does on Oxigraph, so the result is a property of naming the graphs rather than of one engine (ADR-A124, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. -Dledger.store.max caps the events"
 run = "mvn -q -f benchmark/ledger-store-comparison/pom.xml exec:java"

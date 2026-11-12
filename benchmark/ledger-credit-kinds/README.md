@@ -248,9 +248,66 @@ What the run shows.
 4. **A ceiling above a stated amount costs a read nothing that can be told apart.** The sum with cuts equals the stepwise balance at every ancestor in both modes on all three engines, and its times against the two-level corpus agree to within run-to-run variation (the ratios to the kind-filtered and stepwise folds differ by 0 to 0.09, and Jena at 5,000 postings read the sum with cuts in 97 ms against 63 and was not repeated). The model finds 2 accounts of 33 above their stated amount at some read point at 20,000 postings, 4 of the 27 ancestor reads, and 7 and 3 at the smaller sizes. A read that clamps at the stated amount fails the check. The variant has 30 more cuts than the two-level corpus at 20,000 postings (2,190 against 2,160), and its sum with no cuts is wrong at 6 of 9 ancestors where the two-level corpus's is wrong at 8.
 5. **The sketch's figures hold through an engine as well as in the model.** The cut the writer records is the cut the cuts aggregate reads back, and a writer that records none gives 9 where the model gives 7, which the check catches.
 
+## Writes, concurrent writers and late postings
+
+`writes.py`, run by `mise run check:ledger-credit-kinds-writes` (`LEDGER_WRITES_QUICK=1` runs the smallest sizes, `LEDGER_WRITES_REPORT_DIR` writes `writes-report.md` and `writes-report.json` elsewhere, both git-ignored). It reuses the tree, the writer's arithmetic, the vocabulary, the quads and the reads of `check.py`, and adds no behaviour to it.
+
+**The live writer.** For one posting against a store that holds history, the writer reads the ledger's revision and the balance of every account on the posting account's path (a sum with cuts from the last checkpoint, whose balances it reads once), settles the posting in the application with `settle_debit` and `settle_credit`, refuses a debit larger than the balance of any account on its path, and writes the posting, its applied amount, its kind, its cuts and the new revision in one SPARQL update request. It writes no checkpoint, so its reads fold every period after the last one the history holds. A contract has its own read, since `check.py` reads ancestors only.
+
+**The guard.** One triple in the default graph holds the revision of the owner's ledger. The write is `DELETE { revision N } INSERT { revision N+1, and the posting and its cuts in the period graph } WHERE { revision N }` (PAT-21, PAT-04), and the committed revision N+1 is the posting's recorded position. SPARQL update returns no count, so the writer asks afterwards whether its own posting exists. The posting's IRI is unique to the writer and the attempt. A stale writer wrote nothing, reads again and retries. The unguarded writer sends `DELETE DATA { revision N } ; INSERT DATA { revision N+1, and the posting }` and does not confirm. One revision covers the owner's whole ledger, so any commit makes every other writer in flight stale. The benchmark reports the figures that bear on whether that is too coarse and does not decide it.
+
+**What concurrent means here.** Threads in one process against one `pyoxigraph.Store`. It is not a test over HTTP, nor from several processes. pyoxigraph releases the GIL in a query and in an update: a thread counting in pure Python beside a thread running queries back to back ran at 0.98 of its speed alone, beside updates at 1.04, and beside a thread of pure Python at 0.48, on 8 CPUs, so the threads overlap in the engine. The fixed interleavings step two writers by hand, with no threads, and are the tests. The stress gives each thread its own seeded requests from the two-level stream's distribution, 1,000 further postings in all on a store holding 5,000, each retried until it commits or is refused as unavailable. After each run the committed records are read back in revision order and compared with a replay through `settle_debit` and `settle_credit`: every stored applied amount, every stored cut and every account's sum with cuts. Revisions must be dense and unique. A guarded run on the in-memory store that differs raises `WrongResult`. The on-disk store is audited and reported but not asserted, for the reason below.
+
+**Late postings.** A late posting is stored in the period graph of its recorded position, with its effective position as one more triple, on every posting. That is a choice of this benchmark and not a decision, since where a posting effective inside a sealed period goes is open (PDD-14). A seeded `LATE_SHARE` of 5% of the postings, and a second run at 20%, are effective one to three periods (200 passes each) before they are recorded, never after (STD-294). The writer settled each in recorded order, so its applied amount and cuts were computed against every posting recorded before it. At each ancestor and read point four numbers are compared. Recorded is the sum with cuts over postings recorded by the point, and must equal the stepwise replay, in the model and through Oxigraph. Effective is the same amounts and cuts over postings effective by the point, folded from the start over every period graph (STD-278, and no reach cap, since a posting recorded long after the point can be effective by it), and the engine must equal the model. Replay R is a fresh stepwise replay in recorded order of only the postings effective by the point, and replay E the same in effective order, ties by recorded order. Nothing says which is right.
+
+Figures, from one run on one laptop (8 CPUs, 8 GB, Oxigraph 0.5.13, Jena 5.1.0 through the kit, Python 3.14.7). The report holds every row.
+
+A write, mean ms, 500 further postings by one writer. The store is in memory unless stated. A debit reads 4 accounts and makes 8.1 requests, a credit with no cut 3.0 to 3.1 accounts and 6.7 to 6.9, a credit with a cut 3.5 to 3.7 and 7.4 to 7.7. A write adds 8.0, 9.8 to 9.9 and 13.2 to 13.9 triples, and the revision triple is replaced, not added. At 20,000 postings 187 of the 350 debits were refused, because the corpus does not refuse debits and the cap section is already overdrawn, so a debit under it has no availability.
+
+| Backend, postings | debit total | credit total | credit with a cut total | path reads share | update, guarded / unguarded | confirm |
+|---|---|---|---|---|---|---|
+| Oxigraph memory, 1,000 | 2.49 | 2.29 | 2.33 | 98% | 0.03 / 0.02 | 0.02 |
+| Oxigraph memory, 5,000 | 2.20 | 1.93 | 2.24 | 98% | 0.03 / 0.02 | 0.02 |
+| Oxigraph memory, 20,000 | 2.82 | 2.51 | 2.58 | 98% | 0.03 / 0.03 | 0.02 |
+| Oxigraph disk, 20,000 | 11.00 | 10.06 | 10.03 | 99% | 0.09 / 0.07 | 0.03 |
+| Jena, 1,000 | 20.83 | 18.73 | 19.46 | 97% | 0.42 / 0.32 | 0.18 |
+| Jena, 20,000 | 41.15 | 24.34 | 31.95 | 98% | 0.40 / 0.37 | 0.16 |
+
+The settle is under 0.01 ms everywhere. The p95 is 1.2 to 1.5 times the mean on Oxigraph and up to 2 times on Jena. The guard adds the confirmation and a dearer update, 0.03 to 0.06 ms on Oxigraph in memory and on disk and about 0.25 ms on Jena, 1 to 2% of a write, and all of the cost of a write is the path reads.
+
+The stress, in memory, 932 to 990 commits of 1,000 requests (the rest refused as unavailable):
+
+| Threads | writer | lost races | retries per request, mean / max | wall s | commits per s | differs from the replay (applied, cuts, balances) | overdrawing debits | duplicate revisions |
+|---|---|---|---|---|---|---|---|---|
+| 1 | guarded | 0 | 0 / 0 | 3.27 | 298 | 0, 0, 0 | 0 | 0 |
+| 2 | guarded | 492 | 0.49 / 492 | 3.72 | 266 | 0, 0, 0 | 0 | 0 |
+| 4 | guarded | 1,869 | 1.87 / 539 | 5.07 | 187 | 0, 0, 0 | 0 | 0 |
+| 8 | guarded | 5,346 | 5.35 / 117 | 9.04 | 104 | 0, 0, 0 | 0 | 0 |
+| 1 | unguarded | 0 | 0 / 0 | 3.14 | 311 | 0, 0, 0 | 0 | 0 |
+| 2 | unguarded | 0 | 0 / 0 | 2.36 | 417 | 16, 90, 1 | 0 | 485 |
+| 4 | unguarded | 0 | 0 / 0 | 1.62 | 584 | 31, 138, 3 | 5 | 700 |
+| 8 | unguarded | 0 | 0 / 0 | 1.47 | 635 | 28, 117, 7 | 5 | 788 |
+
+The unguarded writer's differences are not asserted and may be zero by luck in another run. The fixed interleavings are the tests: two recoveries racing for the room at an aggregate (the stale writer's missing cut lands, and the aggregate's sum differs), two debits racing for the last availability of an aggregate (the second is refused on retry with the guard and overdraws it without), and a debit and a credit on different contracts under one aggregate (the guard made the second retry once, and the outcome equals the replay).
+
+The guard on the on-disk store, three guarded runs a cell, 5,000 postings and 1,000 requests. In memory all nine runs were dense with no duplicate. On disk 8 of 9 had two commits at one revision, from 2 to 32 of them, and in 6 runs a stored cut or applied amount differed from the replay. So the one revision triple closes the race in memory and not on disk, and the benchmark reports the disk figures without asserting them. The cause is the store and not the writer: Oxigraph 0.5.13 makes a second update wait in memory and not on disk, where two updates that read the same revision both commit, and one lock around the update call restores the guard (TSD-73).
+
+Late postings, 9 ancestors at 3 points, 27 reads a row. The recorded sum equalled the replay and the model, and the effective sum equalled the model, in every row. With no late posting all four agreed.
+
+| Postings | late share | late postings | effective differs from R | from E | R from E | largest difference, eff/R, eff/E, R/E | effective sum impossible | effective read / recorded read |
+|---|---|---|---|---|---|---|---|---|
+| 5,000 | 5% | 257 | 7 | 26 | 26 | 3,780 / 4,938 / 2,935 | 4 | 1.29 |
+| 5,000 | 20% | 974 | 9 | 26 | 26 | 3,630 / 6,892 / 6,892 | 2 | 1.29 |
+| 20,000 | 5% | 1,013 | 7 | 26 | 26 | 4,093 / 4,033 / 2,178 | 4 | 1.39 |
+| 20,000 | 20% | 3,997 | 10 | 27 | 27 | 7,264 / 6,312 / 2,467 | 7 | 1.38 |
+
+The effective sum is impossible (below zero or above the ceiling) at 4 reads at 5% and 2 at 5,000 postings and 20% credits late, and also at 2 reads of the 20,000-posting corpus with no late posting, where the history is already overdrawn. Folding every period graph from the start costs 1.3 to 1.4 times the recorded fold from the start of history, whose cost grows with the point read.
+
+What the write benchmark does not show. The writer writes no checkpoint, so a period close is not measured. The stress is threads in one process. The disk store is not asserted. The Java caller is part three.
+
 ## What this does not measure
 
-Concurrent writers, which the cut needs, since the writer reads the path balances and records the cut in one step. The cost of writing, since the cuts and the ceilings are loaded with the history and the writer's reads of the path balances are not run. Late postings. The Java caller, which reads the one-level corpus only (`benchmark/ledger-credit-kinds-jvm`). Each of these is for a later part of LG-17. Not in LG-17 at all, a query plan for any engine, since none here can explain a query, a ceiling that moves in time, reads of a contract, which the account's own postings answer, a checkpoint written by the fold rather than by the model's arithmetic, a `union` form of the applied join on Oxigraph, and a native caller on a store other than Jena. The ceiling variant is read at 30% credits only and without the plain fold or the shortcut. The event stream is seeded and the engines see the same one, so a figure compares folds on one engine and caller, and an engine against another only in its shape. The Java caller runs the reads of a corpus once each, in one JVM after a warm-up on the smallest corpus, so its smallest sizes include some JIT warm-up.
+The Java caller, which reads the one-level corpus only (`benchmark/ledger-credit-kinds-jvm`) and is for part three of LG-17. Not in LG-17 at all, a query plan for any engine, since none here can explain a query, a ceiling that moves in time, a checkpoint written by the fold rather than by the model's arithmetic, a `union` form of the applied join on Oxigraph, and a native caller on a store other than Jena. The ceiling variant is read at 30% credits only and without the plain fold or the shortcut. The event stream is seeded and the engines see the same one, so a figure compares folds on one engine and caller, and an engine against another only in its shape. The Java caller runs the reads of a corpus once each, in one JVM after a warm-up on the smallest corpus, so its smallest sizes include some JIT warm-up. The write benchmark below does not measure writes over HTTP or from more than one process, a store other than Oxigraph under concurrent writers, a writer that writes the checkpoint at a period close, a guard narrower than the owner's whole ledger, a posting effective inside a sealed period as a decision, or any rule that consumes an amount in effective order.
 
 ## Files
 
@@ -258,5 +315,7 @@ Concurrent writers, which the cut needs, since the writer reads the path balance
 |---|---|
 | `check.py` | the tree, the streams, the model, the checkpoints, the four reads and the sum with cuts on three backends, the like-for-like reads, the cut forms, the ceiling variant, the sketch's tree, the pass criterion, the report, and `--emit` and `--merge` for the native Jena caller (the one-level corpus only) |
 | `test_check.py` | the check's own tests |
+| `writes.py` | the live writer, its guard, the fixed interleavings, the stress, the GIL probe, the late postings and their four numbers, and the report (`writes-report.md`, `writes-report.json`) |
+| `test_writes.py` | the write benchmark's own tests |
 | `conftest.py` | makes a temporary folder refuse removal while a store in it is open |
-| `report.md`, `report.json` | the last run's results, generated and git-ignored |
+| `report.md`, `report.json`, `writes-report.md`, `writes-report.json` | the last runs' results, generated and git-ignored |

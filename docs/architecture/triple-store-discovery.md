@@ -566,3 +566,10 @@ Recorded in the domain on 2026-11-11, after `v0.1.0`, so it has no tagged link y
 Recorded in the domain on 2026-11-11, after `v0.1.0`. `mise run graph:ask -- read TSD-72` prints it.
 
 **What it means for LATTICE.** Where an account's credit ceiling can bind, its balance is an ordered read folded by the caller, at about the cost of a filtered sum on rdflib and Oxigraph. The ledger's laws apply the ceiling step by step (LD3, the balances sketch §3), so the runtime shapes and reads that check a balance follow this form, and LG-15 records Jena's cost from a native caller.
+
+### TSD-73. Oxigraph on disk does not make concurrent updates wait for each other, so a guarded update loses writes, and Oxigraph in memory does
+
+Recorded in the domain on 2026-11-12, after `v0.1.0`. `mise run graph:ask -- read TSD-73` prints it.
+
+**What it means for LATTICE.** The guarded write of PAT-21 and PAT-04, and the write `dal:Optimistic` generates (MEC-59), close a race only on a store that applies update requests one at a time or refuses the second of two that rewrite one statement. Oxigraph 0.5.13 embedded on disk does neither, so a store description for it declares `dal:providesSingleWriter` only where its adapter sends updates one at a time, and store isolation is verified against the store as configured (PRI-59). One lock around the update call restores the guard. The ledger's write benchmark (LG-17) asserts the guard on the in-memory store and reports the on-disk store. The patterns guide and the concurrency document, which named Oxigraph among the stores that serialise writers, carry a dated note, and TD-162 holds what is left.
+
