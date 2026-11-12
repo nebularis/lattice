@@ -18,6 +18,7 @@ Each engine departure from the SPARQL 1.1 specification that the store-discovery
 | [oxigraph-optional-inside-graph-reads-every-graph](#oxigraph-optional-inside-graph-reads-every-graph) | Oxigraph | TSD-71 | not filed. Drafted 2026-11-11 and amended the same day as a new issue, since it is on 0.5.11, 0.5.12 and 0.5.13 and so is not the 0.5.13 regression of [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008). It narrows [oxigraph/oxigraph#1980](https://github.com/oxigraph/oxigraph/issues/1980) to a cause and a suggested fix |
 | [oxigraph-count-error](#oxigraph-count-error) | Oxigraph | TSD-43 | filed 2026-10-27 as [oxigraph/oxigraph#2009](https://github.com/oxigraph/oxigraph/issues/2009), fixed by the merged [oxigraph/oxigraph#2025](https://github.com/oxigraph/oxigraph/pull/2025), not yet released, checked 2026-11-11 from a source build. One case as filed expects the wrong value, with a correction ready to paste |
 | [oxigraph-avg-all-unbound](#oxigraph-avg-all-unbound) | Oxigraph | TSD-43 | not filed |
+| [oxigraph-on-disk-store-loses-concurrent-updates](#oxigraph-on-disk-store-loses-concurrent-updates) | Oxigraph | TSD-73 | not filed. Drafted 2026-11-12 from a full read of the storage source at `v0.5.13`. The behaviour is a trade-off the project made on purpose in 0.5.0 ([oxigraph/oxigraph#1310](https://github.com/oxigraph/oxigraph/issues/1310)), so this asks for a change of design or of documentation and offers a patch, which is written and not compiled |
 | [jena-avg-all-unbound](#jena-avg-all-unbound) | Apache Jena ARQ | TSD-43 | not filed |
 | [jena-str-of-blank-node](#jena-str-of-blank-node) | Apache Jena ARQ | TSD-43 | not filed |
 | [jena-clear-graph-of-a-store-without-empty-graphs](#jena-clear-graph-of-a-store-without-empty-graphs) | Apache Jena ARQ | TSD-50 | not filed |
@@ -361,6 +362,554 @@ def test_avg_over_a_group_with_no_value_is_zero():
     # SPARQL 1.1 section 18.5.1.4: Avg(M) = "0"^^xsd:integer where Count(M) = 0
     [solution] = list(pyoxigraph.Store().query("SELECT (AVG(?x) AS ?a) WHERE { VALUES ?x { UNDEF UNDEF } }"))
     assert solution["a"] is not None and solution["a"].value == "0"
+```
+
+### oxigraph-on-disk-store-loses-concurrent-updates
+
+**On-disk store: two concurrent SPARQL updates that read the same data both commit, so a guarded `DELETE`/`INSERT`/`WHERE` is not a compare-and-set and an increment loses counts. A small fix is proposed**
+
+Oxigraph, TSD-73, not filed. Drafted 2026-11-12. This is not a departure from the SPARQL 1.1 specification, which asks that one request be atomic and leaves isolation between requests to the store. It is recorded here because it is a report ready to file. The tracker was searched on 2026-11-12 for concurrent updates, lost updates, conflicts, transactions, isolation and `WriteBatchWithIndex`, and holds no report of it. [oxigraph/oxigraph#1310](https://github.com/oxigraph/oxigraph/issues/1310), closed 2025-07-20 as done in 0.5.0-beta.1, is the design change behind it. The Python reproduction and its figures were run here. The patch and the Rust test were written from the source and **not compiled**, so build and run both before filing, with `cargo test -p oxigraph --test concurrent_updates` in a checkout of `v0.5.13` with its `oxrocksdb-sys/rocksdb` and `oxrocksdb-sys/lz4` submodules, first without the patch and then with it.
+
+**Versions:** pyoxigraph 0.5.13, Python 3.14.7, macOS arm64, 8 cores. Source read at tag `v0.5.13` (`2837810`). The same storage code is on `main` at `78734be` (0.6.0-dev), where `rocksdb_wrapper.rs` differs from the tag only in a lint attribute and one removed `From` impl. Compared with `v0.4.11` (`3f27c43`) by source.
+
+**Summary.** On a `Store` opened on disk, two update requests that overlap in time each evaluate their `WHERE` on their own snapshot and then both write. Nothing makes the second wait and nothing compares its snapshot with what was committed since. A single update request that reads and then writes, such as "move the counter from N to N+1 if it is still N", therefore succeeds for both of two concurrent callers. Each caller can read back its own write, so neither can tell. The in-memory `Store` does not do this, because it runs one write transaction at a time, so a test suite on `Store::new()` passes and the same code on `Store::open()` loses updates.
+
+We know that the trade-off was made on purpose. The 0.5.0-beta.1 changelog says that RocksDB transactions moved from `TransactionDB` to `WriteBatchWithIndex` and that "some write-write conflicts are not detected anymore", #1310 calls the result nearly serializable, and the Architecture wiki page says some read/write conflicts are not detected when a write lands between the snapshot and the batch. This report is about how far the consequence reaches, which those notes understate, and about a small change that removes it and keeps snapshot reads and blind writes as they are.
+
+**Reproduce it.** `pip install pyoxigraph==0.5.13`, then:
+
+```python
+import collections, tempfile, threading
+import pyoxigraph as ox
+
+def run(store, threads, target=1000):
+    store.update("INSERT DATA { <urn:c> <urn:v> 0 }")
+    def work(t):
+        i = 0
+        while True:
+            n = int(next(iter(store.query("SELECT ?n WHERE { <urn:c> <urn:v> ?n }")))[0].value)
+            if n >= target:
+                return
+            i += 1
+            store.update(f"DELETE {{ <urn:c> <urn:v> {n} }} INSERT {{ <urn:c> <urn:v> {n + 1} . <urn:w:{t}:{i}> <urn:at> {n + 1} }} WHERE {{ <urn:c> <urn:v> {n} }}")
+    pool = [threading.Thread(target=work, args=(t,)) for t in range(threads)]
+    [t.start() for t in pool]
+    [t.join() for t in pool]
+    per = collections.Counter(r[0].value for r in store.query("SELECT ?x WHERE { ?w <urn:at> ?x }"))
+    return sum(per.values()), sum(c > 1 for c in per.values())  # markers, revisions with more than one
+
+print("memory", run(ox.Store(), 4))
+with tempfile.TemporaryDirectory() as d:
+    print("disk", run(ox.Store(d), 4))
+```
+
+Each thread reads the counter, sends one guarded update with a marker of its own, and stops at 1,000. A store that applies the guard prints 1,000 markers and 0 values written by more than one update. It printed `memory (1000, 0)` and `disk (1601, 482)`.
+
+Markers confirmed, where 1,000 is correct, three runs a cell:
+
+| Threads | In memory | On disk | On disk, with one `threading.Lock` held around `Store.update` |
+|---|---|---|---|
+| 1 | 1,000 | 1,000 | not run |
+| 2 | 1,000, 1,000, 1,000 | 1,576, 1,607, 1,539 | 1,000, 1,000, 1,000 |
+| 4 | 1,000, 1,000, 1,000 | 1,611, 1,549, 1,542 | 1,000, 1,000, 1,000 |
+| 8 | 1,000, 1,000, 1,000 | 1,368, 1,597, 1,308 | 1,000, 1,000, 1,000 |
+
+On disk 270 to 607 values of the counter in a run carried more than one marker. The counter itself ends at 1,000 as one triple, so the final state shows nothing wrong except through the markers.
+
+A second form needs no read by the caller:
+
+```sparql
+DELETE { <urn:k> <urn:v> ?n } INSERT { <urn:k> <urn:v> ?m } WHERE { <urn:k> <urn:v> ?n . BIND(?n + 1 AS ?m) }
+```
+
+Sent 500 times from each of 2, 4 and 8 threads, it ends in memory at threads times 500 as one triple in every run. On disk it ends near 500 whatever the number of threads, and the counter holds several values at once, from 1 to 60 of them, for example 502 and 503 together after two threads. No serial order of the requests gives that state.
+
+**The cause, as read from the source.** All references are to `v0.5.13`.
+
+- `lib/oxigraph/src/storage/rocksdb_wrapper.rs`, `Db::open_read_write`, opens the database with `rocksdb_open_column_families`, the plain `DB`, with no transaction layer.
+- `Db::start_readable_transaction` takes `rocksdb_create_snapshot` and creates a `rocksdb_writebatch_wi`. `ReadableTransaction::commit` calls `rocksdb_write_writebatch_wi` and nothing else. `Db::start_transaction` creates a plain `rocksdb_writebatch`, and `Transaction::commit` calls `rocksdb_write`. Neither path takes a lock, checks a sequence number or retries.
+- `lib/oxigraph/src/storage/rocksdb.rs` holds no lock for transactions. Its only `Mutex` is the bulk loader's progress counter.
+- `lib/oxigraph/src/sparql/update.rs`, `PreparedSparqlUpdate::on_store`, picks the transaction with `update_requires_read`. A request whose first operation is a `DELETE`/`INSERT`/`WHERE` and whose other operations read nothing does not count as reading, so it gets the write-only transaction, and `WriteOnlyUpdateEvaluator::eval_delete_insert` evaluates its `WHERE` on `storage.snapshot()`, fills the batch and commits. Every other reading request gets the readable transaction. Both have the same window between the snapshot and the write.
+- `lib/oxigraph/src/storage/memory.rs`, `MemoryStorage::start_transaction`, takes `self.transaction_lock.lock()` under the comment "We ensure there is only one transaction running" and keeps the guard until the transaction commits or is dropped. That is why the in-memory store is right.
+- `cli/src/main.rs`, `evaluate_sparql_update`, calls `prepared.on_store(store).execute()` from the request's thread with no lock, so by the source two HTTP clients are enough. We did not measure the server.
+- At `v0.4.11`, `rocksdb_wrapper.rs` opened a `rocksdb_transactiondb`, and `Db::transaction` ran the closure in a loop that began a RocksDB transaction with a snapshot and ran it again when the commit reported `Busy`, `TimedOut` or `TryAgain`. We did not run 0.4.11, so this is the source's word that a caller who relied on a guarded update there loses the guarantee on upgrading.
+
+**Why we think it is worth changing.**
+
+1. It reaches the simplest use of an update. The changelog's example is a graph dropped while a triple is added to it. The case here is one request that reads a value and writes the next, which is how a client does optimistic concurrency, allocates an identifier or keeps a count in a store that speaks SPARQL only.
+2. It is silent. No error, no retry, and reading your own write succeeds.
+3. The two backends differ, so the usual way of testing hides it.
+4. The API documentation does not say it. `Store`, `Store::start_transaction` and pyoxigraph's `Store` promise the "repeatable read" isolation level and atomic operations, and the caveat is in the changelog and the wiki only. A lost update is also the anomaly that repeatable read excludes in Berenson and others, "A Critique of ANSI SQL Isolation Levels" (1995), where P4 is not possible at that level, so a reader who knows the term expects the guard to hold.
+5. A downstream project met the same thing on 0.5.9 and worked around it with a mutex over its write transactions (coasys/ad4m#1452, closed in favour of its #1453).
+
+**Proposed fix.** Give the RocksDB storage the lock the in-memory storage already has, and hold it only where it is needed.
+
+- A transaction that reads (`start_readable_transaction`, and the write-only transaction of a request that starts with a `DELETE`/`INSERT`/`WHERE`) takes the lock before its snapshot and keeps it until it commits or is dropped.
+- A write that reads nothing (`Store::insert`, `extend`, `remove`, `load_from_reader`, `INSERT DATA`, the bulk loader's ingestion) builds its batch with no lock and takes the lock only while RocksDB applies it, so it cannot land inside a reading transaction's window.
+- Queries and every other snapshot read never take it.
+
+The lock is `memory.rs`'s `Lock`, whose guard is `Send` and `Sync`, so `Transaction` stays `Send` and `Sync` (#1759). The patch is against `v0.5.13`. **It has not been compiled or run**, so treat it as a sketch to review. The places it edits are the same on `main`, where `GraphUpdateOperation::DeleteInsert` is a tuple variant.
+
+```diff
+diff --git a/lib/oxigraph/src/sparql/update.rs b/lib/oxigraph/src/sparql/update.rs
+index 5627af0..1ee7829 100644
+--- a/lib/oxigraph/src/sparql/update.rs
++++ b/lib/oxigraph/src/sparql/update.rs
+@@ -104,9 +104,16 @@ impl PreparedSparqlUpdate {
+                 .map(UpdateTransaction::OwnedReadable)
+         } else {
+             let storage = store.storage();
+-            storage
+-                .start_transaction()
+-                .map(|transaction| UpdateTransaction::Owned(transaction, storage))
++            let transaction = if matches!(
++                self.update.operations.first(),
++                Some(GraphUpdateOperation::DeleteInsert { .. })
++            ) {
++                // The changes are computed from a snapshot of the store taken during the evaluation
++                storage.start_transaction_from_snapshot()
++            } else {
++                storage.start_transaction()
++            };
++            transaction.map(|transaction| UpdateTransaction::Owned(transaction, storage))
+         };
+         BoundPreparedSparqlUpdate {
+             evaluator: self.evaluator,
+diff --git a/lib/oxigraph/src/storage/memory.rs b/lib/oxigraph/src/storage/memory.rs
+index a57cba7..6c95a3d 100644
+--- a/lib/oxigraph/src/storage/memory.rs
++++ b/lib/oxigraph/src/storage/memory.rs
+@@ -1017,20 +1017,21 @@ fn pop_boxed_slice<T: Copy>(slice: &[T]) -> Box<[T]> {
+     slice[..slice.len() - 1].into()
+ }
+ 
+-struct Lock {
++/// A lock whose guard is `Send` and `Sync`, so a transaction holding it stays `Send` and `Sync`.
++pub(super) struct Lock {
+     mutex: Mutex<bool>,
+     condvar: Condvar,
+ }
+ 
+ impl Lock {
+-    fn new() -> Self {
++    pub(super) fn new() -> Self {
+         Self {
+             mutex: Mutex::new(false),
+             condvar: Condvar::new(),
+         }
+     }
+ 
+-    fn lock(&self) -> LockGuard<'_> {
++    pub(super) fn lock(&self) -> LockGuard<'_> {
+         *self
+             .condvar
+             .wait_while(self.mutex.lock().unwrap(), |v| *v)
+@@ -1042,7 +1043,7 @@ impl Lock {
+     }
+ }
+ 
+-struct LockGuard<'a> {
++pub(super) struct LockGuard<'a> {
+     mutex: &'a Mutex<bool>,
+     condvar: &'a Condvar,
+ }
+diff --git a/lib/oxigraph/src/storage/mod.rs b/lib/oxigraph/src/storage/mod.rs
+index 900c486..148971c 100644
+--- a/lib/oxigraph/src/storage/mod.rs
++++ b/lib/oxigraph/src/storage/mod.rs
+@@ -123,6 +123,26 @@ impl Storage {
+         })
+     }
+ 
++    /// Starts a write-only transaction whose changes are computed from a [`snapshot`](Self::snapshot)
++    /// taken after this call, with no other write applied in between.
++    #[cfg_attr(
++        not(all(not(target_family = "wasm"), feature = "rocksdb")),
++        expect(clippy::unnecessary_wraps)
++    )]
++    pub fn start_transaction_from_snapshot(&self) -> Result<StorageTransaction<'_>, StorageError> {
++        Ok(StorageTransaction {
++            kind: match &self.kind {
++                #[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
++                StorageKind::RocksDb(storage) => {
++                    StorageTransactionKind::RocksDb(storage.start_transaction_from_snapshot()?)
++                }
++                StorageKind::Memory(storage) => {
++                    StorageTransactionKind::Memory(storage.start_transaction())
++                }
++            },
++        })
++    }
++
+     #[cfg_attr(
+         not(all(not(target_family = "wasm"), feature = "rocksdb")),
+         expect(clippy::unnecessary_wraps)
+diff --git a/lib/oxigraph/src/storage/rocksdb.rs b/lib/oxigraph/src/storage/rocksdb.rs
+index 16985c4..7be0b07 100644
+--- a/lib/oxigraph/src/storage/rocksdb.rs
++++ b/lib/oxigraph/src/storage/rocksdb.rs
+@@ -10,6 +10,7 @@ use crate::storage::binary_encoder::{
+     write_spo_quad, write_spog_quad, write_term,
+ };
+ pub use crate::storage::error::{CorruptionError, StorageError};
++use crate::storage::memory::{Lock, LockGuard};
+ use crate::storage::numeric_encoder::{
+     Decoder, EncodedQuad, EncodedTerm, StrHash, StrHashHasher, StrLookup, insert_term,
+ };
+@@ -79,6 +80,15 @@ pub struct RocksDbStorage {
+     dpos_cf: ColumnFamily,
+     dosp_cf: ColumnFamily,
+     graphs_cf: ColumnFamily,
++    /// Serializes the transactions that read with every other write.
++    ///
++    /// A transaction that reads computes its changes from a snapshot and RocksDB applies them without
++    /// checking what was committed since, so a write landing between its snapshot and its commit
++    /// would be silently overwritten (a lost update).
++    /// Such a transaction holds this lock from before its snapshot until it is committed or dropped,
++    /// and a write that reads nothing holds it only while it is applied.
++    /// Queries and other snapshot reads never take it.
++    write_lock: Arc<Lock>,
+ }
+ 
+ impl RocksDbStorage {
+@@ -186,6 +196,7 @@ impl RocksDbStorage {
+             dpos_cf: db.column_family(DPOS_CF)?,
+             dosp_cf: db.column_family(DOSP_CF)?,
+             graphs_cf: db.column_family(GRAPHS_CF)?,
++            write_lock: Arc::new(Lock::new()),
+             db,
+         };
+         this.migrate()?;
+@@ -356,21 +367,42 @@ impl RocksDbStorage {
+         }
+     }
+ 
++    /// Starts a write-only transaction whose changes do not depend on the store content.
+     pub fn start_transaction(&self) -> Result<RocksDbStorageTransaction<'_>, StorageError> {
+         Ok(RocksDbStorageTransaction {
+             buffer: Vec::new(),
+             transaction: self.db.start_transaction()?,
+             storage: self,
++            write_guard: None,
++        })
++    }
++
++    /// Starts a write-only transaction whose changes are computed from a [`snapshot`](Self::snapshot)
++    /// taken after this call.
++    ///
++    /// No other write is applied between this call and the commit or the drop of the transaction.
++    pub fn start_transaction_from_snapshot(
++        &self,
++    ) -> Result<RocksDbStorageTransaction<'_>, StorageError> {
++        let write_guard = self.write_lock.lock();
++        Ok(RocksDbStorageTransaction {
++            buffer: Vec::new(),
++            transaction: self.db.start_transaction()?,
++            storage: self,
++            write_guard: Some(write_guard),
+         })
+     }
+ 
+     pub fn start_readable_transaction(
+         &self,
+     ) -> Result<RocksDbStorageReadableTransaction<'_>, StorageError> {
++        // We ensure no other write is applied between the snapshot of this transaction and its commit
++        let write_guard = self.write_lock.lock();
+         Ok(RocksDbStorageReadableTransaction {
+             buffer: Vec::new(),
+             transaction: self.db.start_readable_transaction()?,
+             storage: self,
++            _write_guard: write_guard,
+         })
+     }
+ 
+@@ -937,6 +969,7 @@ pub struct RocksDbStorageTransaction<'a> {
+     buffer: Vec<u8>,
+     transaction: Transaction,
+     storage: &'a RocksDbStorage,
++    write_guard: Option<LockGuard<'a>>,
+ }
+ 
+ impl RocksDbStorageTransaction<'_> {
+@@ -1118,6 +1151,11 @@ impl RocksDbStorageTransaction<'_> {
+     }
+ 
+     pub fn commit(self) -> Result<(), StorageError> {
++        // We do not apply the changes while a transaction that reads is running
++        let _write_guard = match self.write_guard {
++            Some(write_guard) => write_guard,
++            None => self.storage.write_lock.lock(),
++        };
+         self.transaction.commit()
+     }
+ }
+@@ -1127,6 +1165,7 @@ pub struct RocksDbStorageReadableTransaction<'a> {
+     buffer: Vec<u8>,
+     transaction: ReadableTransaction<'a>,
+     storage: &'a RocksDbStorage,
++    _write_guard: LockGuard<'a>, // Released when the transaction is committed or dropped
+ }
+ 
+ impl RocksDbStorageReadableTransaction<'_> {
+@@ -1459,7 +1498,11 @@ impl RocksDbStorageBulkLoader<'_> {
+         if self.sst_files.is_empty() {
+             return Ok(());
+         }
+-        self.storage.db.insert_stt_files(&self.sst_files)?;
++        {
++            // We do not apply the changes while a transaction that reads is running
++            let _write_guard = self.storage.write_lock.lock();
++            self.storage.db.insert_stt_files(&self.sst_files)?;
++        }
+         for (_, file) in &self.sst_files {
+             remove_file(file)?;
+         }
+diff --git a/lib/oxigraph/src/store.rs b/lib/oxigraph/src/store.rs
+index 8dba815..58bfeeb 100644
+--- a/lib/oxigraph/src/store.rs
++++ b/lib/oxigraph/src/store.rs
+@@ -72,6 +72,9 @@ use std::thread::available_parallelism;
+ /// This store ensures the "repeatable read" isolation level: the store only exposes changes that have
+ /// been "committed" (i.e., no partial writes), and the exposed state does not change for the complete duration
+ /// of a read operation (e.g., a SPARQL query) or a read/write operation (e.g., a SPARQL update).
++/// Read/write operations (a SPARQL update with a `WHERE` clause, a [`Transaction`]) are applied one at a time,
++/// so none of them overwrites the changes another one committed after it started reading.
++/// Read operations are never blocked by them.
+ ///
+ /// Usage example:
+ /// ```
+@@ -549,6 +552,11 @@ impl Store {
+     /// (e.g., a SPARQL query) or a read/write operation (e.g., a SPARQL update).
+     /// Transactional operations are also atomic.
+     ///
++    /// Only one transaction runs at a time: this method waits for the end of the running one, and the other
++    /// write operations on the store wait for the end of the transaction.
++    /// Starting a second transaction, or writing to the store outside of the transaction,
++    /// from the thread that holds a transaction blocks forever.
++    ///
+     /// Note that the transaction keeps the complete set of changes into memory, do not use them to load
+     /// tens of millions of triples.
+     ///
+```
+
+What it costs, as far as we can tell without measuring.
+
+- Two reading updates no longer overlap. Today they overlap and one of them may be wrong.
+- Blind writes are applied one at a time, where RocksDB could group several writers into one write. A shared mode for blind writes and an exclusive mode for reading transactions would keep that grouping, at the price of a second lock type.
+- A request that needs the readable transaction and contains a `LOAD` holds the lock while it fetches.
+- A thread that holds a `Transaction` and starts a second one, or writes to the store outside it, blocks forever. The in-memory store already behaves so.
+
+Alternatives. Detect instead of exclude, by comparing the snapshot's sequence number with the latest one under a short lock at commit, and evaluate the request again when they differ. Or keep today's behaviour as the default and offer the lock as a `StoreOptions` setting. If neither is wanted, a sentence in the documentation of `Store` and of pyoxigraph's `Store` saying that concurrent updates on disk may overwrite each other, and that a caller who needs a guard must send updates one at a time, would have saved us the search.
+
+**A test.** As `lib/oxigraph/tests/concurrent_updates.rs`, written for `v0.5.13` and also not compiled. The three in-memory tests should pass today and the three on-disk tests should fail without the fix.
+
+```rust
+#![cfg(test)]
+#![allow(clippy::panic_in_result_fn)]
+
+//! Concurrent read-modify-write operations on one [`Store`] must not lose updates.
+
+use oxigraph::model::{GraphNameRef, Literal, NamedNodeRef, QuadRef, Term};
+use oxigraph::sparql::{QueryResults, SparqlEvaluator};
+use oxigraph::store::Store;
+use std::error::Error;
+use std::thread;
+#[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
+use tempfile::TempDir;
+
+type TestResult<T> = Result<T, Box<dyn Error + Send + Sync>>;
+
+const THREADS: u64 = 4;
+const TARGET: u64 = 300;
+const INCREMENTS: u64 = 200;
+
+fn update(store: &Store, update: &str) -> TestResult<()> {
+    SparqlEvaluator::new()
+        .parse_update(update)?
+        .on_store(store)
+        .execute()?;
+    Ok(())
+}
+
+fn number(store: &Store, query: &str) -> TestResult<u64> {
+    if let QueryResults::Solutions(mut solutions) = SparqlEvaluator::new()
+        .parse_query(query)?
+        .on_store(store)
+        .execute()?
+    {
+        if let Some(solution) = solutions.next() {
+            if let Some(Term::Literal(literal)) = solution?.get(0) {
+                return Ok(literal.value().parse()?);
+            }
+        }
+    }
+    Err("the query did not return a number".into())
+}
+
+fn join(handles: Vec<thread::ScopedJoinHandle<'_, TestResult<()>>>) -> TestResult<()> {
+    for handle in handles {
+        handle.join().map_err(|_| "a thread panicked")??;
+    }
+    Ok(())
+}
+
+/// Each thread reads the counter N and sends one update that moves it to N+1 only if it is still N,
+/// together with a marker of its own. Exactly one update may succeed for each value of the counter.
+fn compare_and_set(store: &Store) -> TestResult<()> {
+    update(store, "INSERT DATA { <urn:c> <urn:v> 0 }")?;
+    thread::scope(|scope| {
+        join(
+            (0..THREADS)
+                .map(|t| {
+                    scope.spawn(move || -> TestResult<()> {
+                        for i in 0.. {
+                            let n = number(store, "SELECT ?n WHERE { <urn:c> <urn:v> ?n }")?;
+                            if n >= TARGET {
+                                break;
+                            }
+                            update(
+                                store,
+                                &format!(
+                                    "DELETE {{ <urn:c> <urn:v> {n} }} INSERT {{ <urn:c> <urn:v> {m} . <urn:w:{t}:{i}> <urn:at> {m} }} WHERE {{ <urn:c> <urn:v> {n} }}",
+                                    m = n + 1
+                                ),
+                            )?;
+                        }
+                        Ok(())
+                    })
+                })
+                .collect(),
+        )
+    })?;
+    let markers = number(store, "SELECT (COUNT(?w) AS ?c) WHERE { ?w <urn:at> ?x }")?;
+    let clashes = number(
+        store,
+        "SELECT (COUNT(*) AS ?c) WHERE { SELECT ?x WHERE { ?w <urn:at> ?x } GROUP BY ?x HAVING (COUNT(?w) > 1) }",
+    )?;
+    assert_eq!(
+        (markers, clashes),
+        (TARGET, 0),
+        "{markers} updates succeeded for {TARGET} values of the counter, and {clashes} values were written by more than one update"
+    );
+    Ok(())
+}
+
+/// Each thread increments a counter in a single update.
+fn increment(store: &Store) -> TestResult<()> {
+    update(store, "INSERT DATA { <urn:k> <urn:v> 0 }")?;
+    thread::scope(|scope| {
+        join(
+            (0..THREADS)
+                .map(|_| {
+                    scope.spawn(move || -> TestResult<()> {
+                        for _ in 0..INCREMENTS {
+                            update(
+                                store,
+                                "DELETE { <urn:k> <urn:v> ?n } INSERT { <urn:k> <urn:v> ?m } WHERE { <urn:k> <urn:v> ?n BIND(?n + 1 AS ?m) }",
+                            )?;
+                        }
+                        Ok(())
+                    })
+                })
+                .collect(),
+        )
+    })?;
+    let values = number(store, "SELECT (COUNT(?n) AS ?c) WHERE { <urn:k> <urn:v> ?n }")?;
+    let last = number(store, "SELECT (MAX(?n) AS ?m) WHERE { <urn:k> <urn:v> ?n }")?;
+    assert_eq!(
+        (values, last),
+        (1, THREADS * INCREMENTS),
+        "the counter holds {values} values, the largest being {last}"
+    );
+    Ok(())
+}
+
+/// Each thread increments a counter with the `Transaction` API: read, remove, insert, commit.
+fn transaction_increment(store: &Store) -> TestResult<()> {
+    let k = NamedNodeRef::new_unchecked("urn:t");
+    let v = NamedNodeRef::new_unchecked("urn:v");
+    store.insert(QuadRef::new(
+        k,
+        v,
+        &Literal::from(0_i64),
+        GraphNameRef::DefaultGraph,
+    ))?;
+    thread::scope(|scope| {
+        join(
+            (0..THREADS)
+                .map(|_| {
+                    scope.spawn(move || -> TestResult<()> {
+                        for _ in 0..INCREMENTS {
+                            let mut transaction = store.start_transaction()?;
+                            let current = transaction
+                                .quads_for_pattern(Some(k.into()), Some(v), None, None)
+                                .collect::<Result<Vec<_>, _>>()?;
+                            for quad in &current {
+                                let Term::Literal(literal) = &quad.object else {
+                                    return Err("the counter is not a literal".into());
+                                };
+                                let next = literal.value().parse::<i64>()? + 1;
+                                transaction.remove(quad);
+                                transaction.insert(QuadRef::new(
+                                    k,
+                                    v,
+                                    &Literal::from(next),
+                                    GraphNameRef::DefaultGraph,
+                                ));
+                            }
+                            transaction.commit()?;
+                        }
+                        Ok(())
+                    })
+                })
+                .collect(),
+        )
+    })?;
+    let values = number(store, "SELECT (COUNT(?n) AS ?c) WHERE { <urn:t> <urn:v> ?n }")?;
+    let last = number(store, "SELECT (MAX(?n) AS ?m) WHERE { <urn:t> <urn:v> ?n }")?;
+    assert_eq!(
+        (values, last),
+        (1, THREADS * INCREMENTS),
+        "the counter holds {values} values, the largest being {last}"
+    );
+    Ok(())
+}
+
+#[test]
+fn test_concurrent_compare_and_set() -> TestResult<()> {
+    compare_and_set(&Store::new()?)
+}
+
+#[test]
+#[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
+fn test_concurrent_compare_and_set_on_disk() -> TestResult<()> {
+    let dir = TempDir::new()?;
+    compare_and_set(&Store::open(&dir)?)
+}
+
+#[test]
+fn test_concurrent_increment() -> TestResult<()> {
+    increment(&Store::new()?)
+}
+
+#[test]
+#[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
+fn test_concurrent_increment_on_disk() -> TestResult<()> {
+    let dir = TempDir::new()?;
+    increment(&Store::open(&dir)?)
+}
+
+#[test]
+fn test_concurrent_transaction_increment() -> TestResult<()> {
+    transaction_increment(&Store::new()?)
+}
+
+#[test]
+#[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
+fn test_concurrent_transaction_increment_on_disk() -> TestResult<()> {
+    let dir = TempDir::new()?;
+    transaction_increment(&Store::open(&dir)?)
+}
 ```
 
 ### jena-avg-all-unbound

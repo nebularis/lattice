@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 18 branches, the units' own state from this tree, the newest board day 2026-11-12.
+Built from the status records on 19 branches, the units' own state from this tree, the newest board day 2026-11-12.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -49,7 +49,7 @@ Built from the status records on 18 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-12 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 6 planned, 5 built, 3 merged, 2 verified, 1 blocked | docs/placement-vehicles-structure |
+| [ledger](plans/ledger.md) | unit | built 2026-11-12 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 6 built, 6 planned, 3 merged, 2 verified, 1 blocked | docs/placement-vehicles-structure |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -70,7 +70,7 @@ Built from the status records on 18 branches, the units' own state from this tre
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-09 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 | VM-0 | 9 verified, 3 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-09 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 | VM-0 | 9 verified, 4 built |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -345,6 +345,7 @@ gantt
     LG-14 a benchmark of the credit :lg14, 2026-11-11, 2026-11-12
     LG-15 LG-14 gaps closed native :lg15, 2026-11-11, 2026-11-12
     LG-16 the cut the writer records :lg16, 2026-11-12, 2026-11-13
+    LG-17 LG-16 gaps closed :lg17, 2026-11-12, 2026-11-13
     LG-2 the runtime document :lg2, 2026-10-27, 2026-11-09
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
     LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-10
@@ -488,6 +489,7 @@ gantt
     VM-1 the binding :vm1, 2026-11-05, 2026-11-06
     VM-10 the getting-started guide :vm10, 2026-11-09, 2026-11-10
     VM-11 the pin at v0.2.27 :vm11, 2026-11-09, 2026-11-10
+    VM-12 bootstrap erlang :vm12, 2026-11-12, 2026-11-13
     VM-2 the index tasks and hooks over :vm2, 2026-11-05, 2026-11-06
     VM-3 the quanta and owners :vm3, 2026-11-05, 2026-11-06
     VM-4 the board tasks and the work :vm4, 2026-11-05, 2026-11-06
@@ -876,7 +878,8 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
 | `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
-| `docs/placement-vehicles-structure` | 2026-11-12 | 75 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-16, LG-2, LG-7, OD-DOC4 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-12 | 11 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B3, SVA-B4, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O3, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R5, SVA-S1, SVA-S2, SVA-S3 |
+| `docs/placement-vehicles-structure` | 2026-11-12 | 82 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-16, LG-17, LG-2, LG-7, OD-DOC4 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -940,7 +943,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 109 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 110 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -1025,7 +1028,8 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 8. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
 9. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
 10. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
-11. **Start OD-DOC4, the layer interactions record**, once the ledger's design is settled (the scenarios note ruled through, LG-Q23 decided on LG-16's figures, machine S's brief written). One maintained architecture document on how the layers work together at design time and at runtime, with two events traced end to end, [briefed](plans/improved-ontology-documentation.md) with its inputs, and kept current by STD-326.
+11. **Start OD-DOC4, the layer interactions record**, once the ledger's design is settled (the scenarios note ruled through, LG-Q23 decided on LG-16's and LG-17's figures, machine S's brief written). One maintained architecture document on how the layers work together at design time and at runtime, with two events traced end to end, [briefed](plans/improved-ontology-documentation.md) with its inputs, and kept current by STD-326.
+12. **Settle the ledger's writer on LG-17's figures**, added 2026-11-12 ([pack](validation/LG-17.md)). Decide LG-Q23, which the measurements support as (a) with (d). Decide where single-writer is provided for Oxigraph on disk, which loses guarded writes by a design choice of Oxigraph 0.5.0 (TSD-73, TD-162), and whether to file the [drafted report](notes/upstream-sparql-engine-reports.md#oxigraph-on-disk-store-loses-concurrent-updates), whose patch is written and not compiled. Decide whether the guard is one revision per owner or the ledger runs one writer, since retries lose throughput on every store measured. Decide what a read as of an effective position means once a ceiling has cut a credit (PDD-14). Push the triple-stores domain, which holds TSD-73 and TSD-74 in three local commits.
 
 ## 11. Completed units
 
