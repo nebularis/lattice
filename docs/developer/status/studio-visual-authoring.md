@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** the first wave, the slices that wait on no other: SVA-B1, SVA-O1, SVA-O3, SVA-M1, SVA-M2a and SVA-R0. The maintainer confirms or changes SVA-Q3 before SVA-P3.
+**Next action:** paused 2026-11-12 at the maintainer's request. The [handover](../notes/studio-visual-authoring-handover-2026-11-12.md) says where each slice stands and what to do next, in order: finish SVA-B2a, run SVA-R0's probes, finish SVA-R1, build SVA-O2. The maintainer confirms or changes SVA-Q3 before SVA-P3, and accepts or rejects ADR-A154.
 
 ## Slices
 
@@ -77,3 +77,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12: SVA-O1 built, [Validation Pack](../validation/SVA-O1.md). The kit is `src/canvas/`, the layered layout is one function others can replace (SVA-Q8), and the mapping canvas runs on it with its picture unchanged, held by a browser test written and passed on the old canvas first. Layout took 2 to 3 ms for 100 nodes, 5 to 7 ms for 500 and 15 to 20 ms for 2,000, over five runs, so no web worker is needed. Two faults of the old canvas are fixed: stored positions were read only on mount, and laying out again could do nothing under React's strict mode. Verified with 234 unit tests, the type check and 25 browser tests on the fake service.
 - 2026-11-12: SVA-O2 picked up.
 - 2026-11-12: work paused at the maintainer's request. SVA-R0, SVA-B2a and SVA-O2 were stopped mid-edit and their files committed as they stood, unverified and possibly not compiling, so nothing is lost. Each resumes from its files: SVA-R0 has its probe scripts and no record of results yet, SVA-B2a was part way through the service's route and its tests, and SVA-O2 had begun the graph derivation. None of the three has been run or reviewed.
+- 2026-11-12: the paused slices were checked with no change to their code. SVA-B2a compiles and passes its modules' tests, 24 in core, 198 in the service and 10 in the writer, and the worker's 16 for the fence job, and still needs review, a Validation Pack and a probe. SVA-R0 has its probe scripts and no results. SVA-O2 wrote no file. The [handover](../notes/studio-visual-authoring-handover-2026-11-12.md) was written.
