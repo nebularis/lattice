@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 18 branches, the units' own state from this tree, the newest board day 2026-11-11.
+Built from the status records on 18 branches, the units' own state from this tree, the newest board day 2026-11-12.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -49,7 +49,7 @@ Built from the status records on 18 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-11 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 6 planned, 4 built, 3 merged, 2 verified, 1 blocked | docs/placement-vehicles-structure |
+| [ledger](plans/ledger.md) | unit | building 2026-11-12 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · built 2026-10-27 on ccs-trunk, ccs/board-corrections · built 2026-11-08 on claude/adoring-torvalds-ce7ffe, getting-started-vyd, vyvid-quanta-builtin · built 2026-11-09 on ccr-242894ed-j78yu1, fm/ledger-proofs-second-widening, tutorial/studio-guide | LG-2 | 6 planned, 4 built, 3 merged, 2 verified, 1 building, 1 blocked | docs/placement-vehicles-structure |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -344,6 +344,7 @@ gantt
     LG-13 the insurance example cap :lg13, 2026-11-10, 2026-11-11
     LG-14 a benchmark of the credit :lg14, 2026-11-11, 2026-11-12
     LG-15 LG-14 gaps closed native :lg15, 2026-11-11, 2026-11-12
+    LG-16 the cut the writer records :active, lg16, 2026-11-12, 2026-11-13
     LG-2 the runtime document :lg2, 2026-10-27, 2026-11-09
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
     LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-10
@@ -875,7 +876,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
 | `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
-| `docs/placement-vehicles-structure` | 2026-11-11 | 71 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-2, LG-7, OD-DOC4 |
+| `docs/placement-vehicles-structure` | 2026-11-12 | 72 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-16, LG-2, LG-7, OD-DOC4 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -1024,6 +1025,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 8. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
 9. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
 10. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
+11. **Start OD-DOC4, the layer interactions record**, once the ledger's design is settled (the scenarios note ruled through, LG-Q23 decided on LG-16's figures, machine S's brief written). One maintained architecture document on how the layers work together at design time and at runtime, with two events traced end to end, [briefed](plans/improved-ontology-documentation.md) with its inputs, and kept current by STD-326.
 
 ## 11. Completed units
 

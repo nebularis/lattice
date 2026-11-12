@@ -49,7 +49,7 @@ Since then the work has been design rather than build, and it has answered the w
 | WPG-Q2 | **open, leaning (a).** Where the declared ceiling lives: on `ldg:AccountDefinition` as a per-account availability bound, on the draw term, or in Quantification beside LF-Q22(a)'s maximum magnitude per value space. The bound is a property of the account, and LF-Q22's is about a value space, so the two are different things that happen to be upper bounds | the maintainer, then LG-4 |
 | the `owl:rational` probe | **done by LG-2**, TSD-70. rdflib, Oxigraph and Jena keep the literal and none compares it by value, so a proportion is two integers. ES-5 can rely on the finding | closed |
 
-**Next action:** the maintainer's verification of LG-7 and LG-2 from their packs, and LG-Q9 and LG-Q10. Then LG-3, Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and no longer waits on LG-2.
+**Next action:** the maintainer's verification of LG-7 and LG-2 from their packs, and LG-Q9 and LG-Q10. Then LG-3, Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and no longer waits on LG-2. **Then, as soon as the design is settled:** the documentation unit's OD-DOC4, the layer interactions record, whose brief holds the inputs this unit's design discussions produced.
 
 ## 2026-11-09, LG-8 built
 

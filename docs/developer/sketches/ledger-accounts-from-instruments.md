@@ -109,11 +109,11 @@ Leaning (a), since it pays TD-102, which a historical read needs anyway for the 
 
 **Runtime dials leave the configuration document.** A setting that tunes cost and changes no meaning, the closing recurrence that sets how often a checkpoint is written for example, belongs in a profile or is derived. Which ancestor is read in what way is always derived.
 
-**A ledger profile exists, and it is the deployment's (LG-Q24).** It is one of the deployment's rules for every ledger it runs. It says whether a ceiling above a stated amount is admitted, off by default, and it holds the dials above.
+**A ledger profile exists, and it is the deployment's (LG-Q24).** It is one of the deployment's rules for every ledger it runs. It says whether a ceiling above a stated amount is admitted, off by default, and it holds the dials above. It is a versioned node the deployment authors, as Surface's and Persistence's profiles are, decided the same day.
 
 **LG-Q21 is derivation, and its home is Surface.** An account definition is derived from an instrument's meaning by a projection contract, stated once per kind of qualifier, which lowers into a MORK mapping and compiles to a query (ADR-A17, ADR-A18). The contract names Instrument's and Ledger's terms without either layer importing the other, and lives with the deployment or the applied module that owns the kind. This replaces options (a) and (c) of section 5, whose content it keeps. It is not built in the ledger's current slices. The design only fixes where it lands.
 
-**Authored definitions stay legal (PRI-01).** Anyone may write an account definition directly, and the shapes hold it to the same laws. Which holds where an authored and a derived definition answer the same qualifier is LG-Q25.
+**Authored definitions stay legal (PRI-01).** Anyone may write an account definition directly, and the shapes hold it to the same laws. Where an authored and a derived definition answer the same qualifier, the conflict is refused and neither overrides the other (LG-Q25, decided the same day).
 
 **Where a field's value may come from.** Four sources and no fifth.
 
