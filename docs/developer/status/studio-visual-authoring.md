@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** planned. SVA-Q1, SVA-Q2 and SVA-Q4 to SVA-Q16 answered 2026-11-12, SVA-Q3 open
+**Status:** building 2026-11-12. SVA-Q1, SVA-Q2 and SVA-Q4 to SVA-Q16 answered 2026-11-12, SVA-Q3 open
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -28,14 +28,14 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
 | SVA-R4 | the browser's run controller and the dock's run pane | planned | SVA-R1 |
 | SVA-R5 | the run protocol's failure cases on the real stack | planned | SVA-R2, SVA-R3, SVA-R4 |
-| SVA-B1 | catalog reading, ontology headers, the import closure and its plan | planned |  |
+| SVA-B1 | catalog reading, ontology headers, the import closure and its plan | building 2026-11-12 |  |
 | SVA-B2a | several imports held by one write, each with its ontology and version IRI | planned |  |
 | SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | planned | SVA-B2a |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | planned | SVA-B1, SVA-B2a |
 | SVA-B4 | the import graph | planned | SVA-B3, SVA-O1 |
 | SVA-O1 | the canvas kit, with layout in a web worker | planned |  |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | planned | SVA-O1 |
-| SVA-O3 | the axiom reader and the element forms | planned |  |
+| SVA-O3 | the axiom reader and the element forms | building 2026-11-12 |  |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | planned | SVA-O1 |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | planned | SVA-R3 |
@@ -44,7 +44,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
 | SVA-S2 | the surface simulation executor | planned | SVA-P3 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
-| SVA-M1 | the mapping schemes listed on the left | planned |  |
+| SVA-M1 | the mapping schemes listed on the left | building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
 | SVA-M2b | template libraries in `mork2rml`, `mork_transforms` and MCN | planned | SVA-M2a |
 | SVA-M2c | a library as a unit, and a compile that reads libraries | planned | SVA-M2a |
@@ -62,3 +62,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 
 - 2026-11-12: raised by the maintainer. Sketched and planned, SVA-Q1 to SVA-Q16 raised, the board written with 30 slices planned. BL-20 added to the backlog.
 - 2026-11-12: SVA-Q1, SVA-Q2 and SVA-Q4 to SVA-Q16 answered by the maintainer. SVA-P5 added for SVA-Q12 (c). BL-21 to BL-24 added. The unit is to be built autonomously on its branch.
+- 2026-11-12: SVA-B1, SVA-O3 and SVA-M1 picked up, three slices of the application that touch no file in common.
