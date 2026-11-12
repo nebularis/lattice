@@ -18,7 +18,7 @@ Each engine departure from the SPARQL 1.1 specification that the store-discovery
 | [oxigraph-optional-inside-graph-reads-every-graph](#oxigraph-optional-inside-graph-reads-every-graph) | Oxigraph | TSD-71 | not filed. Drafted 2026-11-11 and amended the same day as a new issue, since it is on 0.5.11, 0.5.12 and 0.5.13 and so is not the 0.5.13 regression of [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008). It narrows [oxigraph/oxigraph#1980](https://github.com/oxigraph/oxigraph/issues/1980) to a cause and a suggested fix |
 | [oxigraph-count-error](#oxigraph-count-error) | Oxigraph | TSD-43 | filed 2026-10-27 as [oxigraph/oxigraph#2009](https://github.com/oxigraph/oxigraph/issues/2009), fixed by the merged [oxigraph/oxigraph#2025](https://github.com/oxigraph/oxigraph/pull/2025), not yet released, checked 2026-11-11 from a source build. One case as filed expects the wrong value, with a correction ready to paste |
 | [oxigraph-avg-all-unbound](#oxigraph-avg-all-unbound) | Oxigraph | TSD-43 | not filed |
-| [oxigraph-on-disk-store-loses-concurrent-updates](#oxigraph-on-disk-store-loses-concurrent-updates) | Oxigraph | TSD-73 | not filed. Drafted 2026-11-12 from a full read of the storage source at `v0.5.13`. The behaviour is a trade-off the project made on purpose in 0.5.0 ([oxigraph/oxigraph#1310](https://github.com/oxigraph/oxigraph/issues/1310)), so this asks for a change of design or of documentation and offers a patch, which is written and not compiled |
+| [oxigraph-on-disk-store-loses-concurrent-updates](#oxigraph-on-disk-store-loses-concurrent-updates) | Oxigraph | TSD-73 | not filed. Drafted 2026-11-12 from a full read of the storage source at `v0.5.13`. The behaviour is a trade-off the project made on purpose in 0.5.0 ([oxigraph/oxigraph#1310](https://github.com/oxigraph/oxigraph/issues/1310)), so this asks for a change of design or of documentation and offers a patch, which was built and tested on `v0.5.13` and on `main` the same day |
 | [jena-avg-all-unbound](#jena-avg-all-unbound) | Apache Jena ARQ | TSD-43 | not filed |
 | [jena-str-of-blank-node](#jena-str-of-blank-node) | Apache Jena ARQ | TSD-43 | not filed |
 | [jena-clear-graph-of-a-store-without-empty-graphs](#jena-clear-graph-of-a-store-without-empty-graphs) | Apache Jena ARQ | TSD-50 | not filed |
@@ -368,9 +368,9 @@ def test_avg_over_a_group_with_no_value_is_zero():
 
 **On-disk store: two concurrent SPARQL updates that read the same data both commit, so a guarded `DELETE`/`INSERT`/`WHERE` is not a compare-and-set and an increment loses counts. A small fix is proposed**
 
-Oxigraph, TSD-73, not filed. Drafted 2026-11-12. This is not a departure from the SPARQL 1.1 specification, which asks that one request be atomic and leaves isolation between requests to the store. It is recorded here because it is a report ready to file. The tracker was searched on 2026-11-12 for concurrent updates, lost updates, conflicts, transactions, isolation and `WriteBatchWithIndex`, and holds no report of it. [oxigraph/oxigraph#1310](https://github.com/oxigraph/oxigraph/issues/1310), closed 2025-07-20 as done in 0.5.0-beta.1, is the design change behind it. The Python reproduction and its figures were run here. The patch and the Rust test were written from the source and **not compiled**, so build and run both before filing, with `cargo test -p oxigraph --test concurrent_updates` in a checkout of `v0.5.13` with its `oxrocksdb-sys/rocksdb` and `oxrocksdb-sys/lz4` submodules, first without the patch and then with it.
+Oxigraph, TSD-73, not filed. Drafted 2026-11-12. This is not a departure from the SPARQL 1.1 specification, which asks that one request be atomic and leaves isolation between requests to the store. It is recorded here because it is a report ready to file. The tracker was searched on 2026-11-12 for concurrent updates, lost updates, conflicts, transactions, isolation and `WriteBatchWithIndex`, and holds no report of it. [oxigraph/oxigraph#1310](https://github.com/oxigraph/oxigraph/issues/1310), closed 2025-07-20 as done in 0.5.0-beta.1, is the design change behind it. The Python reproduction and its figures were run here. The patch and the Rust test were **built and run on 2026-11-12**, on `v0.5.13` and on `main` at `78734be`, each from a checkout with its `oxrocksdb-sys/rocksdb` and `oxrocksdb-sys/lz4` submodules, with `cargo test -p oxigraph --test concurrent_updates` first without the patch and then with it. The citation of Berenson and others is from memory and is to be checked before filing.
 
-**Versions:** pyoxigraph 0.5.13, Python 3.14.7, macOS arm64, 8 cores. Source read at tag `v0.5.13` (`2837810`). The same storage code is on `main` at `78734be` (0.6.0-dev), where `rocksdb_wrapper.rs` differs from the tag only in a lint attribute and one removed `From` impl. Compared with `v0.4.11` (`3f27c43`) by source.
+**Versions:** pyoxigraph 0.5.13, Python 3.14.7, macOS arm64, 8 cores. Source read at tag `v0.5.13` (`2837810`). The same storage code is on `main` at `78734be` (0.6.0-dev), where `rocksdb_wrapper.rs` differs from the tag only in a lint attribute and one removed `From` impl. Both the tag and `main` were built from source with rustc 1.95.0 and run with the test below. Compared with `v0.4.11` (`3f27c43`) by source.
 
 **Summary.** On a `Store` opened on disk, two update requests that overlap in time each evaluate their `WHERE` on their own snapshot and then both write. Nothing makes the second wait and nothing compares its snapshot with what was committed since. A single update request that reads and then writes, such as "move the counter from N to N+1 if it is still N", therefore succeeds for both of two concurrent callers. Each caller can read back its own write, so neither can tell. The in-memory `Store` does not do this, because it runs one write transaction at a time, so a test suite on `Store::new()` passes and the same code on `Store::open()` loses updates.
 
@@ -448,14 +448,25 @@ Sent 500 times from each of 2, 4 and 8 threads, it ends in memory at threads tim
 - A write that reads nothing (`Store::insert`, `extend`, `remove`, `load_from_reader`, `INSERT DATA`, the bulk loader's ingestion) builds its batch with no lock and takes the lock only while RocksDB applies it, so it cannot land inside a reading transaction's window.
 - Queries and every other snapshot read never take it.
 
-The lock is `memory.rs`'s `Lock`, whose guard is `Send` and `Sync`, so `Transaction` stays `Send` and `Sync` (#1759). The patch is against `v0.5.13`. **It has not been compiled or run**, so treat it as a sketch to review. The places it edits are the same on `main`, where `GraphUpdateOperation::DeleteInsert` is a tuple variant.
+The lock is `memory.rs`'s `Lock`, whose guard is `Send` and `Sync`, so `Transaction` stays `Send` and `Sync` (#1759). The patch below is against `main` at `78734be`. The same change applies to `v0.5.13` with one line different, the pattern `GraphUpdateOperation::DeleteInsert { .. }`.
+
+What we ran, on macOS arm64 with rustc 1.95.0, debug profile, on `main` and on `v0.5.13` alike.
+
+| | Without the patch | With the patch |
+|---|---|---|
+| the three in-memory tests below | pass | pass |
+| the three on-disk tests below | fail in every run, 1 run on `main` and 4 on `v0.5.13` | pass in every run, 4 runs on `main` and 11 on `v0.5.13` |
+| `cargo test -p oxigraph --lib --tests` | not run | passes, 15 unit, 26 store and 1 optimizer test on `main`, 16, 24 and 1 on `v0.5.13` |
+| `cargo clippy -p oxigraph --all-targets` and `cargo fmt --check` | not run | no warning, no difference |
+
+Without the patch the on-disk compare-and-set let 438 to 767 updates succeed for 300 values of the counter, and the two increment tests, the in-store update and the `Transaction` form, ended with 1 to 36 values of the counter, the largest between 204 and 374 where 800 is right. Not run: the doc tests, the `http-client` tests, the CLI's tests, the W3C test suites, and any measurement of throughput.
 
 ```diff
 diff --git a/lib/oxigraph/src/sparql/update.rs b/lib/oxigraph/src/sparql/update.rs
-index 5627af0..1ee7829 100644
+index 9222d6f..33be740 100644
 --- a/lib/oxigraph/src/sparql/update.rs
 +++ b/lib/oxigraph/src/sparql/update.rs
-@@ -104,9 +104,16 @@ impl PreparedSparqlUpdate {
+@@ -111,9 +111,16 @@ impl PreparedSparqlUpdate {
                  .map(UpdateTransaction::OwnedReadable)
          } else {
              let storage = store.storage();
@@ -464,7 +475,7 @@ index 5627af0..1ee7829 100644
 -                .map(|transaction| UpdateTransaction::Owned(transaction, storage))
 +            let transaction = if matches!(
 +                self.update.operations.first(),
-+                Some(GraphUpdateOperation::DeleteInsert { .. })
++                Some(GraphUpdateOperation::DeleteInsert(_))
 +            ) {
 +                // The changes are computed from a snapshot of the store taken during the evaluation
 +                storage.start_transaction_from_snapshot()
@@ -476,10 +487,10 @@ index 5627af0..1ee7829 100644
          BoundPreparedSparqlUpdate {
              evaluator: self.evaluator,
 diff --git a/lib/oxigraph/src/storage/memory.rs b/lib/oxigraph/src/storage/memory.rs
-index a57cba7..6c95a3d 100644
+index eb5358f..9662b18 100644
 --- a/lib/oxigraph/src/storage/memory.rs
 +++ b/lib/oxigraph/src/storage/memory.rs
-@@ -1017,20 +1017,21 @@ fn pop_boxed_slice<T: Copy>(slice: &[T]) -> Box<[T]> {
+@@ -1024,20 +1024,21 @@ fn pop_boxed_slice<T: Copy>(slice: &[T]) -> Box<[T]> {
      slice[..slice.len() - 1].into()
  }
  
@@ -504,7 +515,7 @@ index a57cba7..6c95a3d 100644
          *self
              .condvar
              .wait_while(self.mutex.lock().unwrap(), |v| *v)
-@@ -1042,7 +1043,7 @@ impl Lock {
+@@ -1049,7 +1050,7 @@ impl Lock {
      }
  }
  
@@ -514,10 +525,10 @@ index a57cba7..6c95a3d 100644
      condvar: &'a Condvar,
  }
 diff --git a/lib/oxigraph/src/storage/mod.rs b/lib/oxigraph/src/storage/mod.rs
-index 900c486..148971c 100644
+index 97f7407..fa2bb15 100644
 --- a/lib/oxigraph/src/storage/mod.rs
 +++ b/lib/oxigraph/src/storage/mod.rs
-@@ -123,6 +123,26 @@ impl Storage {
+@@ -126,6 +126,26 @@ impl Storage {
          })
      }
  
@@ -545,18 +556,18 @@ index 900c486..148971c 100644
          not(all(not(target_family = "wasm"), feature = "rocksdb")),
          expect(clippy::unnecessary_wraps)
 diff --git a/lib/oxigraph/src/storage/rocksdb.rs b/lib/oxigraph/src/storage/rocksdb.rs
-index 16985c4..7be0b07 100644
+index 5cf31cb..e77ef88 100644
 --- a/lib/oxigraph/src/storage/rocksdb.rs
 +++ b/lib/oxigraph/src/storage/rocksdb.rs
-@@ -10,6 +10,7 @@ use crate::storage::binary_encoder::{
-     write_spo_quad, write_spog_quad, write_term,
+@@ -12,6 +12,7 @@ use crate::storage::binary_encoder::{
+     write_pos_quad, write_posg_quad, write_spo_quad, write_spog_quad, write_term,
  };
  pub use crate::storage::error::{CorruptionError, StorageError};
 +use crate::storage::memory::{Lock, LockGuard};
  use crate::storage::numeric_encoder::{
-     Decoder, EncodedQuad, EncodedTerm, StrHash, StrHashHasher, StrLookup, insert_term,
- };
-@@ -79,6 +80,15 @@ pub struct RocksDbStorage {
+     Decoder, EncodedQuad, EncodedTerm, EncodedTriple, StrHash, StrHashHasher, StrLookup,
+     insert_term,
+@@ -84,6 +85,15 @@ pub struct RocksDbStorage {
      dpos_cf: ColumnFamily,
      dosp_cf: ColumnFamily,
      graphs_cf: ColumnFamily,
@@ -572,7 +583,7 @@ index 16985c4..7be0b07 100644
  }
  
  impl RocksDbStorage {
-@@ -186,6 +196,7 @@ impl RocksDbStorage {
+@@ -191,6 +201,7 @@ impl RocksDbStorage {
              dpos_cf: db.column_family(DPOS_CF)?,
              dosp_cf: db.column_family(DOSP_CF)?,
              graphs_cf: db.column_family(GRAPHS_CF)?,
@@ -580,7 +591,7 @@ index 16985c4..7be0b07 100644
              db,
          };
          this.migrate()?;
-@@ -356,21 +367,42 @@ impl RocksDbStorage {
+@@ -433,21 +444,42 @@ impl RocksDbStorage {
          }
      }
  
@@ -623,7 +634,7 @@ index 16985c4..7be0b07 100644
          })
      }
  
-@@ -937,6 +969,7 @@ pub struct RocksDbStorageTransaction<'a> {
+@@ -1157,6 +1189,7 @@ pub struct RocksDbStorageTransaction<'a> {
      buffer: Vec<u8>,
      transaction: Transaction,
      storage: &'a RocksDbStorage,
@@ -631,7 +642,7 @@ index 16985c4..7be0b07 100644
  }
  
  impl RocksDbStorageTransaction<'_> {
-@@ -1118,6 +1151,11 @@ impl RocksDbStorageTransaction<'_> {
+@@ -1340,6 +1373,11 @@ impl RocksDbStorageTransaction<'_> {
      }
  
      pub fn commit(self) -> Result<(), StorageError> {
@@ -643,7 +654,7 @@ index 16985c4..7be0b07 100644
          self.transaction.commit()
      }
  }
-@@ -1127,6 +1165,7 @@ pub struct RocksDbStorageReadableTransaction<'a> {
+@@ -1349,6 +1387,7 @@ pub struct RocksDbStorageReadableTransaction<'a> {
      buffer: Vec<u8>,
      transaction: ReadableTransaction<'a>,
      storage: &'a RocksDbStorage,
@@ -651,7 +662,7 @@ index 16985c4..7be0b07 100644
  }
  
  impl RocksDbStorageReadableTransaction<'_> {
-@@ -1459,7 +1498,11 @@ impl RocksDbStorageBulkLoader<'_> {
+@@ -1683,7 +1722,11 @@ impl RocksDbStorageBulkLoader<'_> {
          if self.sst_files.is_empty() {
              return Ok(());
          }
@@ -665,10 +676,10 @@ index 16985c4..7be0b07 100644
              remove_file(file)?;
          }
 diff --git a/lib/oxigraph/src/store.rs b/lib/oxigraph/src/store.rs
-index 8dba815..58bfeeb 100644
+index 407ddc6..e1a3cfe 100644
 --- a/lib/oxigraph/src/store.rs
 +++ b/lib/oxigraph/src/store.rs
-@@ -72,6 +72,9 @@ use std::thread::available_parallelism;
+@@ -70,6 +70,9 @@ use std::thread::available_parallelism;
  /// This store ensures the "repeatable read" isolation level: the store only exposes changes that have
  /// been "committed" (i.e., no partial writes), and the exposed state does not change for the complete duration
  /// of a read operation (e.g., a SPARQL query) or a read/write operation (e.g., a SPARQL update).
@@ -678,7 +689,7 @@ index 8dba815..58bfeeb 100644
  ///
  /// Usage example:
  /// ```
-@@ -549,6 +552,11 @@ impl Store {
+@@ -375,6 +378,11 @@ impl Store {
      /// (e.g., a SPARQL query) or a read/write operation (e.g., a SPARQL update).
      /// Transactional operations are also atomic.
      ///
@@ -701,7 +712,7 @@ What it costs, as far as we can tell without measuring.
 
 Alternatives. Detect instead of exclude, by comparing the snapshot's sequence number with the latest one under a short lock at commit, and evaluate the request again when they differ. Or keep today's behaviour as the default and offer the lock as a `StoreOptions` setting. If neither is wanted, a sentence in the documentation of `Store` and of pyoxigraph's `Store` saying that concurrent updates on disk may overwrite each other, and that a caller who needs a guard must send updates one at a time, would have saved us the search.
 
-**A test.** As `lib/oxigraph/tests/concurrent_updates.rs`, written for `v0.5.13` and also not compiled. The three in-memory tests should pass today and the three on-disk tests should fail without the fix.
+**A test.** As `lib/oxigraph/tests/concurrent_updates.rs`, for `main`. On `v0.5.13` the `Transaction` test builds its quads with `QuadRef` and `NamedNodeRef` instead. The three in-memory tests pass today and the three on-disk tests fail without the fix.
 
 ```rust
 #![cfg(test)]
@@ -709,17 +720,18 @@ Alternatives. Detect instead of exclude, by comparing the snapshot's sequence nu
 
 //! Concurrent read-modify-write operations on one [`Store`] must not lose updates.
 
-use oxigraph::model::{GraphNameRef, Literal, NamedNodeRef, QuadRef, Term};
+use oxigraph::model::{GraphName, Literal, NamedNode, NamedOrBlankNode, Quad, Term};
 use oxigraph::sparql::{QueryResults, SparqlEvaluator};
 use oxigraph::store::Store;
 use std::error::Error;
+use std::iter::repeat_with;
 use std::thread;
 #[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
 use tempfile::TempDir;
 
 type TestResult<T> = Result<T, Box<dyn Error + Send + Sync>>;
 
-const THREADS: u64 = 4;
+const THREADS: usize = 4;
 const TARGET: u64 = 300;
 const INCREMENTS: u64 = 200;
 
@@ -799,8 +811,7 @@ fn increment(store: &Store) -> TestResult<()> {
     update(store, "INSERT DATA { <urn:k> <urn:v> 0 }")?;
     thread::scope(|scope| {
         join(
-            (0..THREADS)
-                .map(|_| {
+            repeat_with(|| {
                     scope.spawn(move || -> TestResult<()> {
                         for _ in 0..INCREMENTS {
                             update(
@@ -811,14 +822,18 @@ fn increment(store: &Store) -> TestResult<()> {
                         Ok(())
                     })
                 })
+                .take(THREADS)
                 .collect(),
         )
     })?;
-    let values = number(store, "SELECT (COUNT(?n) AS ?c) WHERE { <urn:k> <urn:v> ?n }")?;
+    let values = number(
+        store,
+        "SELECT (COUNT(?n) AS ?c) WHERE { <urn:k> <urn:v> ?n }",
+    )?;
     let last = number(store, "SELECT (MAX(?n) AS ?m) WHERE { <urn:k> <urn:v> ?n }")?;
     assert_eq!(
         (values, last),
-        (1, THREADS * INCREMENTS),
+        (1, u64::try_from(THREADS)? * INCREMENTS),
         "the counter holds {values} values, the largest being {last}"
     );
     Ok(())
@@ -826,50 +841,55 @@ fn increment(store: &Store) -> TestResult<()> {
 
 /// Each thread increments a counter with the `Transaction` API: read, remove, insert, commit.
 fn transaction_increment(store: &Store) -> TestResult<()> {
-    let k = NamedNodeRef::new_unchecked("urn:t");
-    let v = NamedNodeRef::new_unchecked("urn:v");
-    store.insert(QuadRef::new(
-        k,
-        v,
-        &Literal::from(0_i64),
-        GraphNameRef::DefaultGraph,
+    let k = NamedNode::new_unchecked("urn:t");
+    let v = NamedNode::new_unchecked("urn:v");
+    let subject = NamedOrBlankNode::from(k.clone());
+    let (k, v, subject) = (&k, &v, &subject);
+    store.insert(Quad::new(
+        k.clone(),
+        v.clone(),
+        Literal::from(0_i64),
+        GraphName::DefaultGraph,
     ))?;
     thread::scope(|scope| {
         join(
-            (0..THREADS)
-                .map(|_| {
-                    scope.spawn(move || -> TestResult<()> {
-                        for _ in 0..INCREMENTS {
-                            let mut transaction = store.start_transaction()?;
-                            let current = transaction
-                                .quads_for_pattern(Some(k.into()), Some(v), None, None)
-                                .collect::<Result<Vec<_>, _>>()?;
-                            for quad in &current {
-                                let Term::Literal(literal) = &quad.object else {
-                                    return Err("the counter is not a literal".into());
-                                };
-                                let next = literal.value().parse::<i64>()? + 1;
-                                transaction.remove(quad);
-                                transaction.insert(QuadRef::new(
-                                    k,
-                                    v,
-                                    &Literal::from(next),
-                                    GraphNameRef::DefaultGraph,
-                                ));
-                            }
-                            transaction.commit()?;
+            repeat_with(|| {
+                scope.spawn(move || -> TestResult<()> {
+                    for _ in 0..INCREMENTS {
+                        let mut transaction = store.start_transaction()?;
+                        let current = transaction
+                            .quads_for_pattern(Some(subject), Some(v), None, None)
+                            .collect::<Result<Vec<_>, _>>()?;
+                        for quad in &current {
+                            let Term::Literal(literal) = &quad.object else {
+                                return Err("the counter is not a literal".into());
+                            };
+                            let next = literal.value().parse::<i64>()? + 1;
+                            transaction.remove(quad);
+                            transaction.insert(Quad::new(
+                                k.clone(),
+                                v.clone(),
+                                Literal::from(next),
+                                GraphName::DefaultGraph,
+                            ));
                         }
-                        Ok(())
-                    })
+                        transaction.commit()?;
+                    }
+                    Ok(())
                 })
-                .collect(),
+            })
+            .take(THREADS)
+            .collect(),
         )
     })?;
-    let values = number(store, "SELECT (COUNT(?n) AS ?c) WHERE { <urn:t> <urn:v> ?n }")?;
+    let values = number(
+        store,
+        "SELECT (COUNT(?n) AS ?c) WHERE { <urn:t> <urn:v> ?n }",
+    )?;
     let last = number(store, "SELECT (MAX(?n) AS ?m) WHERE { <urn:t> <urn:v> ?n }")?;
     assert_eq!(
         (values, last),
-        (1, THREADS * INCREMENTS),
+        (1, u64::try_from(THREADS)? * INCREMENTS),
         "the counter holds {values} values, the largest being {last}"
     );
     Ok(())
