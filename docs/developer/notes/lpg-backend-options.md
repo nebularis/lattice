@@ -48,25 +48,10 @@ or Cypher, as a storage backend?
    which property becomes a node property, which an edge, how a named graph, a datatype or a
    language tag is represented. Both options need that mapping first, and it is the larger part of
    the design work in either case (§3).
-2. **LATTICE's runtime uses far less SPARQL than its documentation suggests (fact).** The platform
-   reads and writes whole graphs over the Graph Store Protocol and validates them in process. The
-   persistence compiler's generated SPARQL is executed only by tests, a spike and a benchmark. No
-   production component sends a SPARQL query or update today (§2.2). Option 2's main benefit, that
-   every consumer keeps speaking SPARQL, protects little that runs.
-3. **Option 2's write path meets the view-update problem (judgement, high confidence).** A general SPARQL Update over a schema-dependent mapping has no unique translation. The repository's own paper on unified SPARQL views ([distirbuted-queries.md](rdf-engine/distirbuted-queries.md) §3.4) reached the same conclusion for SQL: production virtualisation is read-only, and writes stay native. A facade restricted to the fragment the compiler emits avoids the problem, but it is then Option 1 behind a parser (§5.3).
-4. **Option 1 follows the direction already accepted (fact for the decisions, judgement for the
-   fit).** ADR-A123 decision 4 makes the compiled profile declare logical resources so that "a
-   relational realisation reads the same declarations and can be compared with this one operation by
-   operation". The patterns guide's port (Chapter 25) hides SPARQL behind `compareAndSet`. The
-   client SDK sketch is the API ingress half of Option 1. An LPG realisation is a second consumer of
-   the same contract.
-5. **Option 1 collides with ADR-A75 as drafted (fact).** A75 defines the Core tier as "expressible
-   in SPARQL 1.1 + Graph Store Protocol alone". A pure-LPG adapter cannot be a Core adapter. A75 is
-   still Proposed, so amending it now is cheap. After ratification it is not.
-6. **An LPG holds shape-closed instance aggregates well and RDF-native content badly (judgement).**
-   The TBox, governed vocabularies, wording documents and triple-grain provenance belong in RDF.
-   This is the same split `lattice-sql.md` reached for SQL, and it argues for a mixed deployment in
-   which the LPG realisation is chosen per target, not per dataset.
+2. **Option 2's write path meets the view-update problem (judgement, high confidence).** A general SPARQL Update over a schema-dependent mapping has no unique translation. The repository's own paper on unified SPARQL views ([distirbuted-queries.md](rdf-engine/distirbuted-queries.md) §3.4) reached the same conclusion for SQL: production virtualisation is read-only, and writes stay native. A facade restricted to the fragment the compiler emits avoids the problem, but it is then Option 1 behind a parser (§5.3).
+3. **Option 1 follows the direction already accepted (fact for the decisions, judgement for the fit).** ADR-A123 decision 4 makes the compiled profile declare logical resources so that "a relational realisation reads the same declarations and can be compared with this one operation by operation". The patterns guide's port (Chapter 25) hides SPARQL behind `compareAndSet`. The client SDK sketch is the API ingress half of Option 1. An LPG realisation is a second consumer of the same contract.
+4. **Option 1 collides with ADR-A75 as drafted (fact).** A75 defines the Core tier as "expressible in SPARQL 1.1 + Graph Store Protocol alone". A pure-LPG adapter cannot be a Core adapter. A75 is still Proposed, so amending it now is cheap. After ratification it is not.
+5. **An LPG holds shape-closed instance aggregates well and RDF-native content badly (judgement).** The TBox, governed vocabularies, wording documents and triple-grain provenance belong in RDF. This is the same split `lattice-sql.md` reached for SQL, and it argues for a mixed deployment in which the LPG realisation is chosen per target, not per dataset.
 
 **Leaning.** Option 1, staged, starting with the mapping vocabulary and an LPG discovery record, then
 one aggregate family end to end with its graph codec and generated Python and Java ingress. Keep RDF
@@ -132,11 +117,7 @@ position.
 | `workers/` | PostgreSQL for idempotency and MORK review state. No SPARQL client | `postgres_*_store.py` |
 | `deployment/compose/authoring` | Fuseki 5.1.0 on TDB2, the only store deployed | `docker-compose.yml` |
 
-No `platform/` or `workers/` source sends a SPARQL query or update (a repository search for query
-and update execution found none). The generated persistence operations run only in
-`tools/persistence/tests`, `spikes/persistence-oxigraph` and `benchmark/persistence-composite-cost`,
-on rdflib and Oxigraph. ADR-A123 records that "nothing outside `tools/persistence` and its tests
-calls `instantiate` or fills the slots".
+The Configuration Studio's store writer runs the generated persistence operations against Fuseki as SPARQL Update requests, through `StudioOperations` in `platform/config-studio-core` and the caller libraries under `packages/persistence` (corrected 2026-11-12, since this section first said no runtime component did).
 
 The cross-runtime contract is the graph reference, not a query language ([ADR-A30](../../architecture/decisions/ADR-A30-shared-semantic-platform-cross-runtime-boundary.md)). A reference carries tenant, project, graph IRI and revision hash, and no public contract under `contracts/` exposes SPARQL.
 
@@ -208,11 +189,12 @@ flowchart LR
         JDBC --> PG
     end
 
-    subgraph TESTS["Tests, spike, benchmark only"]
+    subgraph TESTS["Tests, spike, benchmark"]
         ENG["rdflib and Oxigraph<br/>engine fixtures"]:::test
     end
 
-    RQ -. "executed only here" .-> ENG
+    RQ -. "executed here" .-> ENG
+    RQ -- "run by the studio's store writer" --> FUS
     REC -. "packages/minting" .-> RUNTIME
 ```
 
@@ -751,9 +733,7 @@ Appendix B lists every construct. The gaps that matter most:
 
 ### 5.11 KISS
 
-- **Needed now?** No runtime component sends SPARQL to the store today (§2.2). F-A and F-C serve
-  consumers that do not exist yet. F-B serves the persistence operations, which Option 1 serves
-  without a parser.
+- **Needed now?** F-A and F-C serve consumers that do not exist yet. F-B serves the persistence operations, which Option 1 serves without a parser.
 - **As simple as it can be?** F-C is the simplest useful facade, and it presupposes Option 1 for
   writes. F-A is the most complex thing in this document.
 - **Does it model reality?** It hides a different data model behind RDF semantics that the store does
@@ -927,19 +907,10 @@ keeps RDF-native content in RDF.
 
 **Option 1, staged.** The reasons, in order of weight:
 
-1. **The runtime does not need SPARQL over the store today.** The platform moves whole graphs by
-   reference and computes in process (§2.2). Option 2's central benefit protects consumers that do
-   not exist yet.
-2. **The write path decides it.** A general facade cannot translate SPARQL Update faithfully over a
-   mapping that makes the LPG worth having (§5.3). A facade that only accepts the compiler's
-   operations is Option 1 with a parser in the request path (§5.4).
-3. **The architecture already points this way.** ADR-A123 decision 4 made the logical contract the
-   thing a second realisation reads. The patterns guide's port and capability record are store
-   properties, not SPARQL properties. The SDK sketch is the ingress. `lattice-sql.md` worked through
-   the same move for SQL and kept RDF for what RDF does best.
-4. **The cost of the conflict with ADR-A75 is lowest now**, while A75 is Proposed (LPG-Q4).
-5. **Assurance is bounded.** Option 1's correctness is seventeen operations, a codec and a mapping,
-   checked against the RDF realisation and Track H's models. Option 2's is a SPARQL engine's.
+1. **The write path decides it.** A general facade cannot translate SPARQL Update faithfully over a mapping that makes the LPG worth having (§5.3). A facade that only accepts the compiler's operations is Option 1 with a parser in the request path (§5.4).
+2. **The architecture already points this way.** ADR-A123 decision 4 made the logical contract the thing a second realisation reads. The patterns guide's port and capability record are store properties, not SPARQL properties. The SDK sketch is the ingress. `lattice-sql.md` worked through the same move for SQL and kept RDF for what RDF does best.
+3. **The cost of the conflict with ADR-A75 is lowest now**, while A75 is Proposed (LPG-Q4).
+4. **Assurance is bounded.** Option 1's correctness is seventeen operations, a codec and a mapping, checked against the RDF realisation and Track H's models. Option 2's is a SPARQL engine's.
 
 **A staged path, each stage a decision point.**
 
