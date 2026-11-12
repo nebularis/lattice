@@ -5,7 +5,7 @@
 **Unit ID:** `studio-visual-authoring`
 **Prefix:** SVA
 **Unit type:** multi-slice unit, validation gate per slice
-**Status:** planned 2026-11-12 from the [sketch](../sketches/studio-visual-authoring.md). SVA-Q1 to SVA-Q16 answered, SVA-Q3 on 2026-11-13 and the rest on 2026-11-12. The maintainer asked on 2026-11-12 for the unit to be built autonomously
+**Status:** planned 2026-11-12 from the [sketch](../sketches/studio-visual-authoring.md). SVA-Q1 to SVA-Q16 answered 2026-11-12. The maintainer asked on 2026-11-12 for the unit to be built autonomously
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
 **Status record:** [studio-visual-authoring.md](../status/studio-visual-authoring.md)
 **Builds on:** the [Configuration Studio](../../architecture/configuration-studio.md) ([ADR-A136](../../architecture/decisions/ADR-A136-configuration-studio.md) and its amendments, [ADR-A149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md)), its [contract](../../../contracts/config-studio/README.md), [ADR-A88](../../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md), [ADR-A148](../../architecture/decisions/ADR-A148-mork-transform-backends.md), and the events of [projection-maintenance](projection-maintenance.md) PM-3b

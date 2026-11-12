@@ -3,7 +3,7 @@
 # Sketch: baseline management, canvases and run panes for the Configuration Studio
 
 **Unit:** `studio-visual-authoring` (SVA), raised by the maintainer on 2026-11-12
-**Status:** sketch. SVA-Q1 to SVA-Q16 answered, SVA-Q3 on 2026-11-13 and the rest on 2026-11-12
+**Status:** sketch. SVA-Q1 to SVA-Q16 answered 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Status record:** [studio-visual-authoring.md](../status/studio-visual-authoring.md)
 **Builds on:** [ADR-A136](../../architecture/decisions/ADR-A136-configuration-studio.md) and its amendments (the studio, its writers and its worker), [ADR-A149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md) (fenced imports, dependencies, units), [ADR-A88](../../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md) (the XML catalog), [ADR-A148](../../architecture/decisions/ADR-A148-mork-transform-backends.md) (the transforms worker), the [events sketch](browser-events-over-web-mqtt.md) (PM-Q18, PM-Q20), [ADR-A132](../../architecture/decisions/ADR-A132-persistence-caller-library.md) (the caller library)
@@ -407,7 +407,7 @@ Left out, each with where it lives: cost estimates at size (BL-10), generated te
 
 **SVA-Q2. May an event carry content?** The contract says a job's event holds its status and workspace, never its content. (a) Keep that for jobs, and allow content in a run's frames, which go only to the submitting tab and are checked at delivery. (b) Keep it for everything, which leaves (a) or (b) of SVA-Q1. Leaning (a). **Answered 2026-11-12, (a).**
 
-**SVA-Q3. Where does a simulator's state live?** (a) In the tab, each step a function of the sample world and the edit. (b) In a worker's memory, with every step of a session routed to it. (c) In a scratch dataset on Fuseki. (b) needs affinity and loses the session with the worker. (c) adds writes and a second kind of data to the store. Leaning (a). **Answered 2026-11-13, (a).**
+**SVA-Q3. Where does a simulator's state live?** (a) In the tab, each step a function of the sample world and the edit. (b) In a worker's memory, with every step of a session routed to it. (c) In a scratch dataset on Fuseki. (b) needs affinity and loses the session with the worker. (c) adds writes and a second kind of data to the store. Leaning (a). **Answered 2026-11-12, (a).**
 
 **SVA-Q4. Which runtime and engine execute a simulation?** (a) The Java run worker, on Jena's in-memory dataset, with the Java caller library. (b) The Python worker on rdflib. (c) The Python worker on Oxigraph. (a) evaluates as the studio's own store does and reuses what the writer uses. (b) is where the compilers are, and differs from Jena on recorded corners. (c) adds an engine the worker does not ship. Leaning (a), each display saying which engine it shows. **Answered 2026-11-12, (a), with (c) kept as an option to add later, BL-21.**
 

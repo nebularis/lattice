@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** finish SVA-B2a, then pause for the maintainer. From 2026-11-13 the unit is built one slice at a time, with one delegated developer at most and a pause after each slice, at the maintainer's request. The order after SVA-B2a is in the [handover](../notes/studio-visual-authoring-handover-2026-11-12.md). The maintainer accepts or rejects ADR-A154.
+**Next action:** paused after SVA-B2a for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Next in order: SVA-R0's probes, which need a running stack, then SVA-R1, or SVA-O2 or SVA-B3, which need none. The maintainer accepts or rejects ADR-A154, and decides TD-164.
 
 ## Slices
 
@@ -29,7 +29,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R4 | the browser's run controller and the dock's run pane | planned | SVA-R1 |
 | SVA-R5 | the run protocol's failure cases on the real stack | planned | SVA-R2, SVA-R3, SVA-R4 |
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
-| SVA-B2a | several imports held by one write, each with its ontology and version IRI | building 2026-11-12 |  |
+| SVA-B2a | several imports held by one write, each with its ontology and version IRI | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | planned | SVA-B2a |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | planned | SVA-B1, SVA-B2a |
 | SVA-B4 | the import graph | planned | SVA-B3, SVA-O1 |
@@ -63,6 +63,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12, SVA-M1: `schemeSummary` was made to count every unreviewed mapping as to review. Three tests failed. Restored.
 - 2026-11-12, SVA-O3: the depth cap of the expression reader was raised by five. The depth test failed. Restored.
 - 2026-11-12, SVA-O1: the first sort of the layout was removed, so input order reached the result. The determinism test and the edgeless-nodes test failed. Restored.
+- 2026-11-12, SVA-B2a: the writer's check that a fence job digested the import it names was removed. `theWriterChecksEachJobItselfWhateverTheServiceChecked` failed, expecting 400 and getting 200. Restored, 14 of 14 passing.
 
 ## Log
 
@@ -78,4 +79,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12: SVA-O2 picked up.
 - 2026-11-12: work paused at the maintainer's request. SVA-R0, SVA-B2a and SVA-O2 were stopped mid-edit and their files committed as they stood, unverified and possibly not compiling, so nothing is lost. Each resumes from its files: SVA-R0 has its probe scripts and no record of results yet, SVA-B2a was part way through the service's route and its tests, and SVA-O2 had begun the graph derivation. None of the three has been run or reviewed.
 - 2026-11-12: the paused slices were checked with no change to their code. SVA-B2a compiles and passes its modules' tests, 24 in core, 198 in the service and 10 in the writer, and the worker's 16 for the fence job, and still needs review, a Validation Pack and a probe. SVA-R0 has its probe scripts and no results. SVA-O2 wrote no file. The [handover](../notes/studio-visual-authoring-handover-2026-11-12.md) was written.
-- 2026-11-13: SVA-Q3 answered (a) by the maintainer, so a simulator's state is the tab's and nothing waits on a question. The unit resumes one slice at a time with a pause after each.
+- 2026-11-12: SVA-Q3 answered (a) by the maintainer, so a simulator's state is the tab's and nothing waits on a question. The unit resumes one slice at a time with a pause after each.
+- 2026-11-12: SVA-B2a built, [Validation Pack](../validation/SVA-B2a.md). One request holds several imports by one command, which stores each import and then replaces the description once, and a held import records the ontology IRI and version IRI its document declares, read by the worker and copied by the writer from the fence job in the store. Verified: 24 tests in core, 198 in the service and 10 in the writer, the worker's 16, and `mise run check:config-studio`, which exited 0 with 21, 157 and 234 tests passed in its three suites. An export still names held imports without their content, as before (TD-135). TD-164 records that nothing digests the content a fence command carries and that the older, jobless form of the command is still accepted.
