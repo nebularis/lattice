@@ -611,3 +611,38 @@ test("mapping mode lists every scheme of the workspace, selects one by its row a
   await expect.poll(() => tree.textContent()).not.toBe(before);
   await expect(page.getByRole("combobox", { name: "Mapping scheme" })).toHaveCount(0);
 });
+
+test("the mapping canvas draws a node for each mapping, offers its menus and opens a mapping's card on a click", async ({ page }) => {
+  const fake = new FakeService();
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Policies from XML and JSON/ }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  const ws = [...fake.workspaces.keys()][0];
+  await page.goto(`/#/w/${ws}/mapping`);
+
+  // The tree names a mapping of the scheme, and the canvas must show a node with the same name.
+  const first = page.getByRole("tree").getByRole("treeitem").first();
+  await expect(first).toBeVisible();
+  const label = (await first.locator("text").first().textContent())!.trim();
+  expect(label).not.toBe("");
+  await page.getByRole("group", { name: "Drawing" }).getByRole("button", { name: "Canvas" }).click();
+  const mappings = page.locator(".react-flow__node-mapping");
+  await expect(mappings.first()).toBeVisible();
+  expect(await mappings.count()).toBeGreaterThan(0);
+  await expect(mappings.filter({ hasText: label }).first()).toBeVisible();
+
+  const pane = page.locator(".react-flow__pane");
+  await pane.click({ button: "right", position: { x: 5, y: 5 } });
+  const menu = page.getByRole("menu");
+  await expect(menu.getByRole("menuitem", { name: "Add a root datum" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Lay the scheme out again" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.locator(".react-flow__pane").click({ position: { x: 5, y: 5 } });
+  await expect(menu).toHaveCount(0);
+
+  await mappings.filter({ hasText: label }).first().click();
+  await expect(page.getByRole("region", { name: `Mapping ${label}` })).toBeVisible();
+});

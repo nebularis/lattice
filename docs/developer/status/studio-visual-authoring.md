@@ -33,7 +33,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | planned | SVA-B2a |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | planned | SVA-B1, SVA-B2a |
 | SVA-B4 | the import graph | planned | SVA-B3, SVA-O1 |
-| SVA-O1 | the canvas kit, with layout in a web worker | building 2026-11-12 |  |
+| SVA-O1 | the canvas kit, with our own layered layout behind one function | built 2026-11-12, building 2026-11-12 |  |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | planned | SVA-O1 |
 | SVA-O3 | the axiom reader and the element forms | built 2026-11-12, building 2026-11-12 |  |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | planned | SVA-O1 |
@@ -62,6 +62,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12, SVA-B1: the return that lets a catalog entry win was removed from `resolveImports`. Five tests failed, among them the precedence test and the run over LATTICE's own catalog. Restored, 33 passing.
 - 2026-11-12, SVA-M1: `schemeSummary` was made to count every unreviewed mapping as to review. Three tests failed. Restored.
 - 2026-11-12, SVA-O3: the depth cap of the expression reader was raised by five. The depth test failed. Restored.
+- 2026-11-12, SVA-O1: the first sort of the layout was removed, so input order reached the result. The determinism test and the edgeless-nodes test failed. Restored.
 
 ## Log
 
@@ -73,3 +74,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12: SVA-M1 built, [Validation Pack](../validation/SVA-M1.md). Every mapping scheme is a row of a list on the left, with its counts, and the select is gone. The fake service gained the mapping part, which a workspace made from a mapping sample needs to save. Selecting a scheme now also clears the selected source concept, which the select did not.
 - 2026-11-12: SVA-O3 built, [Validation Pack](../validation/SVA-O3.md). `rdf/axioms.ts` reads a class's, a property's and an individual's statements into sections and puts the rest in a table, and the Baseline view shows them read-only. SVA-M1 and SVA-O3 are one commit, since both add to the stylesheet and the browser spec. Verified together: 205 unit tests, the type check, and the 24 browser tests on the fake service, run with this machine's Chromium through a configuration that was not committed, since the pinned Playwright expects a newer build than the machine has.
 - 2026-11-12: SVA-O1 and SVA-B2a picked up. SVA-B2a also changes the worker's fence job, which reads the ontology IRI and version IRI a document declares, since the writer cannot take them from the browser.
+- 2026-11-12: SVA-O1 built, [Validation Pack](../validation/SVA-O1.md). The kit is `src/canvas/`, the layered layout is one function others can replace (SVA-Q8), and the mapping canvas runs on it with its picture unchanged, held by a browser test written and passed on the old canvas first. Layout took 2 to 3 ms for 100 nodes, 5 to 7 ms for 500 and 15 to 20 ms for 2,000, over five runs, so no web worker is needed. Two faults of the old canvas are fixed: stored positions were read only on mount, and laying out again could do nothing under React's strict mode. Verified with 234 unit tests, the type check and 25 browser tests on the fake service.
