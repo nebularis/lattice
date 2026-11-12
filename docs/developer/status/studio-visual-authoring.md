@@ -28,7 +28,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
 | SVA-R4 | the browser's run controller and the dock's run pane | planned | SVA-R1 |
 | SVA-R5 | the run protocol's failure cases on the real stack | planned | SVA-R2, SVA-R3, SVA-R4 |
-| SVA-B1 | catalog reading, ontology headers, the import closure and its plan | building 2026-11-12 |  |
+| SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2a | several imports held by one write, each with its ontology and version IRI | planned |  |
 | SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | planned | SVA-B2a |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | planned | SVA-B1, SVA-B2a |
@@ -58,9 +58,13 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 
 Asked on 2026-11-12. It answered the studio's decisions and capabilities well (ADR-A136, ADR-A88, ADR-A149, CAP-70, CAP-100 to CAP-102, PM-Q18). It answered weakly on the studio's broker flows, where `find studio job worker rabbitmq websocket mqtt streaming results to the browser --quality concurrency` scored 0.72 at best and returned no mechanism for the relay, the transforms request and reply or the writer's events. Those are stated in the contract's Completion events and Transforms sections and in `Relay.java`, with no register entry, which is a gap under STD-272. It is recorded here for the maintainer, since a mechanism row for each would have carried the answer. XJ-Q8, the earlier answer SVA-Q1 reopens, was found only by asking with `--kind question` after the sketch was drafted, so a design question about the studio is asked that way first.
 
+## Adversarial probes
+- 2026-11-12, SVA-B1: the return that lets a catalog entry win was removed from `resolveImports`. Five tests failed, among them the precedence test and the run over LATTICE's own catalog. Restored, 33 passing.
+
 ## Log
 
 - 2026-11-12: raised by the maintainer. Sketched and planned, SVA-Q1 to SVA-Q16 raised, the board written with 30 slices planned. BL-20 added to the backlog.
 - 2026-11-12: SVA-Q1, SVA-Q2 and SVA-Q4 to SVA-Q16 answered by the maintainer. SVA-P5 added for SVA-Q12 (c). BL-21 to BL-24 added. The unit is to be built autonomously on its branch.
 - 2026-11-12: SVA-B1, SVA-O3 and SVA-M1 picked up, three slices of the application that touch no file in common.
 - 2026-11-12: SVA-R0 and SVA-R1 picked up. The decision record is drafted while the broker is installed for the probes, with the limits the probes decide marked as provisional.
+- 2026-11-12: SVA-B1 built, [Validation Pack](../validation/SVA-B1.md). The catalog reader, the ontology header reader and the closure are pure functions, 33 tests passing. The plan's nodes are keyed by the import IRI as written, so an ontology IRI and its version IRI are two nodes of one file, which SVA-B2a joins by digest when it holds them.
