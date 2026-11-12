@@ -29,11 +29,11 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R4 | the browser's run controller and the dock's run pane | planned | SVA-R1 |
 | SVA-R5 | the run protocol's failure cases on the real stack | planned | SVA-R2, SVA-R3, SVA-R4 |
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
-| SVA-B2a | several imports held by one write, each with its ontology and version IRI | planned |  |
+| SVA-B2a | several imports held by one write, each with its ontology and version IRI | building 2026-11-12 |  |
 | SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | planned | SVA-B2a |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | planned | SVA-B1, SVA-B2a |
 | SVA-B4 | the import graph | planned | SVA-B3, SVA-O1 |
-| SVA-O1 | the canvas kit, with layout in a web worker | planned |  |
+| SVA-O1 | the canvas kit, with layout in a web worker | building 2026-11-12 |  |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | planned | SVA-O1 |
 | SVA-O3 | the axiom reader and the element forms | built 2026-11-12, building 2026-11-12 |  |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | planned | SVA-O1 |
@@ -72,3 +72,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12: SVA-B1 built, [Validation Pack](../validation/SVA-B1.md). The catalog reader, the ontology header reader and the closure are pure functions, 33 tests passing. The plan's nodes are keyed by the import IRI as written, so an ontology IRI and its version IRI are two nodes of one file, which SVA-B2a joins by digest when it holds them.
 - 2026-11-12: SVA-M1 built, [Validation Pack](../validation/SVA-M1.md). Every mapping scheme is a row of a list on the left, with its counts, and the select is gone. The fake service gained the mapping part, which a workspace made from a mapping sample needs to save. Selecting a scheme now also clears the selected source concept, which the select did not.
 - 2026-11-12: SVA-O3 built, [Validation Pack](../validation/SVA-O3.md). `rdf/axioms.ts` reads a class's, a property's and an individual's statements into sections and puts the rest in a table, and the Baseline view shows them read-only. SVA-M1 and SVA-O3 are one commit, since both add to the stylesheet and the browser spec. Verified together: 205 unit tests, the type check, and the 24 browser tests on the fake service, run with this machine's Chromium through a configuration that was not committed, since the pinned Playwright expects a newer build than the machine has.
+- 2026-11-12: SVA-O1 and SVA-B2a picked up. SVA-B2a also changes the worker's fence job, which reads the ontology IRI and version IRI a document declares, since the writer cannot take them from the browser.

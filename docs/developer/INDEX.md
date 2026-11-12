@@ -523,11 +523,11 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-R4 | the browser's run controller and the dock's run pane | studio-visual-authoring | planned | SVA-R1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-R5 | the run protocol's failure cases on the real stack | studio-visual-authoring | planned | SVA-R2, SVA-R3, SVA-R4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-B2a | several imports held by one write, each with its ontology and version IRI | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-B2a | several imports held by one write, each with its ontology and version IRI | studio-visual-authoring | building 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | studio-visual-authoring | planned | SVA-B2a | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | studio-visual-authoring | planned | SVA-B1, SVA-B2a | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-B4 | the import graph | studio-visual-authoring | planned | SVA-B3, SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-O1 | the canvas kit, with layout in a web worker | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-O1 | the canvas kit, with layout in a web worker | studio-visual-authoring | building 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | studio-visual-authoring | planned | SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-O3 | the axiom reader and the element forms | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | studio-visual-authoring | planned | SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
