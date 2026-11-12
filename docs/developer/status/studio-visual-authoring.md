@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-12. SVA-Q1, SVA-Q2 and SVA-Q4 to SVA-Q16 answered 2026-11-12, SVA-Q3 open
+**Status:** building 2026-11-12. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused 2026-11-12 at the maintainer's request. The [handover](../notes/studio-visual-authoring-handover-2026-11-12.md) says where each slice stands and what to do next, in order: finish SVA-B2a, run SVA-R0's probes, finish SVA-R1, build SVA-O2. The maintainer confirms or changes SVA-Q3 before SVA-P3, and accepts or rejects ADR-A154.
+**Next action:** finish SVA-B2a, then pause for the maintainer. From 2026-11-13 the unit is built one slice at a time, with one delegated developer at most and a pause after each slice, at the maintainer's request. The order after SVA-B2a is in the [handover](../notes/studio-visual-authoring-handover-2026-11-12.md). The maintainer accepts or rejects ADR-A154.
 
 ## Slices
 
@@ -78,3 +78,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12: SVA-O2 picked up.
 - 2026-11-12: work paused at the maintainer's request. SVA-R0, SVA-B2a and SVA-O2 were stopped mid-edit and their files committed as they stood, unverified and possibly not compiling, so nothing is lost. Each resumes from its files: SVA-R0 has its probe scripts and no record of results yet, SVA-B2a was part way through the service's route and its tests, and SVA-O2 had begun the graph derivation. None of the three has been run or reviewed.
 - 2026-11-12: the paused slices were checked with no change to their code. SVA-B2a compiles and passes its modules' tests, 24 in core, 198 in the service and 10 in the writer, and the worker's 16 for the fence job, and still needs review, a Validation Pack and a probe. SVA-R0 has its probe scripts and no results. SVA-O2 wrote no file. The [handover](../notes/studio-visual-authoring-handover-2026-11-12.md) was written.
+- 2026-11-13: SVA-Q3 answered (a) by the maintainer, so a simulator's state is the tab's and nothing waits on a question. The unit resumes one slice at a time with a pause after each.

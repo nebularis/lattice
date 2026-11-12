@@ -5,7 +5,7 @@
 **Unit ID:** `studio-visual-authoring`
 **Prefix:** SVA
 **Unit type:** multi-slice unit, validation gate per slice
-**Status:** planned 2026-11-12 from the [sketch](../sketches/studio-visual-authoring.md). SVA-Q1, SVA-Q2 and SVA-Q4 to SVA-Q16 answered 2026-11-12, SVA-Q3 open. The maintainer asked on 2026-11-12 for the unit to be built autonomously
+**Status:** planned 2026-11-12 from the [sketch](../sketches/studio-visual-authoring.md). SVA-Q1 to SVA-Q16 answered, SVA-Q3 on 2026-11-13 and the rest on 2026-11-12. The maintainer asked on 2026-11-12 for the unit to be built autonomously
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
 **Status record:** [studio-visual-authoring.md](../status/studio-visual-authoring.md)
 **Builds on:** the [Configuration Studio](../../architecture/configuration-studio.md) ([ADR-A136](../../architecture/decisions/ADR-A136-configuration-studio.md) and its amendments, [ADR-A149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md)), its [contract](../../../contracts/config-studio/README.md), [ADR-A88](../../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md), [ADR-A148](../../architecture/decisions/ADR-A148-mork-transform-backends.md), and the events of [projection-maintenance](projection-maintenance.md) PM-3b
@@ -84,7 +84,7 @@ A slice's documents change in the slice. Estimates are in tokens.
 |---|---|---|---|---|---|
 | SVA-P1 | a compile job's description of each target's landing places, and the exploded view with its scope picker, read-only | `workers`, `apps/config-studio` | each lens draws the facility sample's aggregate with every graph its operations name | SVA-O1 | 240k |
 | SVA-P2 | edits on the canvas, the set fixed against the `dal:` shapes in the slice's brief | `apps/config-studio` | each gesture makes the triples its form field makes, and one undo removes them | SVA-P1 | 200k |
-| SVA-P3 | the simulation executor in the run worker: the sample world loaded, the request checked and bound with the caller library, the update run, the delta by landing place, the outcome | `platform/config-studio-transforms`, `packages/persistence/java` | create, replace, delete and a stale replace on the facility sample give the deltas the persistence conformance suite expects, the same on a repeat and under permuted input | SVA-R3, SVA-Q3 | 300k |
+| SVA-P3 | the simulation executor in the run worker: the sample world loaded, the request checked and bound with the caller library, the update run, the delta by landing place, the outcome | `platform/config-studio-transforms`, `packages/persistence/java` | create, replace, delete and a stale replace on the facility sample give the deltas the persistence conformance suite expects, the same on a repeat and under permuted input | SVA-R3 | 300k |
 | SVA-P4 | the simulator pane: the sample world, the object form, an uploaded object, the operations, as another writer, step back, and the four displays | `apps/config-studio` | the journey creates a facility, changes it, loses a race as another writer and steps back, with the canvas lighting each landing place | SVA-R4, SVA-P1, SVA-P3 | 260k |
 | SVA-P5 | an object generated from the aggregate's boundary shape, one of each owned node the shape requires, with values of each property's datatype | `apps/config-studio` | a generated facility passes its boundary shape and is created in the simulator | SVA-P4 | 120k |
 
