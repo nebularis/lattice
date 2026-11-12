@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** building 2026-11-12. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
+**Status:** built 2026-11-12. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
 
 ## Position
 
@@ -24,7 +24,7 @@
 | VM-9 | the quanta by Вивід's own kind, the pin at v0.2.23 | built 2026-11-08, building 2026-11-08 |  |
 | VM-10 | the getting-started guide names the local setup of Вивід | built 2026-11-09, building 2026-11-09 |  |
 | VM-11 | the pin at v0.2.27, and the documents follow it | built 2026-11-09, building 2026-11-09 |  |
-| VM-12 | `bootstrap:erlang`, for the studio's stack in a cloud session | building 2026-11-12 |  |
+| VM-12 | `bootstrap:erlang`, for the studio's stack in a cloud session | built 2026-11-12, building 2026-11-12 |  |
 
 ## Next action
 

@@ -35,6 +35,10 @@ description = "Install Вивід, vyd, as a uv tool at the version VYVID_VERSIO
 run = "python tools/bootstrap_vyvid.py"
 
 # The git hooks (ADR-A133). Warns, never fails, where a hook it did not write is already present.
+[tasks."bootstrap:erlang"]
+description = "Install the pinned Erlang where a cloud session's setup leaves it out, for the Configuration Studio's RabbitMQ; a no-op where erl is on the path (plan vyvid-migration, VM-12)"
+run = "python tools/bootstrap_erlang.py"
+
 [tasks."bootstrap:hooks"]
 description = "Install the git hooks, warning where a hook this task did not write is present (ADR-A133)"
 run = "python tools/hooks.py install --bootstrap"
@@ -767,12 +771,12 @@ run = "yarn workspace @lattice/config-studio run test"
 
 [tasks."test:config-studio-browser"]
 description = "Run both of the Configuration Studio's browser suites: the journeys against the in-memory fake service, then the real-stack suite against a single topology the harness starts in isolation (ADR-A150), never the developer's own stack. Builds the browser application. Run by convention before a merge of a change to the studio, never in a hook (ADR-A133 decision 13)"
-depends = ["build:config-studio-assets", "bootstrap:testing-studio-harness"]
+depends = ["build:config-studio-assets", "bootstrap:testing-studio-harness", "bootstrap:erlang"]
 run = "python -m lattice_testing_studio_harness.browser"
 
 [tasks."studio:up"]
 description = "Start the Configuration Studio in the background: Fuseki, RabbitMQ, the store writer, the service, the worker and the transforms worker. `-- --docker` runs Fuseki and RabbitMQ in Docker, `-- --dev` adds the browser code with hot reload"
-depends = ["build:config-studio-assets"]
+depends = ["build:config-studio-assets", "bootstrap:erlang"]
 run = "python tools/config_studio_stack.py up"
 
 [tasks."studio:down"]
