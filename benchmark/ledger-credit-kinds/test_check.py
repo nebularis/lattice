@@ -163,3 +163,101 @@ def test_ck17_the_emitted_corpus_and_expected_balances_match_the_model(tmp_path)
     assert sum(1 for _ in open(tmp_path / corpus["file"], encoding="utf-8")) == corpus["stored"]
     model = check.run_model(check.stream(SMALL, HIGH), corpus["points"])
     assert all(r["balance"] == model.balance[(r["fold"], check.BY_IRI[r["account"]], r["point"])] for r in corpus["reads"] if not r["checkpointed"])
+
+
+# the two-level corpus and the cut (LG-16)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+@pytest.mark.parametrize("share", (LOW, HIGH))
+def test_ck18_the_sum_with_cuts_and_the_stepwise_fold_read_the_models_balance_of_every_ancestor(backend, share):
+    m = check.run_backend_cuts(backend, SMALL, share)
+    postings = check.stream_two_level(SMALL, share)
+    assert m.stored_triples == check.expected_stored(postings)
+    assert sum(r.reads for r in m.reads.values()) == len(check.CUT_FOLDS) * len(check.ANCESTORS) * len(check.read_points(postings[-1].pos))
+    assert m.notes["cuts"] == sum(len(p.cuts) for p in postings) and m.notes["cut_triples"] == check.CUT_TRIPLES * m.notes["cuts"]
+    if share >= check.STEPWISE_BINDS_FROM:
+        assert m.notes["cuts"] > 0 and m.notes["ancestors_where_uncut_differs_engine"] == m.notes["ancestors_where_uncut_differs"] > 0
+
+
+def test_ck19_the_four_step_history_of_the_sketch(monkeypatch):
+    """Built against the model's own functions on the sketch's tree (an annual cap of 20 that accepts recoveries only, an aggregate of 10, sections S and T of 10), since the benchmark's tree is fixed."""
+    recovery, reinstatement = check.L + "Recovery", check.L + "Reinstatement"
+    tree = [check.Account("urn:acct:cap", 2, None, (recovery,)), check.Account("urn:acct:agg", 1, 0), check.Account("urn:acct:s", 0, 1), check.Account("urn:acct:t", 0, 1)]
+    monkeypatch.setattr(check, "TREE", tree)
+    monkeypatch.setattr(check, "STATED", (10, 10, 20, 10**6))
+    cap, agg, s, t = range(4)
+    step = [a.stated for a in tree]
+    check.settle_debit(step, s, 10)
+    first = check.Posting(1, 0, s, True, 10, None)
+    applied, cuts = check.settle_credit(step, agg, 10, reinstatement)
+    second = check.Posting(2, 0, agg, False, 10, reinstatement, applied, cuts)
+    assert (applied, cuts) == (10, ()) and step == [10, 10, 0, 10]
+    applied, cuts = check.settle_credit(step, s, 2, recovery)
+    third = check.Posting(3, 0, s, False, 2, recovery, applied, cuts)
+    assert (applied, cuts) == (2, ((agg, 2),)) and step == [12, 10, 2, 10]
+    check.settle_debit(step, t, 3)
+    postings = [first, second, third, check.Posting(4, 0, t, True, 3, None)]
+    model = check.run_model(postings, [4])
+    assert [model.balance[(f, agg, 4)] for f in ("applied", "stepwise", "sum-with-cuts")] == [9, 7, 7]
+    assert all(model.balance[(f, cap, 4)] == 9 for f in ("applied", "stepwise", "sum-with-cuts"))
+    assert model.cuts == [(3, agg, 2)] and model.ancestor_binds == 1
+    assert [model.balance[("stepwise", i, 4)] for i in range(4)] == step
+    assert check.expected_stored(postings) == check.structure_triples() + 8 * 4 + 2 + 2 + check.CUT_TRIPLES
+    assert sum(1 for q in check.quads(postings, {}) if q[0].startswith("urn:cut:")) == check.CUT_TRIPLES
+
+
+def test_ck20_the_model_tells_the_sum_with_cuts_from_the_sum_without_them():
+    postings = check.stream_two_level(2000, HIGH)
+    point = postings[-1].pos
+    model = check.run_model(postings, [point])
+    assert model.ancestor_binds > 0 and model.ancestor_binds == sum(len(p.cuts) for p in postings) == len(model.cuts)
+    assert any(model.balance[("applied", i, point)] != model.balance[("stepwise", i, point)] for i in check.ANCESTORS)
+    assert all(model.balance[("sum-with-cuts", i, point)] == model.balance[("stepwise", i, point)] for i in range(len(check.TREE)))
+    assert any(check.TREE[p.contract].level > 0 for p in postings if not p.debit)
+
+
+def test_ck21_a_two_level_corpus_that_cannot_fail_the_cut_is_refused():
+    postings = check.stream(SMALL, HIGH)
+    model = check.run_model(postings, [postings[-1].pos])
+    with pytest.raises(check.WrongResult, match="no ancestor's ceiling binds"):
+        check.check_discriminates_cuts(model, HIGH, postings[-1].pos, postings)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck22_a_cut_dropped_from_the_stored_data_fails_the_check(monkeypatch, backend):
+    real_quads, real_stored = check.quads, check.expected_stored
+
+    def without_one_cut(postings, cps):
+        dropped = None
+        for q in real_quads(postings, cps):
+            if dropped is None and q[0].startswith("urn:cut:"):
+                dropped = q[0]
+            if q[0] != dropped:
+                yield q
+
+    monkeypatch.setattr(check, "quads", without_one_cut)
+    monkeypatch.setattr(check, "expected_stored", lambda postings: real_stored(postings) - check.CUT_TRIPLES)  # the count agrees, so only the balance can tell
+    with pytest.raises(check.WrongResult, match="sum-with-cuts.*the model gives"):
+        check.run_backend_cuts(backend, SMALL, HIGH)
+
+
+def test_ck23_a_writer_that_records_no_cut_fails_the_check(monkeypatch):
+    real = check.settle_credit
+    monkeypatch.setattr(check, "settle_credit", lambda *a: (real(*a)[0], ()))
+    with pytest.raises(check.WrongResult, match="cut"):
+        check.run_backend_cuts("rdflib", SMALL, HIGH)
+
+
+def test_ck24_a_wrong_stored_cut_count_fails_the_check(monkeypatch):
+    monkeypatch.setattr(check, "expected_stored", lambda postings: 0)
+    with pytest.raises(check.WrongResult, match="stored"):
+        check.run_backend_cuts("rdflib", SMALL, HIGH)
+
+
+def test_ck25_the_report_has_the_two_level_rows(tmp_path):
+    check.write_report(check.run((SMALL,), (HIGH,), ["rdflib"]) + check.run_cuts((SMALL,), (HIGH,), ["rdflib"]), tmp_path)
+    data = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))
+    assert [m["corpus"] for m in data["measurements"]] == [check.CORPUS_ONE, check.CORPUS_TWO]
+    text = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "sum-with-cuts / kind-filtered" in text and "sum-with-cuts / stepwise" in text

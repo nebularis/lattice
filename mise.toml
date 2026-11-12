@@ -414,7 +414,7 @@ run = ["python -m pytest benchmark/ledger-posting-cost/test_late_posting.py -q -
 
 [tasks."check:ledger-credit-kinds"]
 depends = ["bootstrap:testing-oxigraph", "bootstrap:testing-jena"]
-description = "Measure what a credit's kind filter and a stepwise credit ceiling add to an ancestor's balance fold over the period graphs, against the plain fold, on rdflib, Oxigraph and Jena, and what checkpoints, the clamp at the drawn account and a shortcut change (ADR-A124, LG-Q10, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. LEDGER_KINDS_MAX caps the postings, LEDGER_KINDS_QUICK=1 runs the smallest size, LEDGER_KINDS_FORM forces a kind join form"
+description = "Measure what a credit's kind filter and a stepwise credit ceiling add to an ancestor's balance fold over the period graphs, against the plain fold, on rdflib, Oxigraph and Jena, and what checkpoints, the clamp at the drawn account and a shortcut change, and on a second corpus with credits at two levels of a path, an ancestor read as a sum less the cuts the writer recorded (ADR-A124, LG-Q10, LG-Q23, STD-176). Run on demand, not part of check. Fails on a wrong balance, never on time. LEDGER_KINDS_MAX caps the postings, LEDGER_KINDS_QUICK=1 runs the smallest size, LEDGER_KINDS_FORM forces a kind join form"
 run = ["python -m pytest benchmark/ledger-credit-kinds -q -p no:cacheprovider", "python benchmark/ledger-credit-kinds/check.py"]
 
 [tasks."check:ledger-credit-kinds-jvm"]

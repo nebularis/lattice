@@ -23,6 +23,16 @@ Every ancestor (6 sublimits, 2 sections, the root) is read at three pass positio
 
 The join to the credit's kind has two forms. `optional` is an `OPTIONAL { ?p l:kind ?k }` in the graph block. `union` is `{ ?p l:direction l:Debit } UNION { ?p l:kind ?k } UNION { ?p l:direction l:Credit . FILTER NOT EXISTS { ?p l:kind ?z } }`, and its third branch keeps a credit that has no kind, which would otherwise match neither of the first two and drop out of the fold. The first version of this benchmark had only two branches and every credit had a kind, so it did not see that. Their cost differs by engine (below), so each backend reads the form that is cheaper on it, rdflib and Jena `optional` and Oxigraph `union`, and `LEDGER_KINDS_FORM=optional|union` forces one on all three. The report's `kind join` column says which was read.
 
+## Credits at two levels of a path, and the cut
+
+LG-15 posted every credit on a contract, and there no ancestor's ceiling bound. A credit posted at an ancestor restores that ancestor and not the accounts below it, so a later credit below can push the ancestor past its ceiling (section 4.8 of the sketch on balances under post-once). The second corpus, `two-level`, has the same passes, debits, contracts, amounts and kinds as the first (`stream_two_level`), but `UPPER_SHARE`, one half, of the credits are posted at a sublimit or a section on the drawn contract's path instead of at the contract, chosen at random among the accounts there that accept the credit's kind. A credit posted at an internal account X is clamped at X, changes no account below X, and folds upward from X.
+
+Where a credit lives. A credit at a sublimit goes in that sublimit's own period graph, shared with the postings of its contracts. A credit at a section goes in a period graph keyed by the section. An account reads the graphs keyed by every sublimit and section in its subtree, itself included, so a section's credit is read by that section and the root and by no sublimit, and a sublimit's credit by the sublimit, its section and the root. No account reads a graph outside its own subtree.
+
+The writer holds the stepwise balance of every account. It applies a credit at its posting account up to that account's room, then each accepting ancestor takes the lesser of the applied amount and its own room, stepwise, and where it takes less the difference is a **cut** at that ancestor. A cut is stored with the credit in the credit's own graph as 3 triples, a cut node naming its posting (`l:cutOf`), the ancestor it is at (`l:cutAt`) and its value (`l:cutValue`). A cut has no position of its own, so a read joins it to its posting for the position bound, in the same graph. We chose 3 triples over 4 with a copy of the position, which would save that join and cost a triple per cut, and we did not measure the 4-triple form. A cut is recorded only at an ancestor that accepts the credit, so the read of cuts needs no kind filter.
+
+**sum-with-cuts** is an ancestor's balance as the stated amount (or the checkpoint's balance), plus the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it. It is two aggregates, one over the postings and one over the cuts, whose times are reported apart. The postings aggregate is a `UNION` of three branches inside the graph block, a debit, a credit with a kind and a credit with no kind, with no `OPTIONAL` there, since an `OPTIONAL` inside `GRAPH ?g` reads every graph on Oxigraph 0.5.13 (TSD-71) and the applied amount is absent on a debit. The account's kind filter is outside the graph block, where its declarations are in the default graph. One form is used on all three engines. The postings aggregate alone is the kind-filtered sum of applied amounts with no cuts, which the check reads as well and compares with the model's.
+
 ## What it tests
 
 | Claim | Test |
@@ -32,11 +42,15 @@ The join to the credit's kind has two forms. `optional` is an `OPTIONAL { ?p l:k
 | A checkpoint holds the balance by each fold, including the filter and the clamp | every checkpointed read against the model's balance and posting count |
 | The shortcut gives the stepwise balance, and falls back where its check fails | every shortcut read against the model's stepwise balance, and the rate of falling back |
 | The filter, the clamp and the checkpoints are not the cost of a different design from the plain fold | time per read and postings folded per read, each read against the plain fold, on each backend and size |
+| When credits land at two levels of one path, an ancestor's kind-filtered sum of applied amounts is wrong where a cut was recorded, and the sum with cuts equals the stepwise balance | the two-level corpus, every ancestor at every point, in both modes, on each backend: the sum with cuts and the stepwise fold against the model's stepwise balance, and the postings alone against the model's sum of applied amounts, which differs from it at 8 of 9 ancestors at 30% credits |
+| The writer's cuts are the stepwise law's | the cuts the writer recorded against the cuts the model's replay gives, and the stored triples, cuts included, against the arithmetic |
 | The cost is not one engine's or one caller's | the same corpus and the same balances on three engines through Python, and on Jena in memory and on TDB2 called from Java ([benchmark/ledger-credit-kinds-jvm](../ledger-credit-kinds-jvm/README.md)) |
 
 ## Pass criterion
 
 Every read on every backend, from the start of history and from the checkpoint, equals the model's balance for that fold, ancestor and read point and counts the postings the model counts, and every shortcut read equals the model's stepwise balance. The folds therefore differ from each other exactly where the model says, and the report records where it expects it (`model_expects` in `report.json`: the contracts where a clamp binds, the ancestors where the stepwise and the plain or filtered balances differ, the credits with no kind). The stored triples, checkpoints included, have the count the arithmetic gives. The model must itself tell the folds apart, or the corpus is refused: the cap's plain and kind-filtered balances differ, a credit with no kind exists, and at 30% credits a clamp binds at a contract and reaches an ancestor. **A wrong balance, posting count or stored count fails the run. Time never does.** `test_check.py` shows the check fails on a balance off by one, on a filter that ignores the kind, on a join that drops a credit with no kind, on a missing clamp at the drawn contract, on a wrong checkpoint, on a shortcut that skips a needed fallback and on a stored count, that it does not fail on time, that the run leaves no store open, that each form of the join gives the model's balances, and that the emitted corpus matches the model ([PRI-63](../../docs/developer/principles.md)).
+
+The two-level pass criterion is part of the same check. Every kind-filtered, stepwise and sum-with-cuts read, from the start and from the checkpoint, equals the model, the cuts the writer recorded are the model's, the stored count includes 3 triples a cut, and at 30% credits an ancestor's ceiling binds (a cut exists) and the sum of applied amounts with no cuts differs from the stepwise balance at an ancestor, on the model and on each engine. A corpus where that could not be told is refused. `test_check.py` also shows the check fails when a cut is dropped from the stored data (with the stored count agreeing, so only the balance can tell), when the writer records no cut, and that the four-step history of the sketch gives 9 for the sum of applied amounts, 7 for the stepwise balance and the sum with cuts, with one cut of 2 at the aggregate, and 9 at the annual cap under every fold.
 
 ## Run it
 
@@ -120,15 +134,44 @@ What the run shows.
 
    The two-branch union gave 1.7 on Oxigraph and 1.6 on Jena (LG-14, at 20,000), so the third branch costs about 0.2 to 0.4 of the plain fold's time and does not change the ranking. On Oxigraph the `OPTIONAL` form behaves like a scan of every kind triple in the store, and on rdflib the `union` form scans every graph. We did not check either plan. A generated query for the kind filter should be chosen per engine and tested, as [ADR-A128](../../docs/architecture/decisions/ADR-A128-efficient-queries-and-shapes.md) asks of any generated query.
 
+### The two-level corpus and the cut
+
+Run of 2026-11-12 on the same laptop and engine versions, 52 tests passed and the whole task finished in 1,408 s, the two-level corpus included. Credits are posted at a contract, a sublimit or a section, half of them above a contract. "Rows" are as above, with a cut counted as a row. Times are the mean of 3 read points, at the root, at 20,000 postings. The 1,000 and 5,000 rows and the 5% rows are in `report.md`.
+
+Stored cuts. At 30% credits there are 55 / 514 / 2,160 cuts at 1,000 / 5,000 / 20,000 postings, on 44 / 401 / 1,708 credits, which is 14.2% / 26.7% / 28.4% of the credits carrying a cut. They cost 165 / 1,542 / 6,480 triples, 3.5% of the 185,951 stored at 20,000. At 5% credits no ancestor's ceiling binds at any size, so there is no cut and the stored count equals the one-level corpus's. Every stored count equals the arithmetic, on all three engines.
+
+Where the sums are wrong. At 30% credits the kind-filtered sum of applied amounts with no cuts, which is the postings part of the sum with cuts, differs from the stepwise balance at 8 of 9 ancestors at every size, on the model and on each engine. The kind-filtered sum of offered amounts (LG-14's fold) differs at 9 of 9. The sum with cuts and the stepwise fold equal the model at all 9 in both modes.
+
+Time per root read (ms), 30% credits, from the start of history, then from the last checkpoint. The ratios are the time of all 27 ancestor reads of the sum with cuts against the other fold.
+
+| Backend | read | kind-filtered | stepwise | sum-with-cuts | of which postings / cuts | to kind-filtered | to stepwise |
+|---|---|---|---|---|---|---|---|
+| rdflib | full | 7,494 | 7,642 | 5,123 | 4,983 / 138 | 0.71 | 0.69 |
+| rdflib | checkpointed | 262 | 258 | 194 | 179 / 12 | 0.85 | 0.89 |
+| Oxigraph | full | 197 | 194 | 117 | 109 / 7.0 | 0.57 | 0.22 |
+| Oxigraph | checkpointed | 4.46 | 147 | 3.50 | 3.04 / 0.29 | 0.86 | 0.01 |
+| Jena through the kit | full | 219 | 848 | 257 | 241 / 16 | 1.18 | 0.31 |
+| Jena through the kit | checkpointed | 6.40 | 17.5 | 8.60 | 5.79 / 0.70 | 1.32 | 0.56 |
+
+At 5% credits, full, the ratios to kind-filtered / stepwise are 0.54 / 0.53 on rdflib, 0.42 / 0.17 on Oxigraph and 1.04 / 0.27 on Jena, and checkpointed 0.73 / 0.74, 1.49 / 0.01 and 1.57 / 1.14.
+
+What the run shows.
+
+1. **The sum with cuts costs about what the kind-filtered sum costs, and far less than the ordered read.** From the start of history it is 0.57 to 1.18 times the kind-filtered fold at 30% credits (0.42 to 1.04 at 5%) and 0.22 to 0.69 times the stepwise fold. It has no ordered read and no loop, so it does not pay the transfer of rows to the caller. On rdflib and Oxigraph it is cheaper than the kind-filtered fold, whose kind join is an `OPTIONAL` or a two-branch `UNION`. Its three-branch `UNION` reads each of the three kinds of posting once. On Jena it is 1.2 times dearer. We did not read a plan to say why, and the comparison is of one query form against another on each engine, not of one design against the other.
+2. **The cuts are cheap to read.** The cuts aggregate is 3 to 6 percent of the read at the root (138 of 5,123 ms on rdflib, 7.0 of 117 on Oxigraph, 16 of 257 on Jena at 30%), and 0.4 to 3 percent at 5% credits, where it matches nothing. It folds 710 more rows than the postings alone at the root (12,068 against 11,358), one per cut recorded there.
+3. **A checkpoint bounds the read as before.** The sum with cuts from the last checkpoint is 0.02 to 0.04 of the full read on rdflib, Oxigraph and Jena at 20,000 postings and 30% credits (194 of 5,123, 3.5 of 117, 8.6 of 257 ms), folding 255 rows instead of 12,068. The checkpoint holds the account's balance, which is the same under the stepwise law and under the sum with cuts, so the sum with cuts starts from the checkpoint's stepwise balance.
+4. **The postings aggregate uses no `OPTIONAL` inside a graph block and does not meet TSD-71's Oxigraph case.** The checkpointed read on Oxigraph is 3.5 ms against 147 ms for the stepwise fold, which still joins the applied amount by `OPTIONAL`.
+5. **Where a 5% corpus has no cut the fold is not wrong.** At 5% credits no ceiling binds, so the sum of applied amounts with no cuts equals the stepwise balance and the kind-filtered sum of offered amounts is right, which is LG-15's finding. The defect of section 4.8 needs credits at two levels and enough of them to fill an ancestor.
+
 ## What this does not measure
 
-A ceiling that moves in time. Reads of a contract, which the account's own postings answer. A checkpoint written by the fold rather than by the model's arithmetic, and the cost of writing one, since the checkpoints are loaded with the history. Concurrent writers and late postings. A `union` form of the applied join on Oxigraph. A native caller on a store other than Jena. The event stream is seeded and the engines see the same one, so a figure compares folds on one engine and caller, and an engine against another only in its shape. The Java caller runs the reads of a corpus once each, in one JVM after a warm-up on the smallest corpus, so its smallest sizes include some JIT warm-up.
+The native Jena caller on the two-level corpus (`benchmark/ledger-credit-kinds-jvm` reads the one-level corpus only). Concurrent writers, which the cut needs, since the writer reads the path balances and records the cut in one step. Late postings. The cost of writing a cut, since the cuts are loaded with the history and the writer's reads of the path balances are not run. A 4-triple cut. The shortcut and the plain fold on the two-level corpus. A ceiling above a stated amount. A ceiling that moves in time. Reads of a contract, which the account's own postings answer. A checkpoint written by the fold rather than by the model's arithmetic, and the cost of writing one, since the checkpoints are loaded with the history. Concurrent writers and late postings. A `union` form of the applied join on Oxigraph. A native caller on a store other than Jena. The event stream is seeded and the engines see the same one, so a figure compares folds on one engine and caller, and an engine against another only in its shape. The Java caller runs the reads of a corpus once each, in one JVM after a warm-up on the smallest corpus, so its smallest sizes include some JIT warm-up.
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `check.py` | the tree, the stream, the model, the checkpoints, the four reads on three backends, the pass criterion, the report, and `--emit` and `--merge` for the native Jena caller |
+| `check.py` | the tree, the streams, the model, the checkpoints, the four reads and the sum with cuts on three backends, the pass criterion, the report, and `--emit` and `--merge` for the native Jena caller (the one-level corpus only) |
 | `test_check.py` | the check's own tests |
 | `conftest.py` | makes a temporary folder refuse removal while a store in it is open |
 | `report.md`, `report.json` | the last run's results, generated and git-ignored |
