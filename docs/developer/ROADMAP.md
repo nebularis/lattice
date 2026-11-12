@@ -1020,6 +1020,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 8. **Write the board rows** section 9 counts as slices named only in prose, listed by unit in the identifier exceptions baseline.
 9. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
 10. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
+11. **Answer SVA-Q1 to SVA-Q16 of the studio's visual authoring unit** ([sketch](sketches/studio-visual-authoring.md), [plan](plans/studio-visual-authoring.md)), raised 2026-11-12. SVA-Q1 to SVA-Q4 decide how a run's result reaches the browser and where a simulator's state lives, and reopen XJ-Q8. SVA-Q14 decides whether MORK gains a template library. Thirty slices are planned and none is briefed until the answers are in.
 
 ## 11. Completed units
 

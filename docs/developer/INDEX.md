@@ -76,6 +76,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | spc-package-split | unit |  | merged 2026-09-20 |  | [status](status/spc-package-split.md) |
 | studio-publication | multi-slice unit in four phases | PB | built 2026-10-31 | PB-1 | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
 | studio-quality | multi-slice unit | SQ | built 2026-10-31 | SQ-1 | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
+| studio-visual-authoring | multi-slice unit | SVA | planned | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md) |
 | studio-worker-liveness | multi-slice unit | WL | built 2026-11-06 | WL-0 | [plan](plans/studio-worker-liveness.md), [status](status/studio-worker-liveness.md) |
 | surface-mork-unified-projection | unit |  | merged 2026-09-22 |  | [status](status/surface-mork-unified-projection.md) |
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
@@ -515,6 +516,36 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SQ-4 | the model and the Hypothesis state machine | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
 | SQ-5 | a Jepsen test against the Compose topology | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
 | SQ-6 | Locust load runs with reports | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
+| SVA-R0 | probes of the broker for content frames | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | studio-visual-authoring | planned | SVA-R0 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | studio-visual-authoring | planned | SVA-R1 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-R3 | the run worker, from the transforms worker | studio-visual-authoring | planned | SVA-R1 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-R4 | the browser's run controller and the dock's run pane | studio-visual-authoring | planned | SVA-R1 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-R5 | the run protocol's failure cases on the real stack | studio-visual-authoring | planned | SVA-R2, SVA-R3, SVA-R4 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-B1 | catalog reading, ontology headers, the import closure and its plan | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-B2a | several imports held by one write, each with its ontology and version IRI | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | studio-visual-authoring | planned | SVA-B2a | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-B3 | the Baseline view's imports list, import dialog and missing report | studio-visual-authoring | planned | SVA-B1, SVA-B2a | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-B4 | the import graph | studio-visual-authoring | planned | SVA-B3, SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-O1 | the canvas kit, with layout in a web worker | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | studio-visual-authoring | planned | SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-O3 | the axiom reader and the element forms | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-P1 | landing places in a compile job, and the exploded view, read-only | studio-visual-authoring | planned | SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-P2 | edits on the persistence canvas | studio-visual-authoring | planned | SVA-P1 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-P3 | the persistence simulation executor | studio-visual-authoring | planned | SVA-R3 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-P4 | the persistence simulator pane | studio-visual-authoring | planned | SVA-R4, SVA-P1, SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S1 | the surface canvas | studio-visual-authoring | planned | SVA-O2 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S2 | the surface simulation executor | studio-visual-authoring | planned | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S3 | the surface simulator pane | studio-visual-authoring | planned | SVA-S1, SVA-S2, SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-M1 | the mapping schemes listed on the left | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-M2a | MORK's template library, with `mork_rdf` | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-M2b | template libraries in `mork2rml`, `mork_transforms` and MCN | studio-visual-authoring | planned | SVA-M2a | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-M2c | a library as a unit, and a compile that reads libraries | studio-visual-authoring | planned | SVA-M2a | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-M2d | the Libraries section | studio-visual-authoring | planned | SVA-M1, SVA-M2c | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-M2e | template cards for the proposer and the MCP server | studio-visual-authoring | planned | SVA-M2b, SVA-M2c | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-M3a | a mapping's queries over an RDF sample, as a run | studio-visual-authoring | planned | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-M3b | the sample pane | studio-visual-authoring | planned | SVA-R4, SVA-M3a | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-M4 | the output explorer | studio-visual-authoring | planned | SVA-O1, SVA-R4 | docs/developer/status/studio-visual-authoring.md#slices |
 | WL-0 | the plan, this record, the board | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-1 | reproductions that fail today, the view's fate on remount, a worker's idle memory | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-2 | the job on its own thread, the publisher and acknowledgement across threads | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
