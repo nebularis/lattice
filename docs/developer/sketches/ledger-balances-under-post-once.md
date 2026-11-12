@@ -329,6 +329,20 @@ The first line is reading A and the second reading B. A shows a balance below ze
 
 **Leaning, as first written, and the maintainer's answer.** The leaning was that C defines the read, B is offered on request under a name that says it is a restatement, and A is refused. On 2026-11-12 the maintainer said that both readings are needed, a balance by effective day as well as the flows, so a report by effective day does show a balance and C alone is not enough. Which balance that is, A or B or each for a different reader, is not yet said. A's defect stands, that it can show a figure no account held, and so does B's, that it ends away from the ledger.
 
+**No reading is the default.** Asked which readings a practitioner meets, the maintainer answered on 2026-11-12. Figures by occurrence period may be reported as known at a valuation date, and that cannot be taken as the only way. A statement that shows a limit's erosion by occurrence date is likely to be specific to a business, so we assume it exists and do not assume it is the default. So the ledger serves each of A, B and C, and none is what a report shows unless something declares it.
+
+**What published contract drafting says.** The LMA's published drafting modules for a coverholder binding authority agreement were read on 2026-11-12 as public documents, for what a contract states about reports. They are drafting and tables, with no report data, so they inform the question and cannot feed the benchmark. Five things in them bear on it.
+
+- The basis of cover is a declared variable of an agreement's segment, losses occurring or claims made, the latter with retroactive and extended reporting variants. Which date places a loss in a period is therefore declared and never assumed.
+- Reporting is declared per agreement and per segment, with several arrangements allowed in one agreement, each with its recipient, method, frequency and the time allowed after a period ends.
+- A material error is put right in one of two declared ways, by a contra row and a replacement row on the following bordereau, or by cancelling and replacing through a portal. The first leaves what was reported as it was and records the correction later, which is a late posting. The second restates.
+- Tracking against an aggregate limit is a further reporting requirement with its own timings, and an aggregate runs across the agreement's period or a fixed period of its own.
+- An amendment's effect may be immediate, prospective or retrospective.
+
+The modules name data specifications for policies, premiums and claims without including them, so which dates a claims report carries is not answered there (W-Q3 asks the same of cause of loss).
+
+**The shape this points to, as a leaning.** The ledger states facts and two coordinates, and a reading is a derivation that a report declares. What the ledger owes is what all three readings need: the effective position and the recorded position of every posting, the amount offered beside the amount applied, and the cuts. A, B and C are then named derivations over those, none built into a balance, which is where LG-Q21 already puts derivation. Where a reading is declared, on the report that asks for it or as a default of the ledger profile (LG-Q24), is part of LG-Q26 and not settled.
+
 **A day is read as known at a recording.** Every reading above was taken with all that is known now. Read instead for a day as known at a recording, counting only the postings effective by the day and recorded by the recording, each of A, B and C is reproducible, since nothing recorded later is among its postings. The first version of this section claimed that stability under a later recording tells C from A and B. It does not. With the second coordinate all three are stable, and without it none is, C's flows included. What tells the readings apart is whether a figure is one an account could hold, whether it agrees with the ledger where the day is the recording's own, and how far a later recording moves it.
 
 **How the readings are tested.**
