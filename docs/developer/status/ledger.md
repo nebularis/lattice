@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-12. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** building 2026-11-12. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -127,6 +127,8 @@ Results sections. In short:
 | LG-14 | a benchmark of the credit kinds' read cost on every backend | built 2026-11-11, building 2026-11-11 |  |
 | LG-15 | LG-14's gaps closed: native Jena on TDB2, checkpoints, the drawn account's clamp, the loop timed apart, the shortcut | built 2026-11-11, building 2026-11-11 |  |
 | LG-16 | the cut the writer records, measured in the credit kinds benchmark: credits at two levels of a path, and an ancestor read as a sum less its cuts | built 2026-11-12, building 2026-11-12 |  |
+| LG-17 | LG-16's gaps closed: like-for-like read forms, a cut that copies its position, a ceiling above a stated amount, the sketch's tree in an engine, the cost of writing, concurrent writers on Oxigraph and Jena, late postings, and the native Jena caller | building 2026-11-12 |  |
+- 2026-11-12: LG-17 added and picked up, at the maintainer's request on reading LG-16's non-coverage, in three parts run one after another on machine R so their timings do not disturb each other: the read forms and storage variants, then writes, concurrent writers and late postings, then the native Jena caller.
 - 2026-11-12: LG-16 built, with its [Validation Pack](../validation/LG-16.md). With credits at two levels of a path and 30% credits, an ancestor's ceiling binds on 28% of the credits at 20,000 postings, and the sum of applied amounts with no cuts is wrong at 8 of 9 ancestors. The sum less the cuts equals the stepwise balance at every ancestor, read point and backend, costs 3 triples a cut, 3.5% of the stored triples, and reads at 0.57 to 1.18 of the kind-filtered fold from the start and 0.86 to 1.32 from a checkpoint, where the stepwise read on Oxigraph is a hundred times dearer. 52 tests pass, run again at verification of the subagent's work. The Java caller is not covered.
 - 2026-11-12: LG-16 added and picked up on `docs/placement-vehicles-structure`, at the maintainer's request, by a subagent on machine R: the credit kinds benchmark gains credits posted at two levels of a path, where an ancestor's ceiling binds, and a read of the ancestor as a sum less the cuts the writer recorded (LG-Q23 (d), the balances sketch §4.8).
 - 2026-11-11: LG-15 built, with its [Validation Pack](../validation/LG-15.md). Native Jena's stepwise read costs 1.7 to 2.6 times the plain read, about half the piped figure. A checkpoint cuts a read to 0.02 to 0.05 of a read from the start, except Oxigraph's stepwise read. The shortcut rarely pays. Clamping a credit where it is posted means no ancestor's ceiling binds where ceilings equal stated amounts, raised as LG-Q23.
