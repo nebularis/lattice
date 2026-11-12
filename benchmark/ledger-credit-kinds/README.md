@@ -385,6 +385,32 @@ On TDB2, guarded, 200 requests in all on a store of 5,000, three runs a cell, ev
 
 What the native writes do not show. They are threads in one JVM, not several processes or HTTP. TDB2 ran at a fifth to a tenth of the in-memory counts. The wall time of a guarded run on TDB2 grows far less than its lost races, so a lost race costs much less than a commit, and the cause was not examined. Each cell of the stress is three runs and the single writer one, on one laptop.
 
+## One writer per ledger, and the readings of a late posting
+
+Two modules of LG-18, written on 2026-11-12 and **not yet run**. Their results are added here when they have run.
+
+**`single_writer.py`**, run by `mise run check:ledger-credit-kinds-single-writer`. The guarded writers above each read their path, write under the guard and try again when they lose a race. Here producers hand their requests to one writer through a queue. It uses the stores, preloads and seeded request lists of the stress, and runs the guarded writers again beside it so both are measured on one machine.
+
+| Writer | What it does for a posting |
+|---|---|
+| reads | reads the revision and the balance of every account on the path, settles, writes one guarded update and confirms it, as `writes.Live` does |
+| keeps | settles from balances it read once and has kept since, writes one update and confirms it. It is right only while it is the ledger's one writer |
+| keeps, in batches | settles several postings from the balances kept and writes them in one update that moves the revision by their number |
+
+A closed run has 1, 2, 4 and 8 producers that each wait for their answer, and gives the time a request waits. A backlog run queues every request before the writer starts, and gives the writer's rate, which the report also states as postings a second and a day at 70% of it. Every run is held to the replay of its commits on every store, the on-disk one included, since nothing races a single writer. The native Jena run, in memory and on TDB2, is part of `check:ledger-credit-kinds-jvm-writes`.
+
+What LG-17's figures lead us to expect, to be tested by the run and not relied on before it. The writer that reads is LG-17's single writer, at about 300 postings a second on Oxigraph in memory, 90 to 140 on disk, 100 to 200 on Jena in memory and 9 on TDB2. The writer that keeps its balances pays the update and its confirmation alone, which were 0.1 to 0.5 ms on the in-memory stores, so some thousands a second, and on TDB2 it stays at the commit, about 10 a second, until postings share a commit.
+
+**`late_readings.py`**, run by `mise run check:ledger-credit-kinds-late-readings`, for LG-Q26. On the late corpus of `writes.py` it reads a balance for a day as known at a recording, three ways at every ancestor.
+
+| Reading | What it is | Read |
+|---|---|---|
+| A | the recorded amounts of the postings effective by the day and recorded by the recording | a sum, from the start of history or from the checkpoint at the close before the day |
+| B | the same postings settled again in effective order | an ordered read of the account's subtree folded by the caller, always from the start |
+| C | no balance, the debits and the credits offered | two sums, from the start, or since the close before the day |
+
+It checks that each engine read equals the model, that a store holding only what was recorded by then reads the same as the whole store, that A at a day's own recording is the ledger's balance, and that with no late posting A and B agree. It counts the readings that lie below zero or above the ceiling, the heads at which B differs from the ledger, and how far a figure as known at the recording has moved by the end of history. It times each read, and reading A by the age of the day. The checkpointed read of A rests on STD-294: nothing is effective after it is recorded, so everything recorded by a close is effective by any later day.
+
 ## What this does not measure
 
 Not in LG-17 at all, a query plan from the Python callers, since none of them can explain a query (the Java caller's plans are above, for Jena only and without a run-time explanation), a ceiling that moves in time, a checkpoint written by the fold rather than by the model's arithmetic, a `union` form of the applied join on Oxigraph, and a native caller on a store other than Jena. The ceiling variant is read at 30% credits only and without the plain fold or the shortcut. The Java caller does not read the ceiling variant, the cut forms or the shortcut on the two-level corpus. The event stream is seeded and the engines see the same one, so a figure compares folds on one engine and caller, and an engine against another only in its shape. The Java caller runs the reads of a corpus once each, in one JVM after a warm-up on the smallest corpus, so its smallest sizes include some JIT warm-up. The write benchmark below does not measure writes over HTTP or from more than one process, a store other than Oxigraph and Jena under concurrent writers, a writer that writes the checkpoint at a period close, a guard narrower than the owner's whole ledger, a posting effective inside a sealed period as a decision, or any rule that consumes an amount in effective order. The native writes are threads in one JVM, on Jena TDB2 at smaller counts than the in-memory runs because every TDB2 commit is made durable.
@@ -397,5 +423,7 @@ Not in LG-17 at all, a query plan from the Python callers, since none of them ca
 | `test_check.py` | the check's own tests |
 | `writes.py` | the live writer, its guard, the fixed interleavings, the stress, the GIL probe, the late postings and their four numbers, and the report (`writes-report.md`, `writes-report.json`), and `--emit-jvm` and `--audit-jvm` for the native Jena writer |
 | `test_writes.py` | the write benchmark's own tests |
+| `single_writer.py`, `test_single_writer.py` | one writer per ledger fed through a queue, against the guarded writers, and its tests (LG-18) |
+| `late_readings.py`, `test_late_readings.py` | the readings of a balance by effective day as known at a recording, and its tests (LG-18) |
 | `conftest.py` | makes a temporary folder refuse removal while a store in it is open |
-| `report.md`, `report.json`, `writes-report.md`, `writes-report.json` | the last runs' results, generated and git-ignored |
+| `report.md`, `report.json`, `writes-report.md`, `writes-report.json`, `single-writer-report.*`, `late-readings-report.*` | the last runs' results, generated and git-ignored |

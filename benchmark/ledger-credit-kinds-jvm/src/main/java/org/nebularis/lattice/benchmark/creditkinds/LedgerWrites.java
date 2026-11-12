@@ -17,7 +17,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPOutputStream;
 
@@ -44,6 +47,10 @@ import org.apache.jena.update.UpdateExecution;
  * posting with the benchmark's arithmetic, and writes the posting, its applied amount, kind and cuts and the new revision in one guarded update, confirmed by asking for its own posting. The corpus, the
  * request lists and the plan of the runs are written by {@code writes.py --emit-jvm}. After each run the whole dataset is exported as gzipped N-Quads, and Python replays it ({@code writes.py --audit-jvm}),
  * so the audit is the Python benchmark's own and none is written here.
+ *
+ * <p><b>One writer per ledger (LG-18).</b> Producers hand their requests to one writer through a queue, so no race is lost. The writer either reads its path for every posting, as the live writer does, or keeps the
+ * balances it has settled and reads nothing, and it may then write several postings in one update. A run is closed, each producer waiting for its answer, or a backlog queued before the writer starts. Python holds
+ * every such run to the replay of its commits, on both stores.
  *
  * <p><b>A wrong result fails this run with a non-zero exit. Time never does (ADR-A124).</b> What the store does with concurrent writers is reported and not asserted here, and Python asserts it.
  */
@@ -195,7 +202,8 @@ public final class LedgerWrites {
             return p;
         }
 
-        String text(Plan p) {
+        /** The triples of the posting and its cuts. Sets the plan's graph. */
+        String triples(Plan p) {
             Req r = p.r;
             long pos = p.revision + 1;
             p.graph = own[r.at()] + ((pos - 1) / CreditKinds.every);
@@ -221,6 +229,11 @@ public final class LedgerWrites {
                     body.append(c).append(" <").append(L).append("cutValue> ").append(cut[1]).append(" . ");
                 }
             }
+            return body.toString();
+        }
+
+        String text(Plan p) {
+            String body = triples(p);
             String old = "<" + LEDGER + "> <" + REVISION + "> " + p.revision;
             String now = "<" + LEDGER + "> <" + REVISION + "> " + (p.revision + 1);
             String all = now + " . GRAPH <" + p.graph + "> { " + body + "}";
@@ -257,6 +270,222 @@ public final class LedgerWrites {
             }
         }
         throw new CreditKinds.WrongResult(tag + ": lost " + MAX_ATTEMPTS + " races in a row");
+    }
+
+    // ---- one writer per ledger (LG-18) ----
+
+    /** A writer that keeps the balances it has settled. It reads the revision and every account once, and after that settles from what it holds and reads nothing. Right only while it is the ledger's one writer. */
+    static final class Keeper {
+        final Live live;
+        final long[] held = new long[n];
+        long at;
+        final double warm;
+
+        Keeper(Dataset ds, int checkpoints, boolean guarded) {
+            live = new Live(ds, checkpoints, guarded);
+            long t0 = System.nanoTime();
+            Txn.executeRead(ds, () -> {
+                at = live.revision();
+                for (int i = 0; i < n; i++) {
+                    held[i] = live.balance(i, at);
+                }
+            });
+            warm = (System.nanoTime() - t0) / 1e9;
+        }
+
+        /** Settles a request from the balances held, and moves them and the revision unless it is refused. */
+        Plan settle(Req r, String tag) {
+            Plan p = new Plan();
+            p.r = r;
+            p.tag = tag;
+            p.revision = at;
+            List<Integer> path = chain(r.at());
+            p.path = path.size();
+            if (r.debit()) {
+                p.refused = path.stream().anyMatch(i -> held[i] < r.amount());
+                if (!p.refused) {
+                    path.forEach(i -> held[i] -= r.amount());
+                }
+            } else {
+                p.applied = settleCredit(held, r.at(), r.amount(), r.kind(), p.cuts);
+            }
+            if (!p.refused) {
+                at++;
+            }
+            return p;
+        }
+
+        /** Settles the requests in order and writes those not refused in one update, which moves the revision by their number. A guarded write is confirmed by asking for its last posting. Returns a plan for each. */
+        List<Plan> write(List<Ask> items) {
+            long base = at;
+            List<Plan> plans = new ArrayList<>(), written = new ArrayList<>();
+            for (Ask a : items) {
+                Plan p = settle(a.r, a.tag);
+                plans.add(p);
+                if (!p.refused) {
+                    written.add(p);
+                }
+            }
+            if (written.isEmpty()) {
+                return plans;
+            }
+            Map<String, StringBuilder> byGraph = new LinkedHashMap<>();
+            for (Plan p : written) {
+                String body = live.triples(p);
+                byGraph.computeIfAbsent(p.graph, g -> new StringBuilder()).append(body);
+            }
+            StringBuilder all = new StringBuilder("<" + LEDGER + "> <" + REVISION + "> " + (base + written.size()) + " . ");
+            byGraph.forEach((g, b) -> all.append("GRAPH <").append(g).append("> { ").append(b).append("} "));
+            String old = "<" + LEDGER + "> <" + REVISION + "> " + base;
+            String text = live.guarded ? "DELETE { " + old + " } INSERT { " + all + " } WHERE { " + old + " }" : "DELETE DATA { " + old + " } ; INSERT DATA { " + all + " }";
+            Dataset ds = live.ds;
+            Txn.executeWrite(ds, () -> UpdateExecution.dataset(ds).update(text).execute());
+            if (live.guarded) {
+                Plan last = written.get(written.size() - 1);
+                live.queries++;
+                boolean won = Txn.calculateRead(ds, () -> select(ds, "SELECT ?x WHERE { GRAPH <" + last.graph + "> { <urn:posting:" + last.tag + "> a <" + L + "Posting> . BIND(1 AS ?x) } } LIMIT 1").hasNext());
+                if (!won) {
+                    throw new CreditKinds.WrongResult(last.tag + ": the one writer lost a race");
+                }
+            }
+            return plans;
+        }
+    }
+
+    /** A request in the queue, and its answer. */
+    static final class Ask {
+        final Req r;
+        final String tag;
+        final CountDownLatch done = new CountDownLatch(1);
+        long asked, waited;
+        boolean refused;
+
+        Ask(Req r, String tag) {
+            this.r = r;
+            this.tag = tag;
+        }
+    }
+
+    /** The first `total / threads` requests of each of the `threads` seeded lists. */
+    static List<List<Req>> asked(JsonObject lists, int threads, int total) {
+        List<List<Req>> out = new ArrayList<>();
+        lists.get(String.valueOf(threads)).getAsArray().forEach(l -> {
+            List<Req> all = reqs(l);
+            out.add(all.subList(0, Math.min(all.size(), total / threads)));
+        });
+        return out;
+    }
+
+    /**
+     * The lists of requests handed to one writer through a queue. `writer` is "reads", the live writer, or "keeps", the keeper, which alone takes a batch. In a closed run each producer waits for its answer. In a
+     * backlog run every request is queued in turn from each list before the writer starts, so the rate is the writer's own.
+     */
+    static Map<String, Object> queue(String store, JsonObject preload, List<List<Req>> lists, String writer, int batch, boolean guarded, boolean backlog, Path dir, String tag) throws Exception {
+        Store s = open(store);
+        try {
+            loadPreload(s.ds(), dir, preload);
+            int checkpoints = (int) CreditKinds.num(preload, "checkpoints");
+            List<List<Ask>> asks = new ArrayList<>();
+            for (int p = 0; p < lists.size(); p++) {
+                List<Ask> mine = new ArrayList<>();
+                for (int k = 0; k < lists.get(p).size(); k++) {
+                    mine.add(new Ask(lists.get(p).get(k), "Q" + p + "." + k));
+                }
+                asks.add(mine);
+            }
+            int total = asks.stream().mapToInt(List::size).sum();
+            Live live = writer.equals("keeps") ? null : new Live(s.ds(), checkpoints, guarded);
+            Keeper keeper = writer.equals("keeps") ? new Keeper(s.ds(), checkpoints, guarded) : null;
+            LinkedBlockingQueue<Ask> inbox = new LinkedBlockingQueue<>();
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            List<Integer> sizes = new ArrayList<>();
+            Thread server = new Thread(() -> {
+                try {
+                    int served = 0;
+                    while (served < total) {
+                        List<Ask> items = new ArrayList<>();
+                        items.add(inbox.take());
+                        inbox.drainTo(items, batch - 1);
+                        List<Plan> plans = keeper != null ? keeper.write(items) : List.of(writeOne(live, items.get(0).r, items.get(0).tag, false, new int[1]));
+                        long now = System.nanoTime();
+                        sizes.add(items.size());
+                        for (int i = 0; i < items.size(); i++) {
+                            Ask a = items.get(i);
+                            a.refused = plans.get(i).refused;
+                            a.waited = now - a.asked;
+                            a.done.countDown();
+                        }
+                        served += items.size();
+                    }
+                } catch (Throwable e) {
+                    failure.compareAndSet(null, e);
+                }
+            });
+            long t0 = System.nanoTime();
+            if (backlog) {
+                int longest = asks.stream().mapToInt(List::size).max().orElse(0);
+                for (int k = 0; k < longest; k++) {
+                    for (List<Ask> mine : asks) {
+                        if (k < mine.size()) {
+                            mine.get(k).asked = t0;
+                            inbox.put(mine.get(k));
+                        }
+                    }
+                }
+                server.start();
+            } else {
+                server.start();
+                List<Thread> pool = new ArrayList<>();
+                for (List<Ask> mine : asks) {
+                    Thread th = new Thread(() -> {
+                        try {
+                            for (Ask a : mine) {
+                                a.asked = System.nanoTime();
+                                inbox.put(a);
+                                while (!a.done.await(200, TimeUnit.MILLISECONDS)) {
+                                    if (failure.get() != null) {
+                                        return;
+                                    }
+                                }
+                            }
+                        } catch (InterruptedException e) {
+                            failure.compareAndSet(null, e);
+                        }
+                    });
+                    pool.add(th);
+                    th.start();
+                }
+                for (Thread th : pool) {
+                    th.join();
+                }
+            }
+            while (server.isAlive() && failure.get() == null) {
+                server.join(200);
+            }
+            double wall = (System.nanoTime() - t0) / 1e9;
+            if (failure.get() instanceof CreditKinds.WrongResult wrong) {
+                throw wrong;
+            }
+            if (failure.get() != null) {
+                throw new RuntimeException(failure.get());
+            }
+            List<Double> waited = new ArrayList<>();
+            long commits = 0;
+            for (List<Ask> mine : asks) {
+                for (Ask a : mine) {
+                    waited.add(a.waited / 1e6);
+                    commits += a.refused ? 0 : 1;
+                }
+            }
+            String exported = tag + ".nq.gz";
+            export(s.ds(), dir.resolve(exported));
+            return map("store", store, "producers", lists.size(), "writer", writer, "batch", batch, "guarded", guarded, "load", backlog ? "backlog" : "closed", "preload", CreditKinds.num(preload, "postings"),
+                    "requests", total, "commits", commits, "refused", total - commits, "wall_s", wall, "commits_per_s", commits / wall, "waited_mean_ms", mean(waited), "waited_p95_ms", p95(waited),
+                    "batches", sizes.size(), "batch_mean", sizes.stream().mapToInt(Integer::intValue).average().orElse(0), "warm_s", keeper != null ? keeper.warm : 0.0,
+                    "base", CreditKinds.num(preload, "base"), "export", exported);
+        } finally {
+            s.close();
+        }
     }
 
     // ---- stores ----
@@ -581,7 +810,7 @@ public final class LedgerWrites {
         JsonObject preloads = input.get("preloads").getAsObject();
         String jena = CreditKinds.jenaVersion();
         System.out.println("Jena " + jena + ", Java " + Runtime.version().feature() + ", heap cap " + (Runtime.getRuntime().maxMemory() >> 20) + " MiB, " + Runtime.getRuntime().availableProcessors() + " CPUs");
-        List<Object> guarded = new ArrayList<>(), increment = new ArrayList<>(), singles = new ArrayList<>(), stresses = new ArrayList<>();
+        List<Object> guarded = new ArrayList<>(), increment = new ArrayList<>(), singles = new ArrayList<>(), stresses = new ArrayList<>(), queues = new ArrayList<>();
         try {
             // a warm-up that is not reported, so the first writer does not pay for loading classes and the JIT
             JsonObject first = preloads.get(String.valueOf(plan.get("sizes").getAsArray().get(0).getAsNumber().value().longValue())).getAsObject();
@@ -635,13 +864,36 @@ public final class LedgerWrites {
                         }
                     }
                 }
+                if (cut.hasKey("queue")) {
+                    JsonObject qp = cut.get("queue").getAsObject();
+                    int qTotal = (int) CreditKinds.num(qp, "total"), most = 1;
+                    for (JsonValue tv : plan.get("threads").getAsArray()) {
+                        int producers = (int) tv.getAsNumber().value().longValue();
+                        most = Math.max(most, producers);
+                        for (String writer : new String[] {"reads", "keeps"}) {
+                            Map<String, Object> r = queue(store, preload, asked(lists, producers, qTotal), writer, 1, true, false, dir, "queue-" + store + "-closed-" + producers + "-" + writer);
+                            queues.add(r);
+                            System.out.println("queue " + r.get("export") + ": " + r.get("commits") + " commits, " + String.format("%.0f", (Double) r.get("commits_per_s")) + " a second");
+                        }
+                    }
+                    List<Object[]> backlog = new ArrayList<>(List.of(new Object[] {"reads", 1, true}, new Object[] {"keeps", 1, true}, new Object[] {"keeps", 1, false}));
+                    for (JsonValue bv : qp.get("batches").getAsArray()) {
+                        backlog.add(new Object[] {"keeps", (int) bv.getAsNumber().value().longValue(), true});
+                    }
+                    for (Object[] b : backlog) {
+                        String name = "queue-" + store + "-backlog-" + b[0] + "-" + b[1] + ((Boolean) b[2] ? "-guarded" : "-unguarded");
+                        Map<String, Object> r = queue(store, preload, asked(lists, most, qTotal), (String) b[0], (Integer) b[1], (Boolean) b[2], true, dir, name);
+                        queues.add(r);
+                        System.out.println("queue " + r.get("export") + ": " + r.get("commits") + " commits, " + String.format("%.0f", (Double) r.get("commits_per_s")) + " a second");
+                    }
+                }
             }
         } catch (CreditKinds.WrongResult error) {
             System.err.println("WRONG RESULT: " + error.getMessage());
             System.exit(1);
         }
         Map<String, Object> out = map("environment", map("date", java.time.LocalDate.now().toString(), "java", System.getProperty("java.version"), "machine", System.getProperty("os.name") + " " + System.getProperty("os.arch"),
-                "jena", jena, "heap", (Runtime.getRuntime().maxMemory() >> 20) + " MiB", "cpus", Runtime.getRuntime().availableProcessors()), "probe", map("guarded", guarded, "increment", increment), "single", singles, "stress", stresses);
+                "jena", jena, "heap", (Runtime.getRuntime().maxMemory() >> 20) + " MiB", "cpus", Runtime.getRuntime().availableProcessors()), "probe", map("guarded", guarded, "increment", increment), "single", singles, "stress", stresses, "queue", queues);
         Files.writeString(report, json(out));
         System.out.println("report written to " + report.toAbsolutePath());
     }

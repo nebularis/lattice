@@ -195,8 +195,8 @@ class Live:
         plan.seconds, plan.queries = {"reads": read - begin, "settle": time.perf_counter() - read}, self.queries - queries
         return plan
 
-    def text(self, plan: Plan) -> tuple[str, str]:
-        """(the update request, the posting's graph). The posting and its cuts are `ck.quads`' own, renamed to the attempt's."""
+    def lines(self, plan: Plan) -> tuple[list[str], str]:
+        """(the triples of the posting and its cuts, the posting's graph). They are `ck.quads`' own, renamed to the attempt's."""
         r = plan.request
         posting = ck.Posting(plan.revision + 1, 0, r.at, r.debit, r.amount, r.kind, plan.applied, plan.cuts)
         rename = lambda s: s.replace(POSTING_BASE, f"urn:posting:{plan.tag}").replace("urn:cut:1:", f"urn:cut:{plan.tag}:")
@@ -206,6 +206,11 @@ class Live:
                 graph = g
                 o = ("i", rename(o[1])) if o[0] == "i" else ("s", f"k{plan.tag}") if p == L + "key" else o
                 lines.append(f"<{rename(s)}> <{p}> {term(o)} .")
+        return lines, graph
+
+    def text(self, plan: Plan) -> tuple[str, str]:
+        """(the update request, the posting's graph)."""
+        lines, graph = self.lines(plan)
         old, new = f"<{LEDGER}> <{REVISION}> {plan.revision}", f"<{LEDGER}> <{REVISION}> {plan.revision + 1}"
         body = f"{new} . GRAPH <{graph}> {{ {' '.join(lines)} }}"
         if self.guarded:
@@ -636,8 +641,10 @@ def emit_jvm(directory: Path, sizes=WRITE_SIZES, preload_count: int = STRESS_PRE
     (directory / "writes-input.json").write_text(json.dumps(data), encoding="utf-8", newline="\n")
 
 
-def store_plan(probe: tuple[int, int, int], writes: int, total: int, runs: int) -> dict:
-    return {"probe": {"target": probe[0], "increments": probe[1], "runs": probe[2]}, "single": {"writes": writes}, "stress": {"total": total, "guardedRuns": {"1": 1, **{str(t): runs for t in STRESS_THREADS}}}}
+def store_plan(probe: tuple[int, int, int], writes: int, total: int, runs: int, batches: tuple[int, ...] = (10, 100)) -> dict:
+    """The sizes of a store's runs. `queue` is the one writer per ledger of LG-18, the requests handed to it in all and the batches it is tried at."""
+    return {"probe": {"target": probe[0], "increments": probe[1], "runs": probe[2]}, "single": {"writes": writes}, "stress": {"total": total, "guardedRuns": {"1": 1, **{str(t): runs for t in STRESS_THREADS}}},
+            "queue": {"total": total, "batches": list(batches)}}
 
 
 # Jena in memory takes the sizes of the Python benchmark. TDB2 fsyncs every commit, at tens of ms, and a lost race commits too, so it takes smaller counts and the same runs a cell.
@@ -677,6 +684,9 @@ def audit_jvm(directory: Path) -> int:
         for r in report["stress"]:
             r["audit"] = audit_export(directory / r["export"], r["base"], r["guarded"] and held[r["store"]], r["commits"])
             r["asserted"] = r["guarded"] and held[r["store"]]
+            print(f"audited {r['export']}", flush=True)
+        for r in report.get("queue", []):  # one writer per ledger (LG-18): nothing races it, so every run is held to the replay, guarded or not
+            r["audit"] = audit_export(directory / r["export"], r["base"], True, r["commits"])
             print(f"audited {r['export']}", flush=True)
     except WrongResult as error:
         print(f"WRONG RESULT: {error}", file=sys.stderr)
@@ -722,6 +732,13 @@ def render_jvm(data: dict) -> list[str]:
                  [[STORE_NAME[s["store"]], s["threads"], "guarded" if s["guarded"] else "unguarded", s["run"], "yes" if s["asserted"] else "no", s["commits"], s["refused"], s["lost_races"], f"{s['retries_mean']:.2f}",
                    s["retries_max"], f"{s['wall_s']:.2f}", f"{s['commits_per_s']:.0f}", s["audit"]["applied_differ"], s["audit"]["cuts_differ"], s["audit"]["balances_differ"], s["audit"]["overdrawn"], s["audit"]["dense"],
                    s["audit"]["duplicate_positions"]] for s in data["stress"]])
+    if data.get("queue"):
+        out += ["", "## One writer per ledger (LG-18)", "", "Producers hand their requests to one writer through a queue. The writer reads its path for every posting, or keeps the balances it has settled, and may then write a batch in one update. "
+                "In a closed run each producer waits for its answer, and waited is the time from asking to the answer. In a backlog every request is queued before the writer starts, so commits a second is the writer's rate. "
+                "Every run was held to the replay of its commits.", ""]
+        out += table(["store", "load", "producers", "writer", "commits", "refused", "wall s", "commits/s", "waited mean ms", "waited p95 ms", "batches", "postings a batch", "first read of the balances s"],
+                     [[STORE_NAME[q["store"]], q["load"], q["producers"], f"{q['writer']}{f', batches of ' + str(q['batch']) if q['batch'] > 1 else ''}{'' if q['guarded'] else ', no guard'}", q["commits"], q["refused"],
+                       f"{q['wall_s']:.2f}", f"{q['commits_per_s']:.0f}", f"{q['waited_mean_ms']:.2f}", f"{q['waited_p95_ms']:.2f}", q["batches"], f"{q['batch_mean']:.1f}", f"{q['warm_s']:.2f}"] for q in data["queue"]])
     return out + [""]
 
 
