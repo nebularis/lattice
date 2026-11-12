@@ -42,7 +42,8 @@ import tempfile
 import time
 import traceback
 import zipfile
-from dataclasses import dataclass, field
+from contextlib import contextmanager
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import pyoxigraph as ox
@@ -73,9 +74,14 @@ DEBIT_MAX, CREDIT_MAX = 500, 1500
 KINDLESS_SHARE = 0.25  # of the credits on a path where no account restricts kinds
 STEPWISE_BINDS_FROM = 0.30  # the credit share at and above which a clamp must bind at some contract
 UPPER_SHARE = 0.5  # two-level corpus: the share of credits posted at a sublimit or section on the drawn contract's path, where it accepts the kind, instead of at the contract
-CUT_TRIPLES = 3  # a cut: the posting it belongs to, the ancestor it is at, its value
+CUT_FORMS = {"joined": 3, "copied": 4}  # triples a cut costs. joined: the posting it belongs to, the ancestor it is at, its value, and a read joins it to its posting for the position bound. copied: also the posting's position
+DEFAULT_CUT_FORM = "joined"
+CUT_TRIPLES = CUT_FORMS[DEFAULT_CUT_FORM]
+CEILING_SHARE, CEILING_FACTOR = 0.5, 1.5  # ceiling variant: the share of contracts and sublimits whose ceiling is above their stated amount, and by how much
 CUT_FOLDS = ("kind-filtered", "stepwise", "sum-with-cuts")
 CORPUS_ONE, CORPUS_TWO = "one-level", "two-level"
+CORPUS_FORMS, CORPUS_CEILING = "cut-forms", "ceiling-above-stated"
+UNION_FOLD = "kind-filtered-union"  # the kind-filtered read of offered amounts, in the form of the postings part of sum-with-cuts, so the sum with cuts is compared like for like
 
 
 class WrongResult(AssertionError):
@@ -95,10 +101,16 @@ class Account:
     parent: int | None
     accepts: tuple[str, ...] = ()  # kind IRIs. Empty means every kind, the default
     children: tuple[int, ...] = field(default=(), compare=False)
+    ceiling_amount: int | None = None  # a ceiling above the stated amount. None means the ceiling is the stated amount, the default
 
     @property
     def stated(self) -> int:
         return STATED[self.level]
+
+    @property
+    def ceiling(self) -> int:
+        """What a credit never lifts the account above (LD3). The stated amount unless the account was given a ceiling of its own."""
+        return self.stated if self.ceiling_amount is None else self.ceiling_amount
 
 
 def build_tree() -> list[Account]:
@@ -116,10 +128,29 @@ def build_tree() -> list[Account]:
     return accounts
 
 
+def build_ceiling_tree() -> list[Account]:
+    """The same tree, with a ceiling of `CEILING_FACTOR` times the stated amount on a share `CEILING_SHARE` of the contracts and sublimits, chosen by a seeded draw."""
+    rng = random.Random(SEED + 3)
+    return [replace(a, ceiling_amount=int(a.stated * CEILING_FACTOR)) if a.level < 2 and rng.random() < CEILING_SHARE else a for a in build_tree()]
+
+
 TREE = build_tree()
 ANCESTORS = [i for i, a in enumerate(TREE) if a.level > 0]
 CONTRACTS = [i for i, a in enumerate(TREE) if a.level == 0]
 BY_IRI = {a.iri: i for i, a in enumerate(TREE)}
+
+
+@contextmanager
+def using_tree(tree: list[Account], stated: tuple[int, ...] | None = None):
+    """Runs what needs a tree other than the benchmark's with that tree (and the stated amounts by level, if given) in place of the module's, and puts the module's back. Not for threads."""
+    global TREE, ANCESTORS, CONTRACTS, BY_IRI, STATED
+    saved = TREE, ANCESTORS, CONTRACTS, BY_IRI, STATED
+    TREE, STATED = tree, stated or STATED
+    ANCESTORS, CONTRACTS, BY_IRI = [i for i, a in enumerate(TREE) if a.level > 0], [i for i, a in enumerate(TREE) if a.level == 0], {a.iri: i for i, a in enumerate(TREE)}
+    try:
+        yield
+    finally:
+        TREE, ANCESTORS, CONTRACTS, BY_IRI, STATED = saved
 
 
 def chain(index: int) -> list[int]:
@@ -155,7 +186,7 @@ class Posting:
 
 
 def clamp_at_drawn(balance: int, amount: int, stated: int) -> int:
-    """The credit as applied at the account it is posted to. It never lifts the account above its stated amount (LD3)."""
+    """The credit as applied at the account it is posted to. It never lifts the account above its ceiling (LD3), passed here as `stated`, which is also its stated amount unless the account has a ceiling of its own."""
     return min(amount, stated - balance)
 
 
@@ -179,7 +210,7 @@ def stream(count: int, credit_share: float) -> list[Posting]:
             else:
                 if kind_rng.random() < KINDLESS_SHARE and unrestricted(contract):
                     kind = None
-                applied = clamp_at_drawn(balance[contract], amount, TREE[contract].stated)
+                applied = clamp_at_drawn(balance[contract], amount, TREE[contract].ceiling)
                 balance[contract] += applied
             out.append(Posting(pos, micro, contract, debit, amount, kind, applied))
     return out
@@ -201,11 +232,11 @@ def settle_debit(step: list[int], contract: int, amount: int) -> None:
 def settle_credit(step: list[int], at: int, amount: int, kind: str | None) -> tuple[int, tuple[tuple[int, int], ...]]:
     """The writer's step for a credit posted at account `at`, which holds the stepwise balance `step` of every account. The credit is applied at `at` up to its room. Each accepting ancestor then
     takes up to its own room, stepwise in the law, and where it takes less than was applied the difference is a cut at that ancestor. Returns (applied, cuts) and moves `step`."""
-    applied = clamp_at_drawn(step[at], amount, TREE[at].stated)
+    applied = clamp_at_drawn(step[at], amount, TREE[at].ceiling)
     cuts = []
     for i in chain(at):
         if accepts_kind(TREE[i], kind):
-            take = min(applied, TREE[i].stated - step[i])
+            take = min(applied, TREE[i].ceiling - step[i])
             step[i] += take
             if take < applied:
                 cuts.append((i, applied - take))
@@ -268,7 +299,7 @@ def run_model(postings: list[Posting], points: list[int]) -> Model:
         while todo and todo[0] < p.pos:
             snapshot(todo.pop(0))
         sign = -p.amount if p.debit else p.amount
-        restored = 0 if p.debit else min(p.amount, TREE[p.contract].stated - step[p.contract])  # the account's clamp where it is posted, by the model's own arithmetic
+        restored = 0 if p.debit else min(p.amount, TREE[p.contract].ceiling - step[p.contract])  # the account's clamp where it is posted, by the model's own arithmetic
         for i in chain(p.contract):
             a = TREE[i]
             plain[i] += sign
@@ -282,12 +313,12 @@ def run_model(postings: list[Posting], points: list[int]) -> Model:
                     applied[i] -= p.amount
                 else:
                     applied[i] += restored
-                    if step[i] + restored > a.stated:
+                    if step[i] + restored > a.ceiling:
                         model.ancestor_binds += 1
-                        model.cuts.append((e, i, step[i] + restored - a.stated))
-                        cut[i] += step[i] + restored - a.stated
+                        model.cuts.append((e, i, step[i] + restored - a.ceiling))
+                        cut[i] += step[i] + restored - a.ceiling
                         rows[("sum-with-cuts", i)] += 1
-                    step[i] = min(step[i] + restored, a.stated)
+                    step[i] = min(step[i] + restored, a.ceiling)
     while todo:
         snapshot(todo.pop(0))
     return model
@@ -322,21 +353,23 @@ def checkpoint_balances(model: Model, positions: list[int]) -> dict[tuple[int, i
 
 
 def structure_triples() -> int:
-    return sum(2 + (a.parent is not None) + len(a.accepts) for a in TREE)
+    return sum(2 + (a.parent is not None) + len(a.accepts) + (a.ceiling_amount is not None) for a in TREE)
 
 
-def expected_stored(postings: list[Posting]) -> int:
-    """Postings are 8 triples. A credit adds one for what was applied and, if it has a kind, one for the kind, and each cut it carries adds 3. A checkpoint is 5 triples per account."""
+def expected_stored(postings: list[Posting], cut_form: str = DEFAULT_CUT_FORM) -> int:
+    """Postings are 8 triples. A credit adds one for what was applied and, if it has a kind, one for the kind, and each cut it carries adds 3, or 4 where it copies the position. A checkpoint is 5 triples per account."""
     credits = [p for p in postings if not p.debit]
-    return (structure_triples() + POSTING_TRIPLES * len(postings) + len(credits) + sum(p.kind is not None for p in credits) + CUT_TRIPLES * sum(len(p.cuts) for p in credits)
+    return (structure_triples() + POSTING_TRIPLES * len(postings) + len(credits) + sum(p.kind is not None for p in credits) + CUT_FORMS[cut_form] * sum(len(p.cuts) for p in credits)
             + CHECKPOINT_TRIPLES * len(TREE) * len(closes(postings[-1].pos)))
 
 
 # a quad is (subject IRI, predicate IRI, object, graph IRI or None), an object is ("i", IRI), ("n", int) or ("s", text)
-def quads(postings: list[Posting], cps: dict):
+def quads(postings: list[Posting], cps: dict, cut_form: str = DEFAULT_CUT_FORM):
     for a in TREE:
         yield a.iri, RDF_TYPE, ("i", L + "Account"), None
         yield a.iri, L + "statedAmount", ("n", a.stated), None
+        if a.ceiling_amount is not None:
+            yield a.iri, L + "ceilingAmount", ("n", a.ceiling_amount), None
         if a.parent is not None:
             yield a.iri, L + "partOf", ("i", TREE[a.parent].iri), None
         for k in a.accepts:
@@ -361,6 +394,8 @@ def quads(postings: list[Posting], cps: dict):
                 yield cut, L + "cutOf", ("i", s), g
                 yield cut, L + "cutAt", ("i", TREE[i].iri), g
                 yield cut, L + "cutValue", ("n", value), g
+                if cut_form == "copied":
+                    yield cut, L + "cutPosition", ("n", p.pos), g
     for (j, i), (pl, kd, st) in cps.items():
         s, g = f"urn:checkpoint:{j}:{i}", CP_GRAPH.format(k=j)
         yield s, L + "account", ("i", TREE[i].iri), g
@@ -538,9 +573,15 @@ def stated_amount(backend, index: int) -> int:
     return int(row[0])
 
 
-def apply_credit(balance: int, amount: int, stated: int) -> int:
-    """A credit never lifts an account above its stated amount (LD3)."""
-    return min(balance + amount, stated)
+def limits(backend, index: int) -> tuple[int, int]:
+    """(the account's stated amount, its ceiling). The ceiling is the stated amount unless the account carries one of its own."""
+    (row,) = backend.select(f"{PREFIX}SELECT ?s ?c WHERE {{ <{TREE[index].iri}> l:statedAmount ?s . OPTIONAL {{ <{TREE[index].iri}> l:ceilingAmount ?c }} }}")
+    return int(row[0]), int(row[0] if row[1] is None else row[1])
+
+
+def apply_credit(balance: int, amount: int, ceiling: int) -> int:
+    """A credit never lifts an account above its ceiling (LD3), which is its stated amount unless it has one of its own."""
+    return min(balance + amount, ceiling)
 
 
 def checkpoint(backend, index: int, k: int) -> dict[str, int]:
@@ -569,7 +610,7 @@ def aggregate(backend, index: int, point: int, first: int, with_kind: bool) -> t
 def read(fold: str, backend, index: int, point: int, checkpointed: bool = False) -> tuple[int, int]:
     """(the balance of the ancestor as of the point by the fold, how many postings the fold counted or transferred). The stepwise fold leaves its two times in `backend.parts`."""
     backend.parts = (0.0, 0.0)
-    base = stated_amount(backend, index)
+    base, ceiling = limits(backend, index)
     first, start = start_of(backend, index, point, checkpointed, base)
     if fold in ("plain", "kind-filtered"):
         total, folded = aggregate(backend, index, point, first, fold == "kind-filtered")
@@ -580,7 +621,7 @@ def read(fold: str, backend, index: int, point: int, checkpointed: bool = False)
     balance, rows = start[fold], backend.select(text)
     fetched = time.perf_counter()
     for _, _, d, amount, applied in rows:
-        balance = balance - int(amount) if d.endswith("#Debit") else apply_credit(balance, int(applied), base)
+        balance = balance - int(amount) if d.endswith("#Debit") else apply_credit(balance, int(applied), ceiling)
     backend.parts = (fetched - begin, time.perf_counter() - fetched)
     return balance, len(rows)
 
@@ -596,18 +637,27 @@ def shortcut_sound(balance: int, base: int, credits: dict[str, int], outstanding
 
 def read_shortcut(backend, index: int, point: int, checkpointed: bool = False) -> tuple[int, int, bool]:
     """(the balance, the postings folded, whether the stepwise fold was needed)."""
-    base = stated_amount(backend, index)
+    base, ceiling = limits(backend, index)
     first, start = start_of(backend, index, point, checkpointed, base)
     total, folded = aggregate(backend, index, point, first, True)
     balance = start["stepwise"] + total
     credit_text = (f"{PREFIX}SELECT ?c (SUM(?a) AS ?cr) WHERE {{ {scan(index, point, False, backend.form, first, '?p l:account ?c . ', backend.upper)} FILTER(?d = l:Credit) }} GROUP BY ?c")
     credits = {c: int(t) for c, t in backend.select(credit_text)}
+    if backend.upper:
+        # credits are posted above contracts too, and a credit at an account restores it and every accepting account above it, so an account is clear only if the credits posted anywhere in its own subtree fit
+        # what it has outstanding. Each posting account's total therefore counts for every account on its path inside the subtree read.
+        reaching: dict[str, int] = {}
+        for c, t in credits.items():
+            for a in chain(BY_IRI[c]):
+                if index in chain(a):
+                    reaching[TREE[a].iri] = reaching.get(TREE[a].iri, 0) + t
+        credits = reaching
     outstanding: dict[str, int] = {}
     k = point // EVERY_POSITIONS - 1
     if checkpointed and k >= 0:
         stepped = backend.select(f"{PREFIX}SELECT ?c ?st WHERE {{ GRAPH <{CP_GRAPH.format(k=k)}> {{ ?x l:account ?c ; l:stepBalance ?st }} }}")
-        outstanding = {c: TREE[BY_IRI[c]].stated - int(st) for c, st in stepped}
-    if shortcut_sound(balance, base, credits, outstanding):
+        outstanding = {c: TREE[BY_IRI[c]].ceiling - int(st) for c, st in stepped}
+    if shortcut_sound(balance, ceiling, credits, outstanding):
         return balance, folded, False
     balance, rows = read("stepwise", backend, index, point, checkpointed)
     return balance, folded + rows, True
@@ -639,6 +689,7 @@ class Measurement:
     shortcut: dict[tuple[str, str], LevelRead] = field(default_factory=dict)  # (mode, level name) -> totals
     notes: dict[str, int] = field(default_factory=dict)  # what the model expects, so a report says where the folds differ
     corpus: str = CORPUS_ONE
+    cut_form: str = DEFAULT_CUT_FORM
 
 
 def check_discriminates(model: Model, share: float, point: int, postings: list[Posting] | None = None) -> None:
@@ -712,31 +763,41 @@ def run_backend(name: str, count: int, share: float, directory: str | None = Non
     return m
 
 
-def postings_scan(index: int, point: int, first: int) -> str:
-    """The debits, and the credits at the amount applied, of the subtree up to the point, as three branches of a UNION with no OPTIONAL inside the graph block (TSD-71). A debit, a credit with a kind
+def postings_scan(index: int, point: int, first: int, amount: str = "applied") -> str:
+    """The debits, and the credits at the amount applied (or, with `amount="amount"`, the offered amount), of the subtree up to the point, as three branches of a UNION with no OPTIONAL inside the graph block (TSD-71). A debit, a credit with a kind
     and a credit with no kind are one branch each, so none is dropped. The account's kind filter is outside the graph block, where the account's own declarations are in the default graph."""
     head = "?p l:position ?pos ; l:direction"
     return (f"{{ VALUES ?g {{ {graphs_for(index, point, first, True)} }} GRAPH ?g {{ "
             f"{{ {head} l:Debit ; l:amount ?v . BIND(l:Debit AS ?d) FILTER(?pos <= {point}) }} UNION "
-            f"{{ {head} l:Credit ; l:applied ?v ; l:kind ?k . BIND(l:Credit AS ?d) FILTER(?pos <= {point}) }} UNION "
-            f"{{ {head} l:Credit ; l:applied ?v . BIND(l:Credit AS ?d) FILTER(?pos <= {point}) FILTER NOT EXISTS {{ ?p l:kind ?z2 }} }} }} }}")
+            f"{{ {head} l:Credit ; l:{amount} ?v ; l:kind ?k . BIND(l:Credit AS ?d) FILTER(?pos <= {point}) }} UNION "
+            f"{{ {head} l:Credit ; l:{amount} ?v . BIND(l:Credit AS ?d) FILTER(?pos <= {point}) FILTER NOT EXISTS {{ ?p l:kind ?z2 }} }} }} }}")
 
 
-def cuts_scan(index: int, point: int, first: int) -> str:
-    """The cuts recorded at the account by credits up to the point, in the graphs the account reads. Only an accepting ancestor has a cut, so there is no kind filter. A cut has no position of its
-    own, so it joins to the posting it belongs to, in the same graph."""
-    return (f"{{ VALUES ?g {{ {graphs_for(index, point, first, True)} }} GRAPH ?g {{ ?c l:cutAt <{TREE[index].iri}> ; l:cutValue ?cv ; l:cutOf ?p . ?p l:position ?pos . FILTER(?pos <= {point}) }} }}")
+def cuts_scan(index: int, point: int, first: int, cut_form: str = DEFAULT_CUT_FORM) -> str:
+    """The cuts recorded at the account by credits up to the point, in the graphs the account reads. Only an accepting ancestor has a cut, so there is no kind filter. A joined cut has no position of its
+    own, so it joins to the posting it belongs to, in the same graph. A copied cut carries its posting's position and needs no join."""
+    where = ("l:cutPosition ?pos" if cut_form == "copied" else "l:cutOf ?p . ?p l:position ?pos")
+    return (f"{{ VALUES ?g {{ {graphs_for(index, point, first, True)} }} GRAPH ?g {{ ?c l:cutAt <{TREE[index].iri}> ; l:cutValue ?cv ; {where} . FILTER(?pos <= {point}) }} }}")
 
 
-def read_with_cuts(backend, index: int, point: int, checkpointed: bool = False) -> tuple[int, int, int]:
+def read_union(backend, index: int, point: int, checkpointed: bool = False) -> tuple[int, int]:
+    """(the kind-filtered balance, the postings folded), read in the form of the postings part of the sum with cuts, a three-branch UNION with no OPTIONAL, but of the offered amounts. The like-for-like
+    read for the sum with cuts: what it adds to this is the applied amount and the cuts. It equals the kind-filtered fold of `read`."""
+    base, _ = limits(backend, index)
+    first, start = start_of(backend, index, point, checkpointed, base)
+    (row,) = backend.select(f"{PREFIX}SELECT (SUM(?signed) AS ?sum) (COUNT(?p) AS ?folded) WHERE {{ {postings_scan(index, point, first, 'amount')} {KIND_FILTER.format(acct=TREE[index].iri)} {SIGNED.replace('?a', '?v')} }}")
+    return start["kind-filtered"] + (int(row[0]) if row[0] is not None else 0), int(row[1])
+
+
+def read_with_cuts(backend, index: int, point: int, checkpointed: bool = False, cut_form: str = DEFAULT_CUT_FORM) -> tuple[int, int, int]:
     """(the balance, the postings and cuts folded, the balance the postings alone give, which is the sum with no cuts). The stated amount, or the checkpoint's balance, plus the debits and the
     accepted credits at their applied amounts, less the cuts recorded at the account. Two aggregates, and `backend.parts` is the time of each."""
-    base = stated_amount(backend, index)
+    base, _ = limits(backend, index)
     first, start = start_of(backend, index, point, checkpointed, base)
     begin = time.perf_counter()
     (row,) = backend.select(f"{PREFIX}SELECT (SUM(?signed) AS ?sum) (COUNT(?p) AS ?folded) WHERE {{ {postings_scan(index, point, first)} {KIND_FILTER.format(acct=TREE[index].iri)} {SIGNED.replace('?a', '?v')} }}")
     mid = time.perf_counter()
-    (cut_row,) = backend.select(f"{PREFIX}SELECT (SUM(?cv) AS ?cut) (COUNT(?c) AS ?cuts) WHERE {{ {cuts_scan(index, point, first)} }}")
+    (cut_row,) = backend.select(f"{PREFIX}SELECT (SUM(?cv) AS ?cut) (COUNT(?c) AS ?cuts) WHERE {{ {cuts_scan(index, point, first, cut_form)} }}")
     backend.parts = (mid - begin, time.perf_counter() - mid)
     uncut = start["stepwise"] + (int(row[0]) if row[0] is not None else 0)
     cut = int(cut_row[0]) if cut_row[0] is not None else 0
@@ -767,12 +828,34 @@ def build_cut_corpus(count: int, share: float) -> Corpus:
     return Corpus(postings, points, positions, model, checkpoint_balances(model, positions))
 
 
-def run_backend_cuts(name: str, count: int, share: float, directory: str | None = None) -> Measurement:
+def above_stated(model: Model, points: list[int]) -> dict[str, int]:
+    """Where the model's stepwise balance stands above the stated amount, which only a ceiling above it allows: the accounts that do at some read point, and the ancestor reads (account and point) that do."""
+    return {"accounts_above_stated_at_some_point": sum(any(model.balance[("stepwise", i, p)] > TREE[i].stated for p in points) for i in range(len(TREE))),
+            "ancestor_reads_above_stated": sum(model.balance[("stepwise", i, p)] > TREE[i].stated for i in ANCESTORS for p in points),
+            "accounts_with_a_ceiling_above_stated": sum(a.ceiling_amount is not None for a in TREE)}
+
+
+def check_discriminates_ceiling(model: Model, share: float, points: list[int]) -> None:
+    """Refuses a ceiling-variant corpus that could not fail a fold clamping at the stated amount: at a high credit share some balance must stand above its stated amount."""
+    if share >= STEPWISE_BINDS_FROM and not above_stated(model, points)["ancestor_reads_above_stated"]:
+        raise WrongResult(f"share {share}: no ancestor stands above its stated amount at any read point, so a clamp at the stated amount could not be told from one at the ceiling")
+
+
+def run_backend_cuts(name: str, count: int, share: float, directory: str | None = None, like_for_like: bool = False, ceiling: bool = False) -> Measurement:
     """The two-level corpus. Loads it into the backend and reads every ancestor at every point by the kind-filtered, stepwise and sum-with-cuts folds, from the start and from the checkpoint, and checks
-    each against the model. The sum with cuts must equal the stepwise balance, and the postings alone, with no cuts, must equal the model's sum of applied amounts, which differs from it somewhere."""
+    each against the model. The sum with cuts must equal the stepwise balance, and the postings alone, with no cuts, must equal the model's sum of applied amounts, which differs from it somewhere.
+    With `like_for_like` it also reads the plain fold, the kind-filtered read in the sum with cuts' own UNION form (`UNION_FOLD`) and the shortcut, each against the model. With `ceiling` the
+    corpus is the ceiling variant, on the tree of `build_ceiling_tree`."""
+    if ceiling:
+        with using_tree(build_ceiling_tree()):
+            m = run_backend_cuts(name, count, share, directory, like_for_like)
+        m.corpus = CORPUS_CEILING
+        return m
     corpus = build_cut_corpus(count, share)
     postings, points, model = corpus.postings, corpus.points, corpus.model
     check_discriminates_cuts(model, share, points[-1], postings)
+    if any(a.ceiling_amount is not None for a in TREE):
+        check_discriminates_ceiling(model, share, points)
     last = points[-1]
     with tempfile.TemporaryDirectory(prefix="ledger-credit-kinds-", dir=directory) as tmp:
         backend = BACKEND_CLASS[name](tmp)
@@ -789,9 +872,11 @@ def run_backend_cuts(name: str, count: int, share: float, directory: str | None 
                      "cuts": sum(len(p.cuts) for p in postings), "cut_triples": CUT_TRIPLES * sum(len(p.cuts) for p in postings), "ancestor_clamps_binding": model.ancestor_binds,
                      "ancestors_where_uncut_differs": sum(model.balance[("applied", i, last)] != model.balance[("stepwise", i, last)] for i in ANCESTORS),
                      "ancestors_where_uncut_differs_engine": 0, "ancestors_where_filtered_differs": sum(model.balance[("kind-filtered", i, last)] != model.balance[("stepwise", i, last)] for i in ANCESTORS),
-                     "credits_with_no_kind": sum(p.kind is None for p in credits), "checkpoints": len(corpus.positions)}
-            keys = [(f, LEVELS[lv]) for f in CUT_FOLDS for lv in (1, 2, 3)]
-            m = Measurement(name, count, share, stored, sum(p.kind is not None for p in credits), write, backend.form, {k: LevelRead() for k in keys}, {k: LevelRead() for k in keys}, {}, notes, CORPUS_TWO)
+                     "credits_with_no_kind": sum(p.kind is None for p in credits), "checkpoints": len(corpus.positions), **above_stated(model, points)}
+            more = ("plain", UNION_FOLD) if like_for_like else ()
+            keys = [(f, LEVELS[lv]) for f in CUT_FOLDS + more for lv in (1, 2, 3)]
+            shortcut = {(mode, LEVELS[lv]): LevelRead() for mode in MODES for lv in (1, 2, 3)} if like_for_like else {}
+            m = Measurement(name, count, share, stored, sum(p.kind is not None for p in credits), write, backend.form, {k: LevelRead() for k in keys}, {k: LevelRead() for k in keys}, shortcut, notes, CORPUS_TWO)
             for point in points:
                 for i in ANCESTORS:
                     level = LEVELS[TREE[i].level]
@@ -821,6 +906,25 @@ def run_backend_cuts(name: str, count: int, share: float, directory: str | None 
                                 r.postings_seconds, r.cuts_seconds = r.postings_seconds + backend.parts[0], r.cuts_seconds + backend.parts[1]
                             elif fold == "stepwise":
                                 r.fetch_seconds, r.loop_seconds = r.fetch_seconds + backend.parts[0], r.loop_seconds + backend.parts[1]
+                        for fold in more:
+                            begin = time.perf_counter()
+                            balance, rows = read_union(backend, i, point, cp) if fold == UNION_FOLD else read(fold, backend, i, point, cp)
+                            seconds = time.perf_counter() - begin
+                            want, want_rows = expected(model, "kind-filtered" if fold == UNION_FOLD else fold, i, point, cp)
+                            where = f"{name} {count} share {share} {mode} {fold}: {TREE[i].iri} as of {point}"
+                            if balance != want or rows != want_rows:
+                                raise WrongResult(f"{where} reads {balance} from {rows} postings, the model gives {want} from {want_rows}")
+                            r = (m.cp_reads if cp else m.reads)[(fold, level)]
+                            r.reads, r.seconds, r.rows = r.reads + 1, r.seconds + seconds, r.rows + rows
+                        if like_for_like:
+                            begin = time.perf_counter()
+                            balance, rows, fell_back = read_shortcut(backend, i, point, cp)
+                            seconds = time.perf_counter() - begin
+                            want = model.balance[("stepwise", i, point)]
+                            if balance != want:
+                                raise WrongResult(f"{name} {count} share {share} {mode} shortcut: {TREE[i].iri} as of {point} reads {balance}, the model gives {want}")
+                            r = m.shortcut[(mode, level)]
+                            r.reads, r.seconds, r.rows, r.fallbacks = r.reads + 1, r.seconds + seconds, r.rows + rows, r.fallbacks + fell_back
             if share >= STEPWISE_BINDS_FROM and m.notes["ancestors_where_uncut_differs_engine"] == 0:
                 raise WrongResult(f"{name} {count} share {share}: no ancestor's postings-only sum differs from its stepwise balance, so the engine does not show the defect the cut repairs")
             if m.notes["ancestors_where_uncut_differs_engine"] != m.notes["ancestors_where_uncut_differs"]:
@@ -832,15 +936,137 @@ def run_backend_cuts(name: str, count: int, share: float, directory: str | None 
     return m
 
 
-def run_cuts(sizes=SIZES, shares=SHARES, backends=None) -> list[Measurement]:
+def run_backend_cut_forms(name: str, count: int, share: float, directory: str | None = None) -> list[Measurement]:
+    """The two-level corpus stored with a joined cut (3 triples) and with a copied cut (4 triples, the posting's position on the cut), each in its own store. Reads every ancestor at every point by the sum
+    with cuts, from the start and from the checkpoint, checks each against the model, and keeps the time of the cuts aggregate apart. The two forms must give the same balances."""
+    corpus = build_cut_corpus(count, share)
+    postings, points, model = corpus.postings, corpus.points, corpus.model
+    check_discriminates_cuts(model, share, points[-1], postings)
+    out = []
+    for form in CUT_FORMS:
+        with tempfile.TemporaryDirectory(prefix="ledger-credit-kinds-", dir=directory) as tmp:
+            backend = BACKEND_CLASS[name](tmp)
+            backend.upper = True
+            try:
+                begin = time.perf_counter()
+                backend.load(quads(postings, corpus.cps, cut_form=form))
+                write = time.perf_counter() - begin
+                stored = backend.count()
+                if stored != expected_stored(postings, form):
+                    raise WrongResult(f"{name} {count} {form} cut: stored {stored} triples, expected {expected_stored(postings, form)}")
+                cuts = sum(len(p.cuts) for p in postings)
+                keys = [("sum-with-cuts", LEVELS[lv]) for lv in (1, 2, 3)]
+                m = Measurement(name, count, share, stored, sum(not p.debit and p.kind is not None for p in postings), write, backend.form, {k: LevelRead() for k in keys}, {k: LevelRead() for k in keys}, {},
+                                {"cuts": cuts, "cut_triples": CUT_FORMS[form] * cuts}, CORPUS_FORMS, form)
+                for point in points:
+                    for i in ANCESTORS:
+                        for mode in MODES:
+                            cp = mode == "checkpointed"
+                            begin = time.perf_counter()
+                            balance, rows, _ = read_with_cuts(backend, i, point, cp, form)
+                            seconds = time.perf_counter() - begin
+                            want, want_rows = expected(model, "sum-with-cuts", i, point, cp)
+                            where = f"{name} {count} share {share} {form} cut {mode} sum-with-cuts: {TREE[i].iri} as of {point}"
+                            if balance != want or rows != want_rows:
+                                raise WrongResult(f"{where} reads {balance} from {rows} rows, the model gives {want} from {want_rows}")
+                            r = (m.cp_reads if cp else m.reads)[("sum-with-cuts", LEVELS[TREE[i].level])]
+                            r.reads, r.seconds, r.rows = r.reads + 1, r.seconds + seconds, r.rows + rows
+                            r.postings_seconds, r.cuts_seconds = r.postings_seconds + backend.parts[0], r.cuts_seconds + backend.parts[1]
+            finally:
+                backend.close()
+                backend = None
+                release_store()
+        out.append(m)
+    return out
+
+
+# the sketch's four-step history (section 4.8 of the sketch on balances under post-once), loaded into an engine
+SKETCH_STATED = (10, 10, 20, 10**6)  # by level, contract first. The annual cap has level 2, the aggregate level 1, and sections S and T are contracts of 10
+
+
+def sketch_tree() -> list[Account]:
+    """An annual cap of 20 that accepts recoveries only, an aggregate of 10 under it, and sections S and T of 10 under the aggregate."""
+    return [Account("urn:acct:cap", 2, None, (L + "Recovery",)), Account("urn:acct:agg", 1, 0), Account("urn:acct:s", 0, 1), Account("urn:acct:t", 0, 1)]
+
+
+def sketch_history() -> list[Posting]:
+    """Under `using_tree(sketch_tree(), SKETCH_STATED)`. A loss of 10 at S, a reinstatement of 10 at the aggregate, a recovery of 2 at S and a loss of 3 at T, written by the benchmark's writer, so the
+    recovery carries a cut of 2 at the aggregate."""
+    recovery, reinstatement = L + "Recovery", L + "Reinstatement"
+    _, agg, s, t = range(4)
+    step = [a.stated for a in TREE]
+    out = [Posting(1, 0, s, True, 10, None)]
+    settle_debit(step, s, 10)
+    applied, cuts = settle_credit(step, agg, 10, reinstatement)
+    out.append(Posting(2, 0, agg, False, 10, reinstatement, applied, cuts))
+    applied, cuts = settle_credit(step, s, 2, recovery)
+    out.append(Posting(3, 0, s, False, 2, recovery, applied, cuts))
+    settle_debit(step, t, 3)
+    out.append(Posting(4, 0, t, True, 3, None))
+    return out
+
+
+def run_sketch(name: str, directory: str | None = None) -> dict[str, dict[str, int]]:
+    """Loads the sketch's tree and history into the backend as the benchmark's own quads and reads the cap and the aggregate by every fold. Each read must equal the model's, and the figures the sketch
+    gives must hold, or it raises. Returns {account: {fold: balance, "cuts": the cut the engine's cuts aggregate gives, "cut_count": how many}}."""
+    cap, agg = 0, 1
+    with using_tree(sketch_tree(), SKETCH_STATED):
+        postings = sketch_history()
+        model = run_model(postings, [4])
+        with tempfile.TemporaryDirectory(prefix="ledger-credit-kinds-", dir=directory) as tmp:
+            backend = BACKEND_CLASS[name](tmp)
+            backend.upper = True
+            try:
+                backend.load(quads(postings, {}))
+                if backend.count() != expected_stored(postings):
+                    raise WrongResult(f"{name} sketch: stored {backend.count()} triples, expected {expected_stored(postings)}")
+                got: dict[str, dict[str, int]] = {}
+                for i in ANCESTORS:
+                    row = {f: read(f, backend, i, 4)[0] for f in FOLDS}
+                    row["kind-filtered-union"] = read_union(backend, i, 4)[0]
+                    balance, rows, uncut = read_with_cuts(backend, i, 4)
+                    row["applied"], row["sum-with-cuts"] = uncut, balance
+                    row["cuts"], row["cut_count"] = uncut - balance, rows - model.rows[("applied", i, 4)]
+                    for f in FOLDS + ("applied", "sum-with-cuts", "kind-filtered-union"):
+                        if row[f] != model.balance[("kind-filtered" if f == "kind-filtered-union" else f, i, 4)]:
+                            raise WrongResult(f"{name} sketch {f}: {TREE[i].iri} reads {row[f]}, the model gives {model.balance[('kind-filtered' if f == 'kind-filtered-union' else f, i, 4)]}")
+                    got[TREE[i].iri] = row
+            finally:
+                backend.close()
+                backend = None
+                release_store()
+    want = {"urn:acct:agg": {"applied": 9, "stepwise": 7, "sum-with-cuts": 7, "cuts": 2, "cut_count": 1},
+            "urn:acct:cap": {"applied": 9, "kind-filtered": 9, "kind-filtered-union": 9, "stepwise": 9, "sum-with-cuts": 9, "cuts": 0, "cut_count": 0}}
+    for iri, figures in want.items():
+        for key, value in figures.items():
+            if got[iri][key] != value:
+                raise WrongResult(f"{name} sketch: {iri} {key} reads {got[iri][key]}, the sketch gives {value}")
+    return got
+
+
+def run_cuts(sizes=SIZES, shares=SHARES, backends=None, like_for_like: bool = False, ceiling: bool = False) -> list[Measurement]:
     out = []
     for count in sizes:
         for share in shares:
             for name in backends or available_backends():
-                m = run_backend_cuts(name, count, share)
+                m = run_backend_cuts(name, count, share, like_for_like=like_for_like, ceiling=ceiling)
                 out.append(m)
-                print(f"{name:9} two-level events {count:6} credits {share:4.0%} stored {m.stored_triples:7} cuts {m.notes['cuts']:5} write {m.write_seconds:6.2f} s  " + "  ".join(
+                print(f"{name:9} {m.corpus:9} events {count:6} credits {share:4.0%} stored {m.stored_triples:7} cuts {m.notes['cuts']:5} write {m.write_seconds:6.2f} s  " + "  ".join(
                     f"{f} root {1000 * m.reads[(f, 'root')].seconds / m.reads[(f, 'root')].reads:8.2f} ms" for f in CUT_FOLDS), flush=True)
+    return out
+
+
+def run_cut_forms(sizes=SIZES, shares=SHARES[-1:], backends=None) -> list[Measurement]:
+    out = []
+    for count in sizes:
+        for share in shares:
+            for name in backends or available_backends():
+                for m in run_backend_cut_forms(name, count, share):
+                    out.append(m)
+                    c = m.reads[("sum-with-cuts", "root")]
+                    print(f"{name:9} {m.cut_form:7} cut events {count:6} credits {share:4.0%} stored {m.stored_triples:7} cuts {m.notes['cuts']:5} write {m.write_seconds:6.2f} s  root sum-with-cuts "
+                          f"{1000 * c.seconds / c.reads:8.2f} ms of which cuts {1000 * c.cuts_seconds / c.reads:7.2f} ms  checkpointed cuts "
+                          f"{1000 * m.cp_reads[('sum-with-cuts', 'root')].cuts_seconds / m.cp_reads[('sum-with-cuts', 'root')].reads:7.2f} ms", flush=True)
     return out
 
 
@@ -861,7 +1087,7 @@ def run(sizes=SIZES, shares=SHARES, backends=None) -> list[Measurement]:
 
 def environment() -> dict[str, str]:
     return {"date": time.strftime("%Y-%m-%d"), "python": platform.python_version(), "machine": f"{platform.system()} {platform.machine()}", **versions(),
-            "depth": "4", "contracts": str(len(CONTRACTS)), "passes_per_period": str(EVERY_POSITIONS), "seed": str(SEED), "kindless_share": str(KINDLESS_SHARE), "upper_share": str(UPPER_SHARE),
+            "depth": "4", "contracts": str(len(CONTRACTS)), "passes_per_period": str(EVERY_POSITIONS), "seed": str(SEED), "kindless_share": str(KINDLESS_SHARE), "upper_share": str(UPPER_SHARE), "ceiling_share": str(CEILING_SHARE), "ceiling_factor": str(CEILING_FACTOR),
             "jena_note": "" if jena_available() else "jena not run: the test kit jar is not built or there is no java"}
 
 
@@ -880,7 +1106,7 @@ def measurement_row(m: Measurement) -> dict:
     reads.update({f"cp:{f}/{lv}": _entry(r) for (f, lv), r in m.cp_reads.items()})
     reads.update({f"shortcut:{mode}/{lv}": _entry(r) for (mode, lv), r in m.shortcut.items()})
     return {"corpus": m.corpus, "backend": m.backend, "events": m.events, "credit_share": m.credit_share, "stored_triples": m.stored_triples, "kind_triples": m.kind_triples, "kind_join": m.form,
-            "write_seconds": m.write_seconds, "model_expects": m.notes, "reads": reads}
+            "write_seconds": m.write_seconds, "model_expects": m.notes, "cut_form": m.cut_form, "reads": reads}
 
 
 def render(rows: list[dict], title: str) -> list[str]:
@@ -928,12 +1154,12 @@ def write_report(measurements: list[Measurement], directory: Path | None = None)
     write_markdown(data, directory)
 
 
-def render_cuts(rows: list[dict]) -> list[str]:
+def render_cuts(rows: list[dict], title: str = "Credits at two levels of a path (sum with cuts)") -> list[str]:
     """The tables of the two-level corpus, from report rows. Reads are of the ancestors only, times are means per read, and the ratios are of the time of all 27 ancestor reads."""
     def total(r, key):
         return sum(v["mean_ms"] * v["reads"] for k, v in r["reads"].items() if k.startswith(key + "/"))
 
-    out = ["## Credits at two levels of a path (sum with cuts)", "",
+    out = [f"## {title}", "",
            "Credits posted at a contract, a sublimit or a section on the drawn contract's path, with the cuts a writer records. What the corpus holds, and where the folds differ.", "",
            "| backend | events | credits | credits above a contract | credits with a cut | cuts | cut triples | stored triples | ancestor clamps binding | ancestors where the uncut sum is wrong (model / engine) | ancestors where the offered sum is wrong |",
            "|---|---|---|---|---|---|---|---|---|---|---|"]
@@ -954,13 +1180,73 @@ def render_cuts(rows: list[dict]) -> list[str]:
     return out + [""]
 
 
+def _total(r: dict, key: str) -> float:
+    return sum(v["mean_ms"] * v["reads"] for k, v in r["reads"].items() if k.startswith(key + "/"))
+
+
+def render_like(rows: list[dict]) -> list[str]:
+    """The read forms of the two-level corpus side by side, from the rows that hold them. Mean ms per read of the root, then the ratios of the time of all 27 ancestor reads."""
+    rows = [r for r in rows if "plain/root" in r["reads"]]
+    if not rows:
+        return []
+    out = ["## Like-for-like read forms on the two-level corpus", "",
+           f"The `{UNION_FOLD}` read is the kind-filtered sum of offered amounts in the UNION form of the postings part of sum-with-cuts, so sum-with-cuts / {UNION_FOLD} is what the applied amount and the cuts add. "
+           "Mean ms per read of the root, then the time of all 27 ancestor reads against the like-for-like read.", "",
+           f"| backend | kind join | events | credits | read from | plain ms | kind-filtered ms | {UNION_FOLD} ms | sum-with-cuts ms | sum-with-cuts / {UNION_FOLD} | sum-with-cuts / plain | {UNION_FOLD} / kind-filtered | shortcut fallbacks | shortcut s | stepwise s |",
+           "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in rows:
+        for mode, prefix, key in (("start", "", "full"), ("checkpoint", "cp:", "checkpointed")):
+            ms = {f: r["reads"][f"{prefix}{f}/root"]["mean_ms"] for f in ("plain", "kind-filtered", UNION_FOLD, "sum-with-cuts")}
+            parts = [v for k, v in r["reads"].items() if k.startswith(f"shortcut:{key}/")]
+            n, fb = sum(v["reads"] for v in parts), sum(v["fallbacks"] for v in parts)
+            out.append(f"| {r['backend']} | {r['kind_join']} | {r['events']} | {r['credit_share']:.0%} | {mode} | {ms['plain']:.2f} | {ms['kind-filtered']:.2f} | {ms[UNION_FOLD]:.2f} | {ms['sum-with-cuts']:.2f} "
+                       f"| {_total(r, prefix + 'sum-with-cuts') / _total(r, prefix + UNION_FOLD):.2f} | {_total(r, prefix + 'sum-with-cuts') / _total(r, prefix + 'plain'):.2f} "
+                       f"| {_total(r, prefix + UNION_FOLD) / _total(r, prefix + 'kind-filtered'):.2f} | {fb} of {n} | {_total(r, f'shortcut:{key}') / 1000:.2f} | {_total(r, prefix + 'stepwise') / 1000:.2f} |")
+    return out + [""]
+
+
+def render_forms(rows: list[dict]) -> list[str]:
+    """A joined cut (3 triples) against a copied cut (4 triples), for each backend, size and share. The ratio is copied / joined over all 27 ancestor reads."""
+    if not rows:
+        return []
+    out = ["## A cut that copies its position", "",
+           "Stored triples, and the cuts aggregate (mean ms per read of the root, then the time of all 27 ancestor reads of the copied cut against the joined one). Both forms give the model's balance.", "",
+           "| backend | events | credits | cuts | stored joined | stored copied | cuts ms joined (full / checkpointed) | cuts ms copied (full / checkpointed) | copied / joined, full | copied / joined, checkpointed | sum-with-cuts copied / joined, full |",
+           "|---|---|---|---|---|---|---|---|---|---|---|"]
+    by = {(r["backend"], r["events"], r["credit_share"], r["cut_form"]): r for r in rows}
+    for (backend, events, share, form), j in by.items():
+        if form != "joined":
+            continue
+        c = by[(backend, events, share, "copied")]
+
+        def cuts(r, prefix):
+            return sum(v["cuts_ms"] * v["reads"] for k, v in r["reads"].items() if k.startswith(prefix + "sum-with-cuts/"))
+
+        out.append(f"| {backend} | {events} | {share:.0%} | {j['model_expects']['cuts']} | {j['stored_triples']} | {c['stored_triples']} "
+                   f"| {j['reads']['sum-with-cuts/root']['cuts_ms']:.2f} / {j['reads']['cp:sum-with-cuts/root']['cuts_ms']:.2f} | {c['reads']['sum-with-cuts/root']['cuts_ms']:.2f} / {c['reads']['cp:sum-with-cuts/root']['cuts_ms']:.2f} "
+                   f"| {cuts(c, '') / cuts(j, ''):.2f} | {cuts(c, 'cp:') / cuts(j, 'cp:'):.2f} | {_total(c, 'sum-with-cuts') / _total(j, 'sum-with-cuts'):.2f} |")
+    return out + [""]
+
+
+def render_ceiling(rows: list[dict]) -> list[str]:
+    if not rows:
+        return []
+    out = render_cuts(rows, "A ceiling above the stated amount (sum with cuts)")
+    out += ["Where balances stand above the stated amount, on the model.", "", "| backend | events | credits | accounts with a ceiling above stated | accounts above stated at some read point | ancestor reads above stated | cuts |", "|---|---|---|---|---|---|---|"]
+    for r in rows:
+        n = r["model_expects"]
+        out.append(f"| {r['backend']} | {r['events']} | {r['credit_share']:.0%} | {n['accounts_with_a_ceiling_above_stated']} | {n['accounts_above_stated_at_some_point']} | {n['ancestor_reads_above_stated']} of 27 | {n['cuts']} |")
+    return out + [""]
+
+
 def write_markdown(data: dict, directory: Path, jvm_report: Path = JVM_REPORT) -> None:
-    one = [m for m in data["measurements"] if m.get("corpus", CORPUS_ONE) == CORPUS_ONE]
-    two = [m for m in data["measurements"] if m.get("corpus", CORPUS_ONE) == CORPUS_TWO]
+    kinds = {c: [m for m in data["measurements"] if m.get("corpus", CORPUS_ONE) == c] for c in (CORPUS_ONE, CORPUS_TWO, CORPUS_FORMS, CORPUS_CEILING)}
+    one, two = kinds[CORPUS_ONE], kinds[CORPUS_TWO]
     lines = ["# Ledger credit kinds (generated)", "", "```", json.dumps(data["environment"]), "```", ""]
     lines += render(one, "Python callers")
     if two:
-        lines += render_cuts(two)
+        lines += render_cuts(two) + render_like(two)
+    lines += render_forms(kinds[CORPUS_FORMS]) + render_ceiling(kinds[CORPUS_CEILING])
     if jvm_report.exists():
         jvm = json.loads(jvm_report.read_text(encoding="utf-8"))
         lines += ["```", json.dumps(jvm["environment"]), "```", ""] + render(jvm["measurements"], "Native Jena (Java)")
@@ -1015,7 +1301,8 @@ def main() -> int:
         print(f"native Jena timings merged into {HERE / 'report.md'}")
         return 0
     try:
-        measurements = run(sizes_from_env()) + run_cuts(sizes_from_env())
+        sizes = sizes_from_env()
+        measurements = ([] if os.environ.get("LEDGER_KINDS_NEW_ONLY") else run(sizes)) + run_cuts(sizes, like_for_like=True) + run_cut_forms(sizes) + run_cuts(sizes, SHARES[-1:], ceiling=True)
     except WrongResult as error:
         print(f"WRONG RESULT: {error}", file=sys.stderr)
         return 1

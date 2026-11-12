@@ -261,3 +261,122 @@ def test_ck25_the_report_has_the_two_level_rows(tmp_path):
     assert [m["corpus"] for m in data["measurements"]] == [check.CORPUS_ONE, check.CORPUS_TWO]
     text = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert "sum-with-cuts / kind-filtered" in text and "sum-with-cuts / stepwise" in text
+
+
+# like-for-like read forms, a cut that copies its position, a ceiling above a stated amount, and the sketch's tree in an engine (LG-17, part one)
+
+
+def _skip_unavailable(backend):
+    return pytest.param(backend, marks=pytest.mark.skipif(backend not in BACKENDS, reason="the Jena test kit jar is not built or there is no java (mise run bootstrap:sparql-testkit)"))
+
+
+ALL_BACKENDS = [_skip_unavailable(b) for b in check.BACKENDS]
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck26_the_plain_union_and_shortcut_reads_of_the_two_level_corpus_equal_the_model(backend):
+    m = check.run_backend_cuts(backend, SMALL, HIGH, like_for_like=True)
+    points = len(check.read_points(check.stream_two_level(SMALL, HIGH)[-1].pos))
+    for fold in ("plain", check.UNION_FOLD):
+        assert sum(r.reads for (f, _), r in m.reads.items() if f == fold) == len(check.ANCESTORS) * points
+        assert sum(r.reads for (f, _), r in m.cp_reads.items() if f == fold) == len(check.ANCESTORS) * points
+    assert sum(r.reads for r in m.shortcut.values()) == 2 * len(check.ANCESTORS) * points
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck27_a_like_for_like_read_that_is_wrong_fails_the_check(monkeypatch, backend):
+    real = check.read_union
+    monkeypatch.setattr(check, "read_union", lambda *a: (lambda b, n: (b + 1, n))(*real(*a)))
+    with pytest.raises(check.WrongResult, match=check.UNION_FOLD):
+        check.run_backend_cuts(backend, SMALL, HIGH, like_for_like=True)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck27b_a_shortcut_that_skips_a_needed_fallback_on_the_two_level_corpus_fails_the_check(monkeypatch, backend):
+    monkeypatch.setattr(check, "shortcut_sound", lambda *a: True)
+    with pytest.raises(check.WrongResult, match="shortcut"):
+        check.run_backend_cuts(backend, SMALL, HIGH, like_for_like=True)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck28_a_joined_and_a_copied_cut_both_read_the_models_balance_and_the_copy_costs_a_triple_a_cut(backend):
+    joined, copied = check.run_backend_cut_forms(backend, SMALL, HIGH)
+    cuts = joined.notes["cuts"]
+    assert (joined.cut_form, copied.cut_form) == ("joined", "copied") and cuts > 0
+    assert copied.stored_triples - joined.stored_triples == cuts
+    assert copied.notes["cut_triples"] - joined.notes["cut_triples"] == cuts
+    assert joined.stored_triples == check.expected_stored(check.stream_two_level(SMALL, HIGH))
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck29_a_copied_cut_with_a_wrong_position_fails_the_check(monkeypatch, backend):
+    real = check.quads
+
+    def wrong_position(postings, cps, **kw):
+        for s, p, o, g in real(postings, cps, **kw):
+            yield (s, p, ("n", o[1] + 10**6), g) if p == check.L + "cutPosition" else (s, p, o, g)
+
+    monkeypatch.setattr(check, "quads", wrong_position)
+    with pytest.raises(check.WrongResult, match="copied cut.*the model gives"):
+        check.run_backend_cut_forms(backend, SMALL, HIGH)
+
+
+def test_ck30_a_default_account_has_its_stated_amount_for_a_ceiling_and_the_variant_raises_a_share_of_them():
+    assert all(a.ceiling == a.stated and a.ceiling_amount is None for a in check.TREE)
+    variant = check.build_ceiling_tree()
+    raised = [a for a in variant if a.ceiling_amount is not None]
+    assert raised and all(a.level < 2 and a.ceiling == int(a.stated * check.CEILING_FACTOR) for a in raised)
+    assert len(raised) < len([a for a in variant if a.level < 2])
+    with check.using_tree(variant):
+        assert check.TREE is variant and check.structure_triples() == sum(2 + (a.parent is not None) + len(a.accepts) for a in variant) + len(raised)
+    assert check.TREE is not variant and check.structure_triples() == sum(2 + (a.parent is not None) + len(a.accepts) for a in check.TREE)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck31_with_a_ceiling_above_stated_the_sum_with_cuts_equals_the_stepwise_balance_at_every_ancestor(backend):
+    m = check.run_backend_cuts(backend, SMALL, HIGH, ceiling=True)
+    assert m.corpus == check.CORPUS_CEILING and m.notes["cuts"] > 0 and m.notes["ancestor_reads_above_stated"] > 0 and m.notes["accounts_above_stated_at_some_point"] > 0
+    assert m.notes["accounts_with_a_ceiling_above_stated"] == sum(a.ceiling_amount is not None for a in check.build_ceiling_tree())
+    assert sum(r.reads for r in m.reads.values()) == len(check.CUT_FOLDS) * len(check.ANCESTORS) * len(check.read_points(check.stream_two_level(SMALL, HIGH)[-1].pos))
+    assert check.TREE[0].ceiling == check.TREE[0].stated and all(a.ceiling_amount is None for a in check.TREE)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck32_a_read_that_clamps_at_the_stated_amount_fails_the_ceiling_variant(monkeypatch, backend):
+    real = check.limits
+    monkeypatch.setattr(check, "limits", lambda b, i: (lambda stated, ceiling: (stated, stated))(*real(b, i)))
+    with pytest.raises(check.WrongResult, match="stepwise.*the model gives"):
+        check.run_backend_cuts(backend, SMALL, HIGH, ceiling=True)
+
+
+def test_ck32b_a_ceiling_variant_in_which_nothing_stands_above_its_stated_amount_is_refused():
+    postings = check.stream_two_level(SMALL, HIGH)
+    model = check.run_model(postings, [postings[-1].pos])
+    with pytest.raises(check.WrongResult, match="above its stated amount"):
+        check.check_discriminates_ceiling(model, HIGH, [postings[-1].pos])
+
+
+@pytest.mark.parametrize("backend", ALL_BACKENDS)
+def test_ck33_the_sketchs_tree_and_history_read_the_sketchs_figures_through_the_engine(backend):
+    got = check.run_sketch(backend)
+    agg, cap = got["urn:acct:agg"], got["urn:acct:cap"]
+    assert [agg[f] for f in ("applied", "stepwise", "sum-with-cuts")] == [9, 7, 7] and (agg["cuts"], agg["cut_count"]) == (2, 1)
+    assert all(cap[f] == 9 for f in ("kind-filtered", "kind-filtered-union", "stepwise", "applied", "sum-with-cuts")) and cap["cut_count"] == 0
+    assert check.TREE is not None and len(check.TREE) == 33
+
+
+@pytest.mark.parametrize("backend", ALL_BACKENDS)
+def test_ck34_a_writer_that_records_no_cut_fails_the_sketch_through_the_engine(monkeypatch, backend):
+    real = check.settle_credit
+    monkeypatch.setattr(check, "settle_credit", lambda *a: (real(*a)[0], ()))
+    with pytest.raises(check.WrongResult, match="sketch"):
+        check.run_sketch(backend)
+
+
+def test_ck35_the_report_has_the_like_for_like_cut_form_and_ceiling_rows(tmp_path):
+    ms = check.run_cuts((SMALL,), (HIGH,), ["rdflib"], like_for_like=True) + check.run_cut_forms((SMALL,), (HIGH,), ["rdflib"]) + check.run_cuts((SMALL,), (HIGH,), ["rdflib"], ceiling=True)
+    check.write_report(ms, tmp_path)
+    data = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))
+    assert [m["corpus"] for m in data["measurements"]] == [check.CORPUS_TWO, check.CORPUS_FORMS, check.CORPUS_FORMS, check.CORPUS_CEILING]
+    text = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert f"sum-with-cuts / {check.UNION_FOLD}" in text and "copied / joined" in text and "ancestor reads above stated" in text
