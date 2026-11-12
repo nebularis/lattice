@@ -11,6 +11,7 @@ import { split } from "../rdf/split";
 import { Modal, Spinner, download, go, readFiles } from "./kit";
 import { addFor, declaredFor } from "./Overview";
 import { useStudio } from "./Workspace";
+import { ClassAxioms, IndividualAxioms, PropertyAxioms } from "./AxiomForms";
 
 const kind = (type: string) => KINDS.find((k) => k.type === type)!;
 
@@ -24,6 +25,9 @@ export function BaselineView({ selected }: { selected?: string }) {
   const matches = (c: BaselineClass): boolean => !q || c.label.toLowerCase().includes(q) || c.children.some((x) => matches(baseline.classes.get(x)!));
   const scheme = baseline.schemes.find((s) => s.iri === selected);
   const current = selected && baseline.classes.get(selected);
+  const property = selected && !current ? baseline.properties.get(selected) : undefined;
+  // Any other subject the baseline states something about opens as an individual.
+  const individual = selected && !current && !property && !scheme && baseline.declares(selected) ? selected : undefined;
 
   return (
     <div className="split">
@@ -57,6 +61,30 @@ export function BaselineView({ selected }: { selected?: string }) {
       </div>
       <div className="detail-pane">
         {current && <ClassDetail c={current} />}
+        {property && (
+          <div className="editor">
+            <div className="editor-head">
+              <div className="grow">
+                <span className="chip baseline">Property</span>
+                <h2 style={{ marginTop: 8 }}>{property.label}</h2>
+                <div className="iri">{property.iri}</div>
+              </div>
+            </div>
+            <PropertyAxioms baseline={baseline} iri={property.iri} />
+          </div>
+        )}
+        {individual && (
+          <div className="editor">
+            <div className="editor-head">
+              <div className="grow">
+                <span className="chip baseline">Individual</span>
+                <h2 style={{ marginTop: 8 }}>{baseline.label(individual)}</h2>
+                <div className="iri">{individual}</div>
+              </div>
+            </div>
+            <IndividualAxioms baseline={baseline} iri={individual} />
+          </div>
+        )}
         {scheme && (
           <div className="editor">
             <div className="editor-head">
@@ -71,7 +99,7 @@ export function BaselineView({ selected }: { selected?: string }) {
             </div>
           </div>
         )}
-        {!current && !scheme && (
+        {!current && !scheme && !property && !individual && (
           <div className="empty">
             <Shapes size={28} />
             <h3>
@@ -196,6 +224,8 @@ function ClassDetail({ c }: { c: BaselineClass }) {
           </tbody>
         </table>
       </div>
+
+      <ClassAxioms baseline={baseline} iri={c.iri} />
     </div>
   );
 }

@@ -134,6 +134,7 @@ test("the command palette jumps to a class of the baseline", async ({ page }) =>
   await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { name: "Guarantor", level: 2 })).toBeVisible();
   await expect(page.getByText("Subclass of Party")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Superclasses" })).toContainText("Party");
 });
 
 const SECTOR = "https://example.org/lattice/eligibility/eligible-sector";
@@ -579,4 +580,34 @@ test("a queue no worker consumes is reported to the author, who can dismiss it, 
   await expect(warning).toContainText("No worker consumes lattice.studio.jobs.long");
   await warning.getByRole("button", { name: "Dismiss" }).click();
   await expect(warning).toHaveCount(0);
+});
+
+test("mapping mode lists every scheme of the workspace, selects one by its row and has no scheme select", async ({ page }) => {
+  const fake = new FakeService();
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Policies from XML and JSON/ }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  const ws = [...fake.workspaces.keys()][0];
+  await page.goto(`/#/w/${ws}/mapping`);
+
+  const list = page.getByRole("navigation", { name: "Mapping schemes" });
+  const rows = list.getByRole("button");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0)).toHaveAttribute("aria-current", "true");
+  await expect(rows.nth(1)).not.toHaveAttribute("aria-current", "true");
+  await expect(page.getByRole("combobox", { name: "Mapping scheme" })).toHaveCount(0);
+  // Both schemes are named Scheme, so what each holds tells them apart.
+  const tree = page.getByRole("tree");
+  await expect(tree).toBeVisible();
+  const before = await tree.textContent();
+
+  await rows.nth(1).click();
+  await expect(rows.nth(1)).toHaveAttribute("aria-current", "true");
+  await expect(rows.nth(0)).not.toHaveAttribute("aria-current", "true");
+  await expect(tree).toBeVisible();
+  await expect.poll(() => tree.textContent()).not.toBe(before);
+  await expect(page.getByRole("combobox", { name: "Mapping scheme" })).toHaveCount(0);
 });

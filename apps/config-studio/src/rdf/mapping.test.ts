@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { Graph, MORK, localName } from "@lattice/authoring-domain";
 import { kindOf, sectionsFor } from "./editors";
 import { Vocabulary } from "./vocabulary";
-import { reviewGraph, sampleFormat, schemesOf, setParent, setSource, unlink } from "./mapping";
+import { reviewGraph, sampleFormat, schemeSummary, schemesOf, setParent, setSource, unlink } from "./mapping";
 import { split } from "./split";
 
 const OM = "https://www.nebularis.org/neuro-semantic/lattice/config-studio/odrl-mapping#";
@@ -156,5 +156,41 @@ describe("a sample's format", () => {
     expect(sampleFormat("<http://example.org/a> <http://example.org/p> 1 .")).toBe("text/turtle");
     expect(sampleFormat("<urn:a:b> a <urn:c> .")).toBe("text/turtle");
     expect(sampleFormat("@prefix ex: <urn:ex:> . ex:a a ex:B .")).toBe("text/turtle");
+  });
+});
+
+describe("a scheme's summary", () => {
+  const P = "https://example.org/s#";
+  const head = `@prefix mork: <http://www.nebularis.org/ontologies/Mork#> . @prefix prov: <http://www.w3.org/ns/prov#> . @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .`;
+  const review = (n: number, of: string, decision: string, at: string) =>
+    `<${P}r${n}> a mork:MappingReview ; mork:reviewOf <${P}${of}> ; mork:reviewDecision mork:${decision} ; prov:endedAtTime "${at}"^^xsd:dateTime .`;
+  const summary = (ttl: string) => schemeSummary(schemesOf(Graph.parse(`${head}\n${ttl}`))[0]);
+
+  it("counts the mappings and those another mapping names as its template", () => {
+    expect(summary(`<${P}S> a mork:MappingScheme .
+      <${P}T> a mork:DataMapping ; mork:mappingScheme <${P}S> .
+      <${P}A> a mork:DataMapping ; mork:mappingScheme <${P}S> ; mork:templateMapping <${P}T> .
+      <${P}B> a mork:DataMapping ; mork:mappingScheme <${P}S> ; mork:templateMapping <${P}T> .`)).toEqual({ mappings: 3, templates: 1, reviews: {}, toReview: 0 });
+  });
+
+  it("counts each reviewed mapping once by its latest decision", () => {
+    expect(summary(`<${P}S> a mork:MappingScheme .
+      <${P}A> a mork:Datum ; mork:mappingScheme <${P}S> . <${P}B> a mork:Datum ; mork:mappingScheme <${P}S> .
+      <${P}C> a mork:Datum ; mork:mappingScheme <${P}S> . <${P}D> a mork:Datum ; mork:mappingScheme <${P}S> .
+      ${review(1, "A", "Deferred", "2026-10-30T01:00:00Z")} ${review(2, "A", "Accepted", "2026-10-30T02:00:00Z")}
+      ${review(3, "B", "Accepted", "2026-10-30T02:00:00Z")} ${review(4, "C", "Rejected", "2026-10-30T02:00:00Z")}`)).toEqual({ mappings: 4, templates: 0, reviews: { Accepted: 2, Rejected: 1 }, toReview: 0 });
+  });
+
+  it("counts a proposal's mappings with no review as to review, and a hand-made one with none as neither", () => {
+    expect(summary(`<${P}S> a mork:MappingScheme .
+      <${P}A> a mork:Datum ; mork:mappingScheme <${P}S> ; prov:wasGeneratedBy <urn:run:1> .
+      <${P}B> a mork:Datum ; mork:mappingScheme <${P}S> ; prov:wasGeneratedBy <urn:run:1> .
+      <${P}C> a mork:Datum ; mork:mappingScheme <${P}S> ; prov:wasGeneratedBy <urn:run:1> .
+      <${P}H> a mork:Datum ; mork:mappingScheme <${P}S> .
+      ${review(1, "C", "Corrected", "2026-10-30T02:00:00Z")}`)).toEqual({ mappings: 4, templates: 0, reviews: { Corrected: 1 }, toReview: 2 });
+  });
+
+  it("is zero throughout for a scheme with no mapping", () => {
+    expect(summary(`<${P}S> a mork:MappingScheme .`)).toEqual({ mappings: 0, templates: 0, reviews: {}, toReview: 0 });
   });
 });

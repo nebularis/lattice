@@ -35,7 +35,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-B4 | the import graph | planned | SVA-B3, SVA-O1 |
 | SVA-O1 | the canvas kit, with layout in a web worker | planned |  |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | planned | SVA-O1 |
-| SVA-O3 | the axiom reader and the element forms | building 2026-11-12 |  |
+| SVA-O3 | the axiom reader and the element forms | built 2026-11-12, building 2026-11-12 |  |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | planned | SVA-O1 |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | planned | SVA-R3 |
@@ -44,7 +44,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
 | SVA-S2 | the surface simulation executor | planned | SVA-P3 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
-| SVA-M1 | the mapping schemes listed on the left | building 2026-11-12 |  |
+| SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
 | SVA-M2b | template libraries in `mork2rml`, `mork_transforms` and MCN | planned | SVA-M2a |
 | SVA-M2c | a library as a unit, and a compile that reads libraries | planned | SVA-M2a |
@@ -60,6 +60,8 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 
 ## Adversarial probes
 - 2026-11-12, SVA-B1: the return that lets a catalog entry win was removed from `resolveImports`. Five tests failed, among them the precedence test and the run over LATTICE's own catalog. Restored, 33 passing.
+- 2026-11-12, SVA-M1: `schemeSummary` was made to count every unreviewed mapping as to review. Three tests failed. Restored.
+- 2026-11-12, SVA-O3: the depth cap of the expression reader was raised by five. The depth test failed. Restored.
 
 ## Log
 
@@ -68,3 +70,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12: SVA-B1, SVA-O3 and SVA-M1 picked up, three slices of the application that touch no file in common.
 - 2026-11-12: SVA-R0 and SVA-R1 picked up. The decision record is drafted while the broker is installed for the probes, with the limits the probes decide marked as provisional.
 - 2026-11-12: SVA-B1 built, [Validation Pack](../validation/SVA-B1.md). The catalog reader, the ontology header reader and the closure are pure functions, 33 tests passing. The plan's nodes are keyed by the import IRI as written, so an ontology IRI and its version IRI are two nodes of one file, which SVA-B2a joins by digest when it holds them.
+- 2026-11-12: SVA-M1 built, [Validation Pack](../validation/SVA-M1.md). Every mapping scheme is a row of a list on the left, with its counts, and the select is gone. The fake service gained the mapping part, which a workspace made from a mapping sample needs to save. Selecting a scheme now also clears the selected source concept, which the select did not.
+- 2026-11-12: SVA-O3 built, [Validation Pack](../validation/SVA-O3.md). `rdf/axioms.ts` reads a class's, a property's and an individual's statements into sections and puts the rest in a table, and the Baseline view shows them read-only. SVA-M1 and SVA-O3 are one commit, since both add to the stylesheet and the browser spec. Verified together: 205 unit tests, the type check, and the 24 browser tests on the fake service, run with this machine's Chromium through a configuration that was not committed, since the pinned Playwright expects a newer build than the machine has.

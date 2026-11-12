@@ -15,7 +15,7 @@ import type { Artefact, Job } from "../rdf/report";
 import { applyArtefacts, importDocument, mediaTypeOf } from "../rdf/odrl";
 import { mint } from "../rdf/editors";
 import { CONFIG_PARTS } from "../rdf/split";
-import { SAMPLE_FORMATS, exampleSources, reviewGraph, sampleFormat, schemesOf, written, type MappingNode, type RunCost, type SampleFormat, type Scheme } from "../rdf/mapping";
+import { SAMPLE_FORMATS, exampleSources, reviewGraph, sampleFormat, schemeSummary, schemesOf, written, type MappingNode, type RunCost, type SampleFormat, type Scheme } from "../rdf/mapping";
 import { Spinner, download, go } from "./kit";
 import { NodeEditor } from "./ConfigView";
 import { MappingCanvas } from "./MappingCanvas";
@@ -103,22 +103,23 @@ export function MappingView({ selected }: { selected?: string }) {
   return (
     <div className="split" style={{ gridTemplateColumns: "minmax(280px, 340px) 1fr" }}>
       <div className="list" aria-label="Source">
+        <SchemeList
+          groups={[{ title: "Schemes", schemes }]}
+          current={scheme.iri}
+          prefixes={prefixes}
+          wrote={sampleRun.result ? (m) => sampleRun.output(m).length : undefined}
+          onSelect={(s) => {
+            setSchemeIri(s);
+            setSource(undefined);
+            go("w", studio.id, "mapping");
+          }}
+        />
         <div className="list-head">
           <div className="row">
             <Network size={16} />
             <strong className="grow">Mapping</strong>
             <span className="small muted">{scheme.mappings.length} mappings</span>
           </div>
-          {schemes.length > 1 && (
-            <select value={scheme.iri} onChange={(e) => {
-              setSchemeIri(e.target.value);
-              go("w", studio.id, "mapping");
-            }} aria-label="Mapping scheme">
-              {schemes.map((s) => (
-                <option key={s.iri} value={s.iri}>{s.label}</option>
-              ))}
-            </select>
-          )}
           <div className="small muted">{scheme.label}</div>
           {scheme.run && <div className="small muted">{cost(scheme.run)}</div>}
           <div className="row" style={{ gap: 6 }}>
@@ -175,6 +176,39 @@ export function MappingView({ selected }: { selected?: string }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** The review decisions a scheme's row counts, in the order the row shows them. */
+const DECISIONS = ["Accepted", "Corrected", "Rejected", "Deferred"];
+
+/** Every mapping scheme of the workspace, in groups, each a row with what it holds, its review state and, once a sample has
+ * run, how many triples the run wrote for it. The row of `current` is marked, and picking a row hands its IRI to `onSelect`. */
+function SchemeList({ groups, current, prefixes, wrote, onSelect }: { groups: { title: string; schemes: Scheme[] }[]; current?: string; prefixes: Record<string, string>; wrote?: (mapping: string) => number; onSelect: (scheme: string) => void }) {
+  return (
+    <nav aria-label="Mapping schemes" className="scheme-list">
+      {groups.map((group) => (
+        <section key={group.title} aria-label={group.title}>
+          <h4>{group.title}</h4>
+          {group.schemes.map((s) => {
+            const sum = schemeSummary(s);
+            const review = [...DECISIONS.filter((d) => sum.reviews[d]).map((d) => `${sum.reviews[d]} ${d}`), ...(sum.toReview ? [`${sum.toReview} to review`] : [])].join(" · ");
+            const triples = wrote ? s.mappings.reduce((n, m) => n + wrote(m.iri), 0) : undefined;
+            return (
+              <button key={s.iri} type="button" className="scheme-row" aria-current={s.iri === current ? "true" : undefined} onClick={() => onSelect(s.iri)}>
+                <span className="name">{s.label}</span>
+                <span className="detail mono">{compact(s.iri, prefixes)}</span>
+                <span className="detail">
+                  {sum.mappings} mappings · {sum.templates} templates
+                  {triples !== undefined && ` · ${triples} triples written`}
+                </span>
+                {review && <span className="detail">{review}</span>}
+              </button>
+            );
+          })}
+        </section>
+      ))}
+    </nav>
   );
 }
 

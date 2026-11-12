@@ -149,6 +149,27 @@ export function schemesOf(g: Graph): Scheme[] {
     .sort((a, b) => Number(b.labelled) - Number(a.labelled) || a.label.localeCompare(b.label));
 }
 
+/** What a scheme holds, counted from its mappings: how many, how many are templates, the latest decision of each reviewed
+ * mapping by decision, and how many a proposal generated that no review has decided yet. Only decisions that occur are keys. */
+export interface SchemeSummary {
+  mappings: number;
+  templates: number;
+  reviews: Record<string, number>;
+  toReview: number;
+}
+
+export function schemeSummary(scheme: Pick<Scheme, "mappings">): SchemeSummary {
+  const reviews: Record<string, number> = {};
+  let templates = 0;
+  let toReview = 0;
+  for (const m of scheme.mappings) {
+    if (m.isTemplate) templates++;
+    if (m.review) reviews[m.review.decision] = (reviews[m.review.decision] ?? 0) + 1;
+    else if (m.generatedBy) toReview++;
+  }
+  return { mappings: scheme.mappings.length, templates, reviews, toReview };
+}
+
 function costOf(g: Graph, run: string): RunCost {
   const n = (p: string) => (g.value(run, p) === undefined ? undefined : Number(g.value(run, p)));
   const start = g.value(run, PROV + "startedAtTime");

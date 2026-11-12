@@ -12,7 +12,7 @@ import { DataFactory, Parser, Store, Writer } from "n3";
 
 const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../.build/config-studio");
 const CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
-const PARTS = ["library", "assembly", "meaning", "review", "vocabulary", "quantification", "eligibility", "surface", "persistence"];
+const PARTS = ["library", "assembly", "meaning", "review", "vocabulary", "quantification", "eligibility", "surface", "persistence", "mapping"];
 const E = "https://example.org/lattice/eligibility/";
 const ELG = "https://www.nebularis.org/neuro-semantic/lattice/eligibility#";
 const QNT = "https://www.nebularis.org/neuro-semantic/lattice/quantification#";
