@@ -333,7 +333,7 @@ annual cap 20M   after the loss: 10M left
 | (ii) stopped at the ceiling, the excess goes to the parent | 1M | the parent, if it has room |
 | (iii) the recovery is credited to the period of the original loss | 1M this period | last period, which is sealed |
 
-**Bears on** the running balance LG-9 proves, PDD-14. **Ruling.**
+**Bears on** the running balance LG-9 proves, PDD-14. **Ruling.** The maintainer, 2026-11-12. Reading (i). The credit stops at the account's ceiling and the excess goes to a residual account that stands beside the limit, since a surplus held is money owed and not capacity. A ceiling above an account's stated amount is refused by default, and a deployment whose terms need one says so in its ledger profile (LG-Q24). The ruling stands provided the default path's cost in space and time does not grow, which the [balances sketch](../sketches/ledger-balances-under-post-once.md) §4.8 bears on.
 
 ### E3. A loss reported after its year closed (insurance)
 

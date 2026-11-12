@@ -207,6 +207,7 @@ Estimates are in tokens.
 | OD-DOC1 | Published decisions (A127): the Published status, the generated list, the sources check, unpublished ADRs hidden from the site, and the ADRs Eligibility cites published. Brief below Built 2026-10-19, [Validation Pack](../validation/OD-DOC1.md) | `docs/`, `tools/` | L1, L3 | 80k |
 | OD-DOC2 | Site sections (OD-D29 to OD-D31): the `site` block in the root catalogue, the copy task and its check, `_config.yml` exclusions and `defaults`, `published: false` on Proposed ADRs, the tutorial spine's authoring note repointed from its plan to the conventions document, and the stray working notes in `docs/` moved or retired with the maintainer's say on each | `docs/`, `tools/` | L1, L3 | 70k |
 | OD-DOC3 | Tutorial and Field Guide review, after `lattice-tutorial` merges: overlap mapped chapter by chapter, and options put to the maintainer, including the Field Guide as an operations guide | `docs/` | L0 | 40k |
+| OD-DOC4 | The layer interactions record: one maintained architecture document on how the layers work together at design time and at runtime, with register entries that point into it and a standard that keeps it current (STD-326). Brief below. Planned 2026-11-12 | `docs/architecture/`, `docs/developer/` registers | L0, L1 | 150k |
 | OD-RC4 | Downstream extension (RC-Q7): qualified names and an `extends` chain, tried against Open CBAA's layout. Then the extractor reads the catalogue for every extraction and fails when the files a README generates differ from its entry (RC2-C2 option b, deferred to here) | `tools/` | L1, L4 | 60k |
 | OD-RC5 | Promotion to the `lattice-repo-catalogue` package, installable into each worktree's `.venv` and pinnable by version per branch downstream | `packages/`, `tools/` | L0, L4 | 50k |
 | OD-RC6 | The XML catalogue (ADR-A88) folded into the repository catalogue, under a new ADR, with release and version management read from the same place | `tools/`, `ontology/` | L3, L4 | 80k |
@@ -447,6 +448,33 @@ TD-53). Publishing ADRs no migrated README cites.
 
 **Not covered.** The scan failing rather than reporting, which comes once tools have moved. Downstream
 extension (OD-RC4).
+
+## Brief for OD-DOC4, the layer interactions record (2026-11-12)
+
+**Why.** The consolidated architecture overview was retired on 2026-10-28 as a one-time synthesis, and what replaced it, the repository catalogue, each layer's README, the release register and the decisions, says what each layer is and what it imports. Nothing maintained says how the layers work together: which layer's documents are written at design time and which at runtime, what is authored and what is derived, by which mechanism one stratum becomes the next, and who reads whose records when an event is evaluated. That narrative lives in decisions, sketches and conversation, and a design discussion of 2026-11-12 had to rebuild it from eleven documents. One sentence it needed, that a dynamic amount is created from an instrument's static limit by a projection through Surface, had been lost when Ledger replaced the capacity profile.
+
+**What it is.** One document, `docs/architecture/layer-interactions.md`, in the Architecture section of the site, so it cites only published or Accepted decisions and never a working document (ADR-A127). It describes what is decided and, where a decided interaction is not yet built, says so in a table of its own, so that the narrative is never mistaken for the state of the code. It restates no layer's terms. Each section links the README or decision that defines what it names.
+
+**Sections.**
+
+1. **The strata.** Wording, stated meaning, bound meaning, configuration that is derived from meaning, runtime records, and realisations, with what is authored and what is derived at each.
+2. **Two documents a layer.** The configuration and runtime documents of Behaviour and Ledger, what a design-time check reads, and where a setting that tunes cost and changes no meaning belongs.
+3. **Imports against use.** The dependency order beside who acts on whom at runtime: Instrument specialises Behaviour by subclass, Behaviour acts on Ledger and reads its balances, Ledger imports neither, and Ensemble orders instruments.
+4. **How one stratum becomes the next.** Instantiation from stated to bound meaning, derivation by a Surface projection that lowers into MORK, mapping of an outside source by MORK, and a realisation populated by projection, with what each may and may not originate and how each stays current when its source changes.
+5. **Where a value may come from.** A contract's clauses, a document it refers to, a rule a deployment imposes, a layer's documented default, and precedence between them.
+6. **What a deployment chooses.** Profiles and deployment-wide rules, and what a framework leaves open (PRI-01).
+7. **One event, end to end.** A positioned stimulus through Behaviour's pass, a lifted effect, a posting, a balance read and a threshold regime's transition, naming each record written and each one read.
+8. **Decided and not yet built.** A table, each row a decided interaction, the slice that builds it and its state on the board.
+
+**Inputs so far**, for the slice to read and to add to until it is built (STD-326): ADR-A01 and its addenda, ADR-A104, ADR-A106, ADR-A130, ADR-A131, ADR-A16 to ADR-A18, ADR-A92, ADR-A142, the evaluation context sketch, the sketch on accounts from instruments and its section 9, the balances sketch sections 4.5 to 4.8, the capacity module's README on static and dynamic amounts, and the Instrument README's paragraph on threshold regimes, which still says the measured value is held by a capacity model and is corrected with LG-3.
+
+**The index.** Each of sections 1 to 7 gets a register entry of the kind that fits it, a mechanism or a pattern, whose pointer is that section, so `graph:ask -- find` answers a question about how two layers interact with the section and never with a retired overview. The entries carry the `cross-layer-design` activity. The architecture skill's layer section points at the document through the project's additions. `mise run build:knowledge` reads every pointer, and `mise run graph:ask -- find` for three questions the discussion of 2026-11-12 asked, why Ledger does not import Behaviour, who derives an account definition, and where a runtime dial belongs, each returns a section of the document among its first five.
+
+**Keeping it current.** STD-326, in the register from today, holds a change that alters how two layers work together to update the record in the same change. The slice adds what a check can hold: that every interaction row in section 8 names a slice the board knows, and that the document's dependency table agrees with the repository catalogue. Moving the import guard's source from the retired overview to the catalogue pays TD-114 and lets the overview be deleted, and is in scope only if it stays small.
+
+**Not covered.** A rewrite of any layer's README. The stale paragraph in Instrument's README. A description of the platform's services, which the solution design specification holds.
+
+**Checks.** `mise run check:published-decisions`, the site sections check and the links check for the document, `mise run build:knowledge` read in full for a note on any new entry, and the three `find` questions above. A Validation Pack in the lifecycle skill's form.
 
 ## Validation
 

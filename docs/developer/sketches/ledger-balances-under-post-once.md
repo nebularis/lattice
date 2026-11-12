@@ -246,6 +246,38 @@ flowchart LR
 - **Which balance is checkpointed.** An account's balance is now its own fold under its own restoring kinds, so an ancestor that accepts recoveries only checkpoints that balance and not the sum of everything below it. A checkpoint is still one balance per account per close where the balance moved, so it costs no more triples.
 - **A change of configuration within a period.** Where an account's restoring kinds or ceiling change between closes, a new version of its definition, each posting after the checkpoint must be folded under the version in force when it took effect, never under today's. A stepwise fold does that naturally. A sum must group the later postings by the version in force, which is one more reason to pay TD-102 and to decide LG-Q22, so the version in force at any point can be read.
 
+### 4.8 Added 2026-11-12: a credit at two levels of a path, the path clamp, and a cut the writer records
+
+**Section 4.6's condition is too weak.** It says an ancestor's ceiling cannot bind where every ceiling equals its account's stated amount. LG-15's corpus posted every credit on a contract, a leaf, and its argument, that an ancestor's outstanding draw is at least the sum of its contracts', holds for credits on leaves. LG-Q10's own answer posts a reinstatement at the aggregate, an account with accounts below it. A credit at an ancestor restores the ancestor and not the accounts below it, so a later credit below can push the ancestor past its ceiling. The history is ordinary: a loss, a reinstatement, and a recovery that arrives late. Amounts are in millions, an annual cap of 20 that accepts recoveries only, an aggregate of 10 under it, and sections S and T of 10 each under the aggregate, every ceiling equal to its stated amount.
+
+| Step | Event | S | T | Aggregate, clamped at each step | Aggregate as a sum | Annual cap |
+|---|---|---|---|---|---|---|
+| start | | 10 | 10 | 10 | 10 | 20 |
+| 1 | loss of 10 at S | 0 | 10 | 0 | 0 | 10 |
+| 2 | reinstatement at the aggregate | 0 | 10 | 10 | 10 | 10 |
+| 3 | recovery of 2 at S | 2 | 10 | 10 | 12 | 12 |
+| 4 | loss of 3 at T | 2 | 7 | 7 | 9 | 9 |
+
+From step 3 a sum overstates the aggregate by 2 and would let its second life pay 12. So the configuration test of section 4.6 does not make an ancestor's fold a sum. The condition that does, stated as a hypothesis for the proofs, is that every ceiling equals its stated amount and no credit an ancestor accepts lands on an account that lies above another account receiving one.
+
+**The path clamp, examined and not taken.** Clamping a credit along its path when it is written, to the least room among the accounts that accept its kind, would make every ancestor a sum. At step 3 the rooms are 10 at S, 0 at the aggregate and 10 at the annual cap, so the recovery would be applied at nothing. S would stay at 0 though the money came back, and the annual cap would stay at 10 though net paid fell to 8. The accounts on a path measure different things, which is what LG-Q10 decided, so they cannot share one applied amount. The clamp is more restrictive than refusing a configuration, since it cuts a credit silently at runtime where a refusal is visible at design time, and it fails on the default configuration.
+
+**A cut the writer records.** The writer of a credit already holds the balances along the path (LG-Q9 (a)). Where the amount applied at the posting account is more than an accepting ancestor has room for, the writer records the difference on the credit as a cut at that ancestor. An ancestor's balance is then its stated amount, less the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it. At step 3 the recovery carries a cut of 2 at the aggregate, and the aggregate reads 10 less 13 plus 12 less 2, which is 7 after step 4.
+
+| | Refuse the configuration | Ordered read where a ceiling can bind | A cut recorded by the writer |
+|---|---|---|---|
+| the history above | cannot be refused, it is the decided design | the aggregate is read in order (TSD-72) | the aggregate is a sum |
+| a ceiling above a stated amount | refused | read in order | a sum |
+| written per credit | nothing more | nothing more | one cut, about 3 triples, only where an ancestor had less room |
+| read of any ancestor | a sum | ordered, with a loop in the caller | a sum with one more term, looked up by the ancestor |
+| what the writer must know | the path balances | the path balances | the path balances |
+| verification | a sum | an ordered replay | an ordered replay, off the hot path |
+| what the proofs owe | the leaf condition | the stepwise law, LG-9's | that the sum with cuts equals the stepwise balance |
+
+The cut is part of the credit's own record in its period graph, never a posting in the ancestor's book, so section 4.2's objection to a posting at an ancestor does not apply. None of the costs in the table is measured. The credit kinds benchmark can measure the read with cuts, on machine R.
+
+**What it means for the rulings.** The ruling on scenario E2, that an excess goes to a residual account and a ceiling above the stated amount is refused by default, stands as a statement of meaning. It no longer rests on cost, since with cuts a ceiling above the stated amount costs a read nothing. The residual account itself is an account that only receives and has no ancestor, so nothing binds above it, and how it is declared is for LG-Q16's treatment of a residual. LG-Q23 gains the cut as its option (d).
+
 ## 5. `draw` and `spread`, two refusal semantics
 
 LG-7's kernel has two ways an amount reaches the tree. `draw` takes one amount to one account, debits the path and the paths of every account counting its purpose as one operation, and either succeeds whole or changes nothing (LD1, LD4). That is ADR-A131 decision 3 and PRI-43. `spread` takes a request vector over keys and a list of accounts, and at each account takes the least of what is still requested and what the account can afford, splits it among the keys by the rule, debits the path, and carries the rest to the next account. What no account affords is the residual (LC1 to LC3).

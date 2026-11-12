@@ -363,6 +363,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | OD-DOC1 | published decisions | improved-ontology-documentation | verified 2026-10-19 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-DOC2 | site sections | improved-ontology-documentation | merged 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-DOC3 | tutorial and Field Guide review | improved-ontology-documentation | planned | OD-DOC2, `lattice-tutorial` merged | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-DOC4 | the layer interactions record, with its register entries and STD-326 | improved-ontology-documentation | planned |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC4 | downstream extension | improved-ontology-documentation | planned | OD-RC3 | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC5 | package promotion | improved-ontology-documentation | planned | OD-RC4 | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC6 | XML catalogue folded in | improved-ontology-documentation | planned | OD-RC5, a new ADR on ADR-A88 | docs/developer/status/improved-ontology-documentation.md#slices |

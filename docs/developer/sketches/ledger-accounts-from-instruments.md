@@ -60,7 +60,7 @@ Two consequences follow for the ledger. An account's configuration can come from
 | where it lives | above Instrument and Ledger, beside the instantiator, reaching Ledger through Behaviour's import as ADR-A131 requires | Behaviour | the same as (a), with MORK's toolchain |
 | cost | a mapping for each kind of limit, and a rule for what it does with a qualifier it has no mapping for, Undetermined | authoring effort on every instrument, and drift between the clause and the account | as (a), plus a dependency on MORK for every deployment that configures accounts |
 
-Leaning (a), with (c) as its later implementation if the mapping is better kept as data. The question for the maintainer is whether the derivation is a stated mapping at all, and where it lives.
+Leaning (a), with (c) as its later implementation if the mapping is better kept as data. The question for the maintainer is whether the derivation is a stated mapping at all, and where it lives. **Answered 2026-11-12 in section 9:** it is a derivation, and it lives with Surface.
 
 ## 6. The reinstatement regime, worked
 
@@ -102,3 +102,36 @@ Leaning (a), since it pays TD-102, which a historical read needs anyway for the 
 - **LG-Q21**, who derives an account definition from an instrument's bound meaning, leaning (a).
 - **LG-Q22**, how a credit kind's scheme edition is fixed for a historical read, leaning (a), which brings TD-102 into the ledger's plan.
 - No change to any decision taken. Section 4 records the maintainer's point on general terms as a case of references that already exist.
+
+## 9. Agreed with the maintainer, 2026-11-12
+
+**Composition, not specialisation.** Ledger stands below Behaviour, which is to import it and act on it (ADR-A131 decisions 1 and 7, LG-3, planned and not built, so section 2's arrow through Behaviour's import names an import that does not exist yet). An account's balance is the data a machine carries, never a state in a declared space, so Ledger's configuration is not rebuilt on states, transitions and guards. The rich model is Instrument's stated meaning on Behaviour, where a regime is a Behaviour state space by subclass.
+
+**Runtime dials leave the configuration document.** A setting that tunes cost and changes no meaning, the closing recurrence that sets how often a checkpoint is written for example, belongs in a profile or is derived. Which ancestor is read in what way is always derived.
+
+**A ledger profile exists, and it is the deployment's (LG-Q24).** It is one of the deployment's rules for every ledger it runs. It says whether a ceiling above a stated amount is admitted, off by default, and it holds the dials above.
+
+**LG-Q21 is derivation, and its home is Surface.** An account definition is derived from an instrument's meaning by a projection contract, stated once per kind of qualifier, which lowers into a MORK mapping and compiles to a query (ADR-A17, ADR-A18). The contract names Instrument's and Ledger's terms without either layer importing the other, and lives with the deployment or the applied module that owns the kind. This replaces options (a) and (c) of section 5, whose content it keeps. It is not built in the ledger's current slices. The design only fixes where it lands.
+
+**Authored definitions stay legal (PRI-01).** Anyone may write an account definition directly, and the shapes hold it to the same laws. Which holds where an authored and a derived definition answer the same qualifier is LG-Q25.
+
+**Where a field's value may come from.** Four sources and no fifth.
+
+| Source | Example |
+|---|---|
+| the instrument's own clauses | "the aggregate limit is 10,000,000 in the period" |
+| a document the instrument refers to | general terms and conditions, by a fixed or an ambulatory reference (section 4) |
+| a rule the deployment imposes on all its instruments or a filtered set of them, which no wording need refer to | a carrier's rule that a claim exceeding any limit is first refused, or that an account always pays as much of a valid claim as it can |
+| Ledger's own documented default | a credit ceiling equal to the stated amount |
+
+The third was missing from section 4. Whether such a rule is built from wordings, as an instrument of its own, or configured directly, and whether an ensemble or another mechanism applies it, is not designed. Where two sources disagree, precedence between provisions decides before the ledger is configured. Where every source is silent on a field Ledger requires, the derivation refuses and invents nothing.
+
+**A derived definition's name outlives the generator.** A posting folds against the definition in force when it took effect, so a definition a record cites is not a cache to discard. Three rules deliver that.
+
+1. **The definition is versioned** (TD-102). It has a persistent identity, and its stated amount, ceiling, merge rule, restoring kinds and parent are parts of a version, minted under it and never edited in place.
+2. **Ledger's rule names it, never the generator's.** The identity is a function of the owner and the stated qualifier, so it survives a new version of the instrument, as the account does. A version is named by the digest of its canonical content under the substrate's digest rule. The same content derived again, under any generator or profile, has the same name, and different content is a new version beside the old.
+3. **A version a record cites is kept.** A projection may discard only a version that no account, posting or checkpoint cites. That is a law Surface does not state today, owed as an addendum when the projection is built.
+
+The record of each derivation carries what was read, the instrument's version, the editions of the documents and rules it drew on and the scheme edition of the credit kinds, which is where LG-Q22 (a)'s pin lives.
+
+**Surface is exercised by use.** MORK entered the studio and Persistence carries it for the same reason. This derivation is where projection gets that use.
