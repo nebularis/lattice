@@ -101,10 +101,10 @@ A workspace is a description, a baseline and the configurations authored against
 
 | Graph IRI | Written by | Holds |
 |---|---|---|
-| `urn:lattice:studio:description/{root}` | writer | the `cst:Workspace`, its label, owner, mode, dependencies, imports, the title of each document and the sample it was copied from, if any. No revision |
+| `urn:lattice:studio:description/{root}` | writer | the `cst:Workspace`, its label, owner, mode, dependencies, imports, the title of each document and the sample it was copied from, if any. An import's root carries its label and, where its document declares them, the ontology IRI and version IRI, which the writer copies from the fence job. No revision |
 | `urn:lattice:studio:part/{root}` | writer | the saved baseline or configuration of one part, its history kept as deltas in the patch log |
 | `urn:lattice:studio:document/{root}` | writer | a document of the library, its history kept as a part's is |
-| `urn:lattice:studio:imported/{root}` | writer, once | a fenced import, stored once by its digest |
+| `urn:lattice:studio:imported/{root}` | writer, once | a fenced import, stored once by its digest. One request holds several, in one command that stores each import and then replaces the description once |
 | `urn:lattice:studio:job:{job}` | writer, for the service and then the worker | the `cst:Job`, its references, status, report and artefacts |
 | `urn:lattice:studio:job:{job}:input` | writer, once | the configurations as submitted |
 

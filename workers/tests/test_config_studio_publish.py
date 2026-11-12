@@ -137,6 +137,62 @@ def test_a_fence_job_digests_an_import_so_equal_imports_name_one_graph():
         fence(JOB, Graph())
 
 
+ONTOLOGY = URIRef("https://example.org/onto")
+VERSION = URIRef("https://example.org/onto/1.2")
+SH_INFO = URIRef("http://www.w3.org/ns/shacl#Info")
+OWL_HEADER = """
+@prefix owl: <http://www.w3.org/2002/07/owl#> . @prefix ex: <https://example.org/> .
+"""
+
+
+def _fenced(body: str) -> Graph:
+    from lattice_workers.config_studio_publish import fence
+
+    return fence(JOB, Graph().parse(data=OWL_HEADER + body, format="turtle"))
+
+
+def _info_codes(out: Graph) -> list[str]:
+    return [str(out.value(r, CST.code)) for r in out.subjects(URIRef("http://www.w3.org/ns/shacl#resultSeverity"), SH_INFO)]
+
+
+def test_a_fence_job_gives_the_ontology_iri_and_the_version_iri_the_document_declares():
+    """ADR-A149 decision 6. What an import declares is read from its content, here, and never from a request."""
+    out = _fenced("<https://example.org/onto> a owl:Ontology ; owl:versionIRI <https://example.org/onto/1.2> . ex:a ex:p ex:o .")
+    assert out.value(JOB, CST.declaresOntology) == ONTOLOGY
+    assert out.value(JOB, CST.declaresVersion) == VERSION
+    assert _info_codes(out) == []
+
+
+def test_a_fence_job_gives_no_version_iri_for_an_ontology_that_has_none_or_several():
+    none = _fenced("<https://example.org/onto> a owl:Ontology . ex:a ex:p ex:o .")
+    assert none.value(JOB, CST.declaresOntology) == ONTOLOGY
+    assert none.value(JOB, CST.declaresVersion) is None
+    several = _fenced("<https://example.org/onto> a owl:Ontology ; owl:versionIRI <https://example.org/v1>, <https://example.org/v2> .")
+    assert several.value(JOB, CST.declaresOntology) == ONTOLOGY
+    assert several.value(JOB, CST.declaresVersion) is None
+
+
+def test_a_document_with_no_named_ontology_records_neither_iri_and_says_so_as_information():
+    for body in ("ex:a ex:p ex:o .", "[] a owl:Ontology . ex:a ex:p ex:o ."):
+        out = _fenced(body)
+        assert out.value(JOB, CST.declaresOntology) is None and out.value(JOB, CST.declaresVersion) is None
+        assert _info_codes(out) == ["NoOntologyIri"]
+        assert out.value(JOB, CST.digest) is not None and out.value(JOB, CST.conforms).toPython() is True, "information, not a failure"
+
+
+def test_a_document_with_two_named_ontologies_records_neither_iri_and_says_so_as_information():
+    out = _fenced("<https://example.org/a> a owl:Ontology ; owl:versionIRI <https://example.org/a/1> . <https://example.org/b> a owl:Ontology .")
+    assert out.value(JOB, CST.declaresOntology) is None and out.value(JOB, CST.declaresVersion) is None
+    assert _info_codes(out) == ["NoOntologyIri"]
+    assert out.value(JOB, CST.conforms).toPython() is True
+
+
+def test_what_a_document_declares_does_not_change_its_digest_beyond_its_content():
+    a = _fenced("<https://example.org/onto> a owl:Ontology . ex:a ex:p ex:o .")
+    b = _fenced("<https://example.org/onto> a owl:Ontology . ex:a ex:p ex:o .")
+    assert a.value(JOB, CST.digest) == b.value(JOB, CST.digest)
+
+
 def _encode_for_uri(text: str) -> str:
     """SPARQL's ENCODE_FOR_URI, written out byte by byte so the test does not rest on the code it holds equal."""
     return "".join(chr(b) if chr(b) in "-_.~" or chr(b).isascii() and chr(b).isalnum() else f"%{b:02X}" for b in text.encode("utf-8"))

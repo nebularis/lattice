@@ -92,6 +92,10 @@ public final class Cst {
     /** An import graph a workspace holds, stored once by its digest. */
     public static final Property holdsImport = p("holdsImport");
     public static final Property job = p("job");
+    /** The ontology IRI the document of a fenced import declares, on a fence job and on the import's root in a description. */
+    public static final Property declaresOntology = p("declaresOntology");
+    /** The version IRI that ontology declares, with {@link #declaresOntology}. */
+    public static final Property declaresVersion = p("declaresVersion");
     /** The unit IRI a publish job versions, which becomes the lineage. */
     public static final Property unit = p("unit");
     public static final Property lineage = p("lineage");

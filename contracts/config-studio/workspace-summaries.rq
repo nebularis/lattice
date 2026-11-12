@@ -2,8 +2,8 @@
 # The workspace summaries (ADR-A149 decision 14, PB-Q14 (b)). For each workspace its label, owner, mode and cst:modifiedAt
 # from its description graph, and the sequence of each part's and each document's version row in the terms
 # Workspace.toModel() uses, cst:{name}Revision and cst:revision, 0 where there is no live row, and the sample it was made from, the
-# lineages and versions it depends on and the imports it holds with their labels, which the browser's listing shows. The service
-# evaluates it as the listing is read, and nothing stores its result.
+# lineages and versions it depends on and the imports it holds with their labels and the ontology IRI and version IRI each declares,
+# which the browser's listing shows. The service evaluates it as the listing is read, and nothing stores its result.
 #
 # A surface promotion restates a value reached by a read path of edges. A part's row is joined to its workspace by its root's IRI,
 # {workspace}/part/{name}, which is built here and is no edge, and the summary keys each sequence by the part's name. So this is
@@ -24,6 +24,8 @@ CONSTRUCT {
   ?doc cst:revision ?docSeq .
   ?w ?edge ?held .
   ?held rdfs:label ?heldLabel .
+  ?held cst:declaresOntology ?heldOntology .
+  ?held cst:declaresVersion ?heldVersion .
 }
 WHERE {
   {
@@ -45,7 +47,9 @@ WHERE {
     BIND (xsd:integer(COALESCE(?dseq, 0)) AS ?docSeq)
   } UNION {
     GRAPH ?d { ?w a cst:Workspace ; ?edge ?held . FILTER (?edge IN (cst:dependsOn, cst:holdsImport, cst:fromSample))
-               OPTIONAL { ?held rdfs:label ?heldLabel } }
+               OPTIONAL { ?held rdfs:label ?heldLabel }
+               OPTIONAL { ?held cst:declaresOntology ?heldOntology }
+               OPTIONAL { ?held cst:declaresVersion ?heldVersion } }
     FILTER (STRSTARTS(STR(?d), "urn:lattice:studio:description/"))
   }
 }

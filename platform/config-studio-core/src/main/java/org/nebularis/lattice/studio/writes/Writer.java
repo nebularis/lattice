@@ -22,6 +22,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
@@ -67,7 +68,7 @@ public final class Writer {
     /** What a job update may change. Anything else on the job node is the service's and must stay as it wrote it. */
     private static final Set<Property> WORKER_PREDICATES = Set.of(
         Cst.status, Cst.startedAt, Cst.finishedAt, Cst.failureMessage, p("conforms"), p("report"), p("artefact"),
-        Cst.lineage, Cst.version, Cst.digest, Cst.unitKind, p("pins"),
+        Cst.lineage, Cst.version, Cst.digest, Cst.unitKind, p("pins"), Cst.declaresOntology, Cst.declaresVersion,
         p("gap"), p("resolution"), p("expansion"), p("testResult"));
     private static final List<String> CONFIGS = Workspace.CONFIGS;
     private static final Var S = Var.alloc("s");
@@ -345,29 +346,118 @@ public final class Writer {
         }
 
         /**
-         * Imported RDF into the import of its digest, which is stored once since the same digest is the same content (a create
-         * over an existing import writes nothing), then the workspace's holding of it with its label.
+         * Imported RDF into the import of each digest, which is stored once since the same digest is the same content (a create
+         * over an existing import writes nothing), and then the workspace's holding of all of them with their labels and what their
+         * documents declare, in one replacement of the description. The imports come first, so a guard that fails part way leaves no
+         * import named by a description that was not written. What a document declares is read from its fence job in the store.
          */
         private Reply fence(int index, Command c) {
-            Model content = c.body().getDefaultModel();
-            if (!Graphs.isDigest(c.part()) || content.isEmpty() || named(c).hasNext()) {
-                return Reply.refused("a fence names a digest of 64 lower-case hexadecimal digits and carries the imported graph alone, which is not empty");
-            }
-            String label = c.label() == null || c.label().isBlank() ? "Import" : c.label();
-            if (label.length() > MAX_TITLE) {
-                return Reply.refused("an import's label is at most " + MAX_TITLE + " characters");
+            List<Command.Fenced> imports;
+            try {
+                imports = fenced(c);
+            } catch (IllegalArgumentException e) {
+                return Reply.refused(e.getMessage());
             }
             Optional<Workspace> found = workspace(c.workspace());
             if (found.isEmpty()) {
                 return Reply.notFound();
             }
-            Workspace updated = found.get().withImport(Graphs.importGraph(c.part()), label);
+            Workspace updated = found.get();
             Steps s = new Steps(c);
-            s.op(Graphs.importedGraph(c.part()), txn -> ops.create(Family.IMPORT, Graphs.importGraph(c.part()), Skolem.skolemise(content), txn));
+            for (Command.Fenced held : imports) {
+                String root = Graphs.importGraph(held.digest());
+                updated = held.job() == null ? updated.withImport(root, held.label()) : updated.withImport(root, held.label(), declared(held.job()));
+                Model content = Skolem.skolemise(held.content());
+                s.op(Graphs.importedGraph(held.digest()), txn -> ops.create(Family.IMPORT, root, content, txn));
+            }
             describe(s, updated, false);
             s.commit(Graphs.receipts(updated.id()), null);
-            workspaces.put(updated.id(), Optional.of(updated));
-            return planned(index, c, Reply.ok(), () -> changed(updated.id()));
+            Workspace result = updated;
+            workspaces.put(result.id(), Optional.of(result));
+            return planned(index, c, Reply.ok(), () -> changed(result.id()));
+        }
+
+        /**
+         * The imports a fence command holds, or an {@link IllegalArgumentException} saying why it is not one. The older form carries one
+         * import, its digest as the part and its graph as the default graph, and names no job. The other carries no part, names each import's
+         * root with its label and its fence job in the default graph and holds each graph as a named graph, and every job must be a finished
+         * fence job of this workspace that digested that import.
+         */
+        private List<Command.Fenced> fenced(Command c) {
+            if (c.part() != null) {
+                Model content = c.body().getDefaultModel();
+                if (!Graphs.isDigest(c.part()) || content.isEmpty() || named(c).hasNext()) {
+                    throw new IllegalArgumentException("a fence names a digest of 64 lower-case hexadecimal digits and carries the imported graph alone, which is not empty");
+                }
+                return List.of(new Command.Fenced(c.part(), labelOf(c.label() == null || c.label().isBlank() ? "Import" : c.label()), null, content));
+            }
+            Model entries = c.body().getDefaultModel();
+            Set<String> roots = new java.util.TreeSet<>();
+            for (Statement st : entries.listStatements().toList()) {
+                boolean known = (st.getPredicate().equals(RDFS.label) && st.getObject().isLiteral()) || (st.getPredicate().equals(Cst.job) && st.getObject().isURIResource());
+                if (!known || !st.getSubject().isURIResource() || !Graphs.isImportGraph(st.getSubject().getURI())) {
+                    throw new IllegalArgumentException("a fence names each import by its root, with its label and its fence job and nothing else");
+                }
+                roots.add(st.getSubject().getURI());
+            }
+            if (roots.isEmpty() || roots.size() > Command.MAX_FENCED) {
+                throw new IllegalArgumentException("a fence holds 1 to " + Command.MAX_FENCED + " imports");
+            }
+            Set<String> graphs = new java.util.TreeSet<>();
+            named(c).forEachRemaining(g -> graphs.add(g.getURI()));
+            Set<String> expected = new java.util.TreeSet<>();
+            roots.forEach(root -> expected.add(Graphs.importedGraphOf(root)));
+            if (!graphs.equals(expected)) {
+                throw new IllegalArgumentException("a fence carries the graph of each import it names, and no other");
+            }
+            List<Command.Fenced> out = new ArrayList<>();
+            for (String root : roots) {
+                String digest = root.substring(Graphs.IMPORT_PREFIX.length());
+                Resource node = entries.createResource(root);
+                List<RDFNode> labels = entries.listObjectsOfProperty(node, RDFS.label).toList();
+                List<RDFNode> jobs = entries.listObjectsOfProperty(node, Cst.job).toList();
+                Model content = c.body().getNamedModel(Graphs.importedGraphOf(root));
+                if (labels.size() != 1 || jobs.size() != 1 || content.isEmpty()) {
+                    throw new IllegalArgumentException("an import of a fence has one label, one fence job and a graph that is not empty: " + root);
+                }
+                String job = jobs.get(0).asResource().getURI();
+                String id = job.startsWith(Graphs.job("")) ? job.substring(Graphs.job("").length()) : null;
+                if (!Graphs.isId(id)) {
+                    throw new IllegalArgumentException("a fence job is named by its id: " + job);
+                }
+                Optional<Model> held = job(id);
+                Resource jobNode = ResourceFactory.createResource(job);
+                if (held.isEmpty() || !held.get().contains(jobNode, Cst.workspace, ResourceFactory.createResource(Graphs.workspace(c.workspace())))
+                    || !held.get().contains(jobNode, Cst.kind, Cst.Fence) || !held.get().contains(jobNode, Cst.status, Cst.Succeeded)
+                    || !held.get().contains(jobNode, Cst.digest, digest)) {
+                    throw new IllegalArgumentException("an import of a fence comes from a finished fence job of this workspace that digested it: " + root);
+                }
+                out.add(new Command.Fenced(digest, labelOf(labels.get(0).asLiteral().getLexicalForm()), id, content));
+            }
+            return out;
+        }
+
+        private String labelOf(String label) {
+            if (label.length() > MAX_TITLE) {
+                throw new IllegalArgumentException("an import's label is at most " + MAX_TITLE + " characters");
+            }
+            return label;
+        }
+
+        /**
+         * What the document of fence job {@code id} declares, as the job's graph in the store says it, or null when it says none. The
+         * ontology IRI and the version IRI each count when the job gives exactly one IRI, and the version only with its ontology.
+         */
+        private Workspace.Declared declared(String id) {
+            Model m = job(id).orElseThrow();
+            Resource node = m.createResource(Graphs.job(id));
+            String ontology = singleIri(m, node, Cst.declaresOntology);
+            return ontology == null ? null : new Workspace.Declared(ontology, singleIri(m, node, Cst.declaresVersion));
+        }
+
+        private String singleIri(Model m, Resource node, Property p) {
+            List<RDFNode> values = m.listObjectsOfProperty(node, p).toList();
+            return values.size() == 1 && values.get(0).isURIResource() ? values.get(0).asResource().getURI() : null;
         }
 
         /** The workspace stops holding an import. The import stays, since other workspaces may hold it and it is never tombstoned. */

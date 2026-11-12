@@ -6,6 +6,10 @@ import java.util.UUID;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.RDFS;
+import org.nebularis.lattice.studio.store.Cst;
+import org.nebularis.lattice.studio.store.Graphs;
 
 /**
  * One write to the store, as the service or the worker asks the workspace's writer to make it. Every write names the
@@ -102,9 +106,37 @@ public record Command(String id, String sender, Type type, String workspace, Str
         return new Command(newId(), SERVICE, Type.SET_DEPENDENCIES, ws, null, null, null, null, null, null, withDefault(body), null, false);
     }
 
-    /** The imported graph rides as the default graph, its digest as the part and its label as the label. */
+    /**
+     * One import from no job, the imported graph riding as the default graph, its digest as the part and its label as the label. It
+     * records nothing its document declares, since no job says it.
+     */
     public static Command fence(String ws, String digest, String label, Model content) {
         return new Command(newId(), SERVICE, Type.FENCE, ws, null, digest, null, null, label, null, withDefault(content), null, false);
+    }
+
+    /** The most imports one fence command holds. */
+    public static final int MAX_FENCED = 64;
+
+    /**
+     * One import a fence command holds: its digest, its label, the finished fence job it came from and the graph that job digested.
+     * The writer reads what the document declares from {@code job} in the store, and the command carries no claim of it (PRI-75).
+     */
+    public record Fenced(String digest, String label, String job, Model content) {
+    }
+
+    /**
+     * The workspace holds every import of {@code imports}, in one command. The default graph names each by its root with
+     * {@code rdfs:label} and {@code cst:job}, and each graph is a named graph of the import's own graph name. The command carries no part.
+     */
+    public static Command fence(String ws, java.util.List<Fenced> imports) {
+        Dataset body = DatasetFactory.create();
+        for (Fenced f : imports) {
+            Resource root = body.getDefaultModel().createResource(Graphs.importGraph(f.digest()));
+            root.addProperty(RDFS.label, f.label());
+            root.addProperty(Cst.job, body.getDefaultModel().createResource(Graphs.job(f.job())));
+            body.addNamedModel(Graphs.importedGraph(f.digest()), f.content());
+        }
+        return new Command(newId(), SERVICE, Type.FENCE, ws, null, null, null, null, null, null, body, null, false);
     }
 
     /** The workspace stops holding the import graph of {@code digest}, which stays in the store. */

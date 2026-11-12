@@ -12,6 +12,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1067,44 +1068,62 @@ public final class StudioApi {
     }
 
     /**
-     * Puts the import a finished fence job read into the store, once by its digest, and into this workspace's holdings.
-     * Answers 201 with the workspace's description.
+     * Puts the imports the finished fence jobs read into the store, once each by its digest, and into this workspace's holdings, in
+     * one command, so the description is replaced once. {@code job} is given once or more, at most {@link Command#MAX_FENCED} times,
+     * and {@code label} once for each in the same order, or not at all for a single job, which is then labelled "Import". A job that is
+     * not a finished fence job of this workspace refuses the whole request, and two jobs of one digest hold it once, under the first's
+     * label. Answers 201 with the workspace's description.
      */
     private ApiResponse fence(ApiRequest req, String id) {
-        Map<String, String> query = query(req.query());
-        String job = query.get("job");
-        String label = query.get("label") == null ? "Import" : query.get("label").trim();
-        if (load(id) == null || job == null || !Graphs.isId(job)) {
+        Map<String, List<String>> query = queryAll(req.query());
+        List<String> jobs = query.getOrDefault("job", List.of());
+        List<String> labels = query.getOrDefault("label", List.of());
+        if (load(id) == null || jobs.isEmpty() || !jobs.stream().allMatch(Graphs::isId)) {
             return notFound();
         }
-        if (label.isEmpty() || label.length() > 200) {
+        if (jobs.size() > Command.MAX_FENCED) {
+            return ApiResponse.text(400, "at most " + Command.MAX_FENCED + " jobs are held in one request");
+        }
+        if (labels.size() != jobs.size() && !(labels.isEmpty() && jobs.size() == 1)) {
+            return ApiResponse.text(400, "job and label are given the same number of times, in matching order, and label may be left out for one job");
+        }
+        List<String> named = labels.isEmpty() ? List.of("Import") : labels.stream().map(String::trim).toList();
+        if (named.stream().anyMatch(l -> l.isEmpty() || l.length() > 200)) {
             return ApiResponse.text(400, "label is 1 to 200 characters");
         }
-        Resource node = ResourceFactory.createResource(Graphs.job(job));
-        Model m = store.graph(Graphs.job(job));
-        if (!m.contains(node, Cst.workspace, ResourceFactory.createResource(Graphs.workspace(id)))) {
-            return notFound();
-        }
-        String content = null;
-        for (Resource artefact : m.listObjectsOfProperty(node, Cst.artefact).toList().stream().filter(o -> o.isResource()).map(o -> o.asResource()).toList()) {
-            if (artefact.hasLiteral(Cst.path, "import.nt") && artefact.hasProperty(Cst.content)) {
-                content = artefact.getProperty(Cst.content).getString();
+        Map<String, Command.Fenced> held = new LinkedHashMap<>();
+        for (int i = 0; i < jobs.size(); i++) {
+            String job = jobs.get(i);
+            Resource node = ResourceFactory.createResource(Graphs.job(job));
+            Model m = store.graph(Graphs.job(job));
+            if (!m.contains(node, Cst.workspace, ResourceFactory.createResource(Graphs.workspace(id)))) {
+                return notFound();
             }
+            String content = null;
+            for (Resource artefact : m.listObjectsOfProperty(node, Cst.artefact).toList().stream().filter(o -> o.isResource()).map(o -> o.asResource()).toList()) {
+                if (artefact.hasLiteral(Cst.path, "import.nt") && artefact.hasProperty(Cst.content)) {
+                    content = artefact.getProperty(Cst.content).getString();
+                }
+            }
+            var digest = m.getProperty(node, Cst.digest);
+            if (!m.contains(node, Cst.kind, Cst.Fence) || !m.contains(node, Cst.status, Cst.Succeeded) || digest == null || content == null) {
+                return ApiResponse.text(409, "the job is not a finished fence job with an import to hold");
+            }
+            if (held.containsKey(digest.getString())) {
+                continue;
+            }
+            Model graph;
+            try {
+                graph = Turtle.parse(content.getBytes(StandardCharsets.UTF_8), Lang.NTRIPLES);
+            } catch (RiotException e) {
+                return ApiResponse.text(422, "the job's import.nt does not parse as N-Triples");
+            }
+            held.put(digest.getString(), new Command.Fenced(digest.getString(), named.get(i), job, graph));
         }
-        var digest = m.getProperty(node, Cst.digest);
-        if (!m.contains(node, Cst.kind, Cst.Fence) || !m.contains(node, Cst.status, Cst.Succeeded) || digest == null || content == null) {
-            return ApiResponse.text(409, "the job is not a finished fence job with an import to hold");
-        }
-        Model graph;
-        try {
-            graph = Turtle.parse(content.getBytes(StandardCharsets.UTF_8), Lang.NTRIPLES);
-        } catch (RiotException e) {
-            return ApiResponse.text(422, "the job's import.nt does not parse as N-Triples");
-        }
-        Reply reply = writes.send(Command.fence(id, digest.getString(), label, graph));
-        Workspace held = reply.applied() ? load(id) : null;
-        return held == null ? refusal(reply) : ApiResponse.turtle(201, Turtle.write(held.toModel()))
-            .with("Location", "/api/workspaces/" + id + "/imports/" + digest.getString());
+        Reply reply = writes.send(Command.fence(id, List.copyOf(held.values())));
+        Workspace now = reply.applied() ? load(id) : null;
+        return now == null ? refusal(reply) : ApiResponse.turtle(201, Turtle.write(now.toModel()))
+            .with("Location", "/api/workspaces/" + id + "/imports/" + held.keySet().iterator().next());
     }
 
     private ApiResponse getImport(String id, String digest) {
@@ -1542,6 +1561,24 @@ public final class StudioApi {
                 String[] kv = pair.split("=", 2);
                 out.putIfAbsent(URLDecoder.decode(kv[0], StandardCharsets.UTF_8),
                     kv.length == 2 ? URLDecoder.decode(kv[1], StandardCharsets.UTF_8) : "");
+            }
+        } catch (IllegalArgumentException e) {
+            out.clear();
+        }
+        return out;
+    }
+
+    /** Every value of each parameter, in the order given. A query that is not percent-encoded gives none. */
+    private static Map<String, List<String>> queryAll(String raw) {
+        Map<String, List<String>> out = new LinkedHashMap<>();
+        if (raw == null || raw.isEmpty()) {
+            return out;
+        }
+        try {
+            for (String pair : raw.split("&")) {
+                String[] kv = pair.split("=", 2);
+                out.computeIfAbsent(URLDecoder.decode(kv[0], StandardCharsets.UTF_8), k -> new ArrayList<>())
+                    .add(kv.length == 2 ? URLDecoder.decode(kv[1], StandardCharsets.UTF_8) : "");
             }
         } catch (IllegalArgumentException e) {
             out.clear();

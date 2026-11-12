@@ -20,6 +20,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.jupiter.api.Test;
+import org.nebularis.lattice.studio.model.Workspace;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
 import org.nebularis.lattice.studio.store.StudioStore;
@@ -157,6 +158,47 @@ class ReceiptsTest {
         assertEquals(Set.of(Graphs.importGraph("e".repeat(64))), Fixture.OPS.workspace(store, WS).imports().keySet());
         assertTrue(store.graph(Graphs.receipts(WS)).contains(null, Cst.commandId, fence.id()));
         assertTrue(content.isIsomorphicWith(store.graph(Graphs.importedGraph("e".repeat(64)))));
+    }
+
+    @Test
+    void aFenceOfSeveralImportsWhoseDescriptionGuardFailedLeavesNoImportNamedAndARetryHoldsAllOfThem() {
+        RDFConnection real = RDFConnection.connect(DatasetFactory.createTxnMem());
+        AtomicReference<Runnable> before = new AtomicReference<>();
+        StudioStore store = interfered(real, before);
+        Writer writer = created(store);
+        Writer other = new Writer(Fixture.textual(real), Fixture.OPS, Fixture.MAINTENANCE, CLOCK);
+        List<Command.Fenced> imports = new java.util.ArrayList<>();
+        for (int n = 1; n <= 3; n++) {
+            String digest = String.format("%064x", n);
+            String job = Fixture.id(500 + n);
+            Model m = ModelFactory.createDefaultModel();
+            Resource node = m.createResource(Graphs.job(job));
+            node.addProperty(RDF.type, Cst.Job);
+            node.addProperty(Cst.workspace, m.createResource(Graphs.workspace(WS)));
+            node.addProperty(Cst.kind, Cst.Fence);
+            node.addProperty(Cst.status, Cst.Succeeded);
+            node.addProperty(Cst.digest, digest);
+            node.addProperty(Cst.declaresOntology, m.createResource("https://example.org/onto/" + n));
+            store.write(List.of(), Map.of(Graphs.job(job), m));
+            imports.add(new Command.Fenced(digest, "Import " + n, job, Fixture.model(Fixture.PREFIXES + "ex:term" + n + " a ex:Term .")));
+        }
+        // Between this writer's read of the description's sequence and its update, another writer replaces the description.
+        before.set(() -> assertEquals(Reply.ok(), other.apply(Command.setAccess(WS, "shared", null))));
+        Command fence = Command.fence(WS, imports);
+        Reply mine = writer.apply(fence);
+        assertEquals(400, mine.status(), mine.message());
+        assertTrue(store.graph(Graphs.receipts(WS)).contains(null, Cst.commandId, fence.id()) == false, "no receipt for the command");
+        assertTrue(Fixture.OPS.workspace(store, WS).imports().isEmpty(), "no description names any import");
+        assertTrue(Fixture.OPS.workspace(store, WS).declared().isEmpty());
+        for (Command.Fenced held : imports) {
+            assertTrue(held.content().isIsomorphicWith(store.graph(Graphs.importedGraph(held.digest()))), "the imports applied first, which read as nothing");
+        }
+
+        assertEquals(Reply.ok(), writer.apply(fence), "the same command again completes it");
+        Workspace held = Fixture.OPS.workspace(store, WS);
+        assertEquals(3, held.imports().size());
+        assertEquals(3, held.declared().size());
+        assertTrue(store.graph(Graphs.receipts(WS)).contains(null, Cst.commandId, fence.id()));
     }
 
     @Test

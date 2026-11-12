@@ -58,7 +58,7 @@ _TARGETS = {
 # What the worker writes, so that a rerun starts from what the service wrote.
 _WORKER_PREDICATES = (
     CST.status, CST.startedAt, CST.finishedAt, CST.failureMessage, CST.conforms, CST.report, CST.artefact, CST.gap,
-    CST.resolution, CST.expansion, CST.testResult,
+    CST.resolution, CST.expansion, CST.testResult, CST.declaresOntology, CST.declaresVersion,
 )
 
 
@@ -163,7 +163,8 @@ class ConfigStudioWorker:
         except Exception as error:  # the job could not run, which the author reads as a failure
             self._record = None
             self._promotions = {}
-            for predicate in (CST.conforms, CST.report, CST.artefact, CST.gap, CST.resolution, CST.expansion, CST.testResult):
+            for predicate in (CST.conforms, CST.report, CST.artefact, CST.gap, CST.resolution, CST.expansion, CST.testResult,
+                              CST.declaresOntology, CST.declaresVersion):
                 final.remove((job, predicate, None))
             final.add((job, CST.status, CST.Failed))
             final.add((job, CST.failureMessage, Literal(str(error) or type(error).__name__)))

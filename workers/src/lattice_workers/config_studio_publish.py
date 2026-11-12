@@ -12,9 +12,9 @@ from typing import Callable
 from urllib.parse import quote
 
 from rdflib import BNode, Graph, Literal, URIRef
-from rdflib.namespace import RDF
+from rdflib.namespace import OWL, RDF
 
-from .config_studio_jobs import CST, _Result, catalogue
+from .config_studio_jobs import CST, SH, _Result, catalogue
 
 FND = "https://www.nebularis.org/neuro-semantic/lattice/foundation#"
 HAS_IDENTITY = URIRef(FND + "hasIdentity")
@@ -164,9 +164,24 @@ def prepare(job: URIRef, config: Graph, root: URIRef, context: Graph | None = No
     return result.graph
 
 
+def declared(imported: Graph) -> tuple[URIRef | None, URIRef | None, str | None]:
+    """The ontology IRI an imported document declares, its version IRI, and why it gives no ontology IRI when it does not. The
+    document declares an ontology IRI when exactly one named `owl:Ontology` is in it, and a version IRI when that ontology has
+    exactly one `owl:versionIRI`. Nothing is read from anywhere but the graph."""
+    ontologies = sorted({s for s in imported.subjects(RDF.type, OWL.Ontology) if isinstance(s, URIRef)})
+    if not ontologies:
+        return None, None, "the document declares no named owl:Ontology, so the import records no ontology IRI"
+    if len(ontologies) > 1:
+        return None, None, f"the document declares {len(ontologies)} named owl:Ontology subjects, so the import records no ontology IRI"
+    versions = sorted({v for v in imported.objects(ontologies[0], OWL.versionIRI) if isinstance(v, URIRef)})
+    return ontologies[0], versions[0] if len(versions) == 1 else None, None
+
+
 def fence(job: URIRef, imported: Graph) -> Graph:
     """A fence job's result (ADR-A149 decision 6): what an import leaves in the graph, digested so it is stored once,
-    whichever workspaces hold it, as an N-Triples artefact with the job's `cst:digest`."""
+    whichever workspaces hold it, as an N-Triples artefact with the job's `cst:digest`. The job also gives the ontology IRI and
+    the version IRI the document declares, as `cst:declaresOntology` and `cst:declaresVersion`, which the writer copies onto the
+    held import. A document with no named ontology, or several, gives neither, and the job says so as information."""
     from mork_rdf.compile import digest
 
     if not len(imported):
@@ -174,5 +189,12 @@ def fence(job: URIRef, imported: Graph) -> Graph:
     result = _Result(job)
     result.artefact("import.nt", "application/n-triples", imported.serialize(format="nt"), "import")
     result.graph.add((job, CST.digest, Literal(digest(imported))))
+    ontology, version, why = declared(imported)
+    if ontology is not None:
+        result.graph.add((job, CST.declaresOntology, ontology))
+        if version is not None:
+            result.graph.add((job, CST.declaresVersion, version))
+    else:
+        result.finding(SH.Info, why, "NoOntologyIri")
     result.conforms(True)
     return result.graph
