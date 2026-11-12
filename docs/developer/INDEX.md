@@ -516,8 +516,8 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SQ-4 | the model and the Hypothesis state machine | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
 | SQ-5 | a Jepsen test against the Compose topology | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
 | SQ-6 | Locust load runs with reports | studio-quality | planned |  | docs/developer/status/studio-quality.md#slices |
-| SVA-R0 | probes of the broker for content frames | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | studio-visual-authoring | planned | SVA-R0 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-R0 | probes of the broker for content frames | studio-visual-authoring | building 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | studio-visual-authoring | building 2026-11-12 | SVA-R0 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | studio-visual-authoring | planned | SVA-R1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-R3 | the run worker, from the transforms worker | studio-visual-authoring | planned | SVA-R1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-R4 | the browser's run controller and the dock's run pane | studio-visual-authoring | planned | SVA-R1 | docs/developer/status/studio-visual-authoring.md#slices |

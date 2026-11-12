@@ -22,8 +22,8 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| SVA-R0 | probes of the broker for content frames | planned |  |
-| SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | planned | SVA-R0 |
+| SVA-R0 | probes of the broker for content frames | building 2026-11-12 |  |
+| SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | building 2026-11-12 | SVA-R0 |
 | SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | planned | SVA-R1 |
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
 | SVA-R4 | the browser's run controller and the dock's run pane | planned | SVA-R1 |
@@ -63,3 +63,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12: raised by the maintainer. Sketched and planned, SVA-Q1 to SVA-Q16 raised, the board written with 30 slices planned. BL-20 added to the backlog.
 - 2026-11-12: SVA-Q1, SVA-Q2 and SVA-Q4 to SVA-Q16 answered by the maintainer. SVA-P5 added for SVA-Q12 (c). BL-21 to BL-24 added. The unit is to be built autonomously on its branch.
 - 2026-11-12: SVA-B1, SVA-O3 and SVA-M1 picked up, three slices of the application that touch no file in common.
+- 2026-11-12: SVA-R0 and SVA-R1 picked up. The decision record is drafted while the broker is installed for the probes, with the limits the probes decide marked as provisional.
