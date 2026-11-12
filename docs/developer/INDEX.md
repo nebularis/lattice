@@ -534,6 +534,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-P2 | edits on the persistence canvas | studio-visual-authoring | planned | SVA-P1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P3 | the persistence simulation executor | studio-visual-authoring | planned | SVA-R3 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P4 | the persistence simulator pane | studio-visual-authoring | planned | SVA-R4, SVA-P1, SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-P5 | an object generated from the boundary shape | studio-visual-authoring | planned | SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S1 | the surface canvas | studio-visual-authoring | planned | SVA-O2 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2 | the surface simulation executor | studio-visual-authoring | planned | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S3 | the surface simulator pane | studio-visual-authoring | planned | SVA-S1, SVA-S2, SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |

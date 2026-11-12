@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** planned. SVA-Q1 to SVA-Q16 open, each with a leaning, for the maintainer
+**Status:** planned. SVA-Q1, SVA-Q2 and SVA-Q4 to SVA-Q16 answered 2026-11-12, SVA-Q3 open
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -14,7 +14,9 @@ The maintainer asked on 2026-11-12 for enhancements to the studio: ontology impo
 
 The sketch and the plan were written the same day from a reading of the studio's architecture, contract and code. The design's centre is the run, section 4 of the sketch: a result that is not stored reaches the tab as frames relayed by the service instance that accepted it, checked at delivery, bounded by a deadline, with the tab holding a simulator's state. BL-20, a runtime for RML, was added to the backlog as asked.
 
-**Next action:** the maintainer answers SVA-Q1 to SVA-Q16. SVA-Q1 to SVA-Q4 decide phase R and the simulators, SVA-Q5 to SVA-Q7 phase B, SVA-Q14 the template libraries. No slice is briefed and no branch is due until then.
+The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
+
+**Next action:** the first wave, the slices that wait on no other: SVA-B1, SVA-O1, SVA-O3, SVA-M1, SVA-M2a and SVA-R0. The maintainer confirms or changes SVA-Q3 before SVA-P3.
 
 ## Slices
 
@@ -38,6 +40,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | planned | SVA-R3 |
 | SVA-P4 | the persistence simulator pane | planned | SVA-R4, SVA-P1, SVA-P3 |
+| SVA-P5 | an object generated from the boundary shape | planned | SVA-P4 |
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
 | SVA-S2 | the surface simulation executor | planned | SVA-P3 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
@@ -58,3 +61,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 ## Log
 
 - 2026-11-12: raised by the maintainer. Sketched and planned, SVA-Q1 to SVA-Q16 raised, the board written with 30 slices planned. BL-20 added to the backlog.
+- 2026-11-12: SVA-Q1, SVA-Q2 and SVA-Q4 to SVA-Q16 answered by the maintainer. SVA-P5 added for SVA-Q12 (c). BL-21 to BL-24 added. The unit is to be built autonomously on its branch.

@@ -3,7 +3,7 @@
 # Sketch: baseline management, canvases and run panes for the Configuration Studio
 
 **Unit:** `studio-visual-authoring` (SVA), raised by the maintainer on 2026-11-12
-**Status:** sketch. SVA-Q1 to SVA-Q16 open, each with a leaning. Nothing is built
+**Status:** sketch. SVA-Q1, SVA-Q2 and SVA-Q4 to SVA-Q16 answered 2026-11-12. SVA-Q3 open, with the maintainer's questions on size answered in section 8.2
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Status record:** [studio-visual-authoring.md](../status/studio-visual-authoring.md)
 **Builds on:** [ADR-A136](../../architecture/decisions/ADR-A136-configuration-studio.md) and its amendments (the studio, its writers and its worker), [ADR-A149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md) (fenced imports, dependencies, units), [ADR-A88](../../architecture/decisions/ADR-A88-ontology-import-resolution-for-consumers.md) (the XML catalog), [ADR-A148](../../architecture/decisions/ADR-A148-mork-transform-backends.md) (the transforms worker), the [events sketch](browser-events-over-web-mqtt.md) (PM-Q18, PM-Q20), [ADR-A132](../../architecture/decisions/ADR-A132-persistence-caller-library.md) (the caller library)
@@ -110,7 +110,7 @@ A worked example, one author stepping a persistence simulator 20 times in a minu
 
 (a) crosses (c) at the first run, since every run costs commits the others do not. (b) crosses (c) when runs overlap or a result is wanted in steps. (a) remains right for anything worth reading again later, which is why compilation stays a job.
 
-**Leaning (c)** for the sample pane and both simulators, with compilation unchanged (SVA-Q1).
+**Answered (c)** for the sample pane and both simulators, with compilation unchanged (SVA-Q1).
 
 ### 4.2 The flow under (c)
 
@@ -197,7 +197,7 @@ The transforms worker already runs compiled artefacts over a sample, warm betwee
 
 A worker takes a queue from its configuration and a bounded number of requests at once. `POST …/transforms` stays through a deprecation, answered by the same worker, as the contract requires of a change that would break a client.
 
-**Which engine executes a simulation** is SVA-Q4. The facts: Fuseki runs Jena, the Java caller library exists and the writer already binds generated operations with it, the transforms worker is Java, and rdflib differs from Jena on corners the triple-store record lists, for example [TD-44](../technical-debt.md). The leaning is Jena's in-memory dataset in the run worker, with every simulator display saying it shows the write as Jena evaluates it.
+**Which engine executes a simulation** is SVA-Q4. The facts: Fuseki runs Jena, the Java caller library exists and the writer already binds generated operations with it, the transforms worker is Java, and rdflib differs from Jena on corners the triple-store record lists, for example [TD-44](../technical-debt.md). The answer is Jena's in-memory dataset in the run worker, with every simulator display saying it shows the write as Jena evaluates it. Oxigraph as a second engine is BL-21.
 
 ## 5. Baseline management
 
@@ -268,7 +268,7 @@ A class expression is shown as a nested structure and never as a line of text. A
 
 A toggle chooses where a property's ends come from. **Domain and range only** draws an edge from each `rdfs:domain` to each `rdfs:range`. **With shapes** adds an edge from class C to class D when a node shape targeting C has a property shape whose path is the property and whose `sh:class`, or `sh:node` with a target class, is D. It is the reading the forms already use, so `rdf/shapes.ts` is reused, and an edge that comes from a shape is drawn in a second style and names its shape. OWL restrictions are shown in the element's form and are not a third source of edges in this unit.
 
-Everything is derived in the browser from graphs it already holds, so these views add no request and no concurrent flow. A large ontology is the risk. A view opens on the neighbourhood of the selected class, two hops by default, and offers the whole graph on request. Layout runs in a web worker so the page stays responsive. Which layout library is SVA-Q8, and the time to lay out 500 classes is a figure to measure in the first canvas slice, not one this sketch claims.
+Everything is derived in the browser from graphs it already holds, so these views add no request and no concurrent flow. A large ontology is the risk. A view opens on the neighbourhood of the selected class, two hops by default, and offers the whole graph on request. The layout is our own layered layout, as the mapping canvas has, reached through one function of the canvas kit so that `elkjs` or `dagre` can be added as a second implementation later (SVA-Q8, BL-23). The time to lay out 500 classes is a figure to measure in the first canvas slice, not one this sketch claims, and a layout that proves slow moves into a web worker.
 
 A shared canvas kit is taken out of `MappingCanvas.tsx` for all of these: node and edge types, context menus, positions kept in the browser, and laying out again. The mapping canvas then uses it too.
 
@@ -305,7 +305,7 @@ The author makes or changes a domain object in the pane, and the display shows t
 
 | Control | Does |
 |---|---|
-| the object | a form derived from the aggregate's boundary shape, or an uploaded instance in Turtle (SVA-Q12) |
+| the object | a form derived from the aggregate's boundary shape, an uploaded instance in Turtle, or one generated from the boundary shape (SVA-Q12) |
 | the operation | create, replace, delete or append, limited to what the target's profile compiles |
 | as another writer | sends the step with an earlier expected position, to show the guard refusing a lost race |
 | step back | removes the last step from the sample world |
@@ -317,7 +317,16 @@ A step's result has four parts, each a group of frames, shown in order.
 3. **The delta**, the quads added and removed in each graph, grouped by the landing places of the exploded view, which light up on the canvas.
 4. **The outcome**, read as the caller's confirmation read classifies it: applied, lost race or refused.
 
-**The state is the tab's** (SVA-Q3). A step's request carries the sample world as TriG and the edit, and the worker returns the delta, so a step is a function of its request. No worker holds a session, any worker serves any step, and a step sent twice gives the same answer. The sample world is bounded by the 5 MiB body limit, far above the few hundred quads a handful of aggregates take.
+**The state is the tab's** (SVA-Q3). A step's request carries the sample world as TriG and the edit, and the worker returns the delta, so a step is a function of its request. No worker holds a session, any worker serves any step, and a step sent twice gives the same answer. The sample world is bounded by the service's limit on a request body, 5 MiB (`StudioApi.MAX_BODY_BYTES`), which is a rule of the HTTP API and has nothing to do with MQTT. The frames bound the response, at 48 KiB each and 128 a run.
+
+How much that is, measured on the facility sample's six files on 2026-11-12 with rdflib:
+
+| Syntax | Bytes a triple | Triples in 5 MiB |
+|---|---|---|
+| Turtle or TriG, with prefixes | 36 to 50 | about 100,000 to 145,000 |
+| N-Triples or N-Quads | 126 to 188 | about 28,000 to 41,000 |
+
+A step is small beside that. As an estimate to be measured in SVA-P3, an aggregate of the facility sample is some tens of triples, and each write adds a version row, a receipt, a claim and, under a patch log, its delta, so a world of ten aggregates after twenty steps is a few thousand quads, 100 to 300 KB as TriG. The response is the step's delta alone, tens to hundreds of quads. The cost of (a) is that every step sends the whole world again and the worker parses it again, so twenty steps on a 300 KB world send 6 MB and parse it twenty times. Should that be measured as slow, the remedy is a worker that keeps a parsed world by its digest and is sent it again only when it has forgotten it, which stays a function of the request.
 
 The simulator shows what the generated operations do to a small dataset. It does not estimate cost at size, which is BL-10, and it does not generate data from a baseline, which is BL-11. Its executor and its display are what those two would build on.
 
@@ -390,41 +399,41 @@ The sample stays in the browser's storage, as today. Storing it beside the works
 
 All of this is tooling over the substrate and MORK, with no applied content, so its commits carry `Placement: T0`. The template cards serve mappings of structured sources.
 
-Left out, each with where it lives: cost estimates at size (BL-10), generated test data and sizing (BL-11), stored samples (BL-08), an RML runtime (BL-20, added with this sketch), other notifiers (BL-13), and the verification rig's views (`v-rig-studio`, which will use the same shell and canvas kit).
+Left out, each with where it lives: cost estimates at size (BL-10), generated test data and sizing (BL-11), stored samples (BL-08), an RML runtime (BL-20, added with this sketch), Oxigraph as a second simulation engine (BL-21), a catalog directory a deployment configures (BL-22), other layout libraries (BL-23), boundary edits on the persistence canvas (BL-24), other notifiers (BL-13), and the verification rig's views (`v-rig-studio`, which will use the same shell and canvas kit).
 
 ## 12. Questions
 
-**SVA-Q1. How does a run's result reach the browser?** (a) Every run a job in the store. (b) A request that waits, as a transform does. (c) Accepted at once, with frames on the tab's events topic, relayed by the accepting instance, and the same frames collected into the response when a tab has no events. Section 4.1 compares them. This reopens XJ-Q8, whose answer was (b) for now with a push for long jobs, since a simulator's steps are many and short where a transform was one. Leaning (c), with compilation staying a job.
+**SVA-Q1. How does a run's result reach the browser?** (a) Every run a job in the store. (b) A request that waits, as a transform does. (c) Accepted at once, with frames on the tab's events topic, relayed by the accepting instance, and the same frames collected into the response when a tab has no events. Section 4.1 compares them. This reopens XJ-Q8, whose answer was (b) for now with a push for long jobs, since a simulator's steps are many and short where a transform was one. Leaning (c), with compilation staying a job. **Answered 2026-11-12, (c).**
 
-**SVA-Q2. May an event carry content?** The contract says a job's event holds its status and workspace, never its content. (a) Keep that for jobs, and allow content in a run's frames, which go only to the submitting tab and are checked at delivery. (b) Keep it for everything, which leaves (a) or (b) of SVA-Q1. Leaning (a).
+**SVA-Q2. May an event carry content?** The contract says a job's event holds its status and workspace, never its content. (a) Keep that for jobs, and allow content in a run's frames, which go only to the submitting tab and are checked at delivery. (b) Keep it for everything, which leaves (a) or (b) of SVA-Q1. Leaning (a). **Answered 2026-11-12, (a).**
 
 **SVA-Q3. Where does a simulator's state live?** (a) In the tab, each step a function of the sample world and the edit. (b) In a worker's memory, with every step of a session routed to it. (c) In a scratch dataset on Fuseki. (b) needs affinity and loses the session with the worker. (c) adds writes and a second kind of data to the store. Leaning (a).
 
-**SVA-Q4. Which runtime and engine execute a simulation?** (a) The Java run worker, on Jena's in-memory dataset, with the Java caller library. (b) The Python worker on rdflib. (c) The Python worker on Oxigraph. (a) evaluates as the studio's own store does and reuses what the writer uses. (b) is where the compilers are, and differs from Jena on recorded corners. (c) adds an engine the worker does not ship. Leaning (a), each display saying which engine it shows.
+**SVA-Q4. Which runtime and engine execute a simulation?** (a) The Java run worker, on Jena's in-memory dataset, with the Java caller library. (b) The Python worker on rdflib. (c) The Python worker on Oxigraph. (a) evaluates as the studio's own store does and reuses what the writer uses. (b) is where the compilers are, and differs from Jena on recorded corners. (c) adds an engine the worker does not ship. Leaning (a), each display saying which engine it shows. **Answered 2026-11-12, (a), with (c) kept as an option to add later, BL-21.**
 
-**SVA-Q5. Where is an import resolved?** (a) In the browser, from dropped files and their catalog, then held imports, then LATTICE's staged documents, and never the web. (b) In the service, from a catalog directory a deployment configures. (c) By fetching the IRI. (b) suits a shared deployment with a house set of ontologies and can be added beside (a) later. (c) is refused by default for the reason in section 5.1. Leaning (a).
+**SVA-Q5. Where is an import resolved?** (a) In the browser, from dropped files and their catalog, then held imports, then LATTICE's staged documents, and never the web. (b) In the service, from a catalog directory a deployment configures. (c) By fetching the IRI. (b) suits a shared deployment with a house set of ontologies and can be added beside (a) later. (c) is refused by default for the reason in section 5.1. Leaning (a). **Answered 2026-11-12, (a) now, with (b) later, BL-22.**
 
-**SVA-Q6. How is an imported ontology held?** (a) Each document a fenced import. (b) Merged into the baseline part, as uploading everything together does today. (b) makes imported terms editable and lets them drift from their source. Leaning (a).
+**SVA-Q6. How is an imported ontology held?** (a) Each document a fenced import. (b) Merged into the baseline part, as uploading everything together does today. (b) makes imported terms editable and lets them drift from their source. Leaning (a). **Answered 2026-11-12, (a).**
 
-**SVA-Q7. Does a missing import block a save?** (a) No, it is a warning and a missing node. (b) Yes. Leaning (a), since LATTICE imposes a decision only where correctness needs one, and validation already reports an undeclared term.
+**SVA-Q7. Does a missing import block a save?** (a) No, it is a warning and a missing node. (b) Yes. Leaning (a), since LATTICE imposes a decision only where correctness needs one, and validation already reports an undeclared term. **Answered 2026-11-12, (a).**
 
-**SVA-Q8. Which layout library?** (a) `elkjs`, which the lockfile already holds through mermaid, runs in a web worker, and is licensed EPL-2.0. (b) `dagre`, MIT, smaller, layered layouts only. (c) Our own layered layout, as the mapping canvas has. Leaning (a), as a hypothesis until its licence is checked against the dependency audit and its time is measured.
+**SVA-Q8. Which layout library?** (a) `elkjs`, which the lockfile already holds through mermaid, runs in a web worker, and is licensed EPL-2.0. (b) `dagre`, MIT, smaller, layered layouts only. (c) Our own layered layout, as the mapping canvas has. Leaning (a), as a hypothesis until its licence is checked against the dependency audit and its time is measured. **Answered 2026-11-12, (c), to keep the choice open, with (a) and (b) as options to add later, BL-23. The canvas kit therefore takes its layout through one function, so another layout is one more implementation of it.**
 
-**SVA-Q9. Are a baseline's axioms edited in the studio?** (a) Rendered only. (b) Edited, for the workspace's own ontology. The request asks for rendering. (b) makes the studio an ontology editor, which Protege already is. Leaning (a).
+**SVA-Q9. Are a baseline's axioms edited in the studio?** (a) Rendered only. (b) Edited, for the workspace's own ontology. The request asks for rendering. (b) makes the studio an ontology editor, which Protege already is. Leaning (a). **Answered 2026-11-12, (a). The studio does not compete with Protege.**
 
-**SVA-Q10. What scopes does the persistence canvas offer?** (a) Aggregate, profile and scope node. (b) Aggregate only. Leaning (a), with aggregate the default.
+**SVA-Q10. What scopes does the persistence canvas offer?** (a) Aggregate, profile and scope node. (b) Aggregate only. Leaning (a), with aggregate the default. **Answered 2026-11-12, (a).**
 
-**SVA-Q11. May the persistence canvas edit an aggregate's boundary when the boundary shape is in the baseline?** (a) Yes, as an edit of the baseline part, shown as such. (b) No, the boundary is shown and edited where it is declared. Leaning (b) for the first slice, since it keeps a canvas to one part, with (a) reconsidered once the canvas is in use.
+**SVA-Q11. May the persistence canvas edit an aggregate's boundary when the boundary shape is in the baseline?** (a) Yes, as an edit of the baseline part, shown as such. (b) No, the boundary is shown and edited where it is declared. Leaning (b) for the first slice, since it keeps a canvas to one part, with (a) reconsidered once the canvas is in use. **Answered 2026-11-12, (b), with a review once the canvas is in use, BL-24.**
 
-**SVA-Q12. Where do a simulator's domain objects come from?** (a) A form derived from the boundary shape. (b) An uploaded instance. (c) Generated from the baseline. Leaning (a) and (b). (c) is BL-11.
+**SVA-Q12. Where do a simulator's domain objects come from?** (a) A form derived from the boundary shape. (b) An uploaded instance. (c) Generated from the baseline. Leaning (a) and (b). (c) is BL-11. **Answered 2026-11-12, (a), (b) and (c), each offered. (c) here generates one small object from the boundary shape, and data at size stays BL-11.**
 
-**SVA-Q13. Do the two simulators share a sample world?** (a) Yes, one per workspace and tab. (b) No. Leaning (a).
+**SVA-Q13. Do the two simulators share a sample world?** (a) Yes, one per workspace and tab. (b) No. Leaning (a). **Answered 2026-11-12, (a).**
 
-**SVA-Q14. How is a template library modelled?** (a) MORK gains a library class and cross-scheme template resolution, in its specification, shapes, README and three compilers, released as a MORK minor version. (b) The studio marks a scheme as a library in its own vocabulary, and the worker copies a library's templates into a scheme's compile input. (c) No library, templates stay in their scheme. (b) is smaller and leaves a mapping pack used outside the studio without reuse. Leaning (a).
+**SVA-Q14. How is a template library modelled?** (a) MORK gains a library class and cross-scheme template resolution, in its specification, shapes, README and three compilers, released as a MORK minor version. (b) The studio marks a scheme as a library in its own vocabulary, and the worker copies a library's templates into a scheme's compile input. (c) No library, templates stay in their scheme. (b) is smaller and leaves a mapping pack used outside the studio without reuse. Leaning (a). **Answered 2026-11-12, (a).**
 
-**SVA-Q15. Does the sample ever run by itself?** (a) Only on Run. (b) On Run, with an automatic toggle. Leaning (a).
+**SVA-Q15. Does the sample ever run by itself?** (a) Only on Run. (b) On Run, with an automatic toggle. Leaning (a). **Answered 2026-11-12, (a).**
 
-**SVA-Q16. Does `POST …/transforms` go?** (a) Deprecated when runs are built, removed a release later. (b) Kept beside runs. Leaning (a).
+**SVA-Q16. Does `POST …/transforms` go?** (a) Deprecated when runs are built, removed a release later. (b) Kept beside runs. Leaning (a). **Answered 2026-11-12, (a) for the studio. A waiting transform route returns once a sidecar architecture is defined, which the `xslt-sidecar` unit plans.**
 
 ## 13. Slices
 
