@@ -21,6 +21,10 @@
     <kinds.dir>target/corpus</kinds.dir>
     <kinds.report>report.json</kinds.report>
     <kinds.forms>optional,union</kinds.forms>
+    <kinds.plans>target/plans.txt</kinds.plans>
+    <kinds.forms2>optional</kinds.forms2>
+    <writes.dir>target/writes</writes.dir>
+    <writes.report>target/writes/writes-java.json</writes.report>
     <exec.mainClass>org.nebularis.lattice.benchmark.creditkinds.CreditKinds</exec.mainClass>
   </properties>
 
@@ -50,6 +54,10 @@
             <argument>-Dkinds.dir=${kinds.dir}</argument>
             <argument>-Dkinds.report=${kinds.report}</argument>
             <argument>-Dkinds.forms=${kinds.forms}</argument>
+            <argument>-Dkinds.forms2=${kinds.forms2}</argument>
+            <argument>-Dkinds.plans=${kinds.plans}</argument>
+            <argument>-Dwrites.dir=${writes.dir}</argument>
+            <argument>-Dwrites.report=${writes.report}</argument>
             <argument>-classpath</argument>
             <classpath/>
             <argument>${exec.mainClass}</argument>

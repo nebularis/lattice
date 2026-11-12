@@ -1239,6 +1239,25 @@ def render_ceiling(rows: list[dict]) -> list[str]:
     return out + [""]
 
 
+def render_native_two(rows: list[dict]) -> list[str]:
+    """The native caller's two-level corpus, in the shape of the Python tables for it, then the five folds side by side with the ratios of the time of all 27 ancestor reads (sum-with-cuts to the like-for-like
+    read, to stepwise and to plain). The sum-with-cuts time is split into its postings aggregate and its cuts aggregate."""
+    if not rows:
+        return []
+    out = render_cuts(rows, "Native Jena (Java), two-level corpus")
+    out += [f"Native Jena, the five folds on the two-level corpus. Mean ms per read of the root, then the time of all 27 ancestor reads of the sum with cuts against each other fold.", "",
+            f"| backend | kind join | events | credits | read from | plain ms | kind-filtered ms | {UNION_FOLD} ms | stepwise ms | sum-with-cuts ms | of which postings ms | of which cuts ms "
+            f"| sum-with-cuts / {UNION_FOLD} | sum-with-cuts / stepwise | sum-with-cuts / plain |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in rows:
+        for mode, prefix in (("start", ""), ("checkpoint", "cp:")):
+            ms = {f: r["reads"][f"{prefix}{f}/root"] for f in TWO_LEVEL_FOLDS}
+            c = _total(r, prefix + "sum-with-cuts")
+            out.append(f"| {r['backend']} | {r['kind_join']} | {r['events']} | {r['credit_share']:.0%} | {mode} | {ms['plain']['mean_ms']:.2f} | {ms['kind-filtered']['mean_ms']:.2f} | {ms[UNION_FOLD]['mean_ms']:.2f} "
+                       f"| {ms['stepwise']['mean_ms']:.2f} | {ms['sum-with-cuts']['mean_ms']:.2f} | {ms['sum-with-cuts']['postings_ms']:.2f} | {ms['sum-with-cuts']['cuts_ms']:.2f} "
+                       f"| {c / _total(r, prefix + UNION_FOLD):.2f} | {c / _total(r, prefix + 'stepwise'):.2f} | {c / _total(r, prefix + 'plain'):.2f} |")
+    return out + [""]
+
+
 def write_markdown(data: dict, directory: Path, jvm_report: Path = JVM_REPORT) -> None:
     kinds = {c: [m for m in data["measurements"] if m.get("corpus", CORPUS_ONE) == c] for c in (CORPUS_ONE, CORPUS_TWO, CORPUS_FORMS, CORPUS_CEILING)}
     one, two = kinds[CORPUS_ONE], kinds[CORPUS_TWO]
@@ -1249,36 +1268,73 @@ def write_markdown(data: dict, directory: Path, jvm_report: Path = JVM_REPORT) -
     lines += render_forms(kinds[CORPUS_FORMS]) + render_ceiling(kinds[CORPUS_CEILING])
     if jvm_report.exists():
         jvm = json.loads(jvm_report.read_text(encoding="utf-8"))
-        lines += ["```", json.dumps(jvm["environment"]), "```", ""] + render(jvm["measurements"], "Native Jena (Java)")
+        rows = jvm["measurements"]
+        lines += ["```", json.dumps(jvm["environment"]), "```", ""] + render([r for r in rows if r.get("corpus", CORPUS_ONE) == CORPUS_ONE], "Native Jena (Java)")
+        lines += render_native_two([r for r in rows if r.get("corpus") == CORPUS_TWO])
     (directory / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def emit(directory: Path, sizes=SIZES, shares=SHARES) -> None:
-    """Writes each corpus as N-Quads and every read's expected balance and posting count as JSON, for the native Jena caller (`benchmark/ledger-credit-kinds-jvm`)."""
+TWO_LEVEL_FOLDS = ("plain", "kind-filtered", UNION_FOLD, "stepwise", "sum-with-cuts")  # the folds the native caller reads on the two-level corpus
+
+
+def emit(directory: Path, sizes=SIZES, shares=SHARES, two_level: bool = False) -> None:
+    """Writes each corpus as N-Quads and every read's expected balance and posting count as JSON, for the native Jena caller (`benchmark/ledger-credit-kinds-jvm`). With `two_level` it also writes the two-level
+    corpus of each size and share (credits at two levels of a path, with the cuts the writer recorded) and the expected values of `TWO_LEVEL_FOLDS`. The sum with cuts also carries the model's sum of applied
+    amounts (`uncut`) and its stepwise balance, so the caller can show the defect the cut repairs."""
     directory.mkdir(parents=True, exist_ok=True)
 
     def nt(o):
         return f"<{o[1]}>" if o[0] == "i" else f'"{o[1]}"^^<{XSD_INT}>' if o[0] == "n" else f'"{o[1]}"'
 
+    def prefixes(owners):
+        return [f"urn:graph:{TREE[u].iri.rsplit(':', 1)[1]}:" for u in owners]
+
     tree = [{"iri": a.iri, "level": a.level, "stated": a.stated,
-             "graphPrefixes": [f"urn:graph:{TREE[u].iri.rsplit(':', 1)[1]}:" for u in sublimits_under(i)],
+             "graphPrefixes": prefixes(sublimits_under(i)), "upperPrefixes": prefixes(sections_under(i)),
              "contracts": [TREE[c].iri for c in contracts_under(i)]} for i, a in enumerate(TREE)]
     corpora = []
+
+    def write(name, corpus):
+        with open(directory / name, "w", encoding="utf-8", newline="\n") as out:
+            for s, p, o, g in quads(corpus.postings, corpus.cps):
+                out.write(f"<{s}> <{p}> {nt(o)}{' <' + g + '>' if g else ''} .\n")
+
     for count in sizes:
         for share in shares:
             corpus = build_corpus(count, share)
             check_discriminates(corpus.model, share, corpus.points[-1], corpus.postings)
             name = f"corpus-{count}-{round(100 * share)}.nq"
-            with open(directory / name, "w", encoding="utf-8", newline="\n") as out:
-                for s, p, o, g in quads(corpus.postings, corpus.cps):
-                    out.write(f"<{s}> <{p}> {nt(o)}{' <' + g + '>' if g else ''} .\n")
+            write(name, corpus)
             reads = [{"fold": f, "checkpointed": cp, "account": TREE[i].iri, "level": TREE[i].level, "point": point,
                       "balance": expected(corpus.model, f, i, point, cp)[0], "rows": expected(corpus.model, f, i, point, cp)[1]}
                      for point in corpus.points for i in ANCESTORS for cp in (False, True) for f in FOLDS]
             shortcut = [{"checkpointed": cp, "account": TREE[i].iri, "level": TREE[i].level, "point": point, "balance": corpus.model.balance[("stepwise", i, point)]}
                         for point in corpus.points for i in ANCESTORS for cp in (False, True)]
-            corpora.append({"events": count, "credit_share": share, "file": name, "stored": expected_stored(corpus.postings), "points": corpus.points,
+            corpora.append({"corpus": CORPUS_ONE, "events": count, "credit_share": share, "file": name, "stored": expected_stored(corpus.postings), "points": corpus.points,
                             "reads": reads, "shortcut": shortcut})
+    for count in sizes if two_level else ():
+        for share in shares:
+            corpus = build_cut_corpus(count, share)
+            postings, model, last = corpus.postings, corpus.model, corpus.points[-1]
+            check_discriminates_cuts(model, share, last, postings)
+            name = f"corpus-two-{count}-{round(100 * share)}.nq"
+            write(name, corpus)
+            credits = [p for p in postings if not p.debit]
+            notes = {"credits": len(credits), "credits_posted_above_a_contract": sum(TREE[p.contract].level > 0 for p in credits), "credits_with_a_cut": sum(bool(p.cuts) for p in credits),
+                     "cuts": sum(len(p.cuts) for p in postings), "cut_triples": CUT_TRIPLES * sum(len(p.cuts) for p in postings), "ancestor_clamps_binding": model.ancestor_binds,
+                     "ancestors_where_uncut_differs": sum(model.balance[("applied", i, last)] != model.balance[("stepwise", i, last)] for i in ANCESTORS),
+                     "ancestors_where_filtered_differs": sum(model.balance[("kind-filtered", i, last)] != model.balance[("stepwise", i, last)] for i in ANCESTORS),
+                     "credits_with_no_kind": sum(p.kind is None for p in credits)}
+            reads = []
+            for point in corpus.points:
+                for i in ANCESTORS:
+                    for cp in (False, True):
+                        for f in TWO_LEVEL_FOLDS:
+                            balance, rows = expected(model, "kind-filtered" if f == UNION_FOLD else f, i, point, cp)
+                            reads.append({"fold": f, "checkpointed": cp, "account": TREE[i].iri, "level": TREE[i].level, "point": point, "balance": balance, "rows": rows,
+                                          **({"uncut": model.balance[("applied", i, point)], "stepwise": model.balance[("stepwise", i, point)]} if f == "sum-with-cuts" and not cp else {})})
+            corpora.append({"corpus": CORPUS_TWO, "events": count, "credit_share": share, "file": name, "stored": expected_stored(postings), "points": corpus.points, "last": last,
+                            "model_expects": notes, "reads": reads})
     data = {"every": EVERY_POSITIONS, "ns": L, "tree": tree, "corpora": corpora}
     (directory / "expected.json").write_text(json.dumps(data, indent=1), encoding="utf-8", newline="\n")
 
@@ -1291,7 +1347,7 @@ def sizes_from_env() -> list[int]:
 
 def main() -> int:
     if len(sys.argv) == 3 and sys.argv[1] == "--emit":
-        emit(Path(sys.argv[2]), sizes_from_env())
+        emit(Path(sys.argv[2]), sizes_from_env(), two_level=True)
         print(f"corpora and expected balances written to {sys.argv[2]}")
         return 0
     if len(sys.argv) == 2 and sys.argv[1] == "--merge":

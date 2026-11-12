@@ -24,10 +24,15 @@ effective order.
 **Pass criterion.** A guarded run's records equal the replay of its commits, its revisions are dense, nothing is overdrawn, the engine's sums equal the model's, the recorded sum equals the stepwise replay, and the
 effective sum equals the model's. A wrong result raises `WrongResult`. **Time never fails the run**, and neither does the number of retries. What the unguarded writer gets wrong, and where the four late numbers differ, are reported and not asserted.
 
-Run `mise run check:ledger-credit-kinds-writes`. `LEDGER_WRITES_QUICK=1` runs the smallest sizes and `LEDGER_WRITES_REPORT_DIR` writes `writes-report.md` and `writes-report.json` elsewhere."""
+Run `mise run check:ledger-credit-kinds-writes`. `LEDGER_WRITES_QUICK=1` runs the smallest sizes and `LEDGER_WRITES_REPORT_DIR` writes `writes-report.md` and `writes-report.json` elsewhere.
+
+**The native caller (LG-17 part three).** `writes.py --emit-jvm <dir>` writes the preloads, the request lists and the plan of the runs for `benchmark/ledger-credit-kinds-jvm`, which runs the same writer on Jena called from Java and
+exports each store as N-Quads. `writes.py --audit-jvm <dir>` loads each export into an in-memory Oxigraph and runs `audit` on it, so the replay is this module's and none is written in Java. A guarded run on a store is audited
+strictly only if the Java probe of the store (a counter and a guarded update, as TSD-73) kept the guard, and an unguarded run never is. Run `mise run check:ledger-credit-kinds-jvm-writes`."""
 
 from __future__ import annotations
 
+import gzip
 import json
 import math
 import os
@@ -589,6 +594,137 @@ def run_late(count: int, share: float, corpus: ck.Corpus | None = None) -> dict:
     return {"postings": count, "late_share": share, **out, "recorded_s": seconds["recorded"], "effective_s": seconds["effective"]}
 
 
+# the native Jena caller (LG-17 part three)
+
+JVM_DIR = HERE.parent / "ledger-credit-kinds-jvm"
+JVM_STORES = ("memory", "tdb2")
+
+
+def nt(o) -> str:
+    return f"<{o[1]}>" if o[0] == "i" else f'"{o[1]}"^^<{ck.XSD_INT}>' if o[0] == "n" else f'"{o[1]}"'
+
+
+def prefix(index: int) -> str:
+    return f"urn:graph:{ck.TREE[index].iri.rsplit(':', 1)[1]}:"
+
+
+def asked(items: list[Request]) -> list:
+    return [[r.at, int(r.debit), r.amount, r.kind] for r in items]
+
+
+def emit_jvm(directory: Path, sizes=WRITE_SIZES, preload_count: int = STRESS_PRELOAD, threads=STRESS_THREADS, stores: dict | None = None) -> None:
+    """Writes what the native caller needs: the account tree, a preload of the two-level corpus with the ledger's revision for each size (as `preload` loads it) as N-Quads, the request lists of the single writer and of
+    the stress (the same seeds as `run_writes` and `run_stress`, long enough for the largest store) and the plan of the runs. `stores` gives, for each store, the probe (the counter it counts up to, the increments a thread
+    makes and the runs a cell), the writes of the single writer, and the stress (the requests in all and the guarded runs a cell by number of threads). Each store has its own sizes, since a commit on TDB2 costs tens of ms."""
+    stores = stores or JVM_PLAN
+    directory.mkdir(parents=True, exist_ok=True)
+    tree = [{"iri": a.iri, "level": a.level, "stated": a.stated, "ceiling": a.ceiling, "parent": -1 if a.parent is None else a.parent, "accepts": list(a.accepts),
+             "graphPrefixes": [prefix(u) for u in ck.sublimits_under(i)], "upperPrefixes": [prefix(u) for u in ck.sections_under(i)], "ownPrefix": prefix(ck.graph_owner(i))} for i, a in enumerate(ck.TREE)]
+    preloads = {}
+    for count in sorted(set(sizes) | {preload_count}):
+        corpus = ck.build_cut_corpus(count, SHARE)
+        base = corpus.postings[-1].pos
+        name = f"preload-{count}.nq"
+        with open(directory / name, "w", encoding="utf-8", newline="\n") as out:
+            for s, p, o, g in ledger_quads(corpus.postings, corpus.cps, base):
+                out.write(f"<{s}> <{p}> {nt(o)}{' <' + g + '>' if g else ''} .\n")
+        preloads[str(count)] = {"file": name, "postings": count, "base": base, "checkpoints": len(corpus.positions), "stored": ck.expected_stored(corpus.postings) + 1}
+    writes, total = max(v["single"]["writes"] for v in stores.values()), max(v["stress"]["total"] for v in stores.values())
+    lists = {str(t): [asked(requests(total // t, SHARE, ck.SEED + 100 + w)) for w in range(t)] for t in (1,) + tuple(threads)}
+    plan = {"stores": stores, "threads": [1] + list(threads), "sizes": list(sizes), "stressPreload": preload_count}
+    data = {"every": ck.EVERY_POSITIONS, "ns": L, "tree": tree, "preloads": preloads, "plan": plan, "single": asked(requests(writes, SHARE, ck.SEED + 7)), "stress": lists}
+    (directory / "writes-input.json").write_text(json.dumps(data), encoding="utf-8", newline="\n")
+
+
+def store_plan(probe: tuple[int, int, int], writes: int, total: int, runs: int) -> dict:
+    return {"probe": {"target": probe[0], "increments": probe[1], "runs": probe[2]}, "single": {"writes": writes}, "stress": {"total": total, "guardedRuns": {"1": 1, **{str(t): runs for t in STRESS_THREADS}}}}
+
+
+# Jena in memory takes the sizes of the Python benchmark. TDB2 fsyncs every commit, at tens of ms, and a lost race commits too, so it takes smaller counts and the same runs a cell.
+JVM_PLAN = {"memory": store_plan((1000, 500, ISOLATION_RUNS), WRITES, STRESS_TOTAL, ISOLATION_RUNS), "tdb2": store_plan((100, 50, ISOLATION_RUNS), 100, 200, ISOLATION_RUNS)}
+JVM_PLAN_QUICK = {"memory": store_plan((200, 100, 1), 100, 200, 1), "tdb2": store_plan((200, 100, 1), 100, 200, 1)}
+
+
+def audit_export(path: Path, base: int, strict: bool, expect: int | None = None) -> dict:
+    """Loads an export (N-Quads, gzipped if the name says so) into an in-memory Oxigraph and audits it as `audit` does any store."""
+    backend = LiveOxigraph(None)
+    backend.upper = True
+    try:
+        with (gzip.open(path, "rb") if str(path).endswith(".gz") else open(path, "rb")) as handle:
+            backend.store.bulk_load(handle, format=ck.ox.RdfFormat.N_QUADS)
+        return audit(backend, base, strict, expect)
+    finally:
+        backend.close()
+        backend = None
+        ck.release_store()
+
+
+def probe_keeps_guard(report: dict, store: str) -> bool:
+    """Whether the probe's guarded runs on the store, at two threads or more, each ended with every revision carrying exactly one marker and the target number of markers."""
+    cells = [g for g in report["probe"]["guarded"] if g["store"] == store and g["threads"] > 1]
+    return bool(cells) and all(g["markers"] == g["target"] and g["multi_marker_revisions"] == 0 for g in cells)
+
+
+def audit_jvm(directory: Path) -> int:
+    """Audits every export of a native run and writes `writes-report.md` and `writes-report.json`. A guarded run is strict on a store whose probe kept the guard, and a single writer's guarded run is strict always."""
+    report = json.loads((directory / "writes-java.json").read_text(encoding="utf-8"))
+    held = {store: probe_keeps_guard(report, store) for store in JVM_STORES}
+    report["guard_kept"] = held
+    try:
+        for r in report["single"]:
+            r["audit"] = audit_export(directory / r["export"], r["base"], r["guarded"], r["commits"])
+            print(f"audited {r['export']}", flush=True)
+        for r in report["stress"]:
+            r["audit"] = audit_export(directory / r["export"], r["base"], r["guarded"] and held[r["store"]], r["commits"])
+            r["asserted"] = r["guarded"] and held[r["store"]]
+            print(f"audited {r['export']}", flush=True)
+    except WrongResult as error:
+        print(f"WRONG RESULT: {error}", file=sys.stderr)
+        return 1
+    out = Path(os.environ.get("LEDGER_WRITES_REPORT_DIR") or JVM_DIR)
+    (out / "writes-report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    (out / "writes-report.md").write_text("\n".join(render_jvm(report)), encoding="utf-8")
+    print(f"report written to {out}")
+    return 0
+
+
+STORE_NAME = {"memory": "jena-memory (java)", "tdb2": "jena-tdb2 (java)"}
+
+
+def render_jvm(data: dict) -> list[str]:
+    env = data["environment"]
+    out = ["# The write benchmark on native Jena (LG-17 part three)", "", "Environment: " + ", ".join(f"{k} {v}" for k, v in env.items() if v), ""]
+    out += ["## C1, the probe of TSD-73 on Jena", "", "A counter triple. Each thread reads the counter N, sends the guarded update with its own marker and asks whether its marker exists, until the counter reaches the target. Markers confirmed, where the target is correct. "
+            "Revisions with more than one marker is the loss the guard is there to stop. Lost races is the confirmations that found no marker.", ""]
+    out += table(["store", "threads", "run", "target", "markers", "revisions with more than one marker", "lost races", "counter triples", "wall s"],
+                 [[STORE_NAME[g["store"]], g["threads"], g["run"], g["target"], g["markers"], g["multi_marker_revisions"], g["lost_races"], g["counter_triples"], f"{g['wall_s']:.2f}"] for g in data["probe"]["guarded"]])
+    out += ["", "The increment in the store, a thread's updates being `DELETE { ?n } INSERT { ?m } WHERE { ... BIND(?n + 1 AS ?m) }`.", ""]
+    out += table(["store", "threads", "run", "expected", "final", "counter triples", "wall s"],
+                 [[STORE_NAME[i["store"]], i["threads"], i["run"], i["expected"], i["final"], i["counter_triples"], f"{i['wall_s']:.2f}"] for i in data["probe"]["increment"]])
+    out += [""] + [f"- {STORE_NAME[s]}: the guard was {'kept' if kept else 'not kept'} in every guarded probe run at two threads or more. Its guarded stress runs are {'asserted against the replay' if kept else 'audited and reported, not asserted'}."
+                   for s, kept in data["guard_kept"].items()]
+    out += ["", "## C2, what a write costs", "", "Mean and p95 ms per write by kind of posting, one writer. Writes is the further postings of the kind. Accounts is the accounts read on the path, queries the SPARQL requests a write makes, triples the triples the write adds. "
+            "The path reads are made in one read transaction. The unguarded writer replaces the guarded request with `DELETE DATA ; INSERT DATA` and does not confirm.", ""]
+    rows = []
+    for r in data["single"]:
+        for c, v in r["classes"].items():
+            rows.append([STORE_NAME[r["store"]], r["postings"], "guarded" if r["guarded"] else "unguarded", c, v["writes"], f"{v['path_reads']:.1f}", f"{v['queries']:.1f}", f"{v['triples']:.1f}"]
+                        + [f"{v[p]['mean_ms']:.2f} / {v[p]['p95_ms']:.2f}" for p in PARTS] + [f"{v['total']['mean_ms']:.2f} / {v['total']['p95_ms']:.2f}"])
+    out += table(["store", "postings", "writer", "kind", "writes", "accounts", "queries", "triples", "reads ms", "settle ms", "update ms", "confirm ms", "total ms"], rows)
+    out += ["", "Debits refused for lack of availability, and the audit of the store against the replay of its writes.", ""]
+    out += table(["store", "postings", "writer", "writes", "refused", "applied differ", "cuts differ", "balances differ", "overdrawing debits", "dense"],
+                 [[STORE_NAME[r["store"]], r["postings"], "guarded" if r["guarded"] else "unguarded", r["writes"], r["refused"], r["audit"]["applied_differ"], r["audit"]["cuts_differ"], r["audit"]["balances_differ"],
+                   r["audit"]["overdrawn"], r["audit"]["dense"]] for r in data["single"]])
+    out += ["", "## C2, concurrent writers", "", "Threads in one JVM against one dataset, each with its own seeded requests, on a store holding the preload. Retries is the lost races a request had before it committed or was refused. "
+            "Asserted is whether the audit was held to the replay. The last columns are the audit against the replay of the commits in revision order.", ""]
+    out += table(["store", "threads", "writer", "run", "asserted", "commits", "refused", "lost races", "retries mean", "retries max", "wall s", "commits/s", "applied differ", "cuts differ", "balances differ", "overdrawing debits",
+                  "dense", "duplicate positions"],
+                 [[STORE_NAME[s["store"]], s["threads"], "guarded" if s["guarded"] else "unguarded", s["run"], "yes" if s["asserted"] else "no", s["commits"], s["refused"], s["lost_races"], f"{s['retries_mean']:.2f}",
+                   s["retries_max"], f"{s['wall_s']:.2f}", f"{s['commits_per_s']:.0f}", s["audit"]["applied_differ"], s["audit"]["cuts_differ"], s["audit"]["balances_differ"], s["audit"]["overdrawn"], s["audit"]["dense"],
+                   s["audit"]["duplicate_positions"]] for s in data["stress"]])
+    return out + [""]
+
+
 # the run
 
 def quick() -> bool:
@@ -631,6 +767,15 @@ def render(data: dict) -> list[str]:
 
 
 def main() -> int:
+    if len(sys.argv) == 3 and sys.argv[1] == "--emit-jvm":
+        if quick():
+            emit_jvm(Path(sys.argv[2]), WRITE_SIZES[:1], 1_000, stores=JVM_PLAN_QUICK)
+        else:
+            emit_jvm(Path(sys.argv[2]))
+        print(f"preloads, requests and the plan written to {sys.argv[2]}")
+        return 0
+    if len(sys.argv) == 3 and sys.argv[1] == "--audit-jvm":
+        return audit_jvm(Path(sys.argv[2]))
     fast = quick()
     sizes = WRITE_SIZES[:1] if fast else WRITE_SIZES
     try:

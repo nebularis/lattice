@@ -248,6 +248,40 @@ What the run shows.
 4. **A ceiling above a stated amount costs a read nothing that can be told apart.** The sum with cuts equals the stepwise balance at every ancestor in both modes on all three engines, and its times against the two-level corpus agree to within run-to-run variation (the ratios to the kind-filtered and stepwise folds differ by 0 to 0.09, and Jena at 5,000 postings read the sum with cuts in 97 ms against 63 and was not repeated). The model finds 2 accounts of 33 above their stated amount at some read point at 20,000 postings, 4 of the 27 ancestor reads, and 7 and 3 at the smaller sizes. A read that clamps at the stated amount fails the check. The variant has 30 more cuts than the two-level corpus at 20,000 postings (2,190 against 2,160), and its sum with no cuts is wrong at 6 of 9 ancestors where the two-level corpus's is wrong at 8.
 5. **The sketch's figures hold through an engine as well as in the model.** The cut the writer records is the cut the cuts aggregate reads back, and a writer that records none gives 9 where the model gives 7, which the check catches.
 
+### The two-level corpus read natively, and Jena's plans
+
+Run of 2026-11-12 on the same laptop by `mise run check:ledger-credit-kinds-jvm`, Jena 5.1.0 called from Java 25 with a 2 GB heap, each read run once in one JVM. The two-level corpus is read in the `optional` kind join form, in memory and on TDB2, at 1,000, 5,000 and 20,000 postings and 5% and 30% credits, by the plain, kind-filtered, `kind-filtered-union`, stepwise and sum-with-cuts folds, from the start of history and from the last checkpoint. Every balance and count equals the model's, and the postings alone of the sum with cuts equal the model's sum of applied amounts and differ from the stepwise balance at 8 of 9 ancestors at 30% credits, as the model says. The report holds every row, in the section "Native Jena (Java), two-level corpus".
+
+Mean ms per read of the root from the start of history, 20,000 postings (the cuts column is the time of the cuts aggregate, part of the sum with cuts):
+
+| Store | credits | plain | kind-filtered | kind-filtered-union | stepwise | sum-with-cuts | of which cuts |
+|---|---|---|---|---|---|---|---|
+| memory | 5% | 37.72 | 49.99 | 72.95 | 88.75 | 48.75 | 1.93 |
+| memory | 30% | 40.12 | 53.58 | 63.16 | 106.71 | 58.24 | 4.03 |
+| TDB2 | 5% | 88.17 | 72.32 | 63.39 | 125.26 | 63.83 | 1.14 |
+| TDB2 | 30% | 113.65 | 109.86 | 109.69 | 203.95 | 117.77 | 7.49 |
+
+The ratio of the time of all 27 ancestor reads, 20,000 postings, from the start of history and (in brackets) from the last checkpoint:
+
+| Store | credits | sum-with-cuts / kind-filtered-union | sum-with-cuts / stepwise | sum-with-cuts / plain | kind-filtered-union / kind-filtered |
+|---|---|---|---|---|---|
+| memory | 5% | 0.91 (1.20) | 0.65 (1.59) | 1.45 (1.92) | 1.16 (1.38) |
+| memory | 30% | 0.97 (0.82) | 0.66 (1.17) | 1.63 (1.93) | 1.14 (1.91) |
+| TDB2 | 5% | 1.04 (1.17) | 0.57 (1.30) | 1.02 (1.86) | 0.85 (1.32) |
+| TDB2 | 30% | 1.09 (1.13) | 0.69 (0.99) | 1.50 (1.83) | 1.01 (1.12) |
+
+The sum with cuts costs what its like-for-like read costs, within 0.82 to 1.20 and mostly within 0.9 to 1.1 from the start, which is the shape the Python callers gave on Jena (1.07 and 1.12 from the start at 5% and 30%, and 1.25 and 1.18 from the checkpoint). The ratio is not a quantity this single run fixes to better than about 0.1. The checkpointed reads take 1 to 3 ms, so a single slow read moves a ratio, and the one checkpointed read of the root by `kind-filtered-union` in memory at 30% took 5.08 ms against 1 to 2 ms for the others, which is why that row's two ratios (0.82 and 1.91) are not to be read as a difference. The cuts aggregate is 2 to 7% of the sum with cuts, 4.03 of 58.24 ms in memory and 7.49 of 117.77 ms on TDB2 at 30%. The sum with cuts costs 0.57 to 0.69 of the stepwise fold from the start, and 1.0 to 1.6 of it from the checkpoint, where the stepwise fold has little to fold. On TDB2 the stepwise fold, which crosses no pipe here, costs 1.4 to 1.8 of the plain fold at the root at 20,000 postings (125.26 against 88.17 ms and 203.95 against 113.65 ms), and 1.5 on the one-level corpus at 30% (150.15 against 97.25 ms).
+
+What the plans show. The run writes what Jena will run for three reads of the root at 20,000 postings and 30% credits to `benchmark/ledger-credit-kinds-jvm/target/plans.txt` (git-ignored), for each store, as compiled, as optimised by ARQ, and for TDB2 in quad form and in the order TDB2's reordering gives each pattern.
+
+* **The `VALUES ?g` graphs are the bound that works.** In all three queries ARQ turns the join of the VALUES table with the `GRAPH ?g` block into a `sequence`, so the pattern is evaluated once per listed graph with `?g` bound, 400 graphs for the root at 20,000 postings from the start. TDB2 keeps the same shape in quad form with `?g` as the first term of each quad. No graph outside the list is touched. This agrees with the measurements, where a checkpointed read, which lists few graphs, costs 0.5 to 3 ms against 40 to 120 ms from the start.
+* **The filter on position does not bound a scan.** In every query the optimiser keeps `?pos` as a variable of the first triple of the pattern, `?p l:position ?pos`, and applies `FILTER(?pos <= N)` to the rows of that triple, so each listed graph is read for all its position triples and the bound only drops rows after them. In the OPTIONAL form it places the filter after that triple and moves the rest of the pattern (`microPosition`, `direction`, `amount`) behind it, so those are probed only for rows that pass. Nothing in the plan turns the bound into a range of an index. Only the last listed graph holds postings above the bound, so the filter saves little in these reads, and what follows from the plan is that a read costs the number of position triples in the graphs listed.
+* **OPTIONAL against UNION.** The OPTIONAL form becomes `conditional`, one probe of `l:kind` for each row that passes the filter. The UNION form is three branches, each repeating the position triple and its filter, so the position triples of the listed graphs are scanned three times, and the third branch tests `NOT EXISTS` for each credit. The plan therefore does more per graph for the UNION, and the measurements put the UNION at 1.14 to 1.16 of the OPTIONAL in memory at 20,000 postings and 0.85 to 1.01 on TDB2. That the plan has three scans does not by itself explain a ratio near 1, since the second and third branches are selective after the position scan, and the plan carries no cardinalities or costs, so it shows the work Jena is asked to do and not what it costs. The kind filter outside the graph block, `FILTER(?d = l:Debit || NOT EXISTS ... || EXISTS ...)`, is applied to every row of both forms and is not part of the difference.
+* **The cuts aggregate is driven by the cuts.** Its first triple has a constant object, `?c l:cutAt <urn:acct:root>`, so both stores start from the cuts at the account and join to `cutOf` and the posting's position. Its work is the cuts recorded at the account (2,160 in the whole corpus) and not the postings, which fits it taking 2 to 7% of the sum with cuts. The position filter is again applied after the join.
+* **TDB2's reordering changes nothing here.** The store's transformation, `ReorderFixed`, returned the patterns of all three queries in the order they were given. TDB2 has no statistics in this benchmark, so a reordering by selectivity was not possible.
+
+What the output does not show. ARQ's execution log, which would show the plan as it ran and the order the in-memory engine chose, goes through SLF4J, which the module binds to a no-op logger, so it was not read, and the in-memory engine's plan is the optimised algebra alone, without whatever its executor does after it. The TDB2 order is what the store's reordering transformation returns for a pattern, asked directly, and not the order read from a log of a run. No plan carries a row count or a time. So the plans explain which graphs and triples are touched and how often, and they do not decide whether the UNION's repeated scan or the OPTIONAL's probe costs more, for which the measured ratios are the evidence. This closes the gap for Jena only. Oxigraph and rdflib offer nothing to read.
+
 ## Writes, concurrent writers and late postings
 
 `writes.py`, run by `mise run check:ledger-credit-kinds-writes` (`LEDGER_WRITES_QUICK=1` runs the smallest sizes, `LEDGER_WRITES_REPORT_DIR` writes `writes-report.md` and `writes-report.json` elsewhere, both git-ignored). It reuses the tree, the writer's arithmetic, the vocabulary, the quads and the reads of `check.py`, and adds no behaviour to it.
@@ -303,19 +337,65 @@ Late postings, 9 ancestors at 3 points, 27 reads a row. The recorded sum equalle
 
 The effective sum is impossible (below zero or above the ceiling) at 4 reads at 5% and 2 at 5,000 postings and 20% credits late, and also at 2 reads of the 20,000-posting corpus with no late posting, where the history is already overdrawn. Folding every period graph from the start costs 1.3 to 1.4 times the recorded fold from the start of history, whose cost grows with the point read.
 
-What the write benchmark does not show. The writer writes no checkpoint, so a period close is not measured. The stress is threads in one process. The disk store is not asserted. The Java caller is part three.
+What the write benchmark does not show. The writer writes no checkpoint, so a period close is not measured. The stress is threads in one process. The disk store is not asserted. The native Jena writer is below.
+
+### The same writer on native Jena
+
+Run of 2026-11-12 on the same laptop by `mise run check:ledger-credit-kinds-jvm-writes` (981 s with its 6 tests), Jena 5.1.0 called from Java 25 with a 2 GB heap, threads in one JVM against one dataset, Jena in memory and TDB2 in a temporary directory. The writer is `writes.py`'s ported (the module `benchmark/ledger-credit-kinds-jvm`), with the same preloads and the same seeded request lists, so a run is comparable to the Oxigraph one above. After each run the JVM exports the dataset and Python loads the export into an in-memory Oxigraph and runs `audit`, the replay of the commits in revision order, so the replay is the Python one. TDB2 makes every commit durable, at 84 to 98 ms an update here, so a TDB2 run takes smaller counts and is not the same size as the in-memory one. TDB2 ran the probe up to 100 markers and 50 increments a thread, the single writer for 100 writes, and the stress for 200 requests in all, each cell three times at 2, 4 and 8 threads. Jena in memory ran the sizes of the Python benchmark, 1,000 markers, 500 increments, 500 writes and 1,000 requests.
+
+**C1, the probe of TSD-73 on Jena.** A counter triple. Each thread reads the counter N, sends `DELETE { N } INSERT { N+1 and its marker } WHERE { N }` as one update request in its own write transaction, and asks in a read transaction whether its marker exists, until the counter reaches the target. Then each thread increments in the store (`DELETE { ?n } INSERT { ?m } WHERE { ... BIND(?n + 1 AS ?m) }`). Three runs a cell at 2, 4 and 8 threads, one at 1.
+
+| Store | Threads | markers confirmed, of the target, 3 runs | revisions with more than one marker | lost races, 3 runs | increment final, of threads times the count | counter triples left |
+|---|---|---|---|---|---|---|
+| memory, target 1,000 | 1 | 1,000 | 0 | 0 | 500 of 500 | 1 |
+| memory | 2 | 1,000, 1,000, 1,000 | 0, 0, 0 | 997, 999, 998 | 1,000 of 1,000 in every run | 1 |
+| memory | 4 | 1,000, 1,000, 1,000 | 0, 0, 0 | 2,904, 2,979, 2,958 | 2,000 of 2,000 | 1 |
+| memory | 8 | 1,000, 1,000, 1,000 | 0, 0, 0 | 6,778, 6,574, 6,850 | 4,000 of 4,000 | 1 |
+| TDB2, target 100 | 1 | 100 | 0 | 0 | 50 of 50 | 1 |
+| TDB2 | 2 | 100, 100, 100 | 0, 0, 0 | 100, 100, 100 | 100 of 100 | 1 |
+| TDB2 | 4 | 100, 100, 100 | 0, 0, 0 | 300, 300, 300 | 200 of 200 | 1 |
+| TDB2 | 8 | 100, 100, 100 | 0, 0, 0 | 700, 700, 700 | 400 of 400 | 1 |
+
+On both Jena stores, in all 20 guarded runs, every revision carries one marker, the confirmed markers are the target, and the in-store increment ends at threads times the count as one triple. A second update does wait for the first and runs its `WHERE` on the first's result. A lost race is a guarded update that found the counter already moved and wrote nothing, and its thread read again. At two threads a store loses about one race a revision on memory (997 to 999 of 1,000) and exactly one on TDB2 (100 of 100), and TDB2 loses exactly threads less one races a revision at 2, 4 and 8, as writers queued behind a lock would. A thread dump taken during an exploratory run, not part of the report, showed the TDB2 threads parked in `TransactionCoordinator.acquireWriterLock`, a fair semaphore, with one thread committing. This differs from Oxigraph on disk (TSD-73), where the same probe confirmed 1,300 to 1,600 markers of 1,000, and agrees with Oxigraph in memory. So the guard is safe on Jena in memory and on TDB2 called in process (TSD-74). The probe is reported and not asserted, and what it decides is only whether the guarded runs of the store are held to the replay. Both are.
+
+**What a write costs.** Mean ms per write, one writer, 500 further postings on Jena in memory and 100 on TDB2, guarded. The path reads are made in one read transaction.
+
+| Store, postings | debit total | credit total | credit with a cut total | path reads share | update, guarded / unguarded | confirm |
+|---|---|---|---|---|---|---|
+| Jena memory, 1,000 | 6.12 | 5.39 | 5.77 | 93 to 95% | 0.24 / 0.21 | 0.08 |
+| Jena memory, 5,000 | 5.90 | 4.63 | 5.60 | 93 to 95% | 0.22 / 0.20 | 0.06 |
+| Jena memory, 20,000 | 10.43 | 6.18 | 8.30 | 94 to 97% | 0.27 / 0.24 | 0.07 |
+| Jena TDB2, 1,000 | 102.86 | 100.10 | 102.86 | 13 to 15% | 86.45 / 86.74 | 0.53 |
+| Jena TDB2, 20,000 | 110.69 | 94.63 | 105.57 | 11 to 18% | 90.40 / 93.43 | 0.37 |
+
+The writes are the same as the Python ones, 4 accounts and 8.1 requests for a debit in memory (8.4 on TDB2, which writes the first 100 of the requests), 3.0 to 3.1 accounts and 6.7 to 6.9 requests for a credit, and 8, 9.8 to 9.9 and 13.2 to 13.9 triples. The settle is under 0.01 ms. Natively on Jena in memory a write costs 4.6 to 10.4 ms against 17 to 41 ms through the test kit's pipe, and the path reads, which are 93 to 97% of it, are the cost, as in Oxigraph where a write is 2.2 to 2.8 ms. On TDB2 a write costs 95 to 113 ms, of which the update, that is the commit, is 84 to 98 ms and the path reads 10 to 20 ms. The guard adds the confirmation, 0.06 to 0.08 ms in memory and 0.3 to 0.9 ms on TDB2, and a dearer update, 0.02 to 0.04 ms in memory. At 20,000 postings 187 of the 500 writes were refused in memory (32 of 100 on TDB2), because the corpus overdraws its cap section. Every single-writer export, guarded and unguarded, equals the replay. A warm-up writer runs first, and each single-writer figure is one run.
+
+**The stress.** Jena in memory, guarded, 1,000 requests on a store of 5,000, three runs a cell (the three values are shown where they differ):
+
+| Threads | commits | lost races | retries per request, mean / max | wall s | commits per s | differs from the replay | duplicate revisions |
+|---|---|---|---|---|---|---|---|
+| 1 | 976 | 0 | 0 / 0 | 7.71 | 127 | none | 0 |
+| 2 | 987, 991, 987 | 674, 895, 578 | 0.58 to 0.90 / 224 to 429 | 7.76, 8.75, 7.97 | 113 to 127 | none | 0 |
+| 4 | 940, 931, 934 | 2,277, 2,252, 2,241 | 2.24 to 2.28 / 156 to 343 | 8.38, 8.91, 8.39 | 104 to 112 | none | 0 |
+| 8 | 939, 937, 937 | 4,884, 4,850, 4,847 | 4.85 to 4.88 / 77 to 125 | 12.38, 12.41, 12.63 | 74 to 76 | none | 0 |
+
+The rest of the 1,000 requests were refused as unavailable. Against Oxigraph in memory above, the lost races are the same order (492, 1,869 and 5,346 at 2, 4 and 8 threads there) and the throughput lower, 127 to 74 commits per s against 298 to 104. The same writer without the guard, once a cell, left 484, 683 and 776 duplicate revisions at 2, 4 and 8 threads (485, 700 and 788 on Oxigraph), 15 to 31 stored applied amounts, 99 to 147 stored cuts and 2 to 6 balances that differ from the replay, and 0 to 4 debits that overdrew an account. Those are reported and not asserted.
+
+On TDB2, guarded, 200 requests in all on a store of 5,000, three runs a cell, every run committed all 200 requests with dense revisions and no difference from the replay. The lost races were 100, 300 and 700 at 2, 4 and 8 threads in every run, the retries per request 0.50, 1.50 and 3.50, the wall time 22 to 24 s, 30 to 31 s and 41 to 60 s (22.7 s at one thread, 113 ms a request with its reads), which is 8 to 9, 6 to 7 and 3 to 5 commits per s. Without the guard the wall time fell to 18, 17 and 15 s and the store held 100, 150 and 175 duplicate revisions of 200, with 2 to 8 stored applied amounts, 13 to 23 stored cuts and 1 to 4 balances that differ from the replay.
+
+What the native writes do not show. They are threads in one JVM, not several processes or HTTP. TDB2 ran at a fifth to a tenth of the in-memory counts. The wall time of a guarded run on TDB2 grows far less than its lost races, so a lost race costs much less than a commit, and the cause was not examined. Each cell of the stress is three runs and the single writer one, on one laptop.
 
 ## What this does not measure
 
-The Java caller, which reads the one-level corpus only (`benchmark/ledger-credit-kinds-jvm`) and is for part three of LG-17. Not in LG-17 at all, a query plan for any engine, since none here can explain a query, a ceiling that moves in time, a checkpoint written by the fold rather than by the model's arithmetic, a `union` form of the applied join on Oxigraph, and a native caller on a store other than Jena. The ceiling variant is read at 30% credits only and without the plain fold or the shortcut. The event stream is seeded and the engines see the same one, so a figure compares folds on one engine and caller, and an engine against another only in its shape. The Java caller runs the reads of a corpus once each, in one JVM after a warm-up on the smallest corpus, so its smallest sizes include some JIT warm-up. The write benchmark below does not measure writes over HTTP or from more than one process, a store other than Oxigraph under concurrent writers, a writer that writes the checkpoint at a period close, a guard narrower than the owner's whole ledger, a posting effective inside a sealed period as a decision, or any rule that consumes an amount in effective order.
+Not in LG-17 at all, a query plan from the Python callers, since none of them can explain a query (the Java caller's plans are above, for Jena only and without a run-time explanation), a ceiling that moves in time, a checkpoint written by the fold rather than by the model's arithmetic, a `union` form of the applied join on Oxigraph, and a native caller on a store other than Jena. The ceiling variant is read at 30% credits only and without the plain fold or the shortcut. The Java caller does not read the ceiling variant, the cut forms or the shortcut on the two-level corpus. The event stream is seeded and the engines see the same one, so a figure compares folds on one engine and caller, and an engine against another only in its shape. The Java caller runs the reads of a corpus once each, in one JVM after a warm-up on the smallest corpus, so its smallest sizes include some JIT warm-up. The write benchmark below does not measure writes over HTTP or from more than one process, a store other than Oxigraph and Jena under concurrent writers, a writer that writes the checkpoint at a period close, a guard narrower than the owner's whole ledger, a posting effective inside a sealed period as a decision, or any rule that consumes an amount in effective order. The native writes are threads in one JVM, on Jena TDB2 at smaller counts than the in-memory runs because every TDB2 commit is made durable.
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `check.py` | the tree, the streams, the model, the checkpoints, the four reads and the sum with cuts on three backends, the like-for-like reads, the cut forms, the ceiling variant, the sketch's tree, the pass criterion, the report, and `--emit` and `--merge` for the native Jena caller (the one-level corpus only) |
+| `check.py` | the tree, the streams, the model, the checkpoints, the four reads and the sum with cuts on three backends, the like-for-like reads, the cut forms, the ceiling variant, the sketch's tree, the pass criterion, the report, and `--emit` and `--merge` for the native Jena caller (both corpora) |
 | `test_check.py` | the check's own tests |
-| `writes.py` | the live writer, its guard, the fixed interleavings, the stress, the GIL probe, the late postings and their four numbers, and the report (`writes-report.md`, `writes-report.json`) |
+| `writes.py` | the live writer, its guard, the fixed interleavings, the stress, the GIL probe, the late postings and their four numbers, and the report (`writes-report.md`, `writes-report.json`), and `--emit-jvm` and `--audit-jvm` for the native Jena writer |
 | `test_writes.py` | the write benchmark's own tests |
 | `conftest.py` | makes a temporary folder refuse removal while a store in it is open |
 | `report.md`, `report.json`, `writes-report.md`, `writes-report.json` | the last runs' results, generated and git-ignored |
