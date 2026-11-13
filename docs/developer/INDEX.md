@@ -529,10 +529,14 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-B2d | the writer reads an import's content from its fence job, and the jobless fence command goes | studio-visual-authoring | planned | SVA-B2a | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | studio-visual-authoring | built 2026-11-13 | SVA-B1, SVA-B2a | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-B4 | the import graph | studio-visual-authoring | built 2026-11-13 | SVA-B3, SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-B5 | a sample with imports and schemes, the dialog's drop area, and dependencies kept apart in the state | studio-visual-authoring | planned | SVA-B4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-O1 | the canvas kit, with our own layered layout behind one function | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | studio-visual-authoring | built 2026-11-13 | SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-O2a | edge labels placed apart, and edges against the layout's direction attached by the sides that face | studio-visual-authoring | built 2026-11-13 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-O3 | the axiom reader and the element forms | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-O4 | routing finished: edges bent around nodes, attachments spread, drawings fitted, unlinked nodes placed beside | studio-visual-authoring | planned | SVA-O2a | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-O5 | the kit's behaviour held in a browser, and the mapping canvas on the kit's routing | studio-visual-authoring | planned | SVA-O4 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-O6 | one reader of shapes for the forms and the drawing | studio-visual-authoring | planned | SVA-O2 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | studio-visual-authoring | planned | SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P2 | edits on the persistence canvas | studio-visual-authoring | planned | SVA-P1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P3 | the persistence simulation executor | studio-visual-authoring | planned | SVA-R3 | docs/developer/status/studio-visual-authoring.md#slices |
@@ -550,6 +554,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-M3a | a mapping's queries over an RDF sample, as a run | studio-visual-authoring | planned | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M3b | the sample pane | studio-visual-authoring | planned | SVA-R4, SVA-M3a | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M4 | the output explorer | studio-visual-authoring | planned | SVA-O1, SVA-R4 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
 | WL-0 | the plan, this record, the board | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-1 | reproductions that fail today, the view's fate on remount, a worker's idle memory | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-2 | the job on its own thread, the publisher and acknowledgement across threads | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |

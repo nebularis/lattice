@@ -71,6 +71,7 @@ A slice's documents change in the slice. Estimates are in tokens.
 | SVA-B2d | the writer reads an import's content from its fence job in the store, so a fence command carries no content, and the older form of the command that names no job goes from the contract (TD-164) | `platform/config-studio-core`, `platform/config-studio-service` | a fence command cannot store a graph the job did not digest, and the tests that sent the older form send the new one | SVA-B2a | 150k |
 | SVA-B3 | the Baseline view: the left list of ontologies and imports, the import dialog with its plan, what is missing, and Replace resolving again | `apps/config-studio` | the journey imports a folder with a catalog, shows one import missing, and holds the rest after the author confirms | SVA-B1, SVA-B2a | 200k |
 | SVA-B4 | the import graph, with imports, binds and uses terms of | `apps/config-studio` | the facility sample draws its ontology and its six schemes with the binds edges its contracts state, a workspace with imports draws the held and the missing ones, and the derived edge is held by unit tests | SVA-B3, SVA-O1 | 110k |
+| SVA-B5 | a sample workspace whose baseline imports ontologies and binds schemes, so the import graph draws all three kinds of edge and the derived one can be seen. The import dialog's drop area, with each dropped file's relative path. The dependencies' graphs kept apart in the studio's state, so the import graph fetches nothing itself, with a browser test that holds a dependency | `contracts/config-studio`, `apps/config-studio` | the sample's import graph shows a stated import, a binds edge and a derived edge, seen in a screenshot, and a folder dropped on the dialog resolves as one chosen through the input | SVA-B4 | 180k |
 
 ### Phase O, the ontology
 
@@ -80,6 +81,9 @@ A slice's documents change in the slice. Estimates are in tokens.
 | SVA-O2 | the views of classes and object properties and of the class hierarchy, the toggle between domain and range and shapes, and the neighbourhood of a class | `apps/config-studio` | on the facility sample the four links its shapes state each name their shape, and a shape stating a link no domain and range states adds exactly that edge, dashed | SVA-O1 | 200k |
 | SVA-O2a | edge labels placed so they do not cover one another or a node, and an edge that runs against the layout's direction leaving and entering by the sides that face, for every canvas of the kit that asks for routing | `apps/config-studio` | on the facility sample's drawing no two labels overlap and none covers a class, held by a unit test over the placement and seen in a screenshot | SVA-O2 | 120k |
 | SVA-O3 | `rdf/axioms.ts` and the element forms | `apps/config-studio` | each OWL construct of the sketch's section 6 has a unit test, and a triple the form does not recognise appears in its table | nothing | 220k |
+| SVA-O4 | the canvas kit's routing finished: an edge that spans several ranks bent around the nodes between its ends, the edges of one side to different nodes attached apart so their labels do not bunch, a drawing fitted to its pane on opening whatever its size, and a node with no link in a view placed beside the drawing and not in a last column of its own | `apps/config-studio` | on the facility sample no edge crosses a class it does not join, the import graph opens with every scheme in view, and both are seen in screenshots | SVA-O2a | 200k |
+| SVA-O5 | the kit's behaviour held in a browser: a dragged node's edges and labels follow it, its position is kept after a reload, a link dropped on a node joins it, and each menu item does what it says. The mapping canvas moved onto the kit's routing | `apps/config-studio` | each has a browser test that fails when the behaviour is broken | SVA-O4 | 150k |
+| SVA-O6 | `rdf/shapes.ts` gives a shape's name and reads `sh:node`, and the ontology drawing reads shapes through it, so the rule is written once | `apps/config-studio` | the drawing's own shape reader is gone and its tests pass unchanged | SVA-O2 | 80k |
 
 ### Phase P, persistence
 
@@ -112,6 +116,12 @@ A slice's documents change in the slice. Estimates are in tokens.
 | SVA-M3a | a mapping's CONSTRUCT queries over an RDF sample, by stratum, as a run | `platform/config-studio-transforms` | the run's output equals the dry-run job's for the ODRL sample | SVA-P3 | 150k |
 | SVA-M3b | the sample pane: the scheme, the compiled form with whether it has a runtime, the sample, Run, and marks on what is out of date. The automatic rerun goes | `apps/config-studio` | nothing runs until Run is pressed, and an RML form is shown as waiting on BL-20 | SVA-R4, SVA-M3a | 200k |
 | SVA-M4 | the output explorer: RDF as a graph on the canvas kit, JSON and XML as a tree, text with Turtle the default for RDF, and a table | `apps/config-studio` | a run's output opens in each rendering, and the simulators use the same component | SVA-O1, SVA-R4 | 220k |
+
+### Closing
+
+| Slice | What | Modules | Done when | Waits on | Estimate |
+|---|---|---|---|---|---|
+| SVA-V1 | the suites no slice ran: `mise run test:config-studio-browser`, with the import dialog's journey added to the real-stack run, `mise run studio:liveness`, and `mise run check`, each on the unit's branch before a merge is asked for | `apps/config-studio/e2e-stack` | each is run and its result is in the status record, and a failure is fixed or recorded with the maintainer's answer | every other slice | 150k |
 
 ### The order
 

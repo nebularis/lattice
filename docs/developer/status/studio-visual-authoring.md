@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-B4 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-B2c and SVA-B2d, which finish phase B, and SVA-R0's probes, which need a running stack, unblock phase R and are what the maintainer waits for before deciding ADR-A154.
+**Next action:** SVA-R0's probes, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each. After it the maintainer decides ADR-A154.
 
 ## Slices
 
@@ -35,10 +35,14 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-B2d | the writer reads an import's content from its fence job, and the jobless fence command goes | planned | SVA-B2a |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | built 2026-11-13, building 2026-11-13 | SVA-B1, SVA-B2a |
 | SVA-B4 | the import graph | built 2026-11-13, building 2026-11-13 | SVA-B3, SVA-O1 |
+| SVA-B5 | a sample with imports and schemes, the dialog's drop area, and dependencies kept apart in the state | planned | SVA-B4 |
 | SVA-O1 | the canvas kit, with our own layered layout behind one function | built 2026-11-12, building 2026-11-12 |  |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | built 2026-11-13, building 2026-11-12 | SVA-O1 |
-| SVA-O2a | edge labels placed apart, and edges against the layout's direction attached by the sides that face | built 2026-11-13, building 2026-11-13 | |
+| SVA-O2a | edge labels placed apart, and edges against the layout's direction attached by the sides that face | built 2026-11-13, building 2026-11-13 |  |
 | SVA-O3 | the axiom reader and the element forms | built 2026-11-12, building 2026-11-12 |  |
+| SVA-O4 | routing finished: edges bent around nodes, attachments spread, drawings fitted, unlinked nodes placed beside | planned | SVA-O2a |
+| SVA-O5 | the kit's behaviour held in a browser, and the mapping canvas on the kit's routing | planned | SVA-O4 |
+| SVA-O6 | one reader of shapes for the forms and the drawing | planned | SVA-O2 |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | planned | SVA-O1 |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | planned | SVA-R3 |
@@ -56,6 +60,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-M3a | a mapping's queries over an RDF sample, as a run | planned | SVA-P3 |
 | SVA-M3b | the sample pane | planned | SVA-R4, SVA-M3a |
 | SVA-M4 | the output explorer | planned | SVA-O1, SVA-R4 |
+| SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | planned |  |
 
 ## Knowledge index
 
@@ -98,3 +103,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-13: SVA-B2b built, [Validation Pack](../validation/SVA-B2b.md). Staging copies each of the 48 documents LATTICE's catalog names under its content digest with an index, the service lists them at `/api/ontologies` and serves one by its ontology IRI or version IRI, found through the index alone, and the import walk and the dialog continue through them. A decision taken alone, for the maintainer to ratify: `baseline` is now a target of `validate`, and of nothing else, so that a validation can report an import no held document declares as the warning `ImportNotHeld`. One test that asserted that target was refused now asserts it for `compile` and `propose`. Left undone: the browser's live validation does not submit the baseline, since it runs over the configuration parts and the baseline is not one, so the warning reaches a client that asks and the Baseline view shows what is missing from its own list. `check:config-studio` gained the new worker test file. Verified with `mise run check:config-studio`, which exited 0 with 21, 171 and 296 tests passed in its three suites, 24, 204 and 10 in the three Java modules, and 30 browser tests on the fake service.
 - 2026-11-13: the maintainer ratified `baseline` as a target of `validate`, asked for the browser's live validation to take the baseline (SVA-B2c added), chose for TD-164 that the writer reads an import's content from its fence job in the store (SVA-B2d added, and TD-164 leaves the debt register for it), and will decide ADR-A154 after SVA-R0's probes. SVA-B4 picked up.
 - 2026-11-13: SVA-B4 built, [Validation Pack](../validation/SVA-B4.md). The diagram's third view draws the workspace's ontology, each held and each missing import and each concept scheme, with imports as stated, a binds edge from the ontology that declares the property a scheme contract constrains to each scheme its bindings or its fallback name, and a dashed edge derived from the terms a document uses, never where a stated edge joins the pair. The plan's acceptance was wrong about the sample again: the facility sample imports nothing, so it draws five binds edges and no other kind, and the plan's row now says so. The derived edge is held by unit tests and was seen in no picture. Left as it is: a graph of more than five nodes opens at a fixed zoom, so the sixth scheme of the facility sample is cut at the pane's edge until the author pans, and the view fetches the workspace's dependencies itself while it is open, since the studio's state keeps them only merged. Verified with 308 unit tests, the type check and 31 browser tests on the fake service.
+- 2026-11-13: the maintainer asked for every shortfall the built slices left to be closed by the end, and for a sample that lets the derived edge of the import graph be seen. Five slices added for them: SVA-B5, SVA-O4, SVA-O5, SVA-O6 and SVA-V1. Live validation of the baseline and the jobless fence command already have SVA-B2c and SVA-B2d. SVA-R0 resumed.
