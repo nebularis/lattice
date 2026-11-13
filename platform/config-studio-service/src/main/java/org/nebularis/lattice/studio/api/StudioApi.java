@@ -59,6 +59,8 @@ public final class StudioApi {
     private static final List<String> GRAPH_NAMES = Workspace.GRAPHS;
     /** The configurations a job checks, and those of them that compile. */
     private static final List<String> TARGETS = GRAPH_NAMES.subList(1, GRAPH_NAMES.size());
+    /** The baseline is also a target of validate jobs, which report an import no held document declares (SVA-B2b), and of no other kind. */
+    private static final String BASELINE = "baseline";
     private static final List<String> COMPILED = List.of("eligibility", "surface", "persistence", "mapping");
     /** The proposers a propose job may name, and the target each is recorded as (ADR-A138 decision 5). */
     private static final Map<String, Resource> PROPOSERS = Map.of(
@@ -75,6 +77,7 @@ public final class StudioApi {
     private final Clock clock;
     private final Supplier<UUID> ids;
     private final Path assets;
+    private final StagedOntologies ontologies;
     /** The optional features the deployment turned on, from {@code LATTICE_STUDIO_FEATURES}. */
     private final Set<String> features;
 
@@ -124,6 +127,7 @@ public final class StudioApi {
         this.clock = clock;
         this.ids = ids;
         this.assets = assets;
+        this.ontologies = new StagedOntologies(assets);
         this.mcp = new StudioMcp(store, ops, this.writes, clock, ids, assets, this::runTool);
     }
 
@@ -405,6 +409,9 @@ public final class StudioApi {
         if (s.length == 1 && s[0].equals("vocabulary")) {
             return method.equals("GET") ? vocabulary(req) : notAllowed("GET");
         }
+        if (s.length == 1 && s[0].equals("ontologies")) {
+            return method.equals("GET") ? ontologies(req) : notAllowed("GET");
+        }
         if (s.length == 1 && s[0].equals("publication-units")) {
             return method.equals("GET") ? asset("publication-units.ttl") : notAllowed("GET");
         }
@@ -531,6 +538,37 @@ public final class StudioApi {
             return notFound();
         }
         String etag = "\"" + sha256(bytes).substring(0, 32) + "\"";
+        String cache = "no-cache";
+        if (matches(req.header("if-none-match"), etag)) {
+            return ApiResponse.empty(304).with("ETag", etag).with("Cache-Control", cache);
+        }
+        return ApiResponse.turtle(200, bytes).with("ETag", etag).with("Cache-Control", cache);
+    }
+
+    /**
+     * The index of LATTICE's staged ontology documents, or with {@code iri} one of them (SVA-B2b). A document is found through the
+     * index loaded at start, by the IRI it declares, and never by a path or file name from the request.
+     */
+    private ApiResponse ontologies(ApiRequest req) {
+        if (!ontologies.present()) {
+            return notFound();
+        }
+        Map<String, List<String>> asked = queryAll(req.query());
+        List<String> iris = asked.getOrDefault("iri", List.of());
+        if (asked.isEmpty() && req.query() != null && !req.query().isEmpty()) {
+            return ApiResponse.text(400, "the query is not percent-encoded");
+        }
+        if (!asked.containsKey("iri")) {
+            return cached(req, ontologies.listing(), ontologies.etag());
+        }
+        if (iris.size() != 1 || !StagedOntologies.isAbsoluteIri(iris.get(0))) {
+            return ApiResponse.text(400, "iri must be one absolute IRI");
+        }
+        byte[] document = ontologies.document(iris.get(0));
+        return document == null ? notFound() : cached(req, document, "\"" + sha256(document).substring(0, 32) + "\"");
+    }
+
+    private static ApiResponse cached(ApiRequest req, byte[] bytes, String etag) {
         String cache = "no-cache";
         if (matches(req.header("if-none-match"), etag)) {
             return ApiResponse.empty(304).with("ETag", etag).with("Cache-Control", cache);
@@ -895,11 +933,11 @@ public final class StudioApi {
         if ("propose".equals(kind) && "odrl".equals(target) && !features.contains("odrl")) {
             return notFound();
         }
-        if (!("validate".equals(kind) && TARGETS.contains(target)) && !("compile".equals(kind) && COMPILED.contains(target))
+        if (!("validate".equals(kind) && (TARGETS.contains(target) || BASELINE.equals(target))) && !("compile".equals(kind) && COMPILED.contains(target))
             && !("assemble".equals(kind) && "assembly".equals(target)) && !("fence".equals(kind) && "import".equals(target))
             && !("propose".equals(kind) && PROPOSERS.containsKey(target))
             && !("dry-run".equals(kind) && ("meaning".equals(target) || "mapping".equals(target)))) {
-            return ApiResponse.text(400, "kind must be validate, with target one of " + TARGETS + ", compile, with target one of " + COMPILED
+            return ApiResponse.text(400, "kind must be validate, with target baseline or one of " + TARGETS + ", compile, with target one of " + COMPILED
                 + ", assemble, with target assembly, propose, with target one of " + PROPOSERS.keySet()
                 + ", dry-run, with target meaning or mapping, fence, with target import, or analyse, with target a document");
         }

@@ -141,8 +141,12 @@ export interface ResolveInput {
   catalog: ReadonlyMap<string, string>;
   /** The imports the workspace already holds, from IRI to digest. */
   held: ReadonlyMap<string, string>;
-  /** The IRIs of the documents the service stages. */
-  staged: ReadonlySet<string> | readonly string[];
+  /**
+   * The documents the service stages. A set or an array gives their IRIs only, so a staged node's own imports are not followed.
+   * A map gives each IRI, the ontology IRI or the version IRI, its document's header, so the walk goes on through the document's
+   * own imports.
+   */
+  staged: ReadonlySet<string> | readonly string[] | ReadonlyMap<string, OntologyHeader>;
 }
 
 export type ImportStatus = "catalog" | "file" | "held" | "staged" | "missing";
@@ -226,7 +230,8 @@ export function resolveImports(input: ResolveInput): ImportPlan {
     }
   }
 
-  const stagedSet = new Set(input.staged);
+  const stagedHeaders: ReadonlyMap<string, OntologyHeader> = input.staged instanceof Map ? input.staged : new Map();
+  const stagedSet = new Set(input.staged instanceof Map ? input.staged.keys() : input.staged);
   const problems = new Map<string, PlanProblem>();
   const report = (problem: PlanProblem): void => {
     problems.set(JSON.stringify([problem.kind, problem.iri ?? "", problem.path ?? "", problem.message]), problem);
@@ -335,6 +340,9 @@ export function resolveImports(input: ResolveInput): ImportPlan {
       node.digest = digest;
     } else if (stagedSet.has(iri)) {
       node.status = "staged";
+      const header = stagedHeaders.get(iri);
+      if (header?.ontologyIri !== undefined) node.ontologyIri = header.ontologyIri;
+      if (header?.versionIri !== undefined) node.versionIri = header.versionIri;
     }
     return node;
   };
@@ -342,14 +350,15 @@ export function resolveImports(input: ResolveInput): ImportPlan {
   for (let i = 0; i < queue.length; i++) {
     const from = queue[i];
     const entry = parsed.get(documents.get(from) ?? "");
-    if (!entry || !("header" in entry)) continue;
-    for (const to of entry.header.imports) {
+    const header = entry !== undefined && "header" in entry ? entry.header : nodes.get(from)?.status === "staged" ? stagedHeaders.get(from) : undefined;
+    if (header === undefined) continue;
+    for (const to of header.imports) {
       edges.set(JSON.stringify([from, to]), { from, to });
       let node = nodes.get(to);
       if (node === undefined) {
         node = resolveOne(to);
         nodes.set(to, node);
-        if (documents.has(to)) queue.push(to);
+        if (documents.has(to) || (node.status === "staged" && stagedHeaders.has(to))) queue.push(to);
       }
       if (!node.importedBy.includes(from)) node.importedBy.push(from);
     }

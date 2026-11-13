@@ -50,7 +50,7 @@ function layerResults(job: string, target: string, body: string): string {
 
 const A = "https://example.org/lattice/studio/assembly/";
 const E_BUILDER = "https://example.org/lattice/wording/facility-form/";
-const TARGETS: Record<string, string> = { "sentence-forms": "SentenceFormProposer", "language-model": "LanguageModelProposer", "mapping-language-model": "MappingLanguageModelProposer", surface: "Surface", assembly: "AssemblyTarget", meaning: "Meaning", review: "Review" };
+const TARGETS: Record<string, string> = { baseline: "Baseline", "sentence-forms": "SentenceFormProposer", "language-model": "LanguageModelProposer", "mapping-language-model": "MappingLanguageModelProposer", surface: "Surface", assembly: "AssemblyTarget", meaning: "Meaning", review: "Review" };
 
 /** The recorded result of assembling the builder sample: the assembly with a lender count assembles, and the
  * one without is refused at the decide stage, naming the governing variable. Each assembly is answered by its IRI. */
@@ -185,6 +185,48 @@ function fence(body: string, mediaType: string): { digest: string; ontology?: st
   }
 }
 
+/** The ontology documents the fake stages, as the service's index and files would hold them (SVA-B2b): the first imports the second. */
+export const STAGED_FIRST = "https://example.org/lattice/staged/alpha";
+export const STAGED_FIRST_VERSION = "https://example.org/lattice/staged/alpha/1.0";
+export const STAGED_SECOND = "https://example.org/lattice/staged/beta";
+const OWL_HEAD = "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n";
+const STAGED: { iri: string; version?: string; imports: string[]; text: string }[] = [
+  { iri: STAGED_FIRST, version: STAGED_FIRST_VERSION, imports: [STAGED_SECOND], text: `${OWL_HEAD}<${STAGED_FIRST}> a owl:Ontology ; owl:versionIRI <${STAGED_FIRST_VERSION}> ; owl:imports <${STAGED_SECOND}> .\n` },
+  { iri: STAGED_SECOND, imports: [], text: `${OWL_HEAD}<${STAGED_SECOND}> a owl:Ontology .\n` },
+];
+const OWL_IMPORTS = "http://www.w3.org/2002/07/owl#imports";
+
+/** What the worker's validation of a baseline reports: each owl:imports of a named ontology of the baseline or of a held import that no held
+ * import declares, as an ImportNotHeld warning on the importing ontology. A document that does not parse holds and states nothing. */
+function importWarnings(baseline: string, held: Held[]): string {
+  const read = (text: string): { ontologies: { iri: string; versions: string[]; imports: string[] }[] } => {
+    try {
+      const quads = new Parser().parse(text);
+      const iris = [...new Set(quads.filter((q) => q.predicate.value === RDF_TYPE && q.object.value === OWL_ONTOLOGY && q.subject.termType === "NamedNode").map((q) => q.subject.value))];
+      return {
+        ontologies: iris.map((iri) => ({
+          iri,
+          versions: quads.filter((q) => q.subject.value === iri && q.predicate.value === OWL_VERSION).map((q) => q.object.value),
+          imports: quads.filter((q) => q.subject.value === iri && q.predicate.value === OWL_IMPORTS && q.object.termType === "NamedNode").map((q) => q.object.value),
+        })),
+      };
+    } catch {
+      return { ontologies: [] };
+    }
+  };
+  const own = read(baseline).ontologies;
+  const documents = held.filter((h) => !h.mediaType.includes("xml")).map((h) => read(h.text).ontologies);
+  const known = new Set([...own.flatMap((o) => [o.iri, ...o.versions]), ...documents.filter((d) => d.length === 1).flatMap((d) => [d[0].iri, ...d[0].versions])]);
+  const found = [...own, ...documents.flat()].flatMap((o) => o.imports.filter((i) => !known.has(i)).map((i) => [o.iri, i]));
+  return [...new Set(found.map((f) => JSON.stringify(f)))]
+    .sort()
+    .map((f) => {
+      const [importer, target] = JSON.parse(f) as string[];
+      return `<urn:r> sh:result [ sh:resultSeverity sh:Warning ; sh:resultMessage "${importer} imports ${target}, and no held document declares that IRI." ; cst:code "ImportNotHeld" ; sh:focusNode <${importer}> ; sh:resultPath <${OWL_IMPORTS}> ; sh:value <${target}> ] .`;
+    })
+    .join("\n");
+}
+
 export interface Submitted {
   kind: string;
   target: string;
@@ -202,6 +244,8 @@ export class FakeService {
   readonly saves: { name: string; ifMatch: string | null; body: string }[] = [];
   /** Jobs that never finish while held, as a proposal that waits on a model does not (plan studio-worker-liveness): a kind, or `kind:target`. */
   readonly hold = new Set<string>();
+  /** Whether the service stages LATTICE's ontology documents, and so answers the two reads of /api/ontologies. Off, it answers 404 as an older one does. */
+  stagedOntologies = true;
   /** Whether a language model is configured, so that a proposal by it succeeds. */
   modelConfigured = false;
   /** What the service's status reports, such as a queue no worker consumes. */
@@ -256,6 +300,10 @@ export class FakeService {
       const declared = `${result.ontology ? ` ; cst:declaresOntology <${result.ontology}>` : ""}${result.version ? ` ; cst:declaresVersion <${result.version}>` : ""}`;
       return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:digest "${result.digest}"${declared} .\n`;
     }
+    if (job.kind === "validate" && job.target === "baseline") {
+      const held = this.workspaces.get(job.ws)?.imports ?? [];
+      return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${importWarnings(job.body, held)}\n`;
+    }
     if (job.kind === "dry-run") return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${dryRunResults(iri, job.body)}`;
     if (job.kind === "propose") {
       if (job.target === "language-model" && !this.modelConfigured) return `${PREFIX}${head} ; cst:status cst:Failed ; cst:failureMessage "no language model is configured" .\n`;
@@ -293,6 +341,17 @@ export class FakeService {
     if (parts[0] === "status") return json({ warnings: this.warnings });
     if (parts[0] === "features") return json({ features: [] });
     if (parts[0] === "vocabulary") return turtle(readFileSync(join(assets, "vocabulary.ttl"), "utf-8"));
+    if (parts[0] === "ontologies") {
+      if (!this.stagedOntologies) return route.fulfill({ status: 404, body: "not found" });
+      const iri = url.searchParams.get("iri");
+      if (iri === null) {
+        const rows = STAGED.map((o) => `<${o.iri}> a owl:Ontology${o.version ? ` ; owl:versionIRI <${o.version}>` : ""}${o.imports.map((i) => ` ; owl:imports <${i}>`).join("")} .\n`).join("");
+        return turtle(`${OWL_HEAD}${rows}`);
+      }
+      if (!/^[A-Za-z][A-Za-z0-9+.-]*:\S+$/.test(iri)) return route.fulfill({ status: 400, body: "iri must be one absolute IRI" });
+      const found = STAGED.find((o) => o.iri === iri || o.version === iri);
+      return found ? turtle(found.text) : route.fulfill({ status: 404, body: "not found" });
+    }
     if (parts[0] === "samples" && parts.length === 1) return turtle(readFileSync(join(assets, "samples.ttl"), "utf-8"));
     if (parts[0] === "samples") return turtle(readFileSync(join(assets, "samples", `${parts[1]}.ttl`), "utf-8") + (parts[1] === "builder" ? REGIME : ""));
     if (parts[0] === "workspaces" && parts.length === 1) {

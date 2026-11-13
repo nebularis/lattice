@@ -117,3 +117,69 @@ def test_the_promotions_are_staged_as_six_promotions_and_the_summaries_query(sta
         "holders-follows", "holders-imports", "jobs", "registry", "terms-label", "terms-version"]
     assert all(str(c.promotes_to).startswith("https://www.nebularis.org/neuro-semantic/lattice/config-studio/promotion#") for c in read_contracts(contracts))
     assert "CONSTRUCT" in (staged / "promotions" / "workspace-summaries.rq").read_text(encoding="utf-8")
+
+
+def _ontology_index(staged: Path) -> Graph:
+    return Graph().parse(staged / "ontologies" / "index.ttl", format="turtle")
+
+
+def test_the_ontologies_are_staged_with_an_index_of_ontology_iri_version_iri_imports_and_file(staged: Path) -> None:
+    """SVA-B2b: the service serves a LATTICE document by an IRI this index holds."""
+    foundation = URIRef("https://www.nebularis.org/neuro-semantic/foundation")
+    index = _ontology_index(staged)
+    assert (foundation, RDF.type, OWL.Ontology) in index
+    versions = [str(v) for v in index.objects(foundation, OWL.versionIRI)]
+    assert len(versions) == 1 and versions[0].startswith("https://www.nebularis.org/neuro-semantic/lattice/foundation/")
+    assert URIRef("http://www.w3.org/ns/prov-o-20130430") in set(index.objects(foundation, OWL.imports))
+    file = index.value(foundation, CST.stagedAs)
+    assert isinstance(file, Literal) and (staged / "ontologies" / str(file)).is_file()
+    assert str(file).endswith(".ttl") and len(str(file)) == 64 + len(".ttl")
+    # Every staged copy is an index entry's, and every entry's copy exists.
+    assert sorted(p.name for p in (staged / "ontologies").iterdir() if p.name != "index.ttl") == sorted(str(o) for o in index.objects(None, CST.stagedAs))
+
+
+def test_two_iris_of_one_file_share_one_staged_copy(staged: Path) -> None:
+    """The catalog maps both the ontology IRI and the version IRI of MORK to one file."""
+    import ontology_catalog
+
+    root = lattice_repo_catalogue.find_root()
+    entries = ontology_catalog.Catalog(root / "ontology" / "catalog-v001.xml").entries
+    mork = [name for name, location in entries.items() if location == "mork/spec/Mork.ttl"]
+    assert len(mork) >= 2
+    index = _ontology_index(staged)
+    nodes = [n for n in index.subjects(RDF.type, OWL.Ontology) if str(n) in mork]
+    assert len(nodes) == 1
+    assert len(list(index.objects(nodes[0], CST.stagedAs))) == 1
+
+
+def test_staging_the_ontologies_twice_gives_byte_identical_output(staged: Path, tmp_path: Path) -> None:
+    stage(lattice_repo_catalogue.find_root(), tmp_path)
+    first = {p.relative_to(staged / "ontologies").as_posix(): p.read_bytes() for p in (staged / "ontologies").rglob("*") if p.is_file()}
+    second = {p.relative_to(tmp_path / "ontologies").as_posix(): p.read_bytes() for p in (tmp_path / "ontologies").rglob("*") if p.is_file()}
+    assert first == second and "index.ttl" in first
+
+
+def test_a_document_that_declares_no_single_named_ontology_is_skipped_and_counted(tmp_path: Path) -> None:
+    import config_studio_stage
+
+    root = tmp_path / "ontology"
+    root.mkdir()
+    (root / "catalog-v001.xml").write_text(
+        '<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">'
+        '<uri name="urn:x:one" uri="one.ttl"/><uri name="urn:x:two" uri="two.ttl"/><uri name="urn:x:web" uri="https://example.org/w.ttl"/>'
+        '<uri name="urn:x:gone" uri="gone.ttl"/></catalog>', encoding="utf-8")
+    prefix = "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+    (root / "one.ttl").write_text(prefix + "<urn:x:one> a owl:Ontology .\n", encoding="utf-8")
+    (root / "two.ttl").write_text(prefix + "<urn:x:a> a owl:Ontology . <urn:x:b> a owl:Ontology .\n", encoding="utf-8")
+
+    class Fake:
+        root = tmp_path
+
+        @staticmethod
+        def area(name: str) -> Path:
+            return Path("ontology")
+
+    staged, skipped = config_studio_stage.stage_ontologies(Fake, tmp_path / "out")  # type: ignore[arg-type]
+    assert staged == 1
+    assert skipped == {"declaring no single named ontology": 1}
+    assert len(list((tmp_path / "out").iterdir())) == 2

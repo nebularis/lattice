@@ -2,7 +2,7 @@
 // The author's journey through the studio, against the fake service in fake-service.ts.
 
 import { expect, test, type Page } from "@playwright/test";
-import { FakeService } from "./fake-service";
+import { FakeService, STAGED_FIRST, STAGED_SECOND } from "./fake-service";
 
 const PROFILE = "https://example.org/lending#LoanApplicationStrongProfile";
 
@@ -799,4 +799,30 @@ test("a fence job that fails holds nothing, names the file and keeps the dialog 
   await expect(page.getByRole("region", { name: "Ontologies" }).getByText("missing", { exact: true })).toHaveCount(2);
   await dialog.getByRole("button", { name: "Back to the plan" }).click();
   await expect(dialog.getByRole("button", { name: "Hold 2 imports" })).toBeEnabled();
+});
+
+test("an import only LATTICE's documents give is resolved with no file given, and confirming holds it and the one it imports", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await importingWorkspace(page, fake, [STAGED_FIRST]);
+  const list = page.getByRole("region", { name: "Ontologies" });
+  await expect(list.getByText("missing", { exact: true })).toHaveCount(1);
+
+  await page.getByRole("button", { name: "Import ontologies" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import ontologies" });
+  await dialog.getByRole("button", { name: "Show the plan" }).click();
+
+  const plan = dialog.getByRole("table", { name: "Import plan" });
+  await expect(plan.getByRole("row")).toHaveCount(3);
+  await expect(plan.getByRole("row", { name: /^example\.org\/lattice\/staged\/alpha/ })).toContainText("from LATTICE's documents");
+  await expect(plan.getByRole("row", { name: /^example\.org\/lattice\/staged\/beta/ })).toContainText("from LATTICE's documents");
+  await expect(dialog.getByRole("status")).toHaveText("2 to hold now, 0 already held, 0 missing.");
+  expect(fake.holds).toHaveLength(0);
+
+  await dialog.getByRole("button", { name: "Hold 2 imports" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(fake.holds).toHaveLength(1);
+  expect(fake.holds[0].labels.sort()).toEqual([STAGED_FIRST, STAGED_SECOND]);
+  expect(fake.workspaces.get(ws)!.imports.map((i) => i.ontology).sort()).toEqual([STAGED_FIRST, STAGED_SECOND]);
+  await expect(list.getByText("held", { exact: true })).toHaveCount(2);
+  await expect(list.getByText("missing", { exact: true })).toHaveCount(0);
 });

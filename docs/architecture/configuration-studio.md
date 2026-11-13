@@ -46,9 +46,9 @@ flowchart LR
 | Component | Owns | Never does |
 |---|---|---|
 | browser application | the editors, derived from the vocabularies it is served, and the sorting of an imported graph into a workspace's parts | interpret a finding or compile |
-| service | HTTP, reads of the store, and the publication of jobs and writes | interpret `dal:`, `srf:` or the other layers' terms, or write the store |
+| service | HTTP, reads of the store, the staged vocabulary and samples, LATTICE's own ontology documents by the IRI a staged index holds, and the publication of jobs and writes | interpret `dal:`, `srf:` or the other layers' terms, or write the store |
 | store writer (`config-studio-writer`) | every write to the store for the partitions it holds, in batches of one request each, the revision guard, a receipt per write, and the sweep of finished jobs | serve HTTP, or apply a command it has not checked |
-| worker | validation and compilation, with the engines `mise run check` uses | take a path, a command or a graph of its own choosing from a message |
+| worker | validation and compilation, with the engines `mise run check` uses, and a validation of the baseline that warns of an `owl:imports` no held document declares (SVA-Q7) | take a path, a command or a graph of its own choosing from a message |
 | transforms worker (`config-studio-transforms`) | running a compile job's XSLT stylesheets and JOLT chains over a sample source and attributing what they write to the mappings, warm between requests (ADR-A148) | write the store, or run a transform the compile job does not hold |
 | Fuseki | every workspace and job, as named graphs | hold state the service or worker keeps elsewhere |
 | RabbitMQ | delivery of job IRIs to the worker, and of writes to the writer of their partition on a super stream | carry a job's content to the worker |

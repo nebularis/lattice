@@ -11,14 +11,11 @@ import { api, awaitJob, type WorkspaceSummary } from "../api";
 import { isAbort, useUnmountSignal } from "../jobs";
 import { buildCatalogLookup, normalisePath } from "../rdf/catalog";
 import { heldByIri, shortIri, shortLabel, type HeldImport } from "../rdf/held";
-import { mediaTypeOf, resolveImports, type ImportPlan, type ImportStatus, type MediaType, type PlanNode } from "../rdf/imports";
+import { mediaTypeOf, resolveImports, type ImportPlan, type ImportStatus, type MediaType, type OntologyHeader, type PlanNode } from "../rdf/imports";
 import { Modal, Spinner } from "./kit";
 
-/**
- * The IRIs of the documents the service stages. LATTICE's own documents are staged by a later slice (SVA-B2b), so none is offered
- * here yet, and an import that only a staged document could give is reported missing.
- */
-export const STAGED_DOCUMENTS: readonly string[] = [];
+/** What the service stages when it stages nothing, or is too old to say. An import only a staged document could give is then missing. */
+const NO_STAGED: ReadonlyMap<string, OntologyHeader> = new Map();
 
 /** The workspace's own baseline takes part in the plan as one more file, under a name that a dropped file may not use. */
 export const BASELINE_PATH = "(workspace baseline).ttl";
@@ -46,6 +43,8 @@ interface HoldFile {
   mediaType: MediaType;
   /** The ontology IRI the document declares, which labels the import. */
   ontology?: string;
+  /** A document of LATTICE's, whose text is fetched from the service when it is held, by `ontology`, and is no dropped file. */
+  staged?: boolean;
 }
 
 interface Planned {
@@ -71,14 +70,19 @@ export function describeStatus(status: ImportStatus): string {
     case "held":
       return "already held";
     case "staged":
-      return "staged by the service";
+      return "from LATTICE's documents";
     case "missing":
       return "missing";
   }
 }
 
 /** The plan for the workspace's baseline from what was chosen. Pure, so the same files in any order give the same plan. */
-export function planImports(baseline: Graph, chosen: readonly Chosen[], held: readonly HeldImport[]): Planned {
+export function planImports(
+  baseline: Graph,
+  chosen: readonly Chosen[],
+  held: readonly HeldImport[],
+  staged: ReadonlyMap<string, OntologyHeader> = NO_STAGED,
+): Planned {
   const dropped = chosen.map((f) => ({ path: normalisePath(f.path), text: f.text }));
   const catalogs = dropped
     .filter((f) => CATALOG.test(f.path))
@@ -91,7 +95,7 @@ export function planImports(baseline: Graph, chosen: readonly Chosen[], held: re
     files: [...documents, { path: BASELINE_PATH, text: baseline.toTurtle(), mediaType: "text/turtle" }],
     catalog: lookup.lookup,
     held: heldByIri(held),
-    staged: STAGED_DOCUMENTS,
+    staged,
   });
   const problems = [
     ...lookup.errors.map((e) => `The catalog ${e.path} could not be read: ${e.message}.`),
@@ -100,14 +104,22 @@ export function planImports(baseline: Graph, chosen: readonly Chosen[], held: re
   ];
   const texts = new Map(documents.map((f) => [f.path, f.text]));
   const byPath = new Map<string, HoldFile>();
+  const stagedDocuments = new Map<string, HoldFile>();
   for (const node of plan.nodes) {
+    if (node.status === "staged") {
+      // The ontology IRI and the version IRI of one document are two nodes and one document, held once.
+      const ontology = node.ontologyIri ?? node.iri;
+      stagedDocuments.set(ontology, { path: ontology, text: "", mediaType: "text/turtle", ontology, staged: true });
+      continue;
+    }
     if ((node.status !== "catalog" && node.status !== "file") || node.path === undefined || byPath.has(node.path)) continue;
     const mediaType = mediaTypeOf(node.path);
     const text = texts.get(node.path);
     if (mediaType === undefined || text === undefined) continue;
     byPath.set(node.path, { path: node.path, text, mediaType, ontology: node.ontologyIri });
   }
-  return { plan, catalog: start?.path, problems, toHold: [...byPath.values()].sort((a, b) => compare(a.path, b.path)) };
+  const toHold = [...byPath.values(), ...stagedDocuments.values()].sort((a, b) => compare(a.path, b.path));
+  return { plan, catalog: start?.path, problems, toHold };
 }
 
 /** The label an import is held under, which is at most 200 characters. */
@@ -138,6 +150,7 @@ export function ImportDialog(props: { workspace: string; baseline: Graph; held: 
   const [phase, setPhase] = useState<Phase>("digesting");
   const [error, setError] = useState<string>();
   const digested = useRef(new Map<string, string>());
+  const stagedRef = useRef<ReadonlyMap<string, OntologyHeader> | undefined>(undefined);
   const signal = useUnmountSignal();
 
   const add = async (list: FileList | null) => {
@@ -161,9 +174,12 @@ export function ImportDialog(props: { workspace: string; baseline: Graph; held: 
     setIgnored((i) => [...i, ...left]);
   };
 
-  const showPlan = () => {
+  const showPlan = async () => {
     digested.current.clear();
-    setPlanned(planImports(baseline, chosen, held));
+    // Read once a dialog. A service that stages nothing, or fails, leaves every import to the files and the held imports.
+    stagedRef.current ??= await api.stagedOntologies().catch(() => NO_STAGED);
+    if (signal().aborted) return;
+    setPlanned(planImports(baseline, chosen, held, stagedRef.current));
     setStep("plan");
   };
 
@@ -183,7 +199,8 @@ export function ImportDialog(props: { workspace: string; baseline: Graph; held: 
         if (!file || failed || signal().aborted) return;
         set(file.path, { state: "running" });
         try {
-          const job = await api.submitFence(workspace, file.text, file.mediaType);
+          const text = file.staged ? await api.stagedOntology(file.path) : file.text;
+          const job = await api.submitFence(workspace, text, file.mediaType);
           const done = await awaitJob(job, signal());
           if (done.status === "Failed") throw new Error(done.failure ?? "The document could not be read.");
           digested.current.set(file.path, job);
@@ -229,7 +246,7 @@ export function ImportDialog(props: { workspace: string; baseline: Graph; held: 
     step === "choose" ? (
       <>
         <button className="btn" onClick={onClose}>Cancel</button>
-        <button className="btn primary" onClick={showPlan}>Show the plan</button>
+        <button className="btn primary" onClick={() => void showPlan()}>Show the plan</button>
       </>
     ) : step === "plan" ? (
       <>
@@ -251,7 +268,7 @@ export function ImportDialog(props: { workspace: string; baseline: Graph; held: 
     <Modal
       wide
       title="Import ontologies"
-      subtitle="Choose the files, check how each import of the baseline resolves, then confirm. Nothing is written before you confirm and nothing is fetched from the web."
+      subtitle="Choose the files, check how each import of the baseline resolves, then confirm. LATTICE's own documents need no file. Nothing is written before you confirm and nothing is fetched from the web."
       onClose={onClose}
       footer={footer}
     >

@@ -116,6 +116,39 @@ describe("resolveImports", () => {
     expect(statuses(plan)[`${EX}x`]).toBe("held");
   });
 
+  it("walks through a staged document to its own imports when staged is a map of headers", () => {
+    const staged = new Map([
+      [`${EX}s`, { ontologyIri: `${EX}s`, versionIri: `${EX}s/1`, imports: [`${EX}t`] }],
+      [`${EX}s/1`, { ontologyIri: `${EX}s`, versionIri: `${EX}s/1`, imports: [`${EX}t`] }],
+      [`${EX}t`, { ontologyIri: `${EX}t`, imports: [] }],
+    ]);
+    const plan = resolveImports(input({ roots: ["r.ttl"], files: [file("r.ttl", ttl(`${EX}r`, [`${EX}s`]))], staged }));
+    expect(statuses(plan)).toEqual({ [`${EX}r`]: "file", [`${EX}s`]: "staged", [`${EX}t`]: "staged" });
+    expect(plan.nodes.find((n) => n.iri === `${EX}s`)).toMatchObject({ ontologyIri: `${EX}s`, versionIri: `${EX}s/1`, importedBy: [`${EX}r`] });
+    expect(plan.edges).toEqual([
+      { from: `${EX}r`, to: `${EX}s` },
+      { from: `${EX}s`, to: `${EX}t` },
+    ]);
+  });
+
+  it("reports an import a staged document states and nothing resolves as missing", () => {
+    const staged = new Map([[`${EX}s`, { ontologyIri: `${EX}s`, imports: [`${EX}gone`] }]]);
+    const plan = resolveImports(input({ roots: ["r.ttl"], files: [file("r.ttl", ttl(`${EX}r`, [`${EX}s`]))], staged }));
+    expect(statuses(plan)).toEqual({ [`${EX}r`]: "file", [`${EX}s`]: "staged", [`${EX}gone`]: "missing" });
+    expect(plan.nodes.find((n) => n.iri === `${EX}gone`)?.importedBy).toEqual([`${EX}s`]);
+  });
+
+  it("ends a cycle through staged documents", () => {
+    const staged = new Map([
+      [`${EX}a`, { ontologyIri: `${EX}a`, imports: [`${EX}b`] }],
+      [`${EX}b`, { ontologyIri: `${EX}b`, imports: [`${EX}a`, `${EX}r`] }],
+    ]);
+    const plan = resolveImports(input({ roots: ["r.ttl"], files: [file("r.ttl", ttl(`${EX}r`, [`${EX}a`]))], staged }));
+    expect(statuses(plan)).toEqual({ [`${EX}r`]: "file", [`${EX}a`]: "staged", [`${EX}b`]: "staged" });
+    expect(plan.edges).toContainEqual({ from: `${EX}b`, to: `${EX}a` });
+    expect(plan.edges).toContainEqual({ from: `${EX}b`, to: `${EX}r` });
+  });
+
   it("walks through resolved documents to their own imports", () => {
     const plan = resolveImports(
       input({ roots: ["r.ttl"], files: [file("r.ttl", ttl(`${EX}r`, [`${EX}a`])), file("a.ttl", ttl(`${EX}a`, [`${EX}b`])), file("b.ttl", ttl(`${EX}b`, [`${EX}gone`]))] }),

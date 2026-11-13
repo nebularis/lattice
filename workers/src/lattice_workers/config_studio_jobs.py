@@ -143,7 +143,7 @@ class _Result:
         self._count += 1
         return URIRef(f"{self.job}#{kind}-{self._count}")
 
-    def finding(self, severity: URIRef, message: str, code: Optional[str] = None, focus: Any = None) -> None:
+    def finding(self, severity: URIRef, message: str, code: Optional[str] = None, focus: Any = None, path: Any = None, value: Any = None) -> None:
         node = self._mint("result")
         add = self.graph.add
         add((self.report, SH.result, node))
@@ -154,6 +154,10 @@ class _Result:
             add((node, CST.code, Literal(code)))
         if isinstance(focus, URIRef):
             add((node, SH.focusNode, focus))
+        if isinstance(path, URIRef):
+            add((node, SH.resultPath, path))
+        if value is not None:
+            add((node, SH.value, value))
 
     def conforms(self, value: bool) -> None:
         literal = Literal(value, datatype=XSD.boolean)

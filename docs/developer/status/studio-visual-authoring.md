@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-B3 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-B2b and SVA-B4, which complete phase B, and SVA-R0's probes, which need a running stack and unblock phase R. The maintainer accepts or rejects ADR-A154, and decides TD-164, both put to them on 2026-11-13.
+**Next action:** paused after SVA-B2b for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-B4, which completes phase B, and SVA-R0's probes, which need a running stack and unblock phase R. For the maintainer: ratify or change `baseline` as a target of `validate`, which SVA-B2b added to carry the warning, say whether the browser's live validation should take the baseline, which it does not yet, accept or reject ADR-A154, and decide TD-164.
 
 ## Slices
 
@@ -30,7 +30,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R5 | the run protocol's failure cases on the real stack | planned | SVA-R2, SVA-R3, SVA-R4 |
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2a | several imports held by one write, each with its ontology and version IRI | built 2026-11-12, building 2026-11-12 |  |
-| SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | building 2026-11-13 | SVA-B2a |
+| SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | built 2026-11-13, building 2026-11-13 | SVA-B2a |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | built 2026-11-13, building 2026-11-13 | SVA-B1, SVA-B2a |
 | SVA-B4 | the import graph | planned | SVA-B3, SVA-O1 |
 | SVA-O1 | the canvas kit, with our own layered layout behind one function | built 2026-11-12, building 2026-11-12 |  |
@@ -68,6 +68,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-13, SVA-O2: an edge both origins state was given the origin shape, and the hop limit was raised by one. Five tests failed, among them the toggle only adding edges and the facility file's four links. Restored, 20 of 20 passing.
 - 2026-11-13, SVA-O2a: a label was left only the middle of its edge. Four tests failed, among them the two over the facility sample. Restored, 23 of 23 passing.
 - 2026-11-13, SVA-B3: a held import's ontology and version IRI were left out of `heldByIri`. Six tests failed. Restored, 16 of 16 passing.
+- 2026-11-13, SVA-B2b: the service's check that an index entry names a staged copy, 64 hexadecimal digits and `.ttl`, was removed. `aRequestCannotNameAFile` and the listing test failed, a file outside the copies being served. Restored, 37 of 37 passing.
 
 ## Log
 
@@ -91,3 +92,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-13: SVA-B3 picked up. LATTICE's staged documents are SVA-B2b and not built, so the dialog resolves from dropped files and held imports and passes no staged document.
 - 2026-11-13: SVA-B3 built, [Validation Pack](../validation/SVA-B3.md). The Baseline view lists the workspace's own ontology, each held import and each missing one, and its dialog takes files or a folder, shows how every import of the baseline resolves, and on confirmation digests each file by a fence job, four at once, then holds them all in one request. A missing import never blocks. `rdf/held.ts` derives the list and what is missing from the baseline and the held imports. The fake service had no fence job or import route, so all of it was added there. The dialog has no drop area, only the two inputs, since the kit's file reader gives no relative path. Verified with 293 unit tests, the type check and 29 browser tests on the fake service. The real service has not been driven from this dialog.
 - 2026-11-13: SVA-B2b picked up. It also touches the service, which serves the staged documents, and the browser, whose dialog offers them, beyond the staging tool and the worker the plan named.
+- 2026-11-13: SVA-B2b built, [Validation Pack](../validation/SVA-B2b.md). Staging copies each of the 48 documents LATTICE's catalog names under its content digest with an index, the service lists them at `/api/ontologies` and serves one by its ontology IRI or version IRI, found through the index alone, and the import walk and the dialog continue through them. A decision taken alone, for the maintainer to ratify: `baseline` is now a target of `validate`, and of nothing else, so that a validation can report an import no held document declares as the warning `ImportNotHeld`. One test that asserted that target was refused now asserts it for `compile` and `propose`. Left undone: the browser's live validation does not submit the baseline, since it runs over the configuration parts and the baseline is not one, so the warning reaches a client that asks and the Baseline view shows what is missing from its own list. `check:config-studio` gained the new worker test file. Verified with `mise run check:config-studio`, which exited 0 with 21, 171 and 296 tests passed in its three suites, 24, 204 and 10 in the three Java modules, and 30 browser tests on the fake service.

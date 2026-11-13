@@ -76,7 +76,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | spc-package-split | unit |  | merged 2026-09-20 |  | [status](status/spc-package-split.md) |
 | studio-publication | multi-slice unit in four phases | PB | built 2026-10-31 | PB-1 | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
 | studio-quality | multi-slice unit | SQ | built 2026-10-31 | SQ-1 | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
-| studio-visual-authoring | multi-slice unit | SVA | building 2026-11-12 | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md), 8 Validation Packs |
+| studio-visual-authoring | multi-slice unit | SVA | building 2026-11-12 | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md), 9 Validation Packs |
 | studio-worker-liveness | multi-slice unit | WL | built 2026-11-06 | WL-0 | [plan](plans/studio-worker-liveness.md), [status](status/studio-worker-liveness.md) |
 | surface-mork-unified-projection | unit |  | merged 2026-09-22 |  | [status](status/surface-mork-unified-projection.md) |
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
@@ -524,7 +524,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-R5 | the run protocol's failure cases on the real stack | studio-visual-authoring | planned | SVA-R2, SVA-R3, SVA-R4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-B2a | several imports held by one write, each with its ontology and version IRI | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | studio-visual-authoring | building 2026-11-13 | SVA-B2a | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | studio-visual-authoring | built 2026-11-13 | SVA-B2a | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | studio-visual-authoring | built 2026-11-13 | SVA-B1, SVA-B2a | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-B4 | the import graph | studio-visual-authoring | planned | SVA-B3, SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-O1 | the canvas kit, with our own layered layout behind one function | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |

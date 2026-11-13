@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 // The service's HTTP API (contracts/config-studio/README.md). Every body is Turtle.
 
-import { COMMENT, CST, Graph, LABEL, localName } from "@lattice/authoring-domain";
+import { COMMENT, CST, Graph, LABEL, OWL, localName } from "@lattice/authoring-domain";
+import type { OntologyHeader } from "./rdf/imports";
 import { patchOf, patchTrig } from "./rdf/patch";
 import { readJob, type Job } from "./rdf/report";
 import { CONFIG_PARTS, type ConfigPart, type Part } from "./rdf/split";
@@ -93,6 +94,38 @@ function summary(graph: Graph, iri: string): WorkspaceSummary {
 export const api = {
   async vocabulary(): Promise<string> {
     return (await request("/api/vocabulary")).text();
+  },
+
+  /**
+   * LATTICE's own ontology documents the service stages (SVA-B2b), from each document's ontology IRI and each version IRI it declares to
+   * its header. Empty when the service stages none, which it says with 404, so an older service behaves as it did.
+   */
+  async stagedOntologies(): Promise<Map<string, OntologyHeader>> {
+    let text: string;
+    try {
+      text = await (await request("/api/ontologies")).text();
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return new Map();
+      throw e;
+    }
+    const graph = Graph.parse(text);
+    const staged = new Map<string, OntologyHeader>();
+    for (const node of graph.ofType(OWL("Ontology"))) {
+      const version = graph.value(node, OWL("versionIRI"));
+      const header: OntologyHeader = {
+        ontologyIri: node.value,
+        imports: graph.objects(node, OWL("imports")).map((o) => o.value).sort(),
+        ...(version === undefined ? {} : { versionIri: version }),
+      };
+      staged.set(node.value, header);
+      if (version !== undefined) staged.set(version, header);
+    }
+    return staged;
+  },
+
+  /** The text of the staged document whose ontology IRI or version IRI is `iri`, as Turtle. */
+  async stagedOntology(iri: string): Promise<string> {
+    return (await request(`/api/ontologies?${new URLSearchParams({ iri })}`)).text();
   },
 
   async samples(): Promise<Sample[]> {

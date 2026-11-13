@@ -286,6 +286,10 @@ class ConfigStudioWorker:
         if graph.value(job, CST.kind) == CST.Analyse:
             document = self._read(graph, job, CST.configGraph, "document", allowed=lambda iri: iri == f"{job}:input")
             return analyse_document(job, document)
+        if graph.value(job, CST.kind) == CST.Validate and graph.value(job, CST.target) == CST.Baseline:
+            from .config_studio_imports import validate_baseline
+
+            return validate_baseline(job, input_("configuration"), self._held_imports(graph, job))
         kind = _KINDS.get(graph.value(job, CST.kind))
         target = _TARGETS.get(graph.value(job, CST.target))
         submitted = graph.value(job, CST.submittedAt)
@@ -330,6 +334,19 @@ class ConfigStudioWorker:
             return self._get(iri)
         except GraphNotFound:
             return Graph()
+
+    def _held_imports(self, graph: Graph, job: URIRef) -> list:
+        """The fenced imports the job names as context, each as its own graph, in the order of their graph names. They are told
+        apart from the workspace's parts by name, as `_context` tells them (the service and the writer checked each when the job
+        was submitted)."""
+        held = []
+        for iri in sorted(graph.objects(job, CST.contextGraph), key=str):
+            if _IMPORT_GRAPH.fullmatch(str(iri)):
+                try:
+                    held.append(self._get(str(iri)))
+                except GraphNotFound:
+                    pass
+        return held
 
     def _context(self, graph: Graph, job: URIRef) -> Graph:
         """The graphs a job names as its context: its own workspace's other configuration parts (STD-298), a part never

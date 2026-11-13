@@ -300,7 +300,8 @@ class StudioApiTest {
     void anInvalidKindOrTargetIs400() {
         f.createWorkspace("One");
         assertEquals(400, f.post(WS_PATH + "/jobs", "kind=build&target=surface", CONFIG).status());
-        assertEquals(400, f.post(WS_PATH + "/jobs", "kind=validate&target=baseline", CONFIG).status());
+        assertEquals(400, f.post(WS_PATH + "/jobs", "kind=compile&target=baseline", CONFIG).status());
+        assertEquals(400, f.post(WS_PATH + "/jobs", "kind=propose&target=baseline", CONFIG).status());
         assertEquals(400, f.post(WS_PATH + "/jobs", "kind=compile&target=vocabulary", CONFIG).status());
         assertEquals(400, f.post(WS_PATH + "/jobs", "kind=compile&target=quantification", CONFIG).status());
         assertEquals(400, f.post(WS_PATH + "/jobs", null, CONFIG).status());
@@ -481,5 +482,106 @@ class StudioApiTest {
         assertEquals("no-store", health.headers().get("Cache-Control"));
         assertEquals("nosniff", health.headers().get("X-Content-Type-Options"));
         assertEquals("no-store", f.get("/api/nothing").headers().get("Cache-Control"));
+    }
+
+    // --- LATTICE's staged ontology documents (SVA-B2b) ---------------------------------------
+
+    private static final String FND = "https://www.nebularis.org/neuro-semantic/foundation";
+    private static final String FND_VERSION = "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1";
+    private static final String FND_FILE = "a".repeat(64) + ".ttl";
+    private static final String OTHER_FILE = "b".repeat(64) + ".ttl";
+    private static final String FND_TEXT = "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n<" + FND + "> a owl:Ontology .\n";
+
+    /** Stages the way tools/config_studio_stage.py does: copies named by a digest, and an index naming each. */
+    private Fixture withOntologies() throws IOException {
+        Path folder = java.nio.file.Files.createDirectories(dir.resolve("ontologies"));
+        java.nio.file.Files.writeString(folder.resolve(FND_FILE), FND_TEXT);
+        java.nio.file.Files.writeString(folder.resolve(OTHER_FILE), "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n<urn:x:other> a owl:Ontology .\n");
+        java.nio.file.Files.writeString(dir.resolve("secret.ttl"), "@prefix ex: <https://example.org/> .\nex:secret ex:p ex:o .\n");
+        java.nio.file.Files.writeString(folder.resolve("index.ttl"), "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+            + "@prefix cst: <" + LATTICE + "config-studio#> .\n"
+            + "<" + FND + "> a owl:Ontology ; owl:versionIRI <" + FND_VERSION + "> ; owl:imports <http://www.w3.org/ns/prov-o-20130430> ; cst:stagedAs \"" + FND_FILE + "\" .\n"
+            + "<urn:x:other> a owl:Ontology ; cst:stagedAs \"" + OTHER_FILE + "\" .\n"
+            + "<urn:x:escape> a owl:Ontology ; cst:stagedAs \"../secret.ttl\" .\n");
+        return new Fixture(dir);
+    }
+
+    @Test
+    void theStagedOntologiesAreListedWithoutTheirFilesAndCarryAnEtag() throws IOException {
+        f = withOntologies();
+        ApiResponse r = f.get("/api/ontologies");
+        assertEquals(200, r.status());
+        String text = new String(r.body(), java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue(text.contains(FND) && text.contains(FND_VERSION) && text.contains("prov-o-20130430"), text);
+        assertFalse(text.contains("stagedAs") || text.contains(FND_FILE) || text.contains("secret"), text);
+        assertFalse(text.contains("urn:x:escape"), "an entry naming a file that is not a staged copy is not served");
+        String etag = r.headers().get("ETag");
+        assertTrue(etag.startsWith("\"") && etag.endsWith("\""));
+        ApiResponse again = f.send("GET", "/api/ontologies", Map.of("if-none-match", etag), null);
+        assertEquals(304, again.status());
+        assertEquals(0, again.body().length);
+        assertEquals(200, f.send("GET", "/api/ontologies", Map.of("if-none-match", "\"other\""), null).status());
+        assertEquals(405, f.send("POST", "/api/ontologies", Map.of(), null).status());
+    }
+
+    @Test
+    void aStagedDocumentIsServedByItsOntologyIriOrItsVersionIri() throws IOException {
+        f = withOntologies();
+        for (String iri : List.of(FND, FND_VERSION)) {
+            ApiResponse r = f.send("GET", "/api/ontologies", "iri=" + java.net.URLEncoder.encode(iri, java.nio.charset.StandardCharsets.UTF_8), Map.of(), new byte[0]);
+            assertEquals(200, r.status(), iri);
+            assertEquals(FND_TEXT, new String(r.body(), java.nio.charset.StandardCharsets.UTF_8));
+            assertTrue(r.headers().get("Content-Type").startsWith("text/turtle"));
+            assertEquals(304, f.send("GET", "/api/ontologies", "iri=" + java.net.URLEncoder.encode(iri, java.nio.charset.StandardCharsets.UTF_8),
+                Map.of("if-none-match", r.headers().get("ETag")), new byte[0]).status());
+        }
+    }
+
+    @Test
+    void anIriTheIndexDoesNotHoldIs404AndOneThatIsNotAbsoluteIs400() throws IOException {
+        f = withOntologies();
+        assertEquals(404, f.send("GET", "/api/ontologies", "iri=urn%3Ax%3Aunknown", Map.of(), new byte[0]).status());
+        assertEquals(400, f.send("GET", "/api/ontologies", "iri=", Map.of(), new byte[0]).status());
+        assertEquals(400, f.send("GET", "/api/ontologies", "iri=foundation", Map.of(), new byte[0]).status());
+        assertEquals(400, f.send("GET", "/api/ontologies", "iri=a%20b%3Ac", Map.of(), new byte[0]).status());
+        assertEquals(400, f.send("GET", "/api/ontologies", "iri=urn%3Ax%3Aa&iri=urn%3Ax%3Ab", Map.of(), new byte[0]).status());
+        assertEquals(400, f.send("GET", "/api/ontologies", "iri=%zz", Map.of(), new byte[0]).status());
+    }
+
+    @Test
+    void aRequestCannotNameAFile() throws IOException {
+        f = withOntologies();
+        for (String asked : List.of("../vocabulary.ttl", "..%2Fvocabulary.ttl", "/etc/passwd", "../secret.ttl", FND_FILE, "ontologies/" + FND_FILE, "file:///" + FND_FILE,
+            "urn:x:escape", "index.ttl", "ontologies/index.ttl")) {
+            ApiResponse r = f.send("GET", "/api/ontologies", "iri=" + java.net.URLEncoder.encode(asked, java.nio.charset.StandardCharsets.UTF_8), Map.of(), new byte[0]);
+            assertTrue(r.status() == 400 || r.status() == 404, asked + " answered " + r.status());
+            String body = new String(r.body(), java.nio.charset.StandardCharsets.UTF_8);
+            assertFalse(body.contains("secret") || body.contains("owl:Ontology") || body.contains("https://example.org/v"), asked);
+        }
+        assertEquals(404, f.get("/api/ontologies/" + FND_FILE).status());
+        assertEquals(404, f.get("/api/ontologies/index.ttl").status());
+    }
+
+    @Test
+    void aStagedFolderWithoutAnOntologyIndexAnswers404AndStillStarts() {
+        assertEquals(404, f.get("/api/ontologies").status());
+        assertEquals(404, f.send("GET", "/api/ontologies", "iri=urn%3Ax%3Aother", Map.of(), new byte[0]).status());
+        assertEquals(200, f.get("/api/vocabulary").status());
+    }
+
+    @Test
+    void aValidationOfTheBaselineIsSubmittedLikeAnyOtherAndNamesEveryPartAsContext() {
+        f.createWorkspace("One");
+        assertEquals(202, f.post(WS_PATH + "/jobs", "kind=validate&target=baseline", CONFIG).status());
+        Model job = f.store.graph(Graphs.job(Fixture.id(2)));
+        Resource node = job.getResource(Graphs.job(Fixture.id(2)));
+        assertTrue(job.contains(node, Cst.kind, Cst.Validate));
+        assertTrue(job.contains(node, Cst.target, Cst.target("baseline")));
+        java.util.Set<String> got = new java.util.TreeSet<>();
+        job.listObjectsOfProperty(node, Cst.contextGraph).forEachRemaining(o -> got.add(o.asResource().getURI()));
+        java.util.Set<String> want = new java.util.TreeSet<>();
+        org.nebularis.lattice.studio.model.Workspace.CONFIGS.forEach(p -> want.add(Graphs.config(WS, p)));
+        assertEquals(want, got);
+        same(Fixture.model(CONFIG), f.store.graph(Graphs.jobInput(Fixture.id(2))));
     }
 }

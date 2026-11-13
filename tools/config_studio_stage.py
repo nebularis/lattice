@@ -9,15 +9,17 @@ rdflib, and finds every repository file through the catalogue here (STD-273).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import sys
 from pathlib import Path
-from typing import Iterable, List
+from typing import Dict, Iterable, List, Tuple
 
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lattice_repo_catalogue  # noqa: E402
+import ontology_catalog  # noqa: E402
 
 CST = Namespace("https://www.nebularis.org/neuro-semantic/lattice/config-studio#")
 SAMPLE_PREFIX = "urn:lattice:studio:sample:"
@@ -121,9 +123,65 @@ def stage(root: Path, out: Path) -> None:
     mtp = catalogue.root / catalogue.module("mork").directory("mtp") / "out" / "l0.txt"
     (out / "prompts" / "mtp-l0.txt").write_text(mtp.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     stage_mork(out / "mork")
+    staged, skipped = stage_ontologies(catalogue, out / "ontologies")
+    print(f"staged {staged} ontology documents, skipped {sum(skipped.values())}" + "".join(f", {n} {why}" for why, n in sorted(skipped.items())))
     stage_persistence(catalogue, out / "persistence")
     stage_maintenance(catalogue, out / "maintenance")
     print(f"staged {out.as_posix()}")
+
+
+def stage_ontologies(catalogue: lattice_repo_catalogue.Catalogue, folder: Path) -> Tuple[int, Dict[str, int]]:
+    """LATTICE's own ontology documents, which the service serves by their ontology IRI or version IRI (SVA-B2b, ADR-A88). The
+    catalog is read with `ontology_catalog.Catalog`. Each entry whose target is a Turtle file that exists under the ontology
+    root is copied once, under the SHA-256 of its content, so two IRIs of one file share one copy. `index.ttl` describes each
+    document by its ontology IRI, its version IRIs, the `owl:imports` it states and `cst:stagedAs`, the copy's file name. An entry
+    that names a web location or a missing file is not a document, and is not counted. A document is skipped, and counted by
+    reason, when it is not Turtle or does not parse, or declares no single named `owl:Ontology`. Returns the number staged and the
+    skipped count for each reason."""
+    import shutil
+
+    ontology = catalogue.root / catalogue.area("ontology")
+    catalog = ontology_catalog.Catalog(ontology / ontology_catalog.CATALOG_NAME)
+    files = sorted({(ontology / location).resolve() for location in catalog.entries.values() if "://" not in location})
+    shutil.rmtree(folder, ignore_errors=True)
+    folder.mkdir(parents=True)
+    index = Graph()
+    index.bind("cst", CST)
+    index.bind("owl", OWL)
+    skipped: Dict[str, int] = {}
+
+    def skip(reason: str) -> None:
+        skipped[reason] = skipped.get(reason, 0) + 1
+
+    copies: Dict[str, bytes] = {}
+    for file in files:
+        if not file.is_file() or ontology.resolve() not in file.parents:
+            continue
+        if file.suffix != ".ttl":
+            skip("not Turtle")
+            continue
+        data = file.read_bytes()
+        try:
+            document = Graph().parse(data=data, format="turtle")
+        except Exception:  # rdflib raises several unrelated types
+            skip("not Turtle")
+            continue
+        named = sorted(n for n in document.subjects(RDF.type, OWL.Ontology) if isinstance(n, URIRef))
+        if len(named) != 1:
+            skip("declaring no single named ontology")
+            continue
+        name = hashlib.sha256(data).hexdigest() + ".ttl"
+        copies[name] = data
+        node = named[0]
+        index.add((node, RDF.type, OWL.Ontology))
+        for predicate in (OWL.versionIRI, OWL.imports):
+            for value in document.objects(node, predicate):
+                index.add((node, predicate, value))
+        index.add((node, CST.stagedAs, Literal(name)))
+    for name, data in sorted(copies.items()):
+        (folder / name).write_bytes(data)
+    index.serialize(folder / "index.ttl", format="turtle", encoding="utf-8")
+    return len(copies), skipped
 
 
 def stage_persistence(catalogue: lattice_repo_catalogue.Catalogue, folder: Path) -> None:
