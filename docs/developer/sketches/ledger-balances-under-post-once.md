@@ -278,7 +278,7 @@ The cut is part of the credit's own record in its period graph, never a posting 
 
 **What it means for the rulings.** The ruling on scenario E2, that an excess goes to a residual account and a ceiling above the stated amount is refused by default, stands as a statement of meaning. It no longer rests on cost, since with cuts a ceiling above the stated amount costs a read nothing. The residual account itself is an account that only receives and has no ancestor, so nothing binds above it, and how it is declared is for LG-Q16's treatment of a residual. LG-Q23 gains the cut as its option (d).
 
-**Decided 2026-11-13.** LG-Q23 is (b) with (d): the posting keeps the amount offered and records the amount applied beside it, and the writer records the cut. LG-16, LG-17 and LG-18 measured that form. The proof that the sum with cuts equals the stepwise balance is owed, in the tranche of work machine S receives once the remaining questions are settled.
+**Decided 2026-11-13.** LG-Q23 is (b) with (d): the posting keeps the amount offered and records the amount applied beside it, and the writer records the cut. LG-16, LG-17 and LG-18 measured that form. The proof that the sum with cuts equals the stepwise balance is owed, and goes to machine S with whatever else can be handed over safely without a benchmark.
 
 ### 4.9 Added 2026-11-12: a posting recorded after it takes effect, and what a read as of an effective day shows
 
