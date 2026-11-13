@@ -70,7 +70,7 @@ A slice's documents change in the slice. Estimates are in tokens.
 | SVA-B2c | the browser's live validation takes the baseline, so the warning for an import that is not held reaches the problems drawer, and runs again when the held imports change | `apps/config-studio` | a baseline with an import that is not held shows the warning in the problems drawer, and it goes when the import is held | SVA-B2b | 110k |
 | SVA-B2d | the writer reads an import's content from its fence job in the store, so a fence command carries no content, and the older form of the command that names no job goes from the contract (TD-164) | `platform/config-studio-core`, `platform/config-studio-service` | a fence command cannot store a graph the job did not digest, and the tests that sent the older form send the new one | SVA-B2a | 150k |
 | SVA-B3 | the Baseline view: the left list of ontologies and imports, the import dialog with its plan, what is missing, and Replace resolving again | `apps/config-studio` | the journey imports a folder with a catalog, shows one import missing, and holds the rest after the author confirms | SVA-B1, SVA-B2a | 200k |
-| SVA-B4 | the import graph, with imports, binds and uses terms of | `apps/config-studio` | the facility sample draws its ontology, its imports and its schemes with the three kinds of edge | SVA-B3, SVA-O1 | 110k |
+| SVA-B4 | the import graph, with imports, binds and uses terms of | `apps/config-studio` | the facility sample draws its ontology and its six schemes with the binds edges its contracts state, a workspace with imports draws the held and the missing ones, and the derived edge is held by unit tests | SVA-B3, SVA-O1 | 110k |
 
 ### Phase O, the ontology
 

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Download, Network, Plus, RefreshCw, Shapes, Upload } from "lucide-react";
 import { Baseline, type BaselineClass } from "../rdf/baseline";
 import { KINDS, checkReferences } from "../rdf/editors";
-import { DAL, Graph, SRF, compact } from "@lattice/authoring-domain";
+import { CST, DAL, Graph, SRF, compact } from "@lattice/authoring-domain";
 import { api } from "../api";
 import { ontologyList, shortIri, type HeldImport } from "../rdf/held";
 import { split } from "../rdf/split";
@@ -35,6 +35,25 @@ export function BaselineView({ selected }: { selected?: string }) {
       if (!graphs[i.digest]) void api.importGraph(id, i.digest).then((g) => setGraphs((m) => ({ ...m, [i.digest]: g })), () => undefined);
     }
   }, [summary.imports]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The graphs of what the workspace depends on, read only and loaded where the import graph is drawn, as the workspace reads them.
+  const [dependencies, setDependencies] = useState<Graph[]>([]);
+  const dependsOn = summary.dependsOn.join(" ");
+  useEffect(() => {
+    if (!diagram) return;
+    let stale = false;
+    void (async () => {
+      const loaded: Graph[] = [];
+      for (const d of dependsOn.split(" ").filter(Boolean)) {
+        const version = d.includes("/rev/1-") ? d : (await api.lineage(d).catch(() => null))?.value(d, CST("current"));
+        const content = version ? await api.version(version).catch(() => null) : null;
+        if (content) loaded.push(content);
+      }
+      if (!stale) setDependencies(loaded);
+    })();
+    return () => {
+      stale = true;
+    };
+  }, [diagram, dependsOn]);
   const held = useMemo<HeldImport[]>(
     () => summary.imports.map((i) => ({ digest: i.digest, label: i.label, ontology: i.ontology, version: i.version, graph: graphs[i.digest] })),
     [summary.imports, graphs],
@@ -121,7 +140,12 @@ export function BaselineView({ selected }: { selected?: string }) {
         </div>
         {diagram && (
           <div className="editor">
-            <OntologyCanvas workspace={id} baseline={baseline} selected={selected} />
+            <OntologyCanvas
+              workspace={id}
+              baseline={baseline}
+              selected={selected}
+              imports={{ held, vocabulary: studio.model.state.configs.vocabulary?.current, dependencies, onOpenImport: () => setImporting(true) }}
+            />
           </div>
         )}
         {!diagram && (<>

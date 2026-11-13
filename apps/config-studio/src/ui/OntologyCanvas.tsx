@@ -3,26 +3,40 @@
 // between them, and another draws the class hierarchy. Both are derived in the browser from the baseline graph and never stored,
 // and the author's positions are kept in this browser by the kit, never in a graph. A class selected in the baseline limits the
 // drawing to its neighbourhood, and clicking a class selects it there by the route the axiom forms use. A whole ontology of
-// many classes is drawn only when the author asks for it, so the page never stops by surprise.
+// many classes is drawn only when the author asks for it, so the page never stops by surprise. A third view draws how the
+// workspace's ontology, the ontologies it imports and its concept schemes relate (SVA-B4), from the graphs the browser holds, and
+// never stores it.
 
 import { useMemo, useState } from "react";
 import { Handle, MarkerType, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
-import { PREFIXES, compact } from "@lattice/authoring-domain";
+import { PREFIXES, compact, type Graph } from "@lattice/authoring-domain";
 import { Canvas, RoutedEdge, type LayoutOptions, type RoutedEdgeData } from "../canvas/kit";
 import type { Baseline } from "../rdf/baseline";
+import { shortIri, type HeldImport } from "../rdf/held";
+import { importGraph, importSummary, type ImportEdge, type ImportNode } from "../rdf/importGraph";
 import { DEFAULT_HOPS, classGraph, counts, hierarchyGraph, type ClassEdge, type ClassGraph, type HierarchyGraph } from "../rdf/ontologyGraph";
 import { go } from "./kit";
 
 /** More classes than this are drawn only when the author asks. */
 export const DRAW_AT_ONCE = 150;
 
-type View = "classes" | "hierarchy";
+type View = "classes" | "hierarchy" | "imports";
 type Hops = "1" | "2" | "3" | "all";
 
 export const LAYOUTS: Record<View, LayoutOptions> = {
   classes: { direction: "LR", columnGap: 420, rowGap: 84 },
   hierarchy: { direction: "TB", columnGap: 110, rowGap: 280 },
+  imports: { direction: "TB", columnGap: 130, rowGap: 30 },
 };
+
+/** What the import graph is drawn from besides the baseline, as the Baseline view holds it. */
+export interface ImportsInput {
+  held: readonly HeldImport[];
+  vocabulary?: Graph;
+  dependencies?: readonly Graph[];
+  /** Opens the import dialog, for a click on a missing import. */
+  onOpenImport?: () => void;
+}
 
 type ClassData = { label: string; short: string; selected: boolean; direction: "LR" | "TB" };
 
@@ -41,10 +55,27 @@ function ClassBox({ data }: NodeProps<Node<ClassData>>) {
 /** The edge classes the stylesheet knows, around what an edge says. */
 const ROUTED = (data: RoutedEdgeData): RoutedEdgeData => ({ ...data, className: "onto-edge", labelClass: "onto-edge-label" });
 
-const NODE_TYPES = { cls: ClassBox };
+type ImportData = { label: string; short: string; kind: ImportNode["kind"]; note: string };
+
+const KIND_NOTE: Record<ImportNode["kind"], string> = { own: "workspace ontology", held: "held import", missing: "missing import", scheme: "concept scheme" };
+const SCHEME_NOTE = { baseline: "in the baseline", vocabulary: "in the vocabulary", import: "in a held import", dependency: "in a dependency" } as const;
+
+function ImportBox({ data }: NodeProps<Node<ImportData>>) {
+  return (
+    <div className={`canvas-node import-node ${data.kind}`} title={`${data.note}, ${data.short}`}>
+      <Handle type="target" position={Position.Top} />
+      <strong className="ellipsis" style={{ display: "block" }}>{data.label}</strong>
+      <div className="small muted mono canvas-terms">{data.short}</div>
+      <div className="small import-note">{data.note}</div>
+      <Handle type="source" position={Position.Bottom} />
+    </div>
+  );
+}
+
+const NODE_TYPES = { cls: ClassBox, imp: ImportBox };
 const EDGE_TYPES = { link: RoutedEdge };
 
-export function OntologyCanvas({ workspace, baseline, selected }: { workspace: string; baseline: Baseline; selected?: string }) {
+export function OntologyCanvas({ workspace, baseline, selected, imports }: { workspace: string; baseline: Baseline; selected?: string; imports?: ImportsInput }) {
   const [view, setView] = useState<View>("classes");
   const [shapes, setShapes] = useState(false);
   const [hops, setHops] = useState<Hops>("2");
@@ -56,17 +87,36 @@ export function OntologyCanvas({ workspace, baseline, selected }: { workspace: s
   const reach = hops === "all" ? Infinity : Number(hops);
   const drawn = useMemo<ClassGraph | HierarchyGraph>(() => {
     const options = { focus, hops: focus ? reach : DEFAULT_HOPS, shapes: view === "classes" && shapes };
+    if (view === "imports") return { nodes: [], edges: [] };
     return view === "classes" ? classGraph(baseline.graph, options) : hierarchyGraph(baseline.graph, options);
   }, [baseline, view, shapes, focus, reach]);
   const held = counts(drawn);
+  const importView = useMemo(
+    () => (view === "imports" ? importGraph({ baseline: baseline.graph, held: imports?.held ?? [], vocabulary: imports?.vocabulary, dependencies: imports?.dependencies }) : undefined),
+    [view, baseline, imports?.held, imports?.vocabulary, imports?.dependencies],
+  );
   // Nothing is drawn of a large ontology until the author asks, unless a class limits it to its neighbourhood.
-  const deferred = !focus && !whole && baseline.classes.size > DRAW_AT_ONCE;
+  const deferred = view !== "imports" && !focus && !whole && baseline.classes.size > DRAW_AT_ONCE;
 
   const nodes = useMemo<Node[]>(
-    () => (deferred ? [] : drawn.nodes.map((n) => ({ id: n.iri, type: "cls", position: { x: 0, y: 0 }, data: { label: n.label, short: compact(n.iri, prefixes), selected: n.iri === focus, direction: LAYOUTS[view].direction } }))),
-    [drawn, deferred, prefixes, focus, view],
+    () => importView ? importView.nodes.map((n) => ({
+      id: n.id, type: "imp", position: { x: 0, y: 0 },
+      data: { label: n.label === n.iri ? shortIri(n.label) : n.label, short: n.iri === undefined ? "declares no ontology IRI" : n.kind === "scheme" ? compact(n.iri, prefixes) : n.kind === "missing" ? n.iri : shortIri(n.iri), kind: n.kind, note: n.kind === "scheme" ? `${KIND_NOTE.scheme}, ${SCHEME_NOTE[n.declaredIn!]}` : KIND_NOTE[n.kind] },
+    })) : (deferred ? [] : drawn.nodes.map((n) => ({ id: n.iri, type: "cls", position: { x: 0, y: 0 }, data: { label: n.label, short: compact(n.iri, prefixes), selected: n.iri === focus, direction: LAYOUTS[view].direction } }))),
+    [drawn, deferred, prefixes, focus, view, importView],
   );
   const edges = useMemo<Edge[]>(() => {
+    if (importView) {
+      const named = new Map(importView.nodes.map((n) => [n.id, n.kind === "scheme" || n.kind === "missing" ? n.label : n.iri ? shortIri(n.iri) : n.label]));
+      return importView.edges.map((e: ImportEdge): Edge => {
+        const from = named.get(e.source) ?? e.source;
+        const to = named.get(e.target) ?? e.target;
+        const marker = { type: MarkerType.ArrowClosed, width: 18, height: 18 };
+        if (e.kind === "imports") return { id: e.id, source: e.source, target: e.target, type: "link", markerEnd: marker, style: { stroke: "var(--accent)", strokeWidth: 1.8 }, data: ROUTED({ title: `${from} imports ${to}, as owl:imports states` }) };
+        if (e.kind === "binds") return { id: e.id, source: e.source, target: e.target, type: "link", markerEnd: marker, style: { stroke: "var(--baseline-c)", strokeWidth: 1.6 }, data: ROUTED({ label: e.label, title: `${e.label} binds ${to}, and constrains a property ${from} declares` }) };
+        return { id: e.id, source: e.source, target: e.target, type: "link", markerEnd: marker, style: { stroke: "var(--text-3)", strokeDasharray: "6 4" }, data: ROUTED({ title: `${from} uses terms of ${to}. Derived from the terms used, not stated`, dashed: true }) };
+      });
+    }
     if (deferred) return [];
     if (view === "hierarchy") {
       // The layout puts a superclass above its subclasses, so the edge runs down and its arrow points back up at the superclass.
@@ -84,9 +134,19 @@ export function OntologyCanvas({ workspace, baseline, selected }: { workspace: s
         style: e.origin === "shape" ? { strokeDasharray: "6 4" } : undefined, data: ROUTED({ label: property, title, dashed: e.origin === "shape" }),
       };
     });
-  }, [drawn, deferred, view, prefixes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [drawn, deferred, view, prefixes, importView]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The layout knows no node's size unless told, and an import node has three lines.
+  const hints = useMemo(() => (importView ? Object.fromEntries(importView.nodes.map((n) => [n.id, { width: 240, height: 76 }])) : undefined), [importView]);
 
   const storageKey = `lattice-studio:ontology-canvas:${workspace}:${view}:${focus ? "focus" : "all"}`;
+  const onNodeClick = (n: Node) => {
+    if (view !== "imports") return go("w", workspace, "baseline", n.id);
+    const node = importView?.nodes.find((x) => x.id === n.id);
+    if (node?.kind === "missing") imports?.onOpenImport?.();
+    // A scheme opens where it is held, in the baseline or in the vocabulary. One an import or a dependency holds has no page.
+    else if (node?.kind === "scheme" && node.iri && (node.declaredIn === "baseline" || node.declaredIn === "vocabulary")) go("w", workspace, node.declaredIn, node.iri);
+  };
   const summary = `${held.classes} ${held.classes === 1 ? "class" : "classes"} and ${held.links} ${held.links === 1 ? "link" : "links"}${view === "classes" && shapes ? `, ${held.byShape} stated by shapes` : ""}`;
 
   return (
@@ -95,23 +155,26 @@ export function OntologyCanvas({ workspace, baseline, selected }: { workspace: s
         <div className="mode-switch" role="group" aria-label="Ontology view" style={{ margin: 0 }}>
           <button aria-pressed={view === "classes"} onClick={() => setView("classes")}>Classes and properties</button>
           <button aria-pressed={view === "hierarchy"} onClick={() => setView("hierarchy")}>Class hierarchy</button>
+          <button aria-pressed={view === "imports"} onClick={() => setView("imports")}>Import graph</button>
         </div>
         {view === "classes" && (
           <label className="row small" style={{ gap: 6 }}>
             <input type="checkbox" checked={shapes} onChange={(e) => setShapes(e.target.checked)} /> Include shapes
           </label>
         )}
-        <label className="row small" style={{ gap: 6 }}>
-          Hops
-          <select className="select" aria-label="Hops around the selected class" value={hops} disabled={!focus} onChange={(e) => setHops(e.target.value as Hops)}>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="all">All</option>
-          </select>
-        </label>
+        {view !== "imports" && (
+          <label className="row small" style={{ gap: 6 }}>
+            Hops
+            <select className="select" aria-label="Hops around the selected class" value={hops} disabled={!focus} onChange={(e) => setHops(e.target.value as Hops)}>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+        )}
         <span className="small muted grow" role="status">
-          {deferred ? `The ontology holds ${held.classes} classes and ${held.links} links.` : `${summary} drawn${focus ? `, around ${label(focus)}` : ""}.`}
+          {importView ? importSummary(importView) : deferred ? `The ontology holds ${held.classes} classes and ${held.links} links.` : `${summary} drawn${focus ? `, around ${label(focus)}` : ""}.`}
         </span>
       </div>
       {deferred ? (
@@ -123,6 +186,11 @@ export function OntologyCanvas({ workspace, baseline, selected }: { workspace: s
         <div className="empty"><p>The baseline declares no class to draw.</p></div>
       ) : (
         <>
+          {view === "imports" && (
+            <p className="small muted" style={{ margin: "6px 0" }}>
+              A solid arrow is an import the ontology states, a labelled arrow binds a scheme through the contract it names, and a dashed arrow is derived from the terms a document uses and is never stated. An orange node is an import no held document declares.
+            </p>
+          )}
           {view === "classes" && <p className="small muted" style={{ margin: "6px 0" }}>An arrow runs from a property's domain to its range.{shapes && " A dashed arrow is stated only by a shape."}</p>}
           <Canvas
             key={`${view}|${focus ?? ""}|${hops}`}
@@ -132,10 +200,13 @@ export function OntologyCanvas({ workspace, baseline, selected }: { workspace: s
             edgeTypes={EDGE_TYPES}
             routing
             options={LAYOUTS[view]}
+            hints={hints}
             storageKey={storageKey}
             height={560}
-            fitViewUpTo={60}
-            onNodeClick={(n) => go("w", workspace, "baseline", n.id)}
+            // A wide import graph opens readable at its top left, as a large class graph does, rather than fitted too small to read.
+            fitViewUpTo={view === "imports" ? 5 : 60}
+            defaultViewport={view === "imports" ? { x: 16, y: 16, zoom: 0.7 } : undefined}
+            onNodeClick={onNodeClick}
           />
         </>
       )}

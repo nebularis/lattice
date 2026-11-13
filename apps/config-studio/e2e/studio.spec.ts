@@ -826,3 +826,38 @@ test("an import only LATTICE's documents give is resolved with no file given, an
   await expect(list.getByText("held", { exact: true })).toHaveCount(2);
   await expect(list.getByText("missing", { exact: true })).toHaveCount(0);
 });
+
+test("the import graph draws the workspace's ontology, a held import and a missing import, and hides the controls of the classes view", async ({ page }) => {
+  const fake = new FakeService();
+  await importingWorkspace(page, fake, [IMPORT_A, IMPORT_B]);
+  await page.getByRole("button", { name: "Import ontologies" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import ontologies" });
+  await dialog.getByLabel("Files", { exact: true }).setInputFiles([{ name: "a.ttl", ...ontology(IMPORT_A) }]);
+  await dialog.getByRole("button", { name: "Show the plan" }).click();
+  await dialog.getByRole("button", { name: "Hold 1 import" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Ontologies" }).getByText("held", { exact: true })).toHaveCount(1);
+
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Diagram" }).click();
+  const diagram = page.getByRole("region", { name: "Ontology diagram" });
+  await expect(diagram.getByLabel("Include shapes")).toBeVisible();
+  await expect(diagram.getByLabel("Hops around the selected class")).toBeVisible();
+  await diagram.getByRole("group", { name: "Ontology view" }).getByRole("button", { name: "Import graph" }).click();
+
+  const nodes = diagram.locator(".react-flow__node-imp");
+  await expect(nodes).toHaveCount(3);
+  await expect(nodes.filter({ hasText: "workspace ontology" })).toContainText("example.org/ont/base");
+  await expect(nodes.filter({ hasText: "held import" })).toContainText("example.org/ont/a");
+  await expect(nodes.filter({ hasText: "missing import" })).toContainText("example.org/ont/b");
+  await expect(diagram.getByRole("status")).toHaveText("1 ontology of the workspace, 1 import held, 1 missing, 0 schemes.");
+  // The base ontology imports both, so two solid edges are drawn and none is derived.
+  await expect(diagram.locator(".react-flow__edge title").filter({ hasText: "imports" })).toHaveCount(2);
+  await expect(diagram.locator(".react-flow__edge title").filter({ hasText: "Derived from the terms used" })).toHaveCount(0);
+  // The shapes and hops controls belong to the classes view.
+  await expect(diagram.getByLabel("Include shapes")).toHaveCount(0);
+  await expect(diagram.getByLabel("Hops around the selected class")).toHaveCount(0);
+
+  // A click on the missing import opens the import dialog.
+  await nodes.filter({ hasText: "missing import" }).click();
+  await expect(page.getByRole("dialog", { name: "Import ontologies" })).toBeVisible();
+});

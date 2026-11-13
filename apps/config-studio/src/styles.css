@@ -473,3 +473,12 @@ table.axiom-rows.nested th { position: static; }
 .import-summary { margin: 0; font-weight: 600; }
 .import-failure { color: var(--bad); overflow-wrap: anywhere; }
 
+
+/* The import graph, a third view of the ontology diagram (SVA-B4). */
+.import-node { height: auto; }
+.import-node .import-note { color: var(--text-3); }
+.import-node.own { border-color: var(--accent); background: var(--accent-2); }
+.import-node.held { border-color: var(--ok); }
+.import-node.missing { border: 1.5px dashed var(--warn); background: var(--warn-2); color: var(--warn); }
+.import-node.missing .import-note, .import-node.missing .muted { color: var(--warn); }
+.import-node.scheme { border-color: var(--baseline-c); background: var(--baseline-c2); border-radius: 18px; }
