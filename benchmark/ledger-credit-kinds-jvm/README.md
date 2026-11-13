@@ -43,6 +43,28 @@ Run on 2026-11-12 on a cloud machine with 4 cores, 15 GiB of memory and Linux am
 
 The writer that reads matches the guarded single thread and does not fall with producers, where the guarded writers lose a third to a half at 8 threads. The keeper is 28 to 33 times the guarded single thread on Jena in memory, and on TDB2 it is limited by the commit at about 80 a second until postings share a commit, then 477 and 1,700 a second at batches of 10 and 100. This is more than the 10 a second expected from LG-17's laptop figure, so a commit costs less on this machine. The mean wait at 8 producers is 119 ms for the writer that reads and 4 ms for the keeper on Jena in memory, and 224 and 106 ms on TDB2.
 
+### Measured again on corpora that refuse an overdrawing debit (LG-19)
+
+The corpora that `check.py --emit` and `writes.py --emit-jvm` write no longer post a debit that an account on its path could not cover (the benchmark's README says how). The task `check:ledger-credit-kinds-jvm` and the task `check:ledger-credit-kinds-jvm-writes` were run on 2026-11-13 on the machine of the LG-18 run, before and after the change, and both exited 0, in 231 s after and 238 s before, and 547 s after and 552 s before. All 26 queue exports were audited and equal the replay. Before is the run on the old corpora and after the run on the new.
+
+The native reads at 20,000 postings and 30% credits, mean ms of the root read of the one-level corpus, before and after:
+
+| Store | plain | kind-filtered | stepwise |
+|---|---|---|---|
+| Jena in memory | 49.5 / 50.5 | 71.9 / 77.9 | 177 / 150 |
+| Jena TDB2 | 99.4 / 112.9 | 109.5 / 140.8 | 180 / 228 |
+
+Over all 27 reads the kind-filtered fold against the plain fold is 1.34 and 1.47 on Jena in memory and 1.45 and 1.60 on TDB2, and the stepwise fold 2.43 and 2.66 and 2.16 and 2.31. The variation of a native root read on identical inputs is 0.66 to 2.06 times, so none of these moved beyond it. The stored triples at 20,000 postings are 183,186 at 5% credits and 185,551 at 30% on the one-level corpus, and the shortcut falls back in 10 of 27 checkpointed reads at 5% where it fell back in none, and in 27 where it fell back in 18 at 30%.
+
+The writes, at 20,000 postings, the mean ms of a guarded debit, credit and credit with a cut:
+
+| Store | before | after |
+|---|---|---|
+| Jena in memory | 17.3, 11.2, 13.4 | 15.7, 9.4, 11.6 |
+| Jena TDB2 | 31.8, 24.4, 26.4 | 25.7, 18.7, 20.4 |
+
+The debits the writer refuses for lack of availability fell from 187 to 138 in memory and from 32 to 16 on TDB2. At 1,000 and 5,000 postings nothing moved. The stress, which draws from request lists that did not change, is a repeat measurement and its commit rates differ by under 10%, with no duplicate position on a guarded run and 99 to 772 on the unguarded. The one writer per ledger ran on the same request lists too. Its commits a second, before and after, were 1,944 and 1,673 for the keeper with one producer in memory, 2,474 and 2,273 in the backlog, 5,895 and 5,116 with batches of 100, and on TDB2 94 and 90 in the backlog and 1,483 and 1,560 with batches of 100. The variation of such a run is up to 20%.
+
 ## Pass criterion
 
 For the reads, every read equals the model's balance and posting count, every shortcut read equals the model's stepwise balance, the postings alone of the sum with cuts equal the model's sum of applied amounts and differ from the stepwise balance at as many ancestors as the model says, and the store holds the stored count the arithmetic gives. For the writes, every preload holds its stored count, a single writer never loses a race and the store grows by the triples the writes add, and the audit holds as above. **A wrong balance, count or audit prints `WRONG RESULT`, exits non-zero and writes no report, so the task fails. Time never does, and neither does anything the probe shows about the store.** `test_jvm.py` shows the read run passes on the emitted corpora and fails on a wrong balance, a wrong posting count, a wrong shortcut balance, a wrong expected value of any of the five two-level folds, and a wrong model sum of applied amounts. `test_jvm_writes.py` shows the audit fails on an export whose stored cut was changed and on one with a duplicate revision, that a store whose probe lost a guarded update is not held to the replay, that a small native run is audited and passes, and that a Java run fails on a preload that is not the corpus.
