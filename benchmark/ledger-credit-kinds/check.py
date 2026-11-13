@@ -8,7 +8,7 @@ carry a kind, and each account declares the kinds that restore it, all kinds by 
 account above it (law LD3). A credit is clamped at the account it is posted to, and the clamped amount, the credit as applied there, is stored on the credit (`l:applied`)
 and is what an ancestor folds. The account tree has depth 4: a root, 2 sections, 3 sublimits to a section and 4 contracts to a sublimit. The first section is a cap and
 accepts recoveries only. A credit with no kind is posted only on a path where no account restricts kinds. A stream of postings, grouped into passes (a pass position and a
-micro-position within it), falls on random contracts. Each posting goes into a named graph keyed by its sublimit and its period of `EVERY_POSITIONS` passes. At each period
+micro-position within it), falls on random contracts. A debit that would leave an account on its path below zero is refused as the writers refuse it and is not in the stream (`generate`). Each posting goes into a named graph keyed by its sublimit and its period of `EVERY_POSITIONS` passes. At each period
 close a checkpoint is written as data, the balance of every account by each of the three folds, in the graph `urn:graph:checkpoint:<period>`. Every ancestor is read at
 stated pass positions, each read from the start of history and from the last checkpoint at or before the point.
 
@@ -190,32 +190,6 @@ def clamp_at_drawn(balance: int, amount: int, stated: int) -> int:
     return min(amount, stated - balance)
 
 
-def stream(count: int, credit_share: float) -> list[Posting]:
-    """`count` postings in passes of one to three, on random contracts. Credits are split evenly across the three kinds, a quarter of those on an unrestricted path carry no kind, and
-    credits are larger than debits, so a ceiling binds at a high share. A credit's applied amount is clamped at the contract it is posted to."""
-    rng, kind_rng = random.Random(SEED), random.Random(SEED + 1)
-    out: list[Posting] = []
-    balance = {c: TREE[c].stated for c in CONTRACTS}
-    pos = 0
-    while len(out) < count:
-        pos += 1
-        for micro in range(min(rng.randint(1, 3), count - len(out))):
-            debit = rng.random() >= credit_share
-            contract, amount = rng.choice(CONTRACTS), 0
-            amount = rng.randint(1, DEBIT_MAX if debit else CREDIT_MAX)
-            kind = None if debit else L + rng.choice(KINDS)
-            applied = amount
-            if debit:
-                balance[contract] -= amount
-            else:
-                if kind_rng.random() < KINDLESS_SHARE and unrestricted(contract):
-                    kind = None
-                applied = clamp_at_drawn(balance[contract], amount, TREE[contract].ceiling)
-                balance[contract] += applied
-            out.append(Posting(pos, micro, contract, debit, amount, kind, applied))
-    return out
-
-
 def accepts_kind(account: Account, kind: str | None) -> bool:
     return not account.accepts or kind in account.accepts
 
@@ -243,31 +217,67 @@ def settle_credit(step: list[int], at: int, amount: int, kind: str | None) -> tu
     return applied, tuple(cuts)
 
 
-def stream_two_level(count: int, credit_share: float) -> list[Posting]:
-    """The same draws as `stream` (same passes, debits, contracts, amounts and kinds), but a share `UPPER_SHARE` of the credits is posted at the sublimit or section on the drawn contract's path,
-    chosen at random among those that accept its kind, and the rest at the contract. The writer holds the stepwise balance of every account and records the applied amount and the cuts."""
+def refuses_debit(step: list[int], at: int, amount: int) -> bool:
+    """The writers' own test (`writes.Live.prepare`): a debit is refused when its amount is more than the stepwise balance of any account on its path, the account it is drawn on included."""
+    return any(step[i] < amount for i in chain(at))
+
+
+IDLE_PASSES = 10_000  # consecutive passes in which every draw was refused, after which the stream is taken to be unable to reach its count
+
+
+def generate(count: int, credit_share: float, two_level: bool) -> list[Posting]:
+    """`count` postings in passes of one to three, on random contracts, settled as the writer settles them (`settle_debit`, `settle_credit`) against the stepwise balance of every account.
+    A debit more than any account on its path holds is refused, as the writers refuse it (`refuses_debit`), and is not a posting: every value it needs is drawn as for any debit and the debit
+    is then dropped, so the draws that follow do not shift, and the generator draws on until it has `count` postings. A pass in which every draw was refused is drawn again at the same position,
+    so positions stay without a gap and a period holds as many passes as it names. Credits are split evenly across the three kinds, a quarter of those on an unrestricted path carry no kind,
+    and credits are larger than debits, so a ceiling binds at a high share. In the two-level corpus a share `UPPER_SHARE` of the credits is posted at the sublimit or section on the drawn
+    contract's path, chosen at random among those that accept its kind, and the rest at the contract, and each credit records its cuts."""
     rng, kind_rng, place_rng = random.Random(SEED), random.Random(SEED + 1), random.Random(SEED + 2)
     out: list[Posting] = []
     step = [a.stated for a in TREE]
-    pos = 0
+    pos = idle = 0
     while len(out) < count:
         pos += 1
-        for micro in range(min(rng.randint(1, 3), count - len(out))):
+        micro = 0
+        for _ in range(min(rng.randint(1, 3), count - len(out))):
             debit = rng.random() >= credit_share
             contract = rng.choice(CONTRACTS)
             amount = rng.randint(1, DEBIT_MAX if debit else CREDIT_MAX)
             kind = None if debit else L + rng.choice(KINDS)
             if debit:
+                if refuses_debit(step, contract, amount):
+                    continue
                 settle_debit(step, contract, amount)
-                out.append(Posting(pos, micro, contract, True, amount, None))
-                continue
-            if kind_rng.random() < KINDLESS_SHARE and unrestricted(contract):
-                kind = None
-            candidates = [i for i in chain(contract)[1:3] if accepts_kind(TREE[i], kind)]
-            at = place_rng.choice(candidates) if candidates and place_rng.random() < UPPER_SHARE else contract
-            applied, cuts = settle_credit(step, at, amount, kind)
-            out.append(Posting(pos, micro, at, False, amount, kind, applied, cuts))
+                out.append(Posting(pos, micro, contract, True, amount, None, 0 if two_level else amount))
+            else:
+                if kind_rng.random() < KINDLESS_SHARE and unrestricted(contract):
+                    kind = None
+                at = contract
+                if two_level:
+                    candidates = [i for i in chain(contract)[1:3] if accepts_kind(TREE[i], kind)]
+                    at = place_rng.choice(candidates) if candidates and place_rng.random() < UPPER_SHARE else contract
+                applied, cuts = settle_credit(step, at, amount, kind)
+                out.append(Posting(pos, micro, at, False, amount, kind, applied, cuts if two_level else ()))
+            micro += 1
+        if micro == 0:
+            pos -= 1
+            idle += 1
+            if idle > IDLE_PASSES:
+                raise ValueError(f"the accounts cannot take {count} postings at a credit share of {credit_share}: {len(out)} are posted and every debit since is refused")
+        else:
+            idle = 0
     return out
+
+
+def stream(count: int, credit_share: float) -> list[Posting]:
+    """The one-level corpus: `generate` with every credit posted at the contract it was drawn on, where its applied amount is clamped at that contract's ceiling."""
+    return generate(count, credit_share, False)
+
+
+def stream_two_level(count: int, credit_share: float) -> list[Posting]:
+    """The two-level corpus: the same draws as `stream`, but a share `UPPER_SHARE` of the credits is posted at the sublimit or section on the drawn contract's path. The writer holds the
+    stepwise balance of every account and records the applied amount and the cuts."""
+    return generate(count, credit_share, True)
 
 
 @dataclass

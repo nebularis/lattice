@@ -186,7 +186,7 @@ class Live:
         read = time.perf_counter()
         plan = Plan(request, tag, revision, path=len(path))
         if request.debit:
-            if any(step[i] < request.amount for i in path):
+            if ck.refuses_debit(step, request.at, request.amount):
                 plan.refused = True
             else:
                 ck.settle_debit(step, request.at, request.amount)
