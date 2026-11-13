@@ -529,6 +529,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-B4 | the import graph | studio-visual-authoring | planned | SVA-B3, SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-O1 | the canvas kit, with our own layered layout behind one function | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | studio-visual-authoring | built 2026-11-13 | SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-O2a | edge labels placed apart, and edges against the layout's direction routed around nodes | studio-visual-authoring | building 2026-11-13 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-O3 | the axiom reader and the element forms | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | studio-visual-authoring | planned | SVA-O1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P2 | edits on the persistence canvas | studio-visual-authoring | planned | SVA-P1 | docs/developer/status/studio-visual-authoring.md#slices |
