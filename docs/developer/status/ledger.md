@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-12. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** building 2026-11-13. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -129,7 +129,8 @@ Results sections. In short:
 | LG-16 | the cut the writer records, measured in the credit kinds benchmark: credits at two levels of a path, and an ancestor read as a sum less its cuts | built 2026-11-12, building 2026-11-12 |  |
 | LG-17 | LG-16's gaps closed: like-for-like read forms, a cut that copies its position, a ceiling above a stated amount, the sketch's tree in an engine, the cost of writing, concurrent writers on Oxigraph and Jena, late postings, and the native Jena caller | built 2026-11-12, building 2026-11-12 |  |
 | LG-18 | LG-17's follow-ups measured: one writer per ledger against guarded writers, with balances kept by the writer and with batched commits, and the readings of a balance by effective day as known at a recording, their properties and their read cost | built 2026-11-12, building 2026-11-12 |  |
-| LG-19 | the benchmark's corpora refuse a debit beyond availability, and LG-14 to LG-18 are run again on them | planned | LG-18 |
+| LG-19 | the benchmark's corpora refuse a debit beyond availability, and LG-14 to LG-18 are run again on them | building 2026-11-13 | LG-18 |
+- 2026-11-13: LG-19 picked up in a cloud session on `ledger/lg-19-cloud-run`, per its brief. The baseline of the six tasks is run first, then the streams are changed.
 - 2026-11-13: a [brief](../notes/cloud-brief-lg-19-2026-11-13.md) written for the cloud session that builds and runs LG-19, which is its own to write: the streams refuse a debit beyond availability, a baseline is run first on the same machine, and every figure of LG-14 to LG-18 is compared before and after. The maintainer corrected the note on machine S: it receives whatever can be handed over safely without a benchmark, as it is ready, and not one tranche at the end. LG-Q10 was listed as open in a report today and is not, having been decided on 2026-11-10.
 - 2026-11-13: **LG-Q23 decided by the maintainer, (b) with (d).** The posting keeps the amount offered beside the amount applied and the writer records a cut at each accepting ancestor with less room (MEC-106). A checkpoint carries the two flow totals (STD-331), and STD-278 is narrowed so a read of the recorded amounts or the flows by effective day may start from a checkpoint, with an ADR-A131 addendum owed. Machine S receives one tranche of proofs once the remaining questions and posting scenarios are settled, and the verification rig runs after the design work is complete.
 - 2026-11-13: the maintainer accepted reading B's cost for a read that does not run often, and confirmed that a checkpoint is written only where an account moved, which MS-Q6 answered (a) on 2026-10-27 and the multi-store sketch's table still showed as open. Drafts of the rig's competency questions on dates, periods and reporting, and of what a rig must state to answer them, are with the maintainer to place.
