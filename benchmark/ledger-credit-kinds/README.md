@@ -387,7 +387,7 @@ What the native writes do not show. They are threads in one JVM, not several pro
 
 ## One writer per ledger, and the readings of a late posting
 
-Two modules of LG-18, written on 2026-11-12 and **not yet run**. Their results are added here when they have run.
+Two modules of LG-18, written on 2026-11-12 and run the same day. Their measured results are at the end of this section.
 
 **`single_writer.py`**, run by `mise run check:ledger-credit-kinds-single-writer`. The guarded writers above each read their path, write under the guard and try again when they lose a race. Here producers hand their requests to one writer through a queue. It uses the stores, preloads and seeded request lists of the stress, and runs the guarded writers again beside it so both are measured on one machine.
 
@@ -410,6 +410,74 @@ What LG-17's figures lead us to expect, to be tested by the run and not relied o
 | C | no balance, the debits and the credits offered | two sums, from the start, or since the close before the day |
 
 It checks that each engine read equals the model, that a store holding only what was recorded by then reads the same as the whole store, that A at a day's own recording is the ledger's balance, and that with no late posting A and B agree. It counts the readings that lie below zero or above the ceiling, the heads at which B differs from the ledger, and how far a figure as known at the recording has moved by the end of history. It times each read, and reading A by the age of the day. The checkpointed read of A rests on STD-294: nothing is effective after it is recorded, so everything recorded by a close is effective by any later day.
+
+### Measured results, one writer per ledger
+
+Run on 2026-11-12 on a cloud machine with 4 cores, 15 GiB of memory and Linux x86_64, with Python 3.14.10, pyoxigraph 0.5.13, rdflib 7.6.0 and Apache Jena 5.1.0, at depth 4, 24 contracts, 200 passes a period and seed 20261111. Every run equals the replay of its commits, on every store, the on-disk Oxigraph store included. The machine is not the laptop of LG-17, so a writer is compared only with the guarded writers of the same run.
+
+Commits a second of the guarded writers and of one writer that reads its path, 1,000 requests:
+
+| store | guarded, 1 thread | guarded, 8 threads | one writer, reads, 8 producers | one writer, keeps, 8 producers |
+|---|---|---|---|---|
+| oxigraph memory | 125 | 38 | 124 | 5,114 |
+| oxigraph disk | 48 | 29 | 45 | 2,814 |
+| jena | 15 | not run | 16 | 431 |
+
+The backlog runs, where every request is queued before the writer starts. Against guarded is the writer's rate over the best rate of the guarded writers on the store.
+
+| store | writer | commits/s | against guarded | postings a batch |
+|---|---|---|---|---|
+| oxigraph memory | reads | 124 | 1.0 | 1 |
+| oxigraph memory | keeps | 6,951 | 55.4 | 1 |
+| oxigraph memory | keeps, no guard | 11,857 | 94.6 | 1 |
+| oxigraph memory | keeps, batches of 10 | 11,846 | 94.5 | 10 |
+| oxigraph memory | keeps, batches of 100 | 16,382 | 130.7 | 100 |
+| oxigraph disk | reads | 42 | 0.9 | 1 |
+| oxigraph disk | keeps | 2,468 | 51.7 | 1 |
+| oxigraph disk | keeps, no guard | 4,428 | 92.7 | 1 |
+| oxigraph disk | keeps, batches of 10 | 5,721 | 119.8 | 10 |
+| oxigraph disk | keeps, batches of 100 | 7,047 | 147.5 | 100 |
+| jena | reads | 16 | 1.1 | 1 |
+| jena | keeps | 428 | 29.0 | 1 |
+| jena | keeps, no guard | 886 | 60.1 | 1 |
+| jena | keeps, batches of 10 | 1,581 | 107.2 | 10 |
+| jena | keeps, batches of 100 | 2,337 | 158.5 | 100 |
+
+In a closed run a request waits for the writer that reads its path about as many writes as there are producers. At 8 producers the mean wait is 60 ms on Oxigraph in memory, 166 ms on disk and 466 ms on Jena, against 1.3, 2.5 and 17 ms for the writer that keeps its balances.
+
+What the figures show. A single writer that reads its path matches the best guarded writer on each store and does not lose throughput as producers are added, where the guarded writers fall from 125 to 38 commits a second on Oxigraph in memory and from 48 to 29 on disk, and on disk lose writes (18, 30 and 38 duplicate positions at 2, 4 and 8 threads), as TSD-73 says. A writer that keeps its balances is 29 to 55 times the guarded rate, and batching raises it to 107 to 159 times on the three stores. The first read of the balances a keeper has to make costs 0.01 to 0.04 s on Oxigraph and 0.3 to 0.4 s on Jena.
+
+Where the run contradicts what is stated above. The writer that reads was expected at about 300 postings a second on Oxigraph in memory and it measured 127, which is the guarded single thread of the same run (125), so the machine is slower and the ratio is as expected. The keeper on Jena was expected to be limited by the commit at about 10 a second on TDB2 and it measured 74 to 80 a second in the native run, against 35 to 38 for the writer that reads on the same store, so the commit costs less here than on the laptop. The keeper is held to its limit only by the update, as expected, and batching of 100 reached 1,700 a second on TDB2.
+
+The keeper is right only while it is the ledger's one writer. The run does not test a second writer behind it (that is `test_sw4`), and it does not measure a restart that reloads the balances.
+
+### Measured results, the readings of a late posting
+
+Run on 2026-11-12 on the same machine and versions, with the late corpus at 5,000 and 20,000 postings, at 0%, 5% and 20% late, a day as known at a recording at each of the 9 ancestors. A is the recorded amounts, B the postings settled again in effective order and C the flows.
+
+| postings | late share | late postings | readings | A impossible | B impossible | heads | B differs from the ledger at the head |
+|---|---|---|---|---|---|---|---|
+| 5000 | 0% | 0 | 72 | 0 | 0 | 27 | 0 |
+| 5000 | 5% | 257 | 72 | 2 | 0 | 27 | 23 |
+| 5000 | 20% | 974 | 72 | 3 | 0 | 27 | 25 |
+| 20000 | 0% | 0 | 81 | 6 | 6 | 27 | 0 |
+| 20000 | 5% | 1013 | 81 | 9 | 6 | 27 | 22 |
+| 20000 | 20% | 3997 | 81 | 13 | 6 | 27 | 25 |
+
+Mean milliseconds a read:
+
+| postings | late share | recorded | A from the start | A from the close | C from the start | C since the close | B |
+|---|---|---|---|---|---|---|---|
+| 5000 | 5% | 1.54 | 8.10 | 1.56 | 7.43 | 1.21 | 14.20 |
+| 5000 | 20% | 1.50 | 8.29 | 1.61 | 7.52 | 1.22 | 14.43 |
+| 20000 | 5% | 2.04 | 31.65 | 2.13 | 27.01 | 1.58 | 57.08 |
+| 20000 | 20% | 2.08 | 31.90 | 2.38 | 27.97 | 1.76 | 56.46 |
+
+How far a figure as known at the recording has moved by the end of history, at 5,000 postings and 20% late: A moved in 45 readings by up to 11,443 (mean 1,397), B in 41 by up to 11,713 (mean 1,269), the debits in 45 by up to 28,997 and the amounts offered in 42 by up to 42,221.
+
+What the figures show. Every read equals the model, a store holding only what was recorded by the recording reads the same as the whole store, and with no late posting A and B agree. With late postings B differs from the ledger's balance at 22 to 25 of the 27 heads, so B is not the balance the ledger recorded. A at a head equals it by construction. A read from the checkpoint at the close costs 1.6 and 2.1 ms at the two sizes and from the start of history 8 and 32 ms, the same as the recorded balance within 1 ms, and its cost grows with the size of history only when read from the start. B costs about twice A from the start. C since the close, which a checkpoint carrying the two totals would complete, costs 1.2 and 1.6 ms.
+
+The impossible readings at 0% late are not a defect of the readings. They are one account, `sec0`, below zero at the recordings 4,991 and 9,977, where the generated stream overdraws an account that the writers' guard would refuse. They are in A and in B equally and in the recorded balance at the head, so only the excess over 6 is attributable to a late posting. A is impossible at 2 to 3 readings of 72 at 5,000 postings and B at none, and at 20,000 postings A is impossible at 3 and 7 readings more than at 0% and B at none more.
 
 ## What this does not measure
 
