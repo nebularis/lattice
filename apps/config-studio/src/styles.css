@@ -449,5 +449,6 @@ table.axiom-rows.nested th { position: static; }
 .onto-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 8px; }
 .onto-controls .mode-switch button { flex: 0 0 auto; padding: 5px 10px; }
 .onto .react-flow__edge-path { stroke: var(--text-3); }
-.onto-edge-label { position: absolute; pointer-events: all; padding: 1px 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-2); font-size: 11px; white-space: nowrap; }
-.onto-edge-label.dashed { border-style: dashed; border-color: var(--text-3); }
+.onto .react-flow__handle { opacity: 0; }
+.canvas-edge-label, .onto-edge-label { position: absolute; pointer-events: all; padding: 1px 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-2); font-size: 11px; white-space: nowrap; }
+.canvas-edge-label.dashed, .onto-edge-label.dashed { border-style: dashed; border-color: var(--text-3); }

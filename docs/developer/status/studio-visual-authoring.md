@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-O2 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-B3, which needs no backend, and SVA-R0's probes, which need a running stack and unblock phase R. The maintainer accepts or rejects ADR-A154, and decides TD-164.
+**Next action:** SVA-B3, which the maintainer asked for after SVA-O2a, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each. The maintainer accepts or rejects ADR-A154, and decides TD-164, both put to them on 2026-11-13.
 
 ## Slices
 
@@ -35,7 +35,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-B4 | the import graph | planned | SVA-B3, SVA-O1 |
 | SVA-O1 | the canvas kit, with our own layered layout behind one function | built 2026-11-12, building 2026-11-12 |  |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | built 2026-11-13, building 2026-11-12 | SVA-O1 |
-| SVA-O2a | edge labels placed apart, and edges against the layout's direction routed around nodes | building 2026-11-13 | |
+| SVA-O2a | edge labels placed apart, and edges against the layout's direction attached by the sides that face | built 2026-11-13, building 2026-11-13 | |
 | SVA-O3 | the axiom reader and the element forms | built 2026-11-12, building 2026-11-12 |  |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | planned | SVA-O1 |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
@@ -66,6 +66,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12, SVA-O1: the first sort of the layout was removed, so input order reached the result. The determinism test and the edgeless-nodes test failed. Restored.
 - 2026-11-12, SVA-B2a: the writer's check that a fence job digested the import it names was removed. `theWriterChecksEachJobItselfWhateverTheServiceChecked` failed, expecting 400 and getting 200. Restored, 14 of 14 passing.
 - 2026-11-13, SVA-O2: an edge both origins state was given the origin shape, and the hop limit was raised by one. Five tests failed, among them the toggle only adding edges and the facility file's four links. Restored, 20 of 20 passing.
+- 2026-11-13, SVA-O2a: a label was left only the middle of its edge. Four tests failed, among them the two over the facility sample. Restored, 23 of 23 passing.
 
 ## Log
 
@@ -85,3 +86,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12: SVA-B2a built, [Validation Pack](../validation/SVA-B2a.md). One request holds several imports by one command, which stores each import and then replaces the description once, and a held import records the ontology IRI and version IRI its document declares, read by the worker and copied by the writer from the fence job in the store. Verified: 24 tests in core, 198 in the service and 10 in the writer, the worker's 16, and `mise run check:config-studio`, which exited 0 with 21, 157 and 234 tests passed in its three suites. An export still names held imports without their content, as before (TD-135). TD-164 records that nothing digests the content a fence command carries and that the older, jobless form of the command is still accepted.
 - 2026-11-13: SVA-O2 built, [Validation Pack](../validation/SVA-O2.md). The Baseline view's detail pane switches to a drawing of classes and object properties or of the class hierarchy, around the selected class or of the whole ontology, on the canvas kit, which gained an `edgeTypes` property. The plan's acceptance was wrong about the sample: the facility sample's shapes state four links and each is already a domain and range, so the toggle adds no edge there and names the shape on four, and the plan's row now says so. A dashed edge is held by a unit test and was seen in a screenshot with one shape added. Two shortfalls seen in the screenshot and left: labels of edges that run against the layout's direction overlap where three meet, and a class with no link in a view sits alone in a last column. The shape reading repeats what `rdf/shapes.ts` does, since that module gives neither a shape's name nor `sh:node`. Verified with 254 unit tests, the type check and 26 browser tests on the fake service.
 - 2026-11-13: the maintainer asked for the label placement seen in SVA-O2's screenshot to be fixed, and for SVA-B3 next. SVA-O2a added to the plan and picked up, with SVA-B3 to follow it.
+- 2026-11-13: SVA-O2a built, [Validation Pack](../validation/SVA-O2a.md). `canvas/edges.ts` routes each edge from the node boxes and places each label at the first of seven points of its curve that covers no node and no other label, and the ontology canvas uses it. In the facility sample's drawing no label covers another or a class, and the edge from Facility back to Drawdown no longer loops behind its node. Left as it is: an edge that spans several ranks is still drawn straight through the classes between its ends, with only its label kept off them, which bending edges around nodes would fix and no slice plans. The mapping canvas keeps its own edges. Following a dragged node holds by construction and was not tried in a browser. Verified with 277 unit tests, the type check and 26 browser tests on the fake service.

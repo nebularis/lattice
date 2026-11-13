@@ -2,16 +2,21 @@
 // The canvas kit, what every canvas of the studio shares. A canvas gives its nodes, its edges and what each does, and the kit
 // draws them with React Flow, lays out the nodes it has no position for, keeps the author's positions in this browser and offers
 // a right-click menu. A canvas's picture is a function of its nodes and edges and the author's stored positions, the layout is
-// one function that another can replace (layout.ts), and a position never enters a graph.
+// one function that another can replace (layout.ts), and a position never enters a graph. A canvas may also have its edges routed
+// and their labels placed (edges.ts), from the nodes where they are now.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Background,
+  BaseEdge,
   Controls,
+  EdgeLabelRenderer,
   ReactFlow,
   applyNodeChanges,
+  getBezierPath,
   type Connection,
   type Edge,
+  type EdgeProps,
   type EdgeTypes,
   type Node,
   type NodeChange,
@@ -19,11 +24,14 @@ import {
   type Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { DEFAULT_NODE_SIZE, routeEdges, type EdgeRoute, type RouteOptions } from "./edges";
 import { layered, type Layout, type LayoutNode, type LayoutOptions } from "./layout";
 import { clearPositions, readPositions, resolvePositions, writePositions, type Point, type Positions } from "./positions";
 
 export type { Layout, LayoutEdge, LayoutNode, LayoutOptions } from "./layout";
 export type { Point, Positions } from "./positions";
+export { DEFAULT_NODE_SIZE, DEFAULT_ROUTE_OPTIONS, LABEL_CANDIDATES, chooseSides, curvePoint, routeEdges } from "./edges";
+export type { Box, EdgeRoute, RouteEdge, RouteOptions, Side } from "./edges";
 
 export interface MenuItem {
   label: string;
@@ -50,6 +58,68 @@ export function ContextMenu({ menu, close }: { menu: Menu; close: () => void }) 
   );
 }
 
+/**
+ * The route of every edge, from the nodes where they are now, so while a node is dragged its edges and their labels follow it. A node
+ * is as large as React Flow measured it, or else as large as `DEFAULT_NODE_SIZE`. An edge's label is its `data.label` where that is
+ * a string. Nothing is routed where `options` is not given.
+ */
+export function useEdgeRoutes(nodes: readonly Node[], edges: readonly Edge[], options?: Partial<RouteOptions>): Map<string, EdgeRoute> {
+  const on = options !== undefined;
+  const { direction, labelCharWidth, labelHeight, labelPadding } = options ?? {};
+  return useMemo(() => {
+    if (!on) return new Map();
+    const boxes = new Map(
+      nodes.map((n) => [n.id, { x: n.position.x, y: n.position.y, width: n.measured?.width ?? n.width ?? DEFAULT_NODE_SIZE.width, height: n.measured?.height ?? n.height ?? DEFAULT_NODE_SIZE.height }]),
+    );
+    const routed = routeEdges(
+      boxes,
+      edges.map((e) => ({ id: e.id, source: e.source, target: e.target, label: typeof e.data?.label === "string" ? e.data.label : undefined })),
+      { direction, labelCharWidth, labelHeight, labelPadding },
+    );
+    return new Map(routed.map((r) => [r.id, r]));
+  }, [on, nodes, edges, direction, labelCharWidth, labelHeight, labelPadding]);
+}
+
+export type RoutedEdgeData = {
+  /** Set by a canvas given `routing`. An edge with none is drawn as React Flow draws a Bezier edge. */
+  route?: EdgeRoute;
+  label?: string;
+  /** Names the edge for a screen reader and a pointer, as its title. */
+  title: string;
+  dashed?: boolean;
+  /** The class of the edge's group, and of its label, which takes " dashed" when the edge is. */
+  className?: string;
+  labelClass?: string;
+};
+
+/**
+ * An edge that draws the path the kit routed and puts its label, in HTML, where the kit placed it. It draws from the node boxes
+ * and ignores where React Flow would attach it, so a node still needs a handle for React Flow to accept the edge and the handle can
+ * be hidden. Give it in `edgeTypes` and give the canvas `routing`.
+ */
+export function RoutedEdge(props: EdgeProps<Edge<RoutedEdgeData>>) {
+  const data = props.data!;
+  const [fallback, fx, fy] = getBezierPath(props);
+  const path = data.route?.path ?? fallback;
+  const box = data.route?.label;
+  const x = box ? box.x + box.width / 2 : fx;
+  const y = box ? box.y + box.height / 2 : fy;
+  const labelClass = data.labelClass ?? "canvas-edge-label";
+  return (
+    <g className={data.className}>
+      <title>{data.title}</title>
+      <BaseEdge id={props.id} path={path} markerStart={props.markerStart} markerEnd={props.markerEnd} style={props.style} interactionWidth={14} />
+      {data.label && (
+        <EdgeLabelRenderer>
+          <div className={data.dashed ? `${labelClass} dashed` : labelClass} title={data.title} style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}>
+            {data.label}
+          </div>
+        </EdgeLabelRenderer>
+      )}
+    </g>
+  );
+}
+
 export const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = { direction: "LR", columnGap: 280, rowGap: 64 };
 
 /** What a node tells the layout besides its id. A node with no entry is left to the layout. */
@@ -64,6 +134,8 @@ export interface CanvasProps {
   nodeTypes: NodeTypes;
   /** A constant like the node types. A canvas that draws its own edges gives them here. */
   edgeTypes?: EdgeTypes;
+  /** Routes the edges and places their labels from the nodes' places now, and gives each edge its route as `data.route`. */
+  routing?: true | Partial<Omit<RouteOptions, "direction">>;
   hints?: LayoutHints;
   layout?: Layout;
   options?: LayoutOptions;
@@ -122,6 +194,9 @@ export function Canvas(props: CanvasProps) {
     });
   }, [laid]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const routes = useEdgeRoutes(nodes, edges, props.routing ? { ...(props.routing === true ? {} : props.routing), direction: options.direction } : undefined);
+  const shown = useMemo(() => (props.routing ? edges.map((e) => ({ ...e, data: { ...e.data, route: routes.get(e.id) } })) : edges), [edges, routes, props.routing]);
+
   const keep = useCallback((next: Node[]) => {
     const positions: Positions = Object.fromEntries(next.map((n) => [n.id, n.position]));
     setStored({ key: storageKey, positions });
@@ -143,7 +218,7 @@ export function Canvas(props: CanvasProps) {
     <div style={{ height: props.height, position: "relative" }} onClick={() => setMenu(undefined)}>
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={shown}
         nodeTypes={props.nodeTypes}
         edgeTypes={props.edgeTypes}
         onNodesChange={(changes: NodeChange[]) => setNodes((ns) => applyNodeChanges(changes, ns))}

@@ -36,7 +36,7 @@ The inspector shows the selected node's Turtle and the unsaved changes as a diff
 | `src/rdf/quantity.ts`, `eligibility.ts` | ranges with their bounds and quantities, and questions as tests |
 | `src/state.ts` | a workspace in the browser: saved and edited graphs, undo, live validation, saving and conflicts |
 | `src/api.ts` | the HTTP API |
-| `src/canvas/` | the canvas kit every canvas shares. `layout.ts` is our own layered layout behind one function, `positions.ts` keeps the author's positions in the browser, and `kit.tsx` draws, menus and connects them with React Flow |
+| `src/canvas/` | the canvas kit every canvas shares. `layout.ts` is our own layered layout behind one function, `edges.ts` routes each edge as a Bezier curve between the sides that face each other and places its label where it covers no node and no other label, `positions.ts` keeps the author's positions in the browser, and `kit.tsx` draws, menus and connects them with React Flow |
 | `src/ui/` | the views. `Specials.tsx` holds the sections the vocabularies cannot derive |
 
 ## Build, run and test

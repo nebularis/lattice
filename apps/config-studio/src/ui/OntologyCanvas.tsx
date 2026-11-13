@@ -6,9 +6,9 @@
 // many classes is drawn only when the author asks for it, so the page never stops by surprise.
 
 import { useMemo, useState } from "react";
-import { BaseEdge, EdgeLabelRenderer, Handle, MarkerType, Position, getBezierPath, type Edge, type EdgeProps, type Node, type NodeProps } from "@xyflow/react";
+import { Handle, MarkerType, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
 import { PREFIXES, compact } from "@lattice/authoring-domain";
-import { Canvas, type LayoutOptions } from "../canvas/kit";
+import { Canvas, RoutedEdge, type LayoutOptions, type RoutedEdgeData } from "../canvas/kit";
 import type { Baseline } from "../rdf/baseline";
 import { DEFAULT_HOPS, classGraph, counts, hierarchyGraph, type ClassEdge, type ClassGraph, type HierarchyGraph } from "../rdf/ontologyGraph";
 import { go } from "./kit";
@@ -19,13 +19,12 @@ export const DRAW_AT_ONCE = 150;
 type View = "classes" | "hierarchy";
 type Hops = "1" | "2" | "3" | "all";
 
-const LAYOUTS: Record<View, LayoutOptions> = {
+export const LAYOUTS: Record<View, LayoutOptions> = {
   classes: { direction: "LR", columnGap: 420, rowGap: 84 },
   hierarchy: { direction: "TB", columnGap: 110, rowGap: 280 },
 };
 
 type ClassData = { label: string; short: string; selected: boolean; direction: "LR" | "TB" };
-type LinkData = { label?: string; title: string; dashed?: boolean };
 
 function ClassBox({ data }: NodeProps<Node<ClassData>>) {
   const lr = data.direction === "LR";
@@ -39,36 +38,11 @@ function ClassBox({ data }: NodeProps<Node<ClassData>>) {
   );
 }
 
-/** An edge with its label in HTML, so it can carry a title that names its property and its shape. */
-function LinkEdge(props: EdgeProps<Edge<LinkData>>) {
-  const [path, mx, my] = getBezierPath(props);
-  const data = props.data!;
-  // A label sits nearer the target than the middle, so the labels of edges that cross mid-way do not land on each other.
-  // This is the point of the curve at t, as React Flow draws a forward edge between a right and a left handle.
-  const { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty } = props;
-  const t = 0.6;
-  const forward = props.sourcePosition === Position.Right && tx > sx;
-  const d = (tx - sx) / 2;
-  const mix = (a: number, b: number, c: number, e: number) => (1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b + 3 * (1 - t) * t ** 2 * c + t ** 3 * e;
-  const x = forward ? mix(sx, sx + d, tx - d, tx) : mx;
-  const y = forward ? mix(sy, sy, ty, ty) : my;
-  return (
-    <g className="onto-edge">
-      <title>{data.title}</title>
-      <BaseEdge id={props.id} path={path} markerStart={props.markerStart} markerEnd={props.markerEnd} style={props.style} interactionWidth={14} />
-      {data.label && (
-        <EdgeLabelRenderer>
-          <div className={data.dashed ? "onto-edge-label dashed" : "onto-edge-label"} title={data.title} style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}>
-            {data.label}
-          </div>
-        </EdgeLabelRenderer>
-      )}
-    </g>
-  );
-}
+/** The edge classes the stylesheet knows, around what an edge says. */
+const ROUTED = (data: RoutedEdgeData): RoutedEdgeData => ({ ...data, className: "onto-edge", labelClass: "onto-edge-label" });
 
 const NODE_TYPES = { cls: ClassBox };
-const EDGE_TYPES = { link: LinkEdge };
+const EDGE_TYPES = { link: RoutedEdge };
 
 export function OntologyCanvas({ workspace, baseline, selected }: { workspace: string; baseline: Baseline; selected?: string }) {
   const [view, setView] = useState<View>("classes");
@@ -98,7 +72,7 @@ export function OntologyCanvas({ workspace, baseline, selected }: { workspace: s
       // The layout puts a superclass above its subclasses, so the edge runs down and its arrow points back up at the superclass.
       return (drawn as HierarchyGraph).edges.map((e) => ({
         id: e.id, source: e.target, target: e.source, type: "link", markerStart: { type: MarkerType.ArrowClosed, width: 18, height: 18 },
-        style: { stroke: "var(--accent)", strokeWidth: 1.6 }, data: { title: `${label(e.source)} is a subclass of ${label(e.target)}` },
+        style: { stroke: "var(--accent)", strokeWidth: 1.6 }, data: ROUTED({ title: `${label(e.source)} is a subclass of ${label(e.target)}` }),
       }));
     }
     return (drawn as ClassGraph).edges.map((e: ClassEdge) => {
@@ -107,7 +81,7 @@ export function OntologyCanvas({ workspace, baseline, selected }: { workspace: s
       const title = `${property}, from ${label(e.source)} to ${label(e.target)}${e.byShape ? `, stated by ${stated || "a shape"}` : ""}`;
       return {
         id: e.id, source: e.source, target: e.target, type: "link", markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 },
-        style: e.origin === "shape" ? { strokeDasharray: "6 4" } : undefined, data: { label: property, title, dashed: e.origin === "shape" },
+        style: e.origin === "shape" ? { strokeDasharray: "6 4" } : undefined, data: ROUTED({ label: property, title, dashed: e.origin === "shape" }),
       };
     });
   }, [drawn, deferred, view, prefixes]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -156,6 +130,7 @@ export function OntologyCanvas({ workspace, baseline, selected }: { workspace: s
             edges={edges}
             nodeTypes={NODE_TYPES}
             edgeTypes={EDGE_TYPES}
+            routing
             options={LAYOUTS[view]}
             storageKey={storageKey}
             height={560}
