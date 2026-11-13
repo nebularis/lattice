@@ -44,6 +44,7 @@ def main() -> int:
     ap.add_argument("--channels", type=int, default=1, help="channels on the one connection. Frames alternate between them")
     ap.add_argument("--pace-ms", type=float, default=0.0, help="a pause after each frame")
     ap.add_argument("--gate-after", type=int, default=0, help="wait for `resume` after this many frames in all, 0 for no wait")
+    ap.add_argument("--corrupt-seq", type=int, default=-1, help="self-test of the probe's digest check: flip the last byte of this seq's payload after its digest is taken, so the subscriber must report a digest that differs")
     args = ap.parse_args()
     if args.size < HEADER.size:
         raise SystemExit("the size must be at least %d" % HEADER.size)
@@ -61,8 +62,10 @@ def main() -> int:
     for seq in range(args.count):
         for channel in range(args.channels):
             payload = HEADER.pack(b"SVA0", args.run, channel, seq) + os.urandom(args.size - HEADER.size)
-            frames.append((channel, seq, payload))
             digests["%d:%d" % (channel, seq)] = hashlib.sha256(payload).hexdigest()
+            if seq == args.corrupt_seq:
+                payload = payload[:-1] + bytes([payload[-1] ^ 0xFF])
+            frames.append((channel, seq, payload))
     say(event="ready")
 
     if sys.stdin.readline().strip() != "go":
@@ -82,6 +85,14 @@ def main() -> int:
     except Exception as exc:  # a refused or closed channel is a result, not a failure of the probe
         error = "%s: %s" % (type(exc).__name__, exc)
     loop_seconds = time.perf_counter() - started
+    # A refusal of a publish, such as a message over the broker's size limit, closes the channel asynchronously. Read it before closing.
+    try:
+        connection.process_data_events(time_limit=0.5)
+    except Exception as exc:
+        error = error or "%s: %s" % (type(exc).__name__, exc)
+    closed = [c.channel_number for c in channels if c.is_closed]
+    if closed and not error:
+        error = "channels closed by the broker: %s" % closed
     try:
         connection.close()
     except Exception as exc:

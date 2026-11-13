@@ -16,13 +16,13 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** SVA-R0's probes, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each. After it the maintainer decides ADR-A154.
+**Next action:** paused after SVA-R0 for the maintainer, who decides ADR-A154 now that the probes are recorded and says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-R1's contract, with the limits the probes support, then SVA-R2, SVA-R3 and SVA-R4.
 
 ## Slices
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| SVA-R0 | probes of the broker for content frames | building 2026-11-12 |  |
+| SVA-R0 | probes of the broker for content frames | built 2026-11-13, building 2026-11-12 |  |
 | SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | building 2026-11-12 | SVA-R0 |
 | SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | planned | SVA-R1 |
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
@@ -77,6 +77,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-13, SVA-B3: a held import's ontology and version IRI were left out of `heldByIri`. Six tests failed. Restored, 16 of 16 passing.
 - 2026-11-13, SVA-B2b: the service's check that an index entry names a staged copy, 64 hexadecimal digits and `.ttl`, was removed. `aRequestCannotNameAFile` and the listing test failed, a file outside the copies being served. Restored, 37 of 37 passing.
 - 2026-11-13, SVA-B4: a derived edge was drawn even where a stated edge joins the pair. The test that forbids it failed. Restored, 12 of 12 passing.
+- 2026-11-13, SVA-R0: the probe's own self-test, P0, corrupts one frame after its digest is taken. A first version corrupted the frame too late and P0 reported all four frames equal, which showed the fault in the test. Fixed, P0 reports three equal and one different.
 
 ## Log
 
@@ -104,3 +105,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-13: the maintainer ratified `baseline` as a target of `validate`, asked for the browser's live validation to take the baseline (SVA-B2c added), chose for TD-164 that the writer reads an import's content from its fence job in the store (SVA-B2d added, and TD-164 leaves the debt register for it), and will decide ADR-A154 after SVA-R0's probes. SVA-B4 picked up.
 - 2026-11-13: SVA-B4 built, [Validation Pack](../validation/SVA-B4.md). The diagram's third view draws the workspace's ontology, each held and each missing import and each concept scheme, with imports as stated, a binds edge from the ontology that declares the property a scheme contract constrains to each scheme its bindings or its fallback name, and a dashed edge derived from the terms a document uses, never where a stated edge joins the pair. The plan's acceptance was wrong about the sample again: the facility sample imports nothing, so it draws five binds edges and no other kind, and the plan's row now says so. The derived edge is held by unit tests and was seen in no picture. Left as it is: a graph of more than five nodes opens at a fixed zoom, so the sixth scheme of the facility sample is cut at the pane's edge until the author pans, and the view fetches the workspace's dependencies itself while it is open, since the studio's state keeps them only merged. Verified with 308 unit tests, the type check and 31 browser tests on the fake service.
 - 2026-11-13: the maintainer asked for every shortfall the built slices left to be closed by the end, and for a sample that lets the derived edge of the import graph be seen. Five slices added for them: SVA-B5, SVA-O4, SVA-O5, SVA-O6 and SVA-V1. Live validation of the baseline and the jobless fence command already have SVA-B2c and SVA-B2d. SVA-R0 resumed.
+- 2026-11-13: SVA-R0 built, [record](../validation/SVA-R0.md). On RabbitMQ 4.4.0 over loopback, 152 runs delivered 254,478 frames with every digest equal, none twice and none out of order. A frame of up to 16 MiB arrived intact, and a larger one was refused by AMQP's own limit before it reached MQTT. Every run of 128 frames of 48 KiB arrived whole, to a prompt subscriber and to one that stopped reading for five seconds. Loss was sporadic, silent in the broker's log, and seen only at a backlog of 1,024 frames or more, eight times the limit. A tab that is away gets nothing sent meanwhile. So the limits of the sketch's rule 9 stand as written, 48 KiB a frame, 128 frames a run and 4 pending runs a tab, the last with a margin of two. Not probed: a real network, TLS, a proxy, a browser as the client, QoS 1 and a persistent session. The cause of the sporadic loss is open, the broker's `mailbox_soft_limit` of 200 being one candidate. The scripts gained a self-test in which a frame corrupted after its digest was taken must be counted as different, and a check that a stalled subscriber's reads had stopped, after a first pass of 27 runs without that check was discarded.

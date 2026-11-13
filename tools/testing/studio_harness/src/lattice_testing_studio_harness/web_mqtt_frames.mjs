@@ -6,9 +6,9 @@
 //
 //   mise exec -- node tools/testing/studio_harness/src/lattice_testing_studio_harness/web_mqtt_frames.mjs [--only P1,P2,...]
 //
-// Options: --runs N (3), --base URL (http://127.0.0.1:8090), --principal NAME (developer), --out FILE (the runs as JSON),
+// Options: --only P0,P1,... (P0 is a self-test of the digest check), --runs N (3), --base URL (http://127.0.0.1:8090), --principal NAME (developer), --out FILE (the runs as JSON),
 // --uri-file FILE (the broker's AMQP URI, read at run time), --log FILE (the broker's log, read for lines a run adds),
-// --stall-ms N (5000), --p3-counts A,B (128,512,2000) and --p3-small-counts (128,256,512,1000), the bursts P3 sends, --p7-frames N (the burst size P7 paces, default the smallest P3 burst that lost frames).
+// --stall-ms N (5000), --budget-min N (15, the wall time P3 gives its bisections), --p3-counts A,B (128,512,2000) and --p3-small-counts (128,256,512,1000), the bursts P3 sends, --p7-frames N (the burst size P7 paces, default the smallest P3 burst that lost frames).
 
 import { spawn, execFile } from "node:child_process";
 import { readFileSync, writeFileSync, statSync, openSync, readSync, closeSync, existsSync } from "node:fs";
@@ -34,7 +34,8 @@ const PRINCIPAL = args.principal ?? "developer";
 const URI_FILE = resolve(ROOT, args["uri-file"] ?? ".build/config-studio/infra/broker/amqp-uri");
 const LOG_FILE = resolve(ROOT, args.log ?? ".build/config-studio/infra/rabbitmq/log/studio@localhost.log");
 const STALL_MS = Number(args["stall-ms"] ?? 5000);
-const ONLY = new Set((args.only ?? "P1,P2,P3,P4,P5,P6,P7").split(","));
+const BUDGET_MS = Number(args["budget-min"] ?? 15) * 60000;
+const ONLY = new Set((args.only ?? "P0,P1,P2,P3,P4,P5,P6,P7").split(","));
 const PUBLISHER = resolve(here, "publish_frames.py");
 const results = [];
 
@@ -141,6 +142,7 @@ function startPublisher(sub, o) {
   const argv = ["exec", "--", "python", PUBLISHER, "--uri-file", URI_FILE, "--routing-key", sub.routingKey, "--count", String(o.count), "--size", String(o.size),
     "--channels", String(o.channels ?? 1), "--pace-ms", String(o.paceMs ?? 0), "--run", String(o.runId ?? 0)];
   if (o.gateAfter) argv.push("--gate-after", String(o.gateAfter));
+  if (o.corruptSeq !== undefined) argv.push("--corrupt-seq", String(o.corruptSeq));
   const child = spawn("mise", argv, { cwd: ROOT, stdio: ["pipe", "pipe", "pipe"] });
   const h = { child, done: null, stderr: "", waiters: [] };
   let buf = "";
@@ -190,10 +192,16 @@ async function once(sess, label, o) {
   pub.send("go");
   let resumedAt = o.stallMs ? t0 + o.stallMs : t0;
   if (o.stallMs) {
-    await sleep(o.stallMs);
+    // A paused socket still reads until the stream's own buffer is full, so a sample once that has happened shows whether reads then stop.
+    const settle = Math.min(1000, o.stallMs / 2);
+    await sleep(settle);
+    stall.bytesReadSettled = sub.raw._socket.bytesRead;
+    stall.msgsSettled = sub.msgs.length;
+    await sleep(o.stallMs - settle);
     const sock = sub.raw._socket;
     stall.bytesReadAtEnd = sock.bytesRead;
     stall.msgsAtEnd = sub.msgs.length;
+    stall.readsStopped = stall.bytesReadAtEnd === stall.bytesReadSettled && stall.msgsAtEnd === stall.msgsAtStart;
     stall.queues = queues(sock.localPort, Number(new URL(sess.url).port));
     sock.resume();
     resumedAt = now();
@@ -224,7 +232,7 @@ async function once(sess, label, o) {
   for (const key of Object.keys(done.sha256)) if (!seen.has(key)) missing.push(key);
   const missingByChannel = {};
   for (const key of missing) { const [c, s] = key.split(":").map(Number); (missingByChannel[c] ??= []).push(s); }
-  const lines = logSince(offset).filter((l) => /mqtt|web_mqtt|packet|drop|error|warn|closing|exceed|too large/i.test(l));
+  const lines = logSince(offset).filter((l) => /\[(error|warning|critical)\]|drop|packet|exceed|too large|mailbox|overload|discard|limit|oversize/i.test(l));
   Object.assign(rec, {
     received: seen.size, messages: sub.msgs.length, dup, outOfOrder, shaOk, shaBad,
     missingCount: missing.length, missing: Object.entries(missingByChannel).map(([c, s]) => (o.channels > 1 ? `ch${c}:` : "") + ranges(s)).join(" "),
@@ -238,7 +246,7 @@ async function once(sess, label, o) {
   try { sub.closed ? null : await sub.client.endAsync(); } catch { /* already gone */ }
   results.push(rec);
   const verdict = `${rec.received}/${expected}`;
-  log(`  ${label} ${JSON.stringify(o)} -> received ${verdict}, missing [${rec.missing}], dup ${dup}, outOfOrder ${outOfOrder}, sha ok ${shaOk}, last ${rec.lastMs} ms, publish ${rec.publishMs} ms${rec.closed ? `, CLOSED ${JSON.stringify(rec.closed)}` : ""}${rec.publisherError ? `, publisher: ${rec.publisherError}` : ""}${stall ? `, stall bytesRead ${stall.bytesReadAtStart}->${stall.bytesReadAtEnd}, msgs ${stall.msgsAtStart}->${stall.msgsAtEnd}` : ""}`);
+  log(`  ${label} ${JSON.stringify(o)} -> received ${verdict}, missing [${rec.missing}], dup ${dup}, outOfOrder ${outOfOrder}, sha ok ${shaOk}, last ${rec.lastMs} ms, publish ${rec.publishMs} ms${rec.closed ? `, CLOSED ${JSON.stringify(rec.closed)}` : ""}${rec.publisherError ? `, publisher: ${rec.publisherError}` : ""}${stall ? `, stall bytesRead ${stall.bytesReadAtStart}->${stall.bytesReadSettled}->${stall.bytesReadAtEnd}${stall.readsStopped ? "" : " INVALID, reads did not stop"}, queues ${JSON.stringify(stall.queues)}, msgs ${stall.msgsAtStart}->${stall.msgsAtEnd}` : ""}`);
   return rec;
 }
 
@@ -246,6 +254,16 @@ async function repeat(sess, label, o, n = RUNS) {
   const out = [];
   for (let i = 1; i <= n; i++) out.push(await once(sess, `${label} run ${i}`, { ...o, runId: i }));
   return out;
+}
+
+/** The check that "arrived intact" means what it says. The publisher flips a byte of frame 2 after taking its digest, so the subscriber must
+ *  count that frame as a digest that differs and the other three as intact. */
+async function p0(sess) {
+  log("P0 self-test of the digest check");
+  const r = await once(sess, "P0 corrupted frame 2 of 4", { count: 4, size: 48 * KIB, corruptSeq: 2, runId: 1 });
+  r.selfTestPassed = r.shaOk === 3 && r.shaBad === 1 && r.received === 4;
+  log(`  digest check ${r.selfTestPassed ? "caught the corrupted frame" : "FAILED to behave as expected"}`);
+  if (!r.selfTestPassed) process.exitCode = 1;
 }
 
 async function p1(sess) {
@@ -262,6 +280,7 @@ async function p2(sess) {
 
 async function p3(sess) {
   log("P3 burst to a slow subscriber");
+  const started = now();
   const counts = (name, fallback) => String(args[name] ?? fallback).split(",").map(Number);
   const big = counts("p3-counts", "128,512,2000");
   const small = counts("p3-small-counts", "128,256,512,1000");
@@ -274,25 +293,27 @@ async function p3(sess) {
     const hi = tried.find(lossyAt);
     const lo = tried.filter((c) => hi !== undefined && c < hi).pop();
     if (hi === undefined || lo === undefined) log(`  bisection of ${size} B frames skipped, ${hi === undefined ? "no burst lost a frame" : "the smallest burst already lost frames"}`);
-    else await bisect(sess, size, lo, hi);
+    else await bisect(sess, size, lo, hi, started + BUDGET_MS);
   }
 }
 
 /** Between a burst that lost nothing (`lo`) and one that lost some (`hi`), halve until they are adjacent. Each step is RUNS runs, and a step
  *  counts as lossy when any run of it lost a frame. */
-async function bisect(sess, size, lo, hi) {
+async function bisect(sess, size, lo, hi, until) {
   const lossy = (runs) => runs.some((r) => r.missingCount > 0 || r.closed);
   const first = results.filter((r) => r.label.startsWith(`P3 ${size === KIB ? "1 KiB " : ""}${hi} `));
   const base = results.filter((r) => r.label.startsWith(`P3 ${size === KIB ? "1 KiB " : ""}${lo} `));
   if (!base.length || !first.length || lossy(base) || !lossy(first)) { log(`  bisection of ${size} B frames between ${lo} and ${hi} skipped, the ends are not lossless and lossy`); return; }
   log(`P3 bisection of ${size} B frames between ${lo} (none lost) and ${hi} (lost)`);
+  let converged = true;
   while (hi - lo > 1) {
+    if (now() > until) { converged = false; log(`  bisection stopped at its time budget, not converged`); break; }
     const mid = Math.floor((lo + hi) / 2);
     const runs = await repeat(sess, `P3 bisect ${size === KIB ? "1 KiB " : "48 KiB "}${mid}`, { count: mid, size, stallMs: STALL_MS });
     if (lossy(runs)) hi = mid; else lo = mid;
   }
-  log(`  loss starts above ${lo} frames and by ${hi} frames, for ${size} B frames`);
-  results.push({ label: `P3 bisection result ${size} B`, lastLossless: lo, firstLossy: hi, size });
+  log(`  ${converged ? "loss starts above" : "bracket reached, lossless up to"} ${lo} frames and by ${hi} frames, for ${size} B frames`);
+  results.push({ label: `P3 bisection result ${size} B`, lastLossless: lo, firstLossy: hi, size, converged });
 }
 
 async function p6(sess) {
@@ -346,7 +367,7 @@ async function p7(sess) {
   const frames = Number(args["p7-frames"] ?? (at128 ? 128 : Math.min(...lossy.map((r) => r.count), Infinity)));
   if (!Number.isFinite(frames)) { log("  no burst of 48 KiB frames lost any, so there is nothing to pace"); results.push({ label: "P7 not run", reason: "no loss in P3 to pace" }); return; }
   log(`  pacing ${frames} frames of 48 KiB${at128 ? "" : " (P3 lost none at 128, so this goes beyond the brief)"}`);
-  for (const paceMs of [1, 5, 20]) await repeat(sess, `P7 ${frames} pace ${paceMs} ms`, { count: frames, size: 48 * KIB, paceMs, stallMs: STALL_MS });
+  for (const paceMs of [0, 1, 5, 20]) await repeat(sess, `P7 ${frames} pace ${paceMs} ms`, { count: frames, size: 48 * KIB, paceMs, stallMs: STALL_MS });
 }
 
 async function configuration() {
@@ -367,12 +388,13 @@ async function configuration() {
 
 const sess = await session();
 await configuration();
+if (ONLY.has("P0")) await p0(sess);
 if (ONLY.has("P1")) await p1(sess);
 if (ONLY.has("P2") || ONLY.has("P4") || ONLY.has("P5")) await p2(sess);
 if (ONLY.has("P3")) await p3(sess);
 if (ONLY.has("P6")) await p6(sess);
 if (ONLY.has("P7")) await p7(sess);
 if (args.out) writeFileSync(resolve(args.out), JSON.stringify(results, null, 1));
-const bad = results.filter((r) => r.shaBad > 0 || r.publisherError);
+const bad = results.filter((r) => !r.label?.startsWith("P0") && (r.shaBad > 0 || r.publisherError));
 log(`done, ${results.length} records, ${bad.length} with a bad digest or a publisher error`);
-process.exit(0);
+process.exit(process.exitCode ?? 0);
