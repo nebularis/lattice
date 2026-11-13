@@ -388,6 +388,8 @@ The consequences, each a question for LG-4 and some for LG-7.
 
 So `draw` is handled separately, and should stay so. The care the maintainer asks for is in the runtime, where a merge under a binding ceiling must say whether it refuses whole, cuts and carries a residual, or is Undetermined, by the declared rule, and in LG-7, where the refuse rule and the atomicity of a pass need theorems before LG-4 cites them.
 
+**Decided 2026-11-13, with the maintainer.** Four of the questions this section raised. An allocation across several accounts commits whole (LG-Q12 (a), STD-332). An allocated amount honours its purpose, so allocation takes `reach` (LG-Q13 (a), STD-333). A rule may leave an explicit residual (LG-Q17 (a), MEC-109). The account declares the criterion of an order and each request carries the rank derived from it (LG-Q18 (c), MEC-108). Each owes a statement in the kernel and a theorem, which need no benchmark.
+
 ## 6. Proof follow-ups
 
 Each is a claim for the gate under LG-7's conventions, in the session as it stands. None needs HOL-Library, and one is simpler with it.

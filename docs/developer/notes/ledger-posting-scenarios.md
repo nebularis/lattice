@@ -49,7 +49,7 @@ pool: 7 left       A asks 5 (whole or not at all)
 | (iii) proportional, then round down to whole blocks | 0 | 0 | 7 | 3.9 and 3.1 seats are not blocks |
 | (iv) refuse both | 0 | 0 | 7 | the pool's policy is refuse |
 
-**Bears on** LG-Q17. **Ruling.**
+**Bears on** LG-Q17. **Ruling.** The maintainer, 2026-11-13, in deciding LG-Q17 as (a). Reading (i), as read on 2026-11-09: A is granted 5, B is refused, and the 2 that remain are an explicit residual on the merge record, under a rule that is lawful with a residual.
 
 ### A2. Blocks where the order decides who is served (software licensing)
 
@@ -287,7 +287,7 @@ What the search found, to be checked against the sources. Where an office-holder
 | (ii) a purpose belongs to a draw, never to an allocation | 3M in all | untouched |
 | (iii) a purpose on an allocation is Undetermined | refused | untouched |
 
-**Bears on** LG-Q13. **Ruling.**
+**Bears on** LG-Q13. **Ruling.** The maintainer, 2026-11-13, in deciding LG-Q13 as (a). Reading (i). A sublimit cannot be avoided by splitting a drawing, so the allocation honours the purpose as a single draw does.
 
 ### D3. Allocation that runs out mid-sequence (research grants)
 
@@ -298,7 +298,7 @@ What the search found, to be checked against the sources. Where an office-holder
 | (i) charge what fits, 10k unallocated | 50k | 30k | residual 10k, the purchase partly funded |
 | (ii) refuse the whole purchase | 0 | 0 | refused |
 
-**Bears on** LG-Q12, LG-Q17. **Ruling.**
+**Bears on** LG-Q12, LG-Q17. **Ruling.** The maintainer, 2026-11-13, in deciding LG-Q12's atomicity as (a). Whatever is charged is committed whole, so no one sees the 50k without the 30k. Which of (i) and (ii) holds was put to the maintainer as the wording's, as in the rulings on B3 and D1, and was not ruled apart from that.
 
 ## E. Restoring and recovering
 
