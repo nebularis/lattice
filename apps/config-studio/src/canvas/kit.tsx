@@ -12,6 +12,7 @@ import {
   applyNodeChanges,
   type Connection,
   type Edge,
+  type EdgeTypes,
   type Node,
   type NodeChange,
   type NodeTypes,
@@ -61,6 +62,8 @@ export interface CanvasProps {
   edges: Edge[];
   /** A constant, since React Flow redraws every node when it changes. */
   nodeTypes: NodeTypes;
+  /** A constant like the node types. A canvas that draws its own edges gives them here. */
+  edgeTypes?: EdgeTypes;
   hints?: LayoutHints;
   layout?: Layout;
   options?: LayoutOptions;
@@ -142,6 +145,7 @@ export function Canvas(props: CanvasProps) {
         nodes={nodes}
         edges={edges}
         nodeTypes={props.nodeTypes}
+        edgeTypes={props.edgeTypes}
         onNodesChange={(changes: NodeChange[]) => setNodes((ns) => applyNodeChanges(changes, ns))}
         onNodeDragStop={() => setNodes((ns) => (keep(ns), ns))}
         onConnect={props.onConnect}

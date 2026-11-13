@@ -75,7 +75,7 @@ A slice's documents change in the slice. Estimates are in tokens.
 | Slice | What | Modules | Done when | Waits on | Estimate |
 |---|---|---|---|---|---|
 | SVA-O1 | the canvas kit taken out of `MappingCanvas.tsx`, with our own layered layout behind one function, and the mapping canvas moved onto it. The time to lay out 100, 500 and 2,000 nodes measured | `apps/config-studio` | the mapping canvas's tests pass unchanged, and the timings are in the status record | nothing | 220k |
-| SVA-O2 | the views of classes and object properties and of the class hierarchy, the toggle between domain and range and shapes, and the neighbourhood of a class | `apps/config-studio` | on the facility sample the toggle adds exactly the edges its shapes state, each naming its shape | SVA-O1 | 200k |
+| SVA-O2 | the views of classes and object properties and of the class hierarchy, the toggle between domain and range and shapes, and the neighbourhood of a class | `apps/config-studio` | on the facility sample the four links its shapes state each name their shape, and a shape stating a link no domain and range states adds exactly that edge, dashed | SVA-O1 | 200k |
 | SVA-O3 | `rdf/axioms.ts` and the element forms | `apps/config-studio` | each OWL construct of the sketch's section 6 has a unit test, and a triple the form does not recognise appears in its table | nothing | 220k |
 
 ### Phase P, persistence

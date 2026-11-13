@@ -646,3 +646,40 @@ test("the mapping canvas draws a node for each mapping, offers its menus and ope
   await mappings.filter({ hasText: label }).first().click();
   await expect(page.getByRole("region", { name: `Mapping ${label}` })).toBeVisible();
 });
+
+test("the ontology drawing shows the classes of the baseline, what the shapes state, and selects a class on a click", async ({ page }) => {
+  const fake = new FakeService();
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Facility agreement/ }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  const ws = [...fake.workspaces.keys()][0];
+  await page.goto(`/#/w/${ws}/baseline`);
+
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Diagram" }).click();
+  const diagram = page.getByRole("region", { name: "Ontology diagram" });
+  const nodes = diagram.locator(".react-flow__node-cls");
+  await expect(nodes.filter({ hasText: "Facility" }).first()).toBeVisible();
+  // The sample's baseline declares nine classes, and nine properties link them.
+  const status = diagram.getByRole("status");
+  await expect(status).toHaveText("9 classes and 9 links drawn.");
+  await expect(diagram.getByRole("group", { name: "Ontology view" }).getByRole("button", { name: "Classes and properties" })).toHaveAttribute("aria-pressed", "true");
+
+  // The facility's shape states four of those links, so none is added and four name the shape.
+  await diagram.getByLabel("Include shapes").check();
+  await expect(status).toHaveText("9 classes and 9 links, 4 stated by shapes drawn.");
+  await expect(diagram.locator(".onto-edge-label.dashed")).toHaveCount(0);
+  await expect(diagram.locator(".react-flow__edge title").filter({ hasText: "stated by ex:FacilityShape" })).toHaveCount(4);
+
+  await diagram.getByRole("group", { name: "Ontology view" }).getByRole("button", { name: "Class hierarchy" }).click();
+  await expect(diagram.getByLabel("Include shapes")).toHaveCount(0);
+  await expect(status).toHaveText("9 classes and 3 links drawn.");
+  await diagram.getByRole("group", { name: "Ontology view" }).getByRole("button", { name: "Classes and properties" }).click();
+
+  await nodes.filter({ hasText: "Drawdown" }).first().click();
+  await expect(page.locator('.list-item[aria-selected="true"]')).toContainText("Drawdown");
+  await expect(page.getByRole("region", { name: "Ontology diagram" }).getByRole("status")).toContainText("around Drawdown");
+  await expect(diagram.getByLabel("Hops around the selected class")).toBeEnabled();
+});

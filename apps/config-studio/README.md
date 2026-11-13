@@ -12,7 +12,7 @@ It talks to the [service](../../platform/config-studio-service) in Turtle, as [c
 |---|---|
 | Workspaces | make a workspace from a sample or uploaded Turtle. Each subject is sorted into the baseline or a configuration by the terms it uses |
 | Overview | every baseline class with the persistence nodes declared at its class scope and the contracts it carries, and buttons to add either |
-| Baseline | the class tree, a class's properties and what configures it, concept schemes, and replacing the baseline with a check for terms the configuration would lose |
+| Baseline | the class tree, a class's properties and what configures it, concept schemes, and replacing the baseline with a check for terms the configuration would lose. A Diagram button draws the ontology on a canvas, as classes with a link for each object property (with the links node shapes state on request) or as the class hierarchy, around the selected class or whole |
 | Vocabulary | concept schemes with their concepts as a tree, scheme contracts with a table of how each resolves for every period and set of binding scopes and a way to try one, bindings with their validity, binding scopes |
 | Quantification | value spaces, units, quantities and ranges, with ranges drawn on a number line and written with their bounds in one step |
 | Eligibility | conditions with each concept's decision over the resolved scheme, and tests: questions with a candidate and an expected decision, decided by the compiled query as you edit. Admission profiles |
@@ -32,6 +32,7 @@ The inspector shows the selected node's Turtle and the unsaved changes as a diff
 | `src/rdf/shapes.ts` | the node shapes and property shapes that place and constrain a class's properties |
 | `src/rdf/editors.ts` | the node kinds, how an editor groups its sections, node creation, and the reference check |
 | `src/rdf/baseline.ts`, `split.ts`, `path.ts`, `report.ts` | the baseline's terms, sorting an import into the six graphs, the read path, and reading a job graph |
+| `src/rdf/ontologyGraph.ts` | the graphs the ontology drawings show, derived from the baseline and never stored. Classes and object properties from domains and ranges and, on request, shapes, and the class hierarchy, each limited to the neighbourhood of a class |
 | `src/rdf/quantity.ts`, `eligibility.ts` | ranges with their bounds and quantities, and questions as tests |
 | `src/state.ts` | a workspace in the browser: saved and edited graphs, undo, live validation, saving and conflicts |
 | `src/api.ts` | the HTTP API |

@@ -12,6 +12,7 @@ import { Modal, Spinner, download, go, readFiles } from "./kit";
 import { addFor, declaredFor } from "./Overview";
 import { useStudio } from "./Workspace";
 import { ClassAxioms, IndividualAxioms, PropertyAxioms } from "./AxiomForms";
+import { OntologyCanvas } from "./OntologyCanvas";
 
 const kind = (type: string) => KINDS.find((k) => k.type === type)!;
 
@@ -20,6 +21,8 @@ export function BaselineView({ selected }: { selected?: string }) {
   const { baseline, id } = studio;
   const [filter, setFilter] = useState("");
   const [replacing, setReplacing] = useState(false);
+  // The ontology drawing takes the place of the detail, around the selected class when one is selected.
+  const [diagram, setDiagram] = useState(false);
   const roots = baseline.roots().sort((a, b) => a.label.localeCompare(b.label));
   const q = filter.toLowerCase();
   const matches = (c: BaselineClass): boolean => !q || c.label.toLowerCase().includes(q) || c.children.some((x) => matches(baseline.classes.get(x)!));
@@ -60,6 +63,16 @@ export function BaselineView({ selected }: { selected?: string }) {
         ))}
       </div>
       <div className="detail-pane">
+        <div className="mode-switch" role="group" aria-label="Detail pane" style={{ margin: "12px 16px 0", maxWidth: 240 }}>
+          <button aria-pressed={!diagram} onClick={() => setDiagram(false)}>Details</button>
+          <button aria-pressed={diagram} onClick={() => setDiagram(true)}>Diagram</button>
+        </div>
+        {diagram && (
+          <div className="editor">
+            <OntologyCanvas workspace={id} baseline={baseline} selected={selected} />
+          </div>
+        )}
+        {!diagram && (<>
         {current && <ClassDetail c={current} />}
         {property && (
           <div className="editor">
@@ -108,6 +121,7 @@ export function BaselineView({ selected }: { selected?: string }) {
             <p>Pick a class to see its properties and what configures it.</p>
           </div>
         )}
+        </>)}
       </div>
       {replacing && <ReplaceBaseline onClose={() => setReplacing(false)} />}
     </div>
