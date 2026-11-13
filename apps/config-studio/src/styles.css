@@ -452,3 +452,24 @@ table.axiom-rows.nested th { position: static; }
 .onto .react-flow__handle { opacity: 0; }
 .canvas-edge-label, .onto-edge-label { position: absolute; pointer-events: all; padding: 1px 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-2); font-size: 11px; white-space: nowrap; }
 .canvas-edge-label.dashed, .onto-edge-label.dashed { border-style: dashed; border-color: var(--text-3); }
+
+/* Importing ontologies: the list of ontologies in the Baseline view and the import dialog (SVA-B3). */
+.onto-list { border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.onto-head { display: flex; align-items: center; gap: 8px; padding-right: 12px; }
+.onto-head h4 { flex: 1; }
+.onto-row { display: flex; align-items: center; gap: 8px; padding: 5px 14px; font-size: 12.5px; }
+.onto-row .name { display: block; font-weight: 550; }
+.onto-row .detail { display: block; font-size: 12px; color: var(--text-3); }
+.onto-row.missing { color: var(--warn); }
+.onto-note { margin: 4px 14px 0; color: var(--warn); }
+.import-step { display: grid; gap: 12px; }
+.import-inputs { display: grid; gap: 6px; }
+.import-inputs .field-label { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; }
+.import-files { margin: 0; padding-left: 18px; display: grid; gap: 2px; }
+.import-plan td, .import-plan th { overflow-wrap: anywhere; }
+.import-plan tr.missing td { background: var(--warn-2); }
+.import-problems { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; color: var(--warn); font-size: 12.5px; }
+.import-problems li { display: flex; gap: 6px; align-items: flex-start; }
+.import-summary { margin: 0; font-weight: 600; }
+.import-failure { color: var(--bad); overflow-wrap: anywhere; }
+

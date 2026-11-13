@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** SVA-B3, which the maintainer asked for after SVA-O2a, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each. The maintainer accepts or rejects ADR-A154, and decides TD-164, both put to them on 2026-11-13.
+**Next action:** paused after SVA-B3 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-B2b and SVA-B4, which complete phase B, and SVA-R0's probes, which need a running stack and unblock phase R. The maintainer accepts or rejects ADR-A154, and decides TD-164, both put to them on 2026-11-13.
 
 ## Slices
 
@@ -31,7 +31,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2a | several imports held by one write, each with its ontology and version IRI | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | planned | SVA-B2a |
-| SVA-B3 | the Baseline view's imports list, import dialog and missing report | building 2026-11-13 | SVA-B1, SVA-B2a |
+| SVA-B3 | the Baseline view's imports list, import dialog and missing report | built 2026-11-13, building 2026-11-13 | SVA-B1, SVA-B2a |
 | SVA-B4 | the import graph | planned | SVA-B3, SVA-O1 |
 | SVA-O1 | the canvas kit, with our own layered layout behind one function | built 2026-11-12, building 2026-11-12 |  |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | built 2026-11-13, building 2026-11-12 | SVA-O1 |
@@ -67,6 +67,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-12, SVA-B2a: the writer's check that a fence job digested the import it names was removed. `theWriterChecksEachJobItselfWhateverTheServiceChecked` failed, expecting 400 and getting 200. Restored, 14 of 14 passing.
 - 2026-11-13, SVA-O2: an edge both origins state was given the origin shape, and the hop limit was raised by one. Five tests failed, among them the toggle only adding edges and the facility file's four links. Restored, 20 of 20 passing.
 - 2026-11-13, SVA-O2a: a label was left only the middle of its edge. Four tests failed, among them the two over the facility sample. Restored, 23 of 23 passing.
+- 2026-11-13, SVA-B3: a held import's ontology and version IRI were left out of `heldByIri`. Six tests failed. Restored, 16 of 16 passing.
 
 ## Log
 
@@ -88,3 +89,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-13: the maintainer asked for the label placement seen in SVA-O2's screenshot to be fixed, and for SVA-B3 next. SVA-O2a added to the plan and picked up, with SVA-B3 to follow it.
 - 2026-11-13: SVA-O2a built, [Validation Pack](../validation/SVA-O2a.md). `canvas/edges.ts` routes each edge from the node boxes and places each label at the first of seven points of its curve that covers no node and no other label, and the ontology canvas uses it. In the facility sample's drawing no label covers another or a class, and the edge from Facility back to Drawdown no longer loops behind its node. Left as it is: an edge that spans several ranks is still drawn straight through the classes between its ends, with only its label kept off them, which bending edges around nodes would fix and no slice plans. The mapping canvas keeps its own edges. Following a dragged node holds by construction and was not tried in a browser. Verified with 277 unit tests, the type check and 26 browser tests on the fake service.
 - 2026-11-13: SVA-B3 picked up. LATTICE's staged documents are SVA-B2b and not built, so the dialog resolves from dropped files and held imports and passes no staged document.
+- 2026-11-13: SVA-B3 built, [Validation Pack](../validation/SVA-B3.md). The Baseline view lists the workspace's own ontology, each held import and each missing one, and its dialog takes files or a folder, shows how every import of the baseline resolves, and on confirmation digests each file by a fence job, four at once, then holds them all in one request. A missing import never blocks. `rdf/held.ts` derives the list and what is missing from the baseline and the held imports. The fake service had no fence job or import route, so all of it was added there. The dialog has no drop area, only the two inputs, since the kit's file reader gives no relative path. Verified with 293 unit tests, the type check and 29 browser tests on the fake service. The real service has not been driven from this dialog.

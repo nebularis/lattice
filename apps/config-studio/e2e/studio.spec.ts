@@ -683,3 +683,120 @@ test("the ontology drawing shows the classes of the baseline, what the shapes st
   await expect(page.getByRole("region", { name: "Ontology diagram" }).getByRole("status")).toContainText("around Drawdown");
   await expect(diagram.getByLabel("Hops around the selected class")).toBeEnabled();
 });
+
+const OWL_HEAD = "@prefix owl: <http://www.w3.org/2002/07/owl#> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n";
+const IMPORT_A = "https://example.org/ont/a";
+const IMPORT_B = "https://example.org/ont/b";
+const ontology = (iri: string) => ({ mimeType: "text/turtle", buffer: Buffer.from(`${OWL_HEAD}<${iri}> a owl:Ontology .\n<${iri}#T> a owl:Class ; rdfs:label "T" .\n`) });
+const catalog = (entries: Record<string, string>) => ({
+  mimeType: "application/xml",
+  buffer: Buffer.from(
+    `<?xml version="1.0" encoding="UTF-8"?>\n<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">\n${Object.entries(entries)
+      .map(([name, uri]) => `<uri name="${name}" uri="${uri}"/>`)
+      .join("\n")}\n</catalog>\n`,
+  ),
+});
+
+/** A workspace from the author's own Turtle, whose baseline ontology imports each of `imports`, open on the Baseline view. */
+async function importingWorkspace(page: Page, fake: FakeService, imports: string[]): Promise<string> {
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Your own Turtle/ }).click();
+  await page.locator("#ws-name").fill("Imports");
+  const baseline = `${OWL_HEAD}<https://example.org/ont/base> a owl:Ontology ; owl:imports ${imports.map((i) => `<${i}>`).join(", ")} .\n<https://example.org/ont/base#Thing> a owl:Class ; rdfs:label "Thing" .\n`;
+  await page.locator('input[type="file"]').setInputFiles({ name: "base.ttl", mimeType: "text/turtle", buffer: Buffer.from(baseline) });
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  const ws = [...fake.workspaces.keys()][0];
+  await page.goto(`/#/w/${ws}/baseline`);
+  return ws;
+}
+
+test("the imports of the baseline are listed as missing, the plan shows how each resolves, and confirming holds the resolved ones in one request", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await importingWorkspace(page, fake, [IMPORT_A, IMPORT_B]);
+  const list = page.getByRole("region", { name: "Ontologies" });
+  await expect(list.getByText("missing", { exact: true })).toHaveCount(2);
+  await expect(list.getByText("2 imports are not held.")).toBeVisible();
+  await expect(list.locator(".onto-row.missing").first()).toHaveAttribute("title", /Imported by https:\/\/example.org\/ont\/base/);
+
+  await page.getByRole("button", { name: "Import ontologies" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import ontologies" });
+  await dialog.getByLabel("Files", { exact: true }).setInputFiles([
+    { name: "a.ttl", ...ontology(IMPORT_A) },
+    { name: "unrelated.ttl", ...ontology("https://example.org/ont/unrelated") },
+    { name: "catalog-v001.xml", ...catalog({ [IMPORT_B]: "b.ttl" }) },
+  ]);
+  await expect(dialog.getByLabel("Chosen files")).toContainText("catalog-v001.xml");
+  await dialog.getByRole("button", { name: "Show the plan" }).click();
+
+  const plan = dialog.getByRole("table", { name: "Import plan" });
+  await expect(plan.getByRole("row")).toHaveCount(3);
+  await expect(plan.getByRole("row", { name: /ont\/a/ })).toContainText("from a dropped file");
+  await expect(plan.getByRole("row", { name: /ont\/a/ })).toContainText("a.ttl");
+  await expect(plan.getByRole("row", { name: /ont\/b/ })).toContainText("missing");
+  await expect(dialog.getByLabel("Problems with the plan")).toContainText("The catalog maps https://example.org/ont/b to b.ttl, which was not dropped.");
+  await expect(dialog.getByRole("status")).toHaveText("1 to hold now, 0 already held, 1 missing.");
+  // nothing is held, or shown as held, before the author confirms
+  expect(fake.holds).toHaveLength(0);
+  await expect(list.getByText("held", { exact: true })).toHaveCount(0);
+
+  await dialog.getByRole("button", { name: "Hold 1 import" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(fake.holds).toHaveLength(1);
+  expect(fake.holds[0].labels).toEqual([IMPORT_A]);
+  expect(fake.workspaces.get(ws)!.imports.map((i) => i.ontology)).toEqual([IMPORT_A]);
+  // the saved baseline is untouched by importing
+  expect(fake.saves.filter((s) => s.name === "baseline")).toHaveLength(0);
+  await expect(list.getByText("held", { exact: true })).toHaveCount(1);
+  await expect(list.getByText("example.org/ont/a", { exact: true })).toBeVisible();
+  await expect(list.getByText("missing", { exact: true })).toHaveCount(1);
+  await expect(list.getByText("1 import is not held.")).toBeVisible();
+});
+
+test("a catalog that maps an import to a file with an unrelated name resolves it, and the plan names the path", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await importingWorkspace(page, fake, [IMPORT_A]);
+  await page.getByRole("button", { name: "Import ontologies" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import ontologies" });
+  await dialog.getByLabel("Files", { exact: true }).setInputFiles([
+    { name: "file-7.ttl", ...ontology(IMPORT_A) },
+    { name: "catalog-v001.xml", ...catalog({ [IMPORT_A]: "file-7.ttl" }) },
+  ]);
+  await dialog.getByRole("button", { name: "Show the plan" }).click();
+  const row = dialog.getByRole("table", { name: "Import plan" }).getByRole("row", { name: /ont\/a/ });
+  await expect(row).toContainText("from the catalog");
+  await expect(row).toContainText("file-7.ttl");
+  await expect(dialog.getByLabel("Problems with the plan")).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Hold 1 import" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(fake.workspaces.get(ws)!.imports.map((i) => i.label)).toEqual([IMPORT_A]);
+  await expect(page.getByRole("region", { name: "Ontologies" }).getByText("missing", { exact: true })).toHaveCount(0);
+});
+
+test("a fence job that fails holds nothing, names the file and keeps the dialog open", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await importingWorkspace(page, fake, [IMPORT_A, IMPORT_B]);
+  await page.getByRole("button", { name: "Import ontologies" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import ontologies" });
+  await dialog.getByLabel("Files", { exact: true }).setInputFiles([
+    { name: "a.ttl", ...ontology(IMPORT_A) },
+    { name: "broken.ttl", mimeType: "text/turtle", buffer: Buffer.from("this is { not turtle") },
+    { name: "catalog-v001.xml", ...catalog({ [IMPORT_B]: "broken.ttl" }) },
+  ]);
+  await dialog.getByRole("button", { name: "Show the plan" }).click();
+  await expect(dialog.getByRole("status")).toHaveText("2 to hold now, 0 already held, 0 missing.");
+  await dialog.getByRole("button", { name: "Hold 2 imports" }).click();
+
+  const table = dialog.getByRole("table", { name: "Documents being held" });
+  await expect(table.getByRole("row", { name: /broken\.ttl/ })).toContainText("failed");
+  await expect(table.getByRole("row", { name: /a\.ttl/ })).toContainText(/digested|failed/);
+  await expect(dialog.getByRole("alert")).toContainText("nothing was held");
+  await expect(dialog).toBeVisible();
+  expect(fake.holds).toHaveLength(0);
+  expect(fake.workspaces.get(ws)!.imports).toHaveLength(0);
+  await expect(page.getByRole("region", { name: "Ontologies" }).getByText("missing", { exact: true })).toHaveCount(2);
+  await dialog.getByRole("button", { name: "Back to the plan" }).click();
+  await expect(dialog.getByRole("button", { name: "Hold 2 imports" })).toBeEnabled();
+});

@@ -52,7 +52,7 @@ export interface WorkspaceSummary {
   /** The published lineages it follows and the versions it pins (ADR-A149 decision 7). */
   dependsOn: string[];
   /** The imports it holds, fenced and stored once by digest (ADR-A149 decision 6). */
-  imports: { graph: string; digest: string; label: string }[];
+  imports: { graph: string; digest: string; label: string; ontology?: string; version?: string }[];
 }
 
 export type Mode = "locked" | "read-only" | "shared";
@@ -78,7 +78,13 @@ function summary(graph: Graph, iri: string): WorkspaceSummary {
     dependsOn: graph.objects(iri, CST("dependsOn")).map((d) => d.value).sort(),
     imports: graph
       .objects(iri, CST("holdsImport"))
-      .map((g) => ({ graph: g.value, digest: g.value.replace("urn:lattice:studio:import:", ""), label: graph.value(g.value, LABEL) ?? "Import" }))
+      .map((g) => ({
+        graph: g.value,
+        digest: g.value.replace("urn:lattice:studio:import:", ""),
+        label: graph.value(g.value, LABEL) ?? "Import",
+        ontology: graph.value(g.value, CST("declaresOntology")),
+        version: graph.value(g.value, CST("declaresVersion")),
+      }))
       .sort((a, b) => a.label.localeCompare(b.label)),
     revisions: Object.fromEntries((["baseline", ...CONFIG_PARTS] as GraphName[]).map((name) => [name, n(name)])) as Record<GraphName, number>,
   };
@@ -202,15 +208,29 @@ export const api = {
     return Graph.parse(await response.text());
   },
 
+  /** Submits a fence job for one imported document and gives the job's id. The body is the document as the author supplied it. */
+  async submitFence(id: string, text: string, mediaType: string): Promise<string> {
+    const response = await request(`/api/workspaces/${id}/jobs?kind=fence&target=import`, { method: "POST", headers: { "Content-Type": mediaType }, body: text });
+    return (response.headers.get("Location") ?? "").split("/").pop() ?? "";
+  },
+
+  /** Holds the imports that finished fence jobs digested, all in one request and all or none (at most 64), each under its label. */
+  async holdImports(id: string, imports: { job: string; label: string }[]): Promise<WorkspaceSummary> {
+    const query = new URLSearchParams();
+    for (const i of imports) query.append("job", i.job);
+    for (const i of imports) query.append("label", i.label);
+    const held = await request(`/api/workspaces/${id}/imports?${query}`, { method: "POST" });
+    return summary(Graph.parse(await held.text()), `urn:lattice:studio:ws:${id}`);
+  },
+
   /** Fences an import: digested by a job, then held by the workspace, stored once whichever workspaces hold it. */
   async fenceImport(id: string, text: string, mediaType: string, label: string): Promise<WorkspaceSummary> {
-    const response = await request(`/api/workspaces/${id}/jobs?kind=fence&target=import`, { method: "POST", headers: { "Content-Type": mediaType }, body: text });
-    const job = (response.headers.get("Location") ?? "").split("/").pop() ?? "";
+    const job = await api.submitFence(id, text, mediaType);
     const done = await awaitJob(job);
     if (done.status === "Failed") throw new Error(done.failure ?? "The import could not be read.");
-    const held = await request(`/api/workspaces/${id}/imports?job=${job}&label=${encodeURIComponent(label)}`, { method: "POST" });
+    const held = await api.holdImports(id, [{ job, label }]);
     void api.deleteJob(job).catch(() => undefined);
-    return summary(Graph.parse(await held.text()), `urn:lattice:studio:ws:${id}`);
+    return held;
   },
 
   async importGraph(id: string, digest: string): Promise<Graph> {

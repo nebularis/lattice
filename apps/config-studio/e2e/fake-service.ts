@@ -5,6 +5,7 @@
 // poll: a validation reports a violation when the submitted Turtle says dal:NoErasure, as the
 // compiler would, and a compilation returns one SPARQL artefact.
 
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Page, Route } from "@playwright/test";
@@ -144,21 +145,58 @@ const INS = "https://www.nebularis.org/neuro-semantic/lattice/instrument#";
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 const PREFIX = `@prefix cst: <${CST}> .\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n@prefix sh: <http://www.w3.org/ns/shacl#> .\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n`;
 
+interface Held {
+  digest: string;
+  label: string;
+  text: string;
+  mediaType: string;
+  ontology?: string;
+  version?: string;
+}
+
 interface Workspace {
   label: string;
   graphs: Record<string, string>;
   revisions: Record<string, number>;
+  /** The imports it holds, in the order they were held. */
+  imports: Held[];
+}
+
+const OWL_ONTOLOGY = "http://www.w3.org/2002/07/owl#Ontology";
+const OWL_VERSION = "http://www.w3.org/2002/07/owl#versionIRI";
+
+/** What a fence job would digest from a body: a digest of its text, and the one named owl:Ontology it declares with its version IRI.
+ * A fake reads RDF/XML by its header with regular expressions. A Turtle body that does not parse fails the job, as the service's does. */
+function fence(body: string, mediaType: string): { digest: string; ontology?: string; version?: string } | { failure: string } {
+  const digest = createHash("sha256").update(body).digest("hex");
+  if (mediaType.includes("xml")) {
+    const ontology = /<owl:Ontology[^>]*rdf:about="([^"]+)"/.exec(body)?.[1];
+    const version = /<owl:versionIRI[^>]*rdf:resource="([^"]+)"/.exec(body)?.[1];
+    return { digest, ontology, version };
+  }
+  try {
+    const quads = new Parser().parse(body);
+    const named = [...new Set(quads.filter((q) => q.predicate.value === RDF_TYPE && q.object.value === OWL_ONTOLOGY && q.subject.termType === "NamedNode").map((q) => q.subject.value))];
+    if (named.length !== 1) return { digest };
+    const versions = quads.filter((q) => q.subject.value === named[0] && q.predicate.value === OWL_VERSION).map((q) => q.object.value);
+    return { digest, ontology: named[0], version: versions.length === 1 ? versions[0] : undefined };
+  } catch (error) {
+    return { failure: error instanceof Error ? error.message.split("\n")[0] : String(error) };
+  }
 }
 
 export interface Submitted {
   kind: string;
   target: string;
   body: string;
+  mediaType?: string;
 }
 
 export class FakeService {
   readonly workspaces = new Map<string, Workspace>();
-  readonly jobs = new Map<string, { ws: string; kind: string; target: string; body: string; finished: boolean }>();
+  readonly jobs = new Map<string, { ws: string; kind: string; target: string; body: string; mediaType?: string; finished: boolean }>();
+  /** Each request that held imports, with the jobs and labels it named in order. */
+  readonly holds: { ws: string; jobs: string[]; labels: string[] }[] = [];
   readonly submitted: Submitted[] = [];
   readonly deletedJobs: string[] = [];
   readonly saves: { name: string; ifMatch: string | null; body: string }[] = [];
@@ -188,14 +226,21 @@ export class FakeService {
   private describe(id: string): string {
     const w = this.workspaces.get(id)!;
     const revisions = Object.entries(w.revisions).map(([name, n]) => `cst:${name}Revision ${n}`).join(" ; ");
+    const held = w.imports.map((i) => `cst:holdsImport <urn:lattice:studio:import:${i.digest}> ;`).join(" ");
+    const roots = w.imports
+      .map(
+        (i) =>
+          `<urn:lattice:studio:import:${i.digest}> rdfs:label ${JSON.stringify(i.label)}${i.ontology ? ` ; cst:declaresOntology <${i.ontology}>` : ""}${i.version ? ` ; cst:declaresVersion <${i.version}>` : ""} .\n`,
+      )
+      .join("");
     return `<urn:lattice:studio:ws:${id}> a cst:Workspace ; rdfs:label ${JSON.stringify(w.label)} ;
-      cst:modifiedAt "2026-10-27T10:00:00Z"^^xsd:dateTime ; ${revisions} .\n`;
+      ${held} cst:modifiedAt "2026-10-27T10:00:00Z"^^xsd:dateTime ; ${revisions} .\n${roots}`;
   }
 
   private jobGraph(id: string): string {
     const job = this.jobs.get(id)!;
     const iri = `<urn:lattice:studio:job:${id}>`;
-    const kind = job.kind === "validate" ? "Validate" : job.kind === "assemble" ? "Assemble" : job.kind === "propose" ? "Propose" : job.kind === "dry-run" ? "DryRunJob" : "Compile";
+    const kind = job.kind === "validate" ? "Validate" : job.kind === "assemble" ? "Assemble" : job.kind === "propose" ? "Propose" : job.kind === "dry-run" ? "DryRunJob" : job.kind === "fence" ? "Fence" : "Compile";
     const head = `${iri} a cst:Job ; cst:kind cst:${kind} ; cst:target cst:${TARGETS[job.target] ?? "Persistence"} ;
       cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime`;
     if (this.hold.has(job.kind) || this.hold.has(`${job.kind}:${job.target}`)) {
@@ -204,6 +249,12 @@ export class FakeService {
     if (!job.finished) {
       job.finished = true;
       return `${PREFIX}${head} ; cst:status cst:Running .\n`;
+    }
+    if (job.kind === "fence") {
+      const result = fence(job.body, job.mediaType ?? "text/turtle");
+      if ("failure" in result) return `${PREFIX}${head} ; cst:status cst:Failed ; cst:failureMessage ${JSON.stringify(result.failure)} .\n`;
+      const declared = `${result.ontology ? ` ; cst:declaresOntology <${result.ontology}>` : ""}${result.version ? ` ; cst:declaresVersion <${result.version}>` : ""}`;
+      return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:digest "${result.digest}"${declared} .\n`;
     }
     if (job.kind === "dry-run") return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${dryRunResults(iri, job.body)}`;
     if (job.kind === "propose") {
@@ -251,6 +302,7 @@ export class FakeService {
           label: decodeURIComponent(request.headers()["slug"] ?? "Untitled workspace"),
           graphs: { baseline: request.postData() ?? "", ...Object.fromEntries(PARTS.map((p) => [p, ""])) },
           revisions: { baseline: 1, ...Object.fromEntries(PARTS.map((p) => [p, 0])) },
+          imports: [],
         });
         return turtle(PREFIX + this.describe(id), 201, { Location: `/api/workspaces/${id}` });
       }
@@ -274,9 +326,38 @@ export class FakeService {
         }
         return turtle(ws.graphs[name], 200, { ETag: `"${ws.revisions[name]}"` });
       }
+      if (parts[2] === "imports" && parts.length === 3 && method === "POST") {
+        // all or nothing, as the service's one command is: every job must be a finished fence job of this workspace
+        const names = url.searchParams.getAll("job");
+        const labels = url.searchParams.getAll("label");
+        if (names.length === 0) return route.fulfill({ status: 404, body: "no job" });
+        if (names.length > 64 || (labels.length !== names.length && !(labels.length === 0 && names.length === 1))) return route.fulfill({ status: 400, body: "the labels do not match the jobs" });
+        const found: Held[] = [];
+        for (const [i, name] of names.entries()) {
+          const job = this.jobs.get(name);
+          if (!job || job.ws !== parts[1]) return route.fulfill({ status: 404, body: `no job ${name}` });
+          const result = job.kind === "fence" ? fence(job.body, job.mediaType ?? "text/turtle") : { failure: "not a fence job" };
+          if ("failure" in result) return route.fulfill({ status: 409, body: `${name} has no import to hold` });
+          found.push({ digest: result.digest, label: labels[i] ?? "Import", text: job.body, mediaType: job.mediaType ?? "text/turtle", ontology: result.ontology, version: result.version });
+        }
+        this.holds.push({ ws: parts[1], jobs: names, labels });
+        for (const held of found) if (!ws.imports.some((i) => i.digest === held.digest)) ws.imports.push(held);
+        return turtle(PREFIX + this.describe(parts[1]), 201, { Location: `/api/workspaces/${parts[1]}/imports/${found[0].digest}` });
+      }
+      if (parts[2] === "imports" && parts.length === 4) {
+        const held = ws.imports.find((i) => i.digest === parts[3]);
+        if (!held) return route.fulfill({ status: 404, body: "not held" });
+        if (method === "DELETE") {
+          ws.imports = ws.imports.filter((i) => i !== held);
+          return route.fulfill({ status: 204 });
+        }
+        // the service gives the converted graph, so an RDF/XML document is a header only here
+        const header = held.mediaType.includes("xml") ? `<${held.ontology ?? "urn:x"}> a <${OWL_ONTOLOGY}> .\n` : held.text;
+        return turtle(header);
+      }
       if (parts[2] === "jobs" && method === "POST") {
         const id = this.id();
-        const job = { ws: parts[1], kind: url.searchParams.get("kind")!, target: url.searchParams.get("target")!, body: request.postData() ?? "", finished: false };
+        const job = { ws: parts[1], kind: url.searchParams.get("kind")!, target: url.searchParams.get("target")!, body: request.postData() ?? "", mediaType: request.headers()["content-type"], finished: false };
         this.jobs.set(id, job);
         this.submitted.push(job);
         return turtle(PREFIX, 202, { Location: `/api/jobs/${id}` });
