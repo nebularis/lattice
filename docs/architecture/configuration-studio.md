@@ -21,6 +21,8 @@ flowchart LR
     MQ["RabbitMQ queue lattice.studio.jobs"]
     TQ["RabbitMQ queue lattice.studio.transforms"]
     TW["transforms worker (Java, Saxon-HE, JOLT)"]
+    RQ["RabbitMQ queues lattice.studio.runs.interactive and lattice.studio.runs"]
+    EV["RabbitMQ exchange lattice.studio.events"]
     WX["RabbitMQ super stream lattice.studio.writes, 8 partitions"]
     WR["config-studio-writer instances, one group"]
     subgraph Worker["Python worker"]
@@ -35,6 +37,10 @@ flowchart LR
     TQ --> TW
     TW -- "read the compile job" --> Store
     TW -. "reply" .-> API
+    API -- "run input, compile job IRI" --> RQ
+    RQ --> TW
+    TW -- "frames of a run" --> EV
+    EV -- "frames, read by every instance" --> API
     MQ -- "job IRI" --> Worker
     Worker -- "read inputs" --> Store
     Worker -- "job-update, keyed by workspace" --> WX
@@ -49,9 +55,9 @@ flowchart LR
 | service | HTTP, reads of the store, the staged vocabulary and samples, LATTICE's own ontology documents by the IRI a staged index holds, and the publication of jobs and writes | interpret `dal:`, `srf:` or the other layers' terms, or write the store |
 | store writer (`config-studio-writer`) | every write to the store for the partitions it holds, in batches of one request each, the revision guard, a receipt per write, and the sweep of finished jobs | serve HTTP, or apply a command it has not checked |
 | worker | validation and compilation, with the engines `mise run check` uses, and a validation of the baseline that warns of an `owl:imports` no held document declares (SVA-Q7) | take a path, a command or a graph of its own choosing from a message |
-| transforms worker (`config-studio-transforms`) | running a compile job's XSLT stylesheets and JOLT chains over a sample source and attributing what they write to the mappings, warm between requests (ADR-A148) | write the store, or run a transform the compile job does not hold |
+| transforms worker (`config-studio-transforms`) | running a compile job's XSLT stylesheets and JOLT chains over a sample source and attributing what they write to the mappings, warm between requests (ADR-A148). It is also the run worker of ADR-A154, which answers the two run queues and publishes each run's result as frames, and the waiting transform route until it is removed | write the store, or run a transform the compile job does not hold |
 | Fuseki | every workspace and job, as named graphs | hold state the service or worker keeps elsewhere |
-| RabbitMQ | delivery of job IRIs to the worker, and of writes to the writer of their partition on a super stream | carry a job's content to the worker |
+| RabbitMQ | delivery of job IRIs to the worker, of writes to the writer of their partition on a super stream, of a run's input to the run worker, and of a run's frames to the service, which relays them to the tab that submitted the run | carry a job's content to the worker |
 
 **Java owns HTTP and storage, Python owns meaning.** Validation and compilation run where pySHACL and the repository's compilers are, so the studio answers as `mise run check` would. A validation of persistence configuration also compiles it, because the `dal:` shapes target the dimension classes and do not see a `dal:DataAccessProfile` that declares several dimensions at once.
 

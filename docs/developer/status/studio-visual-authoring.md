@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-12. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-15. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,14 +16,14 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-H1 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-R1's contract, with the limits the probes support, then SVA-R2, SVA-R3 and SVA-R4.
+**Next action:** paused after SVA-R1 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-R2, the service's runs, SVA-R3, the run worker, and SVA-R4, the browser's run controller, each against the contract. SVA-R2 and SVA-R3 between them declare the two run queues in the service's Java topology, correct the worker's binding of a queue that is not dead-lettered to the dead-letter exchange, and add the queues to the operations guide.
 
 ## Slices
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
 | SVA-R0 | probes of the broker for content frames | built 2026-11-13, building 2026-11-12 |  |
-| SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | building 2026-11-12 | SVA-R0 |
+| SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | built 2026-11-15, building 2026-11-12 | SVA-R0 |
 | SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | planned | SVA-R1 |
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
 | SVA-R4 | the browser's run controller and the dock's run pane | planned | SVA-R1 |
@@ -80,6 +80,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-13, SVA-B4: a derived edge was drawn even where a stated edge joins the pair. The test that forbids it failed. Restored, 12 of 12 passing.
 - 2026-11-13, SVA-R0: the probe's own self-test, P0, corrupts one frame after its digest is taken. A first version corrupted the frame too late and P0 reported all four frames equal, which showed the fault in the test. Fixed, P0 reports three equal and one different.
 - 2026-11-15, SVA-H1: the guard was run by hand on a read of the password through a path with `..` in it, a deletion followed by the settings task, and a search of the folder by its absolute path. It refused the first and the third and let the second through. It then refused a command of the verification itself whose text only named the folder, which is recorded in TD-165.
+- 2026-11-15, SVA-R1: the frame's schema was made to allow extra properties. The test of a frame with one failed. Restored, 31 of 31 passing.
 
 ## Log
 
@@ -110,3 +111,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-13: SVA-R0 built, [record](../validation/SVA-R0.md). On RabbitMQ 4.4.0 over loopback, 152 runs delivered 254,478 frames with every digest equal, none twice and none out of order. A frame of up to 16 MiB arrived intact, and a larger one was refused by AMQP's own limit before it reached MQTT. Every run of 128 frames of 48 KiB arrived whole, to a prompt subscriber and to one that stopped reading for five seconds. Loss was sporadic, silent in the broker's log, and seen only at a backlog of 1,024 frames or more, eight times the limit. A tab that is away gets nothing sent meanwhile. So the limits of the sketch's rule 9 stand as written, 48 KiB a frame, 128 frames a run and 4 pending runs a tab, the last with a margin of two. Not probed: a real network, TLS, a proxy, a browser as the client, QoS 1 and a persistent session. The cause of the sporadic loss is open, the broker's `mailbox_soft_limit` of 200 being one candidate. The scripts gained a self-test in which a frame corrupted after its digest was taken must be counted as different, and a check that a stalled subscriber's reads had stopped, after a first pass of 27 runs without that check was discarded.
 - 2026-11-15: the maintainer accepted ADR-A154 with decision 13 reworded. During SVA-R0 a read of the broker's generated configuration printed the stack's broker password into a tool's output, since the stack writes it there in clear. It reached no file and no commit. The maintainer asked for it not to happen again: the credentials were rotated by deleting the stack's secret files and the broker's data, and SVA-H1 was added and picked up, to take the secret out of that file, to print settings redacted, and to guard the folder.
 - 2026-11-15: SVA-H1 built, [Validation Pack](../validation/SVA-H1.md). The broker's password and the four paths that carry the service's secret moved from the generated `rabbitmq.conf` into an owner-only file beside the other secrets, loaded through `RABBITMQ_CONFIG_FILES`, which was proved by starting the broker and not taken from memory. `mise run studio:config` prints the stack's settings with every secret redacted by one function. `tools/secret_read_guard.py`, a hook of the project's settings with deny rules beside it, refuses a shell command, a read or a search that names the secrets folder. The rule is STD-328 and a line of AGENTS.md. Verified on a fresh broker with rotated credentials: every part ran, the service answered 200, the settings task printed the main configuration with no password and no secret path, and 95 tests passed. Left, as TD-165: the compose stack still keeps settings and secrets in one file, one command still takes a password as an argument, and the guard refuses a command that only names the folder. Through `mise run` the task cannot read the broker's limits where Erlang is not on the path, and says so.
+- 2026-11-15: SVA-R1 built, [Validation Pack](../validation/SVA-R1.md). The contract has a Runs section: the route, the message to the run worker, the frame as one JSON object with a schema, used both over MQTT and in the waiting response, the roles of a part, delivery to the tab, what a client must do, and the limits in one table. The topology gains the two run queues in both its copies, the vocabulary gains `cst:Run` with its two kinds and its deadline, and the transforms route is marked deprecated. The fake service had no transforms route, so its canned run is new. Found and left for SVA-R2 and SVA-R3: the service's Java topology names its queues in code and does not yet declare the run queues, the Python worker binds every queue of the topology to the dead-letter exchange, which is wrong for one that is not dead-lettered and already was for the transforms queue, and the operations guide lists the queues by name. Verified with `mise run check:config-studio`, which exited 0 with 21, 284 and 308 tests passed in its three suites, and 31 browser tests on the fake service.

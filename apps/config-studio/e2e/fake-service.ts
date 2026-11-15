@@ -227,6 +227,38 @@ function importWarnings(baseline: string, held: Held[]): string {
     .join("\n");
 }
 
+/** The mappings the fake's runs report on, each with one canned artefact, as one mapping's output (ADR-A154). */
+const RUN_MAPPINGS = ["https://example.org/lattice/mapping/loan-intake"];
+const RUN_REPORT = "@prefix sh: <http://www.w3.org/ns/shacl#> .\n\n[] a sh:ValidationReport ;\n    sh:conforms true .\n";
+const RUN_ARTEFACT = `<https://example.org/lattice/data/loan-1> <${RDF_TYPE}> <https://example.org/lending#LoanApplication> .\n`;
+const RUN_SAMPLE_TYPES = ["text/turtle", "application/n-triples", "application/xml", "text/xml", "application/json"];
+const RUN_MAX_SECONDS: Record<string, number> = { sample: 120, simulate: 15 };
+const RUN_MAX_BYTES = 5 * 1024 * 1024;
+
+/** A frame of a run, as `run-frame.schema.json` states it. */
+interface RunFrame {
+  run: string;
+  seq: number;
+  last: boolean;
+  part?: { index: number; role: string; mediaType: string; path?: string; group?: string; step?: number };
+  text?: string;
+  more?: boolean;
+  status?: "succeeded" | "failed";
+  message?: string;
+  conforms?: boolean;
+}
+
+/** The frames of a `sample` run over the canned result: a report part and an artefact part for each mapping, then a succeeded last frame. */
+function sampleRunFrames(run: string): RunFrame[] {
+  const frames: RunFrame[] = [];
+  RUN_MAPPINGS.forEach((mapping, i) => {
+    frames.push({ run, seq: frames.length, last: false, part: { index: 2 * i, role: "report", mediaType: "text/turtle", group: mapping }, text: RUN_REPORT });
+    frames.push({ run, seq: frames.length, last: false, part: { index: 2 * i + 1, role: "artefact", mediaType: "application/n-triples", path: `${i}.nt`, group: mapping, step: 0 }, text: RUN_ARTEFACT });
+  });
+  frames.push({ run, seq: frames.length, last: true, status: "succeeded", conforms: true });
+  return frames;
+}
+
 export interface Submitted {
   kind: string;
   target: string;
@@ -241,6 +273,8 @@ export class FakeService {
   readonly holds: { ws: string; jobs: string[]; labels: string[] }[] = [];
   readonly submitted: Submitted[] = [];
   readonly deletedJobs: string[] = [];
+  /** Each run the fake accepted, in order. The fake offers no events, so a run without `wait=true` delivers no frame, and only `wait=true` gives them. */
+  readonly runs: { ws: string; kind: string; target: string; job: string; tab: string; wait: boolean; body: string; mediaType?: string }[] = [];
   readonly saves: { name: string; ifMatch: string | null; body: string }[] = [];
   /** Jobs that never finish while held, as a proposal that waits on a model does not (plan studio-worker-liveness): a kind, or `kind:target`. */
   readonly hold = new Set<string>();
@@ -325,6 +359,48 @@ export class FakeService {
         ? ` ; cst:artefact [ cst:path "LoanApplication/cas-replace.rq" ; cst:mediaType "application/sparql-query" ; cst:group "LoanApplication" ; cst:content "SELECT ?s WHERE { ?s ?p ?o }" ]`
         : "";
     return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms ${!refused} ; cst:report <urn:r> ; cst:finishedAt "2026-10-27T10:00:01Z"^^xsd:dateTime${artefact} .\n${finding}\n`;
+  }
+
+  /**
+   * `POST /api/workspaces/{ws}/runs` as the contract states it (ADR-A154), the parameters checked in the contract's order. Without `wait`
+   * it answers `202` with the `cst:Run` and delivers nothing, since the fake offers no events. With `wait=true` it answers the frames. Only a
+   * `sample` run over the mapping part has a canned result. A `simulate` run answers one failed frame, since no simulator is built yet.
+   */
+  private async run(route: Route, url: URL, ws: string, turtle: (body: string, status?: number, headers?: Record<string, string>) => Promise<void>): Promise<void> {
+    const request = route.request();
+    const refuse = (status: number, body: string) => route.fulfill({ status, body });
+    const kind = url.searchParams.get("kind") ?? "";
+    const target = url.searchParams.get("target") ?? "";
+    const jobId = url.searchParams.get("job") ?? "";
+    const tab = url.searchParams.get("tab") ?? "";
+    const deadline = url.searchParams.get("deadline");
+    const wait = url.searchParams.get("wait") === "true";
+    if (!((kind === "sample" && target === "mapping") || (kind === "simulate" && (target === "persistence" || target === "surface")))) return refuse(400, "kind and target do not make a run");
+    if (!/^[a-z0-9]{1,32}$/.test(tab)) return refuse(400, "tab is 1 to 32 of a-z0-9");
+    const now = Date.now();
+    let ends = now + RUN_MAX_SECONDS[kind] * 1000;
+    if (deadline !== null) {
+      ends = /(Z|[+-]\d\d:\d\d)$/.test(deadline) ? Date.parse(deadline) : Number.NaN;
+      if (Number.isNaN(ends)) return refuse(400, "deadline is an xsd:dateTime with a time zone");
+      if (ends <= now || ends > now + RUN_MAX_SECONDS[kind] * 1000) return refuse(400, "deadline is in the past or beyond the kind's maximum");
+    }
+    const job = this.jobs.get(jobId);
+    if (!job || job.ws !== ws || this.deletedJobs.includes(jobId)) return refuse(404, "the workspace does not hold the job");
+    const part = kind === "sample" ? "mapping" : target;
+    if (job.kind !== "compile" || job.target !== part || !job.finished) return refuse(409, `the job is not a finished compilation of the ${part} part`);
+    const mediaType = (request.headers()["content-type"] ?? "").split(";")[0].trim();
+    if (!(kind === "sample" ? RUN_SAMPLE_TYPES : ["application/trig"]).includes(mediaType)) return refuse(415, "the media type is not one the kind takes");
+    const body = request.postData() ?? "";
+    if (Buffer.byteLength(body) > RUN_MAX_BYTES) return refuse(413, "the body is over 5 MiB");
+    const run = `urn:lattice:studio:run:${this.id()}`;
+    this.runs.push({ ws, kind, target, job: jobId, tab, wait, body, mediaType });
+    if (!wait) {
+      const description = `<${run}> a cst:Run ; cst:kind cst:${kind === "sample" ? "SampleRun" : "SimulationStep"} ; cst:target cst:${target[0].toUpperCase()}${target.slice(1)} ;
+        cst:compileJob <urn:lattice:studio:job:${jobId}> ; cst:deadline "${new Date(ends).toISOString().replace(/\.\d+Z$/, "Z")}"^^xsd:dateTime .\n`;
+      return turtle(PREFIX + description, 202);
+    }
+    const frames: RunFrame[] = kind === "sample" ? sampleRunFrames(run) : [{ run, seq: 0, last: true, status: "failed", message: "The fake service runs no simulator." }];
+    return route.fulfill({ status: 200, body: JSON.stringify(frames), headers: { "Content-Type": "application/json" } });
   }
 
   private async handle(route: Route): Promise<void> {
@@ -414,6 +490,7 @@ export class FakeService {
         const header = held.mediaType.includes("xml") ? `<${held.ontology ?? "urn:x"}> a <${OWL_ONTOLOGY}> .\n` : held.text;
         return turtle(header);
       }
+      if (parts[2] === "runs" && method === "POST") return this.run(route, url, parts[1], turtle);
       if (parts[2] === "jobs" && method === "POST") {
         const id = this.id();
         const job = { ws: parts[1], kind: url.searchParams.get("kind")!, target: url.searchParams.get("target")!, body: request.postData() ?? "", mediaType: request.headers()["content-type"], finished: false };

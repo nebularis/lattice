@@ -4,12 +4,14 @@
 
 The data contracts between the [Configuration Studio](../../apps/config-studio)'s browser code, its [service](../../platform/config-studio-service) and its [worker](../../workers/README.md#configuration-studio-jobs-adr-a136) ([ADR-A136](../../docs/architecture/decisions/ADR-A136-configuration-studio.md)). They are contracts of a supported component: a change that would break a client is announced here and deprecated before it is removed, by the release policy once it is defined.
 
-Every body is RDF. The terms are in [`studio-vocabulary.ttl`](studio-vocabulary.ttl), prefix `cst:`, and the configurations themselves use `dal:` and `srf:` unchanged. The one JSON document is [`amqp-topology.json`](amqp-topology.json).
+Every body is RDF. The terms are in [`studio-vocabulary.ttl`](studio-vocabulary.ttl), prefix `cst:`, and the configurations themselves use `dal:` and `srf:` unchanged. The JSON documents are [`amqp-topology.json`](amqp-topology.json) and, for the frames of a run, [`run-frame.schema.json`](run-frame.schema.json).
 
 | File | Holds |
 |---|---|
-| `studio-vocabulary.ttl` | workspaces, samples, jobs, job status, artefacts and gaps |
-| `amqp-topology.json` | the exchange, the job queue, the dead-letter queue, and the writes super stream with its partitions, declared identically by the service, the writer and the worker |
+| `studio-vocabulary.ttl` | workspaces, samples, jobs, runs, job status, artefacts and gaps |
+| `amqp-topology.json` | the exchange, the job queues, the transforms queue, the two queues of runs, `lattice.studio.runs.interactive` and `lattice.studio.runs`, the dead-letter queue, and the writes super stream with its partitions, declared identically by the service, the writer and the worker |
+| `run-frame.schema.json` | the JSON Schema of one frame of a run, which is the body of a `run.frame` event and an element of a `wait=true` response (see Runs) |
+| `samples/run-frames.example.json`, `samples/run-frames-failed.example.json` | a complete small `sample` run as a `wait=true` response gives it, and a run that could not start. Each is valid against `run-frame.schema.json` |
 | `promotions.ttl` | the surface promotions of the registry, jobs, holders and terms, their generation profile and the target namespace `prm:` (`https://www.nebularis.org/neuro-semantic/lattice/config-studio/promotion#`). The terms promotion covers `skos:Concept` only, and the members of the other units of `publication-units.ttl` are not covered yet |
 | `workspace-summaries.rq` | the query that gives each workspace's summary, evaluated as it is read, kept beside the promotions because it joins a workspace to its parts' version rows, which no read path expresses |
 | `samples/samples.ttl` | the samples, each a list of repository files |
@@ -81,7 +83,8 @@ Every route but `/api/health` and `/api/session`, and `/mcp`, answers `401` with
 | `POST /api/workspaces/{ws}/jobs?kind=propose&target=mapping-language-model` | the mapping configuration, with one `cst:ImportDocument` of `cst:documentRole` `cst:SourceVocabulary`, its `cst:sourceNamespace` optional, and at most one of role `cst:SampleSource`, each Turtle or N-Triples | `202`, as for any job. `422` otherwise. See Mapping proposals |
 | `POST /api/workspaces/{ws}/jobs?kind=dry-run&target=meaning` | the configurations and a `cst:DryRun`, which is never saved | `202`, as for any job. See Dry run |
 | `POST /api/workspaces/{ws}/jobs?kind=dry-run&target=mapping` | the mapping configuration and one `cst:ImportDocument`, its sample source in Turtle or N-Triples | `202`, as for any job. `422` without exactly one document with content and a media type. See Dry run |
-| `POST /api/workspaces/{ws}/transforms?job={job}` | a sample source in XML or JSON, `Content-Type` `application/xml`, `text/xml` or `application/json` | `200`, the run as a `cst:Transform`. `404` for a job the workspace does not hold, `409` for one that is not a finished compilation of the mapping part, `415` for another media type, `413` over 5 MiB, `504` when no transforms worker answered within 30 seconds. See Transforms |
+| `POST /api/workspaces/{ws}/transforms?job={job}` | a sample source in XML or JSON, `Content-Type` `application/xml`, `text/xml` or `application/json` | Deprecated in favour of a `sample` run, which follows. It stays for one release, answered by the run worker, and is then removed (ADR-A154 decision 13). `200`, the run as a `cst:Transform`. `404` for a job the workspace does not hold, `409` for one that is not a finished compilation of the mapping part, `415` for another media type, `413` over 5 MiB, `504` when no transforms worker answered within 30 seconds. See Transforms |
+| `POST /api/workspaces/{ws}/runs?kind={sample,simulate}&target={mapping,persistence,surface}&job={job}&tab={tab}[&deadline={time}][&wait=true]` | the input, at most 5 MiB. A sample source for `sample`, and TriG holding a sample world and a step for `simulate` | Without `wait`, `202`, Turtle, the run as a `cst:Run`, accepted and not yet run. With `wait=true`, `200`, `application/json`, the run's frames. `400`, `404`, `409`, `413`, `415`, `429`, `503` and `504` as Runs states them. See Runs |
 | `GET /api/workspaces/{ws}/jobs` | | `200`, the description of each compile job of the workspace: status, kind, target and times, without report or artefacts |
 | `GET /api/workspaces/{ws}/jobs?unfinished=true` | | `200`, the description of each job of the workspace that is queued or running, of every kind: status, kind, target, the unit a publish job prepares, and times, without input, report or artefacts. A view that opens reads it to find the job it started before it was closed |
 | `GET /api/document-templates` | | `200`, every `cst:DocumentTemplate` a document may be drafted from, each with its `cst:templateKey`, `rdfs:label` and its `cst:section`s in `cst:order`, each section with `cst:sectionKey`, `rdfs:label` (its heading), `cst:elementKind` (`clause` or `definition`), `cst:termKind`, `cst:required` and `rdfs:comment` (its guidance) |
@@ -168,7 +171,7 @@ Running a job twice gives the same graph but for its times, so a redelivered mes
 
 ## Completion events
 
-The writer publishes a CloudEvent for each applied update of a job, of type `org.nebularis.lattice.studio.job.updated`, whose subject is the job's IRI and whose data is `{"status": ..., "workspace": ...}`, the job's status and its workspace's id, never its content. It goes on the topic exchange `lattice.studio.events`, with its type as the routing key and its attributes as `cloudEvents:` headers (the CloudEvents AMQP binding's binary mode), once the request that applied the update committed. Each service instance reads every event through a queue of its own, which lives as long as its connection, so an event published while no instance listens is lost, and a reader that missed one reads the job again.
+The writer publishes a CloudEvent for each applied update of a job, of type `org.nebularis.lattice.studio.job.updated`, whose subject is the job's IRI and whose data is `{"status": ..., "workspace": ...}`, the job's status and its workspace's id, never its content. It goes on the topic exchange `lattice.studio.events`, with its type as the routing key and its attributes as `cloudEvents:` headers (the CloudEvents AMQP binding's binary mode), once the request that applied the update committed. The run worker publishes a run's frames to the same exchange in the same binding, and they are the one event that holds content (see Runs). Each service instance reads every event through a queue of its own, which lives as long as its connection, so an event published while no instance listens is lost, and a reader that missed one reads the job again.
 
 The broker's MQTT over WebSockets (its Web MQTT plugin) carries the events to the browser, as CloudEvents in JSON in the message body, when `LATTICE_STUDIO_EVENTS_URL` names where a browser reaches it, the broker's own address or a proxy's. `/api/session` names it as `events`, and the page's `Content-Security-Policy` lets it connect there. The broker checks identity only, and the service's relay decides what each tab hears.
 
@@ -190,6 +193,118 @@ A tab connects with its principal's name as the user, the app's own credential a
 | `events` | an event, with `specversion` | a job changed |
 
 Whether the principal may read the job is checked at subscription and again at each delivery, by the rule of `GET /api/jobs/{job}`, so an event is withheld once its workspace is locked against the principal, with no change in the broker. A rebuild job's events reach an administrator only. The browser waits on an event between reads of a job, and reads again after five seconds without one, or polls as before when the studio offers no events or the connection is down. A relay that restarts forgets every watch, and the tabs' waits poll until they watch again.
+
+## Runs
+
+A run executes the artefacts of a finished compile job over an input that is not saved, and stores nothing (ADR-A154). It is accepted at once, and its result reaches the submitting tab as numbered frames, so no request waits for a worker where the tab has events. A run is a deterministic function of the compile job, the input and a time the request states, so its identifiers and its times come from the request and its output is ordered canonically. It is not listed by `GET /api/workspaces/{ws}/jobs` and cannot be read again. A run that was lost is run again. Compilation, validation, proposal and publication stay jobs.
+
+| `kind` | `target` | Body | Queue | Deadline, default and maximum |
+|---|---|---|---|---|
+| `sample` | `mapping` | a sample source, `Content-Type` `text/turtle`, `application/n-triples`, `application/xml`, `text/xml` or `application/json`. A run of a compiled mapping over it | `lattice.studio.runs` | 120 seconds |
+| `simulate` | `persistence` or `surface` | `application/trig`, holding the sample world and the step. What it holds is defined by the slices that build each simulator, and this contract says only that it is TriG. One step of a simulator | `lattice.studio.runs.interactive` | 15 seconds |
+
+### The request
+
+`POST /api/workspaces/{ws}/runs` takes these query parameters.
+
+| Parameter | Holds |
+|---|---|
+| `kind`, `target` | a pair of the table above. Any other pair is `400` |
+| `job` | the id of a compile job of the workspace. `404` when the workspace does not hold it, `409` when it is not a finished compilation of the part `target` names, by the rule the transforms route states |
+| `tab` | the tab's identifier, 1 to 32 of `a-z0-9`, the one the tab uses for its events. `400` otherwise |
+| `deadline` | an absolute time, an `xsd:dateTime` with a time zone. When it is left out the service sets it to now plus the kind's default. `400` when it is in the past or further off than the kind's maximum |
+| `wait` | `true` to have the service collect the run's frames and answer on the request, as below |
+
+The principal must be one who may read the workspace, by the rule of `GET /api/workspaces/{ws}`, and a workspace it may not read answers `404`. A run writes nothing, so reading is enough. A body over 5 MiB is `413`, and a media type the kind does not take is `415`.
+
+Without `wait` the answer is `202`, `Content-Type` `text/turtle` as every other RDF response, with the run as a `cst:Run`. No `Location` is given, since a run cannot be read again. `{uuid}` is a lower-case UUID the service chooses.
+
+```turtle
+<urn:lattice:studio:run:{uuid}> a cst:Run ;
+    cst:kind cst:SampleRun ;                  # or cst:SimulationStep
+    cst:target cst:Mapping ;                  # or cst:Persistence, cst:Surface
+    cst:compileJob <urn:lattice:studio:job:{job}> ;
+    cst:deadline "2026-11-15T10:02:00Z"^^xsd:dateTime .
+```
+
+The service answers `429` when the tab already has 4 runs pending, with `Retry-After` in seconds until the earliest of their deadlines, and `503` when it cannot reach the broker. A run is pending from the `202` until the service has seen its last frame or its deadline has passed.
+
+With `wait=true` the service collects the run's frames from the events it already reads and answers `200`, `application/json`, a JSON array of the frames in sequence order, each exactly the frame object below, so the same schema holds both ways a result arrives. It answers `504` when the deadline passes first. This is how a tab with no events, or whose connection is down, runs. The worker behaves the same either way.
+
+### The message to the run worker
+
+The service publishes the request to exchange `lattice.studio`, routed with `lattice.studio.runs.interactive` for `simulate` and `lattice.studio.runs` for `sample`. The body is the input as received, `content_type` its media type, not persistent. No reply queue is named.
+
+| Header | Holds |
+|---|---|
+| `run` | the run's IRI |
+| `job` | the compile job's IRI, `urn:lattice:studio:job:` and a lower-case UUID |
+| `kind` | `sample` or `simulate` |
+| `target` | `mapping`, `persistence` or `surface` |
+| `deadline` | the absolute time, as text |
+
+The message's `expiration` is the milliseconds until the deadline, so the broker drops a request no worker took in time. Neither queue is dead-lettered. The worker reads the compile job from the store, checks the request as the service did, and refuses without requeuing a message that lacks a header or whose run or job IRI is not in the forms above. A message the broker marks as redelivered is not run. The worker publishes one failed frame saying that a worker stopped during the run, and acknowledges it, and the author runs it again. A worker stops an execution that passes the deadline.
+
+### A frame
+
+The run worker publishes each frame to the topic exchange `lattice.studio.events` as a CloudEvent in the AMQP binding's binary mode, as a job's event is published. Its type is `org.nebularis.lattice.studio.run.frame`, which is also its routing key, its subject is the run's IRI, and its body is the frame object, valid against [`run-frame.schema.json`](run-frame.schema.json).
+
+| Field | Holds |
+|---|---|
+| `run` | the run's IRI |
+| `seq` | a whole number from 0, counting the run's frames |
+| `last` | `true` on the run's final frame and on no other |
+| `part` | optional. The part the frame's text belongs to, given on the first frame of each part only |
+| `text` | optional. A piece of the current part's text. A part's text is the concatenation of the `text` of its frames in sequence order. At most 49,152 bytes as UTF-8, and never split inside a character |
+| `more` | optional. `true` when the current part continues in the next frame |
+| `status` | on the last frame only, `succeeded` or `failed` |
+| `message` | on a last frame whose `status` is `failed`, why, in plain words |
+| `conforms` | optional, on a last frame whose `status` is `succeeded` |
+
+| `part` field | Holds |
+|---|---|
+| `index` | a whole number from 0, counting the run's parts |
+| `role` | one of `check`, `request`, `report`, `artefact`, `delta` and `outcome` |
+| `mediaType` | the media type of the part's text |
+| `path`, `group` | optional. As `cst:path` and `cst:group` give them for an artefact |
+| `step` | optional. A whole number, the step of the run that wrote the part, as `cst:stratum` is for a dry run |
+
+| `role` | The part is | Defined by |
+|---|---|---|
+| `report` | an `sh:ValidationReport` as Turtle, the findings as every job gives them | this contract |
+| `artefact` | what a mapping wrote, as a mapping dry run's artefact is, with `group` the mapping and `step` the stratum | this contract |
+| `check`, `request`, `delta`, `outcome` | the four parts of a simulator step | the slices that build the simulators |
+
+A run sends at most 128 frames. A result that would need more ends the run with a failed last frame whose `message` says the result is too large and to narrow what is run. A run that cannot start, for example one whose compile job it cannot read or whose input it cannot parse, is one frame, `seq` 0, `last` `true` and `failed`. [`samples/run-frames.example.json`](samples/run-frames.example.json) is a complete `sample` run, a report part, one artefact part split across two frames and a succeeded last frame, and [`samples/run-frames-failed.example.json`](samples/run-frames-failed.example.json) is a run that could not start.
+
+### Delivery to the tab
+
+The service instance that accepted the run keeps in memory who submitted it, from which tab, for which workspace and until when. That entry is coordination state (PRI-52), and losing it loses only runs in flight. Every instance reads every event, and only the instance holding the entry forwards a run's frames, so a frame reaches a tab once and in the order one consumer read it. It forwards each frame to the submitting tab's events topic, `studio/u/<name>/<tab>/events`, as the CloudEvent in JSON in the message body, the way a job's event reaches a tab, after checking that the principal may read the workspace by the rule of `GET /api/workspaces/{ws}`, from the graph as it is then. A tab sends no `watch` frame for a run. A frame whose run no instance holds is dropped.
+
+At the deadline the accepting instance sends a failed last frame for a run it has not seen end, with `seq` one past the last it forwarded, and forgets the run. A job's event is unchanged and never holds content.
+
+### What a client must do
+
+Events are sent at QoS 0 on a clean session, so a frame can be lost, and a run is not read again from anywhere.
+
+- Keep the first frame it sees for each `seq`.
+- Ignore a frame of a run it no longer shows.
+- Treat the run as complete when every `seq` from 0 to the last frame's is present.
+- Treat the run as incomplete when that is not so at the deadline, and offer to run it again.
+- Send at most one run a pane at a time, and of the requests waiting behind it only the newest.
+- Ask the service to wait, with `wait=true`, where the studio offers no events or the tab's connection is down.
+
+### Limits
+
+The limits are held to what the probes of the broker observed it deliver to a slow reader, with a margin, and may be tightened without changing anything else in this contract.
+
+| Limit | Value | Enforced by |
+|---|---|---|
+| input of a run | 5 MiB | the service, `413` |
+| text of a frame | 49,152 bytes as UTF-8 | the worker |
+| frames of a run | 128 | the worker |
+| pending runs of a tab | 4 | the service, `429` |
+| deadline | 15 seconds for `simulate`, 120 seconds for `sample`, each the default and the maximum | the service sets and checks it, the worker stops an execution that passes it, and the browser holds the same one |
 
 ## Promotions
 
@@ -239,7 +354,7 @@ A dry run of the mapping part compiles each scheme with `tools/mork_rdf` and run
 
 A compile job of the mapping part also compiles each scheme over an XML or JSON source with `tools/mork_transforms` (ADR-A148), grouped by the scheme: `{scheme}.xsl`, an XSLT 3.0 stylesheet (`application/xslt+xml`), or `{scheme}.jolt.json`, a JOLT chain (`application/json`), and beside each `{path}.attribution.json`, the table that attributes what a run writes to its mappings. What a backend refuses or warns of is a finding on its mapping.
 
-A transform runs a finished compile job's stylesheets or chains over a sample source in the transforms worker and answers at once. Nothing is stored, since a run is derived and can be repeated. The service checks the request and publishes the sample as the message body, with `content_type` the sample's media type, header `job` the compile job's IRI, a correlation id, RabbitMQ's direct reply-to and an expiration of 30 seconds, routed with `lattice.studio.transforms` on exchange `lattice.studio`. The worker reads the compile job from the store, checks it as the service did, and replies with a Turtle graph. A request without a reply queue, a correlation id or a job IRI is dropped.
+A transform runs a finished compile job's stylesheets or chains over a sample source in the transforms worker and answers at once. The route is deprecated in favour of a `sample` run (see Runs). It stays for one release, answered by the run worker, which is the transforms worker of ADR-A148 generalised, and is then removed (ADR-A154 decision 13). Nothing is stored, since a run is derived and can be repeated. The service checks the request and publishes the sample as the message body, with `content_type` the sample's media type, header `job` the compile job's IRI, a correlation id, RabbitMQ's direct reply-to and an expiration of 30 seconds, routed with `lattice.studio.transforms` on exchange `lattice.studio`. The worker reads the compile job from the store, checks it as the service did, and replies with a Turtle graph. A request without a reply queue, a correlation id or a job IRI is dropped.
 
 ```turtle
 <urn:lattice:studio:transform:{id}> a cst:Transform ;   # {id} is the request's correlation id

@@ -232,7 +232,7 @@ cst:Job a owl:Class ;
     rdfs:comment "One validation or compilation of one configuration graph against one baseline revision. Described in its own graph, whose IRI is the job's." .
 
 cst:JobKind a owl:Class ;
-    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose cst:DryRunJob cst:ToolCall cst:Rebuild ) ] .
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( cst:Validate cst:Compile cst:Analyse cst:Assemble cst:Propose cst:DryRunJob cst:ToolCall cst:Rebuild cst:SampleRun cst:SimulationStep ) ] .
 cst:Validate a cst:JobKind ; rdfs:comment "Validate the configuration and the baseline against the target's SHACL shapes." .
 cst:Compile a cst:JobKind ; rdfs:comment "Compile the configuration with the target's compiler." .
 cst:Rebuild a cst:JobKind ; rdfs:comment "Rebuild the studio's promotions whole from the store. A rebuild job names no workspace, target or input, and its update may carry the promotion graphs (ADR-A149 decision 14)." .
@@ -308,8 +308,15 @@ cst:artefact a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Artefac
 
 cst:Transform a owl:Class ; rdfs:subClassOf cst:Job ;
     rdfs:comment "A run of a compile job's transforms over a sample source in XML or JSON, answered on the request that asked for it and never stored (ADR-A148)." .
-cst:compileJob a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Transform ; rdfs:range cst:Job ;
-    rdfs:comment "The compile job of the mapping part whose stylesheets or chains the run took." .
+cst:compileJob a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( cst:Transform cst:Run ) ] ; rdfs:range cst:Job ;
+    rdfs:comment "The compile job whose compiled artefacts the run took: of the mapping part for a transform or a sample run, and of the part a simulation names for a simulation step." .
+
+cst:Run a owl:Class ; rdfs:subClassOf cst:Job ;
+    rdfs:comment "A run of a finished compile job's artefacts over an input that is not saved. It is accepted at once, stores nothing, is never listed and cannot be read again, and its result reaches the browser as frames (ADR-A154). Its cst:kind is cst:SampleRun or cst:SimulationStep." .
+cst:SampleRun a cst:JobKind ; rdfs:comment "A run of the compiled mapping part over a sample source, a run of kind sample. Its cst:target is cst:Mapping." .
+cst:SimulationStep a cst:JobKind ; rdfs:comment "One step of a simulator over a sample world, a run of kind simulate. Its cst:target is cst:Persistence or cst:Surface." .
+cst:deadline a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Run ; rdfs:range xsd:dateTime ;
+    rdfs:comment "The absolute time by which the run must have ended. After it the broker drops a request no worker took, a worker stops the execution, and the accepting service instance ends the run with a failed frame." .
 
 cst:Artefact a owl:Class ;
     rdfs:comment "A file a compilation produced, kept as text so the author can read it." .

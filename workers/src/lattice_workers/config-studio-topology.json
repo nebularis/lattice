@@ -18,6 +18,16 @@
       "deadLetter": false
     },
     {
+      "name": "lattice.studio.runs.interactive",
+      "routingKey": "lattice.studio.runs.interactive",
+      "deadLetter": false
+    },
+    {
+      "name": "lattice.studio.runs",
+      "routingKey": "lattice.studio.runs",
+      "deadLetter": false
+    },
+    {
       "name": "lattice.studio.dead",
       "routingKey": "#",
       "deadLetter": false

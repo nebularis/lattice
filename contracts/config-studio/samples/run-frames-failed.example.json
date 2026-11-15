@@ -1,0 +1,9 @@
+[
+  {
+    "run": "urn:lattice:studio:run:9d1c4e72-0b3a-4f6d-8a25-1e7f3c5b2d90",
+    "seq": 0,
+    "last": true,
+    "status": "failed",
+    "message": "The compile job could not be read, so nothing was run."
+  }
+]

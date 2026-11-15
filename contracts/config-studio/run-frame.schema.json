@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/config-studio/run-frame/0.1.0",
+  "title": "Configuration Studio: one frame of a run, the body of a run.frame event and an element of a wait=true response (ADR-A154)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run", "seq", "last"],
+  "properties": {
+    "run": {
+      "type": "string",
+      "pattern": "^urn:lattice:studio:run:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "The run's IRI, urn:lattice:studio:run: and a lower-case UUID"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 128,
+      "description": "The frame's place in the run, from 0. A run sends at most 128 frames, so a worker's frames end at 127. The service's own failed frame at the deadline comes one past the last it forwarded, which may be 128"
+    },
+    "last": {
+      "type": "boolean",
+      "description": "True on the run's final frame and on no other"
+    },
+    "part": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "role", "mediaType"],
+      "description": "The part this frame's text belongs to, given on the first frame of each part only",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 127,
+          "description": "The part's place in the run, from 0"
+        },
+        "role": {
+          "enum": ["check", "request", "report", "artefact", "delta", "outcome"],
+          "description": "What the part is. report and artefact are defined by the contract. check, request, delta and outcome are the four parts of a simulator step, defined by the slices that build the simulators"
+        },
+        "mediaType": {"type": "string", "minLength": 1, "description": "The media type of the part's text, for example text/turtle"},
+        "path": {"type": "string", "minLength": 1, "description": "The artefact's relative path, with / separators, as cst:path gives it"},
+        "group": {"type": "string", "minLength": 1, "description": "What the part belongs to, such as the mapping an artefact was written by, as cst:group gives it"},
+        "step": {"type": "integer", "minimum": 0, "description": "The step of the run that wrote the part, from 0, as cst:stratum gives it for a mapping dry run"}
+      }
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 49152,
+      "description": "A piece of the current part's text. A part's text is the concatenation of the text of its frames in sequence order. At most 49,152 bytes as UTF-8 and never split inside a character, which a schema states only as 49,152 characters, so the worker holds the byte rule"
+    },
+    "more": {
+      "type": "boolean",
+      "description": "True when the current part continues in the next frame"
+    },
+    "status": {
+      "enum": ["succeeded", "failed"],
+      "description": "On the last frame only"
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Why the run failed, in plain words. On a last frame whose status is failed"
+    },
+    "conforms": {
+      "type": "boolean",
+      "description": "Whether what the run checked conforms. On a last frame whose status is succeeded"
+    }
+  },
+  "if": {
+    "properties": {"last": {"const": true}},
+    "required": ["last"]
+  },
+  "then": {
+    "required": ["status"],
+    "properties": {"more": {"const": false}}
+  },
+  "else": {
+    "not": {
+      "anyOf": [{"required": ["status"]}, {"required": ["message"]}, {"required": ["conforms"]}]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "failed"}}, "required": ["status"]},
+      "then": {"required": ["message"], "not": {"required": ["conforms"]}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "succeeded"}}, "required": ["status"]},
+      "then": {"not": {"required": ["message"]}}
+    }
+  ]
+}
