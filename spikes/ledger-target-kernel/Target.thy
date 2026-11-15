@@ -96,6 +96,15 @@ definition tie_arises :: "'k set \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarr
   "tie_arises K rank v x \<longleftrightarrow>
      (\<exists>k\<in>K. 0 < x - ahead K rank v k \<and> x - ahead K rank v k < total (beside K rank k) v \<and> beside K rank k \<noteq> {k})"
 
+text \<open>Requests that are of no use in part, such as blocks. In the declared order, given as a list,
+  each request is granted whole where it fits what is left, and nothing otherwise. What no request
+  fitted is the residual.\<close>
+
+fun whole_each :: "'k list \<Rightarrow> ('k, 'n::linordered_idom) amounts \<Rightarrow> 'n \<Rightarrow> ('k, 'n) amounts" where
+  "whole_each [] v x = nothing"
+| "whole_each (k # ks) v x =
+     (if v k \<le> x then (whole_each ks v (x - v k))(k := v k) else whole_each ks v x)"
+
 section \<open>Rules over whole units\<close>
 
 definition floor_part :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
@@ -236,15 +245,16 @@ record ('k, 'n) policy =
   ranked :: bool
   tie :: "('k set \<Rightarrow> ('k, 'n) rule) option"
   leaves :: bool
+  unmixed :: bool
 
-datatype reason = Exceeds | Unranked | Tied | Undecided
+datatype reason = Exceeds | Unranked | Tied | Undecided | Mixed | Crossing
 
 datatype ('k, 'n) outcome = Granted "('k, 'n) amounts" 'n | Refused reason
 
-definition merge ::
-  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> 'n \<Rightarrow> ('k \<times> 'n) list \<Rightarrow> ('k, 'n) outcome" where
-  "merge pol rank av ps =
-     (let K = proposers ps; v = requested ps; x = max 0 av in
+definition merge_of ::
+  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> 'n \<Rightarrow> 'k set \<Rightarrow> ('k, 'n) amounts \<Rightarrow> ('k, 'n) outcome" where
+  "merge_of pol rank av K v =
+     (let x = max 0 av in
       if total K v \<le> av then Granted v 0
       else if refuses pol then Refused Exceeds
       else if ranked pol \<and> \<not> inj_on rank K then Refused Unranked
@@ -256,6 +266,10 @@ definition merge ::
                 (let g = by_rank rank t K v x; r = x - total K g in
                  if r = 0 \<or> leaves pol then Granted g r else Refused Undecided)))"
 
+definition merge ::
+  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> 'n \<Rightarrow> ('k \<times> 'n) list \<Rightarrow> ('k, 'n) outcome" where
+  "merge pol rank av ps = merge_of pol rank av (proposers ps) (requested ps)"
+
 definition settle ::
   "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> 'a \<Rightarrow> ('k \<times> 'n) list \<Rightarrow> ('a, 'n) balances
      \<Rightarrow> ('k, 'n) outcome \<times> ('a, 'n) balances" where
@@ -263,6 +277,52 @@ definition settle ::
      (case merge pol rank (available parent bal a) ps of
         Granted g r \<Rightarrow> (Granted g r, debit (path parent a) (total (proposers ps) g) bal)
       | Refused why \<Rightarrow> (Refused why, bal))"
+
+section \<open>Requests with a purpose at one position\<close>
+
+text \<open>A request may carry a purpose that accounts off the path count. Each account a request
+  reaches limits the set of requests that reach it, and what is available to a set is the least its
+  accounts hold. The sets are settled from the narrowest to the widest, each a merge of its requests
+  as they then stand, so a request is cut to its own limits before it competes. The widest set is
+  the path of the account drawn on, which every request reaches. A refusal at any set refuses the
+  position. Two sets that overlap with neither inside the other have no such order, and the
+  position is refused, as it is where the wording refuses a position of more than one purpose.\<close>
+
+definition limited :: "'k set \<Rightarrow> ('k \<Rightarrow> 'a set) \<Rightarrow> 'a \<Rightarrow> 'k set" where
+  "limited K R b = {k\<in>K. b \<in> R k}"
+
+definition room :: "'k set \<Rightarrow> ('k \<Rightarrow> 'a set) \<Rightarrow> ('a, 'n::linordered_idom) balances \<Rightarrow> 'k set \<Rightarrow> 'n" where
+  "room K R bal G = least bal {b. limited K R b = G}"
+
+definition crossing :: "'k set \<Rightarrow> ('k \<Rightarrow> 'a set) \<Rightarrow> bool" where
+  "crossing K R \<longleftrightarrow>
+     (\<exists>b c. limited K R b \<inter> limited K R c \<noteq> {}
+            \<and> \<not> limited K R b \<subseteq> limited K R c \<and> \<not> limited K R c \<subseteq> limited K R b)"
+
+definition mixed :: "'k set \<Rightarrow> ('k \<Rightarrow> 'p option) \<Rightarrow> bool" where
+  "mixed K purpose \<longleftrightarrow> (\<exists>j\<in>K. \<exists>k\<in>K. purpose j \<noteq> purpose k)"
+
+definition narrowest_first :: "'k set list \<Rightarrow> bool" where
+  "narrowest_first Gs \<longleftrightarrow> distinct Gs \<and> (\<forall>i<length Gs. \<forall>j<length Gs. Gs ! i \<subset> Gs ! j \<longrightarrow> i < j)"
+
+fun admit ::
+  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('k set \<times> 'n) list \<Rightarrow> ('k, 'n) amounts \<Rightarrow> 'n \<Rightarrow> ('k, 'n) outcome" where
+  "admit pol rank [] v r = Granted v r"
+| "admit pol rank ((G, x) # rest) v r =
+     (case merge_of pol rank x G (\<lambda>k. if k \<in> G then v k else 0) of
+        Refused why \<Rightarrow> Refused why
+      | Granted g s \<Rightarrow> admit pol rank rest (\<lambda>k. if k \<in> G then g k else v k) (r + s))"
+
+definition settle_purposes ::
+  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> ('p \<Rightarrow> 'a set) \<Rightarrow> 'a \<Rightarrow> ('k \<Rightarrow> 'p option)
+     \<Rightarrow> 'k set list \<Rightarrow> ('k \<times> 'n) list \<Rightarrow> ('a, 'n) balances \<Rightarrow> ('k, 'n) outcome \<times> ('a, 'n) balances" where
+  "settle_purposes pol rank parent counts a purpose Gs ps bal =
+     (let K = proposers ps; R = (\<lambda>k. reach parent counts a (purpose k)) in
+      if unmixed pol \<and> mixed K purpose then (Refused Mixed, bal)
+      else if crossing K R then (Refused Crossing, bal)
+      else (case admit pol rank (map (\<lambda>G. (G, room K R bal G)) Gs) (requested ps) 0 of
+              Refused why \<Rightarrow> (Refused why, bal)
+            | Granted g r \<Rightarrow> (Granted g r, (\<lambda>b. bal b - total (limited K R b) g))))"
 
 section \<open>Ranks that hold an amount of their own\<close>
 
@@ -432,6 +492,12 @@ text \<open>Two ranks, the first of three requests of 5 and the second one reque
 
 lemma "map (by_rank (\<lambda>k. if k = 4 then 1 else 0) (ration (largest_remainder no_order)) {1, 2, 3, 4::nat}
               (\<lambda>k. if k = 4 then 3 else 5) 10) [1, 2, 3, 4] = [3, 3, 3, 0]"
+  by eval
+
+text \<open>Blocks: with 7 units and requests of 5 and 4 in that order, the first is granted whole, the
+  second nothing, and 2 are left.\<close>
+
+lemma "map (whole_each [1, 2::nat] (\<lambda>k. if k = 1 then 5 else 4) (7::int)) [1, 2] = [5, 0]"
   by eval
 
 text \<open>Distinct ranks are priority: 7 units to requests of 5 and 4.\<close>

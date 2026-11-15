@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** building 2026-11-15. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** built 2026-11-15. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -119,7 +119,7 @@ Results sections. In short:
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | verified 2026-11-09, built 2026-11-08, building 2026-11-08 |  |
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | merged 2026-11-09, built 2026-11-09, building 2026-11-09 |  |
-| LG-9 | the proofs' second widening, LR2 over multisets, an executable path, the running balance, a merge over whole units, and the parts that wait on LG-Q11, LG-Q12, LG-Q13, LG-Q15 and LG-Q16 | planned | LG-21 |
+| LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | planned | LG-21 |
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | built 2026-11-09, building 2026-11-09 |  |
 | LG-11 | conversion leaves the ledger, the conversion terms removed | planned |  |
 | LG-12 | which draws an account accepts, a shape for compatibility and representability | planned | LG-11 |
@@ -130,9 +130,10 @@ Results sections. In short:
 | LG-17 | LG-16's gaps closed: like-for-like read forms, a cut that copies its position, a ceiling above a stated amount, the sketch's tree in an engine, the cost of writing, concurrent writers on Oxigraph and Jena, late postings, and the native Jena caller | built 2026-11-12, building 2026-11-12 |  |
 | LG-18 | LG-17's follow-ups measured: one writer per ledger against guarded writers, with balances kept by the writer and with batched commits, and the readings of a balance by effective day as known at a recording, their properties and their read cost | built 2026-11-12, building 2026-11-12 |  |
 | LG-19 | the benchmark's corpora refuse a debit beyond availability, and LG-14 to LG-18 are run again on them | built 2026-11-13, building 2026-11-13 | LG-18 |
-| LG-20 | the proofs' third widening: the cut record, the two positions and the readings by effective day, a rule lawful with a residual, and an order derived from ranks | planned | LG-9, LG-21 |
-| LG-21 | the target kernel written first, each changed definition once in its decided form, tried on generated cases and reviewed, before any further proof | building 2026-11-15 |  |
+| LG-20 | the laws the target kernel gains, in seven groups by definition, restated 2026-11-15 in place of the third widening | planned | LG-9 |
+| LG-21 | the target kernel written first, each changed definition once in its decided form, tried on generated cases and reviewed, before any further proof | built 2026-11-15, building 2026-11-15 |  |
 | LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figures at the top of the READMEs | planned | LG-19 |
+- 2026-11-15: **LG-21 built**, with its [Validation Pack](../validation/LG-21.md). The maintainer decided K3 the same day: a request with a purpose is cut to its own limits before it competes, by default, a wording may refuse a mixed position, and one that wants every request to compete on what it asked has them sized upstream (MEC-112). It is in the theory as `settle_purposes`, with `whole_each` for requests of no use in part, 78 definitions in all, type-checked and searched. LG-9 and LG-20 are restated on the target kernel in the plan, LG-9 as the move into the README and the 19 claims proved again, LG-20 as the laws it gains in seven groups, and [machine S's brief](../notes/machine-s-brief-2026-11-15.md) is rewritten as one bundle. It waits on the maintainer's review of the definitions and the handover.
 - 2026-11-15: five of the target kernel's six questions decided by the maintainer as leaned, K1, K2, K4, K5 and K6 (LG-Q28). Reading B now settles a debit by its account's own policy. At the maintainer's word the search was widened to the merge's refusals, pots and allocation across accounts before anything proceeds, and the search of pots found a fault, a unit withheld from the fund alone and taken by a later pot through an account above it, which the target now withholds along the fund's whole path. K3 is open, with a proposal modelled and searched: a request with a purpose is cut to its own limits before it competes. LG-21 is still building.
 - 2026-11-15: LG-21 drafted for review and still building. The target kernel is `spikes/ledger-target-kernel/Target.thy`, 69 definitions with none reading a key's order, type-checked by Isabelle2025-2 with five examples evaluated, and its laws searched by a model on generated cases, with the [sketch](../sketches/ledger-target-kernel.md). Writing it down found that the rule for whole units with no order is `largest_remainder` with no order declared, that rounding to the nearest can fall short as well as over, and that reading B is stated one way in the balances sketch and another in the benchmark, which accounts for the impossible readings LG-19 counted for B. Six questions wait on the maintainer, as LG-Q28. Nothing in `tools/proofs/ledger/` or the README is changed.
 - 2026-11-15: LG-21 picked up on `docs/placement-vehicles-structure`, on the maintainer's go-ahead once the cloud brief was handed over.

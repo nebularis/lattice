@@ -99,6 +99,15 @@ def apportion(U):
     return lambda w, x: U(set(w), x, set(w), w)
 
 
+def whole_each(order, v, x):
+    """Requests of no use in part: in the declared order, each is granted whole where it fits what is left, and nothing otherwise."""
+    out = {k: 0 for k in v}
+    for k in order:
+        if v[k] <= x:
+            out[k], x = v[k], x - v[k]
+    return out
+
+
 # Ranks.
 
 
@@ -268,11 +277,13 @@ def spread_whole(rule, charged, accounts, bal, v):
 # A proposal for question K3, purposes at one position, not yet in the theory.
 
 
-def settle_purposes(rank, tie, parent, a, v, purpose, counts, bal, shuffle=None):
+def settle_purposes(policy, unmixed, rank, parent, a, v, purpose, counts, bal, shuffle=None):
     """Requests at account `a`, some with a purpose that other accounts count. Each account a request reaches limits the set of requests that reach it, and what is available to a set
-    is the least its accounts hold. The sets are settled from the narrowest to the widest, which is the path of `a` and holds every request, each cutting its requests by the rule to
-    what is available to it. So a request is cut to its own limits before it competes. Two sets that overlap with neither inside the other have no such order, and the position is
-    refused. Every account is charged what was granted to the requests that reach it."""
+    is the least its accounts hold. The sets are settled from the narrowest to the widest, which is the path of `a` and holds every request, each a merge of its requests as they then
+    stand. So a request is cut to its own limits before it competes. A refusal at any set refuses the position. Two sets that overlap with neither inside the other have no such order,
+    and the position is refused, as it is where the wording refuses a position of more than one purpose. Every account is charged what was granted to the requests that reach it."""
+    if unmixed and len(set(purpose.values())) > 1:
+        return ("refused", "mixed")
     common = chain(parent, a)
     reach = {k: set(common) | {b for c in counts.get(purpose[k], ()) for b in chain(parent, c)} for k in v}
     limit = {}
@@ -281,15 +292,18 @@ def settle_purposes(rank, tie, parent, a, v, purpose, counts, bal, shuffle=None)
         limit[group] = min(limit.get(group, bal[b]), bal[b])
     groups = sorted(limit, key=len)
     if any(x & y and not x <= y and not y <= x for x in groups for y in groups):
-        return None
+        return ("refused", "crossing")
     if shuffle is not None:
         groups = sorted(shuffle(groups), key=len)
-    claim = dict(v)
+    claim, residual = dict(v), 0
     for group in groups:
         asked = {k: claim[k] for k in v if k in group}
-        if total(asked, asked) > limit[group]:
-            claim.update(by_rank(rank, tie, asked, max(0, limit[group])))
-    return claim, [bal[b] - sum(claim[k] for k in v if b in reach[k]) for b in range(len(bal))]
+        outcome = merge(*policy, {k: rank[k] for k in asked}, limit[group], asked)
+        if outcome[0] == "refused":
+            return outcome
+        claim.update(outcome[1])
+        residual += outcome[2]
+    return ("granted", claim, residual, [bal[b] - sum(claim[k] for k in v if b in reach[k]) for b in range(len(bal))])
 
 
 # The searches.
@@ -575,10 +589,10 @@ def search_spread(cases, seed, whole):
 
 
 def search_purposes(cases, seed, family):
-    """The proposal for question K3: no account overdrawn, the grants within the requests, plain settlement where no request has a purpose, and no dependence on the order in which
-    sets of one size are settled. It counts the positions refused because two sets cross, and those where cutting at the account first would have granted otherwise."""
+    """Purposes at one position: no account overdrawn, the grants within the requests, plain settlement where no request has a purpose, and no dependence on the order in which sets of
+    one size are settled. It counts the positions refused, and those where competing first on what was asked would have granted otherwise."""
     rng = random.Random(seed)
-    found = {"cases": 0, "refused, two sets cross": 0, "a purpose's account binds": 0, "differs from cutting at the account first": 0}
+    found = {"cases": 0, "refused, two sets cross": 0, "refused, a mixed position where the wording forbids one": 0, "a purpose's account binds": 0, "differs from competing first": 0}
     for _ in range(cases):
         book, _ = draw_book(rng)
         parent, stated = book[0], book[1]
@@ -593,22 +607,48 @@ def search_purposes(cases, seed, family):
             rank, tie = dict(zip(v, rng.sample(range(len(v)), len(v)))), None
         else:
             rank, tie = {k: rng.randint(0, 1) for k in v}, ration(largest_remainder(no_order))
+        policy, unmixed = (False, False, tie, True), rng.random() < 0.1
         found["cases"] += 1
-        result = settle_purposes(rank, tie, parent, a, v, purpose, counts, stated)
-        if result is None:
+        result = settle_purposes(policy, unmixed, rank, parent, a, v, purpose, counts, stated)
+        if unmixed and len(set(purpose.values())) > 1:
+            assert result == ("refused", "mixed"), "a mixed position was settled where the wording forbids one"
+            found["refused, a mixed position where the wording forbids one"] += 1
+            continue
+        if result[0] == "refused":
+            assert result[1] == "crossing", ("a position was refused for a reason not stated", result)
             found["refused, two sets cross"] += 1
             continue
-        grants, after = result
+        _, grants, residual, after = result
         assert all(u >= 0 for u in after), ("a purpose's account was overdrawn", parent, stated, a, v, purpose, counts)
-        assert all(0 <= grants[k] <= v[k] for k in v), "a grant outside its request"
+        assert all(0 <= grants[k] <= v[k] for k in v) and residual >= 0, "a grant outside its request"
         av = available(parent, stated, a)
-        plain = dict(v) if total(v, v) <= av else by_rank(rank, tie, v, max(0, av))
-        assert any(purpose.values()) or plain == grants, "with no purpose it is not the plain merge"
-        assert settle_purposes(rank, tie, parent, a, v, purpose, counts, stated, shuffle=lambda g: rng.sample(g, len(g)))[0] == grants, "the order of sets of one size changed the grants"
+        plain = merge(*policy, rank, av, v)
+        assert any(purpose.values()) or (plain[1], plain[2]) == (grants, residual), "with no purpose it is not the plain merge"
+        again = settle_purposes(policy, unmixed, rank, parent, a, v, purpose, counts, stated, shuffle=lambda g: rng.sample(g, len(g)))
+        assert again[1] == grants, "the order of sets of one size changed the grants"
         # the alternative: every request competes at the account on what it asked, and a purpose's accounts then cut what its requests were granted
-        alt = settle_purposes(rank, tie, parent, a, plain, purpose, counts, [10**9 if b in chain(parent, a) else u for b, u in enumerate(stated)])[0]
-        found["a purpose's account binds"] += grants != plain
-        found["differs from cutting at the account first"] += alt != grants
+        alt = settle_purposes(policy, False, rank, parent, a, plain[1], purpose, counts, [10**9 if b in chain(parent, a) else u for b, u in enumerate(stated)])[1]
+        found["a purpose's account binds"] += grants != plain[1]
+        found["differs from competing first"] += alt != grants
+    return found
+
+
+def search_whole(cases, seed):
+    """Requests granted whole or not at all, in a declared order: the laws of a rule that rations with a residual."""
+    rng = random.Random(seed)
+    found = {"cases": 0, "with a residual": 0, "a later request granted past an earlier one refused": 0}
+    for _ in range(cases):
+        v = draw_requests(rng)
+        order = rng.sample(sorted(v), len(v))
+        asked = sum(v.values())
+        x = rng.randint(0, asked)
+        g = whole_each(order, v, x)
+        assert all(g[k] in (0, v[k]) for k in v) and sum(g.values()) <= x, "a whole grant breaks a bound"
+        assert whole_each(order, v, asked) == v, "the whole does not return the whole"
+        refused = [i for i, k in enumerate(order) if g[k] < v[k]]
+        found["cases"] += 1
+        found["with a residual"] += sum(g.values()) < x
+        found["a later request granted past an earlier one refused"] += bool(refused) and any(g[k] > 0 for k in order[refused[0] + 1 :])
     return found
 
 
@@ -641,9 +681,13 @@ def examples():
     # a facility of 100 with a sublimit of 30 that counts letters of credit: a loan of 90 and a letter of credit of 40 at one position, shared in proportion
     parent, bal = [None, 0], [100, 30]
     share = lambda g, left: ranks_model.proportional(g, left)
-    k3, after = settle_purposes({"loan": 0, "lc": 0}, share, parent, 0, {"loan": 90, "lc": 40}, {"loan": None, "lc": "lc"}, {"lc": [1]}, bal)
+    args = ({"loan": 0, "lc": 0}, parent, 0, {"loan": 90, "lc": 40}, {"loan": None, "lc": "lc"}, {"lc": [1]}, bal)
+    _, k3, _, after = settle_purposes((False, False, share, False), False, *args)
     assert k3 == {"loan": 75, "lc": 25} and after == [0, 5]
-    print("a loan of 90 and a letter of credit of 40, facility 100, sublimit 30:", {k: str(x) for k, x in k3.items()}, "balances after", after)
+    assert settle_purposes((False, False, share, False), True, *args) == ("refused", "mixed")
+    assert settle_purposes((True, False, share, False), False, *args) == ("refused", "exceeds")
+    assert whole_each(["a", "b"], {"a": 5, "b": 4}, 7) == {"a": 5, "b": 0}
+    print("a loan of 90 and a letter of credit of 40, facility 100, sublimit 30:", {k: str(x) for k, x in k3.items()}, "balances after", [str(x) for x in after])
     print("the sketch's example: reading A", [reading_a(d) for d in (1, 2, 4)], "reading B where the account rations", [reading_b(d, True) for d in (1, 2, 4)],
           "where it refuses", [reading_b(d, True, refuser) for d in (1, 2, 4)], "and charged in full", [reading_b(d, False) for d in (1, 2, 4)])
 
@@ -663,6 +707,7 @@ def main():
     print("allocation across accounts, whole units:", search_spread(100_000 // scale, 30, True))
     for family in ("exact", "priority", "units"):
         print(f"purposes at one position, {family}:", search_purposes(60_000 // scale, 31, family))
+    print("whole grants in a declared order:", search_whole(100_000 // scale, 32))
 
 
 if __name__ == "__main__":
