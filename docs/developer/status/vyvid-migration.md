@@ -125,3 +125,4 @@ Every command run in this worktree with the binding untrusted, which gives knowl
 - 2026-11-05: v0.2.10 pinned, since v0.2.9 lacks the fixes, and the walkthrough dated at the merge with the gap `check:skills` closes removed from its section 8.
 - 2026-11-05: `fix/studio-worker-heartbeat` merged `main` in. Both branches had written a TD-146, the worker unit's row was committed first, so this unit's row on the writing rules is now TD-149 in the register and in this unit's documents.
 - 2026-11-06: `fix/studio-worker-heartbeat` merged `main` in. Both branches had written a BL-14 and a TD-150, the worker unit's were committed first, so this unit's are now BL-15 and TD-152.
+- 2026-11-15: the pin at v0.2.35, whose `vyd check registers` and Turtle term pointers pay TD-119. MEC-74 and MEC-75 now name `Mork.ttl` terms, no register entry points at the whole of a long file, and the row is removed.

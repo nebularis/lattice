@@ -360,7 +360,7 @@ def test_a_store_finding_takes_its_technology_from_its_evidence(built):
 # Signposts beside an answer (ADR-A134 decisions 28 to 31).
 
 
-# Measured 2026-10-28 when the check was written, and recorded as TD-119. Remove an entry when its
+# Measured 2026-10-28 when the check was written, and recorded then. Remove an entry when its
 # pointer names the section that states it, and never add one.
 
 
@@ -387,9 +387,9 @@ SEPARATOR_RE = re.compile(r"^\|?\s*:?-{3,}")
 # Claims over the limit, each a known debt. Remove an entry when its claim is cut to the limit, and never add one.
 # None remain since 2026-11-15.
 KNOWN_LONG_CLAIMS: frozenset[str] = frozenset()
-# Entries whose pointer covers the whole of a long file, which `read` refuses (TD-119). Вивід notes each at the build,
+# Entries whose pointer covers the whole of a long file, which `read` refuses. None remain since 2026-11-15. Вивід notes each at the build,
 # and this baseline fails on a new one and on one that has been fixed, as the old test did.
-KNOWN_WHOLE_FILE = frozenset({"MEC-74", "MEC-75"})
+KNOWN_WHOLE_FILE: frozenset[str] = frozenset()
 
 
 def tracked(*patterns: str) -> list[Path]:
@@ -450,4 +450,4 @@ def test_the_build_reports_nothing_but_the_known_notes(built):
         unexpected.append(note)
     assert not unexpected, unexpected
     assert not whole - KNOWN_WHOLE_FILE, sorted(whole - KNOWN_WHOLE_FILE)
-    assert not KNOWN_WHOLE_FILE - whole, f"fixed, so remove from the baseline and TD-119: {sorted(KNOWN_WHOLE_FILE - whole)}"
+    assert not KNOWN_WHOLE_FILE - whole, f"fixed, so remove from the baseline: {sorted(KNOWN_WHOLE_FILE - whole)}"
