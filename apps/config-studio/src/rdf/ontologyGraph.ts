@@ -2,15 +2,15 @@
 // The graphs the ontology views draw (SVA-O2), derived from the baseline graph the browser already holds and never stored. The
 // classes are the baseline's own (baseline.ts). In the view of classes and object properties an edge is one object property
 // between two classes, read from `rdfs:domain` and `rdfs:range` and, where the author asks, from the node shapes. A shape is read
-// as shapes.ts reads it, a node shape with `sh:targetClass`, or a class that is itself one, and a property shape with a plain
-// IRI `sh:path`. It is read again here because the drawing needs what shapes.ts merges away, the name of each shape and its
-// `sh:node` links. The shapes only ever add to the view. An edge a shape states between classes a domain and a range already
-// join is that edge, which then names the shape, so turning shapes on never removes or changes the identity of an edge. Every
+// by `readNodeShapes` in shapes.ts, which the forms' reader shares its targeting rule with. The drawing reads the shapes as
+// written because it needs what the forms' merge drops, the name of each shape and its `sh:node` links. The shapes only ever
+// add to the view. An edge a shape states between classes a domain and a range already join is that edge, which then names the shape, so turning shapes on never removes or changes the identity of an edge. Every
 // result is sorted, so the same graph gives the same drawing for any order of triples.
 
-import { Graph, OWL, RDFS, SH, type Term } from "@lattice/authoring-domain";
+import { Graph, RDFS } from "@lattice/authoring-domain";
 import { Baseline } from "./baseline";
 import { readExpression, type ClassExpr } from "./axioms";
+import { readNodeShapes } from "./shapes";
 
 export interface OntologyNode {
   iri: string;
@@ -72,19 +72,6 @@ function named(e: ClassExpr): string[] {
   return [];
 }
 
-/** The classes a node shape targets, and the shape itself when it is a class, as shapes.ts reads them. */
-function targetsOf(graph: Graph, shape: Term): string[] {
-  const targets = graph
-    .objects(shape, SH("targetClass"))
-    .filter((t) => t.termType === "NamedNode")
-    .map((t) => t.value);
-  if (shape.termType === "NamedNode") {
-    const types = graph.types(shape);
-    if (types.includes(RDFS("Class")) || types.includes(OWL("Class"))) targets.push(shape.value);
-  }
-  return sorted(targets);
-}
-
 const edgeId = (source: string, target: string, property: string) => `${source}|${target}|${property}`;
 
 interface Index {
@@ -105,17 +92,11 @@ function domainRangeEdges(baseline: Baseline, add: (s: string, t: string, p: str
 
 function shapeEdges(baseline: Baseline, add: (s: string, t: string, p: string, shape: string | undefined) => void): void {
   const { graph, classes } = baseline;
-  for (const q of graph.quads(null, SH("property"))) {
-    const shape = q.subject;
-    const path = graph.object(q.object, SH("path"));
-    if (path?.termType !== "NamedNode") continue;
-    const sources = targetsOf(graph, shape).filter((c) => classes.has(c));
-    if (sources.length === 0) continue;
-    const ends = new Set<string>();
-    for (const c of graph.objects(q.object, SH("class"))) if (c.termType === "NamedNode") ends.add(c.value);
-    for (const n of graph.objects(q.object, SH("node"))) for (const c of targetsOf(graph, n)) ends.add(c);
-    const name = shape.termType === "NamedNode" ? shape.value : undefined;
-    for (const s of sources) for (const t of ends) if (classes.has(t)) add(s, t, path.value, name);
+  for (const shape of readNodeShapes(graph)) {
+    const sources = shape.targets.filter((c) => classes.has(c));
+    for (const property of shape.properties) {
+      for (const s of sources) for (const t of sorted([...property.classes, ...property.nodeTargets])) if (classes.has(t)) add(s, t, property.path, shape.name);
+    }
   }
 }
 
