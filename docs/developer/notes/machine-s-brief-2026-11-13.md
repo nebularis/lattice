@@ -2,7 +2,7 @@
 
 # Machine S brief, 2026-11-13: the ledger proofs' second and third widening
 
-**Draft, amended 2026-11-15. Not yet handed over.** Every posting scenario is ruled. The brief waits on LG-Q27 in the [ledger plan](../plans/ledger.md), whether the kernel is restated before more is proved on it, which would reorder everything below. Until the maintainer hands it over nothing here is started.
+**Draft, amended 2026-11-15. Not yet handed over.** Every posting scenario is ruled. LG-Q27 in the [ledger plan](../plans/ledger.md) was decided (b) on 2026-11-15: the target kernel is written first, as slice LG-21, and this brief is rewritten on it, so everything below will be reordered by definition. Until the maintainer hands it over nothing here is started.
 
 **For:** the agent on machine S, Windows 11, Isabelle2025-2 through its bundled Cygwin, where LG-7, LG-2, FME-0 and LG-8 were built. **Written on** `docs/placement-vehicles-structure` at the maintainer's request, after the ledger's open questions were decided on 2026-11-12 and 2026-11-13. It replaces the [brief of 2026-11-09](machine-s-brief-2026-11-09.md), whose slice LG-9 was planned and never started. It carries LG-9 as that brief stated it, with the two parts that waited on a question now decided, and adds LG-20.
 
