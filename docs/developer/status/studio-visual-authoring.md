@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-15. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-15. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -40,7 +40,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | built 2026-11-13, building 2026-11-12 | SVA-O1 |
 | SVA-O2a | edge labels placed apart, and edges against the layout's direction attached by the sides that face | built 2026-11-13, building 2026-11-13 |  |
 | SVA-O3 | the axiom reader and the element forms | built 2026-11-12, building 2026-11-12 |  |
-| SVA-O4 | routing finished: edges bent around nodes, attachments spread, drawings fitted, unlinked nodes placed beside | planned | SVA-O2a |
+| SVA-O4 | routing finished: edges bent around nodes, attachments spread, drawings fitted, unlinked nodes placed beside | building 2026-11-15 | SVA-O2a |
 | SVA-O5 | the kit's behaviour held in a browser, and the mapping canvas on the kit's routing | planned | SVA-O4 |
 | SVA-O6 | one reader of shapes for the forms and the drawing | built 2026-11-15, building 2026-11-15 | SVA-O2 |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | planned | SVA-O1 |
@@ -115,3 +115,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-15: SVA-R1 built, [Validation Pack](../validation/SVA-R1.md). The contract has a Runs section: the route, the message to the run worker, the frame as one JSON object with a schema, used both over MQTT and in the waiting response, the roles of a part, delivery to the tab, what a client must do, and the limits in one table. The topology gains the two run queues in both its copies, the vocabulary gains `cst:Run` with its two kinds and its deadline, and the transforms route is marked deprecated. The fake service had no transforms route, so its canned run is new. Found and left for SVA-R2 and SVA-R3: the service's Java topology names its queues in code and does not yet declare the run queues, the Python worker binds every queue of the topology to the dead-letter exchange, which is wrong for one that is not dead-lettered and already was for the transforms queue, and the operations guide lists the queues by name. Verified with `mise run check:config-studio`, which exited 0 with 21, 284 and 308 tests passed in its three suites, and 31 browser tests on the fake service.
 - 2026-11-15: SVA-O6 picked up, as the smallest slice ready, at the maintainer's choice.
 - 2026-11-15: SVA-O6 built, [Validation Pack](../validation/SVA-O6.md). `rdf/shapes.ts` now states once which classes a shape targets and which of its property shapes count, and gives a shape's name and what its `sh:node` constraints target. The ontology drawing reads shapes through it and lost its own reader, with its test file passing unchanged. The forms' merged reading shares the two helpers and is not built on the new reader, since it takes a constraint's first value in the order of the triples, which a sorted reading would change. `shapes.ts` had no test of its own before, and has 11 now. Verified with 319 unit tests, the type check and 31 browser tests on the fake service.
+- 2026-11-15: SVA-O4 picked up, with SVA-O5 to follow it, at the maintainer's word.
