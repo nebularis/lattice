@@ -37,9 +37,9 @@ Ledger accounts do not hold observed values such as prices or temperatures, whic
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/ledger.ttl` | <https://www.nebularis.org/neuro-semantic/ledger> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.1> |
-| `vocab/ledger-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.1> |
-| `spec/ledger-runtime.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-runtime> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-runtime/0.21.1> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.1> |
+| `spec/ledger.ttl` | <https://www.nebularis.org/neuro-semantic/ledger> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.2> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.2>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.2>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.2> |
+| `vocab/ledger-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.21.2> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.2> |
+| `spec/ledger-runtime.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-runtime> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-runtime/0.21.2> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.2> |
 
 | Prefix | Namespace |
 |---|---|
@@ -1649,6 +1649,8 @@ Behaviour (ADR-A131 decision 1).
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
+- **0.21.2**.
+  - changes meaning. `ldg:ToFirstInOrder`'s definition says the residual is allocated one unit at a time to the first proposals in order. It said the whole residual went to the first proposal, which the rule never did, so no allocation changes and a reader of the definition is no longer misled.
 - **0.21.1**.
   - no effect. The runtime document, `ledger-runtime`: `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:BalanceRecord`, `ldg:MergeRecord`, `ldg:Grant` and `ldg:Checkpoint`, their properties, and the runtime laws of section 7.3 in `shapes/runtime.ttl`. Every term is new, so no record stated before is read differently.
   - no effect. New `ldg:periodRecurrence` and `ldg:closingRecurrence` on `ldg:AccountDefinition` (PDD-15), each at most one.
