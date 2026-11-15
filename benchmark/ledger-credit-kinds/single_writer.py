@@ -160,7 +160,7 @@ def run_queue(name: str, producers: int, writer: str = "reads", batch: int = 1, 
         raise ValueError(f"no writer {writer} with a batch of {batch}")
     with w.opened(name) as backend:
         corpus, base = w.preload(backend, preload_count)
-        lists = [[Ask(r, f"Q{p}.{n}") for n, r in enumerate(w.requests(total // producers, w.SHARE, ck.SEED + 100 + p))] for p in range(producers)]
+        lists = [[Ask(r, f"Q{p}.{n}") for n, r in enumerate(w.requests(preload_count, total // producers, w.SHARE, ck.SEED + 100 + p))] for p in range(producers)]
         asks = [a for group in zip(*lists) for a in group]
         live = (Keeper if writer == "keeps" else w.Live)(backend, len(corpus.positions), guarded)
         inbox, errors, sizes = queue.Queue(), [], []
@@ -205,12 +205,15 @@ def label(r: dict) -> str:
 
 def render(data: dict) -> list[str]:
     out = ["# One writer per ledger (LG-18 part one)", "", "Environment: " + ", ".join(f"{k} {v}" for k, v in data["environment"].items() if v), ""]
+    out += ck.corpus_section([(ck.CORPUS_TWO, data["guarded"][0]["preload"], w.SHARE)], "Corpus") + ["The request lists continue the stream of the preload (LG-22). Written is the debits and credits the run committed.", ""]
     out += ["## The guarded writers, for comparison", "", "`writes.run_stress`, threads that each read, write under the guard and try again. Only the in-memory store is held to the replay.", ""]
-    out += w.table(["backend", "threads", "commits", "lost races", "retries max", "wall s", "commits/s", "duplicate positions"],
-                   [[s["backend"], s["threads"], s["commits"], s["lost_races"], s["retries_max"], f"{s['wall_s']:.2f}", f"{s['commits_per_s']:.0f}", s["audit"]["duplicate_positions"]] for s in data["guarded"]])
+    out += w.table(["backend", "threads", "commits", "debits written", "credits written", "refused", "lost races", "retries max", "wall s", "commits/s", "duplicate positions"],
+                   [[s["backend"], s["threads"], s["commits"], s["audit"]["live_debits"], s["audit"]["live_credits"], s["refused"], s["lost_races"], s["retries_max"], f"{s['wall_s']:.2f}", f"{s['commits_per_s']:.0f}", s["audit"]["duplicate_positions"]]
+                    for s in data["guarded"]])
     out += ["", "## One writer, producers that wait for their answer", "", "Waited is the time from asking to the answer, queueing included. Every run equals the replay of its commits, on every store.", ""]
-    head = ["backend", "producers", "writer", "commits", "refused", "wall s", "commits/s", "waited mean ms", "waited p95 ms", "batches", "postings a batch"]
-    row = lambda r: [r["backend"], r["producers"], label(r), r["commits"], r["refused"], f"{r['wall_s']:.2f}", f"{r['commits_per_s']:.0f}", f"{r['waited_mean_ms']:.2f}", f"{r['waited_p95_ms']:.2f}", r["batches"], f"{r['batch_mean']:.1f}"]
+    head = ["backend", "producers", "writer", "commits", "refused", "wall s", "commits/s", "waited mean ms", "waited p95 ms", "batches", "postings a batch", "debits written", "credits written"]
+    row = lambda r: [r["backend"], r["producers"], label(r), r["commits"], r["refused"], f"{r['wall_s']:.2f}", f"{r['commits_per_s']:.0f}", f"{r['waited_mean_ms']:.2f}", f"{r['waited_p95_ms']:.2f}", r["batches"], f"{r['batch_mean']:.1f}",
+                     r["audit"]["live_debits"], r["audit"]["live_credits"]]
     out += w.table(head, [row(r) for r in data["queue"] if r["load"] == "closed"])
     out += ["", "## One writer, a backlog", "", "Every request is queued before the writer starts, so commits a second is the writer's rate. Against guarded is that rate over the best rate of the guarded writers on the store. "
             f"Planned is {UTILISATION:.0%} of the rate, as postings a second and a day, for one ledger.", ""]
@@ -221,8 +224,8 @@ def render(data: dict) -> list[str]:
     for r in data["queue"]:
         if r["load"] == "backlog":
             plan = capacity(r["commits_per_s"])
-            rows.append(row(r)[:7] + [f"{r['commits_per_s'] / best[r['backend']]:.1f}" if best.get(r["backend"]) else "", f"{plan['planned_per_s']:.0f}", f"{plan['planned_per_day']:,.0f}", f"{r['batch_mean']:.1f}", f"{r['warm_s']:.2f}"])
-    out += w.table(head[:7] + ["against guarded", "planned a second", "planned a day", "postings a batch", "first read of the balances s"], rows)
+            rows.append(row(r)[:7] + [f"{r['commits_per_s'] / best[r['backend']]:.1f}" if best.get(r["backend"]) else "", f"{plan['planned_per_s']:.0f}", f"{plan['planned_per_day']:,.0f}", f"{r['batch_mean']:.1f}", f"{r['warm_s']:.2f}", r["audit"]["live_debits"], r["audit"]["live_credits"]])
+    out += w.table(head[:7] + ["against guarded", "planned a second", "planned a day", "postings a batch", "first read of the balances s", "debits written", "credits written"], rows)
     return out + [""]
 
 

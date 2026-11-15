@@ -676,7 +676,7 @@ public final class LedgerWrites {
         return preload;
     }
 
-    static Map<String, Object> single(String store, JsonObject preload, List<Req> requests, boolean guarded, Path dir, String tag) throws Exception {
+    static Map<String, Object> single(String store, JsonObject preload, List<Req> requests, List<Req> refusing, boolean guarded, Path dir, String tag) throws Exception {
         Store s = open(store);
         try {
             loadPreload(s.ds(), dir, preload);
@@ -704,6 +704,19 @@ public final class LedgerWrites {
                 meta.get(c).add(new double[] {p.path, p.queries, p.triples()});
                 added += p.triples();
             }
+            // LG-22: the cost of a request the writer refuses, its path reads and its settling, with nothing written
+            List<Double> refusedReads = new ArrayList<>(), refusedSettle = new ArrayList<>();
+            List<double[]> refusedMeta = new ArrayList<>();
+            int sample = 0;
+            for (Req r : refusing) {
+                Plan p = live.prepare(r, "R" + (sample++));
+                if (!p.refused) {
+                    throw new CreditKinds.WrongResult(store + " " + CreditKinds.num(preload, "postings") + ": a debit of " + r.amount() + ", more than the root's stated amount, was not refused");
+                }
+                refusedReads.add(p.reads);
+                refusedSettle.add(p.settle);
+                refusedMeta.add(new double[] {p.path, p.queries});
+            }
             long grew = CreditKinds.countQuads(s.ds()) - before;
             if (grew != added) {
                 throw new CreditKinds.WrongResult(store + " " + CreditKinds.num(preload, "postings") + ": the store grew by " + grew + " triples, the writes add " + added);
@@ -729,6 +742,20 @@ public final class LedgerWrites {
                 }
                 m.put("total", map("mean_ms", 1000 * mean(total), "p95_ms", 1000 * p95(total)));
                 classes.put(c, m);
+            }
+            if (!refusedReads.isEmpty()) {
+                List<Double> total = new ArrayList<>();
+                for (int i = 0; i < refusedReads.size(); i++) {
+                    total.add(refusedReads.get(i) + refusedSettle.get(i));
+                }
+                Map<String, Object> m = map("writes", refusedReads.size(), "path_reads", refusedMeta.stream().mapToDouble(x -> x[0]).average().orElse(0),
+                        "queries", refusedMeta.stream().mapToDouble(x -> x[1]).average().orElse(0), "triples", 0.0);
+                m.put("reads", map("mean_ms", 1000 * mean(refusedReads), "p95_ms", 1000 * p95(refusedReads)));
+                m.put("settle", map("mean_ms", 1000 * mean(refusedSettle), "p95_ms", 1000 * p95(refusedSettle)));
+                m.put("update", map("mean_ms", 0.0, "p95_ms", 0.0));
+                m.put("confirm", map("mean_ms", 0.0, "p95_ms", 0.0));
+                m.put("total", map("mean_ms", 1000 * mean(total), "p95_ms", 1000 * p95(total)));
+                classes.put("refused debit", m);
             }
             String exported = tag + ".nq.gz";
             export(s.ds(), dir.resolve(exported));
@@ -814,7 +841,9 @@ public final class LedgerWrites {
         try {
             // a warm-up that is not reported, so the first writer does not pay for loading classes and the JIT
             JsonObject first = preloads.get(String.valueOf(plan.get("sizes").getAsArray().get(0).getAsNumber().value().longValue())).getAsObject();
-            single("memory", first, reqs(input.get("single")).subList(0, Math.min(30, input.get("single").getAsArray().size())), true, dir, "warm-up");
+            String firstSize = String.valueOf(plan.get("sizes").getAsArray().get(0).getAsNumber().value().longValue());
+            List<Req> warm = reqs(input.get("single").getAsObject().get(firstSize));
+            single("memory", first, warm.subList(0, Math.min(30, warm.size())), List.of(), true, dir, "warm-up");
             Files.deleteIfExists(dir.resolve("warm-up.nq.gz"));
             // each store has its own sizes, since a TDB2 commit costs tens of milliseconds and the same counts would take hours
             for (String store : plan.get("stores").getAsObject().keys()) {
@@ -832,13 +861,14 @@ public final class LedgerWrites {
                     }
                 }
                 JsonObject sp = cut.get("single").getAsObject();
-                List<Req> one = reqs(input.get("single"));
-                one = one.subList(0, Math.min(one.size(), (int) CreditKinds.num(sp, "writes")));
+                List<Req> refusing = reqs(input.get("refusals"));
                 for (JsonValue size : plan.get("sizes").getAsArray()) {
                     JsonObject preload = preloads.get(String.valueOf(size.getAsNumber().value().longValue())).getAsObject();
+                    List<Req> one = reqs(input.get("single").getAsObject().get(String.valueOf(size.getAsNumber().value().longValue())));
+                    one = one.subList(0, Math.min(one.size(), (int) CreditKinds.num(sp, "writes")));
                     for (boolean g : new boolean[] {true, false}) {
                         String tag = "single-" + store + "-" + CreditKinds.num(preload, "postings") + (g ? "-guarded" : "-unguarded");
-                        Map<String, Object> r = single(store, preload, one, g, dir, tag);
+                        Map<String, Object> r = single(store, preload, one, refusing, g, dir, tag);
                         singles.add(r);
                         System.out.println("single " + tag + " done, " + r.get("commits") + " commits, " + r.get("refused") + " refused");
                     }

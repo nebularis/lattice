@@ -28,7 +28,7 @@ def test_sw2_a_batch_moves_the_revision_by_the_postings_it_writes():
     with w.opened("oxigraph memory") as backend:
         corpus, base = w.preload(backend, PRELOAD)
         live = sw.Keeper(backend, len(corpus.positions))
-        plans = sw.write_batch(live, [(r, f"B{n}") for n, r in enumerate(w.requests(12, w.SHARE, ck.SEED + 7))])
+        plans = sw.write_batch(live, [(r, f"B{n}") for n, r in enumerate(w.requests(PRELOAD, 12, w.SHARE, ck.SEED + 7))])
         written = sum(not p.refused for p in plans)
         assert written > 1 and live.at == base + written == w.Live.revision(live)
         assert w.audit(backend, base, expect=written)["dense"]
@@ -46,7 +46,7 @@ def test_sw4_a_second_writer_beside_the_one_writer_is_caught_by_the_guard():
     with w.opened("oxigraph memory") as backend:
         corpus, base = w.preload(backend, PRELOAD)
         live, other = sw.Keeper(backend, len(corpus.positions)), w.Live(backend, len(corpus.positions))
-        first, second = w.requests(2, w.SHARE, ck.SEED + 9)
+        first, second = w.requests(PRELOAD, 2, w.SHARE, ck.SEED + 9)
         assert not w.write_one(other, first, "other", retry=False)[0].refused
         with pytest.raises(ck.WrongResult):
             w.write_one(live, second, "mine", retry=False)
@@ -65,3 +65,17 @@ def test_sw6_the_report_has_a_table_for_each_piece():
     text = "\n".join(sw.render({"environment": {"store": "test"}, "guarded": guarded, "queue": runs}))
     assert "keeps, batches of 5" in text and "planned a day" in text and "against guarded" in text
     assert sw.capacity(100.0) == {"planned_per_s": 70.0, "planned_per_day": 70.0 * 86_400}
+
+
+# LG-22: the list of one producer continues the preload's stream, so the one writer refuses none of it
+
+@pytest.mark.parametrize("name", ["oxigraph memory", "oxigraph disk"])
+@pytest.mark.parametrize("writer", ["reads", "keeps"])
+def test_sw7_one_writer_sent_one_list_in_order_against_its_preload_refuses_none(name, writer):
+    r = sw.run_queue(name, 1, writer, 1, True, False, PRELOAD, TOTAL)
+    assert r["refused"] == 0 and r["commits"] == TOTAL and r["audit"]["live_debits"] + r["audit"]["live_credits"] == TOTAL
+
+
+def test_sw8_producers_whose_lists_interleave_may_be_refused_and_the_run_counts_them():
+    r = sw.run_queue("oxigraph memory", 4, "reads", 1, True, True, w.STRESS_PRELOAD, 400)
+    assert r["commits"] + r["refused"] == r["requests"] == 400 and r["audit"]["live"] == r["commits"]
