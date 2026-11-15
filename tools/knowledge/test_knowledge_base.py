@@ -384,13 +384,12 @@ def test_a_declared_term_carries_a_claim_from_its_own_document(built):
 # The row families LATTICE's registers define, each a table whose first column is the identifier.
 ROW_FAMILIES = ("STD", "PRI", "PAT", "MEC", "CAP", "TD", "PDD", "BL")
 SEPARATOR_RE = re.compile(r"^\|?\s*:?-{3,}")
-# Claims over the limit measured when the check was written, each a known debt. Remove an entry when its claim is
-# cut to the limit, and never add one.
-KNOWN_LONG_CLAIMS = frozenset({"TD-11", "TD-15", "TD-17", "TD-19", "CAP-58", "CAP-85", "PRI-51", "STD-295", "STD-296"})
+# Claims over the limit, each a known debt. Remove an entry when its claim is cut to the limit, and never add one.
+# None remain since 2026-11-15.
+KNOWN_LONG_CLAIMS: frozenset[str] = frozenset()
 # Entries whose pointer covers the whole of a long file, which `read` refuses (TD-119). Вивід notes each at the build,
 # and this baseline fails on a new one and on one that has been fixed, as the old test did.
-KNOWN_WHOLE_FILE = frozenset({"CAP-52", "MEC-31", "MEC-59", "MEC-63", "MEC-66", "MEC-67", "MEC-71", "MEC-73",
-                              "MEC-74", "MEC-75", "PRI-04", "PRI-05", "PRI-08", "PRI-12"})
+KNOWN_WHOLE_FILE = frozenset({"MEC-74", "MEC-75"})
 
 
 def tracked(*patterns: str) -> list[Path]:
