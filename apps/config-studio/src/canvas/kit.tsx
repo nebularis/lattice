@@ -144,9 +144,13 @@ export interface CanvasProps {
   /** The key the author's positions are kept under in this browser. */
   storageKey: string;
   height: number;
-  /** Where the view opens on a graph too large to fit it. */
+  /**
+   * Where the view opens on a graph too large to fit it. A canvas that gives this or `fitViewUpTo` keeps its own opening rule, a
+   * graph of up to `fitViewUpTo` nodes (30 where not given) fitted and a larger one opened here. A canvas that gives neither is
+   * fitted to its pane, whatever the number of nodes, with a padding and never zoomed in beyond 1, whenever it opens. A canvas that
+   * draws another graph in place is given another `key`, so it opens again.
+   */
   defaultViewport?: Viewport;
-  /** A graph of this many nodes or fewer fits the view. */
   fitViewUpTo?: number;
   onConnect?: (connection: Connection) => void;
   onNodeClick?: (node: Node) => void;
@@ -164,6 +168,7 @@ export function Canvas(props: CanvasProps) {
   if (stored.key !== storageKey) setStored({ key: storageKey, positions: saved });
   const setSaved = (positions: Positions) => setStored({ key: storageKey, positions });
   const [menu, setMenu] = useState<Menu>();
+  const ownOpening = props.defaultViewport !== undefined || props.fitViewUpTo !== undefined;
 
   // The layout depends on the nodes' ids and hints and on the edges, and a new array with the same content does not lay out again.
   const shape = useMemo(
@@ -229,8 +234,8 @@ export function Canvas(props: CanvasProps) {
         onEdgeContextMenu={(event, edge) => open(event, props.edgeMenu?.(edge))}
         onPaneContextMenu={(event) => open(event, props.paneMenu?.({ layOutAgain }))}
         deleteKeyCode={null}
-        // A small graph fits the view, and a large one opens readable at its top left.
-        fitView={laid.length <= (props.fitViewUpTo ?? 30)}
+        fitView={ownOpening ? laid.length <= (props.fitViewUpTo ?? 30) : true}
+        fitViewOptions={{ padding: 0.1, maxZoom: 1 }}
         defaultViewport={props.defaultViewport ?? { x: 16, y: 16, zoom: 0.85 }}
         minZoom={0.2}
         proOptions={{ hideAttribution: true }}

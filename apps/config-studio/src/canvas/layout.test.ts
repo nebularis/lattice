@@ -116,11 +116,54 @@ describe("the layered layout", () => {
     expect([p.get("a")!.y, p.get("b")!.y, p.get("c")!.y]).toEqual([0, 3 * 64, 4 * 64]);
   });
 
-  it("puts nodes with no edge in a rank after the rest, sorted by id", () => {
-    const p = layered(nodes("a", "b", "y", "x"), [edge("a", "b")], LR);
-    expect(p.get("x")).toEqual({ x: 560, y: 0 });
-    expect(p.get("y")).toEqual({ x: 560, y: 64 });
+  it("puts a node with no edge under an LR drawing, in a row that wraps at the drawing's width, sorted by id", () => {
+    // The chain a, b, c spans 560 from the first rank to the last. Five unlinked nodes take rows of three.
+    const p = layered(nodes("a", "b", "c", "u5", "u1", "u3", "u2", "u4"), [edge("a", "b"), edge("b", "c")], LR);
+    expect([p.get("a"), p.get("b"), p.get("c")]).toEqual([{ x: 0, y: 0 }, { x: 280, y: 0 }, { x: 560, y: 0 }]);
+    // Under the last row of the drawing, a row gap further down, from its left edge, at the usual pitch along a row and across rows.
+    expect(["u1", "u2", "u3", "u4", "u5"].map((id) => p.get(id))).toEqual([
+      { x: 0, y: 64 }, { x: 280, y: 64 }, { x: 560, y: 64 },
+      { x: 0, y: 128 }, { x: 280, y: 128 },
+    ]);
+  });
+
+  it("puts a node with no edge to the right of a TB drawing, in a column that wraps at the drawing's height", () => {
+    const p = layered(nodes("a", "b", "c", "u3", "u1", "u2"), [edge("a", "b"), edge("b", "c")], TB);
+    expect([p.get("a"), p.get("b"), p.get("c")]).toEqual([{ x: 0, y: 0 }, { x: 0, y: 100 }, { x: 0, y: 200 }]);
+    expect(["u1", "u2", "u3"].map((id) => p.get(id))).toEqual([{ x: 50, y: 0 }, { x: 50, y: 100 }, { x: 50, y: 200 }]);
+  });
+
+  it("counts the sizes of the nodes in the block and in the drawing", () => {
+    const ns: LayoutNode[] = [
+      { id: "a", width: 100, height: 30 }, { id: "b", width: 100, height: 30 }, { id: "c", width: 100, height: 30 },
+      { id: "u1", width: 100, height: 30 }, { id: "u2", width: 100, height: 30 }, { id: "u3", width: 100, height: 30 }, { id: "u4", width: 100, height: 30 },
+    ];
+    const p = layered(ns, [edge("a", "b"), edge("b", "c")], { direction: "LR", columnGap: 20, rowGap: 10 });
+    // The drawing is 340 wide, from 0 to 340. Rows of three fit, at a pitch of 120, and the first row starts a row gap under it.
+    expect(p.get("c")).toEqual({ x: 240, y: 0 });
+    expect(["u1", "u2", "u3", "u4"].map((id) => p.get(id))).toEqual([{ x: 0, y: 40 }, { x: 120, y: 40 }, { x: 240, y: 40 }, { x: 0, y: 80 }]);
+  });
+
+  it("puts a graph of only unlinked nodes in a plain grid, sorted by id", () => {
+    const p = layered(nodes("p5", "p1", "p3", "p2", "p4"), [], LR);
+    expect(["p1", "p2", "p3", "p4", "p5"].map((id) => p.get(id))).toEqual([
+      { x: 0, y: 0 }, { x: 280, y: 0 }, { x: 560, y: 0 },
+      { x: 0, y: 64 }, { x: 280, y: 64 },
+    ]);
+    expect(layered(nodes("q"), [], LR).get("q")).toEqual({ x: 0, y: 0 });
     expect(layered(nodes("q", "p"), [], LR).get("p")).toEqual({ x: 0, y: 0 });
+  });
+
+  it("places the unlinked nodes the same for any order of the input and on a repeat, and apart from every other node", () => {
+    const { nodes: ns, edges: es } = generated(60);
+    const lonely = [...ns, ...["z1", "z2", "z3", "z4", "z5", "z6", "z7"].map((id) => ({ id }))];
+    const base = entries(layered(lonely, es, LR));
+    for (const seed of [1, 2, 3]) expect(entries(layered(shuffled(lonely, seed), shuffled(es, seed + 5), LR))).toEqual(base);
+    expect(entries(layered(lonely, es, LR))).toEqual(base);
+    const drawn = new Map(base);
+    expect(new Set(base.map(([, v]) => `${v.x},${v.y}`)).size).toBe(lonely.length);
+    const bottom = Math.max(...ns.filter((n) => es.some((e) => e.source === n.id || e.target === n.id)).map((n) => drawn.get(n.id)!.y));
+    for (const id of ["z1", "z7"]) expect(drawn.get(id)!.y).toBeGreaterThan(bottom);
   });
 
   it("keeps an explicit rank on a node with no edge", () => {

@@ -43,8 +43,10 @@ const given = (n: number | undefined): n is number => n !== undefined && Number.
  * Our own layered layout. Cycles are broken by a depth first search from the sources, and the edges it finds going back are
  * ignored in ranking. A node takes the longest path from a source as its rank unless it carries one. Within a rank the nodes keep
  * an explicit order, or else are ordered by sweeps of the barycentre heuristic, a group first and ties by id. A node with no
- * edge and no rank of its own goes in a final rank, sorted by id. An edge to a node that is not given and an edge from a node to
- * itself are ignored, and a repeated id throws.
+ * edge and no rank of its own is not ranked. It goes in a compact block beside the drawing, on the side that does not extend the
+ * layout direction (SVA-O4), in rows that wrap at the drawing's width in LR and in columns that wrap at its height in TB, sorted
+ * by id. A graph of only such nodes is a plain grid. An edge to a node that is not given and an edge from a node to itself are
+ * ignored, and a repeated id throws.
  */
 export const layered: Layout = (nodes, edges, options) => {
   const byId = new Map<string, LayoutNode>();
@@ -117,28 +119,21 @@ export const layered: Layout = (nodes, edges, options) => {
     for (const w of down[v]) if (--waiting[w] === 0) queue.push(w);
   }
 
-  // A node with no edge and no rank of its own goes in a rank after the rest.
-  const alone = [...ids.keys()].filter((i) => out[i].length === 0 && into[i].length === 0 && !given(node[i].rank));
-  const isAlone = new Set(alone);
-  let last = -Infinity;
-  for (let i = 0; i < count; i++) if (!isAlone.has(i)) last = Math.max(last, rank[i]);
-  const aloneRank = last === -Infinity ? 0 : last + 1;
-  for (const i of alone) rank[i] = aloneRank;
+  // A node with no edge and no rank of its own is left out of the ranks and placed beside the drawing afterwards.
+  const isAlone = new Set([...ids.keys()].filter((i) => out[i].length === 0 && into[i].length === 0 && !given(node[i].rank)));
+  const alone = [...isAlone];
 
   const ranks = new Map<number, number[]>();
-  for (let i = 0; i < count; i++) ranks.set(rank[i], [...(ranks.get(rank[i]) ?? []), i]);
+  for (let i = 0; i < count; i++) if (!isAlone.has(i)) ranks.set(rank[i], [...(ranks.get(rank[i]) ?? []), i]);
   const used = [...ranks.keys()].sort((a, b) => a - b);
   const groupOf = (i: number) => node[i].group ?? "";
 
-  // A rank where any node has an order keeps the explicit orders and is not swept. The nodes alone are ordered by id.
+  // A rank where any node has an order keeps the explicit orders and is not swept.
   const pinned = new Set<number>();
   const position = new Array<number>(count).fill(0);
   for (const r of used) {
     const list = ranks.get(r)!;
-    if (r === aloneRank && alone.length && list.every((i) => isAlone.has(i))) {
-      pinned.add(r);
-      list.sort((a, b) => a - b);
-    } else if (list.some((i) => given(node[i].order))) {
+    if (list.some((i) => given(node[i].order))) {
       pinned.add(r);
       list.sort((a, b) => (given(node[a].order) ? node[a].order! : Infinity) - (given(node[b].order) ? node[b].order! : Infinity) || compare(groupOf(a), groupOf(b)) || a - b);
     } else list.sort((a, b) => compare(groupOf(a), groupOf(b)) || a - b);
@@ -189,6 +184,29 @@ export const layered: Layout = (nodes, edges, options) => {
       const c = slot * options.rowGap + before;
       before += across(i);
       place[i] = lr ? { x: a, y: c } : { x: c, y: a };
+    });
+  }
+
+  // The nodes with no link. Their rows run along the ranks and wrap at the drawing's extent along them, and the block starts a gap
+  // across from the drawing's far edge, so it extends the drawing on the side the layout does not run. A pitch along the rows is
+  // the columnGap plus the widest node, as between ranks, and across them the rowGap plus the tallest. A node of unknown size
+  // counts as nothing, as it does among the ranks.
+  if (alone.length) {
+    const drawn = [...ids.keys()].filter((i) => !isAlone.has(i));
+    const aOf = (i: number) => (lr ? place[i].x : place[i].y);
+    const bOf = (i: number) => (lr ? place[i].y : place[i].x);
+    const wide = Math.max(...alone.map(along));
+    const deep = Math.max(...alone.map(across));
+    const pitchA = options.columnGap + wide;
+    const pitchB = options.rowGap + deep;
+    const a0 = drawn.length ? Math.min(...drawn.map(aOf)) : 0;
+    const extentA = drawn.length ? Math.max(...drawn.map((i) => aOf(i) + along(i))) - a0 : 0;
+    const b0 = drawn.length ? Math.max(...drawn.map((i) => bOf(i) + across(i))) + options.rowGap : 0;
+    const perRow = drawn.length ? Math.max(1, Math.floor((extentA - wide) / pitchA) + 1) : Math.ceil(Math.sqrt(alone.length));
+    alone.forEach((i, k) => {
+      const a = a0 + (k % perRow) * pitchA;
+      const b = b0 + Math.floor(k / perRow) * pitchB;
+      place[i] = lr ? { x: a, y: b } : { x: b, y: a };
     });
   }
   return new Map(ids.map((id, i) => [id, place[i]]));

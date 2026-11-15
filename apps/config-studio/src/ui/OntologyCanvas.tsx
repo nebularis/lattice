@@ -193,7 +193,7 @@ export function OntologyCanvas({ workspace, baseline, selected, imports }: { wor
           )}
           {view === "classes" && <p className="small muted" style={{ margin: "6px 0" }}>An arrow runs from a property's domain to its range.{shapes && " A dashed arrow is stated only by a shape."}</p>}
           <Canvas
-            key={`${view}|${focus ?? ""}|${hops}`}
+            key={`${view}|${focus ?? ""}|${hops}|${shapes}|${whole}|${nodes.length}|${edges.length}`}
             nodes={nodes}
             edges={edges}
             nodeTypes={NODE_TYPES}
@@ -203,9 +203,6 @@ export function OntologyCanvas({ workspace, baseline, selected, imports }: { wor
             hints={hints}
             storageKey={storageKey}
             height={560}
-            // A wide import graph opens readable at its top left, as a large class graph does, rather than fitted too small to read.
-            fitViewUpTo={view === "imports" ? 5 : 60}
-            defaultViewport={view === "imports" ? { x: 16, y: 16, zoom: 0.7 } : undefined}
             onNodeClick={onNodeClick}
           />
         </>
