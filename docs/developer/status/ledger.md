@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-15. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** verified 2026-11-15. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -120,19 +120,20 @@ Results sections. In short:
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | verified 2026-11-09, built 2026-11-08, building 2026-11-08 |  |
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | merged 2026-11-09, built 2026-11-09, building 2026-11-09 |  |
 | LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | planned | LG-21 |
-| LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | built 2026-11-09, building 2026-11-09 |  |
+| LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | merged 2026-11-15, built 2026-11-09, building 2026-11-09 |  |
 | LG-11 | conversion leaves the ledger, the conversion terms removed | planned |  |
 | LG-12 | which draws an account accepts, a shape for compatibility and representability | planned | LG-11 |
-| LG-13 | the insurance example's cap named for what it is, annual-cap | built 2026-11-10, building 2026-11-10 |  |
-| LG-14 | a benchmark of the credit kinds' read cost on every backend | built 2026-11-11, building 2026-11-11 |  |
-| LG-15 | LG-14's gaps closed: native Jena on TDB2, checkpoints, the drawn account's clamp, the loop timed apart, the shortcut | built 2026-11-11, building 2026-11-11 |  |
-| LG-16 | the cut the writer records, measured in the credit kinds benchmark: credits at two levels of a path, and an ancestor read as a sum less its cuts | built 2026-11-12, building 2026-11-12 |  |
-| LG-17 | LG-16's gaps closed: like-for-like read forms, a cut that copies its position, a ceiling above a stated amount, the sketch's tree in an engine, the cost of writing, concurrent writers on Oxigraph and Jena, late postings, and the native Jena caller | built 2026-11-12, building 2026-11-12 |  |
-| LG-18 | LG-17's follow-ups measured: one writer per ledger against guarded writers, with balances kept by the writer and with batched commits, and the readings of a balance by effective day as known at a recording, their properties and their read cost | built 2026-11-12, building 2026-11-12 |  |
-| LG-19 | the benchmark's corpora refuse a debit beyond availability, and LG-14 to LG-18 are run again on them | built 2026-11-13, building 2026-11-13 | LG-18 |
+| LG-13 | the insurance example's cap named for what it is, annual-cap | merged 2026-11-15, built 2026-11-10, building 2026-11-10 |  |
+| LG-14 | a benchmark of the credit kinds' read cost on every backend | merged 2026-11-15, built 2026-11-11, building 2026-11-11 |  |
+| LG-15 | LG-14's gaps closed: native Jena on TDB2, checkpoints, the drawn account's clamp, the loop timed apart, the shortcut | merged 2026-11-15, built 2026-11-11, building 2026-11-11 |  |
+| LG-16 | the cut the writer records, measured in the credit kinds benchmark: credits at two levels of a path, and an ancestor read as a sum less its cuts | merged 2026-11-15, built 2026-11-12, building 2026-11-12 |  |
+| LG-17 | LG-16's gaps closed: like-for-like read forms, a cut that copies its position, a ceiling above a stated amount, the sketch's tree in an engine, the cost of writing, concurrent writers on Oxigraph and Jena, late postings, and the native Jena caller | merged 2026-11-15, built 2026-11-12, building 2026-11-12 |  |
+| LG-18 | LG-17's follow-ups measured: one writer per ledger against guarded writers, with balances kept by the writer and with batched commits, and the readings of a balance by effective day as known at a recording, their properties and their read cost | merged 2026-11-15, built 2026-11-12, building 2026-11-12 |  |
+| LG-19 | the benchmark's corpora refuse a debit beyond availability, and LG-14 to LG-18 are run again on them | merged 2026-11-15, built 2026-11-13, building 2026-11-13 | LG-18 |
 | LG-20 | the laws the target kernel gains, in seven groups by definition, restated 2026-11-15 in place of the third widening | planned | LG-9 |
-| LG-21 | the target kernel written first, each changed definition once in its decided form, tried on generated cases and reviewed, before any further proof | built 2026-11-15, building 2026-11-15 |  |
+| LG-21 | the target kernel written first, each changed definition once in its decided form, tried on generated cases and reviewed, before any further proof | merged 2026-11-15, built 2026-11-15, building 2026-11-15 |  |
 | LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figures at the top of the READMEs | planned | LG-19 |
+- 2026-11-15: `docs/placement-vehicles-structure` merged into `main` at the maintainer's word, with a merge commit and no squash. LG-10 and LG-13 to LG-19 and LG-21 are merged, each still awaiting verification. LG-9, LG-20 and LG-22 are planned, with their briefs on `main`. The 20 release tags are the maintainer's to create.
 - 2026-11-15: the substrate release moved to 0.21.2 ahead of the merge into `main`, for LG-10's corrected definition of `ldg:ToFirstInOrder`, which pays BL-19. The versioning gate of a merge into `main` refuses the merge without it. Every module that imports the substrate took a patch with it, as the import rule requires: surface, MORK, persistence, capacity, classification, asset class, and the insurance common, peril and exposure modules. Their vocabulary documents and the pins between them were moved by hand (TD-160), with the pins in five test and source files. The release register lists 20 tags, which are the maintainer's to create after the merge.
 - 2026-11-15: `main` merged into `docs/placement-vehicles-structure` at the maintainer's word, ahead of the merge of this branch into `main`. One conflict, in the backlog, where each side had numbered a row BL-19. The ledger's row was committed on 2026-11-09 and keeps the number, and the row `main` added on 2026-11-10, the LangChain investigation, is BL-21. No other identifier collided.
 - 2026-11-15: the target kernel's model tied to its theory before the merge, at the maintainer's word. `Cases.thy`, written by `cases.py`, has Isabelle evaluate the theory's definitions on 600 generated inputs and compare each with the model's result. Every case agrees, and a figure changed by hand fails the build. Two gaps in the index closed with STD-335, where an experiment lives, and STD-336, how a reading that settles again treats a debit that no longer fits.
