@@ -2,7 +2,7 @@
 
 # The target ledger kernel
 
-**Unit:** `ledger`, slice LG-21 ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Status:** drafted 2026-11-15 for the maintainer's review, under LG-Q27 (b). Decisions waited for, in section 6. Nothing in `tools/proofs/ledger/` or in the ledger README's block is changed by it, and no law is proved.
+**Unit:** `ledger`, slice LG-21 ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Status:** drafted 2026-11-15 for the maintainer's review, under LG-Q27 (b). K1, K2, K4, K5 and K6 were decided the same day, as section 6 records. K3 waits, with a proposal in section 7. Nothing in `tools/proofs/ledger/` or in the ledger README's block is changed by it, and no law is proved.
 
 ## 1. What this is
 
@@ -52,11 +52,13 @@ The target has 69 definitions against 38 today, since it holds what the 17 parts
 1. **The rule for whole units with no order is not a new rule.** It is `largest_remainder` with no order declared for odd units. So the part planned as LW is a law about an instance and adds no definition.
 2. **Seven rules are two.** Priority is `by_rank` with distinct ranks, and the rules for whole units are one `units` with a preference. Each named rule of the vocabulary is an instance, and a law proved of `units` or `by_rank` holds of each.
 3. **Rounding to the nearest can fall short as well as over.** LG-Q16 speaks only of units rounded over and taken back. Shares of 7.44, 0, 27.28 and 27.28 round to 61 where 62 is shared. Giving the unit to the first in the declared order gave it to the key of no weight, a whole unit from its exact share. In the target a unit short goes only to a share rounded down, and the search then holds every share within a unit. Question K6.
-4. **Reading B is stated two ways.** The [balances sketch](ledger-balances-under-post-once.md) §4.9 limits a debit that no longer fits to what is available, so its example reads 70, 0 and 50. The benchmark's reading B charges it in full and reads 70, minus 10 and 40. That difference is the whole of the impossible readings LG-19 counted for B. Question K2.
+4. **Reading B is stated two ways.** The [balances sketch](ledger-balances-under-post-once.md) §4.9 limits a debit that no longer fits to what is available, so its example reads 70, 0 and 50. The benchmark's reading B charges it in full and reads 70, minus 10 and 40. That difference is the whole of the impossible readings LG-19 counted for B. Question K2, decided: the reading settles a debit by its account's own policy, so the example reads 70, 0 and 50 where the account rations and 70, 70 and 100 where it refuses.
 5. **A merge at one position knows no purpose.** `settle` charges the path of the account, as `settle_at` does today, while a single draw charges the reach of its purpose. Requests with different purposes at one position are not stated anywhere. The present kernel has the same gap. Question K3.
 6. **`spread` charged the amount shared.** That equals what was granted only while every rule is exact. The target charges what was granted.
 7. **A residual needs a declaration.** Scenario C1 holds that a unit left unpaid underpays an insurance limit, and LG-Q17 that a rule may leave one. So the policy carries whether a residual may be left, and where it may not a merge that would leave one is refused. Question K5.
 8. **A pot's refusal.** Where one pot's merge refuses, the target refuses every pot at that position. Question K4.
+9. **What a pot withholds, it withholds from every account above it.** The first draft withheld what a pot could not place from the fund alone. The search of pots under a fund that has accounts above it found a later pot paid that unit wherever one of those accounts was the one that bound. The target withholds along the fund's whole path.
+10. **Purposes have an order of their own, and it is not depth.** A first proposal for K3 cut the requests at each counting account from the deepest up, and the grants changed with the order of accounts of one depth. Section 7 states it by the sets of requests the accounts limit.
 
 ## 5. What was tried
 
@@ -67,31 +69,58 @@ Run of 2026-11-15, the model's seeds fixed. The theory type-checks and its five 
 | whole units | 197,159 | a sort, and the rule the ranks spike tried | `to_first` and `largest_remainder` with a declared order are the sort, sum exactly and stay within the claims. With no order the grants stay in bounds, treat equal requests equally and leave less than the number of keys, which they did in 22,522 cases. An apportionment sums exactly for any amount, and a key of no weight took a unit in 14,146. Rounded to the nearest, the parts sum exactly and stay within a unit, a unit taken back in 32,226 cases and given in 22,213 |
 | ranks, exact | 100,000 | the loop over tiers of the ranks spike | `by_rank` is the loop, within bounds, the whole returns the whole, no residual, distinct ranks are priority, and a merge with no tie rule refuses exactly where a tie arises, in 80,307 cases |
 | ranks, whole units | 200,000 | the same loop | the same, with a residual in 22,133 |
-| credits, sums and readings | 60,000 histories, 561,036 postings | the benchmark writer's loop | a credit's closed form is the loop. Every balance stays from zero to its ceiling. The sum less the cuts is the stepped balance after every posting, with a credit cut at an ancestor 21,510 times. Reading A at the head is the ledger's balance. With nothing late, reading B and reading A for each day are the balance. Reading B with a debit limited never leaves the range |
+| credits, sums and readings | 60,000 histories, 563,952 postings | the benchmark writer's loop | a credit's closed form is the loop. Every balance stays from zero to its ceiling. The sum less the cuts is the stepped balance after every posting, with a credit cut at an ancestor 21,661 times. Reading A at the head is the ledger's balance. With nothing late, reading B and reading A for each day are the balance. Reading B, settled by each account's own policy, never leaves the range |
+| the merge and its refusals, exact and whole units | 200,000 | the statement of each refusal, written out again | the outcome is the one stated, a refusal for requests beyond availability in 16,640 cases, for an order not checked out in 11,893, for a tie with no rule in 11,182 and for a residual that may not be left in 537. A refused settlement changes no balance. One that grants stays in bounds, charges the path what was granted, and is unchanged by a renaming of the keys and a reordering of the proposals |
+| pots, exact and whole units | 160,000, of which 80,489 refused | `by_rank` | no balance below zero, on the fund or the accounts above it, which bound in 27,906 cases. No pot paid beyond its own amount, which bound in 42,911. A later pot is paid only where nothing above an earlier one bound. Where no pot has an amount the grants are `by_rank`'s, in 24,581 cases |
+| allocation across accounts, exact and whole units | 139,867 | the charges summed again account by account | no balance below zero. The parts and what is left are what was asked. Each account is charged what was granted at it, on a path or on the reach of a purpose, the latter in 45,104 cases. The whole allocation is the allocation or nothing, and was nothing in 54,326 |
+| purposes at one position, the proposal of section 7 | 180,000 | the plain merge, and the alternative of cutting at the account first | no account overdrawn, the grants within the requests, the plain merge where no request has a purpose, and no dependence on the order in which sets of one size are settled. 1,059 positions were refused because two sets cross. The alternative granted otherwise in 7,668 |
 
-The last search also counted, without asserting, that reading A left the range at 14,079 readings, that reading B charged in full fell below zero at 8,568, and that reading B differed from the ledger at the head in 10,897 of the 41,418 histories with a late posting.
+The search of readings also counted, without asserting, that reading A left the range at 14,180 readings, that reading B charged in full fell below zero at 8,508, and that reading B differed from the ledger at the head in 10,821 of the 41,426 histories with a late posting.
 
-**What it does not show.** No law is proved. The cases are small, up to six requests, four ranks and seven accounts. `pots`, `spread`, `settle` and the refusals of `merge` are exercised by examples and by the ranks spike's search and have no search of their own here. The model is a second transliteration by hand, so a slip in both would go unseen, which the five examples evaluated in Isabelle narrow and do not remove.
+**What it does not show.** No law is proved. The cases are small, up to six requests, four ranks and seven accounts. The model is a second transliteration by hand, so a slip in both would go unseen, which the five examples evaluated in Isabelle narrow and do not remove. `pots`, `spread`, `settle` and the refusals of `merge` had examples only in the first draft, and the maintainer asked on 2026-11-15 that they be searched before anything proceeds. The search of pots then found item 9 of section 4.
 
 ## 6. Questions for the maintainer
 
 | | Question | Options | Leaning |
 |---|---|---|---|
-| **K1** | Whether settlement is stated once for whole units and exact amounts | (a) once, over an ordered ring, as the target has it. (b) twice, over the rationals and the integers, as today | (a). `spread_int` and the planned merge over whole units leave the kernel, and each law is proved once. The cost is that the 19 claims are restated more generally, and how much proof that moves is not known until machine S tries. A law that needs division stays over a field |
-| **K2** | What reading B does with a debit that no longer fits when the postings are settled again in effective order | (i) limits it to what is available, as the sketch's example does. (ii) charges it in full, as the benchmark does, so a reading can fall below zero. (iii) settles it by the account's own policy, refused where the account refuses and cut where it rations | (iii), offered as a hypothesis. A restatement asks what the ledger would have held, and the ledger would have applied the account's policy. (i) is its rationing case. (ii) shows a balance no account could hold, which the decision of 2026-11-13 on debits rules out for the ledger itself. Whichever is chosen, the reading reports what it refused or cut |
-| **K3** | How requests with different purposes are merged at one position | (a) a position's requests share one purpose, and a mixed position is refused. (b) each request is bounded by the least over its own reach, which makes the merge an allocation under several limits and no longer one rule. (c) the purposes are settled one after another in a declared order | none yet. It needs a scenario of its own, and the target states (a)'s case only |
-| **K4** | What a refusal at one pot does to the others at that position | (a) refuses them all. (b) the later pots are still settled | (a), as an allocation across accounts commits whole (STD-332) |
-| **K5** | Whether leaving a residual is something an account declares, with a merge that would leave one refused where it does not | (a) declared, off by default. (b) always allowed | (a). It is what C1, F1 and LG-Q17 say together |
-| **K6** | Where rounding to the nearest leaves the total short, which key takes the unit | (a) a share rounded down, by the declared order. (b) the wording must say, and silence is refused, as LG-Q16 holds for a unit over | (a) with (b)'s refusal where no order is declared, since it is the same question as a unit over |
+| **K1** | Whether settlement is stated once for whole units and exact amounts | (a) once, over an ordered ring, as the target has it. (b) twice, over the rationals and the integers, as today | (a). `spread_int` and the planned merge over whole units leave the kernel, and each law is proved once. The cost is that the 19 claims are restated more generally, and how much proof that moves is not known until machine S tries. A law that needs division stays over a field. **Decided 2026-11-15 by the maintainer, as leaned** |
+| **K2** | What reading B does with a debit that no longer fits when the postings are settled again in effective order | (i) limits it to what is available, as the sketch's example does. (ii) charges it in full, as the benchmark does, so a reading can fall below zero. (iii) settles it by the account's own policy, refused where the account refuses and cut where it rations | (iii), offered as a hypothesis. A restatement asks what the ledger would have held, and the ledger would have applied the account's policy. (i) is its rationing case. (ii) shows a balance no account could hold, which the decision of 2026-11-13 on debits rules out for the ledger itself. Whichever is chosen, the reading reports what it refused or cut. **Decided 2026-11-15 by the maintainer, as leaned** |
+| **K3** | How requests with different purposes are merged at one position | set out in section 7 | (b) of section 7, a request is cut to its own limits before it competes. **Open** |
+| **K4** | What a refusal at one pot does to the others at that position | (a) refuses them all. (b) the later pots are still settled | (a), as an allocation across accounts commits whole (STD-332). **Decided 2026-11-15 by the maintainer, as leaned** |
+| **K5** | Whether leaving a residual is something an account declares, with a merge that would leave one refused where it does not | (a) declared, off by default. (b) always allowed | (a). It is what C1, F1 and LG-Q17 say together. **Decided 2026-11-15 by the maintainer, as leaned** |
+| **K6** | Where rounding to the nearest leaves the total short, which key takes the unit | (a) a share rounded down, by the declared order. (b) the wording must say, and silence is refused, as LG-Q16 holds for a unit over | (a) with (b)'s refusal where no order is declared, since it is the same question as a unit over. **Decided 2026-11-15 by the maintainer, as leaned** |
 
-## 7. After the review
+## 7. K3, a proposal for purposes at one position
+
+**The gap.** A draw may carry a purpose, and an account off its path may count that purpose, as a sublimit for letters of credit counts every draw made for one (scenario D2). A single draw charges its whole reach and an allocation across accounts does too (STD-333). A merge at one position charges the path alone, in today's kernel and in the target, so two requests at one position, one of them for a counted purpose, have no stated settlement.
+
+**The instance.** A facility has 100 left and its sublimit for letters of credit has 30. A loan of 90 and a letter of credit of 40 arrive at one position, and the facility shares in proportion.
+
+| Option | Loan | Letter of credit | Left on the sublimit | What it says |
+|---|---|---|---|---|
+| (a) a position's requests share one purpose, and a mixed position is refused | refused | refused | 30 | simple, and it refuses a case that drafting plainly allows |
+| (b) each request is cut to its own limits first, and the claims so admitted then compete | 75 | 25 | 5 | the sublimit says how much of the letter of credit is a claim at all, 30, and 90 and 30 then share 100 |
+| (c) the requests compete on what was asked, and the sublimit then cuts what its requests were granted | 69.23 | 30 | 0 | 90 and 40 share 100 as 69.23 and 30.77, the sublimit cuts the second to 30, and 0.77 is left unplaced unless a further round shares it |
+| (d) the purposes are settled one after another in a declared order | by the order | by the order | | a priority between purposes that no wording stated |
+
+**The proposal is (b).** The hypothesis behind it is how drafting and the law treat a limit that applies to one kind of claim: it settles what that claim is, and a wider limit then rations the claims. A proof in an insolvency is admitted at its valid amount before the class abates, and a loss is adjusted to its covered amount before it erodes an aggregate. That reading has not been checked against a wording. Where a wording wants (c), whatever is upstream sizes the requests, as scenario G3 ruled for a floor.
+
+**Stated for any tree.** Each account a request reaches limits the set of requests that reach it. What is available to a set is the least its accounts hold, as what is available on a path is the least along it. The sets are settled from the narrowest to the widest, each cutting its requests by the account's rule to what is available to it. The widest is the path of the account drawn on, which every request reaches, so the last step is today's merge. Every account is charged what was granted to the requests that reach it. It needs no new rule, since each step is `by_rank`.
+
+**Where it has no answer.** Two sets may overlap with neither inside the other, which needs three purposes at one position and two accounts that each count two of them. No order between them is implied, so the position is refused as Undetermined unless the wording gives one. With one purpose, or two, the sets always nest.
+
+**What the search showed**, in the last row of section 5's table. Over 180,000 cases no account was overdrawn and the result did not depend on the order of sets of one size. It differed from (c) in 7,668 cases, so the choice is a real one.
+
+**What is asked.** A ruling among (a) to (d), and on the refusal where sets cross. Until then the target states only `settle` on a path.
+
+## 8. After the review
 
 1. The definitions move into the ledger README's block, from which `Kernel.thy` is extracted, in one reviewed change.
 2. LG-9's and LG-20's 17 parts are reordered by definition, in eight groups: the predicates, ranks, whole units, the merge and settlement, accounts and the path as a list, allocation and pots, credits and the sum, and the readings.
 3. Machine S's brief is rewritten on that order, and is handed over.
 
-## 8. What this sketch asks for
+## 9. What this sketch asks for
 
 - The maintainer's review of `Target.thy` against section 3.
-- A decision on K1 to K6.
+- A ruling on K3, section 7.
 - Nothing is handed to machine S before both.

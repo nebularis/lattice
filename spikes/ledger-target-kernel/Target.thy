@@ -267,14 +267,15 @@ definition settle ::
 section \<open>Ranks that hold an amount of their own\<close>
 
 text \<open>Pots under one fund, settled in rank order. What a pot could not place is carried down the
-  list and withheld from what the later pots see of the fund. A refusal at any pot refuses them all.\<close>
+  list and withheld from what the later pots see of the fund and of every account above it, since
+  any of them may be the one that binds. A refusal at any pot refuses them all.\<close>
 
 fun pots ::
   "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> 'a \<Rightarrow> ('a \<times> ('k \<times> 'n) list) list \<Rightarrow> 'n
      \<Rightarrow> ('a, 'n) balances \<Rightarrow> (('k, 'n) amounts list \<times> 'n \<times> ('a, 'n) balances) option" where
   "pots pol rank parent fund [] held bal = Some ([], held, bal)"
 | "pots pol rank parent fund ((a, ps) # rest) held bal =
-     (case merge pol rank (available parent (debit {fund} held bal) a) ps of
+     (case merge pol rank (available parent (debit (path parent fund) held bal) a) ps of
         Refused why \<Rightarrow> None
       | Granted g r \<Rightarrow>
           (case pots pol rank parent fund rest (held + r) (debit (path parent a) (total (proposers ps) g) bal) of
@@ -324,6 +325,7 @@ record ('a, 'c, 'n) book =
   stated :: "'a \<Rightarrow> 'n"
   ceiling :: "'a \<Rightarrow> 'n"
   restores :: "'a \<Rightarrow> 'c option \<Rightarrow> bool"
+  refusing :: "'a \<Rightarrow> bool"
 
 datatype ('a, 'c, 'n) request = Draw 'a 'n | Restore 'a "'c option" 'n
 
@@ -378,9 +380,9 @@ definition reading_a ::
   "('a, 'c, 'n::linordered_idom) book \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> (nat \<times> ('a, 'c, 'n) posted) list \<Rightarrow> 'a \<Rightarrow> 'n" where
   "reading_a B day recording es b = summed B (map snd (counted day recording es)) b"
 
-text \<open>Reading B, the same postings settled again in effective order. A posting that was accepted is
-  not refused again. A debit that no longer fits is limited to what is available, as the worked
-  example of the sketch on balances under post-once has it.\<close>
+text \<open>Reading B, the same postings settled again in effective order, by each account's own policy.
+  A debit that no longer fits is refused where its account refuses and cut to what is available
+  where it rations, so the reading never shows a balance an account could not hold.\<close>
 
 definition asked :: "('a, 'c, 'n) posted \<Rightarrow> ('a, 'c, 'n) request" where
   "asked p = (case p of Drawn a x \<Rightarrow> Draw a x | Restored a c x applied cuts \<Rightarrow> Restore a c x)"
@@ -389,7 +391,10 @@ fun replay ::
   "('a, 'c, 'n::linordered_idom) book \<Rightarrow> ('a, 'c, 'n) request list \<Rightarrow> ('a, 'n) balances \<Rightarrow> ('a, 'n) balances" where
   "replay B [] bal = bal"
 | "replay B (Draw a x # qs) bal =
-     replay B qs (debit (path (parent_of B) a) (max 0 (min x (available (parent_of B) bal a))) bal)"
+     replay B qs
+       (if x \<le> available (parent_of B) bal a then debit (path (parent_of B) a) x bal
+        else if refusing B a then bal
+        else debit (path (parent_of B) a) (max 0 (available (parent_of B) bal a)) bal)"
 | "replay B (Restore a c x # qs) bal =
      replay B qs (snd (snd (credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal)))"
 
