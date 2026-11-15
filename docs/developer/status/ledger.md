@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-13. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** building 2026-11-15. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
@@ -132,7 +132,8 @@ Results sections. In short:
 | LG-19 | the benchmark's corpora refuse a debit beyond availability, and LG-14 to LG-18 are run again on them | built 2026-11-13, building 2026-11-13 | LG-18 |
 | LG-20 | the proofs' third widening: the cut record, the two positions and the readings by effective day, a rule lawful with a residual, and an order derived from ranks | planned | LG-9, LG-21 |
 | LG-21 | the target kernel written first, each changed definition once in its decided form, tried on generated cases and reviewed, before any further proof | planned |  |
-| LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figures at the top of the READMEs | planned | LG-19 |
+| LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figures at the top of the READMEs | building 2026-11-15 | LG-19 |
+- 2026-11-15: LG-22 picked up in a cloud session on `ledger/lg-22-cloud-run`, per its brief. The variation is measured first, by two runs of each of the three tasks that use request lists, before any change.
 - 2026-11-15: LG-22 planned, LG-19's follow-ups, with a [brief](../notes/cloud-brief-lg-22-2026-11-15.md) for a cloud session. The maintainer decided LG-19's four questions the same day: the 5% rows are kept and labelled by the share they hold, request lists continue the preload's stream, a pass with every draw refused is drawn again, and the READMEs' dated results stay as history under a table of current figures.
 - 2026-11-15: LG-21 planned, the target kernel, which LG-9 and LG-20 now wait on. Read against LG-19's figures, the 5% corpus at 20,000 postings has 486 period graphs where it had 306 and 247 postings a period where it had 392, counted from the two generators with nothing timed. That is 1.59 times the graphs beside rdflib's root read at 1.5 times, a hypothesis for that result and not a test of it.
 - 2026-11-15: LG-19's cloud branch, `ledger/lg-19-cloud-run`, merged into `docs/placement-vehicles-structure` at the maintainer's word, with its [handoff note](../notes/lg-19-cloud-run-handoff.md). The row is built and awaits verification, and nothing was run again here. LG-Q27 decided by the maintainer as (b): the target kernel is written here first, and machine S proves on it. The maintainer confirmed that what a rank could not place reaches no lower rank.
