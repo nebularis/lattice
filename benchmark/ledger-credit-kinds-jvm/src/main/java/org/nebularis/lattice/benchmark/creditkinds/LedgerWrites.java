@@ -689,8 +689,22 @@ public final class LedgerWrites {
                 emptyParts(seconds.get(c));
                 meta.put(c, new ArrayList<>());
             }
+            // LG-22: the cost of a request the writer refuses, its path reads and its settling, with nothing written. It is read among the writes, in step with them, since the writer writes no checkpoint and its reads
+            // fold a tail that grows with every write
+            List<Double> refusedReads = new ArrayList<>(), refusedSettle = new ArrayList<>();
+            List<double[]> refusedMeta = new ArrayList<>();
             int refused = 0, w = 0;
             for (Req r : requests) {
+                while (refusedReads.size() < (long) (w + 1) * refusing.size() / requests.size()) {
+                    Req ask = refusing.get(refusedReads.size());
+                    Plan q = live.prepare(ask, "R" + refusedReads.size());
+                    if (!q.refused) {
+                        throw new CreditKinds.WrongResult(store + " " + CreditKinds.num(preload, "postings") + ": a debit of " + ask.amount() + ", more than the root's stated amount, was not refused");
+                    }
+                    refusedReads.add(q.reads);
+                    refusedSettle.add(q.settle);
+                    refusedMeta.add(new double[] {q.path, q.queries});
+                }
                 Plan p = writeOne(live, r, "W" + (w++), false, new int[1]);
                 if (p.refused) {
                     refused++;
@@ -703,19 +717,6 @@ public final class LedgerWrites {
                 }
                 meta.get(c).add(new double[] {p.path, p.queries, p.triples()});
                 added += p.triples();
-            }
-            // LG-22: the cost of a request the writer refuses, its path reads and its settling, with nothing written
-            List<Double> refusedReads = new ArrayList<>(), refusedSettle = new ArrayList<>();
-            List<double[]> refusedMeta = new ArrayList<>();
-            int sample = 0;
-            for (Req r : refusing) {
-                Plan p = live.prepare(r, "R" + (sample++));
-                if (!p.refused) {
-                    throw new CreditKinds.WrongResult(store + " " + CreditKinds.num(preload, "postings") + ": a debit of " + r.amount() + ", more than the root's stated amount, was not refused");
-                }
-                refusedReads.add(p.reads);
-                refusedSettle.add(p.settle);
-                refusedMeta.add(new double[] {p.path, p.queries});
             }
             long grew = CreditKinds.countQuads(s.ds()) - before;
             if (grew != added) {

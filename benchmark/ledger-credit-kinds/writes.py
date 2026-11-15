@@ -101,6 +101,14 @@ def requests(preload: int, count: int, share: float, seed: int) -> list[Request]
 REFUSALS = 100  # requests in the sample whose cost is a refusal's
 
 
+def refuse_one(live, request: Request, name: str, count: int) -> "Plan":
+    """Reads the path of a request that must be refused and writes nothing. Raises if the writer does not refuse it."""
+    plan = live.prepare(request, f"R{request.at}")
+    if not plan.refused:
+        raise WrongResult(f"{name} {count}: a debit of {request.amount}, more than the root's stated amount, was not refused")
+    return plan
+
+
 def refusing_requests(count: int) -> list[Request]:
     """`count` debits that any store refuses, each larger than the stated amount of the root and so than the balance of any account on its path, on the contracts in turn. A writer reads the path of each and writes nothing."""
     return [Request(ck.CONTRACTS[n % len(ck.CONTRACTS)], True, ck.STATED[-1] + 1, None) for n in range(count)]
@@ -361,7 +369,11 @@ def run_writes(name: str, count: int, guarded: bool, writes: int = WRITES) -> di
         corpus, base = preload(backend, count)
         live, before = Live(backend, len(corpus.positions), guarded), backend.count()
         seconds, meta, refused, added = {c: {p: [] for p in PARTS} for c in CLASSES}, {c: [] for c in CLASSES}, 0, 0
+        asked, sample = refusing_requests(REFUSALS), []
         for n, request in enumerate(requests(count, writes, SHARE, ck.SEED + 7)):
+            # a refused request is read among the writes, in step with them, since the writer writes no checkpoint and its reads fold a tail that grows with every write
+            while len(sample) < (n + 1) * REFUSALS // writes:
+                sample.append(refuse_one(live, asked[len(sample)], name, count))
             plan, _ = write_one(live, request, f"W{n}", retry=False)
             if plan.refused:
                 refused += 1
@@ -371,12 +383,6 @@ def run_writes(name: str, count: int, guarded: bool, writes: int = WRITES) -> di
                 seconds[cls][p].append(plan.seconds.get(p, 0.0))
             meta[cls].append((plan.path, plan.queries, posting_triples(plan)))
             added += posting_triples(plan)
-        sample = []
-        for n, request in enumerate(refusing_requests(REFUSALS)):
-            plan = live.prepare(request, f"R{n}")
-            if not plan.refused:
-                raise WrongResult(f"{name} {count}: a debit of {request.amount}, more than the root's stated amount, was not refused")
-            sample.append(plan)
         if backend.count() - before != added:
             raise WrongResult(f"{name} {count}: the store grew by {backend.count() - before} triples, the writes add {added}")
         result = audit(backend, base, expect=writes - refused)
