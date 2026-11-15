@@ -319,7 +319,7 @@ annual cap 20M   after the loss: 10M left
 | (ii) a reinstatement credits its own account only | 10M | 10M |
 | (iii) a credit at the aggregate that rolls up, and a debit at the annual cap that takes it back, as the insurance example does today | 10M | 10M, right in sum, with a posting in the annual cap's own book |
 
-**Bears on** LG-Q10, leaning a credit that carries its kind. **Ruling.**
+**Bears on** LG-Q10, leaning a credit that carries its kind. **Ruling.** The maintainer, 2026-11-15. The aggregate returns to 10M and the annual cap stays at 10M, which is reading (ii)'s result, reached as LG-Q10 decided on 2026-11-10: the reinstatement carries its kind and the annual cap does not accept that kind, so nothing is posted in the cap's own book.
 
 ### E2. A recovery larger than the period's payments (insurance, salvage)
 
@@ -347,7 +347,7 @@ annual cap 20M   after the loss: 10M left
 | (ii) posted to the current year with its effective position in the old year | the old year's checkpoint is stale, a correction posting follows it |
 | (iii) posted to a late-posting graph of the old year, read beside its sealed book | the sealed book stays sealed |
 
-**Bears on** PDD-14. **Ruling.**
+**Bears on** PDD-14. **Ruling.** The maintainer, 2026-11-15. Reading (ii) without its last clause, as PDD-14 was closed. The posting is recorded in the current period with its effective position in the old year, so it draws on the old year's aggregate against what that account holds when it is recorded. Nothing is reopened or resealed, and no checkpoint is stale, since a checkpoint states what was recorded by its close. What a report then shows for the old year is a reading it declares (LG-Q26).
 
 ## F. Order and time
 
@@ -359,7 +359,7 @@ annual cap 20M   after the loss: 10M left
 
 **Question.** Is key order, which here is the order of random tokens, an acceptable tie-break, or must every account that can tie declare an order that means something?
 
-**Bears on** LG-Q12. **Ruling.**
+**Bears on** LG-Q12. **Ruling.** The maintainer, 2026-11-15. Requests that the declared criterion leaves tied share by the rule the account declares for a tie. Where the account declares none, the merge is refused as Undetermined. A key never breaks a tie. How tied requests are held, as a tier of one rule or otherwise, is G1's question and is not ruled here.
 
 ### F2. Two positions that are the same moment (payments)
 
@@ -369,7 +369,7 @@ annual cap 20M   after the loss: 10M left
 
 **Question.** Is this one position, merged, or two, the first recorded winning?
 
-**Bears on** the pass-wide order rule of LG-Q9 (a), pass position then micro-position. **Ruling.**
+**Bears on** the pass-wide order rule of LG-Q9 (a), pass position then micro-position. **Ruling.** The maintainer, 2026-11-15. Two positions, and the first recorded wins, since an amount erodes in the order draws are settled and never the order they occurred. The ledger infers nothing from a timestamp. Where a wording treats the two as one moment, whatever is upstream of the ledger hands them over as one pass, and the account's rule merges them.
 
 ## G. Scaling every request by one ratio
 
