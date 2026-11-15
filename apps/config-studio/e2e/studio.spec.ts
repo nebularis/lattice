@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // The author's journey through the studio, against the fake service in fake-service.ts.
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { FakeService, STAGED_FIRST, STAGED_SECOND } from "./fake-service";
 
 const PROFILE = "https://example.org/lending#LoanApplicationStrongProfile";
@@ -860,4 +860,378 @@ test("the import graph draws the workspace's ontology, a held import and a missi
   // A click on the missing import opens the import dialog.
   await nodes.filter({ hasText: "missing import" }).click();
   await expect(page.getByRole("dialog", { name: "Import ontologies" })).toBeVisible();
+});
+
+// --- What the canvas kit does when a node is dragged, a page is reloaded, a link is dropped or a menu item is chosen (SVA-O5) ---
+
+interface Xy {
+  x: number;
+  y: number;
+}
+
+const centreOf = async (target: Locator): Promise<Xy> => {
+  const box = (await target.boundingBox())!;
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+};
+
+/** A drag with the mouse in steps, since React Flow starts a drag or a connection only from real pointer movement. `held` runs before the button is released. */
+async function dragMouse(page: Page, from: Xy, to: Xy, held?: () => Promise<void>): Promise<void> {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move((from.x + to.x) / 2, (from.y + to.y) / 2, { steps: 6 });
+  await page.mouse.move(to.x, to.y, { steps: 12 });
+  await held?.();
+  await page.mouse.up();
+}
+
+/** A node's place in the flow, from its transform, which does not change with the zoom or the pane. */
+const flowPlace = (node: Locator): Promise<Xy> =>
+  node.evaluate((el) => {
+    const m = /translate\((-?[\d.e+-]+)px,\s*(-?[\d.e+-]+)px\)/.exec((el as HTMLElement).style.transform);
+    return { x: Number(m![1]), y: Number(m![2]) };
+  });
+
+/** The end of an edge's drawn path on the screen, from its start or from its end. */
+const pathEnd = (edge: Locator, end: "start" | "end"): Promise<Xy> =>
+  edge.locator("path.react-flow__edge-path").evaluate((p, which) => {
+    const path = p as SVGPathElement;
+    const at = path.getPointAtLength(which === "end" ? path.getTotalLength() : 0);
+    const m = path.getScreenCTM()!;
+    return { x: m.a * at.x + m.c * at.y + m.e, y: m.b * at.x + m.d * at.y + m.f };
+  }, end);
+
+const pathOf = (edge: Locator): Promise<string | null> => edge.locator("path.react-flow__edge-path").getAttribute("d");
+
+/** How far a point is from a box, zero within it. */
+const distanceTo = (p: Xy, box: { x: number; y: number; width: number; height: number }) =>
+  Math.hypot(Math.max(box.x - p.x, 0, p.x - (box.x + box.width)), Math.max(box.y - p.y, 0, p.y - (box.y + box.height)));
+
+/** A point on the screen that lies on the edge's own path and on nothing else, found where no node or label covers it. */
+const pointOnEdge = async (page: Page, id: string): Promise<Xy> => {
+  await page.locator(".react-flow__pane").scrollIntoViewIfNeeded();
+  return page.evaluate((edgeId) => {
+    const group = [...document.querySelectorAll(".react-flow__edge")].find((e) => e.getAttribute("data-id") === edgeId)!;
+    const path = group.querySelector("path.react-flow__edge-path") as SVGPathElement;
+    const length = path.getTotalLength();
+    const m = path.getScreenCTM()!;
+    for (const t of [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.1, 0.9]) {
+      const at = path.getPointAtLength(length * t);
+      const x = m.a * at.x + m.c * at.y + m.e;
+      const y = m.b * at.x + m.d * at.y + m.f;
+      if (document.elementFromPoint(x, y)?.closest(".react-flow__edge") === group) return { x, y };
+    }
+    throw new Error(`no free point on the edge ${edgeId}`);
+  }, id);
+};
+
+/** Answers the next dialog of the page and keeps what it said. */
+function answerNext(page: Page, answer: string | false): { message: string } {
+  const seen = { message: "" };
+  page.once("dialog", async (dialog) => {
+    seen.message = dialog.message();
+    await (answer === false ? dialog.dismiss() : dialog.accept(answer || undefined));
+  });
+  return seen;
+}
+
+async function openDiagramOfFacility(page: Page, fake: FakeService): Promise<Locator> {
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Facility agreement/ }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  const ws = [...fake.workspaces.keys()][0];
+  await page.goto(`/#/w/${ws}/baseline`);
+  return showDiagram(page);
+}
+
+async function showDiagram(page: Page): Promise<Locator> {
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Diagram" }).click();
+  const diagram = page.getByRole("region", { name: "Ontology diagram" });
+  await expect(diagram.locator(".react-flow__node-cls").first()).toBeVisible();
+  return diagram;
+}
+
+test("a dragged class takes its edges and their labels with it, and the edges still end on it", async ({ page }) => {
+  const fake = new FakeService();
+  const diagram = await openDiagramOfFacility(page, fake);
+  const facility = diagram.locator(".react-flow__node-cls").filter({ hasText: "Facility" });
+  // Facility is the source of four links and the target of one.
+  const links = [
+    { title: "ex:drawnUnder, from Drawdown to Facility", end: "end" as const },
+    { title: "ex:borrower, from Facility to Borrower", end: "start" as const },
+    { title: "ex:arrangedBy, from Facility to Branch", end: "start" as const },
+    { title: "ex:hasDrawdown, from Facility to Drawdown", end: "start" as const },
+    { title: "ex:lender, from Facility to Lender", end: "start" as const },
+  ];
+  const edge = (title: string) => diagram.locator(".react-flow__edge").filter({ has: page.locator("title", { hasText: title }) });
+  const label = (title: string) => diagram.locator(`.onto-edge-label[title="${title}"]`);
+  const before = await Promise.all(links.map(async (l) => ({ d: await pathOf(edge(l.title)), at: await label(l.title).getAttribute("style") })));
+  const start = await centreOf(facility);
+  const placeBefore = await flowPlace(facility);
+
+  // The edges and labels follow the class while the button is held, not only once it is let go.
+  const follows = async () => {
+    await expect.poll(async () => (await flowPlace(facility)).y).toBeGreaterThan(placeBefore.y + 100);
+    for (const [n, l] of links.entries()) {
+      await expect.poll(() => pathOf(edge(l.title)), `the path of ${l.title}`).not.toBe(before[n].d);
+      await expect.poll(() => label(l.title).getAttribute("style"), `the label of ${l.title}`).not.toBe(before[n].at);
+      // The edge still meets the class, whichever end of the edge it is.
+      const box = (await facility.boundingBox())!;
+      const end = await pathEnd(edge(l.title), l.end);
+      expect(distanceTo(end, box), `${l.title} ends ${distanceTo(end, box)} px from the dragged class`).toBeLessThanOrEqual(3);
+    }
+  };
+  await dragMouse(page, start, { x: start.x + 40, y: start.y + 120 }, follows);
+  await follows();
+  const moved = (await facility.boundingBox())!;
+  expect(moved.y - (start.y - moved.height / 2)).toBeGreaterThan(40);
+});
+
+test("a class the author moved stays where it was left after the page is loaded again", async ({ page }) => {
+  const fake = new FakeService();
+  let diagram = await openDiagramOfFacility(page, fake);
+  const facility = () => diagram.locator(".react-flow__node-cls").filter({ hasText: "Facility" });
+  const laid = await flowPlace(facility());
+  const start = await centreOf(facility());
+  await dragMouse(page, start, { x: start.x - 60, y: start.y + 90 });
+  await expect.poll(async () => (await flowPlace(facility())).y).toBeGreaterThan(laid.y + 50);
+  const left = await flowPlace(facility());
+  expect(left.x).toBeLessThan(laid.x - 40);
+
+  await page.reload();
+  await expect(page.getByRole("group", { name: "Detail pane" })).toBeVisible();
+  diagram = await showDiagram(page);
+  await expect.poll(() => flowPlace(facility())).toEqual({ x: expect.closeTo(left.x, 0), y: expect.closeTo(left.y, 0) });
+  // The classes nobody moved are where the layout puts them.
+  expect(await flowPlace(diagram.locator(".react-flow__node-cls").filter({ hasText: "Drawdown" }))).toEqual({ x: 0, y: 0 });
+});
+
+const PROBE = "https://example.org/probe/map#";
+const PROBE_SOURCE = "https://example.org/probe/src#";
+const PROBE_TTL = `@prefix mork: <http://www.nebularis.org/ontologies/Mork#> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix m: <${PROBE}> . @prefix src: <${PROBE_SOURCE}> .
+m:Scheme a mork:MappingScheme ; rdfs:label "Probe scheme" .
+src:Policy a mork:DataConcept ; rdfs:label "Policy source" ; mork:path "$.policy" .
+src:Cover a mork:DataConcept ; rdfs:label "Cover source" ; mork:path "$.cover" .
+m:Policy a mork:Datum ; rdfs:label "Policy" ; mork:mappingScheme m:Scheme ; mork:mappingFor src:Policy .
+m:Cover a mork:Datum ; rdfs:label "Cover" ; mork:compositeBroaderMapping m:Policy ; mork:mappingScheme m:Scheme ; mork:mappingFor src:Cover .
+m:Holder a mork:DataMapping ; rdfs:label "Holder" ; mork:compositeBroaderMapping m:Policy ; mork:mappingScheme m:Scheme .
+m:Status a mork:DataMapping ; rdfs:label "Status" ; mork:mappingScheme m:Scheme ; mork:templateMapping m:Template .
+m:Template a mork:DataMapping ; rdfs:label "Template" ; mork:mappingScheme m:Scheme .
+`;
+
+/** A workspace holding one mapping scheme with source concepts, a parent link, a template link and a source link, open on its canvas. */
+async function openMappingProbe(page: Page, fake: FakeService): Promise<void> {
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Your own Turtle/ }).click();
+  await page.locator("#ws-name").fill("Probe");
+  await page.locator('input[type="file"]').setInputFiles({ name: "probe.ttl", mimeType: "text/turtle", buffer: Buffer.from(PROBE_TTL) });
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`/#/w/${[...fake.workspaces.keys()][0]}/mapping`);
+  await showMappingCanvas(page);
+}
+
+async function showMappingCanvas(page: Page): Promise<void> {
+  await page.getByRole("group", { name: "Drawing" }).getByRole("button", { name: "Canvas" }).click();
+  await expect(page.locator(".react-flow__node-mapping").first()).toBeVisible();
+}
+
+const mappingNode = (page: Page, name: string) => page.locator(".react-flow__node-mapping").filter({ has: page.getByText(name, { exact: true }) });
+const sourceNode = (page: Page, name: string) => page.locator(".react-flow__node-source").filter({ hasText: name });
+const linkEdge = (page: Page, kind: "parent" | "template" | "source", node: string) => page.locator(`.react-flow__edge[data-id="${kind}|${PROBE}${node}"]`);
+const ofEdge = (edge: Locator) => edge.getAttribute("aria-label");
+const connect = async (page: Page, from: Locator, to: Locator) => dragMouse(page, await centreOf(from.locator(".react-flow__handle.source")), await centreOf(to.locator(".react-flow__handle.target")));
+const savedMapping = (fake: FakeService) => fake.saves.filter((s) => s.name === "mapping").pop()?.body ?? "";
+const occurrences = (text: string, of: string) => text.split(of).length - 1;
+
+test("a mapping the author moved stays where it was left after a reload, and laying the scheme out again puts it back, for good", async ({ page }) => {
+  const fake = new FakeService();
+  await openMappingProbe(page, fake);
+  const holder = mappingNode(page, "Holder");
+  const laid = await flowPlace(holder);
+  const start = await centreOf(holder);
+  await dragMouse(page, start, { x: start.x + 30, y: start.y + 110 });
+  await expect.poll(async () => (await flowPlace(holder)).y).toBeGreaterThan(laid.y + 100);
+  const left = await flowPlace(holder);
+
+  await page.reload();
+  await showMappingCanvas(page);
+  await expect.poll(() => flowPlace(holder)).toEqual({ x: expect.closeTo(left.x, 0), y: expect.closeTo(left.y, 0) });
+
+  await page.locator(".react-flow__pane").click({ button: "right", position: { x: 5, y: 5 } });
+  await page.getByRole("menu").getByRole("menuitem", { name: "Lay the scheme out again" }).click();
+  await expect.poll(() => flowPlace(holder)).toEqual({ x: expect.closeTo(laid.x, 0), y: expect.closeTo(laid.y, 0) });
+
+  // What was forgotten stays forgotten on the next visit.
+  await page.reload();
+  await showMappingCanvas(page);
+  await expect.poll(() => flowPlace(holder)).toEqual({ x: expect.closeTo(laid.x, 0), y: expect.closeTo(laid.y, 0) });
+});
+
+test("a link dropped on a mapping makes it a child or gives it a source, a link that would make a cycle is refused, and undo takes each back", async ({ page }) => {
+  const fake = new FakeService();
+  await openMappingProbe(page, fake);
+  const undo = page.getByRole("button", { name: "Undo" });
+  const policy = mappingNode(page, "Policy");
+  const cover = mappingNode(page, "Cover");
+  const holder = mappingNode(page, "Holder");
+  const status = mappingNode(page, "Status");
+  await expect(linkEdge(page, "parent", "Status")).toHaveCount(0);
+  const parents = occurrences(PROBE_TTL, "compositeBroaderMapping");
+
+  // From a mapping to a mapping makes the first the second's parent.
+  await connect(page, policy, status);
+  await expect(linkEdge(page, "parent", "Status")).toHaveCount(1);
+  expect(await ofEdge(linkEdge(page, "parent", "Status"))).toBe(`Edge from ${PROBE}Policy to ${PROBE}Status`);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect.poll(() => occurrences(savedMapping(fake), "compositeBroaderMapping")).toBe(parents + 1);
+  await undo.click();
+  await expect(linkEdge(page, "parent", "Status")).toHaveCount(0);
+
+  // A mapping has one parent, so a link to one that has a parent moves it.
+  expect(await ofEdge(linkEdge(page, "parent", "Holder"))).toBe(`Edge from ${PROBE}Policy to ${PROBE}Holder`);
+  await connect(page, cover, holder);
+  await expect.poll(() => ofEdge(linkEdge(page, "parent", "Holder"))).toBe(`Edge from ${PROBE}Cover to ${PROBE}Holder`);
+  await expect(page.locator('.react-flow__edge[data-id^="parent|"]')).toHaveCount(2);
+  await undo.click();
+  await expect.poll(() => ofEdge(linkEdge(page, "parent", "Holder"))).toBe(`Edge from ${PROBE}Policy to ${PROBE}Holder`);
+
+  // From a source concept to a mapping says what the mapping maps for.
+  await expect(linkEdge(page, "source", "Status")).toHaveCount(0);
+  await connect(page, sourceNode(page, "Cover source"), status);
+  await expect(linkEdge(page, "source", "Status")).toHaveCount(1);
+  expect(await ofEdge(linkEdge(page, "source", "Status"))).toBe(`Edge from ${PROBE_SOURCE}Cover to ${PROBE}Status`);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect.poll(() => occurrences(savedMapping(fake), "mappingFor")).toBe(occurrences(PROBE_TTL, "mappingFor") + 1);
+  await undo.click();
+  await expect(linkEdge(page, "source", "Status")).toHaveCount(0);
+
+  // A link that would make Policy a child of its own child changes nothing, and neither does one dropped on the empty pane.
+  const drawn = await page.locator(".react-flow__edge").count();
+  await connect(page, cover, policy);
+  const pane = (await page.locator(".react-flow__pane").boundingBox())!;
+  await dragMouse(page, await centreOf(policy.locator(".react-flow__handle.source")), { x: pane.x + 30, y: pane.y + 30 });
+  await expect(linkEdge(page, "parent", "Policy")).toHaveCount(0);
+  expect(await ofEdge(linkEdge(page, "parent", "Cover"))).toBe(`Edge from ${PROBE}Policy to ${PROBE}Cover`);
+  await expect(page.locator(".react-flow__edge")).toHaveCount(drawn);
+});
+
+test("each item of the mapping canvas's menus does what it says", async ({ page }) => {
+  const fake = new FakeService();
+  await openMappingProbe(page, fake);
+  const undo = page.getByRole("button", { name: "Undo" });
+  const menu = page.getByRole("menu");
+  const item = (name: string) => menu.getByRole("menuitem", { name });
+  const policy = mappingNode(page, "Policy");
+  const cover = mappingNode(page, "Cover");
+  const holder = mappingNode(page, "Holder");
+  const mappings = page.locator(".react-flow__node-mapping");
+  const parents = page.locator('.react-flow__edge[data-id^="parent|"]');
+  await expect(mappings).toHaveCount(5);
+  await expect(parents).toHaveCount(2);
+
+  // The menu of a mapping with no parent has no item to detach it, and "Open in the editor" opens its card.
+  await policy.click({ button: "right" });
+  await expect(menu.getByRole("menuitem")).toHaveText(["Open in the editor", "Add a child datum", "Add a child data mapping", "Delete the mapping"]);
+  await item("Open in the editor").click();
+  await expect(page.getByRole("region", { name: "Mapping Policy" })).toBeVisible();
+
+  // Deleting asks first, takes the mapping and the links to and from it away, and undo brings them back.
+  const asking = answerNext(page, false);
+  await policy.click({ button: "right" });
+  await item("Delete the mapping").click();
+  await expect.poll(() => asking.message).toContain("Delete Policy?");
+  await expect(policy).toBeVisible();
+  await expect(mappings).toHaveCount(5);
+  answerNext(page, "");
+  await policy.click({ button: "right" });
+  await item("Delete the mapping").click();
+  await expect(policy).toHaveCount(0);
+  await expect(mappings).toHaveCount(4);
+  await expect(linkEdge(page, "source", "Policy")).toHaveCount(0);
+  await expect(parents).toHaveCount(0);
+  await expect(cover).toBeVisible();
+  await undo.click();
+  await expect(policy).toBeVisible();
+  await expect(mappings).toHaveCount(5);
+  await expect(linkEdge(page, "source", "Policy")).toHaveCount(1);
+  await expect(parents).toHaveCount(2);
+
+  // An edge's menu removes that link and no other.
+  const removeFrom = async (edgeId: string, name: string, on?: Locator) => {
+    if (on) await on.click({ button: "right" });
+    else await page.mouse.click(...(Object.values(await pointOnEdge(page, edgeId)) as [number, number]), { button: "right" });
+    await expect(menu.getByRole("menuitem")).toHaveText([name]);
+    await item(name).click();
+  };
+  await removeFrom(`source|${PROBE}Policy`, "Remove the source link");
+  await expect(linkEdge(page, "source", "Policy")).toHaveCount(0);
+  await expect(linkEdge(page, "source", "Cover")).toHaveCount(1);
+  // The edge between the two is short and its label covers it, so the menu is opened on the label.
+  await removeFrom(`template|${PROBE}Status`, "Remove the template link", page.locator(".canvas-edge-label").filter({ hasText: "template" }));
+  await expect(linkEdge(page, "template", "Status")).toHaveCount(0);
+  await expect(mappingNode(page, "Template")).toBeVisible();
+  await removeFrom(`parent|${PROBE}Holder`, "Remove the parent link");
+  await expect(linkEdge(page, "parent", "Holder")).toHaveCount(0);
+  await expect(holder).toBeVisible();
+  await expect(parents).toHaveCount(1);
+
+  // Detaching keeps the mapping and takes its parent link away.
+  await cover.click({ button: "right" });
+  await item("Detach from its parent").click();
+  await expect(linkEdge(page, "parent", "Cover")).toHaveCount(0);
+  await expect(cover).toBeVisible();
+  await expect(parents).toHaveCount(0);
+
+  // A child data mapping and a child datum are named by the author, a cancelled name adds nothing, and each is drawn under its parent.
+  // A new node is laid out where the layout puts it, which may be over one that kept its place, so the nodes to click are used first.
+  let asked = answerNext(page, false);
+  await cover.click({ button: "right" });
+  await item("Add a child datum").click();
+  await expect.poll(() => asked.message).toBe("Name the new datum");
+  await expect(mappings).toHaveCount(5);
+
+  asked = answerNext(page, "Premium");
+  await policy.click({ button: "right" });
+  await item("Add a child datum").click();
+  await expect(mappings).toHaveCount(6);
+  expect(asked.message).toBe("Name the new datum");
+  await expect(mappingNode(page, "Premium")).toBeVisible();
+  await expect(parents).toHaveCount(1);
+  await expect(page.locator(`.react-flow__edge[aria-label^="Edge from ${PROBE}Policy to "]`)).toHaveCount(1);
+
+  asked = answerNext(page, "Rate");
+  await cover.click({ button: "right" });
+  await item("Add a child data mapping").click();
+  await expect(mappings).toHaveCount(7);
+  expect(asked.message).toBe("Name the new data mapping");
+  await expect(mappingNode(page, "Rate")).toBeVisible();
+  await expect(parents).toHaveCount(2);
+  await expect(page.locator(`.react-flow__edge[aria-label^="Edge from ${PROBE}Cover to "]`)).toHaveCount(1);
+
+  // The pane's menu adds a root datum, which has no parent, and lays the scheme out again.
+  const before = await mappings.count();
+  asked = answerNext(page, "Second root");
+  await page.locator(".react-flow__pane").click({ button: "right", position: { x: 5, y: 5 } });
+  await item("Add a root datum").click();
+  await expect(mappings).toHaveCount(before + 1);
+  expect(asked.message).toBe("Name the new datum");
+  await expect(mappingNode(page, "Second root")).toBeVisible();
+  await expect(parents).toHaveCount(2);
+  const laid = await flowPlace(policy);
+  const start = await centreOf(policy);
+  await dragMouse(page, start, { x: start.x + 20, y: start.y + 90 });
+  await expect.poll(async () => (await flowPlace(policy)).y).toBeGreaterThan(laid.y + 60);
+  const dragged = await flowPlace(policy);
+  await page.locator(".react-flow__pane").click({ button: "right", position: { x: 5, y: 5 } });
+  await item("Lay the scheme out again").click();
+  await expect.poll(() => flowPlace(policy)).not.toEqual(dragged);
+  // Every mapping is where the layout puts it, so no two share a place, as a node laid out over another did before.
+  const places = await mappings.evaluateAll((els) => els.map((e) => (e as HTMLElement).style.transform));
+  expect(new Set(places).size).toBe(places.length);
 });

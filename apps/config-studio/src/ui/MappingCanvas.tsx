@@ -5,11 +5,12 @@
 // right click offers what fits where it lands. The canvas kit (src/canvas) draws it, lays it out and keeps the author's
 // positions in this browser for the scheme, never in the graph, since where a node sits says nothing about what it maps.
 // Each mapping's depth and row are its rank and order, and the source concepts are the rank before the first, as they always were.
+// Its edges are routed by the kit like every canvas's, round the nodes they do not join, and keep the ids the edge menu reads.
 
 import { useCallback, useMemo } from "react";
 import { Handle, MarkerType, Position, type Connection, type Edge, type Node, type NodeProps } from "@xyflow/react";
 import { compact, type Graph } from "@lattice/authoring-domain";
-import { Canvas, type LayoutHints, type LayoutOptions, type MenuItem, type Point } from "../canvas/kit";
+import { Canvas, RoutedEdge, type LayoutHints, type LayoutOptions, type MenuItem, type Point, type RoutedEdgeData } from "../canvas/kit";
 import { setParent, setSource, unlink, written, type MappingNode, type Scheme } from "../rdf/mapping";
 
 const COLUMN = 280;
@@ -48,6 +49,10 @@ function SourceBox({ data }: NodeProps<Node<SourceData>>) {
 }
 
 const NODE_TYPES = { mapping: MappingBox, source: SourceBox };
+const EDGE_TYPES = { link: RoutedEdge };
+
+/** The edge classes the stylesheet knows, around what an edge says. */
+const ROUTED = (data: RoutedEdgeData): RoutedEdgeData => ({ ...data, className: "mapping-edge", labelClass: "canvas-edge-label" });
 
 export function MappingCanvas(props: {
   workspace: string;
@@ -86,14 +91,16 @@ export function MappingCanvas(props: {
 
   const edges = useMemo<Edge[]>(() => {
     const ids = new Set(scheme.mappings.map((m) => m.iri));
+    const named = new Map([...scheme.sources, ...scheme.mappings].map((n) => [n.iri, n.label]));
+    const name = (iri: string) => named.get(iri) ?? compact(iri, prefixes);
     const out: Edge[] = [];
     for (const m of scheme.mappings) {
-      if (m.parent && ids.has(m.parent)) out.push({ id: `parent|${m.iri}`, source: m.parent, target: m.iri, markerEnd: { type: MarkerType.ArrowClosed } });
-      if (m.template && ids.has(m.template)) out.push({ id: `template|${m.iri}`, source: m.template, target: m.iri, label: "template", style: { strokeDasharray: "5 4" } });
-      if (m.source && scheme.sources.some((s) => s.iri === m.source)) out.push({ id: `source|${m.iri}`, source: m.source, target: m.iri, style: { strokeDasharray: "2 3" }, animated: false });
+      if (m.parent && ids.has(m.parent)) out.push({ id: `parent|${m.iri}`, source: m.parent, target: m.iri, type: "link", markerEnd: { type: MarkerType.ArrowClosed }, data: ROUTED({ title: `${name(m.parent)} is the parent of ${m.label}` }) });
+      if (m.template && ids.has(m.template)) out.push({ id: `template|${m.iri}`, source: m.template, target: m.iri, type: "link", style: { strokeDasharray: "5 4" }, data: ROUTED({ label: "template", title: `${name(m.template)} is the template of ${m.label}` }) });
+      if (m.source && scheme.sources.some((s) => s.iri === m.source)) out.push({ id: `source|${m.iri}`, source: m.source, target: m.iri, type: "link", style: { strokeDasharray: "2 3" }, data: ROUTED({ title: `${m.label} maps for ${name(m.source)}` }) });
     }
     return out;
-  }, [scheme]);
+  }, [scheme, prefixes]);
 
   /** A link from a mapping makes it the target's parent, and one from a source concept says what the target maps for. */
   const connect = (c: Connection) => {
@@ -127,6 +134,8 @@ export function MappingCanvas(props: {
       nodes={nodes}
       edges={edges}
       nodeTypes={NODE_TYPES}
+      edgeTypes={EDGE_TYPES}
+      routing
       hints={hints}
       options={LAYOUT}
       afterLayout={afterLayout}

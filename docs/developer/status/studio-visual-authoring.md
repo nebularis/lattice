@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-15. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-15. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-O6 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-R2, SVA-R3 and SVA-R4 against the runs contract, and the smaller SVA-B2c and SVA-B2d.
+**Next action:** paused after SVA-O5 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-R2, SVA-R3 and SVA-R4 against the runs contract, the smaller SVA-B2c, SVA-B2d and SVA-O7, and SVA-B5.
 
 ## Slices
 
@@ -41,8 +41,9 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-O2a | edge labels placed apart, and edges against the layout's direction attached by the sides that face | built 2026-11-13, building 2026-11-13 |  |
 | SVA-O3 | the axiom reader and the element forms | built 2026-11-12, building 2026-11-12 |  |
 | SVA-O4 | routing finished: edges bent around nodes, attachments spread, drawings fitted, unlinked nodes placed beside | built 2026-11-15, building 2026-11-15 | SVA-O2a |
-| SVA-O5 | the kit's behaviour held in a browser, and the mapping canvas on the kit's routing | building 2026-11-15 | SVA-O4 |
+| SVA-O5 | the kit's behaviour held in a browser, and the mapping canvas on the kit's routing | built 2026-11-15, building 2026-11-15 | SVA-O4 |
 | SVA-O6 | one reader of shapes for the forms and the drawing | built 2026-11-15, building 2026-11-15 | SVA-O2 |
+| SVA-O7 | a new node clear of the others, and a label beside an edge shorter than it | planned | SVA-O5 |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | planned | SVA-O1 |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | planned | SVA-R3 |
@@ -83,6 +84,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-15, SVA-R1: the frame's schema was made to allow extra properties. The test of a frame with one failed. Restored, 31 of 31 passing.
 - 2026-11-15, SVA-O6: the shared rule was made to ignore a class that is itself a shape. Tests of the new reader, of the drawing and of the forms' vocabulary failed together, which shows the three read one rule. Restored.
 - 2026-11-15, SVA-O4: the test of whether a path comes near a node was made to find nothing, so no edge was routed. The tests of routing and the acceptance tests over the facility sample failed. Restored.
+- 2026-11-15, SVA-O5: the kit was stopped from storing positions. Both tests of a position kept after a reload failed. Restored, both passing. The slice's pack records ten more breaks, tried as each test was written.
 
 ## Log
 
@@ -119,3 +121,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-15: SVA-O4 picked up, with SVA-O5 to follow it, at the maintainer's word.
 - 2026-11-15: SVA-O4 built, [Validation Pack](../validation/SVA-O4.md). An edge that would cross a node between its ends is routed through the gaps of the ranks it passes, as one smooth curve, the edges of one side of a node attach apart in the order of their other ends, an ontology drawing opens fitted to its pane, and a node with no link sits in a block beside the drawing. In the facility sample's three drawings no edge passes within 7 px of a class it does not join and no label covers a class or another label, held by tests built as the canvas builds its drawings and seen in screenshots. Two tests that asserted the rules this slice replaces were replaced and are named in the pack: edges to different nodes sharing a side's middle, and an unlinked node in a last rank. Left as it is: edges still cross one another where the layout puts their ends, which is the layout's part and BL-23's, and a label may sit on another edge's line. The diagram pane is capped at 864 px wide by the editor's style, at which the drawings were also seen to fit. Verified with 344 unit tests, the type check and 31 browser tests on the fake service.
 - 2026-11-15: SVA-O5 picked up.
+- 2026-11-15: SVA-O5 built, [Validation Pack](../validation/SVA-O5.md). Five browser tests hold what the kit does when a node is dragged, a page is loaded again, a link is dropped and a menu item is chosen, each tried against a break in the source that it had to catch, and the first of them rewritten when its first form did not catch its break. The mapping canvas draws its edges with the kit's routing, its tests written and passed on the old edges first, and its nodes where they were. The mapping tests use a workspace made from Turtle of their own, since the mapping sample declares no source concept. Two faults found and planned as SVA-O7: a node added by an edit can land exactly on another, and a label can hide an edge shorter than it. One test this slice did not touch failed in one full run of six, recorded as TD-166. Verified with 344 unit tests, the type check, and the browser suite twice, 36 passed each time.
