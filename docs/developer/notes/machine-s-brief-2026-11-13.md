@@ -2,7 +2,7 @@
 
 # Machine S brief, 2026-11-13: the ledger proofs' second and third widening
 
-**Draft, a first version. Not yet handed over.** The maintainer amends it once the remaining posting scenarios are ruled, and hands it over then. Until that day nothing here is started.
+**Draft, amended 2026-11-15. Not yet handed over.** One ruling is outstanding, the catch-up of scenario G1. The maintainer hands the brief over once it is given. Until that day nothing here is started.
 
 **For:** the agent on machine S, Windows 11, Isabelle2025-2 through its bundled Cygwin, where LG-7, LG-2, FME-0 and LG-8 were built. **Written on** `docs/placement-vehicles-structure` at the maintainer's request, after the ledger's open questions were decided on 2026-11-12 and 2026-11-13. It replaces the [brief of 2026-11-09](machine-s-brief-2026-11-09.md), whose slice LG-9 was planned and never started. It carries LG-9 as that brief stated it, with the two parts that waited on a question now decided, and adds LG-20.
 
@@ -40,6 +40,10 @@ Read these before the plan's parts, since they are the reasons for them.
 | LG-Q17, (a) | 2026-11-13 | a rule may leave an explicit residual | MEC-109, scenario A1 |
 | LG-Q18, (c) | 2026-11-13 | the account declares an order's criterion and each request carries the rank derived from it | MEC-108 |
 | LG-Q22, (a) | 2026-11-13 | a definition version pins its scheme edition. Nothing to prove | STD-334 |
+| scenario F1 | 2026-11-15 | requests the criterion leaves tied share by the rule the account declares for a tie, are refused where it declares none, and a key never breaks a tie | [posting scenarios note](ledger-posting-scenarios.md), F1 |
+| scenario G1, first question | 2026-11-15 | a rank is a tier of the account's rule by default, and an account of its own only where it has an amount of its own or money must be held. What a rank could not place reaches no lower rank | the same note, G1, MEC-110 |
+| scenarios G2 and G3 | 2026-11-15 | a ballot is a party's act and never a rule, a residual may also be posted to a declared account, and a floor is the scheme's rule, tested with a trial merge. Nothing to prove | the same note, MEC-109, MEC-111 |
+| scenarios E1, E3 and F2 | 2026-11-15 | each follows a decision above or one LG-9 states. Nothing new to prove | the same note |
 
 The measurements behind LG-Q23 and LG-Q26 are in the packs of [LG-16](../validation/LG-16.md), [LG-17](../validation/LG-17.md) and [LG-18](../validation/LG-18.md). They show the laws holding on generated histories and are no substitute for the proofs.
 
@@ -47,7 +51,7 @@ The measurements behind LG-Q23 and LG-Q26 are in the packs of [LG-16](../validat
 
 **LG-9, the proofs' second widening.** Home unit `ledger`, row LG-9, brief in the [ledger plan](../plans/ledger.md) under that name, which states each part. Build its seven parts that wait on nothing in the plan's order, then LG-Q16's part, then the two that waited on a question, which the plan now marks decided: LG-Q13, `spread` and `spread_int` debit `reach`, and LG-Q12, an allocation across accounts commits whole or changes nothing.
 
-**LG-20, the proofs' third widening.** Row LG-20, brief in the plan under that name, after LG-9. Its four parts in the plan's order: LU, the cut record, which needs LB1 from LG-9. LE, the two positions and the readings by effective day. LV, a rule lawful with a residual, beside LS's two predicates. LK2, an order derived from ranks, on LK.
+**LG-20, the proofs' third widening.** Row LG-20, brief in the plan under that name, after LG-9. Its seven parts in the plan's order: LU, the cut record, which needs LB1 from LG-9. LE, the two positions and the readings by effective day. LV, a rule lawful with a residual, beside LS's two predicates. LK2, an order derived from ranks, on LK. LR, ranks as tiers. LN, whole units with no order. LP, a rank with an amount of its own, which needs LR. The last three were tried on generated cases before they were planned, as scenario G1 in the [posting scenarios note](ledger-posting-scenarios.md) records, and that search found each of the negative instances the plan asks you to keep.
 
 Read first, for both: LG-8's [pack](../validation/LG-8.md) with its Results, the [sketch on the residual to the first in order](../sketches/ledger-residual-to-first-in-order.md), the [sketch on balances under post-once](../sketches/ledger-balances-under-post-once.md) §3, §4.8, §4.9 and §5, and the session's README.
 
@@ -57,7 +61,7 @@ The README changes with both slices, which moves an extracted document, so `mise
 
 ## What is held back
 
-Not in either slice, because a posting scenario that bears on it has no ruling yet: a tie the criterion does not break (F1), two positions that are the same moment (F2), scaling every request by one ratio (G1 to G3), and whatever E1 and E3 add. Where one has been ruled by the day a part is reached, read its ruling in the [posting scenarios note](../notes/ledger-posting-scenarios.md), say in the handoff what it would add, and do not build it.
+Not in either slice, because it has no ruling yet: the catch-up for a late claimant, scenario G1's second question. If it has been ruled by the day LR is reached, read its ruling in the [posting scenarios note](ledger-posting-scenarios.md), say in the handoff what it would add, and do not build it unless this brief has been amended to say so.
 
 ## The packs
 
