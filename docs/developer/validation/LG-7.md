@@ -106,4 +106,4 @@ Built on machine S, 2026-11-08, on the branch the maintainer created from `main`
 - the statements, not the proofs, of LA1 to LA4 in `tools/proofs/ledger/Allocation.thy` and of LC1, LC2 and LD1 to LD4 in `Draws.thy`, each between its gate markers, against the pack's test table
 - the session README's what-is-assumed and what-is-not-covered sections, `tools/proofs/ledger/README.md`
 
-**The maintainer's verdict** is written here when given. The row on the board moves to `verified` with it.
+**Verified 2026-11-09 by the maintainer.** The kernel will change under TD-161, since keys never decide an order, and the maintainer recorded that the kernel exists to prove the semantics in use and so follows them. That change is LG-9's first part, LK.

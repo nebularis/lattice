@@ -44,7 +44,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
 | lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-0 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
-| ledger | unit | LG | built 2026-11-09 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 5 Validation Packs |
+| ledger | unit | LG | built 2026-11-15 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 13 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
@@ -363,6 +363,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | OD-DOC1 | published decisions | improved-ontology-documentation | verified 2026-10-19 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-DOC2 | site sections | improved-ontology-documentation | merged 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-DOC3 | tutorial and Field Guide review | improved-ontology-documentation | planned | OD-DOC2, `lattice-tutorial` merged | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-DOC4 | the layer interactions record, with its register entries and STD-326 | improved-ontology-documentation | planned |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC4 | downstream extension | improved-ontology-documentation | planned | OD-RC3 | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC5 | package promotion | improved-ontology-documentation | planned | OD-RC4 | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC6 | XML catalogue folded in | improved-ontology-documentation | planned | OD-RC5, a new ADR on ADR-A88 | docs/developer/status/improved-ontology-documentation.md#slices |
@@ -408,14 +409,27 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | TUT-10 | the guide's modules 12, 13 and the quick reference | lattice-tutorial | briefed 2026-11-06 | TUT-6 | docs/developer/status/lattice-tutorial.md#position |
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | ledger | merged 2026-10-27 |  | docs/developer/status/ledger.md#board |
-| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | ledger | built 2026-11-08 |  | docs/developer/status/ledger.md#board |
+| LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | ledger | verified 2026-11-09 |  | docs/developer/status/ledger.md#board |
 | LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | ledger | planned | LG-2 | docs/developer/status/ledger.md#board |
 | LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | ledger | planned | LG-3 | docs/developer/status/ledger.md#board |
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | ledger | blocked | LG-4 | docs/developer/status/ledger.md#board |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | ledger | planned | LG-5 | docs/developer/status/ledger.md#board |
-| LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | ledger | built 2026-11-08 |  | docs/developer/status/ledger.md#board |
+| LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | ledger | verified 2026-11-09 |  | docs/developer/status/ledger.md#board |
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | ledger | merged 2026-11-09 |  | docs/developer/status/ledger.md#board |
-| LG-9 | the proofs' second widening, LR2 over multisets, an executable path, the running balance, a merge over whole units, and the parts that wait on LG-Q11, LG-Q12, LG-Q13, LG-Q15 and LG-Q16 | ledger | planned |  | docs/developer/status/ledger.md#board |
+| LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | ledger | planned | LG-21 | docs/developer/status/ledger.md#board |
+| LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | ledger | built 2026-11-09 |  | docs/developer/status/ledger.md#board |
+| LG-11 | conversion leaves the ledger, the conversion terms removed | ledger | planned |  | docs/developer/status/ledger.md#board |
+| LG-12 | which draws an account accepts, a shape for compatibility and representability | ledger | planned | LG-11 | docs/developer/status/ledger.md#board |
+| LG-13 | the insurance example's cap named for what it is, annual-cap | ledger | built 2026-11-10 |  | docs/developer/status/ledger.md#board |
+| LG-14 | a benchmark of the credit kinds' read cost on every backend | ledger | built 2026-11-11 |  | docs/developer/status/ledger.md#board |
+| LG-15 | LG-14's gaps closed: native Jena on TDB2, checkpoints, the drawn account's clamp, the loop timed apart, the shortcut | ledger | built 2026-11-11 |  | docs/developer/status/ledger.md#board |
+| LG-16 | the cut the writer records, measured in the credit kinds benchmark: credits at two levels of a path, and an ancestor read as a sum less its cuts | ledger | built 2026-11-12 |  | docs/developer/status/ledger.md#board |
+| LG-17 | LG-16's gaps closed: like-for-like read forms, a cut that copies its position, a ceiling above a stated amount, the sketch's tree in an engine, the cost of writing, concurrent writers on Oxi | ledger | built 2026-11-12 |  | docs/developer/status/ledger.md#board |
+| LG-18 | LG-17's follow-ups measured: one writer per ledger against guarded writers, with balances kept by the writer and with batched commits, and the readings of a balance by effective day as known | ledger | built 2026-11-12 |  | docs/developer/status/ledger.md#board |
+| LG-19 | the benchmark's corpora refuse a debit beyond availability, and LG-14 to LG-18 are run again on them | ledger | built 2026-11-13 | LG-18 | docs/developer/status/ledger.md#board |
+| LG-20 | the laws the target kernel gains, in seven groups by definition, restated 2026-11-15 in place of the third widening | ledger | planned | LG-9 | docs/developer/status/ledger.md#board |
+| LG-21 | the target kernel written first, each changed definition once in its decided form, tried on generated cases and reviewed, before any further proof | ledger | built 2026-11-15 |  | docs/developer/status/ledger.md#board |
+| LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figur | ledger | planned | LG-19 | docs/developer/status/ledger.md#board |
 | MSC-1 | `platform/sparql-testkit`, `tools/testing/jena`, `tools/testing/sparql_probes` with the aggregate matrix executed on Jena (352 cells as recorded), `check:conformance`, CAP-91 to CAP-94, an A | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
 | MSC-2 | Jena in the persistence engines, `check:persistence-conformance` on rdflib, Oxigraph and Jena (4727 passed), nine Jena failures triaged into TSD-50 to TSD-53 with expectations per engine, on | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |
 | MSC-3 | Jena in the compilers' engines, conformance per engine for the compilers and Eligibility's reference tests, all passing on Jena first time. TSD-60, TSD-61 (rdflib departures), TD-105 (the pr | multi-store-conformance | merged 2026-10-29 |  | docs/developer/status/multi-store-conformance.md#position |

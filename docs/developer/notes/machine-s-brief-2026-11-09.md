@@ -26,12 +26,17 @@ Every definition goes in the ledger README's `isabelle-spec` block and reaches `
 
 **The parts that wait on nothing, in this order.**
 
-1. **LR2 over multisets.** The smallest, and a warm-up for the gate.
-2. **LX1, an executable path.** After it, the examples of every later part can be evaluated.
-3. **LB1, LB1n and LB2, the running balance.** The law LG-2's rework will cite, whichever way LG-Q9 goes.
-4. **LM2, a merge at one position over whole units**, with `largest_remainder`.
+1. **LK, the order as a declared input.** First, since every later part uses it. No rule orders proposals by their keys (TD-161).
+2. **LS, two kinds of split**, rationing and apportionment, as LG-Q19 decided.
+3. **LR2 over multisets**, restated over the declared order.
+4. **LX1, an executable path.** After it, the examples of every later part can be evaluated.
+5. **LB1, LB1n and LB2, the running balance.** The law LG-2's rework will cite, now that LG-Q9 is decided (a), a running balance on the posting at the drawn account.
+6. **LM2, a merge at one position over whole units**, with `largest_remainder`.
+7. **LM1, a merge that refuses**, as LG-Q11 decided on 2026-11-09: an explicit result, grants or a refusal with its reason, a refusal from either of two places, never zero grants: a guard before any rule, from the inputs alone, for the declared `ldg:Refuse` policy where requests exceed availability or an order check the account declares up front, and the rule itself, for a reason it states, such as a tie its declared order does not break, only where that tie arises. Each rule's laws hold for every result that grants. LM2's merge returns the same result, so build LM1 first or restate LM2 with it.
 
-**The parts that wait on a question, in this order.** LG-Q15, then LG-Q11, then LG-Q16, then LG-Q13, then LG-Q12, each as the plan's brief states it. Under LG-Q15 (b) the vocabulary table's definition of `ldg:ToFirstInOrder` in the README's section 6 changes too, which moves an extracted document, so `mise run check:ontology-versioning -- --base-ref main` will report it unbumped. That report is expected and is not acted on, since versions move at the merge into `main`.
+**Then LG-Q16, decided on 2026-11-09**, as the plan's part states: the default refusal of rounding to the nearest beside a residual rule, and a signed residual where a wording states one. The README and `tools/test_ledger.py` change with it, and `authority-aggregate.ttl` takes `ldg:TowardZero` with `ldg:LargestRemainder`, as the maintainer chose.
+
+**The parts that wait on a question, in this order.** LG-Q13, then LG-Q12, with LG-Q15 decided and nothing to build for it alone, and LG-Q19 decided and built as LS, each as the plan's brief states it. Under LG-Q15 (b) the vocabulary table's definition of `ldg:ToFirstInOrder` in the README's section 6 changes too, which moves an extracted document, so `mise run check:ontology-versioning -- --base-ref main` will report it unbumped. That report is expected and is not acted on, since versions move at the merge into `main`.
 
 **The pack.** `docs/developer/validation/LG-9.md`, in the lifecycle skill's form, a row per claim, the parts left out named with the question each waits on, and a handoff with every command's output read in full.
 

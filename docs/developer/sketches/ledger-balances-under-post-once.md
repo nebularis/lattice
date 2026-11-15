@@ -71,6 +71,8 @@ The triple counts for a year are arithmetic from the per-draw counts and the sce
 
 ### 2.2 Leaning
 
+Design C is not needed for a regulator's read, which is answered from history when it is asked, from a checkpoint, an archive restored to a scratch dataset or a store fed by the event stream (PRI-81, the [multi-store runtime sketch](multi-store-runtime.md) §5.3), so C is weighed on the hot path's reads alone.
+
 B, which is the design as decided, with LG-Q9 answered (a) and the pass-wide order rule stated as a standard. `ldg:BalanceRecord` per pass leaves the runtime document, `ldg:Checkpoint` stays as the balance at a close, and the running balance goes onto `ldg:Posting`. The remaining and available values a balance record carries are then read, not stored, except at a checkpoint. A's one gain, that an ancestor's balance now is a lookup, is what C buys for *d* triples a posting without a node, and whether its ordered seek is flat is the one measurement this sketch asks for before C is preferred to B.
 
 ## 3. The fold that applies the ceiling once
@@ -98,45 +100,263 @@ flowchart LR
 
 A law shape that can refuse a correct record is not a law, so the one-cap fold should not stand as one. There are two exact forms. Under design B each posting carries a running balance and the shape checks one step, the predecessor's running balance plus or less this posting's amount, capped at the ceiling where it is a credit, which applies the ceiling exactly where the writer did. Under design A the shape chains passes, taking the previous pass's record as the base rather than the stated amount, which is exact across passes and leaves only a pass that holds both a cut credit and a later debit on one subtree, closed by a rule that within a pass credits are applied before debits or by the micro-position order.
 
-## 4. The capacity pool and position 4 of the insurance example
+## 4. The annual cap and position 4 of the insurance example
 
 ### 4.1 The arithmetic
 
-The example's pool is stated at twice the aggregate, as the hard cap across the original cover and one reinstatement. Its table reads so.
+The example's annual cap, named a reinstatement annual cap until LG-13 renamed it (STD-325), is stated at twice the aggregate, as the hard cap across the original cover and one reinstatement. Its table reads so.
 
-| Position | Event | Aggregate | Pool |
+| Position | Event | Aggregate | Annual cap |
 |---|---|---|---|
 | before | | 10,000,000 | 20,000,000 |
 | 1 | flood loss 700,000 | 9,300,000 | 19,300,000 |
 | 2 | recovery 300,000 | 9,600,000 | 19,600,000 |
 | 3 | loss 9,600,000 | 0 | 10,000,000 |
-| 4 | reinstatement | 10,000,000 | 20,000,000 rolled up, then 10,000,000 after the pool's own debit |
+| 4 | reinstatement | 10,000,000 | 20,000,000 rolled up, then 10,000,000 after the annual cap's own debit |
 
-The arithmetic is right. Capacity used across the two lives is 700,000 less 300,000 plus 9,600,000, which is 10,000,000, so 10,000,000 is left and the aggregate stands restored. What the example does to reach it is two postings in one pass, a credit of 10,000,000 at the aggregate, which rolls up to the pool under the fold, and a debit of 10,000,000 at the pool, so that the roll-up is undone.
+The arithmetic is right. Capacity used across the two lives is 700,000 less 300,000 plus 9,600,000, which is 10,000,000, so 10,000,000 is left and the aggregate stands restored. What the example does to reach it is two postings in one pass, a credit of 10,000,000 at the aggregate, which rolls up to the annual cap under the fold, and a debit of 10,000,000 at the annual cap, so that the roll-up is undone.
 
 ### 4.2 What the two postings say
 
-Read as modelling, the second posting is a correction of the first. The credit is a reinstatement, and a reinstatement restores the aggregate without adding to the capacity the pool measures, so the credit should never have reached the pool. The example makes it reach the pool and then takes it back, because the fold treats every credit alike. That is the structural mismatch LG-Q10 is about, and the pool debit is its symptom.
+Read as modelling, the second posting is a correction of the first. The credit is a reinstatement, and a reinstatement restores the aggregate without adding to the capacity the annual cap measures, so the credit should never have reached the annual cap. The example makes it reach the annual cap and then takes it back, because the fold treats every credit alike. That is the structural mismatch LG-Q10 is about, and the annual cap debit is its symptom.
 
-The pool debit is also a posting at an ancestor, which LF-Q18 (c) allows for a purpose-counting account only, and it is the first posting any ancestor's book carries. Under post-once an ancestor's book holds checkpoints alone, so sealing it at a close is sealing a derived record. A posting in the pool's book makes the pool's own period and close matter for a posting, and a reinstatement effective after the pool's close lands in PDD-14's case, a posting effective inside a sealed period. That is the sense in which the pool debit runs against sealed periods.
+The annual cap debit is also a posting at an ancestor, which LF-Q18 (c) allows for a purpose-counting account only, and it is the first posting any ancestor's book carries. Under post-once an ancestor's book holds checkpoints alone, so sealing it at a close is sealing a derived record. A posting in the annual cap's book makes the annual cap's own period and close matter for a posting, and a reinstatement effective after the annual cap's close lands in PDD-14's case, a posting effective inside a sealed period. That is the sense in which the annual cap debit runs against sealed periods.
 
 ### 4.3 The options
 
 | | What it is | Terms added | Postings per reinstatement | Posts at an ancestor | What else changes |
 |---|---|---|---|---|---|
-| (a) | the pool is also debited, as built | none | 2 | yes | LF-Q18 (c) gains an exception that is not a purpose |
-| (b) | the pool is not an ancestor but an account a reinstatement draws on by purpose | none | 2 | no | every loss must name the purpose too, or the pool no longer falls with losses, which positions 1 to 3 need |
-| (c) | a credit ceiling on the pool's subtree fold | a ceiling | 1 | no | does not work alone. After position 3 the pool is at 10,000,000, the roll-up takes it to 20,000,000, and 20,000,000 is the ceiling, so nothing is cut |
-| (d) | the pool stays the ancestor, and the reinstatement is a draw that names a purpose the pool counts | a purpose | 2 | yes, as a purpose posting, which LF-Q18 (c) allows | the pool is both ancestor and purpose-counting account for the aggregate |
+| (a) | the annual cap is also debited, as built | none | 2 | yes | LF-Q18 (c) gains an exception that is not a purpose |
+| (b) | the annual cap is not an ancestor but an account a reinstatement draws on by purpose | none | 2 | no | every loss must name the purpose too, or the annual cap no longer falls with losses, which positions 1 to 3 need |
+| (c) | a credit ceiling on the annual cap's subtree fold | a ceiling | 1 | no | does not work alone. After position 3 the annual cap is at 10,000,000, the roll-up takes it to 20,000,000, and 20,000,000 is the ceiling, so nothing is cut |
+| (d) | the annual cap stays the ancestor, and the reinstatement is a draw that names a purpose the annual cap counts | a purpose | 2 | yes, as a purpose posting, which LF-Q18 (c) allows | the annual cap is both ancestor and purpose-counting account for the aggregate |
 | (e) | a credit carries its kind, and a reinstatement is a kind of credit that restores its account and does not fold upward | a kind on a credit, two values | 1 | no | the fold shape and the kernel's `credit` take the kind, so a reinstatement stops at its own account |
 
-On (d), an earlier reading of this sketch's author put a double-count cost on it, and that was wrong. The double count §13 names arises where a draw at an account X names a purpose counted by an ancestor P of X, so the posting at X folds to P and the purpose posting at P counts it again. A reinstatement under (d) is a draw at the pool itself with no posting at a descendant, so nothing folds twice. The double count is a separate open case, and the kernel already answers it, since `reach` is a set union and `debit` debits each account in it once, so the runtime rule it needs is that a purpose posting is not written at an account already on the drawn account's path.
+On (d), an earlier reading of this sketch's author put a double-count cost on it, and that was wrong. The double count §13 names arises where a draw at an account X names a purpose counted by an ancestor P of X, so the posting at X folds to P and the purpose posting at P counts it again. A reinstatement under (d) is a draw at the annual cap itself with no posting at a descendant, so nothing folds twice. The double count is a separate open case, and the kernel already answers it, since `reach` is a set union and `debit` debits each account in it once, so the runtime rule it needs is that a purpose posting is not written at an account already on the drawn account's path.
 
 On cost in time and space, the options do not differ. A reinstatement is a handful of events per contract a year, so two postings against one is noise beside the losses, and the kind in (e) is one triple on those postings alone. The decision is on meaning and on which laws change. (a) and (d) keep the fold as it is and add a posting at an ancestor. (e) keeps post-once intact, changes the fold's treatment of one kind of credit, and is the only option that says what a reinstatement is, which is PRI-12's test. Its cost is that LD3's `credit` gains a kind, and the fold shape a filter, which is a change to what LG-7 and LG-2 built.
 
-### 4.4 Leaning
+### 4.4 Leaning, as first written
 
 (e), examined before (d), on the priority PRI-80 states, correctness before performance before churn. The maintainer's question of whether a reinstatement is built as the example builds it is LG-Q10, and the sketch does not decide it.
+
+### 4.5 Revised 2026-11-10: the kind is the world's, and the account decides
+
+**The table above shows remaining balances, not availability.** At position 3 sublimit A1 still holds 600,000 of its own, but its availability is the least remaining along its path, min(600,000, 5,600,000, 0, 10,000,000) = 0 (LD2), so nothing more can be paid from it, as the maintainer pointed out: once a fire aggregate is used up, no further fire loss is paid, whatever an equipment-fire sublimit beneath it still holds.
+
+**What was wrong with (e).** As written, a reinstatement's kind meant that the credit stops at its own account. That encodes the tree into the posting, so a poster would have to know the parent is a cap, and it fails where a fire sublimit's reinstatement should restore the property aggregate above it. The maintainer's point is that recovery and reinstatement differ in the world, money recovered against a restoration of a limit by a trigger in the wording, and which accounts respond to which is each account's own concern.
+
+**Two designs the maintainer proposed, tested.**
+
+| | P1, the poster states the real-world kind and each account declares the kinds that restore it | P2, a dual-value account, balance tracked apart from what was posted in each direction, the poster stating nothing |
+|---|---|---|
+| correct on the annual cap | yes, it accepts recoveries and not reinstatements | no as stated: a recovery and a reinstatement reach the aggregate as equal credits, so with nothing stated no configuration can tell them apart. The nearest working form posts a recovery as a reversal of a draw, which is the real-world kind again |
+| correct on a term commitment | yes, it accepts nothing, since repaid amounts cannot be redrawn | a reversal would wrongly restore it, so a policy per account is needed anyway |
+| the poster knows | what happened, a recovery, a reinstatement, a repayment, a seat returned | the same, as a direction |
+| space | one triple per credit for its kind, one per restricted account definition | a second running value on every posting, under LG-Q9's running balance |
+| time | one filter on kind in an ancestor's fold where its policy restricts kinds | a second dimension in every read |
+| ease for us | one concept | a second dimension throughout |
+
+| Account | Restored by | Why |
+|---|---|---|
+| annual cap | recoveries, not reinstatements | it measures net paid across the year |
+| aggregate, or a fire sublimit | recoveries and reinstatements | a reinstatement restores the limit |
+| property aggregate above a fire sublimit | recoveries and reinstatements | the maintainer's example |
+| revolving facility | repayments | repaid amounts may be drawn again |
+| term commitment | nothing | repaid amounts may not be drawn again |
+| licence pool | seats returned | a returned seat may be used again |
+
+**The proposal, decided by the maintainer on 2026-11-10 as LG-Q10's answer.**
+
+1. A credit carries its kind, a concept from a scheme whose contract Ledger declares and an applied module binds, so insurance supplies recovery, reinstatement and write-back and Ledger names no domain's kinds.
+2. Each account declares the kinds that restore it, all by default, so a revolving account needs nothing. No credits at all is the empty list, and recoveries only is a list of one, bound from the wording, which the terms may override.
+3. An ancestor's balance folds the debits of its subtree and the credits whose kind it accepts, each account applying its own ceiling.
+4. A credit with no kind, on a path where an account restricts kinds, is refused as Undetermined by a guard, never taken to restore.
+
+The poster needs neither the tree nor the history. A reinstatement in full is posted at the stated amount, and the credit ceiling already cuts it to what was used (LD3). The multi-year worry, that "less everything drawn" reaches back past a year, does not arise, since a periodic amount is one account per period (PDD-15). How many reinstatements a contract allows is the instrument's regime, and the annual cap makes a further one impossible. Position 4 becomes one posting, a reinstatement credit at the aggregate, and the annual cap stays at 10,000,000.
+
+### 4.6 Added 2026-11-11: where an ancestor's ceiling can bind
+
+LG-15 found that once a credit is clamped at the account it is posted to, and an ancestor folds the amount it was applied at, no ancestor's ceiling bound in its corpus. That makes an ancestor's balance a sum rather than an ordered read (TSD-72), which matters for cost. But the corpus set every ceiling equal to its account's stated amount, which the ledger does not require (`ldg:CreditCeilingNotBelowStatedShape` only keeps a ceiling from falling below it). This section shows when the finding holds and when it does not, for LG-Q23.
+
+**The reason it holds.** An ancestor's balance is its stated amount, less every debit in its subtree, plus every credit it accepts at the amount the credit was applied at. A credit is applied at its own account only up to that account's ceiling. Where that ceiling is the account's stated amount, a credit can only give back what was drawn from that account, so across the subtree the credits applied never exceed the debits, and the ancestor's balance never rises above its own stated amount. A kind filter only removes credits from the ancestor's fold, so it can only lower the balance. The ancestor's ceiling, at or above its stated amount, is never reached, and a plain or filtered sum gives the right balance.
+
+**Where it fails.** Where an account below the ancestor has a ceiling above its stated amount, a credit can lift that account past what was drawn from it, by up to the difference. That surplus folds into the ancestor, and if it exceeds the ancestor's own room above its stated amount, the ancestor's ceiling binds. Its balance is then a running balance clamped at its ceiling, where order matters, and a sum is wrong.
+
+```mermaid
+flowchart TB
+  subgraph One["Case 1: every ceiling equals its stated amount"]
+    A1["Ancestor A<br/>stated 100, ceiling 100"]
+    C11["Contract C1<br/>stated 60, ceiling 60"]
+    C12["Contract C2<br/>stated 40, ceiling 40"]
+    A1 --- C11
+    A1 --- C12
+    S11["1. debit 30 at C1<br/>C1 30, A 70"]
+    S12["2. credit 50 offered at C1<br/>applied 30, C1 back to 60"]
+    S13["A folds the 30 applied<br/>A 100, at its ceiling and never above"]
+    S11 --> S12 --> S13
+  end
+  subgraph Two["Case 2: C1's ceiling stands above its stated amount"]
+    A2["Ancestor A<br/>stated 100, ceiling 100"]
+    C21["Contract C1<br/>stated 60, ceiling 80"]
+    C22["Contract C2<br/>stated 40, ceiling 40"]
+    A2 --- C21
+    A2 --- C22
+    S21["1. debit 30 at C1<br/>C1 30, A 70"]
+    S22["2. credit 50 offered at C1<br/>applied 50, C1 to 80"]
+    S23["A folds the 50 applied<br/>a sum gives 120, above its ceiling"]
+    S24["clamped step by step, A is 100<br/>the ordered read is needed"]
+    S21 --> S22 --> S23 --> S24
+  end
+```
+
+In case 1 the credit offered 50 but only 30 had been drawn from C1, so C1 takes 30 and the ancestor folds 30, ending at 100, its ceiling, and no clamp at the ancestor is ever needed. In case 2 C1 may hold up to 80, so it takes all 50, and the ancestor's sum of 70 plus 50 is 120, which its ceiling of 100 must cut. A later debit of 10 at C2 then gives 90 under the clamp and 110 under the sum, so the error carries forward and the order of postings decides the answer.
+
+**What it means for LG-Q23.** Whether an ancestor's fold can be a sum is known from configuration alone, before any posting. An ancestor's ceiling can bind only where the room its descendants have above their stated amounts, added up, is more than its own room above its stated amount. Where it cannot, a sum is right and costs what LG-14 and LG-15 measured for the plain and filtered folds. Where it can, the ancestor needs the ordered read of TSD-72, or a checkpoint that bounds it, or the configuration is refused. That gives three readings beside LG-Q23's own options.
+
+| | What the ledger does with an ancestor whose ceiling can bind |
+|---|---|
+| refuse | a shape refuses a configuration in which descendants' room above their stated amounts exceeds an ancestor's, so every ancestor's fold is a sum |
+| read in order | such an ancestor is marked, by a shape or by derivation, and read in order, every other ancestor by a sum |
+| always in order | every ancestor is read in order, the simplest rule and the most costly read |
+
+The first is the cheapest and the least general, since a contract whose credits may legitimately exceed what was drawn, an overpayment credited and held, would then need a ceiling equal to its stated amount and somewhere else to hold the surplus. The second keeps that generality and pays the ordered read only where it is needed, and the room on each account is configuration a check can read. The decision is the maintainer's under LG-Q23.
+
+### 4.7 Added 2026-11-11: checkpoints under credit kinds and clamped credits
+
+The maintainer asked whether the decisions of sections 4.5 and 4.6 stop the checkpoints designed earlier from working, or override them in another way. They do neither. A checkpoint is an account's balance at a close, and a read at a later point starts from the last checkpoint and folds only the postings recorded after it (ADR-A131's addenda of 2026-10-27, LF-Q17 (b), MS-Q6, MS-Q8). That works for any fold that can restart from a balance alone, and every fold the ledger now uses can.
+
+```mermaid
+flowchart LR
+  C["checkpoint at the close<br/>the account's own balance"] --> F["fold the postings recorded<br/>after the close, in the period graph"]
+  F --> B["the balance at the read point"]
+```
+
+| What changed | What the checkpoint holds | What a read after it does | Still bounded by the close |
+|---|---|---|---|
+| nothing, the design as benchmarked | the account's balance | sums the later postings | yes |
+| credit kinds (LG-Q10) | the account's balance under its own restoring kinds, which is the only balance an account has | sums the later debits and the later credits it accepts | yes |
+| a ceiling that can bind, read step by step (section 4.6) | the same | an ordered fold of the later postings, clamped at each step, which needs nothing from before the close but the balance, since a clamp depends only on the balance it starts from | yes |
+| credits recorded at the amount applied (LG-Q23 (a)) | the same | sums again, with no clamp at the ancestor where section 4.6's condition holds | yes |
+
+**What LG-15 measured.** A read from the checkpoint cost 0.02 to 0.05 of a read from the start on rdflib, on Jena in memory and on TDB2, for every fold, the stepwise fold included. The one exception was the stepwise read on Oxigraph, at 0.92, and a minimal probe traced it to Oxigraph 0.5.13 reading every graph for an `OPTIONAL` inside `GRAPH ?g` (TSD-71, the upstream report beside oxigraph/oxigraph#2008). The query asked only for the graphs after the close, and the engine read them all. That is a defect of the engine, not of the checkpoint, and a `UNION` form or a recording of the applied amount without an `OPTIONAL` avoids it.
+
+**What the decisions do change.** Two things, neither of them the mechanism.
+
+- **Which balance is checkpointed.** An account's balance is now its own fold under its own restoring kinds, so an ancestor that accepts recoveries only checkpoints that balance and not the sum of everything below it. A checkpoint is still one balance per account per close where the balance moved, so it costs no more triples.
+- **A change of configuration within a period.** Where an account's restoring kinds or ceiling change between closes, a new version of its definition, each posting after the checkpoint must be folded under the version in force when it took effect, never under today's. A stepwise fold does that naturally. A sum must group the later postings by the version in force, which is one more reason to pay TD-102 and to decide LG-Q22, so the version in force at any point can be read.
+
+### 4.8 Added 2026-11-12: a credit at two levels of a path, the path clamp, and a cut the writer records
+
+**Section 4.6's condition is too weak.** It says an ancestor's ceiling cannot bind where every ceiling equals its account's stated amount. LG-15's corpus posted every credit on a contract, a leaf, and its argument, that an ancestor's outstanding draw is at least the sum of its contracts', holds for credits on leaves. LG-Q10's own answer posts a reinstatement at the aggregate, an account with accounts below it. A credit at an ancestor restores the ancestor and not the accounts below it, so a later credit below can push the ancestor past its ceiling. The history is ordinary: a loss, a reinstatement, and a recovery that arrives late. Amounts are in millions, an annual cap of 20 that accepts recoveries only, an aggregate of 10 under it, and sections S and T of 10 each under the aggregate, every ceiling equal to its stated amount.
+
+| Step | Event | S | T | Aggregate, clamped at each step | Aggregate as a sum | Annual cap |
+|---|---|---|---|---|---|---|
+| start | | 10 | 10 | 10 | 10 | 20 |
+| 1 | loss of 10 at S | 0 | 10 | 0 | 0 | 10 |
+| 2 | reinstatement at the aggregate | 0 | 10 | 10 | 10 | 10 |
+| 3 | recovery of 2 at S | 2 | 10 | 10 | 12 | 12 |
+| 4 | loss of 3 at T | 2 | 7 | 7 | 9 | 9 |
+
+From step 3 a sum overstates the aggregate by 2 and would let its second life pay 12. So the configuration test of section 4.6 does not make an ancestor's fold a sum. The condition that does, stated as a hypothesis for the proofs, is that every ceiling equals its stated amount and no credit an ancestor accepts lands on an account that lies above another account receiving one.
+
+**The path clamp, examined and not taken.** Clamping a credit along its path when it is written, to the least room among the accounts that accept its kind, would make every ancestor a sum. At step 3 the rooms are 10 at S, 0 at the aggregate and 10 at the annual cap, so the recovery would be applied at nothing. S would stay at 0 though the money came back, and the annual cap would stay at 10 though net paid fell to 8. The accounts on a path measure different things, which is what LG-Q10 decided, so they cannot share one applied amount. The clamp is more restrictive than refusing a configuration, since it cuts a credit silently at runtime where a refusal is visible at design time, and it fails on the default configuration.
+
+**A cut the writer records.** The writer of a credit already holds the balances along the path (LG-Q9 (a)). Where the amount applied at the posting account is more than an accepting ancestor has room for, the writer records the difference on the credit as a cut at that ancestor. An ancestor's balance is then its stated amount, less the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it. At step 3 the recovery carries a cut of 2 at the aggregate, and the aggregate reads 10 less 13 plus 12 less 2, which is 7 after step 4.
+
+| | Refuse the configuration | Ordered read where a ceiling can bind | A cut recorded by the writer |
+|---|---|---|---|
+| the history above | cannot be refused, it is the decided design | the aggregate is read in order (TSD-72) | the aggregate is a sum |
+| a ceiling above a stated amount | refused | read in order | a sum |
+| written per credit | nothing more | nothing more | one cut, about 3 triples, only where an ancestor had less room |
+| read of any ancestor | a sum | ordered, with a loop in the caller | a sum with one more term, looked up by the ancestor |
+| what the writer must know | the path balances | the path balances | the path balances |
+| verification | a sum | an ordered replay | an ordered replay, off the hot path |
+| what the proofs owe | the leaf condition | the stepwise law, LG-9's | that the sum with cuts equals the stepwise balance |
+
+The cut is part of the credit's own record in its period graph, never a posting in the ancestor's book, so section 4.2's objection to a posting at an ancestor does not apply. None of the costs in the table is measured. The credit kinds benchmark can measure the read with cuts, on machine R.
+
+**What it means for the rulings.** The ruling on scenario E2, that an excess goes to a residual account and a ceiling above the stated amount is refused by default, stands as a statement of meaning. It no longer rests on cost, since with cuts a ceiling above the stated amount costs a read nothing. The residual account itself is an account that only receives and has no ancestor, so nothing binds above it, and how it is declared is for LG-Q16's treatment of a residual. LG-Q23 gains the cut as its option (d).
+
+**Decided 2026-11-13.** LG-Q23 is (b) with (d): the posting keeps the amount offered and records the amount applied beside it, and the writer records the cut. LG-16, LG-17 and LG-18 measured that form. The proof that the sum with cuts equals the stepwise balance is owed, and goes to machine S with whatever else can be handed over safely without a benchmark.
+
+### 4.9 Added 2026-11-12: a posting recorded after it takes effect, and what a read as of an effective day shows
+
+**What is settled and what is not.** A draw erodes an amount in the order draws are settled, never the order they occurred, and a late draw is decided against the balance as it stands when it is recorded (PDD-14, closed 2026-10-28, LG-Q9 (a)). The writer therefore settles in recorded order, the applied amounts and cuts of section 4.8 are facts of that order, and LG-17 found the sum with cuts equal to the recorded replay in every run with 5% and with 20% of the postings late. Nothing on the decision path is in question. What is open is what a report shows when it is asked for the balance as of an effective day that lies before some postings were recorded (STD-278 calls this a reporting read). It is raised as LG-Q26.
+
+**The example.** One account, stated at 100 with a ceiling of 100 and full at the start, and three postings. The credit is offered 50 while the account has room for 30, so 30 is applied. The debit of 80 is then recorded with an effective day before the credit's. The same thing happens at an ancestor through a cut.
+
+```mermaid
+flowchart TB
+    subgraph REC["Recorded order, the order the writer settled them"]
+        direction LR
+        r1["Debit 30<br/>effective day 1<br/>balance 70"] --> r2["Credit 50, applied 30<br/>effective day 4<br/>balance 100"] --> r3["Debit 80, recorded late<br/>effective day 2<br/>balance 20"]
+    end
+    subgraph EFF["Effective order, the order they took effect"]
+        direction LR
+        e1["Debit 30<br/>day 1"] --> e2["Debit 80<br/>day 2"] --> e3["Credit 50<br/>day 4"]
+    end
+    REC ~~~ EFF
+```
+
+The credit's applied amount of 30 was worked out before the late debit was known. A report by effective day has three readings to choose from.
+
+| Reading | End of day 1 | End of day 2 | End of day 4 | Ends at the ledger's balance of 20 |
+|---|---|---|---|---|
+| A, the recorded amounts placed on their effective days | 70 | -10 | 20 | yes |
+| B, every posting settled again in effective order, the debit of day 2 limited to the 70 available | 70 | 0 | 50 | no |
+| C, flows by effective day and no balance: debits, then credits offered | 30, 0 | 110, 0 | 110, 50 | not a balance |
+| the balance as known after each recording, which C reports beside the flows | 70 | 100 | 20 | yes |
+
+```mermaid
+xychart-beta
+    title "Balance at the end of each effective day: reading A dips below zero, reading B ends at 50"
+    x-axis ["day 1", "day 2", "day 4"]
+    y-axis "balance, ceiling 100" -20 --> 100
+    line [70, -10, 20]
+    line [70, 0, 50]
+```
+
+The first line is reading A and the second reading B. A shows a balance below zero on day 2, which no account ever held. B stays between zero and the ceiling and ends at 50, where the ledger holds 20, because the amounts it applies are not the amounts that were settled.
+
+| | A, recorded amounts by effective day | B, settled again in effective order | C, flows by effective day, balance by recorded order only | D, later cuts rewritten when a late posting arrives |
+|---|---|---|---|---|
+| what it claims | a balance on a day | the balance the day would have had, had every fact been known on its day | what was drawn and offered by a day, and the balance as it was known at a recording | A, made consistent |
+| can it show a balance no account held | yes, below zero or above the ceiling | no | no, since it shows no balance by day | no |
+| does it agree with statements already issued | at the last day only | no | yes, an earlier reading never changes | no, it rewrites them |
+| read | a sum over every period graph, no checkpoint (STD-278) | an ordered read over the whole history folded by the caller (TSD-72), no checkpoint | a sum over every period graph for the flows, and the recorded read for the balance | as A |
+| written | the effective position, one triple a posting | the amount offered kept beside the amount applied, one triple a credit | the effective position | a rewrite of every later cut on the path, in sealed periods |
+| measured by LG-17, 27 reads a row | impossible at 2 to 7 reads, differs from the recorded replay at 7 to 10 by up to 7,264, read at 1.3 to 1.4 times the recorded read from the start | differs from the recorded replay at 26 or 27 reads by up to 6,892 | not measured as such, its flows are the sums A reads without the clamp | not built |
+| standing | refused by the leaning | on request, named as a restatement | the leaning | refused 2026-10-28 with PDD-14, since a settled draw is not reversed |
+
+**Leaning, as first written, and the maintainer's answer.** The leaning was that C defines the read, B is offered on request under a name that says it is a restatement, and A is refused. On 2026-11-12 the maintainer said that both readings are needed, a balance by effective day as well as the flows, so a report by effective day does show a balance and C alone is not enough. Which balance that is, A or B or each for a different reader, is not yet said. A's defect stands, that it can show a figure no account held, and so does B's, that it ends away from the ledger.
+
+**No reading is the default.** Asked which readings a practitioner meets, the maintainer answered on 2026-11-12. Figures by occurrence period may be reported as known at a valuation date, and that cannot be taken as the only way. A statement that shows a limit's erosion by occurrence date is likely to be specific to a business, so we assume it exists and do not assume it is the default. So the ledger serves each of A, B and C, and none is what a report shows unless something declares it.
+
+**What published contract drafting says.** The LMA's published drafting modules for a coverholder binding authority agreement were read on 2026-11-12 as public documents, for what a contract states about reports. They are drafting and tables, with no report data, so they inform the question and cannot feed the benchmark. Five things in them bear on it.
+
+- The basis of cover is a declared variable of an agreement's segment, losses occurring or claims made, the latter with retroactive and extended reporting variants. Which date places a loss in a period is therefore declared and never assumed.
+- Reporting is declared per agreement and per segment, with several arrangements allowed in one agreement, each with its recipient, method, frequency and the time allowed after a period ends.
+- A material error is put right in one of two declared ways, by a contra row and a replacement row on the following bordereau, or by cancelling and replacing through a portal. The first leaves what was reported as it was and records the correction later, which is a late posting. The second restates.
+- Tracking against an aggregate limit is a further reporting requirement with its own timings, and an aggregate runs across the agreement's period or a fixed period of its own.
+- An amendment's effect may be immediate, prospective or retrospective.
+
+The modules name data specifications for policies, premiums and claims without including them, so which dates a claims report carries is not answered there (W-Q3 asks the same of cause of loss).
+
+**Decided 2026-11-13.** The maintainer agreed the shape below, after LG-18 had measured the three readings ([pack](../validation/LG-18.md)). The ledger owes the facts every reading needs, adopted because nothing less serves all three. A reading is a derivation and none is built into a balance. A reading is declared on the report, its value taken from the agreement's clauses, then a document it cites, then a rule the deployment imposes, as LG-Q21 sources a derived field, and the ledger profile names no reading. A read by effective day that names no reading is refused. Every report records what it declared: the reading, the day, the known-at recording and the version of its declaration. They are MEC-107, STD-328, STD-329 and STD-330. Reading B's cost, an ordered read of the whole history, about a second for the root at 100,000 postings by extrapolation from LG-18, was accepted by the maintainer on 2026-11-13 for a read that does not run often. A checkpoint is written only for an account that moved (MS-Q6 (a), answered 2026-10-27), so two flow totals on it would cost two numbers for each account that moved in a period, 1.4 to 1.7% of the store on the benchmark's tree. Decided the same day: a checkpoint carries the two flow totals (STD-331), and STD-278, which forbade a checkpoint to an effective read, is narrowed, since reading A or C may start from the checkpoint at the close before the day (STD-294) and reading B may not.
+
+**The shape, as it was first put.** The ledger states facts and two coordinates, and a reading is a derivation that a report declares. What the ledger owes is what all three readings need: the effective position and the recorded position of every posting, the amount offered beside the amount applied, and the cuts. A, B and C are then named derivations over those, none built into a balance, which is where LG-Q21 already puts derivation. Where a reading is declared, on the report that asks for it or as a default of the ledger profile (LG-Q24), is part of LG-Q26 and not settled.
+
+**A day is read as known at a recording.** Every reading above was taken with all that is known now. Read instead for a day as known at a recording, counting only the postings effective by the day and recorded by the recording, each of A, B and C is reproducible, since nothing recorded later is among its postings. The first version of this section claimed that stability under a later recording tells C from A and B. It does not. With the second coordinate all three are stable, and without it none is, C's flows included. What tells the readings apart is whether a figure is one an account could hold, whether it agrees with the ledger where the day is the recording's own, and how far a later recording moves it.
+
+**How the readings are tested.**
+
+1. *Against practice in two fields* (ADR-A-C2). Answered in part by the maintainer on 2026-11-12, as above. Still to ask is which balance by day each reader means.
+2. *Against the questions a reader asks*, each added to the [posting scenarios note](../notes/ledger-posting-scenarios.md) with a late posting in it. Set aside for now, since the answers will take a long time to gather.
+3. *By properties, measured by LG-18.* On LG-17's late corpus, for a day as known at a recording: that each reading is the same from a store holding only what was recorded by then, how many readings of A and of B lie below zero or above the ceiling, that A equals the ledger's balance at a day's own recording and how often B does not, and how far each figure has moved by the end of history.
+4. *By cost, measured by LG-18.* A and C are sums. Since nothing is effective after it is recorded (STD-294), everything recorded by a close is effective by any later day, so A can start from the checkpoint at the close before the day and read only the periods between the day and the recording. C could do the same if a checkpoint carried the two flow totals, which it does not. B is an ordered read from the start of history, since settling again in effective order may change every amount before a checkpoint.
+
+**For the README, once the design is settled.** The two diagrams above, or ones like them, belong in the worked reading of `ontology/ledger/README.md` beside the statement of the two orderings. LG-Q23 and LG-Q26 are decided, and the diagrams wait until the ledger's remaining questions and posting scenarios are settled too.
 
 ## 5. `draw` and `spread`, two refusal semantics
 
@@ -168,6 +388,8 @@ The consequences, each a question for LG-4 and some for LG-7.
 
 So `draw` is handled separately, and should stay so. The care the maintainer asks for is in the runtime, where a merge under a binding ceiling must say whether it refuses whole, cuts and carries a residual, or is Undetermined, by the declared rule, and in LG-7, where the refuse rule and the atomicity of a pass need theorems before LG-4 cites them.
 
+**Decided 2026-11-13, with the maintainer.** Four of the questions this section raised. An allocation across several accounts commits whole (LG-Q12 (a), STD-332). An allocated amount honours its purpose, so allocation takes `reach` (LG-Q13 (a), STD-333). A rule may leave an explicit residual (LG-Q17 (a), MEC-109). The account declares the criterion of an order and each request carries the rank derived from it (LG-Q18 (c), MEC-108). Each owes a statement in the kernel and a theorem, which need no benchmark.
+
 ## 6. Proof follow-ups
 
 Each is a claim for the gate under LG-7's conventions, in the session as it stands. None needs HOL-Library, and one is simpler with it.
@@ -189,4 +411,5 @@ LO1 as proved, over two lists without repeats with the same elements, is the mul
 - LG-Q10, leaning (e) examined before (d).
 - LG-Q11 to LG-Q13, raised in the plan from §5.
 - One measurement, the ordered seek of §2.1's design C, before C is preferred to B.
+- LG-Q26, raised from §4.9, what a read as of an effective day shows once a ceiling has cut a credit. Decided 2026-11-13, a reading is a derivation a report declares. The two diagrams of §4.9 go to the ledger README once LG-Q23 and LG-Q26 are decided.
 - LG-Q14, how the session reaches HOL-Library now that it built on machine R, for LO1's statement and the integer `spread`, which LG-8 then proves.

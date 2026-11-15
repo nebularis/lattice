@@ -1,0 +1,7 @@
+(* The target ledger kernel, a spike for slice LG-21. Definitions only, type-checked on HOL. *)
+
+session Ledger_Target = HOL +
+  options [document = false, quick_and_dirty = false, timeout = 900]
+  theories
+    Target
+    Cases

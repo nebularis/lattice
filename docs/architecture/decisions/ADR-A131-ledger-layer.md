@@ -258,6 +258,32 @@ Three consequences follow, and each removes a question rather than adding a mech
 
 What it buys is the only tractable form of a reading as of an effective position. Every posting in a period closed at or before the read point is effective at or before it, so the read starts from that close's checkpoint and folds only the later periods, picking up whatever was backdated into them. Without the bound a checkpoint would also over-count postings effective after the read point, and a summed checkpoint cannot be filtered, so the read would scan the whole history. The cost of that fold is measured separately and this addendum does not assume it is cheap.
 
+## Addendum (2026-11-09): every draw arrives in its account's unit
+
+Accepted by the maintainer on 2026-11-09. It reverses the paragraph "Other value spaces" of decision 3.
+
+Decision 3 converted a draw in another value space than the account's on its posting, by the method the terms state or an outside rule, and had the posting record the amount drawn, the converted amount and the conversion's context. That made the ledger responsible for conversion rates. Choosing and applying a rate is a duty of its own, kept apart from recording what an account gave up, as the segregation of duties that fiduciary work requires keeps them, and a rate held inside the ledger has no clear owner when it is wrong.
+
+**A draw whose amount is not in the account's value space is refused.** The ledger never converts. A request in another value space is logged where it arrives, a rate is applied there, a record of the conversion is written there with the rate, its source and its date, and only then is the draw made, in the account's unit. The posting may cite that record among what it read, as it cites a merge record, so the conversion stays traceable without the ledger owning it. A conversion whose result does not fit the target unit, for example one that overruns the unit's range, fails before anything reaches the ledger.
+
+**What leaves the layer.** `ldg:conversionMethod` on an account definition, `ldg:conversionUsed` and `ldg:amountAsDrawn` on a posting, and the shape that held the last two together. The account's unit of account and the extensive value space decision 2 requires are unchanged, and a draw's value space is checked against it. Removing published terms is a breaking change, which at major version zero is a minor release of the substrate.
+
+## Addendum (proposed 2026-11-09, second): merge rules read a declared order, refuse in two places, and split in two kinds
+
+**Status of this addendum:** Proposed, for the maintainer's acceptance. Decision 8 says new evaluation semantics come by an addendum with conformance cases, and the maintainer decided these on 2026-11-09 from worked scenarios across licensing, lending, grants, insolvency and insurance. None reverses a sentence of decision 6, and each states what it left open.
+
+**An order is declared, never taken from identifiers.** Every rule that needs an order, in priority order, the residual to the first in order and the largest remainder's tie-break, reads one that is supplied to it, by the wording, by a rule imposed on the account, or by the law. A proposal's identifier never decides an order, since it is neither chronological nor tied to any legal meaning. Law outside a contract, such as the order in which liability is ascertained, reaches the ledger as facts a jurisdiction's state machine asserts on the event stream.
+
+**A refusal comes from a guard or from a rule, and is never a grant of nothing.** A merge's result is either its grants or a refusal with a reason, leaving the draws Undetermined. A guard may refuse before any rule runs, from the merge's inputs alone, for the refuse policy where requests exceed availability or for an order check the account declares. A rule may itself refuse, for a reason it states, where the case arises, for example a tie its declared order does not break. Refuse is therefore not a rule that splits. Each rule's laws hold for every result that grants, and a refused merge grants nothing and changes no balance.
+
+**Two kinds of split.** Rationing divides what is available among claims that exceed it, each cut and none granted more than it claims, as the law abates claims on a fund that falls short, and its laws are the four axioms. A residual unit in rationing goes only to a claim not yet met in full. Apportionment divides an amount into proper shares among those the wording names as entitled, by a stated basis, and holds exactness, non-negativity and the whole returning the whole without the bound, so a member whose basis is zero may take a residual unit the declared order gives it. A merge at one position and an allocation across accounts are rationing. A fee or benefit shared among members and the attribution of a posting across parties are apportionment. The members of a split are those the stated meaning names, never what a rule filters.
+
+**Rounding to the nearest is refused beside a residual rule unless the account states how an overshoot is treated.** Decision 6 requires the parts to sum to the amount. A residual rule only adds units, so rounding to the nearest can overshoot and the parts then do not sum. Where the wording states a treatment, the rounding method may govern only how a share is shown, with the split floor then residual, or the units rounded over may be taken back by the declared order or from the shares rounded up most, ties by the declared order.
+
+**A draw is accepted only in its account's value space and unit, and only where its amount is representable** by the space's density and datatype. This completes the addendum of 2026-11-09 that took conversion out of the ledger: a proportion of a base is resolved to an amount before the ledger, and an amount that is not representable is refused, never rounded.
+
+**Releases.** The vocabulary's definitions of the order-reading rules, the refusal of rounding to the nearest without a treatment, and the terms for the two kinds of split and the overshoot treatments change published meaning, a minor release of the substrate at major version zero, batched with the next merge into `main`.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)

@@ -554,3 +554,28 @@ Recorded in the domain on 2026-11-08, after `v0.1.0`, so it has no tagged link y
 **What it means for LATTICE.** Ledger records an exact share as two integers, `ldg:proportionNumerator` and `ldg:proportionDenominator`, rather than one `owl:rational` (LG-Q6, LG-2), since its runtime shapes compare and sum grants and no store compares the literal. LG2-01 in `tools/test_ledger.py` runs the probe on each engine present, so an engine that starts comparing by value fails there.
 
 Nothing in the registers rests on it.
+
+### TSD-71. An `OPTIONAL` join and a `UNION` that stands for it cost differently on each engine
+
+Recorded in the domain on 2026-11-11, after `v0.1.0`, so it has no tagged link yet. `mise run graph:ask -- read TSD-71` prints it from the domain's clone.
+
+**What it means for LATTICE.** A ledger read that counts only the credits an account accepts joins to a credit's kind, an optional property. `benchmark/ledger-credit-kinds/` reads with `OPTIONAL` on rdflib and Jena and with `UNION` on Oxigraph, since each form costs 4 to 6 times the plain read on one engine. The `UNION` form as first written dropped a credit with no kind, which the ledger allows on a path where every account accepts all kinds, and LG-15 corrects and re-measures it (LG-Q10, LG-14, LG-15).
+
+### TSD-72. A running balance clamped at a ceiling is not one SPARQL query, and the ordered read that replaces it
+
+Recorded in the domain on 2026-11-11, after `v0.1.0`. `mise run graph:ask -- read TSD-72` prints it.
+
+**What it means for LATTICE.** Where an account's credit ceiling can bind, its balance is an ordered read folded by the caller, at about the cost of a filtered sum on rdflib and Oxigraph. The ledger's laws apply the ceiling step by step (LD3, the balances sketch §3), so the runtime shapes and reads that check a balance follow this form, and LG-15 records Jena's cost from a native caller.
+
+### TSD-73. Oxigraph on disk does not make concurrent updates wait for each other, so a guarded update loses writes, and Oxigraph in memory does
+
+Recorded in the domain on 2026-11-12, after `v0.1.0`. `mise run graph:ask -- read TSD-73` prints it.
+
+**What it means for LATTICE.** The guarded write of PAT-21 and PAT-04, and the write `dal:Optimistic` generates (MEC-59), close a race only on a store that applies update requests one at a time or refuses the second of two that rewrite one statement. Oxigraph 0.5.13 embedded on disk does neither, so a store description for it declares `dal:providesSingleWriter` only where its adapter sends updates one at a time, and store isolation is verified against the store as configured (PRI-59). One lock around the update call restores the guard. The ledger's write benchmark (LG-17) asserts the guard on the in-memory store and reports the on-disk store. The patterns guide and the concurrency document, which named Oxigraph among the stores that serialise writers, carry a dated note, and TD-162 holds what is left. The behaviour is a trade-off Oxigraph made on purpose in 0.5.0, so it will not go away in a patch release, and a report with a proposed writer lock is drafted in the [upstream reports note](../developer/notes/upstream-sparql-engine-reports.md#oxigraph-on-disk-store-loses-concurrent-updates), not filed.
+
+### TSD-74. Jena in memory and TDB2, called in process, make a second write transaction wait, so a guarded update holds
+
+Recorded in the domain on 2026-11-12, after `v0.1.0`. `mise run graph:ask -- read TSD-74` prints it.
+
+**What it means for LATTICE.** The guarded write of PAT-21 and PAT-04 and the write `dal:Optimistic` generates (MEC-59) hold on Jena in memory and on TDB2 called in process, which is the evidence a store description declaring `dal:providesSingleWriter` for either rests on (PRI-59). The ledger's native write benchmark (LG-17) holds both stores' guarded runs to the replay of their commits. A durable commit on TDB2 costs 84 to 98 ms on a laptop, so a writer that retries after a lost race gains nothing from more threads there, which bears on how many writers a ledger runs and on whether its guard is one revision per owner. A guarded update over HTTP to Fuseki is not probed (TSD-62 has its timing).
+
