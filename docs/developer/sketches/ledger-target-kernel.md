@@ -8,7 +8,7 @@
 
 The kernel as the decisions of 2026-11-09 to 2026-11-15 leave it, with each definition stated once. It replaces the plan of widening the present kernel part by part, in the order the questions were decided, which would have changed or doubled 12 of its 38 definitions over 17 parts.
 
-The definitions are a theory, [`Target.thy`](../../../spikes/ledger-target-kernel/Target.thy), kept as a [spike](../../../spikes/ledger-target-kernel/README.md). Isabelle2025-2 type-checks it on the HOL heap and evaluates six examples on the definitions themselves. A model beside it transliterates the definitions and searches the laws of section 5 on generated cases. The definitions are stated there and not repeated here. This sketch says why each is as it is, what writing them down found, and what waits on the maintainer.
+The definitions are a theory, [`Target.thy`](../../../spikes/ledger-target-kernel/Target.thy), kept as a [spike](../../../spikes/ledger-target-kernel/README.md). Isabelle2025-2 type-checks it on the HOL heap and evaluates six examples on the definitions themselves. A model beside it transliterates the definitions and searches the laws of section 5 on generated cases, and a generated theory, `Cases.thy`, has Isabelle evaluate the definitions on 600 inputs and compare each result with the model's. The definitions are stated there and not repeated here. This sketch says why each is as it is, what writing them down found, and what waits on the maintainer.
 
 ## 2. The principles, each a decision already made
 
@@ -82,7 +82,7 @@ Run of 2026-11-15, the model's seeds fixed. The theory type-checks and its six e
 
 The search of readings also counted, without asserting, that reading A left the range at 14,180 readings, that reading B charged in full fell below zero at 8,508, and that reading B differed from the ledger at the head in 10,821 of the 41,426 histories with a late posting.
 
-**What it does not show.** No law is proved. The cases are small, up to six requests, four ranks and seven accounts. The model is a second transliteration by hand, so a slip in both would go unseen, which the six examples evaluated in Isabelle narrow and do not remove. `pots`, `spread`, `settle` and the refusals of `merge` had examples only in the first draft, and the maintainer asked on 2026-11-15 that they be searched before anything proceeds. The search of pots then found item 9 of section 4.
+**What it does not show.** No law is proved. The cases are small, up to six requests, four ranks and seven accounts. The model is a second transliteration by hand. At the maintainer's word on 2026-11-15 it was tied to the theory before the merge: `cases.py` draws 600 inputs from fixed seeds, 60 for each of ten groups of definitions, and `Cases.thy` has Isabelle evaluate the theory's own definitions on them and compare each result with what the model computed. Every case agrees, and a single expected figure changed by hand fails the build. So the model computes what the theory defines on those inputs, and a law the model's search holds is a law about the theory's definitions as far as the cases reach. It does not show that the laws are stated rightly, since the theory states none. `pots`, `spread`, `settle` and the refusals of `merge` had examples only in the first draft, and the maintainer asked on 2026-11-15 that they be searched before anything proceeds. The search of pots then found item 9 of section 4.
 
 ## 6. Questions for the maintainer
 

@@ -37,6 +37,15 @@ def half_up_part(t, K, w):
     return {k: ((2 * t * w[k] + T) // (2 * T) if T else 0) for k in K}
 
 
+def half_even_part(t, K, w):
+    T = total(K, w)
+    out = {}
+    for k in K:
+        q, r = divmod(t * w[k], T) if T else (0, 0)
+        out[k] = q if 2 * r < T else q + 1 if 2 * r > T else q if q % 2 == 0 else q + 1
+    return out
+
+
 def remainder(t, K, w):
     T = total(K, w)
     return {k: ((t * w[k]) % T if T else 0) for k in K}
@@ -225,6 +234,14 @@ def replay(book, ps, by_policy):
     return bal
 
 
+def flows(book, ps, b):
+    """(what was drawn, what was offered in credits the account accepts), at account `b`."""
+    parent, restores = book[0], book[3]
+    drawn = sum(p[2] for p in ps if p[0] == "drawn" and b in chain(parent, p[1]))
+    offered = sum(p[3] for p in ps if p[0] == "restored" and b in chain(parent, p[1]) and restores(b, p[2]))
+    return drawn, offered
+
+
 def counted(day, recording, es):
     return [e for e in es[:recording] if e[0] <= day]
 
@@ -359,6 +376,8 @@ def search_units(cases, seed):
         over = sum(base.values()) - t
         assert sum(got.values()) == t, ("rounding to the nearest does not sum", w, t, got)
         assert all(abs(Fraction(t * w[k], T) - got[k]) < 1 for k in K), ("rounding to the nearest strays a unit", w, t, got)
+        even = to_nearest(half_even_part, first_in(order), last)(t, K, w)
+        assert sum(even.values()) == t and all(abs(Fraction(t * w[k], T) - even[k]) < 1 for k in K), ("rounding half to even does not sum or strays a unit", w, t, even)
         found["nearest takes a unit back"] += over > 0
         found["nearest gives a unit"] += over < 0
         found["cases"] += 1

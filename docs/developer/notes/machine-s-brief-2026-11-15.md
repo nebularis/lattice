@@ -17,6 +17,7 @@ Machine S runs Isabelle and no benchmark. Nothing below needs a measurement.
 | | Where | What it is |
 |---|---|---|
 | the definitions | [`spikes/ledger-target-kernel/Target.thy`](../../../spikes/ledger-target-kernel/Target.thy) | 78 definitions and six evaluated examples, type-checked on the HOL heap, with no law proved. They are decided. You move them and prove on them, and you do not redesign them |
+| the two tied together | [`spikes/ledger-target-kernel/Cases.thy`](../../../spikes/ledger-target-kernel/Cases.thy), written by `cases.py` | 600 inputs on which Isabelle evaluates the definitions and compares with the model, all agreeing. After R0, point it at the extracted kernel and it must still build |
 | a search of the laws | [`spikes/ledger-target-kernel/model.py`](../../../spikes/ledger-target-kernel/model.py) | the definitions transliterated, with each law of LG-20 asserted on generated cases. It found no counterexample and proves nothing. It runs with the standard library alone |
 | the two slices | the [ledger plan](../plans/ledger.md), under "LG-9" and "LG-20" | every part and every law, by name |
 
