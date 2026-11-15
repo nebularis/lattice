@@ -70,7 +70,7 @@ Built from the status records on 22 branches, the units' own state from this tre
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-09 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 · built 2026-11-12 on spi/sql-backend | VM-0 | 9 verified, 4 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-12 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 | VM-0 | 9 verified, 4 built |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -882,7 +882,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
 | `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
 | `claude/modest-ramanujan-cgvs0p` | 2026-11-15 | 33 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-V1 |
-| `docs/placement-vehicles-structure` | 2026-11-15 | 111 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-16, LG-17, LG-18, LG-19, LG-2, LG-20, LG-21, LG-22, LG-7, OD-DOC4 |
+| `docs/placement-vehicles-structure` | 2026-11-15 | 112 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-16, LG-17, LG-18, LG-19, LG-2, LG-20, LG-21, LG-22, LG-7, OD-DOC4 |
 | `docs/placement-vehicles-structure-h0e5v9` | 2026-11-12 | 89 | pushed | LG-10, LG-11, LG-12, LG-13, LG-14, LG-15, LG-16, LG-17, LG-18, LG-2, LG-7, OD-DOC4 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
@@ -949,7 +949,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 110 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 109 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 

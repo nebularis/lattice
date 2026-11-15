@@ -6,7 +6,7 @@
 **Plan:** [vyvid-migration.md](../plans/vyvid-migration.md)
 **Sketch:** [vyvid-migration.md](../sketches/vyvid-migration.md)
 **Mode:** default. Write, then hand off, unless the maintainer says otherwise.
-**Status:** built 2026-11-09. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
+**Status:** built 2026-11-12. Merged into `main` by squash on 2026-11-06. Every slice verified, with Windows pending the maintainer's run on a Windows machine. ADR-A152 and its addenda accepted, trust point 3 run.
 
 ## Position
 
@@ -24,6 +24,7 @@
 | VM-9 | the quanta by Вивід's own kind, the pin at v0.2.23 | built 2026-11-08, building 2026-11-08 |  |
 | VM-10 | the getting-started guide names the local setup of Вивід | built 2026-11-09, building 2026-11-09 |  |
 | VM-11 | the pin at v0.2.27, and the documents follow it | built 2026-11-09, building 2026-11-09 |  |
+| VM-12 | `bootstrap:erlang`, for the studio's stack in a cloud session | built 2026-11-12, building 2026-11-12 |  |
 
 ## Next action
 
@@ -51,6 +52,8 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-10: Вивід pinned at `v0.2.34`, at the maintainer's word. 0.2.30 to 0.2.32 add `--table plain|pretty|md|auto` and colour for tables, and 0.2.33 and 0.2.34 add backlinks from code to entries with `vyd check links`, `vyd refs` and `vyd expand`, `vyd mcp` and a GitHub Action.
+- 2026-11-09: Вивід pinned at `v0.2.29`, at the maintainer's word. 0.2.29 lets `vyd read` and `vyd node` print a quantum, such as `vyd read data/substrate`, and `vyd find --kind quantum` list quanta alone.
 - 2026-11-09: Вивід pinned at `v0.2.28`, at the maintainer's word. 0.2.28 treats a read that lost its review like an unreviewed domain, which this project does not use and a project that carries a read's skills meets at its next pin.
 - 2026-11-09: VM-11 built. Вивід pinned at `v0.2.27`. With the domains at trust `knowledge`, `vyd check skills` exits 2 naming each domain and its review line, and the task's wrapper turns that into a note and exit 0, so a fresh contributor's `mise run check` no longer fails on it. `vyd install --project` deletes no skill then. TD-163 is removed, section 6 of the getting-started guide says the check does not run until each domain is reviewed, and `AGENTS.md` no longer forbids `vyd install --project` but still tells an agent to ask the maintainer to review a domain and never to run `vyd trust` or `vyd domain trust` itself.
 - 2026-11-09: VM-11 begun on `main` at the maintainer's word, with no other session building here. Вивід 0.2.27 answers TD-163, which the maintainer asked to be fixed in Вивід first.
@@ -122,3 +125,4 @@ Every command run in this worktree with the binding untrusted, which gives knowl
 - 2026-11-05: v0.2.10 pinned, since v0.2.9 lacks the fixes, and the walkthrough dated at the merge with the gap `check:skills` closes removed from its section 8.
 - 2026-11-05: `fix/studio-worker-heartbeat` merged `main` in. Both branches had written a TD-146, the worker unit's row was committed first, so this unit's row on the writing rules is now TD-149 in the register and in this unit's documents.
 - 2026-11-06: `fix/studio-worker-heartbeat` merged `main` in. Both branches had written a BL-14 and a TD-150, the worker unit's were committed first, so this unit's are now BL-15 and TD-152.
+- 2026-11-15: the pin at v0.2.35, whose `vyd check registers` and Turtle term pointers pay TD-119. MEC-74 and MEC-75 now name `Mork.ttl` terms, no register entry points at the whole of a long file, and the row is removed.

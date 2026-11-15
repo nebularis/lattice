@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bootstrap_erlang  # noqa: E402
 import lattice_repo_catalogue  # noqa: E402
 
 WINDOWS = os.name == "nt"
@@ -260,10 +261,11 @@ class Stack:
             "RABBITMQ_NODENAME": self.rabbitmq_node, "RABBITMQ_NODE_IP_ADDRESS": "127.0.0.1",
             "RABBITMQ_NODE_PORT": str(self.rabbitmq_port), "RABBITMQ_DIST_PORT": str(self.rabbitmq_dist_port),
         }
-        erl = shutil.which("erl")
-        if erl is None:
-            raise SystemExit("RabbitMQ needs Erlang. Run this through mise, which installs it")
-        env["ERLANG_HOME"] = str(Path(erl).resolve().parent.parent)
+        folder = bootstrap_erlang.find(bootstrap_erlang.pinned((self.root / "mise.toml").read_text(encoding="utf-8")))
+        if folder is None:
+            raise SystemExit("RabbitMQ needs Erlang. Run `mise run bootstrap:erlang`, which installs the pinned one")
+        env["ERLANG_HOME"] = str(folder.parent)
+        env["PATH"] = str(folder) + os.pathsep + os.environ.get("PATH", "")
         return env
 
     # --- the broker's user and the service's secret ----------------------------------------------

@@ -10,7 +10,7 @@
 
 | File | Role |
 |---|---|
-| `Target.thy` | the target kernel, definitions and five evaluated examples, with no law proved |
+| `Target.thy` | the target kernel, definitions and six evaluated examples, with no law proved |
 | `ROOT` | a session on the HOL heap, so the theory is type-checked |
 | `model.py` | the same definitions transliterated, with a search of their laws on generated cases. It loads the model of the [spike on ranks](../ledger-ranks-and-pots/README.md) to compare against |
 | `cases.py` | draws 600 inputs from fixed seeds and writes `Cases.thy` with what the model computes for each |
@@ -34,4 +34,4 @@ A pass is `Finished Ledger_Target`. Run one Isabelle build at a time. After a ch
 
 ## What it does not show
 
-It proves nothing. The sketch's section 5 has the figures of the run of 2026-11-15 and what the search leaves out.
+It proves no law. The sketch's section 5 has the figures of the run of 2026-11-15 and what the search leaves out.

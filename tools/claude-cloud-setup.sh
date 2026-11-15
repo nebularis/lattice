@@ -57,7 +57,8 @@
 # from the deadsnakes PPA, Node 22 and Maven from the image, Isabelle2025-2
 # from its own release archive, Вивід and its domains from GitHub by git, its
 # embedding model from huggingface.co. Erlang/Elixir (check:spc, which runs no tests yet,
-# TD-22) and Playwright's browsers are left out.
+# TD-22) and Playwright's browsers are left out. `mise run bootstrap:erlang` installs Erlang when the
+# studio's stack needs it.
 #
 # A session's outbound HTTPS goes through the agent proxy named in HTTPS_PROXY,
 # which accepts CONNECT only. Section 0 points pip, Yarn, Maven and apt at it.
