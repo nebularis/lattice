@@ -5,6 +5,7 @@
     python tools/config_studio_stack.py infra
     python tools/config_studio_stack.py down
     python tools/config_studio_stack.py status
+    python tools/config_studio_stack.py config
 
 `up` starts Fuseki and RabbitMQ, from releases it downloads once and checks against the SHA-256
 pinned here, or with `--docker` from the compose file. It then builds and starts the store writer, the service, the
@@ -13,6 +14,12 @@ the compose file also serves the built add-in over HTTPS on 3443, which Word nee
 process id under `.build/config-studio/run`, which `down` reads. Workspaces are kept on disk, in a
 TDB2 database under the user's data folder (`data_dir`), so they outlive the stack and the checkout. Run it through mise, as
 `mise run studio:up`, so Java, Maven, Node, Python and Erlang are on the path.
+
+The stack's secrets, the broker user's password, the service's broker secret, the two URIs that carry the password and the
+broker's secret configuration, are made once and kept as owner-only files in `.build/config-studio/infra/broker`. The broker's
+main configuration, `infra/rabbitmq/rabbitmq.conf`, holds none, and the broker loads the secret configuration beside it
+(`RABBITMQ_CONFIG_FILES`). Read the stack's settings with `mise run studio:config`, which prints them with every secret redacted
+by `redact`, and never open the folder `infra/broker` (`tools/secret_read_guard.py` refuses it as a Claude Code hook).
 """
 
 from __future__ import annotations
@@ -21,6 +28,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import secrets
 import shutil
 import signal
@@ -29,10 +37,11 @@ import subprocess
 import sys
 import tarfile
 import time
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lattice_repo_catalogue  # noqa: E402
@@ -72,20 +81,25 @@ BROKER_USER = "studio"
 # Web MQTT carries the studio's events to the browser, and the HTTP auth backend asks the service who a browser is and what
 # topics it may use, after the broker's own users (PM-Q20 (d)). The plain MQTT listener is not opened.
 RABBITMQ_PLUGINS = "[rabbitmq_stream,rabbitmq_web_mqtt,rabbitmq_auth_backend_http].\n"
-# The broker's user, its checks of a browser at the service under the stack's secret, and Web MQTT, for both kinds of stack.
+# The broker's user and Web MQTT, for both kinds of stack. Nothing in it is a secret, so a person may read it.
 BROKER_CONF = """default_user = {user}
-default_pass = {password}
 auth_backends.1 = internal
 auth_backends.2 = http
 auth_http.http_method = post
-auth_http.user_path = http://{host}:{service}/api/broker/{secret}/user
-auth_http.vhost_path = http://{host}:{service}/api/broker/{secret}/vhost
-auth_http.resource_path = http://{host}:{service}/api/broker/{secret}/resource
-auth_http.topic_path = http://{host}:{service}/api/broker/{secret}/topic
 mqtt.allow_anonymous = false
 mqtt.listeners.tcp = none
 web_mqtt.tcp.port = {web_mqtt}
 """
+# What the broker's configuration holds that is secret, in a file of its own that `write_private` makes: the user's password, and the
+# broker's checks of a browser at the service, whose paths carry the stack's secret.
+BROKER_SECRET_CONF = """default_pass = {password}
+auth_http.user_path = http://{host}:{service}/api/broker/{secret}/user
+auth_http.vhost_path = http://{host}:{service}/api/broker/{secret}/vhost
+auth_http.resource_path = http://{host}:{service}/api/broker/{secret}/resource
+auth_http.topic_path = http://{host}:{service}/api/broker/{secret}/topic
+"""
+# The files of `infra/broker`, each a secret or holding one.
+SECRET_FILES = ("password", "secret", "amqp-uri", "stream-uri", "rabbitmq-secret.conf")
 RABBITMQ_CONF = """stream.listeners.tcp.1 = 127.0.0.1:{port}
 stream.advertised_host = 127.0.0.1
 stream.advertised_port = {port}
@@ -247,15 +261,20 @@ class Stack:
         plugins = data / "enabled_plugins"
         plugins.write_text(RABBITMQ_PLUGINS, encoding="utf-8", newline="\n")
         conf = data / "rabbitmq.conf"
-        text = RABBITMQ_CONF.format(port=self.stream_port) + self.broker_conf("127.0.0.1")
+        text = RABBITMQ_CONF.format(port=self.stream_port) + self.broker_conf()
         if self.web_mqtt_tls is not None:
             port, cert, key, ca = self.web_mqtt_tls
             # The broker's configuration takes forward slashes on every platform.
             text += RABBITMQ_TLS_CONF.format(port=port, cert=cert.resolve().as_posix(), key=key.resolve().as_posix(), ca=ca.resolve().as_posix())
         conf.write_text(text, encoding="utf-8", newline="\n")
+        # The secret part is loaded beside the main file, which names no secret. `RABBITMQ_CONFIG_FILES` takes a glob, in forward slashes.
+        secret_conf = self.infra / "broker" / "rabbitmq-secret.conf"
+        self.broker_credentials()
+        write_private(secret_conf, self.broker_secret_conf("127.0.0.1"))
         env = {
             "RABBITMQ_ENABLED_PLUGINS_FILE": str(plugins),
             "RABBITMQ_CONFIG_FILE": str(conf),
+            "RABBITMQ_CONFIG_FILES": secret_conf.resolve().as_posix(),
             "RABBITMQ_MNESIA_BASE": str(data / "mnesia"), "RABBITMQ_LOG_BASE": str(data / "log"),
             "RABBITMQ_NODENAME": self.rabbitmq_node, "RABBITMQ_NODE_IP_ADDRESS": "127.0.0.1",
             "RABBITMQ_NODE_PORT": str(self.rabbitmq_port), "RABBITMQ_DIST_PORT": str(self.rabbitmq_dist_port),
@@ -290,10 +309,14 @@ class Stack:
     def stream_uri(self, password: str) -> str:
         return f"rabbitmq-stream://{BROKER_USER}:{password}@127.0.0.1:{self.stream_port}/%2f"
 
-    def broker_conf(self, host: str) -> str:
-        """The broker's user and its checks at the service on `host`, as the broker reaches it."""
+    def broker_conf(self) -> str:
+        """The broker's user and Web MQTT, with no secret."""
+        return BROKER_CONF.format(user=BROKER_USER, web_mqtt=self.web_mqtt_port)
+
+    def broker_secret_conf(self, host: str) -> str:
+        """The broker user's password and its checks at the service on `host`, as the broker reaches it, which carry the stack's secret."""
         password, secret = self.broker_credentials()
-        return BROKER_CONF.format(user=BROKER_USER, password=password, host=host, service=self.service_port, secret=secret, web_mqtt=self.web_mqtt_port)
+        return BROKER_SECRET_CONF.format(password=password, host=host, service=self.service_port, secret=secret)
 
     def env(self) -> Dict[str, str]:
         """Every process's settings, with the broker's URI."""
@@ -339,7 +362,8 @@ class Stack:
         """Writes the broker's configuration under `infra/compose`, which the compose file mounts, and starts the compose stack."""
         files = self.compose_files()
         host_network = files[1].name == "docker-compose.host-network.yml"
-        text = self.broker_conf("127.0.0.1" if host_network else "host.docker.internal")
+        # The compose file mounts this one file, so a compose broker's secret part stays in it. It is owner-only and under `infra/compose`.
+        text = self.broker_conf() + self.broker_secret_conf("127.0.0.1" if host_network else "host.docker.internal")
         if host_network:
             text += COMPOSE_HOST_NETWORK_CONF.format(amqp=self.rabbitmq_port, management=self.rabbitmq_port + 10000,
                                                      stream=self.stream_port, dist=self.rabbitmq_dist_port)
@@ -461,6 +485,71 @@ class Stack:
             return "not started here"
         return f"exited, last line of its log: {last_line(self.run / f'{name}.log')}"
 
+    # --- what the stack says about itself, with every secret redacted ------------------------------
+
+    def held_secrets(self) -> Dict[str, str]:
+        """The value of each secret file `infra/broker` holds now, read inside this process and never printed. It makes none."""
+        held: Dict[str, str] = {}
+        for name in SECRET_FILES:
+            try:
+                value = (self.infra / "broker" / name).read_text(encoding="utf-8").strip()
+            except OSError:
+                continue
+            if value:
+                held[name] = value
+        return held
+
+    def broker_limits(self) -> str:
+        """The limits the SVA-R0 probes needed, read from a running node with a read-only `rabbitmqctl eval`, or what stops it."""
+        ctl = self.rabbitmq_home() / "sbin" / ("rabbitmqctl.bat" if WINDOWS else "rabbitmqctl")
+        erl = shutil.which("erl")
+        if not listening(self.rabbitmq_port):
+            return f"the broker is not running (nothing listens on {self.rabbitmq_port}), so its limits are not read"
+        if erl is None or not ctl.exists():
+            return "the broker listens, but Erlang is not on the path or its release is not under infra, so its limits are not read"
+        env = {**os.environ, "RABBITMQ_NODENAME": self.rabbitmq_node, "ERLANG_HOME": str(Path(erl).resolve().parent.parent)}
+        done = subprocess.run(command([str(ctl), "-n", self.rabbitmq_node, "eval", BROKER_LIMITS_EXPRESSION]), env=env, capture_output=True,
+                              text=True, check=False, timeout=60)
+        if done.returncode != 0:
+            return f"rabbitmqctl did not answer (exit {done.returncode}): " + (done.stderr.strip().splitlines() or ["no message"])[-1]
+        return done.stdout.strip()
+
+    def config(self) -> None:
+        """Prints the stack's settings and what it keeps, with every secret redacted by `redact`, the one function all of it goes through."""
+        held = self.held_secrets()
+        say = lambda line="": print(redact(line, held.values()))
+        say("ports")
+        for name, port in (("fuseki", self.fuseki_port), ("rabbitmq (AMQP)", self.rabbitmq_port), ("rabbitmq (streams)", self.stream_port),
+                           ("rabbitmq (Web MQTT)", self.web_mqtt_port), ("rabbitmq (distribution)", self.rabbitmq_dist_port),
+                           ("service", self.service_port), ("add-in", ADDIN_PORT), ("web, with --dev", WEB_PORT)):
+            say(f"  {name}: 127.0.0.1:{port}")
+        say("folders")
+        for name, path in (("root", self.root), ("run (logs and process ids)", self.run), ("infra", self.infra), ("workspaces (data_dir)", self.data),
+                           ("secrets", self.infra / "broker")):
+            say(f"  {name}: {path}")
+        say("parts `up` starts, and whether each runs now")
+        for name in ORDER:
+            kind = " (with --dev only)" if name == "web" else " (in Docker with --docker)" if name in ("fuseki", "rabbitmq") else ""
+            say(f"  {name}{kind}: {'running' if self.pid(name) else 'not running'}")
+        say(f"events URL: ws://127.0.0.1:{self.web_mqtt_port}/ws")
+        conf = self.infra / "rabbitmq" / "rabbitmq.conf"
+        say(f"the broker's configuration, {conf}, which holds no secret")
+        try:
+            lines = conf.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            lines = ["(not written yet, `up` writes it)"]
+        for line in lines:
+            say(f"  {line}")
+        say("secrets the stack keeps")
+        for name in SECRET_FILES:
+            where = self.infra / "broker" / name
+            say(f"  {name}: {where}, " + (f"<redacted, {len(held[name])} characters>" if name in held else "not made yet"))
+            if name.endswith("-uri") and name in held:
+                say(f"    {describe_uri(held[name])}")
+        say("the broker's limits")
+        for line in self.broker_limits().splitlines():
+            say(f"  {line}")
+
 
 # --- platform helpers ----------------------------------------------------------------------------
 
@@ -476,6 +565,30 @@ def data_dir(env: Dict[str, str], platform: str = sys.platform) -> Path:
     if platform == "darwin":
         return home / "Library" / "Application Support" / "LATTICE" / "studio"
     return Path(env.get("XDG_DATA_HOME") or home / ".local" / "share") / "lattice" / "studio"
+
+URI_PASSWORD = re.compile(r"([A-Za-z][A-Za-z0-9+.-]*://[^\s:/@]*):[^\s@/]*@")
+# What a running node says of its limits. Each is the application's setting, or `undefined` where the broker's own default holds.
+BROKER_LIMITS_EXPRESSION = (
+    "[{max_message_size, application:get_env(rabbit, max_message_size, undefined)}, "
+    "{mqtt_max_packet_size_authenticated, application:get_env(rabbitmq_mqtt, max_packet_size_authenticated, undefined)}, "
+    "{mqtt_max_packet_size_unauthenticated, application:get_env(rabbitmq_mqtt, max_packet_size_unauthenticated, undefined)}, "
+    "{mailbox_soft_limit, application:get_env(rabbitmq_mqtt, mailbox_soft_limit, undefined)}]."
+)
+
+
+def redact(text: str, values: Iterable[str] = ()) -> str:
+    """The one place the stack hides a secret. Replaces every occurrence of each of `values`, the secrets the stack holds, longest first and
+    also in their percent-encoded form, with `<redacted>`, wherever they sit in the text, and the password of any `scheme://user:password@`."""
+    for value in sorted({v for v in values if v}, key=len, reverse=True):
+        for form in {value, urllib.parse.quote(value, safe=""), urllib.parse.quote(value)}:
+            text = text.replace(form, "<redacted>")
+    return URI_PASSWORD.sub(r"\1:<redacted>@", text)
+
+
+def describe_uri(uri: str) -> str:
+    """A URI's scheme, user, host, port and path, with the password as `<redacted>`."""
+    parts = urllib.parse.urlsplit(uri)
+    return f"scheme {parts.scheme}, user {parts.username}, password <redacted>, host {parts.hostname}, port {parts.port}, path {parts.path}"
 
 
 def last_line(log: Path) -> str:
@@ -619,7 +732,7 @@ def extract(archive: Path, into: Path) -> None:
 
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
-    parser.add_argument("action", choices=("up", "infra", "down", "status", "migrate"))
+    parser.add_argument("action", choices=("up", "infra", "down", "status", "migrate", "config"))
     parser.add_argument("--dry-run", action="store_true", help="with migrate: write nothing and print what it would do")
     parser.add_argument("--docker", action="store_true", help="run Fuseki and RabbitMQ with docker compose")
     parser.add_argument("--dev", action="store_true", help="also serve the browser code with hot reload on 4175")
@@ -634,6 +747,8 @@ def main(argv: Optional[List[str]] = None) -> None:
         stack.migrate(args.dry_run)
     elif args.action == "down":
         stack.down()
+    elif args.action == "config":
+        stack.config()
     else:
         stack.status()
 

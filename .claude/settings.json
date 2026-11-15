@@ -22,7 +22,24 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Bash|PowerShell|Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v mise >/dev/null 2>&1; then mise exec -- python \"$CLAUDE_PROJECT_DIR/tools/secret_read_guard.py\"; exit $?; fi; exit 0",
+            "timeout": 5
+          }
+        ]
       }
+    ]
+  },
+  "permissions": {
+    "deny": [
+      "Read(./.build/config-studio/infra/broker/**)",
+      "Read(./.build/config-studio/infra/compose/rabbitmq-studio.conf)",
+      "Read(**/.build/config-studio/infra/broker/**)"
     ]
   }
 }

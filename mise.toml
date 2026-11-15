@@ -755,7 +755,7 @@ run = "python tools/config_studio_stage.py"
 description = "Test the Configuration Studio: its staging, worker, service, and browser code"
 depends = ["build:config-studio-assets", "check:authoring-domain", "bootstrap:testing-studio-harness"]
 run = [
-  "python -m pytest tools/testing/studio_harness/tests benchmark/studio-api tools/test_config_studio_stage.py tools/test_config_studio_stack.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_rebuild.py workers/tests/test_config_studio_layers.py workers/tests/test_config_studio_imports.py -q",
+  "python -m pytest tools/testing/studio_harness/tests benchmark/studio-api tools/test_config_studio_stage.py tools/test_config_studio_stack.py tools/test_secret_read_guard.py workers/tests/test_config_studio_worker.py workers/tests/test_config_studio_rebuild.py workers/tests/test_config_studio_layers.py workers/tests/test_config_studio_imports.py -q",
   "mvn -q -f platform/pom.xml -pl config-studio-authoring,config-studio-service,config-studio-writer,config-studio-transforms -am verify",
   "yarn workspace @lattice/config-studio run check",
 ]
@@ -797,6 +797,10 @@ run = "python -m pytest test/studio-integration/test_worker_liveness.py -q -s -m
 [tasks."studio:status"]
 description = "Show what studio:up started and which of the studio's ports are listening"
 run = "python tools/config_studio_stack.py status"
+
+[tasks."studio:config"]
+description = "Print the studio stack's settings with every secret redacted: ports, folders, the parts `up` starts, the events URL, the broker's configuration (which holds no secret), each secret's name, place and length, each URI's parts, and the broker's message and MQTT limits where it runs. Read the settings with this, never by opening .build/config-studio/infra/broker (tools/secret_read_guard.py refuses that). Needs Erlang on the path to read the limits"
+run = "python tools/config_studio_stack.py config"
 
 [tasks."studio:infra"]
 description = "Start Fuseki and RabbitMQ for the Configuration Studio in Docker"

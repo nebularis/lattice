@@ -107,14 +107,80 @@ def test_the_broker_has_one_user_with_a_password_made_once_and_kept_private(tmp_
     assert env["LATTICE_STUDIO_BROKER_SECRET"] == secret
 
 
-def test_the_brokers_configuration_names_its_user_and_asks_the_service_under_the_secret(tmp_path: Path) -> None:
+def test_the_brokers_main_configuration_holds_no_secret_and_the_secret_part_is_private(tmp_path: Path) -> None:
     studio = _stack(tmp_path)
     password, secret = studio.broker_credentials()
-    conf = studio.broker_conf("host.docker.internal")
-    assert f"default_user = studio\ndefault_pass = {password}\n" in conf
-    assert f"auth_http.user_path = http://host.docker.internal:{stack.SERVICE_PORT}/api/broker/{secret}/user" in conf
-    assert "auth_backends.1 = internal\nauth_backends.2 = http" in conf and "mqtt.allow_anonymous = false" in conf
-    assert "guest" not in conf
+    conf = studio.broker_conf()
+    assert "default_user = studio\n" in conf and "auth_backends.1 = internal\nauth_backends.2 = http" in conf and "mqtt.allow_anonymous = false" in conf
+    assert "default_pass" not in conf and "/api/broker/" not in conf and "guest" not in conf
+    assert password not in conf and secret not in conf
+    held = studio.broker_secret_conf("host.docker.internal")
+    assert f"default_pass = {password}\n" in held
+    assert f"auth_http.user_path = http://host.docker.internal:{stack.SERVICE_PORT}/api/broker/{secret}/user" in held
+    assert all(f"auth_http.{name}_path" in held for name in ("vhost", "resource", "topic"))
+
+
+def test_a_stack_the_script_starts_loads_the_secret_part_beside_a_main_file_that_names_none(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    studio = _stack(tmp_path)
+    monkeypatch.setattr(stack.shutil, "which", lambda name: str(tmp_path / "erlang" / "bin" / name))
+    env = studio.rabbitmq_env()
+    password, secret = studio.broker_credentials()
+    main, loaded = Path(env["RABBITMQ_CONFIG_FILE"]), Path(env["RABBITMQ_CONFIG_FILES"])
+    text = main.read_text(encoding="utf-8")
+    assert not any(value in text for value in (password, secret)) and "default_pass" not in text
+    assert loaded == (tmp_path / "infra" / "broker" / "rabbitmq-secret.conf").resolve() and loaded.read_text(encoding="utf-8").startswith(f"default_pass = {password}\n")
+    if not stack.WINDOWS:
+        assert loaded.stat().st_mode & 0o077 == 0
+    assert "\\" not in env["RABBITMQ_CONFIG_FILES"], "a glob in forward slashes"
+
+
+def test_redaction_hides_each_secret_a_uri_and_leaves_a_text_without_one_alone() -> None:
+    password, secret = "p" * 8 + "Aa-_" + "q" * 20, "s" * 8 + "Bb-_" + "r" * 20
+    uri = f"amqp://studio:{password}@127.0.0.1:5673/%2F"
+    values = [password, secret, uri]
+    for text in (f"pass {password} end", f"/api/broker/{secret}/user", f"x{password}{secret}y", f"{password}\n{secret}"):
+        out = stack.redact(text, values)
+        assert password not in out and secret not in out and "<redacted>" in out
+    assert stack.redact(f"x{password}y", values) == "x<redacted>y", "a secret with nothing around it to split it"
+    assert stack.redact("stream rabbitmq-stream://other:hunter2@host:5553/%2f, amqps://u:w0rd@h/", []) == "stream rabbitmq-stream://other:<redacted>@host:5553/%2f, amqps://u:<redacted>@h/"
+    assert stack.redact(f"amqp://studio:{password}@h", values) == "amqp://studio:<redacted>@h"
+    assert stack.redact("quote " + stack.urllib.parse.quote("a/b c+d", safe=""), ["a/b c+d"]) == "quote <redacted>"
+    plain = "listeners.tcp.default = 127.0.0.1:5673\nhttp://example.org:8080/path with : and @ but no password"
+    assert stack.redact(plain, values) == plain and stack.redact(plain) == plain
+    assert stack.redact("kept", ["", ""]) == "kept", "an empty value would match everywhere"
+
+
+def test_a_uri_is_described_without_its_password() -> None:
+    said = stack.describe_uri("rabbitmq-stream://studio:hunter2@127.0.0.1:5553/%2f")
+    assert said == "scheme rabbitmq-stream, user studio, password <redacted>, host 127.0.0.1, port 5553, path /%2f"
+    assert "hunter2" not in said
+
+
+def test_the_config_command_prints_the_settings_and_no_secret(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+    studio = _stack(tmp_path)
+    studio.run = tmp_path / "run"
+    studio.rabbitmq_port = 1  # nothing listens there, so the limits are reported as not read
+    password, secret = studio.broker_credentials()
+    (tmp_path / "infra" / "rabbitmq").mkdir()
+    (tmp_path / "infra" / "rabbitmq" / "rabbitmq.conf").write_text(studio.broker_conf() + f"leaked = {password}\n", encoding="utf-8")
+    studio.broker_secret_conf("127.0.0.1")
+    stack.write_private(tmp_path / "infra" / "broker" / "rabbitmq-secret.conf", studio.broker_secret_conf("127.0.0.1"))
+    studio.config()
+    out = capsys.readouterr().out
+    held = [password, secret, studio.amqp_uri(password), studio.stream_uri(password), (tmp_path / "infra" / "broker" / "rabbitmq-secret.conf").read_text(encoding="utf-8")]
+    assert not any(value.strip() in out for value in held) and "default_pass" not in out
+    assert "default_user = studio" in out and "leaked = <redacted>" in out
+    assert f"password: " in out and f"<redacted, {len(password)} characters>" in out
+    assert "scheme amqp, user studio, password <redacted>, host 127.0.0.1, port 1, path /%2F" in out
+    assert f"events URL: ws://127.0.0.1:{stack.WEB_MQTT_PORT}/ws" in out and "the broker is not running" in out
+
+
+def test_the_config_command_makes_no_secret_and_says_so_when_there_is_none(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+    studio = _stack(tmp_path)
+    studio.run = tmp_path / "run"
+    studio.config()
+    out = capsys.readouterr().out
+    assert "not made yet" in out and "(not written yet" in out and not (tmp_path / "infra" / "broker").exists()
 
 
 def test_the_compose_override_follows_the_kind_of_docker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -21,6 +21,7 @@ along the way.
 - **Never claim a check passed** unless it ran and passed. Say "authored, not yet run" and give the
   command.
 - **Read what a command printed, all of it.** A command that exits zero still reports: `mise run build:knowledge` prints a note naming a register cell it could not read, and a benchmark prints the engine version it actually ran on. A tail of the last few lines hides both. Every figure, version and verdict in a handoff comes from output that was read in full, never from what another agent said it saw.
+- **Never read a secret into a tool's output.** What a tool prints stays in the session's transcript. Never print, search or read whole a file that holds a credential, such as the studio stack's `infra/broker` folder. Read the code that writes such a file, read a setting through a task that redacts, `mise run studio:config`, check a file with a verdict and never its content, and name the files that hold secrets as off limits in any brief to another developer (STD-328). A guard refuses a tool's read of the stack's secrets folder, and it is a seatbelt, never the rule.
 - **Pause for design decisions.** Do not make an architecture or modelling decision alone. Present
   the options and their consequences (skill `lattice-design`) and wait for the answer.
 - **When two standards conflict for a change, stop and ask the maintainer** before proceeding, and record the conflict in `docs/developer/pending-design-decisions.md`, so conflicts that recur show which standards to rework. Standards have no precedence order.
