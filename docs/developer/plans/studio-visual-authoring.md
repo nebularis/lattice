@@ -121,6 +121,7 @@ A slice's documents change in the slice. Estimates are in tokens.
 
 | Slice | What | Modules | Done when | Waits on | Estimate |
 |---|---|---|---|---|---|
+| SVA-H1 | the studio stack keeps every secret in one owner-only folder and out of the broker's configuration file, a task prints the stack's and the broker's settings with secrets redacted, and a guard refuses a tool's read of that folder | `tools/config_studio_stack.py`, `.claude/settings.json` | the generated `rabbitmq.conf` holds no secret and the broker still authenticates, `mise run studio:config` prints no secret, and the guard refuses each way of reading the folder that its tests try | nothing | 150k |
 | SVA-V1 | the suites no slice ran: `mise run test:config-studio-browser`, with the import dialog's journey added to the real-stack run, `mise run studio:liveness`, and `mise run check`, each on the unit's branch before a merge is asked for | `apps/config-studio/e2e-stack` | each is run and its result is in the status record, and a failure is fixed or recorded with the maintainer's answer | every other slice | 150k |
 
 ### The order

@@ -554,6 +554,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-M3a | a mapping's queries over an RDF sample, as a run | studio-visual-authoring | planned | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M3b | the sample pane | studio-visual-authoring | planned | SVA-R4, SVA-M3a | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M4 | the output explorer | studio-visual-authoring | planned | SVA-O1, SVA-R4 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-H1 | the stack's secrets in one guarded folder, settings printed redacted, and a guard on reading them | studio-visual-authoring | building 2026-11-15 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
 | WL-0 | the plan, this record, the board | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-1 | reproductions that fail today, the view's fate on remount, a worker's idle memory | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
