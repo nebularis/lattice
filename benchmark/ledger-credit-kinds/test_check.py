@@ -380,3 +380,114 @@ def test_ck35_the_report_has_the_like_for_like_cut_form_and_ceiling_rows(tmp_pat
     assert [m["corpus"] for m in data["measurements"]] == [check.CORPUS_TWO, check.CORPUS_FORMS, check.CORPUS_FORMS, check.CORPUS_CEILING]
     text = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert f"sum-with-cuts / {check.UNION_FOLD}" in text and "copied / joined" in text and "ancestor reads above stated" in text
+
+
+# LG-19: the streams refuse a debit that would leave an account below zero, as the writers do
+
+import random
+
+
+def legacy_stream(count, credit_share, two_level):
+    """The generator as it was before LG-19, kept as a reference. It posts every debit it draws, whatever the accounts on its path hold."""
+    rng, kind_rng, place_rng = random.Random(check.SEED), random.Random(check.SEED + 1), random.Random(check.SEED + 2)
+    out, step, pos = [], [a.stated for a in check.TREE], 0
+    while len(out) < count:
+        pos += 1
+        for micro in range(min(rng.randint(1, 3), count - len(out))):
+            debit = rng.random() >= credit_share
+            contract = rng.choice(check.CONTRACTS)
+            amount = rng.randint(1, check.DEBIT_MAX if debit else check.CREDIT_MAX)
+            kind = None if debit else check.L + rng.choice(check.KINDS)
+            if debit:
+                check.settle_debit(step, contract, amount)
+                out.append(check.Posting(pos, micro, contract, True, amount, None, 0 if two_level else amount))
+                continue
+            if kind_rng.random() < check.KINDLESS_SHARE and check.unrestricted(contract):
+                kind = None
+            at = contract
+            if two_level:
+                candidates = [i for i in check.chain(contract)[1:3] if check.accepts_kind(check.TREE[i], kind)]
+                at = place_rng.choice(candidates) if candidates and place_rng.random() < check.UPPER_SHARE else contract
+            applied, cuts = check.settle_credit(step, at, amount, kind)
+            out.append(check.Posting(pos, micro, at, False, amount, kind, applied, cuts if two_level else ()))
+    return out
+
+
+def lowest_balance(postings):
+    """The lowest stepwise balance any account holds after any posting, replayed with the writer's own arithmetic, and the number of the first posting that leaves one below zero (None if none does)."""
+    step, lowest, first = [a.stated for a in check.TREE], 0, None
+    for n, p in enumerate(postings, start=1):
+        if p.debit:
+            check.settle_debit(step, p.contract, p.amount)
+        else:
+            assert check.settle_credit(step, p.contract, p.amount, p.kind)[0] == p.applied
+        lowest = min(lowest, min(step))
+        if first is None and min(step) < 0:
+            first = n
+    return lowest, first
+
+
+STREAMS = (("one-level", check.stream, False), ("two-level", check.stream_two_level, True))
+
+
+@pytest.mark.parametrize("name,make,two_level", STREAMS)
+@pytest.mark.parametrize("count,share", [(SMALL, HIGH), (SMALL, LOW), (2000, HIGH), (2000, LOW), (5000, LOW), (20_000, LOW), (20_000, HIGH)])
+def test_ck50_no_account_is_below_zero_at_any_posting(name, make, two_level, count, share):
+    postings = make(count, share)
+    assert len(postings) == count
+    assert lowest_balance(postings)[0] >= 0
+
+
+@pytest.mark.parametrize("name,make,two_level", STREAMS)
+def test_ck51_the_test_of_ck50_fails_on_the_generator_that_posted_every_debit(name, make, two_level):
+    lowest, first = lowest_balance(legacy_stream(20_000, LOW, two_level))
+    assert lowest < 0 and first is not None
+    assert lowest_balance(make(20_000, LOW))[0] >= 0
+
+
+@pytest.mark.parametrize("name,make,two_level", STREAMS)
+@pytest.mark.parametrize("count,share", [(1000, LOW), (1000, HIGH), (5000, HIGH)])
+def test_ck52_where_nothing_is_refused_the_stream_is_the_one_it_was(name, make, two_level, count, share):
+    assert make(count, share) == legacy_stream(count, share, two_level)
+    assert lowest_balance(legacy_stream(count, share, two_level))[0] >= 0
+
+
+@pytest.mark.parametrize("name,make,two_level", STREAMS)
+def test_ck53_where_a_debit_is_refused_the_stream_is_not_the_one_it_was(name, make, two_level):
+    assert make(5000, LOW) != legacy_stream(5000, LOW, two_level)
+
+
+@pytest.mark.parametrize("name,make,two_level", STREAMS)
+def test_ck54_a_refused_debit_leaves_no_trace(name, make, two_level):
+    postings = make(5000, LOW)
+    drawn = sum(1 for _ in legacy_stream(5000, LOW, two_level))
+    assert len(postings) == drawn == 5000
+    point = postings[-1].pos
+    model = check.run_model(postings, [point])
+    root = next(i for i, a in enumerate(check.TREE) if a.level == 3)
+    assert model.rows[("plain", root, point)] == len(postings)
+    assert [p.pos for p in postings] == sorted(p.pos for p in postings)
+    assert len({(p.pos, p.micro) for p in postings}) == len(postings)
+    assert sorted({p.pos for p in postings}) == list(range(1, point + 1))
+    assert sum(1 for p in postings if not p.debit) > sum(1 for p in legacy_stream(5000, LOW, two_level) if not p.debit)
+
+
+def test_ck55_the_one_level_stored_count_is_the_arithmetic_of_a_stream_that_refused_debits():
+    postings = check.stream(5000, LOW)
+    m = check.run_backend("oxigraph", 5000, LOW)
+    assert m.stored_triples == check.expected_stored(postings)
+
+
+def test_ck56_a_stream_that_cannot_reach_its_count_says_so_and_does_not_draw_for_ever():
+    with pytest.raises(ValueError, match="cannot take"):
+        check.stream(100_000, 0.0)
+
+
+def test_ck57_refuses_debit_is_the_writers_rule():
+    step = [check.TREE[i].stated for i in range(len(check.TREE))]
+    contract = check.CONTRACTS[0]
+    path = check.chain(contract)
+    assert not check.refuses_debit(step, contract, check.DEBIT_MAX)
+    step[path[1]] = check.DEBIT_MAX - 1
+    assert check.refuses_debit(step, contract, check.DEBIT_MAX)
+    assert not check.refuses_debit(step, contract, check.DEBIT_MAX - 1)

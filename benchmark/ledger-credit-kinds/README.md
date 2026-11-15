@@ -94,7 +94,7 @@ The sizes are 1,000, 5,000 and 20,000 postings at 5% and 30% credits. `LEDGER_KI
 
 ## Measured results
 
-Run of 2026-11-11 on an Apple-silicon laptop with 8 GB, Python 3.14.7, rdflib 7.6.0, pyoxigraph 0.5.13 and Jena ARQ 5.1.0, read at runtime from the jar the test kit's JVM runs and from the jar the native caller's JVM loads (Java 25, heap capped at 2 GB). "Rows" is the postings the read counted or, for stepwise, transferred. Times are the mean of 3 read points, at the root. The 5% rows are in `report.md`.
+Run of 2026-11-11 on an Apple-silicon laptop with 8 GB, Python 3.14.7, rdflib 7.6.0, pyoxigraph 0.5.13 and Jena ARQ 5.1.0, read at runtime from the jar the test kit's JVM runs and from the jar the native caller's JVM loads (Java 25, heap capped at 2 GB). "Rows" is the postings the read counted or, for stepwise, transferred. Times are the mean of 3 read points, at the root. The 5% rows are in `report.md`. This run was made on a corpus that overdraws at 20,000 postings. The figures on a corpus that refuses an overdrawing debit are under "Measured again on corpora that refuse an overdrawing debit (LG-19)" below.
 
 Time per root read (ms) from the start of history, 30% credits. The root accepts every kind, so all three folds count about the same rows. Native Jena is called from Java, the test kit is called from Python through a JSON pipe, both with the `optional` form.
 
@@ -164,7 +164,7 @@ What the run shows.
 
 ### The two-level corpus and the cut
 
-Run of 2026-11-12 on the same laptop and engine versions, 52 tests passed and the whole task finished in 1,408 s, the two-level corpus included. Credits are posted at a contract, a sublimit or a section, half of them above a contract. "Rows" are as above, with a cut counted as a row. Times are the mean of 3 read points, at the root, at 20,000 postings. The 1,000 and 5,000 rows and the 5% rows are in `report.md`.
+Run of 2026-11-12 on the same laptop and engine versions, 52 tests passed and the whole task finished in 1,408 s, the two-level corpus included. Credits are posted at a contract, a sublimit or a section, half of them above a contract. "Rows" are as above, with a cut counted as a row. Times are the mean of 3 read points, at the root, at 20,000 postings. The 1,000 and 5,000 rows and the 5% rows are in `report.md`. This run was made on a corpus that overdraws at 20,000 postings. The figures on a corpus that refuses an overdrawing debit are under "Measured again on corpora that refuse an overdrawing debit (LG-19)" below.
 
 Stored cuts. At 30% credits there are 55 / 514 / 2,160 cuts at 1,000 / 5,000 / 20,000 postings, on 44 / 401 / 1,708 credits, which is 14.2% / 26.7% / 28.4% of the credits carrying a cut. They cost 165 / 1,542 / 6,480 triples, 3.5% of the 185,951 stored at 20,000. At 5% credits no ancestor's ceiling binds at any size, so there is no cut and the stored count equals the one-level corpus's. Every stored count equals the arithmetic, on all three engines.
 
@@ -193,7 +193,7 @@ What the run shows.
 
 ### Like-for-like reads, the copied cut and the ceiling variant
 
-Run of 2026-11-12 on the same laptop and engine versions, 82 tests passed and the whole task finished in 2,325 s. Times are the mean of 3 read points at the root, and the ratios are the time of all 27 ancestor reads, at 20,000 postings. The 1,000 and 5,000 rows and the 5% rows are in `report.md`. Single points on small times move a good deal between runs, for example Jena's checkpointed 5,000-posting read at 5% credits shows a ratio of 2.9 on 4 ms, and the tables below are at 20,000.
+Run of 2026-11-12 on the same laptop and engine versions, 82 tests passed and the whole task finished in 2,325 s. Times are the mean of 3 read points at the root, and the ratios are the time of all 27 ancestor reads, at 20,000 postings. The 1,000 and 5,000 rows and the 5% rows are in `report.md`. Single points on small times move a good deal between runs, for example Jena's checkpointed 5,000-posting read at 5% credits shows a ratio of 2.9 on 4 ms, and the tables below are at 20,000. This run was made on a corpus that overdraws at 20,000 postings. The figures on a corpus that refuses an overdrawing debit are under "Measured again on corpora that refuse an overdrawing debit (LG-19)" below.
 
 The sum with cuts against the like-for-like read, `kind-filtered-union`, at 30% credits (5% credits in brackets). It is the cost the applied amount and the cuts add to the same query form.
 
@@ -250,7 +250,7 @@ What the run shows.
 
 ### The two-level corpus read natively, and Jena's plans
 
-Run of 2026-11-12 on the same laptop by `mise run check:ledger-credit-kinds-jvm`, Jena 5.1.0 called from Java 25 with a 2 GB heap, each read run once in one JVM. The two-level corpus is read in the `optional` kind join form, in memory and on TDB2, at 1,000, 5,000 and 20,000 postings and 5% and 30% credits, by the plain, kind-filtered, `kind-filtered-union`, stepwise and sum-with-cuts folds, from the start of history and from the last checkpoint. Every balance and count equals the model's, and the postings alone of the sum with cuts equal the model's sum of applied amounts and differ from the stepwise balance at 8 of 9 ancestors at 30% credits, as the model says. The report holds every row, in the section "Native Jena (Java), two-level corpus".
+Run of 2026-11-12 on the same laptop by `mise run check:ledger-credit-kinds-jvm`, Jena 5.1.0 called from Java 25 with a 2 GB heap, each read run once in one JVM. The two-level corpus is read in the `optional` kind join form, in memory and on TDB2, at 1,000, 5,000 and 20,000 postings and 5% and 30% credits, by the plain, kind-filtered, `kind-filtered-union`, stepwise and sum-with-cuts folds, from the start of history and from the last checkpoint. Every balance and count equals the model's, and the postings alone of the sum with cuts equal the model's sum of applied amounts and differ from the stepwise balance at 8 of 9 ancestors at 30% credits, as the model says. The report holds every row, in the section "Native Jena (Java), two-level corpus". This run was made on a corpus that overdraws at 20,000 postings. The figures on a corpus that refuses an overdrawing debit are under "Measured again on corpora that refuse an overdrawing debit (LG-19)" below.
 
 Mean ms per read of the root from the start of history, 20,000 postings (the cuts column is the time of the cuts aggregate, part of the sum with cuts):
 
@@ -341,7 +341,7 @@ What the write benchmark does not show. The writer writes no checkpoint, so a pe
 
 ### The same writer on native Jena
 
-Run of 2026-11-12 on the same laptop by `mise run check:ledger-credit-kinds-jvm-writes` (981 s with its 6 tests), Jena 5.1.0 called from Java 25 with a 2 GB heap, threads in one JVM against one dataset, Jena in memory and TDB2 in a temporary directory. The writer is `writes.py`'s ported (the module `benchmark/ledger-credit-kinds-jvm`), with the same preloads and the same seeded request lists, so a run is comparable to the Oxigraph one above. After each run the JVM exports the dataset and Python loads the export into an in-memory Oxigraph and runs `audit`, the replay of the commits in revision order, so the replay is the Python one. TDB2 makes every commit durable, at 84 to 98 ms an update here, so a TDB2 run takes smaller counts and is not the same size as the in-memory one. TDB2 ran the probe up to 100 markers and 50 increments a thread, the single writer for 100 writes, and the stress for 200 requests in all, each cell three times at 2, 4 and 8 threads. Jena in memory ran the sizes of the Python benchmark, 1,000 markers, 500 increments, 500 writes and 1,000 requests.
+Run of 2026-11-12 on the same laptop by `mise run check:ledger-credit-kinds-jvm-writes` (981 s with its 6 tests), Jena 5.1.0 called from Java 25 with a 2 GB heap, threads in one JVM against one dataset, Jena in memory and TDB2 in a temporary directory. The writer is `writes.py`'s ported (the module `benchmark/ledger-credit-kinds-jvm`), with the same preloads and the same seeded request lists, so a run is comparable to the Oxigraph one above. After each run the JVM exports the dataset and Python loads the export into an in-memory Oxigraph and runs `audit`, the replay of the commits in revision order, so the replay is the Python one. TDB2 makes every commit durable, at 84 to 98 ms an update here, so a TDB2 run takes smaller counts and is not the same size as the in-memory one. TDB2 ran the probe up to 100 markers and 50 increments a thread, the single writer for 100 writes, and the stress for 200 requests in all, each cell three times at 2, 4 and 8 threads. Jena in memory ran the sizes of the Python benchmark, 1,000 markers, 500 increments, 500 writes and 1,000 requests. This run was made on a corpus that overdraws at 20,000 postings. The figures on a corpus that refuses an overdrawing debit are under "Measured again on corpora that refuse an overdrawing debit (LG-19)" below.
 
 **C1, the probe of TSD-73 on Jena.** A counter triple. Each thread reads the counter N, sends `DELETE { N } INSERT { N+1 and its marker } WHERE { N }` as one update request in its own write transaction, and asks in a read transaction whether its marker exists, until the counter reaches the target. Then each thread increments in the store (`DELETE { ?n } INSERT { ?m } WHERE { ... BIND(?n + 1 AS ?m) }`). Three runs a cell at 2, 4 and 8 threads, one at 1.
 
@@ -453,7 +453,7 @@ The keeper is right only while it is the ledger's one writer. The run does not t
 
 ### Measured results, the readings of a late posting
 
-Run on 2026-11-12 on the same machine and versions, with the late corpus at 5,000 and 20,000 postings, at 0%, 5% and 20% late, a day as known at a recording at each of the 9 ancestors. A is the recorded amounts, B the postings settled again in effective order and C the flows.
+Run on 2026-11-12 on the same machine and versions, with the late corpus at 5,000 and 20,000 postings, at 0%, 5% and 20% late, a day as known at a recording at each of the 9 ancestors. A is the recorded amounts, B the postings settled again in effective order and C the flows. This run was made on a corpus that overdraws at 20,000 postings. The figures on a corpus that refuses an overdrawing debit are under "Measured again on corpora that refuse an overdrawing debit (LG-19)" below.
 
 | postings | late share | late postings | readings | A impossible | B impossible | heads | B differs from the ledger at the head |
 |---|---|---|---|---|---|---|---|
@@ -478,6 +478,66 @@ How far a figure as known at the recording has moved by the end of history, at 5
 What the figures show. Every read equals the model, a store holding only what was recorded by the recording reads the same as the whole store, and with no late posting A and B agree. With late postings B differs from the ledger's balance at 22 to 25 of the 27 heads, so B is not the balance the ledger recorded. A at a head equals it by construction. A read from the checkpoint at the close costs 1.6 and 2.1 ms at the two sizes and from the start of history 8 and 32 ms, the same as the recorded balance within 1 ms, and its cost grows with the size of history only when read from the start. B costs about twice A from the start. C since the close, which a checkpoint carrying the two totals would complete, costs 1.2 and 1.6 ms.
 
 The impossible readings at 0% late are not a defect of the readings. They are one account, `sec0`, below zero at the recordings 4,991 and 9,977, where the generated stream overdraws an account that the writers' guard would refuse. They are in A and in B equally and in the recorded balance at the head, so only the excess over 6 is attributable to a late posting. A is impossible at 2 to 3 readings of 72 at 5,000 postings and B at none, and at 20,000 postings A is impossible at 3 and 7 readings more than at 0% and B at none more.
+
+## Measured again on corpora that refuse an overdrawing debit (LG-19)
+
+The streams of `check.py` used to post every debit they drew. A contract is stated at a thousand million and never binds, and a sublimit at 100,000, a section at 300,000 and the root at a million do, so at 20,000 postings one section stood at minus 711,618. The streams now refuse a debit that is more than the stepwise balance of any account on its path, as the writers do (`refuses_debit`), and the generator draws on until it has the posting count. Every value of a refused debit is drawn as before and the debit is then dropped, so a size at which nothing is refused gives the stream it gave before, posting for posting. A pass in which every draw was refused is drawn again at its position, so positions keep no gap.
+
+Run on 2026-11-13 on the cloud machine of the LG-18 run (4 cores, 15 GiB, Linux x86_64), with Python 3.14.10, Java 25.0.5, Maven 3.9.11, rdflib 7.6.0, pyoxigraph 0.5.13 and Apache Jena 5.1.0. The six tasks were run on the code as it stood before the change, then on the changed corpora, one at a time, and the figures below compare those two runs. Before is the run on the old corpora and after the run on the new. The task `check:ledger-credit-kinds` took 5,487 s before and 6,368 s after, and the other five 678, 238, 552, 698 and 61 s before and 659, 231, 547, 665 and 60 s after. All twelve runs exited 0 with no WRONG RESULT.
+
+**Where the corpus changed.** Refused is the debits drawn and dropped. The share of credits among the postings rises above the share drawn, since a stream of 20,000 postings still has 20,000.
+
+| stream | size | drawn credit share | debits refused | postings | credits | realised credit share | last position | last position before | stored triples before | stored triples after | identical to before |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| one-level | 1,000 | 5% | 0 | 1000 | 55 | 5.5% | 492 | 492 | 8,531 | 8,531 | yes |
+| one-level | 5,000 | 5% | 8691 | 5000 | 694 | 13.9% | 3280 | 2489 | 42,533 | 44,047 | no |
+| one-level | 20,000 | 5% | 86358 | 20000 | 5260 | 26.3% | 16190 | 10040 | 170,205 | 183,186 | no |
+| one-level | 1,000 | 30% | 0 | 1000 | 309 | 30.9% | 514 | 514 | 9,004 | 9,004 | yes |
+| one-level | 5,000 | 30% | 0 | 5000 | 1501 | 30.0% | 2486 | 2486 | 44,882 | 44,882 | yes |
+| one-level | 20,000 | 30% | 7818 | 20000 | 8389 | 41.9% | 11922 | 9977 | 179,471 | 185,551 | no |
+| two-level | 1,000 | 5% | 0 | 1000 | 55 | 5.5% | 492 | 492 | 8,531 | 8,531 | yes |
+| two-level | 5,000 | 5% | 10546 | 5000 | 776 | 15.5% | 3331 | 2489 | 42,533 | 44,198 | no |
+| two-level | 20,000 | 5% | 85571 | 20000 | 5220 | 26.1% | 16028 | 10040 | 170,205 | 189,297 | no |
+| two-level | 1,000 | 30% | 0 | 1000 | 309 | 30.9% | 514 | 514 | 9,169 | 9,169 | yes |
+| two-level | 5,000 | 30% | 0 | 5000 | 1501 | 30.0% | 2486 | 2486 | 46,424 | 46,424 | yes |
+| two-level | 20,000 | 30% | 4283 | 20000 | 7333 | 36.7% | 11088 | 9977 | 185,951 | 193,581 | no |
+
+The sizes 1,000 at both shares and 5,000 at 30% are the same stream as before, and they are the repeat measurements that bound the run-to-run variation below. At 5% credits the accounts drain by about posting 2,500 and from there most debits are refused, so 5,000 and 20,000 postings take 3,280 to 3,331 and 16,028 to 16,190 passes where they took 2,489 and 10,040.
+
+**Correctness.** Every benchmark passes its own criterion on the new corpora, and the corpora still refuse the checks they must (`check_discriminates` and `check_discriminates_cuts` pass at every size). The impossible readings of `late_readings.py` with nothing late, 6 for reading A and 6 for B at 20,000 postings, are now 0 and 0. With late postings at 20,000 postings reading A is impossible at 6 readings of 81 at 5% late and at 9 at 20%, where it was 9 and 13, and reading B at 4 and 3, where it was 6 and 6.
+
+**The writers.** The live writers' 500 requests at 20,000 postings are drawn from a stream of their own and settled against the store the preload left. The debits they refuse for lack of availability fell from 187 to 138 on Oxigraph in memory and on disk, on Jena through Python and on native Jena in memory, and from 32 to 16 on native TDB2. They are not none, because the preload of 20,000 postings still leaves accounts low.
+
+**Which figures moved.** The repeat measurements put the run-to-run variation of a single root read at 0.75 to 1.46 times in Python and 0.66 to 2.06 on native Jena, of a run of more than a few seconds at 0.9 to 1.1 times, of a run of under a second at 0.7 to 1.3, and of a ratio between two folds of one run at up to 20%. A ratio inside those is "did not move". Root reads at 20,000 postings and 30% credits, in milliseconds, before and after:
+
+| Corpus | Backend | plain | kind-filtered | stepwise |
+|---|---|---|---|---|
+| one-level | rdflib | 11,423 / 12,708 | 13,442 / 15,370 | 13,858 / 15,869 |
+| one-level | Oxigraph | 129 / 127 | 311 / 280 | 312 / 280 |
+| one-level | Jena through the kit | 222 / 202 | 295 / 264 | 1,512 / 1,417 |
+| one-level | Jena in memory, native | 49.5 / 50.5 | 71.9 / 77.9 | 177 / 150 |
+| one-level | Jena TDB2, native | 99.4 / 112.9 | 109.5 / 140.8 | 180 / 228 |
+| two-level | rdflib | 14,420 / 15,967 | 16,425 / 17,925 | 16,848 / 18,409 |
+| two-level | Oxigraph | 123 / 129 | 277 / 274 | 292 / 322 |
+| two-level | Jena through the kit | 192 / 200 | 332 / 245 | 1,401 / 1,218 |
+
+At 5% credits and 20,000 postings Oxigraph (0.89 to 1.12 times) and Jena (0.91 to 1.09) did not move in either corpus, and rdflib read 1.43 to 1.57 times as long, 11,136 to 16,715 ms for the plain root read of the one-level corpus. That is outside the variation. The rows folded rose by 4% (11,381 to 11,879) and the store by 7.6%, so the likeliest reason is that rdflib's scan cost grows faster than the rows, which we have not tested. The 30% rows on rdflib are 1.09 to 1.15 times.
+
+The ratios that the sections above state held. Over all 27 reads at 20,000 postings and 30% credits the kind-filtered fold against the plain fold is 1.20 and 1.20 on rdflib, 2.26 and 2.25 on Oxigraph and 1.31 and 1.29 on Jena through the kit, before and after, and the stepwise fold is 1.23 and 1.24, 5.77 and 5.85 and 5.97 and 5.86. On native Jena in memory the kind-filtered ratio is 1.34 and 1.47 and the stepwise 2.43 and 2.66, and on TDB2 1.45 and 1.60 and 2.16 and 2.31. A checkpointed stepwise read costs 3% of the full read on rdflib, Jena and native Jena at 20,000 postings and 30% credits, before and after (rdflib 0.036 and 0.031, Jena through the kit 0.027 and 0.030), and 0.92 and 0.96 on Oxigraph, as the section above says of its applied join.
+
+The sum less the cuts against the kind-filtered read in the same query form, over all 27 reads of the two-level corpus at 20,000 postings and 30% credits, is from the start of history 1.01 and 1.01 on rdflib, 1.10 and 1.08 on Oxigraph and 1.14 and 1.14 on Jena, and from the checkpoint 1.06 and 1.08, 1.33 and 1.36 and, on Jena, 0.07 and 1.28, where the 0.07 comes from one 978 ms outlier in the before run. At 5% credits Jena through the kit reads 1.01 before and 1.85 after from the start and 1.37 and 0.86 from the checkpoint, which are reads of a few milliseconds and are not stable. A cut that copies its position adds 1.84% to the store at 20,000 postings (197,141 against 193,581 triples) where it added 1.16% (188,111 against 185,951), and 1.1% at 5,000 as before.
+
+The cost of a write at 20,000 postings fell. A debit took 7.4 and now 5.4 ms on Oxigraph in memory, 17.6 and 12.2 ms on disk and 69.4 and 63.4 ms on Jena through Python, and on native Jena 17.3 and 15.7 ms in memory and 31.8 and 25.7 ms on TDB2. At 1,000 and 5,000 postings it did not move. The likeliest reason is that a period now holds about 248 postings where it held 398, since passes carry fewer postings, so the path reads that fold from the last checkpoint fold fewer rows. We have not tested it. The stress, the guards and the single writer ran on request lists that did not change and are repeat measurements. The guarded writers on Oxigraph on disk still write duplicate positions (8, 22 and 37 at 2, 4 and 8 threads), every single-writer run still equals the replay on every store, and no commit rate moved beyond the variation.
+
+**What no longer holds.** Each statement is quoted from the section that makes it and followed by the new figure.
+
+- "The model counts the credits an ancestor's ceiling reduced and finds none at either share" still holds, `ancestor_clamps_binding` is 0 on every corpus.
+- "The plain and the stepwise balances differ at 24 of 24 contracts at 30% credits (2 of 24 at 5%), and the stepwise balance differs from the filtered one at 9 of 9 ancestors at 30% (4 of 9 at 5%)". At 20,000 postings and 5% credits they now differ at 15 of 24 contracts and the stepwise balance differs from the filtered one at 8 of 9 ancestors (3 of 24 and 6 of 9 at 5,000). The figures at 30% credits are unchanged.
+- "Its check holds for every read from a checkpoint at 5% credits at 5,000 and 20,000 postings" and "it falls back in 18 to 26 of 27 reads from a checkpoint" at 30%. At 5% credits the shortcut now falls back in 3 of 27 reads from a checkpoint at 5,000 postings and 10 of 27 at 20,000, and at 30% credits in 25 and 27 of 27 at 5,000 and 20,000, where it was 25 and 18.
+- "The stored triples are 8,531 / 42,533 / 170,205 at 5% credits and 9,004 / 44,882 / 179,471 at 30%". They are now 8,531 / 44,047 / 183,186 and 9,004 / 44,882 / 185,551 on the one-level corpus, and 8,531 / 44,198 / 189,297 and 9,169 / 46,424 / 193,581 on the two-level. The checkpoints are 80 and 59 at 20,000 postings where they were 50 and 49.
+- "A cut that copies its position adds 1.2% to the store" is 1.8% at 20,000 postings.
+- "187 of 500" debits refused by the live writers at 20,000 postings is 138.
+- On late postings, 6 impossible readings at 0% late were the stream's own overdraw and are gone. At 20,000 postings reading A is impossible at 6 and 9 readings and B at 4 and 3, where the section says 9 and 13, and 6 and 6. B differs from the ledger's balance at the head at 20 and 22 of 27 heads, where it said 22 and 25, and at 23 and 25 at 5,000 as before. Reading A from the close costs 1.7 ms and from the start 30 ms at 20,000 postings, B 50 ms and the flows since the close 1.2 ms, none of which moved.
 
 ## What this does not measure
 
