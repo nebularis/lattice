@@ -30,6 +30,30 @@ public final class RecordingJobBus implements JobBus {
         publish(jobIri);
     }
 
+    /** What a test does when a run is published, such as answering it from inside the call, or failing. */
+    public interface RunHook {
+        void accept(RunMessage message) throws Exception;
+    }
+
+    private final List<RunMessage> runs = new CopyOnWriteArrayList<>();
+    private volatile RunHook runHook = m -> { };
+
+    /** Calls {@code hook} on each run published, after it is recorded. An exception it throws is the publish failing. */
+    public void onRun(RunHook hook) {
+        this.runHook = hook;
+    }
+
+    @Override
+    public void publishRun(RunMessage message) throws Exception {
+        runs.add(message);
+        runHook.accept(message);
+    }
+
+    /** The runs published, in order. */
+    public List<RunMessage> runs() {
+        return List.copyOf(runs);
+    }
+
     public List<String> published() {
         return List.copyOf(published);
     }

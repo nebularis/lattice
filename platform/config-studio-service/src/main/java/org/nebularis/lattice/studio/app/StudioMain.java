@@ -19,6 +19,8 @@ import org.nebularis.lattice.studio.jobs.Amqp;
 import org.nebularis.lattice.studio.jobs.JobBus;
 import org.nebularis.lattice.studio.jobs.RabbitJobBus;
 import org.nebularis.lattice.studio.jobs.RecordingJobBus;
+import org.nebularis.lattice.studio.runs.RunRegistry;
+import org.nebularis.lattice.studio.runs.TabEvents;
 import org.nebularis.lattice.studio.store.StudioOperations;
 import org.nebularis.lattice.studio.store.StudioStore;
 import org.nebularis.lattice.studio.writes.DirectWrites;
@@ -32,6 +34,12 @@ import org.slf4j.LoggerFactory;
 public final class StudioMain {
     private static final Logger LOG = LoggerFactory.getLogger(StudioMain.class);
     private static final Duration WRITE_TIMEOUT = Duration.ofSeconds(10);
+    /** Fires the deadline of each pending run. A daemon thread, since a run is lost with the service anyway. */
+    private static final java.util.concurrent.ScheduledExecutorService RUN_DEADLINES = java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "studio-run-deadlines");
+        t.setDaemon(true);
+        return t;
+    });
 
     private StudioMain() {
     }
@@ -63,14 +71,23 @@ public final class StudioMain {
             events = Amqp.connect(config.amqpUri(), "config-studio-service events");
         }
         StudioApi api = new StudioApi(store, ops, writes, bus, Clock.systemUTC(), UUID::randomUUID, config.assets(), config.features(), auth);
+        Plan plan = plan(config);
         if (config.eventsUrl() != null && config.brokerSecret() == null) {
             LOG.warn("LATTICE_STUDIO_EVENTS_URL is set without LATTICE_STUDIO_BROKER_SECRET, so the broker's checks are not served and the browser polls for jobs");
-        } else if (config.eventsUrl() != null && events != null) {
-            // Events reach a browser over the broker's MQTT, which asks this service who connected, and the relay decides what each tab hears (PM-Q20 (d)).
-            api.events(config.eventsUrl(), config.brokerSecret());
-            Relay.start(events, new Notifier(api::authenticate, api::mayRead));
-        } else if (config.eventsUrl() != null) {
+        } else if (config.eventsUrl() != null && events == null) {
             LOG.warn("LATTICE_STUDIO_EVENTS_URL is set without LATTICE_AMQP_URI, so the browser polls for jobs");
+        }
+        if (plan.runs()) {
+            // A run's frames are read wherever there is a broker, and forwarded only by the instance that accepted the run (ADR-A154 decisions 4 and 10).
+            RunRegistry runs = new RunRegistry(Clock.systemUTC(), RunRegistry.timers(RUN_DEADLINES), api::mayReadWorkspace);
+            Relay.startRuns(events, runs);
+            TabEvents tabs = null;
+            if (plan.tabs()) {
+                // Events reach a browser over the broker's MQTT, which asks this service who connected, and the relay decides what each tab hears (PM-Q20 (d)).
+                api.events(config.eventsUrl(), config.brokerSecret());
+                tabs = Relay.start(events, new Notifier(api::authenticate, api::mayRead));
+            }
+            api.runs(runs, tabs);
         }
         StudioHttpServer server = serve(config, api);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -79,6 +96,15 @@ public final class StudioMain {
             store.close();
         }));
         LOG.info("Configuration Studio service listening on http://{}:{}/", config.bind(), server.port());
+    }
+
+    /** What to start: {@code runs} reads the frames of runs and needs a broker, {@code tabs} serves events to browsers and needs the broker, an events address and the broker's secret. */
+    public record Plan(boolean runs, boolean tabs) {
+    }
+
+    public static Plan plan(StudioConfig config) {
+        boolean broker = config.amqpUri() != null;
+        return new Plan(broker, broker && config.eventsUrl() != null && config.brokerSecret() != null);
     }
 
     private static StudioHttpServer serve(StudioConfig config, StudioApi api) throws Exception {

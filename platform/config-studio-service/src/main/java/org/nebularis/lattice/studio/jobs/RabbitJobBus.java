@@ -65,6 +65,19 @@ public final class RabbitJobBus implements JobBus {
         channel.waitForConfirmsOrDie(CONFIRM_TIMEOUT_MILLIS);
     }
 
+    /**
+     * Not persistent, and expiring at the run's deadline. The channel is the one jobs use, in confirm mode, so a broker that did not
+     * take the request makes this throw and the route answers 503.
+     */
+    @Override
+    public synchronized void publishRun(RunMessage m) throws IOException, InterruptedException, TimeoutException {
+        AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().contentType(m.contentType()).deliveryMode(1)
+            .expiration(Long.toString(Math.max(1, m.expirationMillis())))
+            .headers(Map.of("run", m.run(), "job", m.job(), "kind", m.kind(), "target", m.target(), "deadline", m.deadline())).build();
+        channel.basicPublish(Topology.EXCHANGE, m.routingKey(), properties, m.body());
+        channel.waitForConfirmsOrDie(CONFIRM_TIMEOUT_MILLIS);
+    }
+
     /** A passive declare on a channel of its own, since the broker closes the channel of one that finds no queue. */
     @Override
     public int consumers(String queueName) throws IOException, TimeoutException {

@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -36,8 +37,12 @@ import org.nebularis.lattice.studio.auth.Authenticator;
 import org.nebularis.lattice.studio.auth.LocalAuthenticator;
 import org.nebularis.lattice.studio.auth.Principal;
 import org.nebularis.lattice.studio.jobs.JobBus;
+import org.nebularis.lattice.studio.jobs.RunMessage;
 import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.model.Workspace;
+import org.nebularis.lattice.studio.runs.RunRegistry;
+import org.nebularis.lattice.studio.runs.TabEvents;
+import org.nebularis.lattice.studio.runs.TabSink;
 import org.nebularis.lattice.studio.authoring.Documents;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
@@ -84,6 +89,9 @@ public final class StudioApi {
     private final Authenticator auth;
     /** Where a browser's MQTT client connects for events, or null when the studio offers none (PM-Q20 (d)). */
     private volatile String eventsUrl;
+    /** Where this instance keeps the runs it accepted, or null when it offers none. */
+    private volatile RunRegistry runRegistry;
+    private volatile TabEvents tabEvents;
     /** The broker's checks, answered only under the path segment the broker was configured with. */
     private volatile String brokerSecret;
     /**
@@ -168,7 +176,9 @@ public final class StudioApi {
         List<String> out = new java.util.ArrayList<>();
         for (String[] lane : new String[][] {
             {org.nebularis.lattice.studio.jobs.Topology.JOBS_QUEUE, "validations, compilations and the rest", "mise run studio:worker"},
-            {org.nebularis.lattice.studio.jobs.Topology.JOBS_LONG_QUEUE, "proposals by a language model and publications", "mise run studio:worker-long"}}) {
+            {org.nebularis.lattice.studio.jobs.Topology.JOBS_LONG_QUEUE, "proposals by a language model and publications", "mise run studio:worker-long"},
+            {org.nebularis.lattice.studio.jobs.Topology.RUNS_INTERACTIVE_QUEUE, "steps of a simulator", "mise run studio:transforms"},
+            {org.nebularis.lattice.studio.jobs.Topology.RUNS_QUEUE, "runs of a mapping over a sample", "mise run studio:transforms"}}) {
             long[] last = consumerChecks.computeIfAbsent(lane[0], k -> new long[] {Long.MIN_VALUE, -1});
             synchronized (last) {
                 long now = System.nanoTime();
@@ -288,6 +298,27 @@ public final class StudioApi {
         }
         Workspace found = ops.workspace(store, ws.getResource().getURI().substring(Graphs.WORKSPACE_PREFIX.length()));
         return found != null && found.readableBy(principal.name(), principal.admin());
+    }
+
+    /**
+     * Whether {@code principal} may read the workspace {@code id}, by the rule {@code GET /api/workspaces/{ws}} applies, from the graph as
+     * it is now. A run's frame is checked by it as it is delivered (ADR-A154 decision 5).
+     */
+    public boolean mayReadWorkspace(Principal principal, String id) {
+        if (!Graphs.isId(id)) {
+            return false;
+        }
+        Workspace found = ops.workspace(store, id);
+        return found != null && found.readableBy(principal.name(), principal.admin());
+    }
+
+    /**
+     * Offers runs (ADR-A154): {@code registry} remembers each run this instance accepts, and {@code tabs} is where a frame reaches the
+     * tab that submitted it. Without a registry every run is answered {@code 503}, as in the in-process mode that has no broker. {@code tabs} is null where no events are served, and a run is then accepted only with {@code wait=true}.
+     */
+    public void runs(RunRegistry registry, TabEvents tabs) {
+        this.runRegistry = registry;
+        this.tabEvents = tabs;
     }
 
     /** Offers events over the broker's MQTT at {@code url}, which the session names, and the broker's checks under {@code secret}. */
@@ -486,6 +517,9 @@ public final class StudioApi {
             }
             if (s.length == 3 && s[2].equals("transforms")) {
                 return method.equals("POST") ? transform(req, ws) : notAllowed("POST");
+            }
+            if (s.length == 3 && s[2].equals("runs")) {
+                return method.equals("POST") ? run(req, ws) : notAllowed("POST");
             }
             if (s.length == 3 && s[2].equals("publications")) {
                 return method.equals("POST") ? publish(req, ws) : notAllowed("POST");
@@ -1275,12 +1309,11 @@ public final class StudioApi {
     private static final List<String> SAMPLE_TYPES = List.of("application/xml", "text/xml", "application/json");
 
     /**
-     * Runs the transforms a compile job of the mapping part wrote over a sample source in XML or JSON, through the
-     * transforms worker, and answers with its reply. Nothing is stored, since a run is derived and can be repeated.
+     * The rule a transform and a run share for their compile job: {@code 404} when the workspace does not hold the job, and {@code 409}
+     * when it is not a finished compilation of {@code part}. Null when it is.
      */
-    private ApiResponse transform(ApiRequest req, String id) {
-        String job = query(req.query()).get("job");
-        if (load(id) == null || job == null || !Graphs.isId(job)) {
+    private ApiResponse checkCompile(String id, String job, String part) {
+        if (job == null || !Graphs.isId(job)) {
             return notFound();
         }
         Resource compile = ResourceFactory.createResource(Graphs.job(job));
@@ -1288,9 +1321,25 @@ public final class StudioApi {
         if (!m.contains(compile, Cst.workspace, ResourceFactory.createResource(Graphs.workspace(id)))) {
             return notFound();
         }
-        if (!m.contains(compile, Cst.kind, Cst.Compile) || !m.contains(compile, Cst.target, Cst.target("mapping"))
+        if (!m.contains(compile, Cst.kind, Cst.Compile) || !m.contains(compile, Cst.target, Cst.target(part))
             || !m.contains(compile, Cst.status, Cst.Succeeded)) {
-            return ApiResponse.text(409, "the job is not a finished compilation of the mapping part");
+            return ApiResponse.text(409, "the job is not a finished compilation of the " + part + " part");
+        }
+        return null;
+    }
+
+    /**
+     * Runs the transforms a compile job of the mapping part wrote over a sample source in XML or JSON, through the
+     * transforms worker, and answers with its reply. Nothing is stored, since a run is derived and can be repeated.
+     */
+    private ApiResponse transform(ApiRequest req, String id) {
+        String job = query(req.query()).get("job");
+        if (load(id) == null) {
+            return notFound();
+        }
+        ApiResponse refused = checkCompile(id, job, "mapping");
+        if (refused != null) {
+            return refused;
         }
         String media = media(req);
         if (!SAMPLE_TYPES.contains(media)) {
@@ -1325,6 +1374,135 @@ public final class StudioApi {
             return ApiResponse.text(502, "the transforms worker's reply does not describe the run");
         }
         return ApiResponse.turtle(200, Turtle.write(answer));
+    }
+
+    /** What a kind of run takes (ADR-A154): the part its compile job must have compiled, its queue, its media types and its deadline. */
+    private record RunKind(String kind, String part, String routingKey, Resource term, Duration limit, List<String> types) {
+    }
+
+    private static final List<String> SAMPLE_SOURCE_TYPES = List.of("text/turtle", "application/n-triples", "application/xml", "text/xml", "application/json");
+    private static final RunKind SAMPLE_RUN = new RunKind("sample", "mapping", org.nebularis.lattice.studio.jobs.Topology.RUNS_ROUTING_KEY,
+        Cst.SampleRun, Duration.ofSeconds(120), SAMPLE_SOURCE_TYPES);
+    private static final Duration SIMULATE_LIMIT = Duration.ofSeconds(15);
+    private static final Map<String, RunKind> SIMULATE_RUNS = Map.of(
+        "persistence", new RunKind("simulate", "persistence", org.nebularis.lattice.studio.jobs.Topology.RUNS_INTERACTIVE_ROUTING_KEY,
+            Cst.SimulationStep, SIMULATE_LIMIT, List.of(TRIG)),
+        "surface", new RunKind("simulate", "surface", org.nebularis.lattice.studio.jobs.Topology.RUNS_INTERACTIVE_ROUTING_KEY,
+            Cst.SimulationStep, SIMULATE_LIMIT, List.of(TRIG)));
+    private static final String RUN_PREFIX = "urn:lattice:studio:run:";
+    /** How long past a run's deadline a waiting request waits for its last frame, so the failed one the service sends at the deadline is heard. */
+    private static final Duration WAIT_GRACE = Duration.ofSeconds(1);
+
+    private static RunKind runKind(String kind, String target) {
+        if ("sample".equals(kind) && "mapping".equals(target)) {
+            return SAMPLE_RUN;
+        }
+        return "simulate".equals(kind) && target != null ? SIMULATE_RUNS.get(target) : null;
+    }
+
+    /**
+     * Accepts a run of a finished compile job's artefacts over the body, which is not saved (ADR-A154 decision 2). The answer is
+     * {@code 202} at once and the frames reach the submitting tab, or with {@code wait=true} the request collects them and answers
+     * them (decision 10).
+     */
+    private ApiResponse run(ApiRequest req, String id) {
+        if (load(id) == null) {
+            return notFound();
+        }
+        Map<String, String> q = query(req.query());
+        RunKind kind = runKind(q.get("kind"), q.get("target"));
+        if (kind == null) {
+            return ApiResponse.text(400, "kind and target are sample and mapping, or simulate and persistence or surface");
+        }
+        String tab = q.get("tab");
+        if (!org.nebularis.lattice.studio.events.BrokerAuth.isTab(tab)) {
+            return ApiResponse.text(400, "tab is 1 to 32 of a-z0-9");
+        }
+        Instant now = clock.instant();
+        Instant deadline = now().plus(kind.limit());
+        if (q.containsKey("deadline")) {
+            try {
+                deadline = java.time.OffsetDateTime.parse(q.get("deadline")).toInstant();
+            } catch (java.time.format.DateTimeParseException e) {
+                return ApiResponse.text(400, "deadline is a date and time with a time zone");
+            }
+            if (!deadline.isAfter(now) || deadline.isAfter(now.plus(kind.limit()))) {
+                return ApiResponse.text(400, "deadline is in the future and at most " + kind.limit().toSeconds() + " s from now");
+            }
+        }
+        String job = q.get("job");
+        ApiResponse refused = checkCompile(id, job, kind.part());
+        if (refused != null) {
+            return refused;
+        }
+        String media = media(req);
+        if (!kind.types().contains(media)) {
+            return ApiResponse.text(415, "Content-Type must be one of " + kind.types());
+        }
+        byte[] input = req.body() == null ? new byte[0] : req.body();
+        if (input.length > MAX_BODY_BYTES) {
+            return tooLarge();
+        }
+        RunRegistry registry = runRegistry;
+        TabEvents tabs = tabEvents;
+        Principal principal = CURRENT.get();
+        if (registry == null || principal == null) {
+            return ApiResponse.text(503, "this service offers no runs, since it has no broker");
+        }
+        boolean wait = "true".equals(q.get("wait"));
+        if (!wait && (tabs == null || eventsUrl == null)) {
+            return ApiResponse.text(400, "this deployment offers no events to a browser, so a run must be sent with wait=true");
+        }
+        String run = RUN_PREFIX + ids.get();
+        RunRegistry.Collector collector = wait ? new RunRegistry.Collector() : null;
+        RunRegistry.Admission admission = registry.accept(run, principal, tab, id, deadline,
+            wait ? collector : new TabSink(principal.name(), tab, tabs, clock, ids));
+        if (!admission.accepted()) {
+            return ApiResponse.text(429, "the tab already has " + RunRegistry.MAX_PENDING_PER_TAB + " runs pending")
+                .with("Retry-After", Long.toString(admission.retryAfterSeconds()));
+        }
+        // The run is recorded before it is published, since a worker can answer before the publish call returns and its first frame
+        // must find the run. It is forgotten again if the broker did not take the request, so a failed publish leaves nothing pending.
+        try {
+            bus.publishRun(new RunMessage(kind.routingKey(), run, Graphs.job(job), kind.kind(), q.get("target"), deadline.toString(), media,
+                Math.max(1, Duration.between(clock.instant(), deadline).toMillis()), input));
+        } catch (Exception e) {
+            registry.cancel(run);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            LOG.error("handing {} to the run worker failed", run, e);
+            return ApiResponse.text(503, "the run could not be handed to a worker");
+        }
+        if (!wait) {
+            return ApiResponse.turtle(202, Turtle.write(runDescription(run, kind, q.get("target"), job, deadline)));
+        }
+        // A client that closes this request early is not noticed here, so the run simply ends at its deadline, is forgotten, and
+        // this virtual thread ends with it. Nothing outlives the deadline plus the grace.
+        boolean answered;
+        try {
+            answered = collector.await(Duration.between(clock.instant(), deadline).plus(WAIT_GRACE));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            registry.cancel(run);
+            return ApiResponse.text(503, "the request was interrupted");
+        }
+        if (!answered || collector.timedOut()) {
+            registry.cancel(run);
+            return ApiResponse.text(504, "the run did not finish by its deadline");
+        }
+        return new ApiResponse(200, new LinkedHashMap<>(Map.of("Content-Type", "application/json")),
+            collector.json().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static Model runDescription(String run, RunKind kind, String target, String job, Instant deadline) {
+        Model m = ModelFactory.createDefaultModel();
+        m.setNsPrefix("cst", Cst.NS);
+        m.setNsPrefix("xsd", org.apache.jena.vocabulary.XSD.NS);
+        m.createResource(run).addProperty(RDF.type, Cst.Run).addProperty(Cst.kind, kind.term()).addProperty(Cst.target, Cst.target(target))
+            .addProperty(Cst.compileJob, m.createResource(Graphs.job(job)))
+            .addLiteral(Cst.deadline, m.createTypedLiteral(deadline.toString(), org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime));
+        return m;
     }
 
     private ApiResponse listJobs(String id, boolean unfinished) {

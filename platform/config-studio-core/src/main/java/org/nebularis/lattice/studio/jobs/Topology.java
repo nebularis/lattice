@@ -23,6 +23,14 @@ public final class Topology {
      */
     public static final String TRANSFORMS_QUEUE = "lattice.studio.transforms";
     public static final String TRANSFORMS_ROUTING_KEY = "lattice.studio.transforms";
+    /**
+     * Runs of a compiled mapping or a simulator (ADR-A154), one queue for the short interactive steps and one for sample runs, so a
+     * long run never delays a step. A request expires at its run's deadline, so neither queue is dead-lettered.
+     */
+    public static final String RUNS_INTERACTIVE_QUEUE = "lattice.studio.runs.interactive";
+    public static final String RUNS_INTERACTIVE_ROUTING_KEY = "lattice.studio.runs.interactive";
+    public static final String RUNS_QUEUE = "lattice.studio.runs";
+    public static final String RUNS_ROUTING_KEY = "lattice.studio.runs";
     public static final String DEAD_QUEUE = "lattice.studio.dead";
     public static final String DEAD_ROUTING_KEY = "#";
     /**
@@ -49,6 +57,10 @@ public final class Topology {
         channel.queueBind(JOBS_LONG_QUEUE, EXCHANGE, JOBS_LONG_ROUTING_KEY);
         channel.queueDeclare(TRANSFORMS_QUEUE, true, false, false, Map.of());
         channel.queueBind(TRANSFORMS_QUEUE, EXCHANGE, TRANSFORMS_ROUTING_KEY);
+        channel.queueDeclare(RUNS_INTERACTIVE_QUEUE, true, false, false, Map.of());
+        channel.queueBind(RUNS_INTERACTIVE_QUEUE, EXCHANGE, RUNS_INTERACTIVE_ROUTING_KEY);
+        channel.queueDeclare(RUNS_QUEUE, true, false, false, Map.of());
+        channel.queueBind(RUNS_QUEUE, EXCHANGE, RUNS_ROUTING_KEY);
         channel.queueDeclare(DEAD_QUEUE, true, false, false, Map.of());
         channel.queueBind(DEAD_QUEUE, DEAD_LETTER_EXCHANGE, DEAD_ROUTING_KEY);
         // A super stream, declared as `rabbitmq-streams add_super_stream` would: the exchange marked as one, and each

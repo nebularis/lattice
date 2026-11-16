@@ -143,7 +143,7 @@ class LanesTest {
         bus.counts.put(Topology.JOBS_LONG_QUEUE, 2);
         String later = status(with);
         assertTrue(later.contains("No worker consumes lattice.studio.jobs.long"), "the answer is kept for a while, so the broker is not asked at every poll: " + later);
-        assertEquals(2, bus.asked, "one count for each queue");
+        assertEquals(4, bus.asked, "one count for each queue, the two of jobs and the two of runs");
     }
 
     @Test

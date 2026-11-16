@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-R4a for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start against the corrected contract: SVA-R2, the service's runs, and SVA-R3, the run worker.
+**Next action:** paused after SVA-R2 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Next: SVA-R3, the run worker, then SVA-R5, the failure cases on the real stack with two service instances and a real broker.
 
 ## Slices
 
@@ -24,7 +24,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 |---|---|---|---|
 | SVA-R0 | probes of the broker for content frames | built 2026-11-13, building 2026-11-12 |  |
 | SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | built 2026-11-15, building 2026-11-12 | SVA-R0 |
-| SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | building 2026-11-16 | SVA-R1 |
+| SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | built 2026-11-16, building 2026-11-16 | SVA-R1 |
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
 | SVA-R4 | the browser's run controller and the dock's run pane | built 2026-11-16, building 2026-11-16 | SVA-R1 |
 | SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line | built 2026-11-16, building 2026-11-16 | SVA-R4 |
@@ -94,6 +94,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16, SVA-R4: the assembler was made to keep the last frame seen for a number, which failed the keep-the-first test, and then to drop the completeness check, which failed five tests. Both were restored.
 - 2026-11-16, SVA-U1: the middle taking freed room was broken by keeping the navigation and list widths when collapsed, and the tree clipping test failed. Storing a dragged width was broken by not writing it, and the reload test failed. The canvas refit was switched off and the whole-drawing test failed. Each was restored.
 - 2026-11-16, SVA-R4a: two breaks were tried and each was restored. A timer with no grace failed 4 tests in runs.test.ts, and assemble treating a failed last frame with a gap as partial failed 4 tests there. The browser suite ran once and 58 passed.
+- 2026-11-16, SVA-R2: two breaks were tried. Skipping the access check at delivery failed 3 of the 17 registry tests, and publishing a run before recording it failed 4 of the 19 route tests, among them the test that gives a frame from inside the publish call.
 
 ## Log
 
@@ -153,3 +154,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: SVA-R4a built, [Validation Pack](../validation/SVA-R4a.md). The run contract now states the event's shape, a grace of 2 seconds after the deadline, a client that leaves the deadline to the service and times by duration, a failed last frame that settles a run whatever is missing, and a waiting request that may be abandoned, and the client and a new deadline example follow it. The service and worker sides of each rule are left to SVA-R2 and SVA-R3, and frames over real MQTT to SVA-R5.
 - 2026-11-16: SVA-R4a verified by a second run of its checks, 32 contract tests, 433 unit tests, the type check and 58 browser tests on the fake service. Seven unit tests of the controller changed with the behaviour they stated, each listed in the Validation Pack, and no browser test changed. For the maintainer: ADR-A154's decision 6 says the browser holds the same deadline as the service, and the browser now holds the same length plus a grace, timed from its own send, which the contract states and the decision record does not yet.
 - 2026-11-16: SVA-R2 picked up.
+- 2026-11-16: SVA-R2 built, [Validation Pack](../validation/SVA-R2.md). The service accepts a run at once, records it in a registry before it publishes the request, validates each frame against the frame schema, checks the reader's access at delivery, ends a run at its deadline with a failed frame, and holds at most four pending runs for a tab, with the run queues declared and the status warning of a run queue no worker consumes. Core 24, service 244 and writer 10 tests passed, and the wider check exited 0 with 286 pytest and 433 browser tests. The registry restates the frame schema in code since the service has no schema library, and the run worker and a real two-instance relay are left to SVA-R3 and SVA-R5.
+- 2026-11-16: SVA-R2 reviewed and corrected before it was committed. As first built, the service made its run registry only where it serves events to browsers, so a deployment with a broker and no events answered 503 to every run, the case ADR-A154's decision 10 keeps the waiting request for. No test saw it, since each built the registry itself. The service now reads run frames whenever it has a broker, a run sent without wait where no events are served is refused with 400, which the contract gained a sentence for, and what starts is decided by one function with its own test. Verified by a second run of the three Java modules, 24, 248 and 10 passed, the contract's 32 tests, and the counts of `mise run check:config-studio`, 21, 286 and 433. Left for SVA-R5: two instances and a real broker, the message's delivery mode and expiration, which no unit test sees, and the split of the relay, which was not run against a broker.

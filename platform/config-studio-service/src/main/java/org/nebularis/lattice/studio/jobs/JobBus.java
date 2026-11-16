@@ -25,6 +25,14 @@ public interface JobBus extends AutoCloseable {
     }
 
     /**
+     * Publishes a run's request to the run worker's queue (ADR-A154), or throws when the bus cannot, as one without a broker cannot.
+     * It is not persistent and names no reply queue.
+     */
+    default void publishRun(RunMessage message) throws Exception {
+        throw new java.io.IOException("this bus has no broker, so it cannot publish a run");
+    }
+
+    /**
      * How many workers consume {@code queue}, or -1 when the bus cannot say, as one without a broker cannot. The studio warns when a
      * queue it publishes to has none (plan studio-worker-liveness, WL-Q6).
      */

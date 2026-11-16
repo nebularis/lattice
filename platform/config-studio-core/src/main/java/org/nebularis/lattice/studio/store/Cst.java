@@ -56,6 +56,11 @@ public final class Cst {
     public static final Property report = p("report");
     public static final Resource Artefact = r("Artefact");
     public static final Resource Transform = r("Transform");
+    /** A run of a finished compile job's artefacts over an input that is not saved (ADR-A154). */
+    public static final Resource Run = r("Run");
+    public static final Resource SampleRun = r("SampleRun");
+    public static final Resource SimulationStep = r("SimulationStep");
+    public static final Property deadline = p("deadline");
     public static final Property compileJob = p("compileJob");
     public static final Property fromSample = p("fromSample");
     public static final Resource Receipt = r("Receipt");
