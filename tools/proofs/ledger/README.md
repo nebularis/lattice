@@ -63,9 +63,13 @@ LG-20, with [its pack](../../../docs/developer/validation/LG-20.md), adds 36 cla
 | LW3 | `Units.residual_below_the_number_of_keys` | its residual is from zero to less than the number of keys |
 | LW5 | `Units.whole_groups_need_no_order` | where the units short reach whole groups of equal remainders, it leaves no residual and equals the rule with any declared order |
 | LWn | `Units.a_declared_order_treats_equal_requests_unequally` | three requests of 5 sharing 10 are granted 4, 3 and 3 with an order declared |
+| LW4 | `Units.no_order_renaming_carries_the_grants` | with no order, a renaming of the keys by any bijection carries the grants |
+| LH1 | `Units.to_nearest_sums_exactly` | rounding half up or half to even, with a strict total preference to gain on the shares rounded down and one to lose on those rounded up, sums exactly |
+| LH2 | `Units.to_nearest_within_one_unit` | each share rounded to the nearest is within one unit of its exact value |
 | LHn | `Units.a_unit_to_the_first_among_all_keys_strays` | weights 3, 0, 11 and 11 sharing 62 round to 61, and the unit given to the first among all keys goes to the key of no weight |
 | LM1 | `Merge.each_refusal_where_its_condition_holds` | each of the four reasons of a merge arises exactly where its condition holds, with no rule for a tie a merge refuses exactly where a tie arises, and a refusal changes no balance |
 | LM3 | `Merge.no_residual_unless_declared` | a granted outcome has no residual unless the account declares one may be left |
+| LM2 | `Merge.whole_units_settle_in_proportion` | at whole units, with one rank and largest remainder in a declared order, the grants are the lesser of what was asked and what was available, each within its request, the path is charged exactly that, no balance falls below zero, and each grant is within one unit of its exact share |
 | LJ1 | `Merge.no_purpose_is_settle` | with no purpose and the one set of every proposer, settling purposes is `settle` |
 | LJ4 | `Merge.mixed_or_crossing_refused` | a mixed position is refused exactly where declared and the purposes differ, a crossing one is refused, and no refusal changes a balance |
 | LJ5 | `Merge.two_purposes_never_cross` | with at most two purposes among the requests no two sets cross |
@@ -74,13 +78,19 @@ LG-20, with [its pack](../../../docs/developer/validation/LG-20.md), adds 36 cla
 | LC6 | `Pots.whole_or_no_result` | an allocation that must be whole is the allocation or no result |
 | LV3 | `Pots.rationing_allocation_accounts_for_what_was_asked` | with a rule that rations, parts and what is left are what was asked, and each account is charged what was granted at it |
 | LP3 | `Pots.the_fund_falls_by_the_grants` | the fund and every account above it fall by the grants of its pots |
+| LP2 | `Pots.pots_never_overdraw` | no account of the tree falls below zero, and no pot is paid more than its own amount |
+| LP4 | `Pots.a_bound_at_the_fund_pays_no_later_pot` | where the fund or an account above it binds a pot, no later pot is paid |
+| LPn | `Pots.the_unit_left_is_withheld_along_the_path` | a unit a pot leaves is taken by a later pot where nothing is carried, and where it is withheld from the fund alone and an account above the fund binds |
+| LJ2 | `Pots.no_reached_account_below_zero` | settling purposes leaves no account a request reaches below zero |
+| LJ3 | `Pots.narrowest_first_lists_agree` | any two narrowest-first lists of the same nested or disjoint sets give the same outcome |
 | LB1 | `Credits.the_step_agrees_with_debit_and_credit` | each step of a run moves an account by what its posting records |
 | LB2 | `Credits.recorded_balances_follow_step_by_step` | a list of balances is the run's exactly when each follows from the one before |
 | LU1 | `Credits.the_sum_is_the_balance` | the sum of what a run posted is the balance it ends at |
 | LU2 | `Credits.a_credit_depends_on_its_path` | what a credit applies and cuts depends on the balances on its path alone, and no cut is negative |
 | LB1n | `Credits.the_ceiling_applied_once_overstates` | the sketch's one account: stepped, the balance is 70, and the ceiling applied once to the fold gives 100 |
 | LU1n | `Credits.the_sum_with_no_cuts_overstates` | the sketch's cap, aggregate and two sections: the aggregate steps to 7, the sum with its cuts is 7, and with no cuts 9 |
-| LU3n | `Credits.a_leaf_that_refuses_its_credit_leaves_a_cut` | a counterexample to LU3 as planned: a leaf that does not accept a credit's kind, under a parent that does, leaves a cut of 5 at the parent (LG-Q29) |
+| LU3 | `Credits.no_cut_where_ceilings_are_stated_and_credits_on_leaves` | where every ceiling is its stated amount and every credit is requested at a leaf, no posting of a run records a cut |
+| LU3n | `Credits.a_leaf_that_refuses_its_credit_leaves_a_cut` | `credit` alone, at a leaf that does not accept the kind under a parent that does, leaves a cut of 5, and `run` refuses the credit (LG-Q29 (b)) |
 | LE1 | `Readings.reading_a_from_a_recorded_balance` | reading A from a recorded balance, plus what was recorded after and effective by the day, is reading A from the start |
 | LE2 | `Readings.reading_a_at_the_head` | at the head with every posting counted, reading A is the recorded balance |
 | LE3 | `Readings.flows_from_recorded_totals` | the two totals of the flows split the same way |

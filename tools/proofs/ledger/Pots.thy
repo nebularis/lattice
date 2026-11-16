@@ -419,6 +419,334 @@ qed
 (* GATE:END *)
 
 
+section \<open>Purposes at one position: no account a request reaches falls below zero\<close>
+
+text \<open>Each set's merge grants at most what the set has room for, and a later merge only lowers
+  what is granted, so every set ends within its room.\<close>
+
+lemma admit_bounds:
+  fixes v :: "('k, 'n::linordered_idom) amounts"
+  assumes tie: "\<forall>t. tie pol = Some t \<longrightarrow> (\<forall>G. rations G (t G))"
+  shows "\<forall>k. 0 \<le> v k \<Longrightarrow> \<forall>H\<in>set Hs. finite (fst H) \<Longrightarrow> admit pol rank Hs v r = Granted g s \<Longrightarrow>
+           (\<forall>k. 0 \<le> g k \<and> g k \<le> v k) \<and> (\<forall>H\<in>set Hs. total (fst H) g \<le> max 0 (snd H))"
+proof (induction Hs arbitrary: v r)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons H rest)
+  obtain G x where H: "H = (G, x)" by (cases H)
+  let ?w = "\<lambda>k. if k \<in> G then v k else 0"
+  have finG: "finite G" using Cons.prems(2) H by simp
+  have nnw: "nonneg_on G ?w" using Cons.prems(1) by (simp add: nonneg_on_def)
+  obtain g1 s1 where mo: "merge_of pol rank x G ?w = Granted g1 s1"
+    using Cons.prems(3) H by (cases "merge_of pol rank x G ?w") auto
+  note bd = merge_of_bounds[OF finG nnw tie mo]
+  let ?v' = "\<lambda>k. if k \<in> G then g1 k else v k"
+  have rec: "admit pol rank rest ?v' (r + s1) = Granted g s" using Cons.prems(3) H mo by simp
+  have nn': "\<forall>k. 0 \<le> ?v' k" using bd Cons.prems(1) by (simp add: nonneg_on_def)
+  have le': "\<forall>k. ?v' k \<le> v k"
+  proof
+    fix k
+    have "g1 k \<le> (if k \<in> G then v k else 0)" using bd by (simp add: fits_in_def)
+    then show "?v' k \<le> v k" by (cases "k \<in> G") simp_all
+  qed
+  have IH: "(\<forall>k. 0 \<le> g k \<and> g k \<le> ?v' k) \<and> (\<forall>H\<in>set rest. total (fst H) g \<le> max 0 (snd H))"
+    using Cons.IH[OF nn' _ rec] Cons.prems(2) by simp
+  have "total G g \<le> total G ?v'" unfolding total_def by (rule sum_mono) (use IH in blast)
+  also have "total G ?v' = total G g1" unfolding total_def by (rule sum.cong) simp_all
+  also have "total G g1 \<le> max 0 x" using bd by simp
+  finally have tG: "total G g \<le> max 0 x" .
+  have "\<forall>k. g k \<le> v k" using IH le' by (meson order_trans)
+  then show ?case using IH tG H by simp
+qed
+
+text \<open>The sets a request's accounts are limited by are each in the list the merge is given and
+  within the proposers, every account a request reaches is one of finitely many and holds a
+  non-negative balance, every request is non-negative, and the tie rule, where there is one,
+  rations on every set.\<close>
+
+(* GATE:BEGIN LJ2 *)
+theorem no_reached_account_below_zero:
+  assumes fin: "\<forall>k\<in>proposers ps. finite (reach parent counts a (purpose k))"
+    and sets: "\<forall>b. limited (proposers ps) (\<lambda>k. reach parent counts a (purpose k)) b \<noteq> {}
+                 \<longrightarrow> limited (proposers ps) (\<lambda>k. reach parent counts a (purpose k)) b \<in> set Gs"
+    and sub: "\<forall>G\<in>set Gs. G \<subseteq> proposers ps"
+    and tie: "\<forall>t. tie pol = Some t \<longrightarrow> (\<forall>G. rations G (t G))"
+    and nn: "\<forall>q\<in>set ps. 0 \<le> snd q"
+    and b0: "\<forall>k\<in>proposers ps. \<forall>b\<in>reach parent counts a (purpose k). 0 \<le> bal b"
+    and st: "settle_purposes pol rank parent counts a purpose Gs ps bal = (out, bal')"
+    and k: "k \<in> proposers ps" and b: "b \<in> reach parent counts a (purpose k)"
+  shows "0 \<le> bal' b"
+proof -
+  let ?K = "proposers ps" and ?R = "\<lambda>k. reach parent counts a (purpose k)"
+  let ?Hs = "map (\<lambda>G. (G, room ?K ?R bal G)) Gs"
+  have bb: "0 \<le> bal b" using b0 k b by blast
+  show ?thesis
+  proof (cases "admit pol rank ?Hs (requested ps) 0")
+    case (Refused why)
+    then have "bal' = bal" using st by (auto simp: settle_purposes_def Let_def split: if_splits)
+    then show ?thesis using bb by simp
+  next
+    case (Granted g r)
+    have "bal' = bal \<or> bal' = (\<lambda>b. bal b - total (limited ?K ?R b) g)"
+      using st Granted by (auto simp: settle_purposes_def Let_def split: if_splits)
+    then show ?thesis
+    proof
+      assume "bal' = bal"
+      then show ?thesis using bb by simp
+    next
+      assume bal': "bal' = (\<lambda>b. bal b - total (limited ?K ?R b) g)"
+      let ?G = "limited ?K ?R b"
+      have kG: "k \<in> ?G" using k b by (simp add: limited_def)
+      then have G: "?G \<in> set Gs" using sets by blast
+      have finK: "finite ?K" by (simp add: proposers_def)
+      have nnv: "\<forall>k. 0 \<le> requested ps k" using requested_nonneg[OF nn] by (simp add: nonneg_on_def)
+      have finH: "\<forall>H\<in>set ?Hs. finite (fst H)" using sub finK by (auto intro: finite_subset)
+      have "\<forall>H\<in>set ?Hs. total (fst H) g \<le> max 0 (snd H)" using admit_bounds[OF tie nnv finH Granted] by blast
+      then have tg: "total ?G g \<le> max 0 (room ?K ?R bal ?G)" using G by fastforce
+      have S: "{b'. limited ?K ?R b' = ?G} \<subseteq> ?R k" using kG by (auto simp: limited_def)
+      have "room ?K ?R bal ?G \<le> bal b" unfolding room_def
+        by (rule least_le) (use finite_subset[OF S] fin k in auto)
+      then have mx: "max 0 (room ?K ?R bal ?G) \<le> bal b" using bb by simp
+      have "total ?G g \<le> bal b" by (rule order_trans[OF tg mx])
+      then show ?thesis using bal' by simp
+    qed
+  qed
+qed
+(* GATE:END *)
+
+
+section \<open>Purposes at one position: any narrowest-first list gives the same outcome\<close>
+
+text \<open>A merge refuses for one reason under one policy: refusing when it exceeds, unranked where
+  ranks are required, tied with no tie rule, and undecided with one.\<close>
+
+lemma merge_of_reason:
+  assumes fin: "finite K" and nn: "nonneg_on K v" and m: "merge_of pol rank av K v = Refused w"
+  shows "w = (if refuses pol then Exceeds else if ranked pol then Unranked
+              else if tie pol = None then Tied else Undecided)"
+proof -
+  have t0: "0 \<le> total K v" by (rule total_nonneg[OF nn])
+  have nf: "\<not> total K v \<le> av" using m by (auto simp: merge_of_def)
+  let ?x = "max 0 av"
+  have x0: "0 \<le> ?x" by simp
+  have xv: "?x \<le> total K v" using nf t0 by simp
+  show ?thesis
+  proof (cases "refuses pol")
+    case True
+    then show ?thesis using m nf by (simp add: merge_of_def Let_def)
+  next
+    case nr: False
+    show ?thesis
+    proof (cases "ranked pol")
+      case rk: True
+      show ?thesis
+      proof (cases "inj_on rank K")
+        case False
+        then show ?thesis using m nf nr rk by (simp add: merge_of_def Let_def)
+      next
+        case inj: True
+        have bs: "beside K rank k = {k}" if "k \<in> K" for k
+          using inj that by (auto simp: beside_def inj_on_def)
+        have nt: "\<not> tie_arises K rank v ?x" using bs by (auto simp: tie_arises_def)
+        have ex: "total K (by_rank rank t K v ?x) = ?x" for t :: "'a set \<Rightarrow> ('a, 'b) rule"
+          by (rule by_rank_exact_where_no_tie[OF fin nn x0 xv nt])
+        show ?thesis
+        proof (cases "tie pol")
+          case None
+          then show ?thesis using m nf nr rk inj nt by (simp add: merge_of_def Let_def)
+        next
+          case (Some t)
+          then show ?thesis using m nf nr rk inj ex[of t] by (simp add: merge_of_def Let_def)
+        qed
+      qed
+    next
+      case nk: False
+      show ?thesis using m nf nr nk by (cases "tie pol") (auto simp: merge_of_def Let_def split: if_splits)
+    qed
+  qed
+qed
+
+lemma admit_swap:
+  assumes dis: "G \<inter> H = {}" and finG: "finite G" and finH: "finite H" and nn: "\<forall>k. 0 \<le> v k"
+  shows "admit pol rank ((G, x) # (H, y) # rest) v r = admit pol rank ((H, y) # (G, x) # rest) v r"
+proof -
+  let ?vG = "\<lambda>k. if k \<in> G then v k else 0" and ?vH = "\<lambda>k. if k \<in> H then v k else 0"
+  have hG: "(\<lambda>k. if k \<in> H then (if k \<in> G then g k else v k) else 0) = ?vH" for g
+    using dis by (auto simp: fun_eq_iff)
+  have hH: "(\<lambda>k. if k \<in> G then (if k \<in> H then g k else v k) else 0) = ?vG" for g
+    using dis by (auto simp: fun_eq_iff)
+  have up: "(\<lambda>k. if k \<in> H then gH k else (if k \<in> G then gG k else v k))
+              = (\<lambda>k. if k \<in> G then gG k else (if k \<in> H then gH k else v k))" for gG gH
+    using dis by (auto simp: fun_eq_iff)
+  have nG: "nonneg_on G ?vG" and nH: "nonneg_on H ?vH" using nn by (simp_all add: nonneg_on_def)
+  show ?thesis
+  proof (cases "merge_of pol rank x G ?vG")
+    case (Refused wG)
+    show ?thesis
+    proof (cases "merge_of pol rank y H ?vH")
+      case (Refused wH)
+      have "wG = wH" using merge_of_reason[OF finG nG \<open>merge_of pol rank x G ?vG = Refused wG\<close>]
+                          merge_of_reason[OF finH nH Refused] by simp
+      then show ?thesis using \<open>merge_of pol rank x G ?vG = Refused wG\<close> Refused by simp
+    next
+      case (Granted gH sH)
+      then show ?thesis using \<open>merge_of pol rank x G ?vG = Refused wG\<close> by (simp add: hH)
+    qed
+  next
+    case (Granted gG sG)
+    show ?thesis
+    proof (cases "merge_of pol rank y H ?vH")
+      case (Refused wH)
+      then show ?thesis using Granted by (simp add: hG)
+    next
+      case gH: (Granted gH sH)
+      then show ?thesis using Granted by (simp add: hG hH up add.assoc add.commute add.left_commute)
+    qed
+  qed
+qed
+
+lemma admit_to_front:
+  assumes tie: "\<forall>t. tie pol = Some t \<longrightarrow> (\<forall>G. rations G (t G))" and finG: "finite G"
+  shows "\<forall>H\<in>set ys. G \<inter> fst H = {} \<and> finite (fst H) \<Longrightarrow> \<forall>k. 0 \<le> v k \<Longrightarrow>
+           admit pol rank (ys @ (G, x) # zs) v r = admit pol rank ((G, x) # ys @ zs) v r"
+proof (induction ys arbitrary: v r)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons Hy ys')
+  obtain H y where Hy: "Hy = (H, y)" by (cases Hy)
+  have dis: "G \<inter> H = {}" and finH: "finite H" using Cons.prems(1) Hy by simp_all
+  have rest: "\<forall>H\<in>set ys'. G \<inter> fst H = {} \<and> finite (fst H)" using Cons.prems(1) by simp
+  have sw: "admit pol rank ((H, y) # (G, x) # ys' @ zs) v r = admit pol rank ((G, x) # (H, y) # ys' @ zs) v r"
+    by (rule admit_swap[OF dis finG finH Cons.prems(2), symmetric])
+  let ?vH = "\<lambda>k. if k \<in> H then v k else 0"
+  show ?case
+  proof (cases "merge_of pol rank y H ?vH")
+    case (Refused w)
+    have l: "admit pol rank ((H, y) # ys' @ (G, x) # zs) v r = Refused w" using Refused by simp
+    have rr: "admit pol rank ((H, y) # (G, x) # ys' @ zs) v r = Refused w" using Refused by simp
+    show ?thesis using l rr sw Hy by (simp del: admit.simps)
+  next
+    case (Granted gH sH)
+    have nH: "nonneg_on H ?vH" using Cons.prems(2) by (simp add: nonneg_on_def)
+    have "nonneg_on H gH" using merge_of_bounds[OF finH nH tie Granted] by blast
+    then have nn': "\<forall>k. 0 \<le> (if k \<in> H then gH k else v k)" using Cons.prems(2) by (simp add: nonneg_on_def)
+    have "admit pol rank (ys' @ (G, x) # zs) (\<lambda>k. if k \<in> H then gH k else v k) (r + sH)
+            = admit pol rank ((G, x) # ys' @ zs) (\<lambda>k. if k \<in> H then gH k else v k) (r + sH)"
+      by (rule Cons.IH[OF rest nn'])
+    then show ?thesis using sw Hy Granted by simp
+  qed
+qed
+
+lemma narrowest_first_sorted:
+  assumes nf: "narrowest_first Gs"
+  shows "distinct Gs \<and> sorted_wrt (\<lambda>A B. \<not> B \<subset> A) Gs"
+proof -
+  have d: "distinct Gs" using nf by (simp add: narrowest_first_def)
+  have h: "\<forall>i<length Gs. \<forall>j<length Gs. Gs ! i \<subset> Gs ! j \<longrightarrow> i < j" using nf by (simp add: narrowest_first_def)
+  have "\<forall>i j. i < j \<longrightarrow> j < length Gs \<longrightarrow> \<not> Gs ! j \<subset> Gs ! i"
+  proof (intro allI impI)
+    fix i j
+    assume ij: "i < j" "j < length Gs"
+    show "\<not> Gs ! j \<subset> Gs ! i"
+    proof
+      assume p: "Gs ! j \<subset> Gs ! i"
+      have il: "i < length Gs" using ij by simp
+      have "j < i" using h[rule_format, OF ij(2) il p] .
+      then show False using ij by simp
+    qed
+  qed
+  then show ?thesis by (simp add: d sorted_wrt_iff_nth_less)
+qed
+
+lemma admit_narrowest_first:
+  fixes f :: "'k set \<Rightarrow> 'n::linordered_idom"
+  assumes tie: "\<forall>t. tie pol = Some t \<longrightarrow> (\<forall>G. rations G (t G))"
+    and lam: "\<forall>G\<in>S. \<forall>H\<in>S. G \<subseteq> H \<or> H \<subseteq> G \<or> G \<inter> H = {}" and fin: "\<forall>G\<in>S. finite G"
+  shows "set Ls \<subseteq> S \<Longrightarrow> distinct Ls \<Longrightarrow> sorted_wrt (\<lambda>A B. \<not> B \<subset> A) Ls
+         \<Longrightarrow> distinct Ms \<Longrightarrow> sorted_wrt (\<lambda>A B. \<not> B \<subset> A) Ms \<Longrightarrow> set Ls = set Ms \<Longrightarrow> \<forall>k. 0 \<le> v k
+         \<Longrightarrow> admit pol rank (map (\<lambda>G. (G, f G)) Ls) v r = admit pol rank (map (\<lambda>G. (G, f G)) Ms) v r"
+proof (induction Ls arbitrary: Ms v r)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons G Ls')
+  have GM: "G \<in> set Ms" using Cons.prems(6) by auto
+  obtain ys zs where Ms: "Ms = ys @ G # zs" using split_list[OF GM] by blast
+  have GS: "G \<in> S" using Cons.prems(1) by simp
+  have finG: "finite G" using fin GS by blast
+  have dM: "G \<notin> set ys" "G \<notin> set zs" "distinct (ys @ zs)" using Cons.prems(4) Ms by auto
+  have dL: "G \<notin> set Ls'" using Cons.prems(2) by simp
+  have below: "\<forall>H\<in>set Ls'. \<not> H \<subset> G" using Cons.prems(3) by simp
+  have above: "\<forall>H\<in>set ys. \<not> G \<subset> H" using Cons.prems(5) Ms by (simp add: sorted_wrt_append)
+  have setys: "set ys \<subseteq> S" using Cons.prems(1,6) Ms by auto
+  have disj: "\<forall>H\<in>set (map (\<lambda>G. (G, f G)) ys). G \<inter> fst H = {} \<and> finite (fst H)"
+  proof
+    fix Hp
+    assume "Hp \<in> set (map (\<lambda>G. (G, f G)) ys)"
+    then obtain H where H: "H \<in> set ys" and Hp: "Hp = (H, f H)" by auto
+    have HS: "H \<in> S" using setys H by blast
+    have HG: "H \<noteq> G" using H dM(1) by blast
+    have HL: "H \<in> set Ls'" using H Cons.prems(6) Ms HG by auto
+    have "\<not> H \<subset> G" using below HL by blast
+    moreover have "\<not> G \<subset> H" using above H by blast
+    ultimately have "G \<inter> H = {}" using lam GS HS HG by blast
+    then show "G \<inter> fst Hp = {} \<and> finite (fst Hp)" using Hp fin HS by simp
+  qed
+  have front: "admit pol rank (map (\<lambda>G. (G, f G)) Ms) v r
+                 = admit pol rank ((G, f G) # map (\<lambda>G. (G, f G)) (ys @ zs)) v r"
+    using admit_to_front[OF tie finG disj Cons.prems(7), where x = "f G" and zs = "map (\<lambda>G. (G, f G)) zs"
+                                                       and r = r and rank = rank] Ms by simp
+  have sM: "sorted_wrt (\<lambda>A B. \<not> B \<subset> A) (ys @ zs)" using Cons.prems(5) Ms by (simp add: sorted_wrt_append)
+  have setL: "set Ls' = set (ys @ zs)" using Cons.prems(6) Ms dL dM by auto
+  have sL: "set Ls' \<subseteq> S" using Cons.prems(1) by simp
+  have dL': "distinct Ls'" and sL': "sorted_wrt (\<lambda>A B. \<not> B \<subset> A) Ls'" using Cons.prems(2,3) by simp_all
+  let ?vG = "\<lambda>k. if k \<in> G then v k else 0"
+  show ?case
+  proof (cases "merge_of pol rank (f G) G ?vG")
+    case (Refused w)
+    then show ?thesis using front by simp
+  next
+    case (Granted gG sG)
+    have nG: "nonneg_on G ?vG" using Cons.prems(7) by (simp add: nonneg_on_def)
+    have "nonneg_on G gG" using merge_of_bounds[OF finG nG tie Granted] by blast
+    then have nn': "\<forall>k. 0 \<le> (if k \<in> G then gG k else v k)" using Cons.prems(7) by (simp add: nonneg_on_def)
+    have "admit pol rank (map (\<lambda>G. (G, f G)) Ls') (\<lambda>k. if k \<in> G then gG k else v k) (r + sG)
+            = admit pol rank (map (\<lambda>G. (G, f G)) (ys @ zs)) (\<lambda>k. if k \<in> G then gG k else v k) (r + sG)"
+      by (rule Cons.IH[OF sL dL' sL' dM(3) sM setL nn'])
+    then show ?thesis using front Granted by simp
+  qed
+qed
+
+text \<open>The sets given are pairwise nested or apart, which the refusal of crossing sets secures
+  where they are the sets the requests' accounts are limited by, and each is within the proposers.\<close>
+
+(* GATE:BEGIN LJ3 *)
+theorem narrowest_first_lists_agree:
+  assumes nf1: "narrowest_first Gs1" and nf2: "narrowest_first Gs2" and same: "set Gs1 = set Gs2"
+    and lam: "\<forall>G\<in>set Gs1. \<forall>H\<in>set Gs1. G \<subseteq> H \<or> H \<subseteq> G \<or> G \<inter> H = {}"
+    and sub: "\<forall>G\<in>set Gs1. G \<subseteq> proposers ps"
+    and tie: "\<forall>t. tie pol = Some t \<longrightarrow> (\<forall>G. rations G (t G))"
+    and nn: "\<forall>q\<in>set ps. 0 \<le> snd q"
+  shows "settle_purposes pol rank parent counts a purpose Gs1 ps bal
+           = settle_purposes pol rank parent counts a purpose Gs2 ps bal"
+proof -
+  let ?K = "proposers ps" and ?R = "\<lambda>k. reach parent counts a (purpose k)"
+  have finK: "finite ?K" by (simp add: proposers_def)
+  have fin: "\<forall>G\<in>set Gs1. finite G" using sub finK by (auto intro: finite_subset)
+  have nnv: "\<forall>k. 0 \<le> requested ps k" using requested_nonneg[OF nn] by (simp add: nonneg_on_def)
+  have s1: "distinct Gs1 \<and> sorted_wrt (\<lambda>A B. \<not> B \<subset> A) Gs1" by (rule narrowest_first_sorted[OF nf1])
+  have s2: "distinct Gs2 \<and> sorted_wrt (\<lambda>A B. \<not> B \<subset> A) Gs2" by (rule narrowest_first_sorted[OF nf2])
+  have "admit pol rank (map (\<lambda>G. (G, room ?K ?R bal G)) Gs1) (requested ps) 0
+          = admit pol rank (map (\<lambda>G. (G, room ?K ?R bal G)) Gs2) (requested ps) 0"
+    using admit_narrowest_first[OF tie lam fin, where Ls = Gs1 and Ms = Gs2 and v = "requested ps"
+                                and f = "room ?K ?R bal" and rank = rank and r = 0] s1 s2 same nnv by simp
+  then show ?thesis by (simp add: settle_purposes_def Let_def)
+qed
+(* GATE:END *)
+
+
 section \<open>Two instances kept on purpose\<close>
 
 text \<open>A fund, account 1, with two pots under it, accounts 2 and 3, and account 0 above the fund. A
