@@ -1,7 +1,7 @@
 {
   "subject": "LR4",
   "statedAs": "Rounding.ration_lawful",
-  "statementDigest": "sha256:5653e79a08f849b945378791b6793e71dda110bf0f5d5938773f60b5de4bb734",
+  "statementDigest": "sha256:a702461d2020dc3cdbe9bab33c9e24d21a6d016ab692198ae63ee2de18fd4699",
   "method": "Proof",
   "scope": "EveryFiniteKeySetAndInjectiveOrder",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

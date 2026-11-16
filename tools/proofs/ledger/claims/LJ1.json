@@ -1,7 +1,7 @@
 {
   "subject": "LJ1",
   "statedAs": "Merge.no_purpose_is_settle",
-  "statementDigest": "sha256:28a7f1ff4cabb765b6d75a9b120485fe4060a56dd6efdf6fe1c024c53608a1d6",
+  "statementDigest": "sha256:fe8f24e2b30946f7dcb77d3ff9557b56ff6ba12ea390ffd6a44c443ef4b60371",
   "method": "Proof",
   "scope": "EveryNonEmptyProposalList",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

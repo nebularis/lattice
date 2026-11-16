@@ -1,7 +1,7 @@
 {
   "subject": "LU1n",
   "statedAs": "Credits.the_sum_with_no_cuts_overstates",
-  "statementDigest": "sha256:37218d8415ca5b9edb3372a9d41b0af3ead2d08efd0d28b76bb86b4b7d037ab2",
+  "statementDigest": "sha256:7558e7cccb56af32972aafde41e001ff21a66609774496a30d5fff444e3f35b5",
   "method": "Proof",
   "scope": "OneHistory",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

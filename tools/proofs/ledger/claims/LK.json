@@ -1,7 +1,7 @@
 {
   "subject": "LK",
   "statedAs": "Ranks.renaming_carries_the_result",
-  "statementDigest": "sha256:2fdbd04927a4155c129a683720ac4e1fe2a6c864a37501873dc09896f2a8a377",
+  "statementDigest": "sha256:9b60b9e59ca4c301f1117b10e424e9281c5fe361c986014ad62ebadf997e04f4",
   "method": "Proof",
   "scope": "EveryBijectionAndEquivariantTieRule",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

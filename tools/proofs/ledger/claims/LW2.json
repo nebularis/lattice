@@ -1,7 +1,7 @@
 {
   "subject": "LW2",
   "statedAs": "Units.equal_requests_equal_grants",
-  "statementDigest": "sha256:c7c79504076de2083665ad3eaa734bcc693949565c23df4e8d1a51334b2406d1",
+  "statementDigest": "sha256:fdc62db38b6befabe5c384099224166387b6bf81cf49b9eb132f07e41255e16e",
   "method": "Proof",
   "scope": "EveryKeySetAndAmount",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

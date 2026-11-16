@@ -1,7 +1,7 @@
 {
   "subject": "LW3",
   "statedAs": "Units.residual_below_the_number_of_keys",
-  "statementDigest": "sha256:183051af1dc074bec085cd26a98690985c22462f93264acc97e5be49847466aa",
+  "statementDigest": "sha256:cb8e970e43e064727e9461b95212be063625d72ac15522bb49c71f0b9c511868",
   "method": "Proof",
   "scope": "EveryFiniteNonEmptyKeySet",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

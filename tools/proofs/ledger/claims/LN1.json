@@ -1,7 +1,7 @@
 {
   "subject": "LN1",
   "statedAs": "Allocation.residual_falls_as_the_drawn_amount_rises",
-  "statementDigest": "sha256:222a8f5e70661a3a9fd20b5a8c553543cdd2c01ddf04da0a0ad89785766ab5d8",
+  "statementDigest": "sha256:f5eeced8e001c02ad043c07d723d1e7ba07a2e3c83c268bdda129a29947ad741",
   "method": "Proof",
   "scope": "OneThreshold",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

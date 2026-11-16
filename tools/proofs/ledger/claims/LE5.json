@@ -1,7 +1,7 @@
 {
   "subject": "LE5",
   "statedAs": "Readings.reading_b_within_range",
-  "statementDigest": "sha256:0c0d68d5b3b6905ccbaf0c165f3a8d895497b055c074d90250ee3083144be051",
+  "statementDigest": "sha256:e2e3db7f8f762dcf8757eea3ea9839981eccf6e2ea4e2479847709bad90502c4",
   "method": "Proof",
   "scope": "EveryHistoryRecordingAndDay",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

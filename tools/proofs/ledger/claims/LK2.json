@@ -1,7 +1,7 @@
 {
   "subject": "LK2",
   "statedAs": "Ranks.distinct_ranks_are_priority",
-  "statementDigest": "sha256:66d13d6f52cc73ec668defc1c46d85eee9f4b5bc20ab5d461efc8a9a702360d2",
+  "statementDigest": "sha256:c7aacea20a722ea1e2f7eed68eed2fde17cc5a2b14df6fab5f0871def523fecf",
   "method": "Proof",
   "scope": "EveryInjectiveRank",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

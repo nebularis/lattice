@@ -1,7 +1,7 @@
 {
   "subject": "LE4",
   "statedAs": "Readings.with_nothing_late_the_readings_agree",
-  "statementDigest": "sha256:58ec7943ffd542292cfffbc664cd49e62caacf4f2be81ff4b5a97c8a08266961",
+  "statementDigest": "sha256:fa6b240450a33ecf3f69c4be8dc08e22e9c8ae5e95581dcf1dacf11e50e579c0",
   "method": "Proof",
   "scope": "EveryHistoryWithNothingLate",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

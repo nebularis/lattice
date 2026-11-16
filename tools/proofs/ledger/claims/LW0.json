@@ -1,7 +1,7 @@
 {
   "subject": "LW0",
   "statedAs": "Units.a_strict_total_order_places_exactly_n",
-  "statementDigest": "sha256:2be36180a35996972afa2f580f83f0d4b57d064784cbf068c9eb9f01d5e6f9e3",
+  "statementDigest": "sha256:d748af3cf03f9f9f696b11ed0123aa04af7339e5d713b0122d448195f119eb3e",
   "method": "Proof",
   "scope": "EveryFiniteSetAndStrictTotalOrder",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

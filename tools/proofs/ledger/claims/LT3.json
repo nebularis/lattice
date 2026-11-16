@@ -1,7 +1,7 @@
 {
   "subject": "LT3",
   "statedAs": "Ranks.cut_short_leaves_later_ranks_nothing",
-  "statementDigest": "sha256:a0e1cee0ec1e13473ae0d2cfba0e59173632feca037cbd189d38cd5dda1aaa0d",
+  "statementDigest": "sha256:6ae8b905c434a41be62532afa427778352ebfe8f993821fa8aca7b7e3993d06d",
   "method": "Proof",
   "scope": "EveryFiniteKeySetRankAndTieRule",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

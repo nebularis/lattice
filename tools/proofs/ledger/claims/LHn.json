@@ -1,7 +1,7 @@
 {
   "subject": "LHn",
   "statedAs": "Units.a_unit_to_the_first_among_all_keys_strays",
-  "statementDigest": "sha256:56ea4bd4646f28a7f33bb9013d80f5f64d8bfbbc04d374ba9a8e681e0be19f7a",
+  "statementDigest": "sha256:758eb699e65b070ae27729d0ef6a7192b1f553639b972f0af0400eae6689a530",
   "method": "Proof",
   "scope": "OneArrangement",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

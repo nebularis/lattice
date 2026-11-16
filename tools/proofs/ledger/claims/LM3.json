@@ -1,7 +1,7 @@
 {
   "subject": "LM3",
   "statedAs": "Merge.no_residual_unless_declared",
-  "statementDigest": "sha256:12d1c67957fe5b11b5faa7ce64e401653fd4ad233ae46a34ebcbed019fe5deed",
+  "statementDigest": "sha256:80d71782b4ecf372ad7adaf512796564472b3ed807c59d9f68a96761ea834f8e",
   "method": "Proof",
   "scope": "EveryPolicyAndFiniteKeySet",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

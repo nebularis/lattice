@@ -1836,7 +1836,7 @@ definition attributed ::
   "attributed K R basis ps q = (\<Sum>i<length ps. R (basis i) (total K (ps ! i)) q)"
 ```
 
-**Credits, and what a posting records.** A `credit` is applied at the account it is posted to, up to that account's room under its ceiling. Each ancestor that accepts its kind takes the least of the amount applied and its own room, and where it takes less the difference is a cut at that ancestor. A `book` states each account's parent, its stated amount, its ceiling, the kinds of credit it accepts and whether it refuses a debit that no longer fits. A `request` is a draw or a restoration, and a posting keeps what was offered, what was applied and the cuts. `post` applies one request and `run` a list of them in turn. `moved` is what one posting moves an account by, read from what the posting records, and `summed` is a balance as a sum, the stated amount less the debits, plus the credits applied, less the cuts.
+**Credits, and what a posting records.** A `credit` is applied at the account it is posted to, up to that account's room under its ceiling. Each ancestor that accepts its kind takes the least of the amount applied and its own room, and where it takes less the difference is a cut at that ancestor. A `book` states each account's parent, its stated amount, its ceiling, the kinds of credit it accepts and whether it refuses a debit that no longer fits. A `request` is a draw or a restoration, and a posting keeps what was offered, what was applied and the cuts. `post` applies one request and `run` a list of them in turn. A credit posted to an account that does not accept its kind is refused, so nothing is posted and no balance moves, while `credit` itself stays total. `moved` is what one posting moves an account by, read from what the posting records, and `summed` is a balance as a sum, the stated amount less the debits, plus the credits applied, less the cuts.
 
 ```isabelle-spec
 definition credit ::
@@ -1868,8 +1868,10 @@ definition post ::
         Draw a x \<Rightarrow>
           (case draw_on (path (parent_of B) a) x bal of (bal', ok) \<Rightarrow> (if ok then Some (Drawn a x) else None, bal'))
       | Restore a c x \<Rightarrow>
-          (case credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal of
-             (applied, cuts, bal') \<Rightarrow> (Some (Restored a c x applied cuts), bal')))"
+          (if restores B a c then
+             (case credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal of
+                (applied, cuts, bal') \<Rightarrow> (Some (Restored a c x applied cuts), bal'))
+           else (None, bal)))"
 
 fun run ::
   "('a, 'c, 'n::linordered_idom) book \<Rightarrow> ('a, 'c, 'n) request list \<Rightarrow> ('a, 'n) balances

@@ -1,7 +1,7 @@
 {
   "subject": "LW5",
   "statedAs": "Units.whole_groups_need_no_order",
-  "statementDigest": "sha256:61f76c6e5c28a9d7c6ea85cbf622364023d11ca6875ba100ef925989957a7637",
+  "statementDigest": "sha256:f873065d720fb1d9fa055c7cdea73946b10acdccc629416ae382b99203cfad09",
   "method": "Proof",
   "scope": "EveryFiniteKeySetAndInjectiveOrder",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

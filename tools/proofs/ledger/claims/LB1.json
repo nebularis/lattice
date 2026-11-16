@@ -1,7 +1,7 @@
 {
   "subject": "LB1",
   "statedAs": "Credits.the_step_agrees_with_debit_and_credit",
-  "statementDigest": "sha256:807e5b1948bdfa0aaa3cf5a4956daa508f08ced9ffb1fb112f24c0167acb8a67",
+  "statementDigest": "sha256:fc10bb4cbe7784d9c4ca4ce2ee8501e9cbe77aa4e063a30e77239151ccad8b9e",
   "method": "Proof",
   "scope": "EveryBookAndRequest",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

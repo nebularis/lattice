@@ -1,7 +1,7 @@
 {
   "subject": "LV3",
   "statedAs": "Pots.rationing_allocation_accounts_for_what_was_asked",
-  "statementDigest": "sha256:92c398bf91a23f2e7985d983f49678871ef2ebd4a967ea615f0acb9f3e986288",
+  "statementDigest": "sha256:397400d8ee9bbb43303ab392319399009423cfa3133cb89856145c1452c02f2b",
   "method": "Proof",
   "scope": "EveryRationingRuleAndSequence",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

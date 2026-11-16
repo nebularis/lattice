@@ -1,7 +1,7 @@
 {
   "subject": "LC3",
   "statedAs": "Draws.nothing_posted_beyond_availability",
-  "statementDigest": "sha256:87ad73643b297ad6228e4764180401be5c54f81c65c8a7a8f67cf00c4f46da69",
+  "statementDigest": "sha256:4ba3ad7edbaa9e1d7907796d33ddaff399c960546b943801b2f0f20a97668d5a",
   "method": "Proof",
   "scope": "EveryRationingRuleSequenceAndStep",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

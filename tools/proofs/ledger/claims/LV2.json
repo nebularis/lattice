@@ -1,7 +1,7 @@
 {
   "subject": "LV2",
   "statedAs": "Predicates.whole_each_rations",
-  "statementDigest": "sha256:01a30d898b857c95f0f89c7b45f32fe443c9ee17f19c1a9fb053486b9793c5e4",
+  "statementDigest": "sha256:9a26bc47795c1d1403848c42b722b0cecfab664cd0582944eb74f13f84241737",
   "method": "Proof",
   "scope": "EveryListOfDistinctKeys",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

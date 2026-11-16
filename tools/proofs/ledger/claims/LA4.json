@@ -1,7 +1,7 @@
 {
   "subject": "LA4",
   "statedAs": "Allocation.lawful_rules_differ",
-  "statementDigest": "sha256:603f735e07a7a3b08f38cff12657b7901ca5fb2a52616c8323a735e63fc7674e",
+  "statementDigest": "sha256:a7cd1c747e2cdb9fdb519ad8392c24c0a2017613f47dcc9e16f00e301415b5f6",
   "method": "Proof",
   "scope": "OneArrangement",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

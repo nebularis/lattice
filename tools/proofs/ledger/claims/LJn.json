@@ -1,7 +1,7 @@
 {
   "subject": "LJn",
   "statedAs": "Merge.a_facility_with_a_sublimit",
-  "statementDigest": "sha256:df07ac09ed9028bdb034090bb3fd9b03991976ab64842a3e96e71cb6afedb725",
+  "statementDigest": "sha256:3252328279d601d623716e8465994a7ce3c9955f4c04c2e070ebc4dce46ce906",
   "method": "Proof",
   "scope": "OneArrangement",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

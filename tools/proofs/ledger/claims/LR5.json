@@ -1,7 +1,7 @@
 {
   "subject": "LR5",
   "statedAs": "Rounding.rounded_part_within_one_unit, rounded_spread_takes_what_the_exact_takes",
-  "statementDigest": "sha256:2f7718032d9bcce8f2202f2973028176575b9e476ea32f251f38584f70e8fea2",
+  "statementDigest": "sha256:0bf55c961ee566ef8e19d1a3bfb88b5ab2073df57aa302210978dca68ca56ad2",
   "method": "Proof",
   "scope": "EveryLawfulRuleAndSequence",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

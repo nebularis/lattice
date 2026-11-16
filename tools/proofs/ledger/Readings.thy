@@ -107,10 +107,18 @@ next
     qed
   next
     case (Restore a c x)
-    obtain ap cuts bal1 where cr: "credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal = (ap, cuts, bal1)"
-      by (cases "credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal") auto
-    then have "post B q bal = (Some (Restored a c x ap cuts), bal1)" using Restore by (simp add: post_def)
-    then show ?thesis using IH[of bal1] cr Restore by (simp add: prod.case_eq_if)
+    show ?thesis
+    proof (cases "restores B a c")
+      case True
+      obtain ap cuts bal1 where cr: "credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal = (ap, cuts, bal1)"
+        by (cases "credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal") auto
+      then have "post B q bal = (Some (Restored a c x ap cuts), bal1)" using Restore True by (simp add: post_def)
+      then show ?thesis using IH[of bal1] cr Restore by (simp add: prod.case_eq_if)
+    next
+      case False
+      then have "post B q bal = (None, bal)" using Restore by (simp add: post_def)
+      then show ?thesis using IH[of bal] by simp
+    qed
   qed
 qed
 

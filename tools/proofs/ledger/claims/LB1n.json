@@ -1,7 +1,7 @@
 {
   "subject": "LB1n",
   "statedAs": "Credits.the_ceiling_applied_once_overstates",
-  "statementDigest": "sha256:6b4a9c92d9b63cbaed4cb6634e4ff081de73cb4b6372685de49d8da2fc5383d5",
+  "statementDigest": "sha256:fc5695038c3ddf787eb19e24fe57818b440616062b19f32eae64f02e519d9d1f",
   "method": "Proof",
   "scope": "OneHistory",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

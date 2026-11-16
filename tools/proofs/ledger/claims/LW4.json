@@ -1,0 +1,13 @@
+{
+  "subject": "LW4",
+  "statedAs": "Units.no_order_renaming_carries_the_grants",
+  "statementDigest": "sha256:c4f1cc650150b0dec765ea6538f693bd756c3ea238b1e365f1842fd5a0b7fcaa",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySet",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}
