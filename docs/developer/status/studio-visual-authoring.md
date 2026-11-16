@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-O7 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Phase O is built. Ready to start: SVA-R2, SVA-R3 and SVA-R4 against the runs contract, the smaller SVA-B2c and SVA-B2d, and SVA-B5.
+**Next action:** paused after SVA-B2c for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-R2, SVA-R3 and SVA-R4 against the runs contract, SVA-B2d, and SVA-B5.
 
 ## Slices
 
@@ -31,7 +31,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2a | several imports held by one write, each with its ontology and version IRI | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | built 2026-11-13, building 2026-11-13 | SVA-B2a |
-| SVA-B2c | the browser's live validation takes the baseline | building 2026-11-16 | SVA-B2b |
+| SVA-B2c | the browser's live validation takes the baseline | built 2026-11-16, building 2026-11-16 | SVA-B2b |
 | SVA-B2d | the writer reads an import's content from its fence job, and the jobless fence command goes | planned | SVA-B2a |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | built 2026-11-13, building 2026-11-13 | SVA-B1, SVA-B2a |
 | SVA-B4 | the import graph | built 2026-11-13, building 2026-11-13 | SVA-B3, SVA-O1 |
@@ -86,6 +86,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-15, SVA-O4: the test of whether a path comes near a node was made to find nothing, so no edge was routed. The tests of routing and the acceptance tests over the facility sample failed. Restored.
 - 2026-11-15, SVA-O5: the kit was stopped from storing positions. Both tests of a position kept after a reload failed. Restored, both passing. The slice's pack records ten more breaks, tried as each test was written.
 - 2026-11-16, SVA-O7: two browser tests and eighteen unit tests were added. Detaching a mapping and adding children drew Cover over Rate before the fix. Removing the clearance in the kit failed the first test with that overlap, and making the beside placement unreachable failed the second and three unit tests.
+- 2026-11-16, SVA-B2c: stopping the baseline's submission failed the drawer test with no ImportNotHeld finding, and dropping the held imports from the key failed the hold test, which kept the warning in the drawer. Both breaks were restored.
 
 ## Log
 
@@ -127,3 +128,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: SVA-O7 built, [Validation Pack](../validation/SVA-O7.md). A node an edit adds is now drawn at the nearest place clear of the nodes that kept theirs, and the label of an edge shorter than itself is placed beside it, so the line stays visible and opens its menu.
 - 2026-11-16: SVA-O7 verified by a second run of its checks, 362 unit tests, the type check and 38 browser tests on the fake service. The label of a short edge is moved out until it covers no node, which for two stacked mappings puts it beyond their sides, some way from the line, since no nearer place is free. The test of the label was written after the fix, so no run of it on the old code exists, and it was shown to fail on a break. Every commit of this unit since 2026-11-12 carries that day in its AI disclosure trailer, the script that writes it having held the date fixed, and from this commit the trailer carries the day of the commit.
 - 2026-11-16: SVA-B2c picked up.
+- 2026-11-16: SVA-B2c built, [Validation Pack](../validation/SVA-B2c.md). The baseline is validated live by the same hook as a part, again when the held imports change, and its warnings reach the problems drawer, the Baseline badge and the pill, and open the Baseline view. The fake service now serves an empty publication table so the Publish view opens, and a failed baseline validation is shown nowhere.
+- 2026-11-16: SVA-B2c verified by a second run of its checks, 365 unit tests, the type check and 41 browser tests on the fake service. Two things it left are added to SVA-B5: a baseline validation that is running or could not run is not shown in the workspace's state pill, and the Overview's count reads the parts alone. The fake service gained the publication units route, without which the Publish view could not be reached to release an import.

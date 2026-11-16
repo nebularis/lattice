@@ -2,7 +2,8 @@
 // A workspace's state in the browser: the baseline, and per configuration the saved graph, the
 // edited graph with its undo history, its revision and its latest validation. Edits never reach
 // the service until saved. Validation runs on the edited graph, 600 ms after the last edit, with
-// at most one job in flight per configuration, and a result for an older graph is discarded.
+// at most one job in flight per configuration, and a result for an older graph is discarded. The
+// baseline is validated by the same machinery, again when the set of held imports changes.
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ApiError, Conflict, api, awaitJob, type WorkspaceSummary } from "./api";
@@ -34,6 +35,9 @@ const DEPENDS: Record<Part, Part[]> = {
   surface: ["vocabulary"],
 };
 
+/** What is validated live: a configuration part, or the baseline, whose findings are the imports no held document declares. */
+export type Validated = Part | "baseline";
+
 export interface Validation {
   state: "idle" | "running" | "done" | "failed";
   issues: Issue[];
@@ -63,6 +67,8 @@ export interface Conflicted {
 interface State {
   summary?: WorkspaceSummary;
   baseline?: { graph: Graph; index: Baseline; revision: string };
+  /** The baseline's latest validation, in the way a part's is kept on its configuration. */
+  baselineValidation?: Validation;
   configs: Partial<Record<Part, Config>>;
   conflict?: Conflicted;
   error?: string;
@@ -72,7 +78,7 @@ type Action =
   | { type: "loaded"; summary: WorkspaceSummary; baseline: Graph; baselineRevision: string; configs: Record<Part, { graph: Graph; revision: string }> }
   | { type: "edit"; part: Part; graph: Graph }
   | { type: "undo" | "redo"; part: Part }
-  | { type: "validation"; part: Part; validation: Validation }
+  | { type: "validation"; part: Validated; validation: Validation }
   | { type: "saving"; part: Part; saving: boolean }
   | { type: "saved"; part: Part; graph: Graph; revision: string }
   | { type: "conflict"; conflict?: Conflicted }
@@ -116,6 +122,7 @@ function reducer(state: State, action: Action): State {
         c.future.length ? { ...c, current: c.future[0], future: c.future.slice(1), past: [...c.past, c.current] } : c,
       );
     case "validation":
+      if (action.part === "baseline") return { ...state, baselineValidation: action.validation };
       return update(state, action.part, (c) => ({ ...c, validation: action.validation }));
     case "saving":
       return update(state, action.part, (c) => ({ ...c, saving: action.saving }));
@@ -132,6 +139,11 @@ function reducer(state: State, action: Action): State {
 
 export function isDirty(c?: Config): boolean {
   return !!c && c.current !== c.saved && c.current.toTurtle() !== c.saved.toTurtle();
+}
+
+/** What the baseline's validation depends on besides the baseline: the digests of the imports the workspace holds, in a fixed order. */
+export function heldImportsKey(imports: { digest: string }[] | undefined): string {
+  return (imports ?? []).map((i) => i.digest).sort().join(" ");
 }
 
 export function useWorkspace(id: string, vocab: Vocabulary) {
@@ -209,6 +221,7 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
 
   // A fixed number of calls in a fixed order, as the rules of hooks require.
   for (const part of PARTS) useValidation(id, part, state, dispatch); // eslint-disable-line react-hooks/rules-of-hooks
+  useValidation(id, "baseline", state, dispatch);
 
   // What the workspace depends on and imports, read only (ADR-A149 decisions 6 and 7). A followed lineage is read under
   // the lineage's IRI, which a draft names, and a pinned version under its own.
@@ -248,14 +261,15 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
   }, [state.configs, state.baseline, context]);
 
   const issues = useMemo(() => {
-    const out = Object.fromEntries(PARTS.map((p) => [p, [] as Issue[]])) as Record<Part, Issue[]>;
+    const out = Object.fromEntries([...PARTS, "baseline"].map((p) => [p, [] as Issue[]])) as Record<Validated, Issue[]>;
+    out.baseline = [...(state.baselineValidation?.issues ?? [])].sort(bySeverity);
     for (const part of PARTS) {
       const c = state.configs[part];
       if (!c || !state.baseline) continue;
       out[part] = [...c.validation.issues, ...checkReferences(c.current, state.baseline.index, vocab, world)].sort(bySeverity);
     }
     return out;
-  }, [state.configs, state.baseline, vocab, world]);
+  }, [state.configs, state.baseline, state.baselineValidation, vocab, world]);
 
   return {
     state,
@@ -275,14 +289,19 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
 
 export type WorkspaceModel = ReturnType<typeof useWorkspace>;
 
-function useValidation(id: string, part: Part, state: State, dispatch: (a: Action) => void) {
-  const current = state.configs[part]?.current;
+function validationOf(state: State, subject: Validated): Validation | undefined {
+  return subject === "baseline" ? state.baselineValidation : state.configs[subject]?.validation;
+}
+
+function useValidation(id: string, part: Validated, state: State, dispatch: (a: Action) => void) {
+  const current = part === "baseline" ? state.baseline?.graph : state.configs[part]?.current;
   const baselineRevision = state.baseline?.revision;
   const inFlight = useRef(false);
   const queued = useRef<Graph | undefined>(undefined);
   const latest = useRef(state);
   latest.current = state;
-  const dependencies = DEPENDS[part].map((p) => state.configs[p]?.current);
+  // A part is validated again when a part it depends on changes, the baseline when the held imports do.
+  const dependencies: unknown[] = part === "baseline" ? [heldImportsKey(state.summary?.imports)] : DEPENDS[part].map((p) => state.configs[p]?.current);
   // Ends when the workspace's view goes, so no closure of an old mount goes on reading a job nobody shows (plan studio-worker-liveness, RC5).
   const gone = useRef<AbortController>(undefined);
   useEffect(() => {
@@ -293,7 +312,8 @@ function useValidation(id: string, part: Part, state: State, dispatch: (a: Actio
   useEffect(() => {
     if (!current || !baselineRevision) return;
     // The job checks this part with every other part as edited beside it, as context.
-    const body = () => {
+    const body = (graph: Graph) => {
+      if (part === "baseline") return latest.current.baseline?.graph ?? graph;
       let g = Graph.empty();
       for (const p of PARTS) g = g.merge(latest.current.configs[p]?.current ?? Graph.empty());
       return g;
@@ -310,10 +330,10 @@ function useValidation(id: string, part: Part, state: State, dispatch: (a: Actio
       }
       inFlight.current = true;
       const signal = gone.current?.signal;
-      dispatch({ type: "validation", part, validation: { state: "running", issues: latest.current.configs[part]?.validation.issues ?? [], of: graph, job: latest.current.configs[part]?.validation.job } });
+      dispatch({ type: "validation", part, validation: { state: "running", issues: validationOf(latest.current, part)?.issues ?? [], of: graph, job: validationOf(latest.current, part)?.job } });
       let submitted: string | undefined;
       try {
-        submitted = await api.submit(id, "validate", part, body());
+        submitted = await api.submit(id, "validate", part, body(graph));
         const jobId = submitted;
         const job = await awaitJob(jobId, signal);
         void api.deleteJob(jobId).catch(() => undefined);

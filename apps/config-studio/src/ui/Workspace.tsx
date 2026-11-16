@@ -245,7 +245,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           ) : (
             <>
               <NavLink to="overview" view={view} id={id} icon={<LayoutDashboard size={16} />} label="Overview" />
-              <NavLink to="baseline" view={view} id={id} icon={<Shapes size={16} />} label="Baseline" count={baseline.classes.size} />
+              <NavLink to="baseline" view={view} id={id} icon={<Shapes size={16} />} label="Baseline" count={baseline.classes.size} issues={model.issues.baseline} />
               <div className="group">Configuration</div>
               {PART_NAV.map((n) => (
                 <NavLink key={n.part} to={n.part} view={view} id={id} icon={n.icon} label={n.label} count={itemLists[n.part].length} issues={model.issues[n.part]} dirty={dirty[n.part]} />
@@ -308,7 +308,7 @@ function NavLink(props: { to: View; view: View; id: string; icon: React.ReactNod
 function ValidationPill({ model }: { model: WorkspaceModel }) {
   const running = PARTS.some((p) => model.state.configs[p]?.validation.state === "running");
   const failed = PARTS.find((p) => model.state.configs[p]?.validation.state === "failed");
-  const all = PARTS.flatMap((p) => model.issues[p]);
+  const all = [...PARTS.flatMap((p) => model.issues[p]), ...model.issues.baseline];
   const violations = all.filter((i) => i.severity === "Violation").length;
   const warnings = all.filter((i) => i.severity === "Warning").length;
   if (running) {
@@ -385,12 +385,14 @@ function Inspector({ part, node }: { part: Part; node?: string }) {
 }
 
 function Problems({ open, toggle }: { open: boolean; toggle: () => void }) {
-  const { model, open: openNode } = useStudio();
-  const jump = (part: Part, issue: Issue) => {
+  const { id, model, open: openNode } = useStudio();
+  const jump = (part: Part | "baseline", issue: Issue) => {
+    // A finding on the baseline opens the Baseline view, where its missing imports are listed.
+    if (part === "baseline") return go("w", id, "baseline");
     const node = nodeFor(model.state.configs[part]!.current, issue);
     if (node) openNode(part, node, issue.path);
   };
-  const rows = PARTS.flatMap((part) => model.issues[part].map((issue) => ({ part, issue })));
+  const rows = [...PARTS, "baseline" as const].flatMap((part) => model.issues[part].map((issue) => ({ part, issue })));
   const v = rows.filter((r) => r.issue.severity === "Violation").length;
   const w = rows.length - v;
   return (

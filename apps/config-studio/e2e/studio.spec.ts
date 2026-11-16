@@ -1313,3 +1313,78 @@ test("the template edge of a mapping is seen beside its label and opens its menu
   await page.mouse.click(at.x, at.y, { button: "right" });
   await expect(page.getByRole("menu").getByRole("menuitem")).toHaveText(["Remove the template link"]);
 });
+
+// SVA-B2c. The baseline is validated live, as a configuration part is, and its findings reach the problems drawer.
+const problems = (page: Page) => page.getByRole("region", { name: "Problems" });
+const baselineBadge = (page: Page) => page.getByRole("navigation", { name: "Workspace" }).getByRole("link", { name: /^Baseline/ }).locator(".dot.warn");
+const baselineValidations = (fake: FakeService) => [...fake.jobs.entries()].filter(([, j]) => j.kind === "validate" && j.target === "baseline");
+
+async function holdImportA(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Import ontologies" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import ontologies" });
+  await dialog.getByLabel("Files", { exact: true }).setInputFiles([{ name: "a.ttl", ...ontology(IMPORT_A) }]);
+  await dialog.getByRole("button", { name: "Show the plan" }).click();
+  await dialog.getByRole("button", { name: "Hold 1 import" }).click();
+  await expect(dialog).toHaveCount(0);
+}
+
+test("an import no held document declares is a warning in the problems drawer and on the Baseline entry, and choosing it opens the Baseline view", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await importingWorkspace(page, fake, [IMPORT_A]);
+  await page.goto(`/#/w/${ws}/overview`);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  const finding = problems(page).getByRole("listitem").filter({ hasText: "ImportNotHeld" });
+  await expect(finding).toHaveCount(1);
+  await expect(finding).toContainText(`imports ${IMPORT_A}`);
+  await expect(baselineBadge(page)).toHaveCount(1);
+  expect(baselineValidations(fake).map(([, j]) => j.body)[0]).toMatch(/owl:imports\s+ont:a/);
+  // a warning is a warning in the pill too, never a violation
+  await expect(page.getByRole("status")).toHaveText("1 warning");
+
+  await finding.click();
+  await expect(page).toHaveURL(new RegExp(`/w/${ws}/baseline$`));
+  await expect(page.getByRole("region", { name: "Ontologies" })).toBeVisible();
+  // the view's own list says it once, and the finding is not added to the view
+  await expect(page.getByRole("region", { name: "Ontologies" }).getByText("missing", { exact: true })).toHaveCount(1);
+  await expect(page.getByRole("main").getByText("ImportNotHeld")).toHaveCount(0);
+});
+
+test("holding the import takes the warning from the drawer with no edit of the baseline, and releasing it brings the warning back", async ({ page }) => {
+  const fake = new FakeService();
+  const ws = await importingWorkspace(page, fake, [IMPORT_A]);
+  await expect(problems(page).getByText("ImportNotHeld")).toHaveCount(1);
+  await expect(baselineBadge(page)).toHaveCount(1);
+  const before = baselineValidations(fake).length;
+
+  await holdImportA(page);
+  await expect(problems(page).getByText("No problems in any part of the workspace.")).toBeVisible();
+  await expect(problems(page).getByText("ImportNotHeld")).toHaveCount(0);
+  await expect(baselineBadge(page)).toHaveCount(0);
+  expect(baselineValidations(fake).length).toBeGreaterThan(before);
+  expect(fake.saves.filter((s) => s.name === "baseline")).toHaveLength(0);
+
+  // the Publish view lists the held imports with a way to release each
+  await page.goto(`/#/w/${ws}/publish`);
+  await page.getByRole("button", { name: `Release ${IMPORT_A}` }).click();
+  await expect(problems(page).getByText("ImportNotHeld")).toHaveCount(1);
+  await expect(baselineBadge(page)).toHaveCount(1);
+  expect(fake.workspaces.get(ws)!.imports).toHaveLength(0);
+  expect(fake.saves.filter((s) => s.name === "baseline")).toHaveLength(0);
+});
+
+test("leaving a workspace ends the waiting on the baseline's validation, and coming back leaves no more of them than before", async ({ page }) => {
+  const fake = new FakeService();
+  fake.hold.add("validate:baseline");
+  const ws = await importingWorkspace(page, fake, [IMPORT_A]);
+  const open = () => baselineValidations(fake).filter(([id]) => !fake.deletedJobs.includes(id)).length;
+  await page.waitForTimeout(1500);
+  const first = open();
+  expect(first).toBe(1);
+  await page.goto("/#/");
+  await page.waitForTimeout(500);
+  expect(open()).toBe(0);
+  await page.goto(`/#/w/${ws}`);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.waitForTimeout(1500);
+  expect(open()).toBe(first);
+});

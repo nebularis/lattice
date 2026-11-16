@@ -416,6 +416,8 @@ export class FakeService {
     if (parts[0] === "session") return json({ provider: "local", principal: "developer", admin: true, principalOption: ["developer"], administrator: ["developer"] });
     if (parts[0] === "status") return json({ warnings: this.warnings });
     if (parts[0] === "features") return json({ features: [] });
+    // The publication units' table, empty here, so the Publish view opens and lists the imports held (SVA-B2c).
+    if (parts[0] === "publication-units") return turtle(PREFIX);
     if (parts[0] === "vocabulary") return turtle(readFileSync(join(assets, "vocabulary.ttl"), "utf-8"));
     if (parts[0] === "ontologies") {
       if (!this.stagedOntologies) return route.fulfill({ status: 404, body: "not found" });
