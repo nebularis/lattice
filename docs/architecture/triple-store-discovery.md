@@ -579,3 +579,8 @@ Recorded in the domain on 2026-11-12, after `v0.1.0`. `mise run graph:ask -- rea
 
 **What it means for LATTICE.** The guarded write of PAT-21 and PAT-04 and the write `dal:Optimistic` generates (MEC-59) hold on Jena in memory and on TDB2 called in process, which is the evidence a store description declaring `dal:providesSingleWriter` for either rests on (PRI-59). The ledger's native write benchmark (LG-17) holds both stores' guarded runs to the replay of their commits. A durable commit on TDB2 costs 84 to 98 ms on a laptop, so a writer that retries after a lost race gains nothing from more threads there, which bears on how many writers a ledger runs and on whether its guard is one revision per owner. A guarded update over HTTP to Fuseki is not probed (TSD-62 has its timing).
 
+### TSD-75. On rdflib a pattern inside a named graph scans the whole store for its predicate, so a read over many graphs costs graphs times rows
+
+Recorded in the domain on 2026-11-16, after `v0.1.0`. `mise run graph:ask -- read TSD-75` prints it once the domain is pinned at a version that holds it.
+
+**What it means for LATTICE.** The ledger's period graphs bound a read on Oxigraph and Jena, and not on rdflib's memory store, where a read over every period costs the graphs times the rows. rdflib is a test engine here, so the closing recurrence is not chosen for it, and a cost measured on rdflib for a read over period graphs says nothing of another store (STD-176). The credit kinds benchmark's probe of the period length shows it, 12.2 s at 156 graphs and 59.0 s at 969 for the same 20,000 rows.
