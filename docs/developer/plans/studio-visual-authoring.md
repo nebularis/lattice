@@ -59,6 +59,7 @@ A slice's documents change in the slice. Estimates are in tokens.
 | SVA-R3 | the run worker, from the transforms worker: two queues, a bounded number of requests at once, the deadline, the redelivery rule, frames. XSLT and JOLT run as runs, and the transforms route is answered by the same code | `platform/config-studio-transforms` | a transform's result as a run equals its result by the old route, and a run redelivered gives one failed frame | SVA-R1 | 220k |
 | SVA-R4 | the browser: `runs.ts`, which numbers a pane's runs, keeps the first frame per `seq`, holds the deadline and falls back to the waiting request. The dock's run pane, controls left and displays right | `apps/config-studio` | property tests pass frames duplicated, reordered and missing, and the pane shows running, complete, incomplete and failed | SVA-R1 | 200k |
 | SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line: the tab's event states its JSON shape with the frame as its data, a client leaves the deadline to the service and allows a grace after it before it calls a run incomplete, so the service's own failed frame at the deadline is seen, `more` is said to be advisory since a frame with no part continues the current one, and what a client shows when a frame was lost before the deadline's failed frame is stated | `contracts/config-studio`, `apps/config-studio` | the contract says each, the schema and its tests agree, and the controller's tests hold the grace and the omitted deadline | SVA-R4 | 110k |
+| SVA-U1 | columns the author collapses and resizes: the mode navigation, the mode's list column and the right-hand dock each collapse to a rail and come back, the boundaries beside the middle column are dragged or moved with the arrow keys, and each column's state and width are kept in the browser. The dock no longer widens itself for the Sample tab or starts closed on a narrow window | `apps/config-studio` | with the Sample tab open the mapping tree is not clipped once a column is collapsed, a width and a collapsed column are kept after a reload, and each toggle and handle works from the keyboard, each held by a browser test | SVA-R4 | 150k |
 | SVA-R5 | the failure cases of the sketch's section 4.3 on the real stack, in the harness and the liveness suite | `tools/testing/studio_harness`, `apps/config-studio/e2e-stack` | each of the five cases has a test that fails when its rule is broken | SVA-R2, SVA-R3, SVA-R4 | 180k |
 
 ### Phase B, the baseline
@@ -135,6 +136,8 @@ flowchart LR
     R1 --> R3["SVA-R3"]
     R1 --> R4["SVA-R4"]
     R4 --> R4a["SVA-R4a"]
+    R4 --> U1["SVA-U1"]
+    U1 --> M3b
     R4a --> R2
     R2 --> R5["SVA-R5"]
     R3 --> R5
