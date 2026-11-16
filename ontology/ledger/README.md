@@ -269,7 +269,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** One evaluation's write of records, recorded at one position.
 
-**Utility.** What an evaluation records about itself beyond its postings. Every posting, balance record, merge record and checkpoint names the pass that wrote it. A pass's position is on the effective axis, so the records it writes are effective no later than it (STD-294), and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged.
+**Utility.** What an evaluation records about itself beyond its postings. Every posting, balance record, merge record and checkpoint names the pass that wrote it. A pass's position is on the effective axis, so the records it writes are effective no later than it, and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged.
 
 **Restrictions.**
 
@@ -306,7 +306,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Subclass of.** `fnd:DerivedArtefact`
 
-**Utility.** Materialise one per account a pass moved, and for its ancestors where a reader needs them. It is keyed by the account and the pass, so it reads along the recorded axis. A reading as of an effective position folds the postings instead (STD-278).
+**Utility.** Materialise one per account a pass moved, and for its ancestors where a reader needs them. It is keyed by the account and the pass, so it reads along the recorded axis. A reading as of an effective position folds the postings instead.
 
 **Restrictions.**
 
@@ -469,7 +469,7 @@ availability.
 
 **Definition.** Deprecated: when the account was to return to its stated amount.
 
-**Utility.** Use `ldg:periodRecurrence`. A reset credit restoring the account lets a draw effective in the old period but recorded after the reset be tested against the new period's amount, so a periodic amount is one account per period instead (PDD-15). Removed with Behaviour's allowance terms (LG-3).
+**Utility.** Use `ldg:periodRecurrence`. A reset credit restoring the account lets a draw effective in the old period but recorded after the reset be tested against the new period's amount, so a periodic amount is one account per period instead. Removed with Behaviour's allowance terms.
 
 **Domain.** `ldg:AccountDefinition`
 
@@ -647,7 +647,7 @@ which may differ by date, is recorded with that draw.
 
 #### `ldg:forPurpose`
 
-**Definition.** The purpose a draw names (LG-Q2).
+**Definition.** The purpose a draw names.
 
 **Domain.** `ldg:Posting`
 
@@ -657,7 +657,7 @@ which may differ by date, is recorded with that draw.
 
 #### `ldg:amountAsDrawn`
 
-**Definition.** The amount as drawn, in another value space than the account's (LG-Q8).
+**Definition.** The amount as drawn, in another value space than the account's.
 
 **Utility.** State it with `ldg:conversionUsed`, both or neither.
 
@@ -669,7 +669,7 @@ which may differ by date, is recorded with that draw.
 
 #### `ldg:conversionUsed`
 
-**Definition.** The conversion a draw in another value space used, with its rate's source and date (LG-Q8).
+**Definition.** The conversion a draw in another value space used, with its rate's source and date.
 
 **Domain.** `ldg:Posting`
 
@@ -689,7 +689,7 @@ which may differ by date, is recorded with that draw.
 
 **Definition.** The evaluation that proposed a grant's draw.
 
-**Utility.** Deliberately has no range: the layer above names its evaluations (LG-4).
+**Utility.** Deliberately has no range: the layer above names its evaluations.
 
 **Domain.** `ldg:Grant`
 
@@ -727,7 +727,7 @@ The configuration declares none. The runtime document's positions are whole numb
 
 **Definition.** Where a fact sits in the arrangement the accounts describe.
 
-**Utility.** Supplied by the domain and comparable across accounts. Never later than the position of the pass that recorded the fact (STD-294).
+**Utility.** Supplied by the domain and comparable across accounts. Never later than the position of the pass that recorded the fact.
 
 **Domain.** `ldg:Posting or ldg:MergeRecord`
 
@@ -823,7 +823,7 @@ The configuration declares none. The runtime document's positions are whole numb
 
 **Definition.** The numerator of a proportional grant's exact share.
 
-**Utility.** State it with `ldg:proportionDenominator`. The share is kept exact because other evaluations cite it, and the posting is rounded (LG-Q6).
+**Utility.** State it with `ldg:proportionDenominator`. The share is kept exact because other evaluations cite it, and the posting is rounded.
 
 **Domain.** `ldg:Grant`
 
@@ -920,7 +920,7 @@ The runtime document's classes are pairwise disjoint, and disjoint from the acco
 
 ### 6.6 Other Axioms
 
-`ldg:resetRecurrence` is deprecated in favour of `ldg:periodRecurrence` (PDD-15).
+`ldg:resetRecurrence` is deprecated in favour of `ldg:periodRecurrence`, since a periodic amount is one account per period and nothing resets an account.
 
 ```turtle-spec
 ldg:resetRecurrence owl:deprecated true .
@@ -1007,13 +1007,15 @@ ldg:resetRecurrence owl:deprecated true .
 
 ### 7.2 Constraints
 
-`shapes/constraints.ttl` holds seven SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, rounding half-even or half-up beside a residual allocation only where the account states how the difference is settled, a credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space. The rounding constraint is LG-Q16's decision (c) by default. Rounding to the nearest can round the shares to more than the amount, which no residual rule takes back, so it is refused unless the wording says how the difference is settled, through `ldg:roundingDifference`, a term proposed for review in section 13 and not yet declared, so until it is the constraint refuses every such account. Each targets the class as one node (`sh:targetNode ldg:AccountDefinition`) and reads every definition in one query, as the runtime laws of section 7.3 do, so a validator that runs a constraint once per focus node runs each once rather than once per definition (TSD-23). A violation's `sh:value` names the definition.
+`shapes/constraints.ttl` holds seven SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, rounding half-even or half-up beside a residual allocation only where the account states how the difference is settled, a credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space. Rounding to the nearest can round the shares to more than the amount, which no residual rule takes back, so it is refused beside a residual rule unless the wording says how the difference is settled, through `ldg:roundingDifference`, a term proposed for review in section 13 and not yet declared, so until it is the constraint refuses every such account. Each targets the class as one node (`sh:targetNode ldg:AccountDefinition`) and reads every definition in one query, as the runtime laws of section 7.3 do, so a validator that runs a constraint once per focus node runs each once rather than once per definition. A violation's `sh:value` names the definition.
 
 <!-- hidden: {"output-file": "shapes/constraints.ttl"}
 ```turtle-shapes
-# SHACL-SPARQL constraints for ldg:AccountDefinition (ADR-A131 decisions 2
-# and 3).
-# Each targets the class as one node and reads every definition in one query (TSD-23).
+# SHACL-SPARQL constraints for ldg:AccountDefinition: the tree has no cycle,
+# units of account match and are extensive, a merge rule states what it needs,
+# a credit ceiling is not below the stated amount, and a key dimension is typed.
+# Each targets the class as one node and reads every definition in one query,
+# so a validator runs each once rather than once per definition.
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
@@ -1086,7 +1088,7 @@ ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
 ldg:NearestRoundingStatesTheDifferenceShape a sh:NodeShape ;
 	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
-		sh:message "Rounding half-even or half-up beside a residual allocation must state how the difference is settled (LG-Q16)." ;
+		sh:message "Rounding half-even or half-up beside a residual allocation must state how the difference is settled." ;
 		sh:select """
 			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
 			SELECT $this ?value WHERE {
@@ -1156,17 +1158,18 @@ ldg:KeyDimensionTypeShape a sh:NodeShape ;
 | `ldg:PartOfAccountFollowsDefinitionShape` | an instance is part of the instance of its definition's parent, under the same period key | |
 | `ldg:PostingNaturalKeyShape` | no two postings on one account share a recorded position and a micro-position | |
 | `ldg:RecordedOrderFollowsPassesShape` | an account's recorded order never runs against the order of the passes that wrote it | |
-| `ldg:NotForwardDatedShape` | no posting or merge is effective later than the pass that recorded it (STD-294) | |
+| `ldg:NotForwardDatedShape` | no posting or merge is effective later than the pass that recorded it | |
 | `ldg:ConversionTogetherShape` | a posting states the amount as drawn and the conversion used both or neither | |
 
-The fold applies a ceiling once, to the total. That is exact where no credit was cut by a ceiling before a later debit in the same subtree, which every example meets, and a history where one was needs the recorded running balance of LG-Q9 to be checked.
+The fold applies a ceiling once, to the total. That is exact where no credit was cut by a ceiling before a later debit in the same subtree, which every example meets, and a history where one was needs a running balance recorded on each posting to be checked, which section 13 leaves open.
 
-Each shape targets the class it checks as a node and reads every instance in one query, so a result's focus node is the class and its value is the record. A shape per record would run one query per record, which took over a minute and a half on 250 postings with rdflib, against a few seconds for the 5,000 postings of LG2-10 this way. Each inner pattern starts from a variable already bound, a record's account or its pass, so no query scans every record once per record.
+Each shape targets the class it checks as a node and reads every instance in one query, so a result's focus node is the class and its value is the record. A shape per record would run one query per record, which took over a minute and a half on 250 postings with rdflib, against a few seconds for 5,000 postings this way. Each inner pattern starts from a variable already bound, a record's account or its pass, so no query scans every record once per record.
 
 <!-- hidden: {"output-file": "shapes/runtime.ttl"}
 ```turtle-shapes
-# SHACL-SPARQL constraints over Ledger's records (ADR-A131 decisions 3, 4 and
-# 6, its two addenda of 2026-10-27, PDD-15, STD-277, STD-294). Each shape
+# SHACL-SPARQL constraints over Ledger's records: balances fold their
+# postings, a merge stays within availability, account instances keep their
+# natural keys and periods, and no record is effective after its pass. Each shape
 # targets the class it checks and reads all its instances in one query, so a
 # dataset's records are checked in one evaluation per law rather than one per
 # record. A result's focus node is the class and its value the record.
@@ -1452,7 +1455,7 @@ ldg:RecordedOrderFollowsPassesShape a sh:NodeShape ;
 ldg:NotForwardDatedShape a sh:NodeShape ;
         sh:targetNode ldg:Posting , ldg:MergeRecord ;
         sh:sparql [
-                sh:message "A record must not be effective later than the pass that recorded it (STD-294)." ;
+                sh:message "A record must not be effective later than the pass that recorded it." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
@@ -1490,7 +1493,7 @@ delegated authority, insurance) and five refusals (cycle, unit mismatch, overdra
 `ldg:Refuse`, an unrounded proportional rule, an intensive unit of account), validated against the
 structural shapes and the constraints of section 7. §5.2 walks through one of them.
 
-The accepted examples and the refusal under `ldg:Refuse` carry their records too: the account instances, the passes, and the postings, balance records and merge records each position writes, which the runtime laws of section 7.3 check. The licensing example keeps one account per site and licence year (PDD-15), with no reset credit.
+The accepted examples and the refusal under `ldg:Refuse` carry their records too: the account instances, the passes, and the postings, balance records and merge records each position writes, which the runtime laws of section 7.3 check. The licensing example keeps one account per site and licence year, with no reset credit.
 
 ## 9. Canonicalisation
 
@@ -1498,9 +1501,9 @@ Not applicable.
 
 ## 10. Formalisation
 
-Ledger's laws are proved in one Isabelle/HOL session, [`tools/proofs/ledger/`](../../tools/proofs/ledger/README.md), from the definitions in the blocks below, which `tools/literate_extract.py` writes, in order and unchanged, to `tools/proofs/ledger/Kernel.thy`. Each law's theorem carries a claim record under the proof gate, and the session's README says what is proved, what is assumed and where the proofs came from. The definitions are those of the target kernel of the ledger plan's LG-21, moved here by LG-9 in the order of its spike's theory, and the plan's sketch of it says why each is as it is and which laws it keeps and gains.
+Ledger's laws are proved in one Isabelle/HOL session, [`tools/proofs/ledger/`](../../tools/proofs/ledger/README.md), from the definitions in the blocks below, which `tools/literate_extract.py` writes, in order and unchanged, to `tools/proofs/ledger/Kernel.thy`. Each law's theorem carries a claim record under the proof gate, and the session's README says what is proved, what is assumed and where the proofs came from. The definitions are grouped by what they define, from amounts to readings, each group after the prose that says what it is for.
 
-The definitions name no domain. Every definition that only adds, subtracts and compares is stated once, over any ordered ring, so it serves whole minor units (`int`) and exact amounts (`rat`) alike, and only a rule names its number type (LG-Q28, K1). No rule reads anything of a key but what the account declares of it, so no allocation depends on how the keys are named (TD-161).
+The definitions name no domain. Every definition that only adds, subtracts and compares is stated once, over any ordered ring, so it serves whole minor units (`int`) and exact amounts (`rat`) alike, and only a rule names its number type. No rule reads anything of a key but what the account declares of it, so no allocation depends on how the keys are named.
 
 ```isabelle-spec
 theory Kernel
@@ -1529,7 +1532,7 @@ definition nonneg_on :: "'k set \<Rightarrow> ('k, 'n::linordered_idom) amounts 
   "nonneg_on K v \<longleftrightarrow> (\<forall>k. 0 \<le> v k) \<and> (\<forall>k. k \<notin> K \<longrightarrow> v k = 0)"
 ```
 
-**What a rule must do.** A rule takes an amount vector and an amount to split, and there are two kinds of split. Rationing divides what is available among claims that together exceed it. Under `rations` no part is negative or above its claim, the parts sum to no more than the amount shared, and splitting the whole returns the whole. What the parts leave of the amount is the rule's `residual`, and a rule is `exact` where it leaves none. `lawful` is rationing with no residual, the four axioms of the kernel before LG-9. Apportionment divides an amount into proper shares by a stated basis, with no part bounded by its basis, and under `apportions` the shares are non-negative and sum to the amount, and the whole basis returns itself.
+**What a rule must do.** A rule takes an amount vector and an amount to split, and there are two kinds of split. Rationing divides what is available among claims that together exceed it. Under `rations` no part is negative or above its claim, the parts sum to no more than the amount shared, and splitting the whole returns the whole. What the parts leave of the amount is the rule's `residual`, and a rule is `exact` where it leaves none. `lawful` is rationing with no residual, so the parts sum to the amount, no part exceeds its claim, no part is negative, and the whole returns the whole. Apportionment divides an amount into proper shares by a stated basis, with no part bounded by its basis, and under `apportions` the shares are non-negative and sum to the amount, and the whole basis returns itself.
 
 ```isabelle-spec
 type_synonym ('k, 'n) rule = "('k, 'n) amounts \<Rightarrow> 'n \<Rightarrow> ('k, 'n) amounts"
@@ -1637,7 +1640,7 @@ definition no_order :: "'k \<Rightarrow> 'k \<Rightarrow> bool" where
   "no_order j k \<longleftrightarrow> False"
 ```
 
-The two residual rules the vocabulary names each take the keys that may take a unit and the order the account declares for odd units. `to_first` is `ldg:ToFirstInOrder`, the floor parts with each unit short given to the first keys in the declared order. `largest_remainder` is `ldg:LargestRemainder`, the floor parts with each unit short given to the largest remainders, ties taken in the declared order, and with no order declared it leaves the units that equal remainders do not decide. `to_nearest` rounds each share to the nearest, for a wording that says how the difference is settled. The rounded shares can sum to more than the amount or to less, a unit over is taken from a share rounded up and a unit short goes to a share rounded down, so no share strays a whole unit from its exact value (LG-Q16, K6). In rationing a unit goes only to a claim not yet met in full, `unmet`, which is what `ration` gives the rule, and in apportionment every key the wording names may take one, which is what `apportion` gives it.
+The two residual rules the vocabulary names each take the keys that may take a unit and the order the account declares for odd units. `to_first` is `ldg:ToFirstInOrder`, the floor parts with each unit short given to the first keys in the declared order. `largest_remainder` is `ldg:LargestRemainder`, the floor parts with each unit short given to the largest remainders, ties taken in the declared order, and with no order declared it leaves the units that equal remainders do not decide. `to_nearest` rounds each share to the nearest, for a wording that says how the difference is settled. The rounded shares can sum to more than the amount or to less, a unit over is taken from a share rounded up and a unit short goes to a share rounded down, so no share strays a whole unit from its exact value. Where the wording does not say how the difference is settled, rounding to the nearest beside a residual rule is refused. In rationing a unit goes only to a claim not yet met in full, `unmet`, which is what `ration` gives the rule, and in apportionment every key the wording names may take one, which is what `apportion` gives it.
 
 ```isabelle-spec
 definition to_first :: "('k \<Rightarrow> nat) \<Rightarrow> 'k set \<Rightarrow> int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
@@ -1703,7 +1706,7 @@ definition draw ::
   "draw parent counts a purpose x bal = draw_on (reach parent counts a purpose) x bal"
 ```
 
-**A merge at one position.** Draws proposed at one position are merged from the requests taken together, which `requested` sums by key and whose keys `proposers` collects. What an account declares for a merge is its `policy`. It says whether requests beyond what is available are refused whole, whether the rank is checked to be injective before any rule runs, the rule for requests of one rank if any, whether a residual may be left, which is off by default (K5), and whether requests of different purposes are refused together. A merge's `outcome` is the grants with the residual, or a refusal with its `reason`. `Exceeds` refuses requests beyond what is available, `Unranked` a rank that is not injective where one is declared, `Tied` a tie where no rule for one is declared, `Undecided` a residual where none may be left, `Mixed` requests of different purposes where they are refused together, and `Crossing` requests whose sets of accounts cross. Requests that fit are granted as asked, whatever the policy. `settle` merges at an account by what is available on its path and charges the path what was granted, and on a refusal changes nothing.
+**A merge at one position.** Draws proposed at one position are merged from the requests taken together, which `requested` sums by key and whose keys `proposers` collects. What an account declares for a merge is its `policy`. It says whether requests beyond what is available are refused whole, whether the rank is checked to be injective before any rule runs, the rule for requests of one rank if any, whether a residual may be left, which is off by default, and whether requests of different purposes are refused together. A merge's `outcome` is the grants with the residual, or a refusal with its `reason`. `Exceeds` refuses requests beyond what is available, `Unranked` a rank that is not injective where one is declared, `Tied` a tie where no rule for one is declared, `Undecided` a residual where none may be left, `Mixed` requests of different purposes where they are refused together, and `Crossing` requests whose sets of accounts cross. Requests that fit are granted as asked, whatever the policy. `settle` merges at an account by what is available on its path and charges the path what was granted, and on a refusal changes nothing.
 
 ```isabelle-spec
 definition requested :: "('k \<times> 'n::linordered_idom) list \<Rightarrow> ('k, 'n) amounts" where
@@ -1751,7 +1754,7 @@ definition settle ::
       | Refused why \<Rightarrow> (Refused why, bal))"
 ```
 
-**Requests with a purpose at one position.** A request may carry a purpose that accounts off the path count. Each account a request reaches limits the set of requests that reach it, `limited`, and what is available to a set is the least its accounts hold, `room`. The sets are settled from the narrowest to the widest, `narrowest_first`, each a merge of its requests as they then stand, so a request is cut to its own limits before it competes (K3, MEC-112). The widest set is the path of the account drawn on, which every request reaches, and a refusal at any set refuses the position, `admit`. Two sets that overlap with neither inside the other have no such order, and the position is refused, `crossing`, as it is where the wording refuses a position of more than one purpose, `mixed`.
+**Requests with a purpose at one position.** A request may carry a purpose that accounts off the path count. Each account a request reaches limits the set of requests that reach it, `limited`, and what is available to a set is the least its accounts hold, `room`. The sets are settled from the narrowest to the widest, `narrowest_first`, each a merge of its requests as they then stand, so a request is cut to its own limits before it competes. The widest set is the path of the account drawn on, which every request reaches, and a refusal at any set refuses the position, `admit`. Two sets that overlap with neither inside the other have no such order, and the position is refused, `crossing`, as it is where the wording refuses a position of more than one purpose, `mixed`.
 
 ```isabelle-spec
 definition limited :: "'k set \<Rightarrow> ('k \<Rightarrow> 'a set) \<Rightarrow> 'a \<Rightarrow> 'k set" where
@@ -1791,7 +1794,7 @@ definition settle_purposes ::
             | Granted g r \<Rightarrow> (Granted g r, (\<lambda>b. bal b - total (limited K R b) g))))"
 ```
 
-**Ranks that hold an amount of their own.** `pots` settles pots under one fund in rank order. What a pot could not place is carried down the list and withheld from what the later pots see of the fund and of every account above it, since any of them may be the one that binds, and a refusal at any pot refuses them all (K4).
+**Ranks that hold an amount of their own.** `pots` settles pots under one fund in rank order. What a pot could not place is carried down the list and withheld from what the later pots see of the fund and of every account above it, since any of them may be the one that binds, and a refusal at any pot refuses them all.
 
 ```isabelle-spec
 fun pots ::
@@ -1807,7 +1810,7 @@ fun pots ::
            | Some (gs, h, bal') \<Rightarrow> Some (g # gs, h, bal')))"
 ```
 
-**One amount allocated across accounts.** `spread` charges each account in turn what its rule grants of what is still asked, and what no account takes is the residual. The accounts charged for an account are its path, or the reach of the amount's purpose. Where the wording refuses a shortfall, `spread_whole` is the allocation whole or changes nothing. An attribution splits the total of each part among parties by a basis for that part and a rule that apportions, and `shares_ok` says each basis is non-negative with a positive total. A share matrix whose rows sum to one, the attribution of the kernel before LG-9, is the case of the proportional rule with the rows as the bases.
+**One amount allocated across accounts.** `spread` charges each account in turn what its rule grants of what is still asked, and what no account takes is the residual. The accounts charged for an account are its path, or the reach of the amount's purpose. Where the wording refuses a shortfall, `spread_whole` is the allocation whole or changes nothing. An attribution splits the total of each part among parties by a basis for that part and a rule that apportions, and `shares_ok` says each basis is non-negative with a positive total. A share matrix whose rows sum to one is the case of the proportional rule with the rows as the bases.
 
 ```isabelle-spec
 fun spread ::
@@ -1886,7 +1889,7 @@ definition summed :: "('a, 'c, 'n::linordered_idom) book \<Rightarrow> ('a, 'c, 
   "summed B ps b = stated B b + sum_list (map (\<lambda>p. moved B p b) ps)"
 ```
 
-**Readings by effective day.** A history is the postings in recorded order, each with its effective day, and a recording is a length of that list. The postings `counted` for a day and a recording are those recorded by the recording and effective by the day. Reading A, `reading_a`, places the recorded amounts on their effective days. Reading B, `reading_b`, settles the same postings again in effective order, by each account's own policy, `replay`, so a debit that no longer fits is refused where its account refuses and cut to what is available where it rations, and the reading never shows a balance an account could not hold (K2). Reading C, `flows`, is what was drawn and what was offered in credits the account accepts.
+**Readings by effective day.** A history is the postings in recorded order, each with its effective day, and a recording is a length of that list. The postings `counted` for a day and a recording are those recorded by the recording and effective by the day. Reading A, `reading_a`, places the recorded amounts on their effective days. Reading B, `reading_b`, settles the same postings again in effective order, by each account's own policy, `replay`, so a debit that no longer fits is refused where its account refuses and cut to what is available where it rations, and the reading never shows a balance an account could not hold. Reading C, `flows`, is what was drawn and what was offered in credits the account accepts.
 
 ```isabelle-spec
 definition counted :: "nat \<Rightarrow> nat \<Rightarrow> (nat \<times> 'e) list \<Rightarrow> (nat \<times> 'e) list" where
@@ -1928,10 +1931,7 @@ end
 
 ## 11. Dependencies
 
-Ledger imports Foundation, for persistent identity, and Quantification, for value spaces, quantities and
-recurrences. It imports Vocabulary only transitively, through Quantification, and declares no term of its
-own as a subclass of a Vocabulary term. Ledger names no term of Party, Eligibility, Wording, Instrument or
-Behaviour (ADR-A131 decision 1).
+Ledger imports Foundation, for persistent identity, and Quantification, for value spaces, quantities and recurrences. It imports Vocabulary only transitively, through Quantification, and declares no term of its own as a subclass of a Vocabulary term. Ledger names no term of Party, Eligibility, Wording, Instrument or Behaviour, so a lower layer never depends on a higher one.
 
 ## 12. Release Notes
 
@@ -1941,13 +1941,11 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   - changes meaning. `ldg:ToFirstInOrder`'s definition says the residual is allocated one unit at a time to the first proposals in order. It said the whole residual went to the first proposal, which the rule never did, so no allocation changes and a reader of the definition is no longer misled.
 - **0.21.1**.
   - no effect. The runtime document, `ledger-runtime`: `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:BalanceRecord`, `ldg:MergeRecord`, `ldg:Grant` and `ldg:Checkpoint`, their properties, and the runtime laws of section 7.3 in `shapes/runtime.ttl`. Every term is new, so no record stated before is read differently.
-  - no effect. New `ldg:periodRecurrence` and `ldg:closingRecurrence` on `ldg:AccountDefinition` (PDD-15), each at most one.
-  - changes meaning (PDD-15). `ldg:resetRecurrence` is deprecated. A definition that states it still conforms, but nothing resets an account any more, so a periodic amount is one account per period under `ldg:periodRecurrence`.
-  - changes meaning (TD-98). `ldg:keyDimension`'s range is `skos:ConceptScheme` or `qnt:ValueSpace`, which its prose and its shape already said. A reasoner no longer infers a value space named as a key dimension to be a concept scheme, and no shape result changes.
+  - no effect. New `ldg:periodRecurrence` and `ldg:closingRecurrence` on `ldg:AccountDefinition`, each at most one, so a periodic amount is one account per period, closed on its own recurrence.
+  - changes meaning. `ldg:resetRecurrence` is deprecated. A definition that states it still conforms, but nothing resets an account any more, so a periodic amount is one account per period under `ldg:periodRecurrence`.
+  - changes meaning. `ldg:keyDimension`'s range is `skos:ConceptScheme` or `qnt:ValueSpace`, which its prose and its shape already said. A reasoner no longer infers a value space named as a key dimension to be a concept scheme, and no shape result changes.
 
-- 0.18.0, the first release of Ledger, joining the substrate's release at its number
-  ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md),
-  [ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). The configuration document:
+- 0.18.0, the first release of Ledger, joining the substrate's release at its number, one version for every layer. The configuration document:
   `ldg:AccountDefinition`, the account tree (`ldg:partOf`), owner kinds, merge rules and their rounding and
   residual parameters, reset, key dimension, purposes, credit ceiling and conversion method. The vocabulary
   document: `ldg:MergeRules`, `ldg:PostingDirections`, `ldg:RoundingMethods`, `ldg:ResidualAllocations` and
@@ -1956,17 +1954,17 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 
 ## 13. Open Issues
 
-- **The running balance on a posting (LG-Q9).** With postings at the drawn account only, which account's running balance a posting would carry is ambiguous where its account has an ancestor. Balance records state the balance per account per pass instead.
-- **A ceiling cut before a later debit.** The fold of section 7.3 applies the credit ceiling once, to the total, which is exact unless a credit was cut by the ceiling before a later debit in the same subtree. Checking such a history needs the running balance of LG-Q9.
-- **A purpose under a shared ancestor.** A draw naming a purpose writes a posting at the purpose-counting account too, and an ancestor of both would fold the draw twice. No example has such an ancestor, and the rule that prevents the double count is open (LF-Q18).
-- **A reinstatement under a capacity pool (LG-Q10).** A credit rolls up, so restoring an aggregate also restores the pool above it, and the insurance example debits the reinstatement at the pool to keep the pool the measure of capacity left. Whether a reinstatement is built that way, or the pool is stated otherwise, is the maintainer's.
-- **Persistence's record families** for postings, balance records and merge records, append-only, are not yet declared. The storage shape they take is what LG-6's fold investigation measures.
-- **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects and threshold regimes drawing on and reading them (ADR-A131 decision 7).
-- **Terms proposed by LG-9 for review.** The target kernel of section 10 names what the README has no term for, and each is proposed here, not yet declared, for the maintainer's review.
+- **The running balance on a posting.** With postings at the drawn account only, which account's running balance a posting would carry is ambiguous where its account has an ancestor. Balance records state the balance per account per pass instead.
+- **A ceiling cut before a later debit.** The fold of section 7.3 applies the credit ceiling once, to the total, which is exact unless a credit was cut by the ceiling before a later debit in the same subtree. Checking such a history needs the running balance on a posting, above.
+- **A purpose under a shared ancestor.** A draw naming a purpose writes a posting at the purpose-counting account too, and an ancestor of both would fold the draw twice. No example has such an ancestor, and the rule that prevents the double count is open.
+- **A reinstatement under a capacity pool.** A credit rolls up, so restoring an aggregate also restores the pool above it, and the insurance example debits the reinstatement at the pool to keep the pool the measure of capacity left. Whether a reinstatement is built that way, or the pool is stated otherwise, is the maintainer's.
+- **Persistence's record families** for postings, balance records and merge records, append-only, are not yet declared. The storage shape they take is what a measurement of the fold decides.
+- **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects and threshold regimes drawing on and reading them.
+- **Terms proposed for review.** The definitions of section 10 name what the README has no term for, and each is proposed here, not yet declared, for the maintainer's review.
   - The two kinds of split, a concept scheme `ldg:SplitKinds` with `ldg:Rationing`, what is available divided among claims that together exceed it with no part above its claim (`rations`), and `ldg:Apportionment`, an amount divided into proper shares by a stated basis with no part bounded by its basis (`apportions`).
-  - A rule that leaves a residual, `ldg:leavesResidual`, a boolean on `ldg:AccountDefinition`, false by default (K5), saying that a merge may grant less than is available where its rule cannot place every unit, as `ldg:LargestRemainder` with no order declared does (`leaves`).
-  - What an account declares for a merge beyond `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation`, which is the kernel's `policy`. `ldg:declaredOrder` names the criterion each request's rank is derived from, the order `ldg:InPriorityOrder`, `ldg:ToFirstInOrder` and `ldg:LargestRemainder` read (TD-161). `ldg:distinctRanks` says the rank is checked to be injective before any rule runs (`ranked`). `ldg:tieRule` names the rule for requests of one rank (`tie`). `ldg:refusesMixedPurposes` says requests of different purposes at one position are refused together (`unmixed`). Refusing requests beyond what is available (`refuses`) is `ldg:Refuse` already.
+  - A rule that leaves a residual, `ldg:leavesResidual`, a boolean on `ldg:AccountDefinition`, false by default, saying that a merge may grant less than is available where its rule cannot place every unit, as `ldg:LargestRemainder` with no order declared does (`leaves`).
+  - What an account declares for a merge beyond `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation`, which is the kernel's `policy`. `ldg:declaredOrder` names the criterion each request's rank is derived from, the order `ldg:InPriorityOrder`, `ldg:ToFirstInOrder` and `ldg:LargestRemainder` read, never the identifiers'. `ldg:distinctRanks` says the rank is checked to be injective before any rule runs (`ranked`). `ldg:tieRule` names the rule for requests of one rank (`tie`). `ldg:refusesMixedPurposes` says requests of different purposes at one position are refused together (`unmixed`). Refusing requests beyond what is available (`refuses`) is `ldg:Refuse` already.
   - The reasons a merge is refused, a concept scheme `ldg:RefusalReasons`, the range of `ldg:refusalReason`, with `ldg:Exceeds`, `ldg:Unranked`, `ldg:Tied`, `ldg:Undecided`, `ldg:Mixed` and `ldg:Crossing`, each as `reason` defines it in section 10.
-  - How the difference left by rounding to the nearest is settled, `ldg:roundingDifference` on `ldg:AccountDefinition`, which the constraint of section 7.2 reads, with a concept scheme `ldg:RoundingDifferences`. `ldg:ShownOnly` says the rounding method governs only how a share is shown and the split is floor then residual (LG-Q16 (a)). `ldg:SettledToNearest` says a unit over is taken from a share rounded up and a unit short goes to a share rounded down, in the declared order and never by the keys (LG-Q16 (b), K6, `to_nearest`).
+  - How the difference left by rounding to the nearest is settled, `ldg:roundingDifference` on `ldg:AccountDefinition`, which the constraint of section 7.2 reads, with a concept scheme `ldg:RoundingDifferences`. `ldg:ShownOnly` says the rounding method governs only how a share is shown and the split is floor then residual. `ldg:SettledToNearest` says a unit over is taken from a share rounded up and a unit short goes to a share rounded down, in the declared order and never by the keys (`to_nearest`).
 - **Allocation with conservation**, one amount split across several accounts by a merge rule, is not yet specified.
 - **A benchmark** under `benchmark/ledger/`, at realistic volumes of accounts and draws, is not yet written.

@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# SHACL-SPARQL constraints over Ledger's records (ADR-A131 decisions 3, 4 and
-# 6, its two addenda of 2026-10-27, PDD-15, STD-277, STD-294). Each shape
+# SHACL-SPARQL constraints over Ledger's records: balances fold their
+# postings, a merge stays within availability, account instances keep their
+# natural keys and periods, and no record is effective after its pass. Each shape
 # targets the class it checks and reads all its instances in one query, so a
 # dataset's records are checked in one evaluation per law rather than one per
 # record. A result's focus node is the class and its value the record.
@@ -287,7 +288,7 @@ ldg:RecordedOrderFollowsPassesShape a sh:NodeShape ;
 ldg:NotForwardDatedShape a sh:NodeShape ;
         sh:targetNode ldg:Posting , ldg:MergeRecord ;
         sh:sparql [
-                sh:message "A record must not be effective later than the pass that recorded it (STD-294)." ;
+                sh:message "A record must not be effective later than the pass that recorded it." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {

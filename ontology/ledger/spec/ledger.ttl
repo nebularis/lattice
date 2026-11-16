@@ -104,7 +104,7 @@ ldg:periodRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:resetRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "Deprecated: when the account was to return to its stated amount." ;
-    fnd:utility "Use ldg:periodRecurrence. A reset credit restoring the account lets a draw effective in the old period but recorded after the reset be tested against the new period's amount, so a periodic amount is one account per period instead (PDD-15). Removed with Behaviour's allowance terms (LG-3)." ;
+    fnd:utility "Use ldg:periodRecurrence. A reset credit restoring the account lets a draw effective in the old period but recorded after the reset be tested against the new period's amount, so a periodic amount is one account per period instead. Removed with Behaviour's allowance terms." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:Recurrence .
 
