@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 22 branches, the units' own state from this tree, the newest board day 2026-11-15.
+Built from the status records on 25 branches, the units' own state from this tree, the newest board day 2026-11-16.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -49,7 +49,7 @@ Built from the status records on 22 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | verified 2026-11-15 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 12 merged, 8 planned, 2 verified, 1 blocked |  |
+| [ledger](plans/ledger.md) | unit | building 2026-11-16 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · verified 2026-11-16 on docs/placement-vehicles-structure · built 2026-10-27 on ccs-trunk, ccs/board-corrections · built 2026-11-08 on claude/adoring-torvalds-ce7ffe, getting-started-vyd, vyvid-quanta-builtin · built 2026-11-09 on ccr-242894ed-j78yu1, claude/modest-ramanujan-cgvs0p, fm/ledger-proofs-second-widening, spi/sql-backend, tutorial/studio-guide · built 2026-11-12 on docs/placement-vehicles-structure-h0e5v9 · built 2026-11-13 on ledger/lg-19-cloud-run · built 2026-11-16 on ledger/lg-22-cloud-run | LG-2 | 13 merged, 5 planned, 2 verified, 1 building, 1 blocked, 1 built | docs/placement-vehicles-structure, fm/ledger-proofs-on-the-target-kernel, ledger/lg-22-cloud-run |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -340,18 +340,21 @@ gantt
     section ledger
     LG-0 examples :done, lg0, 2026-10-27, 2026-10-28
     LG-1 the configuration document :done, lg1, 2026-10-27, 2026-10-28
-    LG-10 the residual rule published :done, lg10, 2026-11-09, 2026-11-15
-    LG-13 the insurance example cap :done, lg13, 2026-11-10, 2026-11-15
-    LG-14 a benchmark of the credit :done, lg14, 2026-11-11, 2026-11-15
-    LG-15 LG-14 gaps closed native :done, lg15, 2026-11-11, 2026-11-15
-    LG-16 the cut the writer records :done, lg16, 2026-11-12, 2026-11-15
-    LG-17 LG-16 gaps closed :done, lg17, 2026-11-12, 2026-11-15
-    LG-18 LG-17 follow-ups measured :done, lg18, 2026-11-12, 2026-11-15
-    LG-19 the benchmark corpora refuse :done, lg19, 2026-11-13, 2026-11-15
+    LG-10 the residual rule published :done, lg10, 2026-11-09, 2026-11-16
+    LG-13 the insurance example cap :done, lg13, 2026-11-10, 2026-11-16
+    LG-14 a benchmark of the credit :done, lg14, 2026-11-11, 2026-11-16
+    LG-15 LG-14 gaps closed native :done, lg15, 2026-11-11, 2026-11-16
+    LG-16 the cut the writer records :done, lg16, 2026-11-12, 2026-11-16
+    LG-17 LG-16 gaps closed :done, lg17, 2026-11-12, 2026-11-16
+    LG-18 LG-17 follow-ups measured :done, lg18, 2026-11-12, 2026-11-16
+    LG-19 the benchmark corpora refuse :done, lg19, 2026-11-13, 2026-11-16
     LG-2 the runtime document :lg2, 2026-10-27, 2026-11-09
+    LG-20 the laws the target kernel :active, lg20, 2026-11-16, 2026-11-17
     LG-21 the target kernel written :done, lg21, 2026-11-15, 2026-11-16
+    LG-22 LG-19 follow-ups rows named :done, lg22, 2026-11-15, 2026-11-16
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
-    LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-10
+    LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-16
+    LG-9 the target kernel in the :lg9, 2026-11-16, 2026-11-17
 ```
 
 ```mermaid
@@ -880,13 +883,11 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
-| `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-15 | 33 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-V1 |
-| `docs/placement-vehicles-structure` | 2026-11-15 | 114 | pushed | no mark |
-| `docs/placement-vehicles-structure-h0e5v9` | 2026-11-12 | 89 | pushed | no mark |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-16 | 42 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-V1 |
+| `docs/placement-vehicles-structure` | 2026-11-16 | 15 | pushed | LG-10, LG-13, LG-14, LG-15, LG-16, LG-17, LG-18, LG-19, LG-21, LG-22, LG-8 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
-| `ledger/lg-19-cloud-run` | 2026-11-13 | 99 | pushed | no mark |
+| `ledger/lg-22-cloud-run` | 2026-11-16 | 5 | pushed | LG-22 |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
 | `spi/sql-backend` | 2026-11-12 | 1 | pushed | no mark |
