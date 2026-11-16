@@ -1,0 +1,13 @@
+{
+  "subject": "LPn",
+  "statedAs": "Pots.the_unit_left_is_withheld_along_the_path",
+  "statementDigest": "sha256:d6980d097695ba4066b7862f27a5c901e0b4a1d1811bf46e29ebcce6337533e6",
+  "method": "Proof",
+  "scope": "OneArrangement",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

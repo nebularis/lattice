@@ -249,4 +249,98 @@ theorem a_facility_with_a_sublimit:
   by code_simp
 (* GATE:END *)
 
+
+section \<open>Settlement at whole units, in proportion\<close>
+
+text \<open>One rank, so the tie rule decides, and the tie rule is largest remainder with a declared
+  order injective on the proposers. Every request is non-negative and every account on the path
+  holds a non-negative balance.\<close>
+
+(* GATE:BEGIN LM2 *)
+theorem whole_units_settle_in_proportion:
+  fixes ps :: "('k \<times> int) list" and parent :: "'a \<Rightarrow> 'a option"
+  assumes tr: "tree A parent" and a: "a \<in> A" and inj: "inj_on order (proposers ps)"
+    and nr: "\<not> refuses pol" and nk: "\<not> ranked pol" and t: "tie pol = Some (ration (largest_remainder (first_in order)))"
+    and nn: "\<forall>q\<in>set ps. 0 \<le> snd q" and b0: "\<forall>b\<in>path parent a. 0 \<le> bal b"
+    and st: "settle pol (\<lambda>_. 0) parent a ps bal = (out, bal')"
+  shows "\<exists>g. out = Granted g 0
+           \<and> total (proposers ps) g = min (total (proposers ps) (requested ps)) (available parent bal a)
+           \<and> (\<forall>k\<in>proposers ps. 0 \<le> g k \<and> g k \<le> requested ps k)
+           \<and> bal' = debit (path parent a) (total (proposers ps) g) bal
+           \<and> (\<forall>b\<in>path parent a. 0 \<le> bal' b)
+           \<and> (0 < total (proposers ps) (requested ps) \<longrightarrow>
+                (\<forall>k\<in>proposers ps. \<bar>total (proposers ps) (requested ps) * g k
+                     - min (total (proposers ps) (requested ps)) (available parent bal a) * requested ps k\<bar>
+                   < total (proposers ps) (requested ps)))"
+proof -
+  let ?K = "proposers ps" and ?v = "requested ps" and ?av = "available parent bal a"
+  let ?t = "ration (largest_remainder (first_in order))"
+  have fin: "finite ?K" by (simp add: proposers_def)
+  have nnv: "nonneg_on ?K ?v" by (rule requested_nonneg[OF nn])
+  have av0: "0 \<le> ?av" using available_attained[OF tr a, of bal] b0 by auto
+  have avb: "?av \<le> bal b" if "b \<in> path parent a" for b using available_le[OF tr a that] .
+  have mg: "merge pol (\<lambda>_. 0) ?av ps = merge_of pol (\<lambda>_. 0) ?av ?K ?v" by (simp add: merge_def)
+  obtain g where gdef: "merge_of pol (\<lambda>_. 0) ?av ?K ?v = Granted g 0"
+     and gt: "total ?K g = min (total ?K ?v) ?av"
+     and gb: "\<forall>k\<in>?K. 0 \<le> g k \<and> g k \<le> ?v k"
+     and gu: "0 < total ?K ?v \<longrightarrow> (\<forall>k\<in>?K. \<bar>total ?K ?v * g k - min (total ?K ?v) ?av * ?v k\<bar> < total ?K ?v)"
+  proof (cases "total ?K ?v \<le> ?av")
+    case True
+    have "merge_of pol (\<lambda>_. 0) ?av ?K ?v = Granted ?v 0" using True by (simp add: merge_of_def Let_def)
+    moreover have "total ?K ?v = min (total ?K ?v) ?av" using True by simp
+    moreover have "\<forall>k\<in>?K. 0 \<le> ?v k \<and> ?v k \<le> ?v k" using nnv by (simp add: nonneg_on_def)
+    moreover have "0 < total ?K ?v \<longrightarrow> (\<forall>k\<in>?K. \<bar>total ?K ?v * ?v k - min (total ?K ?v) ?av * ?v k\<bar> < total ?K ?v)"
+      using True by simp
+    ultimately show ?thesis by (rule that)
+  next
+    case False
+    have x: "max 0 ?av = ?av" using av0 by simp
+    have xv: "?av \<le> total ?K ?v" using False by simp
+    have law: "lawful ?K (?t ?K)" by (rule ration_lawful(2)[OF fin inj])
+    have br: "by_rank (\<lambda>_. 0) ?t ?K ?v ?av = ?t ?K ?v ?av"
+      by (rule one_rank_is_the_tie_rule[where rank = "\<lambda>_. 0" and r = 0 and tr = ?t, OF fin _ law nnv av0 xv]) simp
+    have ex: "total ?K (?t ?K ?v ?av) = ?av" by (rule ration_largest_remainder_sums_exactly[OF fin inj nnv av0 xv])
+    let ?g = "?t ?K ?v ?av"
+    have "merge_of pol (\<lambda>_. 0) ?av ?K ?v = Granted ?g 0"
+      using False nr nk t x br ex by (simp add: merge_of_def Let_def)
+    moreover have "total ?K ?g = min (total ?K ?v) ?av" using ex xv by simp
+    moreover have "\<forall>k\<in>?K. 0 \<le> ?g k \<and> ?g k \<le> ?v k"
+    proof -
+      have "nonneg_on ?K ?g \<and> fits_in ?g ?v" using law nnv av0 xv by (simp add: lawful_def rations_def)
+      then show ?thesis by (simp add: nonneg_on_def fits_in_def)
+    qed
+    moreover have "0 < total ?K ?v \<longrightarrow> (\<forall>k\<in>?K. \<bar>total ?K ?v * ?g k - min (total ?K ?v) ?av * ?v k\<bar> < total ?K ?v)"
+    proof (intro impI ballI)
+      fix k
+      assume Tp: "0 < total ?K ?v" and k: "k \<in> ?K"
+      define T where "T = (\<Sum>j\<in>?K. ?v j)"
+      have W: "0 < (\<Sum>j\<in>?K. ?v j)" using Tp by (simp add: total_def)
+      have h: "\<bar>of_int (?g k) - of_int (?av * ?v k) / of_int T\<bar> < (1::rat)"
+        unfolding T_def by (rule rounded_part_within_one_unit(2)[OF k W fin inj nnv av0 xv])
+      have Tq: "(0::rat) < of_int T" using W unfolding T_def by (simp only: of_int_0_less_iff)
+      have e: "(of_int (T * ?g k - ?av * ?v k) :: rat) = of_int T * (of_int (?g k) - of_int (?av * ?v k) / of_int T)"
+        using Tq by (simp add: field_simps)
+      have "\<bar>(of_int (T * ?g k - ?av * ?v k) :: rat)\<bar> = of_int T * \<bar>of_int (?g k) - of_int (?av * ?v k) / of_int T\<bar>"
+        by (subst e) (use Tq in \<open>simp add: abs_mult\<close>)
+      also have "\<dots> < of_int T" using mult_strict_left_mono[OF h Tq] by simp
+      finally have "(of_int \<bar>T * ?g k - ?av * ?v k\<bar> :: rat) < of_int T" by (simp only: of_int_abs)
+      then have "\<bar>T * ?g k - ?av * ?v k\<bar> < T" by (simp only: of_int_less_iff)
+      then show "\<bar>total ?K ?v * ?g k - min (total ?K ?v) ?av * ?v k\<bar> < total ?K ?v"
+        using xv by (simp add: T_def total_def)
+    qed
+    ultimately show ?thesis by (rule that)
+  qed
+  have so: "out = Granted g 0" "bal' = debit (path parent a) (total ?K g) bal"
+    using st gdef mg by (simp_all add: settle_def)
+  have nb: "\<forall>b\<in>path parent a. 0 \<le> bal' b"
+  proof
+    fix b
+    assume b: "b \<in> path parent a"
+    have "total ?K g \<le> ?av" using gt by simp
+    then show "0 \<le> bal' b" using so(2) avb[OF b] b by (simp add: debit_def)
+  qed
+  show ?thesis using so gt gb nb gu by blast
+qed
+(* GATE:END *)
+
 end
