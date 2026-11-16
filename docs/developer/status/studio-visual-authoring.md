@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-16. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -32,7 +32,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-B2a | several imports held by one write, each with its ontology and version IRI | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | built 2026-11-13, building 2026-11-13 | SVA-B2a |
 | SVA-B2c | the browser's live validation takes the baseline | built 2026-11-16, building 2026-11-16 | SVA-B2b |
-| SVA-B2d | the writer reads an import's content from its fence job, and the jobless fence command goes | planned | SVA-B2a |
+| SVA-B2d | the writer reads an import's content from its fence job, and the jobless fence command goes | building 2026-11-16 | SVA-B2a |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | built 2026-11-13, building 2026-11-13 | SVA-B1, SVA-B2a |
 | SVA-B4 | the import graph | built 2026-11-13, building 2026-11-13 | SVA-B3, SVA-O1 |
 | SVA-B5 | a sample with imports and schemes, the dialog's drop area, and dependencies kept apart in the state | planned | SVA-B4 |
@@ -130,3 +130,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: SVA-B2c picked up.
 - 2026-11-16: SVA-B2c built, [Validation Pack](../validation/SVA-B2c.md). The baseline is validated live by the same hook as a part, again when the held imports change, and its warnings reach the problems drawer, the Baseline badge and the pill, and open the Baseline view. The fake service now serves an empty publication table so the Publish view opens, and a failed baseline validation is shown nowhere.
 - 2026-11-16: SVA-B2c verified by a second run of its checks, 365 unit tests, the type check and 41 browser tests on the fake service. Two things it left are added to SVA-B5: a baseline validation that is running or could not run is not shown in the workspace's state pill, and the Overview's count reads the parts alone. The fake service gained the publication units route, without which the Publish view could not be reached to release an import.
+- 2026-11-16: SVA-B2d picked up.
