@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 24 branches, the units' own state from this tree, the newest board day 2026-11-16.
+Built from the status records on 23 branches, the units' own state from this tree, the newest board day 2026-11-16.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -42,7 +42,7 @@ Built from the status records on 24 branches, the units' own state from this tre
 | [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned |  |
 | [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-11-09 | FME-1.0 | 5 planned, 3 built, 1 merged, 1 dropped |  |
 | [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 21 built, 15 merged, 11 planned, 6 verified, 1 briefed |  |
-| [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, ccs/board-corrections, realign/config-authoring-studio |
+| [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, realign/config-authoring-studio |
 | [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 | GH-0 | 6 built |  |
 | [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
 | [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 6 planned, 1 merged |  |
@@ -69,6 +69,7 @@ Built from the status records on 24 branches, the units' own state from this tre
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
+| [v-rig](plans/v-rig.md) | unit | merged 2026-11-08 | VR-8 | 7 merged, 1 briefed | docs/placement-vehicles-structure |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
 | [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-12 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 | VM-0 | 9 verified, 4 built |  |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
@@ -485,6 +486,23 @@ gantt
 ```mermaid
 %%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
 gantt
+    title V-rig
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section v-rig
+    VR-1 the module ontology v-rig :done, vr1, 2026-11-08, 2026-11-09
+    VR-2 the synthetic mini-rig :done, vr2, 2026-11-08, 2026-11-09
+    VR-3 the tracked mapping scheme and :done, vr3, 2026-11-08, 2026-11-09
+    VR-4 P1 :done, vr4, 2026-11-08, 2026-11-09
+    VR-5 P2 and P3 :done, vr5, 2026-11-08, 2026-11-09
+    VR-6 P4 :done, vr6, 2026-11-08, 2026-11-09
+    VR-7 the seam for a read case :done, vr7, 2026-11-08, 2026-11-09
+    VR-8 competency questions on dates :vr8, 2026-11-16, 2026-11-17
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
     title Vyvid-migration
     dateFormat YYYY-MM-DD
     axisFormat %d %b
@@ -880,8 +898,8 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
-| `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-16 | 42 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-V1 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-16 | 43 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-V1 |
+| `docs/placement-vehicles-structure` | 2026-11-16 | 1 | pushed | VR-8 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
@@ -1065,7 +1083,6 @@ Every unit whose Status line reads merged, tagged or dropped and that no branch 
 | surface-mork-unified-projection | unit | merged 2026-09-22 | 0 | 2026-09-22 |
 | surface-outstanding-items | unit | merged 2026-09-22 | 0 | 2026-09-22 |
 | [toolchain-jdk25-python314](plans/toolchain-jdk25-python314.md) | unit | merged 2026-09-23 | 0 | 2026-09-23 |
-| [v-rig](plans/v-rig.md) | unit | merged 2026-11-08 | 7 | 2026-11-08 |
 | validation-pause-handover | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
 | validation-status | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 
@@ -1090,22 +1107,6 @@ gantt
     MSC-3 Jena in the compilers :done, msc3, 2026-10-27, 2026-10-29
     MSC-4 benchmark persistence-store-p :done, msc4, 2026-10-27, 2026-10-29
     MSC-5 TSD-42 and TSD-43 on Jena :done, msc5, 2026-10-27, 2026-10-29
-```
-
-```mermaid
-%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
-gantt
-    title V-rig
-    dateFormat YYYY-MM-DD
-    axisFormat %d %b
-    section v-rig
-    VR-1 the module ontology v-rig :done, vr1, 2026-11-08, 2026-11-09
-    VR-2 the synthetic mini-rig :done, vr2, 2026-11-08, 2026-11-09
-    VR-3 the tracked mapping scheme and :done, vr3, 2026-11-08, 2026-11-09
-    VR-4 P1 :done, vr4, 2026-11-08, 2026-11-09
-    VR-5 P2 and P3 :done, vr5, 2026-11-08, 2026-11-09
-    VR-6 P4 :done, vr6, 2026-11-08, 2026-11-09
-    VR-7 the seam for a read case :done, vr7, 2026-11-08, 2026-11-09
 ```
 
 <!-- END GENERATED work-board-completed -->
