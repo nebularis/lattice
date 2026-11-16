@@ -419,6 +419,327 @@ qed
 (* GATE:END *)
 
 
+section \<open>Where no pot's own amount binds, the pots are by rank\<close>
+
+text \<open>The condition, the maintainer's: every account on a pot's path below the fund holds at
+  least what the fund makes available before the pots run. An account below the fund falls only by
+  what earlier pots were paid through it, while what the fund makes available falls by all that was
+  paid and by what is held, so such an account never becomes the least. Then what is available at
+  each pot is the fund's, a pot granted in full leaves the next what by rank would, and a pot cut
+  short leaves nothing.\<close>
+
+lemma pots_fund_binds:
+  assumes tr: "tree A parent" and a: "a \<in> A" and fA: "fund \<in> A" and fa: "fund \<in> path parent a"
+    and below: "\<forall>b\<in>path parent a. b \<notin> path parent fund \<longrightarrow> available parent (debit (path parent fund) held bal) fund \<le> bal b"
+  shows "available parent (debit (path parent fund) held bal) a = available parent (debit (path parent fund) held bal) fund"
+proof (rule antisym)
+  let ?h = "debit (path parent fund) held bal"
+  obtain c where c: "c \<in> path parent fund" and cf: "available parent ?h fund = ?h c"
+    using available_attained[OF tr fA] by blast
+  have ca: "c \<in> path parent a" using path_trans[OF fa] c by blast
+  show "available parent ?h a \<le> available parent ?h fund" using available_le[OF tr a ca, of ?h] cf by simp
+  show "available parent ?h fund \<le> available parent ?h a"
+    unfolding le_available_iff[OF tr a]
+  proof
+    fix b
+    assume b: "b \<in> path parent a"
+    show "available parent ?h fund \<le> ?h b"
+    proof (cases "b \<in> path parent fund")
+      case True
+      then show ?thesis by (rule available_le[OF tr fA])
+    next
+      case False
+      then show ?thesis using below b by (simp add: debit_def)
+    qed
+  qed
+qed
+
+lemma by_rank_one_rank:
+  "k \<in> G \<Longrightarrow> by_rank (\<lambda>_. 0) tr G v x k
+     = (if total G v \<le> x then v k else if x \<le> 0 then 0 else if G = {k} then x
+        else tr G (\<lambda>j. if j \<in> G then v j else 0) x k)"
+  by (simp add: by_rank_def Let_def ahead_def beside_def)
+
+lemma by_rank_nothing_left:
+  assumes fin: "finite G" and nn: "nonneg_on G v" and L: "L \<le> 0"
+  shows "by_rank (\<lambda>_. 0) tr G v L k = 0"
+proof (cases "k \<in> G")
+  case False
+  then show ?thesis by (simp add: by_rank_def)
+next
+  case True
+  have "v k \<le> total G v" unfolding total_def by (rule member_le_sum[OF True _ fin]) (use nn in \<open>simp add: nonneg_on_def\<close>)
+  moreover have "0 \<le> v k" using nn by (simp add: nonneg_on_def)
+  ultimately show ?thesis using L by (simp add: by_rank_one_rank[OF True])
+qed
+
+lemma by_rank_nothing_to_share:
+  assumes fin: "finite G" and nn: "nonneg_on G v"
+  shows "by_rank rank t G v 0 k = 0"
+proof (cases "k \<in> G")
+  case False
+  then show ?thesis by (simp add: by_rank_def)
+next
+  case True
+  let ?B = "beside G rank k"
+  have kB: "k \<in> ?B" using True by (simp add: beside_def)
+  have finB: "finite ?B" using fin by (simp add: beside_def)
+  have "v k \<le> total ?B v" unfolding total_def by (rule member_le_sum[OF kB _ finB]) (use nn in \<open>simp add: nonneg_on_def\<close>)
+  moreover have "0 \<le> v k" using nn by (simp add: nonneg_on_def)
+  moreover have "0 \<le> ahead G rank v k" unfolding ahead_def by (rule sum_nonneg) (use nn in \<open>simp add: nonneg_on_def\<close>)
+  ultimately show ?thesis using True by (auto simp: by_rank_def Let_def)
+qed
+
+lemma by_rank_single:
+  assumes x: "0 < x" and v: "\<not> v k \<le> x"
+  shows "by_rank rank t {k} v x k = x"
+proof -
+  have e1: "{j\<in>{k}. rank j < rank k} = {}" by auto
+  have e2: "{j\<in>{k}. rank j = rank k} = {k}" by auto
+  have "ahead {k} rank v k = 0" unfolding ahead_def e1 by simp
+  moreover have "beside {k} rank k = {k}" unfolding beside_def e2 ..
+  ultimately show ?thesis using x v by (simp add: by_rank_def Let_def total_def)
+qed
+
+lemma pots_by_groups:
+  fixes qs :: "('a \<times> ('k \<times> 'n::linordered_idom) list) list"
+  assumes tr: "tree A parent" and fA: "fund \<in> A" and t: "tie pol = Some t" and ok: "\<forall>G. rations G (t G)"
+  shows "\<forall>q\<in>set qs. fst q \<in> A \<and> fund \<in> path parent (fst q) \<Longrightarrow> \<forall>q\<in>set qs. \<forall>p\<in>set (snd q). 0 \<le> snd p \<Longrightarrow>
+         \<forall>q\<in>set qs. \<forall>b\<in>path parent (fst q). b \<notin> path parent fund
+           \<longrightarrow> available parent (debit (path parent fund) held bal) fund \<le> bal b \<Longrightarrow>
+         L = available parent (debit (path parent fund) held bal) fund
+           \<or> (L \<le> 0 \<and> available parent (debit (path parent fund) held bal) fund \<le> 0) \<Longrightarrow>
+         pots pol rank parent fund qs held bal = Some (gs, h, bal') \<Longrightarrow>
+         \<forall>i<length qs. \<forall>k. (gs ! i) k = by_rank (\<lambda>_. 0) (\<lambda>G. by_rank rank t G) (proposers (snd (qs ! i))) (requested (snd (qs ! i)))
+                                         (L - (\<Sum>j<i. total (proposers (snd (qs ! j))) (requested (snd (qs ! j))))) k"
+proof (induction qs arbitrary: held bal gs h bal' L)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons q rest)
+  obtain a ps where q: "q = (a, ps)" by (cases q)
+  have a: "a \<in> A" and fa: "fund \<in> path parent a" using Cons.prems(1) q by simp_all
+  let ?h = "debit (path parent fund) held bal"
+  let ?X = "available parent ?h fund"
+  let ?G = "proposers ps" and ?v = "requested ps"
+  have tie: "\<forall>t'. tie pol = Some t' \<longrightarrow> (\<forall>G. rations G (t' G))" using t ok by simp
+  have av: "available parent ?h a = ?X" by (rule pots_fund_binds[OF tr a fA fa]) (use Cons.prems(3) q in simp)
+  obtain g r where Gr: "merge pol rank ?X ps = Granted g r"
+    using Cons.prems(5) q av by (cases "merge pol rank ?X ps") auto
+  have fin: "finite ?G" by (simp add: proposers_def)
+  have nnv: "nonneg_on ?G ?v" using Cons.prems(2) q by (intro requested_nonneg) simp
+  have mo: "merge_of pol rank ?X ?G ?v = Granted g r" using Gr by (simp add: merge_def)
+  note bd = merge_of_bounds[OF fin nnv tie mo]
+  define bal1 where "bal1 = debit (path parent a) (total ?G g) bal"
+  obtain gs1 h1 bal2 where rec: "pots pol rank parent fund rest (held + r) bal1 = Some (gs1, h1, bal2)"
+    using Cons.prems(5) q av Gr by (auto simp: bal1_def split: option.splits)
+  have out: "gs = g # gs1" using Cons.prems(5) q av Gr rec by (simp add: bal1_def)
+  have nnk: "0 \<le> ?v k" for k using nnv by (simp add: nonneg_on_def)
+  have off: "?v k = 0" if "k \<notin> ?G" for k using that by (rule requested_off)
+  have goff: "g k = 0" if "k \<notin> ?G" for k using merge_of_off[OF mo _ that] off by blast
+  have head: "g k = by_rank (\<lambda>_. 0) (\<lambda>G. by_rank rank t G) ?G ?v L k" for k
+  proof (cases "k \<in> ?G")
+    case False
+    then show ?thesis using goff by (simp add: by_rank_def)
+  next
+    case kG: True
+    show ?thesis
+    proof (cases "total ?G ?v \<le> ?X")
+      case fit: True
+      have gv: "g = ?v" using mo fit by (simp add: merge_of_def Let_def)
+      from Cons.prems(4) show ?thesis
+      proof
+        assume LX: "L = ?X"
+        show ?thesis using fit LX gv by (simp add: by_rank_one_rank[OF kG])
+      next
+        assume "L \<le> 0 \<and> ?X \<le> 0"
+        then have L0: "L \<le> 0" and X0: "?X \<le> 0" by simp_all
+        have "total ?G ?v = 0" using fit X0 total_nonneg[OF nnv] by simp
+        then have "?v k = 0" using kG fin nnk by (simp add: total_def sum_nonneg_eq_0_iff)
+        then show ?thesis using gv by_rank_nothing_left[OF fin nnv L0] by simp
+      qed
+    next
+      case cut: False
+      have g: "g = by_rank rank t ?G ?v (max 0 ?X)"
+        using mo cut t by (auto simp: merge_of_def Let_def split: if_splits)
+      from Cons.prems(4) show ?thesis
+      proof
+        assume LX: "L = ?X"
+        show ?thesis
+        proof (cases "?X \<le> 0")
+          case True
+          have "g k = 0" using g True by_rank_nothing_to_share[OF fin nnv] by simp
+          then show ?thesis using by_rank_nothing_left[OF fin nnv] True LX by simp
+        next
+          case pos: False
+          have restr: "(\<lambda>j. if j \<in> ?G then ?v j else 0) = ?v" using off by (auto simp: fun_eq_iff)
+          show ?thesis
+          proof (cases "?G = {k}")
+            case True
+            have tv: "total ?G ?v = ?v k" using True by (simp add: total_def)
+            have gk: "g k = ?X" using g pos cut True tv by_rank_single[of ?X ?v k rank t] by simp
+            show ?thesis by (subst by_rank_one_rank[OF kG]) (use pos cut True LX tv gk in simp)
+          next
+            case False
+            then show ?thesis using g pos cut LX restr by (simp add: by_rank_one_rank[OF kG])
+          qed
+        qed
+      next
+        assume "L \<le> 0 \<and> ?X \<le> 0"
+        then have L0: "L \<le> 0" and X0: "?X \<le> 0" by simp_all
+        have "g k = 0" using g X0 by_rank_nothing_to_share[OF fin nnv] by simp
+        then show ?thesis using by_rank_nothing_left[OF fin nnv L0] by simp
+      qed
+    qed
+  qed
+  have X1: "available parent (debit (path parent fund) (held + r) bal1) fund = ?X - (total ?G g + r)"
+  proof (rule antisym)
+    obtain c where c: "c \<in> path parent fund" and cf: "?X = ?h c" using available_attained[OF tr fA] by blast
+    have ca: "c \<in> path parent a" using path_trans[OF fa] c by blast
+    have "available parent (debit (path parent fund) (held + r) bal1) fund \<le> debit (path parent fund) (held + r) bal1 c"
+      by (rule available_le[OF tr fA c])
+    also have "\<dots> = ?X - (total ?G g + r)" using c ca cf by (simp add: bal1_def debit_def algebra_simps)
+    finally show "available parent (debit (path parent fund) (held + r) bal1) fund \<le> ?X - (total ?G g + r)" .
+    show "?X - (total ?G g + r) \<le> available parent (debit (path parent fund) (held + r) bal1) fund"
+      unfolding le_available_iff[OF tr fA]
+    proof
+      fix b
+      assume b: "b \<in> path parent fund"
+      have "?X \<le> ?h b" by (rule available_le[OF tr fA b])
+      moreover have "b \<in> path parent a" using path_trans[OF fa] b by blast
+      ultimately show "?X - (total ?G g + r) \<le> debit (path parent fund) (held + r) bal1 b"
+        using b by (simp add: bal1_def debit_def algebra_simps)
+    qed
+  qed
+  have tg0: "0 \<le> total ?G g" using bd total_nonneg by blast
+  have r0: "0 \<le> r" using bd by simp
+  have C1: "\<forall>q\<in>set rest. \<forall>b\<in>path parent (fst q). b \<notin> path parent fund
+              \<longrightarrow> available parent (debit (path parent fund) (held + r) bal1) fund \<le> bal1 b"
+  proof (intro ballI impI)
+    fix q' b
+    assume q': "q' \<in> set rest" and b: "b \<in> path parent (fst q')" and nb: "b \<notin> path parent fund"
+    have "?X \<le> bal b" using Cons.prems(3) q' b nb by simp
+    moreover have "bal b - total ?G g \<le> bal1 b" using tg0 by (simp add: bal1_def debit_def)
+    ultimately show "available parent (debit (path parent fund) (held + r) bal1) fund \<le> bal1 b"
+      unfolding X1 using r0 by linarith
+  qed
+  have L1: "L - total ?G ?v = available parent (debit (path parent fund) (held + r) bal1) fund
+            \<or> (L - total ?G ?v \<le> 0 \<and> available parent (debit (path parent fund) (held + r) bal1) fund \<le> 0)"
+  proof (cases "total ?G ?v \<le> ?X")
+    case fit: True
+    have "g = ?v" "r = 0" using mo fit by (simp_all add: merge_of_def Let_def)
+    then have X1': "available parent (debit (path parent fund) (held + r) bal1) fund = ?X - total ?G ?v" using X1 by simp
+    from Cons.prems(4) show ?thesis
+    proof
+      assume "L = ?X"
+      then show ?thesis using X1' by simp
+    next
+      assume "L \<le> 0 \<and> ?X \<le> 0"
+      then show ?thesis using X1' total_nonneg[OF nnv] by simp
+    qed
+  next
+    case cut: False
+    have "total ?G g + r = max 0 ?X" using bd cut by blast
+    then have "available parent (debit (path parent fund) (held + r) bal1) fund \<le> 0" using X1 by (simp add: max_def)
+    moreover have "L - total ?G ?v \<le> 0" using Cons.prems(4) cut total_nonneg[OF nnv] by auto
+    ultimately show ?thesis by simp
+  qed
+  have IH: "\<forall>i<length rest. \<forall>k. (gs1 ! i) k = by_rank (\<lambda>_. 0) (\<lambda>G. by_rank rank t G) (proposers (snd (rest ! i))) (requested (snd (rest ! i)))
+              (L - total ?G ?v - (\<Sum>j<i. total (proposers (snd (rest ! j))) (requested (snd (rest ! j))))) k"
+    using Cons.IH[OF _ _ C1 L1 rec] Cons.prems(1,2) by simp
+  have each: "(gs ! i) k = by_rank (\<lambda>_. 0) (\<lambda>G. by_rank rank t G) (proposers (snd ((q # rest) ! i))) (requested (snd ((q # rest) ! i)))
+                (L - (\<Sum>j<i. total (proposers (snd ((q # rest) ! j))) (requested (snd ((q # rest) ! j))))) k"
+    if i: "i < length (q # rest)" for i k
+  proof (cases i)
+    case 0
+    then show ?thesis using head q out by simp
+  next
+    case (Suc i')
+    then have i': "i' < length rest" using i by simp
+    have "(\<Sum>j<Suc i'. total (proposers (snd ((q # rest) ! j))) (requested (snd ((q # rest) ! j))))
+            = total ?G ?v + (\<Sum>j<i'. total (proposers (snd (rest ! j))) (requested (snd (rest ! j))))"
+      by (simp only: sum.lessThan_Suc_shift) (simp add: q)
+    then show ?thesis using IH i' Suc out by (simp add: algebra_simps)
+  qed
+  show ?case using each by blast
+qed
+
+text \<open>The plan's law, with nothing held at the start. The pots' groups are apart, the rank by which
+  `by_rank` orders them is each group's place in the list, and the requests are each group's.\<close>
+
+(* GATE:BEGIN LP1 *)
+theorem pots_are_by_rank_where_no_pot_binds:
+  fixes qs :: "('a \<times> ('k \<times> 'n::linordered_idom) list) list"
+  assumes tr: "tree A parent" and fA: "fund \<in> A" and t: "tie pol = Some t" and ok: "\<forall>G. rations G (t G)"
+    and qs: "\<forall>q\<in>set qs. fst q \<in> A \<and> fund \<in> path parent (fst q)"
+    and nn: "\<forall>q\<in>set qs. \<forall>p\<in>set (snd q). 0 \<le> snd p"
+    and below: "\<forall>q\<in>set qs. \<forall>b\<in>path parent (fst q). b \<notin> path parent fund \<longrightarrow> available parent bal fund \<le> bal b"
+    and disj: "\<forall>i<length qs. \<forall>j<length qs. i \<noteq> j \<longrightarrow> proposers (snd (qs ! i)) \<inter> proposers (snd (qs ! j)) = {}"
+    and rk: "\<forall>i<length qs. \<forall>k\<in>proposers (snd (qs ! i)). prank k = i"
+    and vv: "\<forall>i<length qs. \<forall>k\<in>proposers (snd (qs ! i)). v k = requested (snd (qs ! i)) k"
+    and K: "K = (\<Union>i<length qs. proposers (snd (qs ! i)))"
+    and po: "pots pol rank parent fund qs 0 bal = Some (gs, h, bal')"
+  shows "\<forall>i<length qs. \<forall>k\<in>proposers (snd (qs ! i)).
+           (gs ! i) k = by_rank prank (\<lambda>G. by_rank rank t G) K v (available parent bal fund) k"
+proof (intro allI impI ballI)
+  fix i k
+  assume i: "i < length qs" and k: "k \<in> proposers (snd (qs ! i))"
+  let ?P = "\<lambda>j. proposers (snd (qs ! j))" and ?R = "\<lambda>j. requested (snd (qs ! j))"
+  let ?X = "available parent bal fund"
+  have d0: "debit (path parent fund) 0 bal = bal" by (simp add: debit_def fun_eq_iff)
+  have grp: "(gs ! i) k = by_rank (\<lambda>_. 0) (\<lambda>G. by_rank rank t G) (?P i) (?R i) (?X - (\<Sum>j<i. total (?P j) (?R j))) k"
+    using pots_by_groups[OF tr fA t ok qs nn, where held = 0 and L = ?X and bal = bal and gs = gs and h = h and bal' = bal']
+          below po i d0 by simp
+  have finP: "finite (?P j)" for j by (simp add: proposers_def)
+  have kK: "k \<in> K" using K i k by blast
+  have pk: "prank k = i" using rk i k by blast
+  have memb: "j \<in> K \<and> prank j = i' \<longleftrightarrow> i' < length qs \<and> j \<in> ?P i'" for j i'
+  proof
+    assume jK: "j \<in> K \<and> prank j = i'"
+    then obtain i'' where "i'' < length qs" "j \<in> ?P i''" using K by blast
+    then show "i' < length qs \<and> j \<in> ?P i'" using rk jK by auto
+  next
+    assume "i' < length qs \<and> j \<in> ?P i'"
+    then show "j \<in> K \<and> prank j = i'" using K rk by blast
+  qed
+  have bes: "beside K prank k = ?P i" using memb[of _ i] pk i by (auto simp: beside_def)
+  have ah_set: "{j\<in>K. prank j < prank k} = (\<Union>i'\<in>{..<i}. ?P i')"
+  proof
+    show "{j\<in>K. prank j < prank k} \<subseteq> (\<Union>i'\<in>{..<i}. ?P i')"
+    proof
+      fix j
+      assume "j \<in> {j\<in>K. prank j < prank k}"
+      then have "j \<in> K" "prank j < i" using pk by simp_all
+      then show "j \<in> (\<Union>i'\<in>{..<i}. ?P i')" using memb[of j "prank j"] by auto
+    qed
+    show "(\<Union>i'\<in>{..<i}. ?P i') \<subseteq> {j\<in>K. prank j < prank k}"
+    proof
+      fix j
+      assume "j \<in> (\<Union>i'\<in>{..<i}. ?P i')"
+      then obtain i' where i'i: "i' < i" and j: "j \<in> ?P i'" by blast
+      have "j \<in> K \<and> prank j = i'" using memb[of j i'] i'i i j by simp
+      then show "j \<in> {j\<in>K. prank j < prank k}" using i'i pk by simp
+    qed
+  qed
+  have ah: "ahead K prank v k = (\<Sum>j<i. total (?P j) (?R j))"
+  proof -
+    have "ahead K prank v k = (\<Sum>i'\<in>{..<i}. \<Sum>j\<in>?P i'. v j)"
+      unfolding ahead_def ah_set by (rule sum.UNION_disjoint) (use finP disj i in auto)
+    also have "\<dots> = (\<Sum>j<i. total (?P j) (?R j))" using vv i by (auto intro!: sum.cong simp: total_def)
+    finally show ?thesis .
+  qed
+  have tot: "total (?P i) v = total (?P i) (?R i)" using vv i by (auto intro!: sum.cong simp: total_def)
+  have vk: "v k = ?R i k" using vv i k by blast
+  have restr: "(\<lambda>j. if j \<in> ?P i then v j else 0) = (\<lambda>j. if j \<in> ?P i then ?R i j else 0)"
+    using vv i by (auto simp: fun_eq_iff)
+  have "by_rank prank (\<lambda>G. by_rank rank t G) K v ?X k
+          = by_rank (\<lambda>_. 0) (\<lambda>G. by_rank rank t G) (?P i) (?R i) (?X - (\<Sum>j<i. total (?P j) (?R j))) k"
+    using kK by (simp add: by_rank_one_rank[OF k] by_rank_def[of prank] Let_def ah bes tot vk restr)
+  then show "(gs ! i) k = by_rank prank (\<lambda>G. by_rank rank t G) K v ?X k" using grp by simp
+qed
+(* GATE:END *)
+
+
 section \<open>Purposes at one position: no account a request reaches falls below zero\<close>
 
 text \<open>Each set's merge grants at most what the set has room for, and a later merge only lowers

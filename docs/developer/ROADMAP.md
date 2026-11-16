@@ -49,7 +49,7 @@ Built from the status records on 25 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | building 2026-11-16 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · verified 2026-11-16 on docs/placement-vehicles-structure · built 2026-10-27 on ccs-trunk, ccs/board-corrections · built 2026-11-08 on claude/adoring-torvalds-ce7ffe, getting-started-vyd, vyvid-quanta-builtin · built 2026-11-09 on ccr-242894ed-j78yu1, claude/modest-ramanujan-cgvs0p, fm/ledger-proofs-second-widening, spi/sql-backend, tutorial/studio-guide · built 2026-11-12 on docs/placement-vehicles-structure-h0e5v9 · built 2026-11-13 on ledger/lg-19-cloud-run · built 2026-11-16 on ledger/lg-22-cloud-run | LG-2 | 13 merged, 5 planned, 2 verified, 1 building, 1 blocked, 1 built | docs/placement-vehicles-structure, fm/ledger-proofs-on-the-target-kernel, ledger/lg-22-cloud-run |
+| [ledger](plans/ledger.md) | unit | building 2026-11-16 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · verified 2026-11-16 on docs/placement-vehicles-structure · built 2026-10-27 on ccs-trunk, ccs/board-corrections · built 2026-11-08 on claude/adoring-torvalds-ce7ffe, getting-started-vyd, vyvid-quanta-builtin · built 2026-11-09 on ccr-242894ed-j78yu1, claude/modest-ramanujan-cgvs0p, fm/ledger-proofs-second-widening, spi/sql-backend, tutorial/studio-guide · built 2026-11-12 on docs/placement-vehicles-structure-h0e5v9 · built 2026-11-13 on ledger/lg-19-cloud-run · built 2026-11-16 on ledger/lg-22-cloud-run | LG-2 | 13 merged, 5 planned, 2 verified, 2 built, 1 blocked | docs/placement-vehicles-structure, fm/ledger-proofs-on-the-target-kernel, ledger/lg-22-cloud-run |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -349,7 +349,7 @@ gantt
     LG-18 LG-17 follow-ups measured :done, lg18, 2026-11-12, 2026-11-16
     LG-19 the benchmark corpora refuse :done, lg19, 2026-11-13, 2026-11-16
     LG-2 the runtime document :lg2, 2026-10-27, 2026-11-09
-    LG-20 the laws the target kernel :active, lg20, 2026-11-16, 2026-11-17
+    LG-20 the laws the target kernel :lg20, 2026-11-16, 2026-11-17
     LG-21 the target kernel written :done, lg21, 2026-11-15, 2026-11-16
     LG-22 LG-19 follow-ups rows named :done, lg22, 2026-11-15, 2026-11-16
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09

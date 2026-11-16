@@ -78,6 +78,7 @@ LG-20, with [its pack](../../../docs/developer/validation/LG-20.md), adds 36 cla
 | LC6 | `Pots.whole_or_no_result` | an allocation that must be whole is the allocation or no result |
 | LV3 | `Pots.rationing_allocation_accounts_for_what_was_asked` | with a rule that rations, parts and what is left are what was asked, and each account is charged what was granted at it |
 | LP3 | `Pots.the_fund_falls_by_the_grants` | the fund and every account above it fall by the grants of its pots |
+| LP1 | `Pots.pots_are_by_rank_where_no_pot_binds` | where every account on a pot's path below the fund holds at least what the fund makes available, each pot's grants are `by_rank`'s over the pots' groups ranked by their place |
 | LP2 | `Pots.pots_never_overdraw` | no account of the tree falls below zero, and no pot is paid more than its own amount |
 | LP4 | `Pots.a_bound_at_the_fund_pays_no_later_pot` | where the fund or an account above it binds a pot, no later pot is paid |
 | LPn | `Pots.the_unit_left_is_withheld_along_the_path` | a unit a pot leaves is taken by a later pot where nothing is carried, and where it is withheld from the fund alone and an account above the fund binds |
