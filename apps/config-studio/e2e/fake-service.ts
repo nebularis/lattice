@@ -312,6 +312,14 @@ export class FakeService {
   stagedOntologies = true;
   /** The published versions the registry serves, by version IRI, for a workspace that pins one (SVA-B5). A pinned version's IRI holds `/rev/1-`. */
   readonly published = new Map<string, string>();
+  /** A status every run is refused with, after the contract's own checks passed, as a service at its limit does (SVA-R4). A `429` carries `Retry-After`. */
+  runRefusal?: number;
+  /** A message every run ends with as a failed last frame, as a run that could not finish does (SVA-R4). */
+  runFailure?: string;
+  /** Milliseconds a run is held before the fake answers it, so a test can see the pane while it runs (SVA-R4). */
+  runDelayMs = 0;
+  /** The number of the next waiting runs the fake ends with `504` at once, as the service does at a deadline (SVA-R4). */
+  expiredRuns = 0;
   /** Whether a language model is configured, so that a proposal by it succeeds. */
   modelConfigured = false;
   /** What the service's status reports, such as a queue no worker consumes. */
@@ -427,6 +435,12 @@ export class FakeService {
     if (!(kind === "sample" ? RUN_SAMPLE_TYPES : ["application/trig"]).includes(mediaType)) return refuse(415, "the media type is not one the kind takes");
     const body = request.postData() ?? "";
     if (Buffer.byteLength(body) > RUN_MAX_BYTES) return refuse(413, "the body is over 5 MiB");
+    if (this.runDelayMs > 0) await new Promise((r) => setTimeout(r, this.runDelayMs));
+    if (this.runRefusal !== undefined) return route.fulfill({ status: this.runRefusal, body: `refused with ${this.runRefusal}`, headers: this.runRefusal === 429 ? { "Retry-After": "3" } : {} });
+    if (wait && this.expiredRuns > 0) {
+      this.expiredRuns--;
+      return refuse(504, "the deadline passed before the run ended");
+    }
     const run = `urn:lattice:studio:run:${this.id()}`;
     this.runs.push({ ws, kind, target, job: jobId, tab, wait, body, mediaType });
     if (!wait) {
@@ -434,7 +448,7 @@ export class FakeService {
         cst:compileJob <urn:lattice:studio:job:${jobId}> ; cst:deadline "${new Date(ends).toISOString().replace(/\.\d+Z$/, "Z")}"^^xsd:dateTime .\n`;
       return turtle(PREFIX + description, 202);
     }
-    const frames: RunFrame[] = kind === "sample" ? sampleRunFrames(run) : [{ run, seq: 0, last: true, status: "failed", message: "The fake service runs no simulator." }];
+    const frames: RunFrame[] = this.runFailure !== undefined ? [{ run, seq: 0, last: true, status: "failed", message: this.runFailure }] : kind === "sample" ? sampleRunFrames(run) : [{ run, seq: 0, last: true, status: "failed", message: "The fake service runs no simulator." }];
     return route.fulfill({ status: 200, body: JSON.stringify(frames), headers: { "Content-Type": "application/json" } });
   }
 

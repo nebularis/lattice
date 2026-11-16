@@ -8,6 +8,7 @@ import { readJob, type Job } from "./rdf/report";
 import { CONFIG_PARTS, type ConfigPart, type Part } from "./rdf/split";
 import { authHeaders } from "./session";
 import { connected, watch } from "./events";
+import type { RunKind, StartRunResult } from "./runs";
 
 export type GraphName = Part;
 export type Target = ConfigPart;
@@ -330,6 +331,37 @@ export const api = {
     const run = graph.ofType(CST("Transform"))[0];
     if (!run) throw new ApiError(502, "the reply does not describe the run");
     return readJob(graph, run.value);
+  },
+
+  /**
+   * Starts a run over an input that is not saved (ADR-A154). Without `wait` the service accepts it with `202` and the run's IRI, and its
+   * frames reach the tab's events. With `wait` the answer is the frames, `200`, or `504` at the deadline. Every refusal the contract names is
+   * returned and not thrown, with the service's text and, for `429`, the seconds it asks to wait.
+   */
+  async startRun(
+    id: string,
+    query: { kind: RunKind; target: string; job: string; tab: string; deadline: string; wait: boolean },
+    body: string,
+    mediaType: string,
+    signal?: AbortSignal,
+  ): Promise<StartRunResult> {
+    const params = new URLSearchParams({ kind: query.kind, target: query.target, job: query.job, tab: query.tab, deadline: query.deadline });
+    if (query.wait) params.set("wait", "true");
+    const response = await fetch(`/api/workspaces/${id}/runs?${params}`, {
+      method: "POST",
+      headers: { Accept: query.wait ? "application/json" : TURTLE, ...authHeaders(), "Content-Type": mediaType },
+      body,
+      signal,
+    });
+    if (response.status === 504) return { kind: "deadline" };
+    if (!response.ok) {
+      const retry = Number(response.headers.get("Retry-After"));
+      return { kind: "refused", status: response.status, message: (await response.text()) || response.statusText, ...(response.status === 429 && Number.isFinite(retry) && retry > 0 ? { retryAfter: retry } : {}) };
+    }
+    if (query.wait) return { kind: "frames", frames: await response.json() };
+    const run = Graph.parse(await response.text()).ofType(CST("Run"))[0];
+    if (!run) throw new ApiError(502, "the reply does not describe the run");
+    return { kind: "accepted", run: run.value };
   },
 
   async job(jobId: string): Promise<Job> {

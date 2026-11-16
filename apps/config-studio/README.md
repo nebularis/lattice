@@ -36,6 +36,8 @@ The inspector shows the selected node's Turtle and the unsaved changes as a diff
 | `src/rdf/quantity.ts`, `eligibility.ts` | ranges with their bounds and quantities, and questions as tests |
 | `src/state.ts` | a workspace in the browser: saved and edited graphs, undo, live validation, saving and conflicts |
 | `src/api.ts` | the HTTP API |
+| `src/runs.ts` | a run's result assembled from its frames in any order with any repeats, and the controller that keeps one run in flight a pane, with the newest request waiting, a deadline from the injected clock and timers, and frames from the tab's events or from the answer of a request that waits (ADR-A154) |
+| `src/ui/RunPane.tsx` | the run pane every mode's runs use, controls on the left and a status line and the result's parts on the right, and the mapping dock's Sample tab, which runs the sample the mapping view keeps when Run is pressed |
 | `src/canvas/` | the canvas kit every canvas shares. `layout.ts` is our own layered layout behind one function, `edges.ts` routes each edge as a Bezier curve between the sides that face each other and places its label where it covers no node and no other label, `positions.ts` keeps the author's positions in the browser, `place.ts` moves a node an edit added to the nearest place clear of the nodes that kept theirs, and `kit.tsx` draws, menus and connects them with React Flow |
 | `src/ui/` | the views. `Specials.tsx` holds the sections the vocabularies cannot derive |
 

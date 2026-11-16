@@ -1532,3 +1532,91 @@ test("the overview counts the baseline's violations with the parts'", async ({ p
   await expect(stat).toContainText("1");
   await expect(page.getByRole("status").filter({ hasText: "1 violation" })).toHaveCount(1);
 });
+
+// --- The run pane in mapping mode's dock, on the fake service, which offers no events, so every run waits (SVA-R4) ---
+
+/** A workspace of mapping schemes with an example sample, open on mapping mode with the dock's Sample tab showing. */
+async function sampleDock(page: Page, fake: FakeService): Promise<Locator> {
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Policies from XML and JSON/ }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`/#/w/${[...fake.workspaces.keys()][0]}/mapping`);
+  await page.getByRole("button", { name: /^Use the XML example/ }).click();
+  // the dock is open at this viewport's width
+  await page.getByRole("tab", { name: "Sample" }).click();
+  const pane = page.getByRole("region", { name: "Sample", exact: true });
+  await expect(pane).toBeVisible();
+  // the automatic run of the sample is a later slice's to remove, so let it end before the pane's own runs are counted. The fake has no transforms route, so it ends as not found
+  await expect(page.getByRole("status").filter({ hasText: /Ran on the sample|not found/ })).toBeVisible();
+  return pane;
+}
+
+test("the dock's Sample tab runs nothing until Run is pressed, then shows the run and its parts in order, from the compile job it names", async ({ page }) => {
+  const fake = new FakeService();
+  fake.runDelayMs = 400;
+  const pane = await sampleDock(page, fake);
+  const status = pane.getByRole("status", { name: "Sample status" });
+  await expect(status).toContainText("Nothing has run yet.");
+  expect(fake.runs).toHaveLength(0);
+  await expect(pane.getByRole("group", { name: "Sample controls" })).toContainText("Scheme");
+  await expect(pane.getByRole("group", { name: "Sample controls" })).toContainText("XML");
+  await pane.getByRole("button", { name: "Run" }).click();
+  await expect(status).toContainText("Running, 0 parts so far.");
+  await expect(status).toContainText("Complete, 2 parts, conforms.");
+  expect(fake.runs).toHaveLength(1);
+  expect(fake.runs[0]).toMatchObject({ kind: "sample", target: "mapping", wait: true, mediaType: "application/xml" });
+  await expect(status).toContainText(`Compile job ${fake.runs[0].job}`);
+  const parts = pane.getByRole("list", { name: "Sample parts" }).getByRole("listitem");
+  await expect(parts).toHaveCount(2);
+  await expect(parts.nth(0).getByRole("region", { name: "Part 1, report" })).toContainText("sh:conforms true");
+  await expect(parts.nth(1).getByRole("region", { name: "Part 2, artefact" })).toContainText("application/n-triples");
+  await expect(parts.nth(1).getByRole("region", { name: "Part 2, artefact" })).toContainText("LoanApplication");
+  await expect(parts.nth(1).getByRole("region", { name: "Part 2, artefact" })).toContainText("0.nt");
+});
+
+test("a run the service refuses shows refused with its status and reason, and a 429's Retry-After", async ({ page }) => {
+  const fake = new FakeService();
+  const pane = await sampleDock(page, fake);
+  const status = pane.getByRole("status", { name: "Sample status" });
+  fake.runRefusal = 429;
+  await pane.getByRole("button", { name: "Run" }).click();
+  await expect(status).toContainText("Refused (429). refused with 429 Try again in 3 seconds.");
+  fake.runRefusal = 409;
+  await pane.getByRole("button", { name: "Run" }).click();
+  await expect(status).toContainText("Refused (409). refused with 409");
+  await expect(status).not.toContainText("Try again");
+  await expect(pane.getByRole("listitem")).toHaveCount(0);
+});
+
+test("a run whose last frame is failed shows failed with the run's own message", async ({ page }) => {
+  const fake = new FakeService();
+  const pane = await sampleDock(page, fake);
+  fake.runFailure = "The compile job could not be read, so nothing was run.";
+  await pane.getByRole("button", { name: "Run" }).click();
+  await expect(pane.getByRole("status", { name: "Sample status" })).toContainText("Failed. The compile job could not be read, so nothing was run.");
+});
+
+test("a run that passes its deadline shows incomplete and offers Run again, which then completes", async ({ page }) => {
+  const fake = new FakeService();
+  const pane = await sampleDock(page, fake);
+  const status = pane.getByRole("status", { name: "Sample status" });
+  fake.expiredRuns = 1;
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(status).toContainText("Incomplete, the run did not finish before its deadline.");
+  expect(fake.runs).toHaveLength(0);
+  await status.getByRole("button", { name: "Run again" }).click();
+  await expect(status).toContainText("Complete, 2 parts, conforms.");
+  await expect(status.getByRole("button", { name: "Run again" })).toHaveCount(0);
+  expect(fake.runs).toHaveLength(1);
+});
+
+test("the Sample tab is in mapping mode's dock only", async ({ page }) => {
+  const fake = new FakeService();
+  await lendingWorkspace(page, fake);
+  await expect(page.getByRole("tab", { name: "Turtle" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Sample" })).toHaveCount(0);
+});
+

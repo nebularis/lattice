@@ -130,4 +130,32 @@ describe("events", () => {
     expect(topicName("ana.lyst@example.org/a+b#")).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(topicName("développeur")).toBe(Buffer.from("développeur").toString("base64url"));
   });
+
+  it("gives every run frame event's body to a listener, with no watch, and wakes no watcher by it", async () => {
+    const { events, w, c } = await connected();
+    const seen: unknown[] = [];
+    const off = events.onRunFrame((f) => seen.push(f));
+    const run = "urn:lattice:studio:run:3f2b8c1e-5a47-4d0e-9b1a-6c7d8e9f0a1b";
+    const frame = { run, seq: 0, last: true, status: "failed", message: "no" };
+    c.serve({ specversion: "1.0", type: "org.nebularis.lattice.studio.run.frame", subject: run, data: frame });
+    c.serve({ specversion: "1.0", type: "org.nebularis.lattice.studio.job.updated", subject: JOB });
+    expect(seen).toEqual([frame]);
+    expect(c.frames().filter((f) => f.type === "subscribe")).toHaveLength(1);
+    expect(events.tabId()).toBe(String(c.options.clientId).split(":")[2]);
+    off();
+    c.serve({ specversion: "1.0", type: "org.nebularis.lattice.studio.run.frame", subject: run, data: frame });
+    expect(seen).toHaveLength(1);
+    w.close();
+  });
+
+  it("opens the connection for a run listener that comes first", async () => {
+    const events = await import("./events");
+    const seen: unknown[] = [];
+    const off = events.onRunFrame((f) => seen.push(f));
+    while (!FakeClient.last) await settle();
+    FakeClient.last.emit("connect");
+    await settle();
+    expect(events.connected()).toBe(true);
+    off();
+  });
 });

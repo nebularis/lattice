@@ -20,6 +20,7 @@ import { Spinner, download, go } from "./kit";
 import { NodeEditor } from "./ConfigView";
 import { MappingCanvas } from "./MappingCanvas";
 import { useStudio } from "./Workspace";
+import { useRunSource } from "./RunPane";
 
 const INDENT = 28;
 const BOX_W = 240;
@@ -41,7 +42,7 @@ export function MappingView({ selected }: { selected?: string }) {
   const [busy, setBusy] = useState(false);
   // A job reads the other parts as saved, so their revisions say when a compilation is out of date (ADR-A149).
   const context = CONFIG_PARTS.filter((p) => p !== "mapping").map((p) => studio.model.state.configs[p]?.revision ?? "").join(" ");
-  const sampleRun = useSampleRun(studio.id, graph, context);
+  const sampleRun = useSampleRun(studio.id, graph, context, scheme?.label);
   const [drawing, setDrawing] = useState<"tree" | "canvas">(() => {
     try {
       return localStorage.getItem("lattice-studio:mapping-drawing") === "canvas" ? "canvas" : "tree";
@@ -381,7 +382,7 @@ function runResult(job: Job): RunResult {
 /** The sample source and its format, kept in this browser for the workspace, and the run of the mapping part over it,
  * rerun 800 ms after the part or the sample last changed. A Turtle sample is a dry run. An XML or JSON one compiles the
  * part, once for each version of it, and runs the compiled transforms over the sample in the transforms worker. */
-function useSampleRun(workspace: string, graph: Graph, context: string): SampleRun {
+function useSampleRun(workspace: string, graph: Graph, context: string, schemeLabel?: string): SampleRun {
   const key = `lattice-studio:mapping-sample:${workspace}`;
   const [sample, setSampleState] = useState<string | undefined>(() => stored(key));
   const [format, setFormatState] = useState<SampleFormat>(() => (stored(`${key}:format`) as SampleFormat | undefined) ?? sampleFormat(sample ?? ""));
@@ -401,6 +402,27 @@ function useSampleRun(workspace: string, graph: Graph, context: string): SampleR
     store(key, text);
     if (text) setFormat(sampleFormat(text, filename));
   };
+  /** The id of the finished compile job of the part as it is, found where the last compilation is of this content and made where it is not. */
+  const ensureCompiled = async (): Promise<string> => {
+    if (compiled.current?.graph !== graph || compiled.current.context !== context) {
+      const id = await api.submit(workspace, "compile", "mapping", graph);
+      const done = await awaitJob(id);
+      if (done.status === "Failed") throw new Error(done.failure ?? "The compilation failed.");
+      // The compilation this one replaces is no longer run, so it leaves the workspace's job history.
+      if (compiled.current) void api.deleteJob(compiled.current.job).catch(() => undefined);
+      compiled.current = { graph, context, job: id };
+      setTransforms(done.artefacts.filter((a) => a.mediaType === "application/xslt+xml" || a.path.endsWith(".jolt.json")));
+    }
+    return compiled.current.job;
+  };
+  // The run pane in the dock runs what this view keeps, so it is given the sample and a way to find or make the compilation (SVA-R4).
+  const latest = useRef(ensureCompiled);
+  latest.current = ensureCompiled;
+  const pane = useRunSource();
+  useEffect(() => {
+    pane?.set({ workspace, scheme: schemeLabel, sample, mediaType: format, ensureCompiled: () => latest.current() });
+    return () => pane?.set(undefined);
+  }, [workspace, schemeLabel, sample, format]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!sample?.trim() || graph.size === 0) return;
     let stale = false;
@@ -413,16 +435,7 @@ function useSampleRun(workspace: string, graph: Graph, context: string): SampleR
           job = await awaitJob(id);
           void api.deleteJob(id).catch(() => undefined);
         } else {
-          if (compiled.current?.graph !== graph || compiled.current.context !== context) {
-            const id = await api.submit(workspace, "compile", "mapping", graph);
-            const done = await awaitJob(id);
-            if (done.status === "Failed") throw new Error(done.failure ?? "The compilation failed.");
-            // The compilation this one replaces is no longer run, so it leaves the workspace's job history.
-            if (compiled.current) void api.deleteJob(compiled.current.job).catch(() => undefined);
-            compiled.current = { graph, context, job: id };
-            setTransforms(done.artefacts.filter((a) => a.mediaType === "application/xslt+xml" || a.path.endsWith(".jolt.json")));
-          }
-          job = await api.transform(workspace, compiled.current.job, format, sample);
+          job = await api.transform(workspace, await ensureCompiled(), format, sample);
         }
         if (stale) return;
         if (job.status === "Failed") {

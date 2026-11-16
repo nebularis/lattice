@@ -47,6 +47,7 @@ import { MappingView } from "./MappingView";
 import { MeaningView } from "./MeaningView";
 import { ConfigView } from "./ConfigView";
 import { Code, Diff, Modal, SeverityIcon, Spinner, go, href } from "./kit";
+import { RunSourceContext, SamplePane, type RunSource } from "./RunPane";
 import { Overview } from "./Overview";
 
 export interface Studio {
@@ -101,6 +102,9 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
   const node = route[1];
   const activePart: Part = (PARTS as string[]).includes(view) ? (view as Part) : view === "instrument" ? "meaning" : "persistence";
   const [inspector, setInspector] = useState(() => window.innerWidth >= 1560);
+  // The dock holds the inspector and, in mapping mode, the Sample pane, which runs what the mapping view keeps (SVA-R4).
+  const [dock, setDock] = useState<"inspector" | "sample">("inspector");
+  const [runSource, setRunSource] = useState<RunSource>();
   const [problemsOpen, setProblemsOpen] = useState(true);
   const [palette, setPalette] = useState(false);
 
@@ -172,6 +176,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
 
   return (
     <StudioContext.Provider value={studio}>
+      <RunSourceContext.Provider value={{ source: runSource, set: setRunSource }}>
       <div className="shell">
         <header className="topbar">
           <a href="#/" className="brand" style={{ textDecoration: "none", color: "inherit" }} aria-label="All workspaces">
@@ -270,8 +275,24 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           {view === "publish" && <PublishView />}
         </main>
 
-        <aside className={`side${inspector ? "" : " closed"}`} aria-label="Inspector">
-          {inspector && <Inspector part={activePart} node={editing ? node : undefined} />}
+        <aside className={`side${inspector ? "" : " closed"}${inspector && mode === "mapping" && dock === "sample" ? " wide" : ""}`} aria-label="Inspector">
+          {inspector && mode === "mapping" && (
+            <div className="tabs" role="tablist" aria-label="Dock">
+              <button role="tab" aria-selected={dock === "inspector"} onClick={() => setDock("inspector")}>
+                Inspector
+              </button>
+              <button role="tab" aria-selected={dock === "sample"} onClick={() => setDock("sample")}>
+                Sample
+              </button>
+            </div>
+          )}
+          {inspector && (mode !== "mapping" || dock === "inspector") && <Inspector part={activePart} node={editing ? node : undefined} />}
+          {/* kept mounted while the Inspector shows, so a run in flight and its result stay */}
+          {inspector && mode === "mapping" && (
+            <div className="dock-sample" hidden={dock !== "sample"}>
+              <SamplePane />
+            </div>
+          )}
         </aside>
 
         <Problems open={problemsOpen} toggle={() => setProblemsOpen(!problemsOpen)} />
@@ -287,6 +308,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           </button>
         </div>
       )}
+      </RunSourceContext.Provider>
     </StudioContext.Provider>
   );
 }

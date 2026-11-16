@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-B5 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Phases B and O are built. Ready to start: SVA-R2, SVA-R3 and SVA-R4 against the runs contract.
+**Next action:** paused after SVA-R4 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Next in order: SVA-R4a, which corrects the runs contract before the service is built against it, then SVA-R2 and SVA-R3.
 
 ## Slices
 
@@ -26,7 +26,8 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | built 2026-11-15, building 2026-11-12 | SVA-R0 |
 | SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | planned | SVA-R1 |
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
-| SVA-R4 | the browser's run controller and the dock's run pane | building 2026-11-16 | SVA-R1 |
+| SVA-R4 | the browser's run controller and the dock's run pane | built 2026-11-16, building 2026-11-16 | SVA-R1 |
+| SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line | planned | SVA-R4 |
 | SVA-R5 | the run protocol's failure cases on the real stack | planned | SVA-R2, SVA-R3, SVA-R4 |
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2a | several imports held by one write, each with its ontology and version IRI | built 2026-11-12, building 2026-11-12 |  |
@@ -89,6 +90,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16, SVA-B2c: stopping the baseline's submission failed the drawer test with no ImportNotHeld finding, and dropping the held imports from the key failed the hold test, which kept the warning in the drawer. Both breaks were restored.
 - 2026-11-16, SVA-B2d: the writer's refusal of a part or a named graph was disabled, and two tests in ImportsClosureTest failed, one expecting 400 and getting 200 and one on the refusal message.
 - 2026-11-16, SVA-B5: two breaks were tried. With importGraph dropping derived edges the library sample test failed, the derived edge was expected once and drawn 0 times. With a fetch of each held import's graph restored in BaselineView when the diagram opens, the no-extra-request test failed, 3 requests expected and 4 seen. Both were restored.
+- 2026-11-16, SVA-R4: the assembler was made to keep the last frame seen for a number, which failed the keep-the-first test, and then to drop the completeness check, which failed five tests. Both were restored.
 
 ## Log
 
@@ -139,3 +141,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: SVA-B5 built, [Validation Pack](../validation/SVA-B5.md). Built the library-imports sample whose import graph draws a stated import, a binds edge and a derived edge once its imports are held, a drop area on the import dialog that walks a dropped folder, the state's own per-dependency and per-import graphs that the Baseline view now reads instead of fetching, and the baseline's validation in the state pill and the Overview's count. Found that the Overview counts violations only, so a baseline's missing-import warnings do not move it, and that the two LATTICE layers shared a namespace so their import node labels were cut alike, which a wrapping rule fixes. Left undone is a run on the live stack, where the two layers also import skos and prov-o, which are not staged and draw as missing.
 - 2026-11-16: SVA-B5 verified by a second run of its checks, 13 stage tests, 374 unit tests, the type check and 47 browser tests on the fake service, and by the counts of `mise run check:config-studio`, 21, 285 and 374. The derived edge of the import graph was seen drawn for the first time, dashed, from the library sample's ontology to the foundation layer. One existing test was edited, the stage test that lists every sample by name, which gained the new sample's name. For SVA-V1 to see on the real stack: both LATTICE layers the sample holds import SKOS and PROV-O, which the service does not stage, so the sample's import graph will show two missing imports there that the fake's stand-ins leave out. A held import's node shows its IRI twice, as its label and as its IRI, where its label is the IRI.
 - 2026-11-16: SVA-R4 picked up.
+- 2026-11-16: SVA-R4 built, [Validation Pack](../validation/SVA-R4.md). Built the frame assembler and the per-pane run controller with its clock and timers as inputs, the tab's run frame events, `startRun`, the run pane and the mapping dock's Sample tab, with four switches in the fake and five browser tests. Found that the contract leaves open where a frame's body sits in the tab's CloudEvent, taken here as its data, and that a client deadline equal to the service's races the service's own failed frame. Left to later slices are the removal of the automatic sample run, the output explorer and frames over real MQTT.
+- 2026-11-16: SVA-R4 verified by a second run of its checks, 409 unit tests, the type check and 52 browser tests on the fake service. The contract's first client found six things in it, which SVA-R4a takes up before the service is built: the tab's event does not state its JSON shape, a client holding the service's own deadline calls a run incomplete before the service's failed frame arrives, a deadline computed on a clock that runs ahead is refused, `more` adds nothing a frame's missing part does not say, a frame lost before the deadline's failed frame leaves a gap the contract does not speak of, and a waiting request needs an abort, which the client has. Two things about the pane for the sample pane's own slice: the dock widens to 620 px for the Sample tab, which clips the mapping tree beside it, and below 1560 px the dock starts closed.

@@ -489,3 +489,21 @@ table.axiom-rows.nested th { position: static; }
 
 /* An import node's name and IRI wrap, so two IRIs that differ only at their end, such as two layers of one namespace, stay told apart (SVA-B5). */
 .import-node strong.ellipsis, .import-node .canvas-terms { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+
+/* The run pane in the dock, controls on the left and displays on the right (SVA-R4). */
+.side.wide { width: min(620px, 52vw); }
+.dock-sample { flex: 1; min-height: 0; display: flex; }
+.dock-sample[hidden] { display: none; }
+.run-pane { flex: 1; min-width: 0; min-height: 0; display: grid; grid-template-columns: minmax(104px, 150px) minmax(0, 1fr); }
+.run-controls { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px; border-right: 1px solid var(--border); overflow: auto; }
+.run-display { min-width: 0; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+.run-status { font-size: 12.5px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); overflow-wrap: anywhere; }
+.run-status.complete { border-color: var(--ok); }
+.run-status.failed, .run-status.refused { border-color: var(--bad); color: var(--bad); }
+.run-status.incomplete { border-color: var(--warn); }
+.run-status .muted { color: var(--text-3); }
+.run-parts { display: flex; flex-direction: column; gap: 10px; }
+.run-part { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.run-part-head { padding: 6px 10px; background: var(--surface-2); font-size: 12.5px; overflow-wrap: anywhere; }
+.run-part-text { margin: 0; padding: 8px 10px; font: 12px/1.5 var(--mono); max-height: 240px; overflow: auto; white-space: pre; }
+.run-problem { color: var(--bad); overflow-wrap: anywhere; }

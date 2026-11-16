@@ -17,6 +17,10 @@ let ready = false;
 let watchTopic = "";
 const tab = Array.from({ length: 12 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join("");
 const waiters = new Map<string, Set<() => void>>();
+const runListeners = new Set<(frame: unknown) => void>();
+
+/** The type of the CloudEvent that carries one frame of a run to the tab (ADR-A154). */
+export const RUN_FRAME_EVENT = "org.nebularis.lattice.studio.run.frame";
 
 /** A principal's name as a topic carries it, unpadded base64url of its UTF-8, so it holds no `.`, `/`, `+` or `#`. */
 export function topicName(principal: string): string {
@@ -79,13 +83,15 @@ async function connect() {
       for (const subject of waiters.keys()) subscribe(subject);
     });
     c.on("message", (_topic, payload) => {
-      let frame: { specversion?: string; subject?: string };
+      let frame: { specversion?: string; subject?: string; type?: string; data?: unknown };
       try {
         frame = JSON.parse(new TextDecoder().decode(payload));
       } catch {
         return;
       }
-      if (frame.specversion && frame.subject) wake(frame.subject);
+      // A run sends its frames to the tab unasked, so they need no watch.
+      if (frame.specversion && frame.type === RUN_FRAME_EVENT) for (const listener of [...runListeners]) listener(frame.data);
+      else if (frame.specversion && frame.subject) wake(frame.subject);
     });
     c.on("close", () => {
       if (!ready) return;
@@ -104,6 +110,18 @@ async function connect() {
 /** Whether the tab's connection is up, so a watcher may wait long between reads. */
 export function connected(): boolean {
   return ready;
+}
+
+/** The tab's identifier, the one its events topic and a run's `tab` parameter carry. */
+export function tabId(): string {
+  return tab;
+}
+
+/** Receives the body of each run frame event the tab is sent, as it is, and gives a way to stop. It opens the connection where there is none. */
+export function onRunFrame(listener: (frame: unknown) => void): () => void {
+  void connect();
+  runListeners.add(listener);
+  return () => void runListeners.delete(listener);
 }
 
 export interface Watch {
