@@ -2,8 +2,8 @@
 
 # ADR-A153: A standalone module for the verification rig's intermediate representation
 
-**Status:** Proposed
-**Date:** 2026-11-08 (proposed)
+**Status:** Accepted 2026-11-16
+**Date:** 2026-11-08 (proposed), 2026-11-16 (accepted)
 **Described in:** [the verification rig module](../../../ontology/v-rig/README.md)
 **Related:** [ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md) (`ontology/` as the one root for semantic assets), [ADR-A129](ADR-A129-one-release-for-the-substrate.md) (a standalone module is released on its own), [ADR-A121](ADR-A121-repository-catalogue.md) (the catalogue entry and the import guard), [ADR-A126](ADR-A126-literate-specification-layout-and-grammar.md) (the literate layout), [ADR-A147](ADR-A147-skolem-rule-for-mapped-sources.md) (a versioned deterministic naming rule), [ADR-A143](ADR-A143-one-canonicalisation.md) (SHA-256 in lowercase hex), [ADR-A112](ADR-A112-wording-layer.md) (the layer the body nodes project onto), [ADR-A-C2](ADR-A-C2-clean-room-authoring-procedure.md) (examples from generic premises)
 **Unit:** [`v-rig`](../../developer/plans/v-rig.md)

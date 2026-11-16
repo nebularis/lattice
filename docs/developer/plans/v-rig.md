@@ -5,7 +5,7 @@
 **Unit ID:** `v-rig`
 **Prefix:** VR
 **Status:** proposed 2026-11-07 and approved by the maintainer the same day, from a design briefed in chat and the answers to VR-Q1 to VR-Q11. Built 2026-11-08, VR-1 to VR-7, each with its Validation Pack, awaiting review.
-**ADRs:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), Proposed 2026-11-08, for the standalone module `ontology/v-rig/` ([ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) decision 1, [ADR-A129](../../architecture/decisions/ADR-A129-one-release-for-the-substrate.md)'s addendum of 2026-10-26, [ADR-A121](../../architecture/decisions/ADR-A121-repository-catalogue.md)'s addendum of 2026-10-21)
+**ADRs:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), accepted 2026-11-16, for the standalone module `ontology/v-rig/` ([ADR-A77](../../architecture/decisions/ADR-A77-repository-topology-and-documentation-governance.md) decision 1, [ADR-A129](../../architecture/decisions/ADR-A129-one-release-for-the-substrate.md)'s addendum of 2026-10-26, [ADR-A121](../../architecture/decisions/ADR-A121-repository-catalogue.md)'s addendum of 2026-10-21)
 **Builds on:** the Wording layer ([ADR-A112](../../architecture/decisions/ADR-A112-wording-layer.md)), MORK mappings over RDF sources ([`tools/mork_rdf`](../../../tools/mork_rdf/README.md), CAP-99, MEC-92), the formal-methods tracks ([lifecycle](../formal-methods-lifecycle.md)), and the [phase 7 plan](applied-insurance-reference-phase-7.md)'s programme model, AIR-7.0 and AIR-7.1
 
 ## Scope
@@ -55,6 +55,7 @@ Estimates are in tokens, for agent work, excluding review.
 | VR-5 | P2 and P3, the generated theory and the test vectors | VR-3 | 160k |
 | VR-6 | P4, findings as RDF with stable ids and the report rendered from them | VR-4 | 100k |
 | VR-7 | the seam for a read case, a representation graph from outside taken as a case | VR-2 | 40k |
+| VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | VR-4 | 80k |
 
 ```mermaid
 flowchart LR
@@ -64,6 +65,7 @@ flowchart LR
   V3 --> V4["VR-4 P1 shapes,<br/>reasoner, queries"]
   V3 --> V5["VR-5 P2 theory,<br/>P3 vectors"]
   V4 --> V6["VR-6 P4 findings"]
+  V4 --> V8["VR-8 questions on dates<br/>and the ledger design"]
 ```
 
 ## Slices in detail
@@ -81,6 +83,8 @@ flowchart LR
 **VR-6.** Findings as `vrig:Finding` nodes in Turtle, each with an IRI formed from a versioned deterministic rule over its kind, document id, locator and key, in the manner of ADR-A147, so two runs of one revision give the same ids and a resolved finding disappears from a diff by id. The Markdown report is rendered from that graph, sorted by document id and locator. Both are byte-stable for a rig revision. Every run prints the rig digest, the checkout's commit and substrate release, and the versions of the vocabulary and the vector schema, as its first lines.
 
 **VR-7.** The lifter accepts a Turtle file in the `vrig:` vocabulary from outside, validates it against the shapes, and treats it as a read case, so a reader that lives outside the repository can write one and the comparison of a read case with the declared case runs unchanged.
+
+**VR-8.** Added 2026-11-16, after the unit was built. The five questions the [sketch on dates, periods and reporting](../sketches/v-rig-dates-periods-and-reporting.md) can ask today join their competency files, with questions on what [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)'s addenda of 2026-11-09 and 2026-11-16 have an account declare and a request carry. A question whose term exists is a query, run on the mini-rig for its row count. A question with no term is recorded as a gap, with the layer the term would belong to, as a requirement for the rework of the Ledger vocabulary. No layer gains a term, no rig but the mini-rig is read, and P2 and P3 are untouched. The [brief](../notes/rig-agent-brief-2026-11-16.md) has the candidate questions and the reading.
 
 ## Formal methods
 
