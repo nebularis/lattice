@@ -1,0 +1,13 @@
+{
+  "subject": "LW0",
+  "statedAs": "Units.a_strict_total_order_places_exactly_n",
+  "statementDigest": "sha256:d748af3cf03f9f9f696b11ed0123aa04af7339e5d713b0122d448195f119eb3e",
+  "method": "Proof",
+  "scope": "EveryFiniteSetAndStrictTotalOrder",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

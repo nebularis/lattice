@@ -3,10 +3,10 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** verified 2026-11-16. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** built 2026-11-16. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
-**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md)
+**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md)
 
 ---
 
@@ -50,6 +50,34 @@ Since then the work has been design rather than build, and it has answered the w
 | the `owl:rational` probe | **done by LG-2**, TSD-70. rdflib, Oxigraph and Jena keep the literal and none compares it by value, so a proportion is two integers. ES-5 can rely on the finding | closed |
 
 **Next action:** the maintainer's verification of LG-7 and LG-2 from their packs, and LG-Q9 and LG-Q10. Then LG-3, Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and no longer waits on LG-2. **Then, as soon as the design is settled:** the documentation unit's OD-DOC4, the layer interactions record, whose brief holds the inputs this unit's design discussions produced.
+
+## 2026-11-16, LG-20 built
+
+On machine S, committed locally, [its pack](../validation/LG-20.md). LP1 is proved on the maintainer's condition, every account on a pot's path below the fund holding at least what the fund makes available before the pots run, so all fifty-one of the plan's laws are theorems with claim records, 72 in the session. The row is built and waits on the maintainer's verdict.
+
+## 2026-11-16, LG-20 fifty laws built, post refuses an unaccepted credit
+
+On machine S, committed locally, [its pack](../validation/LG-20.md). The maintainer leans LG-Q29 (b), and `post` now refuses a credit whose account does not accept its kind, in the README's block, the spike's `Target.thy` and the model together, with every claim's digest moved. LU3 as the plan states it is then proved for what a run posts, and LU3n keeps the case for `credit` alone. LW4, LH1, LH2, LM2, LJ2, LJ3, LP2, LP4 and LPn are built, so fifty of the plan's fifty-one laws are theorems with claim records, 71 in the session. LP1 is not built: "no pot's own amount binds" needs either a trace of `pots` as a new definition or a sufficient condition on the balances before the pots, which is the maintainer's choice. The row stays building.
+
+## 2026-11-16, LG-20 forty laws built, LU3 refuted
+
+On machine S, committed locally, [its pack](../validation/LG-20.md). LB1n, LU1n, LE4 and LE5 are built, so forty of the plan's fifty-one laws are theorems with claim records. LU3 is false as planned. A leaf that does not accept a credit's kind, under a parent that does, leaves a cut with every ceiling at its stated amount. It is kept as LU3n, added to the model's examples and raised as LG-Q29. LW4, LH1, LH2, LM2, LJ2, LJ3, LP1, LP2, LP4 and LPn are not built, each left for want of time and held by the model's search, so the row stays building.
+
+## 2026-11-16, LG-20 part built
+
+On machine S, committed locally, [its pack](../validation/LG-20.md). Thirty-six of the plan's fifty-one laws are theorems with claim records, in seven theories by group, and the predicates and ranks are whole. No counterexample was found and no definition changed. LW4, LH1, LH2, LM2, LJ2, LJ3, LP1, LP2, LP4, LPn, LB1n, LU1n, LU3, LE4 and LE5 are not built, each left for want of time and held by the model's search, so the row stays building.
+
+## 2026-11-16, LG-20 marked building
+
+On machine S, on the same branch as LG-9 and after it, per the [machine S brief of 2026-11-15](../notes/machine-s-brief-2026-11-15.md), the day LG-9 was built.
+
+## 2026-11-16, LG-9 built
+
+On machine S, branch `fm/ledger-proofs-on-the-target-kernel`, committed locally, [its pack](../validation/LG-9.md). The definitions of the target kernel are in the README's section 10 and extracted to `Kernel.thy`, the 600 generated cases agree on it, and the 19 claims of LG-7 and LG-8 are proved on it with LX1, the path as a list, beside them. LC4, LR2 and LR3 gained hypotheses, rationing's domain and an order injective on the keys, and LR4 lost LG-8's positive weights, since under rationing a request of no weight takes no unit. Two findings on the gate, which read the kernel's `admit` as Coq's marker and whose digest did not cover records, both fixed. Terms the README lacks are proposed in its section 13.
+
+## 2026-11-16, LG-9 marked building
+
+On machine S, branch `fm/ledger-proofs-on-the-target-kernel`, per the [machine S brief of 2026-11-15](../notes/machine-s-brief-2026-11-15.md), handed over by the maintainer on 2026-11-16.
 
 ## 2026-11-09, LG-8 built
 
@@ -119,7 +147,7 @@ Results sections. In short:
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | verified 2026-11-09, built 2026-11-08, building 2026-11-08 |  |
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | merged 2026-11-16, verified 2026-11-16, merged 2026-11-09, built 2026-11-09, building 2026-11-09 |  |
-| LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | planned | LG-21 |
+| LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | built 2026-11-16, building 2026-11-16 |  |
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-09, building 2026-11-09 |  |
 | LG-11 | conversion leaves the ledger, the conversion terms removed | planned |  |
 | LG-12 | which draws an account accepts, a shape for compatibility and representability | planned | LG-11 |
@@ -130,7 +158,7 @@ Results sections. In short:
 | LG-17 | LG-16's gaps closed: like-for-like read forms, a cut that copies its position, a ceiling above a stated amount, the sketch's tree in an engine, the cost of writing, concurrent writers on Oxigraph and Jena, late postings, and the native Jena caller | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-12, building 2026-11-12 |  |
 | LG-18 | LG-17's follow-ups measured: one writer per ledger against guarded writers, with balances kept by the writer and with batched commits, and the readings of a balance by effective day as known at a recording, their properties and their read cost | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-12, building 2026-11-12 |  |
 | LG-19 | the benchmark's corpora refuse a debit beyond availability, and LG-14 to LG-18 are run again on them | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-13, building 2026-11-13 | LG-18 |
-| LG-20 | the laws the target kernel gains, in seven groups by definition, restated 2026-11-15 in place of the third widening | planned | LG-9 |
+| LG-20 | the laws the target kernel gains, in seven groups by definition, restated 2026-11-15 in place of the third widening | built 2026-11-16, building 2026-11-16 |  |
 | LG-21 | the target kernel written first, each changed definition once in its decided form, tried on generated cases and reviewed, before any further proof | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-15, building 2026-11-15 |  |
 | LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figures at the top of the READMEs | merged 2026-11-16, verified 2026-11-16, built 2026-11-16, building 2026-11-15 | LG-19 |
 - 2026-11-16: merged into `main` at the maintainer's word, with a merge commit and no version bump, since no ontology document changed. It carries LG-22, the verification of eleven slices with their probes, the three addenda to ADR-A131 and the third of 2026-11-16, MEC-113, STD-335 to STD-337 and the writing check's two rules for a layer README. The merge gate passed over 45 files.

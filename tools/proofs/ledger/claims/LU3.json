@@ -1,0 +1,13 @@
+{
+  "subject": "LU3",
+  "statedAs": "Credits.no_cut_where_ceilings_are_stated_and_credits_on_leaves",
+  "statementDigest": "sha256:379f94331c62c8c5836b5bce70e5df864d24921d94a5ded8be3730ffccf84102",
+  "method": "Proof",
+  "scope": "EveryTreeAndHistory",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

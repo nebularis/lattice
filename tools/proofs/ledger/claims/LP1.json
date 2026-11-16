@@ -1,0 +1,13 @@
+{
+  "subject": "LP1",
+  "statedAs": "Pots.pots_are_by_rank_where_no_pot_binds",
+  "statementDigest": "sha256:4b86bcc0165d80c08611723dac55c3e62df9cb3af22ee83d1da5067460677c27",
+  "method": "Proof",
+  "scope": "EveryTreeAndPotList",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

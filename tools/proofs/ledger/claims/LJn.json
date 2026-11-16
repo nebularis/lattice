@@ -1,0 +1,13 @@
+{
+  "subject": "LJn",
+  "statedAs": "Merge.a_facility_with_a_sublimit",
+  "statementDigest": "sha256:3252328279d601d623716e8465994a7ce3c9955f4c04c2e070ebc4dce46ce906",
+  "method": "Proof",
+  "scope": "OneArrangement",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

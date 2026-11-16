@@ -56,10 +56,10 @@ ldg:HalfUp a skos:Concept ;
     rdfs:comment "Rounds a tie away from zero." .
 
 ldg:InPriorityOrder a skos:Concept ;
-    rdfs:comment "Draws are granted in a stated priority order until availability is exhausted." .
+    rdfs:comment "Draws are granted in the priority order the account declares until availability is exhausted. The order is the account's declaration, never the order of the proposals' identifiers." .
 
 ldg:LargestRemainder a skos:Concept ;
-    rdfs:comment "The residual is allocated to the proposal(s) with the largest rounding remainder, ties broken by the total order of the proposals." .
+    rdfs:comment "The residual is allocated one unit at a time to the proposals with the largest rounding remainders, ties taken in the order the account declares, never in the order of the proposals' identifiers. With no order declared, the units that equal remainders do not decide are left." .
 
 ldg:MergeRules a skos:ConceptScheme ;
     rdfs:comment "What happens when several draws at one position together exceed availability." .
@@ -80,7 +80,7 @@ ldg:RoundingMethods a skos:ConceptScheme ;
     rdfs:comment "How a proportional merge's exact shares round to the account's unit." .
 
 ldg:ToFirstInOrder a skos:Concept ;
-    rdfs:comment "The residual is allocated one unit at a time to the first proposals in order." .
+    rdfs:comment "The residual is allocated one unit at a time to the first proposals in the order the account declares, never in the order of their identifiers." .
 
 ldg:TowardZero a skos:Concept ;
     rdfs:comment "Truncates toward zero." .

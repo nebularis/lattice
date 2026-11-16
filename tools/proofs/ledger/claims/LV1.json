@@ -1,0 +1,13 @@
+{
+  "subject": "LV1",
+  "statedAs": "Predicates.lawful_is_rationing_with_no_residual",
+  "statementDigest": "sha256:4adfc474bd3cbeab7134b36252b4a829f0a2fe3e6aa03a4b186a4287c08368dd",
+  "method": "Proof",
+  "scope": "EveryRule",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

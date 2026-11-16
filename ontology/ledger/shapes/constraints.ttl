@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# SHACL-SPARQL constraints for ldg:AccountDefinition (ADR-A131 decisions 2
-# and 3).
-# Each targets the class as one node and reads every definition in one query (TSD-23).
+# SHACL-SPARQL constraints for ldg:AccountDefinition: the tree has no cycle,
+# units of account match and are extensive, a merge rule states what it needs,
+# a credit ceiling is not below the stated amount, and a key dimension is typed.
+# Each targets the class as one node and reads every definition in one query,
+# so a validator runs each once rather than once per definition.
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
@@ -68,6 +70,22 @@ ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
 				OPTIONAL { ?value ldg:roundingMethod ?rounding }
 				OPTIONAL { ?value ldg:residualAllocation ?residual }
 				FILTER (!BOUND(?rounding) || !BOUND(?residual))
+			}
+		"""
+	] .
+
+ldg:NearestRoundingStatesTheDifferenceShape a sh:NodeShape ;
+	sh:targetNode ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "Rounding half-even or half-up beside a residual allocation must state how the difference is settled." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:roundingMethod ?rounding ;
+					  ldg:residualAllocation ?residual .
+				FILTER (?rounding IN (ldg:HalfEven, ldg:HalfUp))
+				FILTER NOT EXISTS { ?value ldg:roundingDifference ?settled }
 			}
 		"""
 	] .

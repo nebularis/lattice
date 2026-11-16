@@ -267,7 +267,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** One evaluation's write of records, recorded at one position.
 
-**Utility.** What an evaluation records about itself beyond its postings. Every posting, balance record, merge record and checkpoint names the pass that wrote it. A pass's position is on the effective axis, so the records it writes are effective no later than it (STD-294), and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged.
+**Utility.** What an evaluation records about itself beyond its postings. Every posting, balance record, merge record and checkpoint names the pass that wrote it. A pass's position is on the effective axis, so the records it writes are effective no later than it, and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged.
 
 **Restrictions.**
 
@@ -304,7 +304,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Subclass of.** `fnd:DerivedArtefact`
 
-**Utility.** Materialise one per account a pass moved, and for its ancestors where a reader needs them. It is keyed by the account and the pass, so it reads along the recorded axis. A reading as of an effective position folds the postings instead (STD-278).
+**Utility.** Materialise one per account a pass moved, and for its ancestors where a reader needs them. It is keyed by the account and the pass, so it reads along the recorded axis. A reading as of an effective position folds the postings instead.
 
 **Restrictions.**
 
@@ -455,9 +455,7 @@ be a whole unit of account, so state how it rounds: `ldg:HalfEven`, `ldg:HalfUp`
 **Definition.** How the rounding residual is allocated so a proportional merge's grants still sum to
 availability.
 
-**Utility.** Required wherever `ldg:mergeRule` is `ldg:Proportional`. Rounding every share independently
-can leave the sum short of, or over, availability by a unit or two; state how that residual is allocated:
-`ldg:LargestRemainder` (ties broken by the total order of the proposals) or `ldg:ToFirstInOrder`.
+**Utility.** Required wherever `ldg:mergeRule` is `ldg:Proportional`. Rounding every share independently can leave the sum short of, or over, availability by a unit or two, so state how that residual is allocated, `ldg:LargestRemainder` (ties taken in the order the account declares, never by the proposals' identifiers) or `ldg:ToFirstInOrder`.
 
 **Domain.** `ldg:AccountDefinition`
 
@@ -469,7 +467,7 @@ can leave the sum short of, or over, availability by a unit or two; state how th
 
 **Definition.** Deprecated: when the account was to return to its stated amount.
 
-**Utility.** Use `ldg:periodRecurrence`. A reset credit restoring the account lets a draw effective in the old period but recorded after the reset be tested against the new period's amount, so a periodic amount is one account per period instead (PDD-15). Removed with Behaviour's allowance terms (LG-3).
+**Utility.** Use `ldg:periodRecurrence`. A reset credit restoring the account lets a draw effective in the old period but recorded after the reset be tested against the new period's amount, so a periodic amount is one account per period instead. Removed with Behaviour's allowance terms.
 
 **Domain.** `ldg:AccountDefinition`
 
@@ -647,7 +645,7 @@ which may differ by date, is recorded with that draw.
 
 #### `ldg:forPurpose`
 
-**Definition.** The purpose a draw names (LG-Q2).
+**Definition.** The purpose a draw names.
 
 **Domain.** `ldg:Posting`
 
@@ -657,7 +655,7 @@ which may differ by date, is recorded with that draw.
 
 #### `ldg:amountAsDrawn`
 
-**Definition.** The amount as drawn, in another value space than the account's (LG-Q8).
+**Definition.** The amount as drawn, in another value space than the account's.
 
 **Utility.** State it with `ldg:conversionUsed`, both or neither.
 
@@ -669,7 +667,7 @@ which may differ by date, is recorded with that draw.
 
 #### `ldg:conversionUsed`
 
-**Definition.** The conversion a draw in another value space used, with its rate's source and date (LG-Q8).
+**Definition.** The conversion a draw in another value space used, with its rate's source and date.
 
 **Domain.** `ldg:Posting`
 
@@ -689,7 +687,7 @@ which may differ by date, is recorded with that draw.
 
 **Definition.** The evaluation that proposed a grant's draw.
 
-**Utility.** Deliberately has no range: the layer above names its evaluations (LG-4).
+**Utility.** Deliberately has no range: the layer above names its evaluations.
 
 **Domain.** `ldg:Grant`
 
@@ -727,7 +725,7 @@ The configuration declares none. The runtime document's positions are whole numb
 
 **Definition.** Where a fact sits in the arrangement the accounts describe.
 
-**Utility.** Supplied by the domain and comparable across accounts. Never later than the position of the pass that recorded the fact (STD-294).
+**Utility.** Supplied by the domain and comparable across accounts. Never later than the position of the pass that recorded the fact.
 
 **Domain.** `ldg:Posting or ldg:MergeRecord`
 
@@ -823,7 +821,7 @@ The configuration declares none. The runtime document's positions are whole numb
 
 **Definition.** The numerator of a proportional grant's exact share.
 
-**Utility.** State it with `ldg:proportionDenominator`. The share is kept exact because other evaluations cite it, and the posting is rounded (LG-Q6).
+**Utility.** State it with `ldg:proportionDenominator`. The share is kept exact because other evaluations cite it, and the posting is rounded.
 
 **Domain.** `ldg:Grant`
 
@@ -882,7 +880,7 @@ in a scheme of its own. `ldg:PostingDirections` is used only by the runtime term
 
 | Individual | Type | Definition |
 |---|---|---|
-| `ldg:InPriorityOrder` | `skos:Concept` | Draws are granted in a stated priority order until availability is exhausted. |
+| `ldg:InPriorityOrder` | `skos:Concept` | Draws are granted in the priority order the account declares until availability is exhausted. The order is the account's declaration, never the order of the proposals' identifiers. |
 | `ldg:Proportional` | `skos:Concept` | Draws are granted in proportion to the amounts requested, rounded and allocated per the account's `ldg:roundingMethod` and `ldg:residualAllocation`. |
 | `ldg:Refuse` | `skos:Concept` | Where proposals together exceed availability, the whole merge is refused: no grant, a reason recorded, no posting. |
 
@@ -905,8 +903,8 @@ in a scheme of its own. `ldg:PostingDirections` is used only by the runtime term
 
 | Individual | Type | Definition |
 |---|---|---|
-| `ldg:LargestRemainder` | `skos:Concept` | The residual is allocated to the proposal(s) with the largest rounding remainder, ties broken by the total order of the proposals. |
-| `ldg:ToFirstInOrder` | `skos:Concept` | The residual is allocated one unit at a time to the first proposals in order. |
+| `ldg:LargestRemainder` | `skos:Concept` | The residual is allocated one unit at a time to the proposals with the largest rounding remainders, ties taken in the order the account declares, never in the order of the proposals' identifiers. With no order declared, the units that equal remainders do not decide are left. |
+| `ldg:ToFirstInOrder` | `skos:Concept` | The residual is allocated one unit at a time to the first proposals in the order the account declares, never in the order of their identifiers. |
 
 ### 6.5 Disjointness and Keys
 
@@ -920,7 +918,7 @@ The runtime document's classes are pairwise disjoint, and disjoint from the acco
 
 ### 6.6 Other Axioms
 
-`ldg:resetRecurrence` is deprecated in favour of `ldg:periodRecurrence` (PDD-15).
+`ldg:resetRecurrence` is deprecated in favour of `ldg:periodRecurrence`, since a periodic amount is one account per period and nothing resets an account.
 
 ```turtle-spec
 ldg:resetRecurrence owl:deprecated true .
@@ -1007,13 +1005,15 @@ ldg:resetRecurrence owl:deprecated true .
 
 ### 7.2 Constraints
 
-`shapes/constraints.ttl` holds six SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, a credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space. Each targets the class as one node (`sh:targetNode ldg:AccountDefinition`) and reads every definition in one query, as the runtime laws of section 7.3 do, so a validator that runs a constraint once per focus node runs each once rather than once per definition (TSD-23). A violation's `sh:value` names the definition.
+`shapes/constraints.ttl` holds seven SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, rounding half-even or half-up beside a residual allocation only where the account states how the difference is settled, a credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space. Rounding to the nearest can round the shares to more than the amount, which no residual rule takes back, so it is refused beside a residual rule unless the wording says how the difference is settled, through `ldg:roundingDifference`, a term proposed for review in section 13 and not yet declared, so until it is the constraint refuses every such account. Each targets the class as one node (`sh:targetNode ldg:AccountDefinition`) and reads every definition in one query, as the runtime laws of section 7.3 do, so a validator that runs a constraint once per focus node runs each once rather than once per definition. A violation's `sh:value` names the definition.
 
 <!-- hidden: {"output-file": "shapes/constraints.ttl"}
 ```turtle-shapes
-# SHACL-SPARQL constraints for ldg:AccountDefinition (ADR-A131 decisions 2
-# and 3).
-# Each targets the class as one node and reads every definition in one query (TSD-23).
+# SHACL-SPARQL constraints for ldg:AccountDefinition: the tree has no cycle,
+# units of account match and are extensive, a merge rule states what it needs,
+# a credit ceiling is not below the stated amount, and a key dimension is typed.
+# Each targets the class as one node and reads every definition in one query,
+# so a validator runs each once rather than once per definition.
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
@@ -1083,6 +1083,22 @@ ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
 		"""
 	] .
 
+ldg:NearestRoundingStatesTheDifferenceShape a sh:NodeShape ;
+	sh:targetNode ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "Rounding half-even or half-up beside a residual allocation must state how the difference is settled." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:roundingMethod ?rounding ;
+					  ldg:residualAllocation ?residual .
+				FILTER (?rounding IN (ldg:HalfEven, ldg:HalfUp))
+				FILTER NOT EXISTS { ?value ldg:roundingDifference ?settled }
+			}
+		"""
+	] .
+
 ldg:CreditCeilingNotBelowStatedShape a sh:NodeShape ;
 	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
@@ -1143,14 +1159,15 @@ ldg:KeyDimensionTypeShape a sh:NodeShape ;
 | `ldg:NotForwardDatedShape` | no posting or merge is effective later than the pass that recorded it | |
 | `ldg:ConversionTogetherShape` | a posting states the amount as drawn and the conversion used both or neither | |
 
-The fold applies a ceiling once, to the total. That is exact where no credit was cut by a ceiling before a later debit in the same subtree, which every example meets, and a history where one was needs a running balance recorded on each posting to be checked.
+The fold applies a ceiling once, to the total. That is exact where no credit was cut by a ceiling before a later debit in the same subtree, which every example meets, and a history where one was needs a running balance recorded on each posting to be checked, which section 13 leaves open.
 
-Each shape targets the class it checks as a node and reads every instance in one query, so a result's focus node is the class and its value is the record. A shape per record would run one query per record, which took over a minute and a half on 250 postings with rdflib, against a few seconds for the 5,000 postings of LG2-10 this way. Each inner pattern starts from a variable already bound, a record's account or its pass, so no query scans every record once per record.
+Each shape targets the class it checks as a node and reads every instance in one query, so a result's focus node is the class and its value is the record. A shape per record would run one query per record, which took over a minute and a half on 250 postings with rdflib, against a few seconds for 5,000 postings this way. Each inner pattern starts from a variable already bound, a record's account or its pass, so no query scans every record once per record.
 
 <!-- hidden: {"output-file": "shapes/runtime.ttl"}
 ```turtle-shapes
-# SHACL-SPARQL constraints over Ledger's records (ADR-A131 decisions 3, 4 and
-# 6, its two addenda of 2026-10-27, PDD-15, STD-277, STD-294). Each shape
+# SHACL-SPARQL constraints over Ledger's records: balances fold their
+# postings, a merge stays within availability, account instances keep their
+# natural keys and periods, and no record is effective after its pass. Each shape
 # targets the class it checks and reads all its instances in one query, so a
 # dataset's records are checked in one evaluation per law rather than one per
 # record. A result's focus node is the class and its value the record.
@@ -1436,7 +1453,7 @@ ldg:RecordedOrderFollowsPassesShape a sh:NodeShape ;
 ldg:NotForwardDatedShape a sh:NodeShape ;
         sh:targetNode ldg:Posting , ldg:MergeRecord ;
         sh:sparql [
-                sh:message "A record must not be effective later than the pass that recorded it (STD-294)." ;
+                sh:message "A record must not be effective later than the pass that recorded it." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
@@ -1482,56 +1499,176 @@ Not applicable.
 
 ## 10. Formalisation
 
-Ledger's laws are proved in one Isabelle/HOL session, [`tools/proofs/ledger/`](../../tools/proofs/ledger/README.md), from the definitions in the block below, which `tools/literate_extract.py` writes to `tools/proofs/ledger/Kernel.thy` unchanged. Each law's theorem carries a claim record under the proof gate, and the session's README says what is proved, what is assumed and where the proofs came from.
+Ledger's laws are proved in one Isabelle/HOL session, [`tools/proofs/ledger/`](../../tools/proofs/ledger/README.md), from the definitions in the blocks below, which `tools/literate_extract.py` writes, in order and unchanged, to `tools/proofs/ledger/Kernel.thy`. Each law's theorem carries a claim record under the proof gate, and the session's README says what is proved, what is assumed and where the proofs came from. The definitions are grouped by what they define, from amounts to readings, each group after the prose that says what it is for.
 
-The definitions name no domain. An amount is an exact rational, as decision 6's exactness asks. An amount vector gives an amount to each key of a finite key set, the shape a posting per key needs. A merge rule takes an amount vector and an amount to split, and it is lawful when it satisfies four axioms: the parts sum to the amount, no part exceeds its own key's amount, no part is negative, and splitting the whole returns the whole. A split of zero giving zero parts follows from these and is not assumed, and monotonicity is not an axiom, since no law below needs it. Two lawful rules are defined, proportional and in priority order, and they split one arrangement differently, which is why an account declares its rule rather than taking a default.
-
-The account tree is a parent function over a finite set of accounts. An account's path is the account and every ancestor, and its availability is the least remaining balance along that path. A draw debits every account on its path, and every account on the path of an account that counts the draw's purpose, as one operation that succeeds whole or changes nothing. A credit restores along the path and stops at each account's ceiling. Draws proposed at one position are merged by the account's rule from the requests taken together, and settled in the order of their keys. An amount drawn across several accounts in turn is split at each one by the rule, and what no account takes is the residual. A position is a pair of whole numbers, the position and the micro-position, ordered by the first and then the second.
-
-Rounding is over whole minor units, as integers. Floor division of a total by weights leaves a residual below the number of parts, and allocating that residual one unit at a time to the first parts in key order, `ldg:ToFirstInOrder`, makes the parts sum exactly to the total. `ldg:LargestRemainder` allocates it one unit at a time to the parts whose floor division left the largest remainders instead, taking ties in key order. The same split of an amount drawn across several accounts in turn is stated over whole minor units too, with a rounding rule in place of an exact one, so that the rounded split can be compared with the exact one account by account.
+The definitions name no domain. Every definition that only adds, subtracts and compares is stated once, over any ordered ring, so it serves whole minor units (`int`) and exact amounts (`rat`) alike, and only a rule names its number type. No rule reads anything of a key but what the account declares of it, so no allocation depends on how the keys are named.
 
 ```isabelle-spec
 theory Kernel
 imports Complex_Main
 begin
+```
 
-type_synonym amount = rat
+**Amounts.** An amount vector gives an amount to each key, the shape a posting per key needs, and its `total` over a key set is the sum of its amounts there. `nothing` gives every key zero, `less` subtracts one vector from another key by key, `fits_in` says no key's amount exceeds another vector's, and `nonneg_on` says every amount is non-negative and none is held off the key set.
 
-type_synonym 'k amounts = "'k \<Rightarrow> amount"
+```isabelle-spec
+type_synonym ('k, 'n) amounts = "'k \<Rightarrow> 'n"
 
-definition total :: "'k set \<Rightarrow> 'k amounts \<Rightarrow> amount" where
+definition total :: "'k set \<Rightarrow> ('k, 'n::linordered_idom) amounts \<Rightarrow> 'n" where
   "total K v = (\<Sum>k\<in>K. v k)"
 
-definition nothing :: "'k amounts" where
+definition nothing :: "('k, 'n::linordered_idom) amounts" where
   "nothing = (\<lambda>_. 0)"
 
-definition less :: "'k amounts \<Rightarrow> 'k amounts \<Rightarrow> 'k amounts" where
+definition less :: "('k, 'n::linordered_idom) amounts \<Rightarrow> ('k, 'n) amounts \<Rightarrow> ('k, 'n) amounts" where
   "less v w = (\<lambda>k. v k - w k)"
 
-definition fits_in :: "'k amounts \<Rightarrow> 'k amounts \<Rightarrow> bool" where
+definition fits_in :: "('k, 'n::linordered_idom) amounts \<Rightarrow> ('k, 'n) amounts \<Rightarrow> bool" where
   "fits_in v w \<longleftrightarrow> (\<forall>k. v k \<le> w k)"
 
-definition nonneg_on :: "'k set \<Rightarrow> 'k amounts \<Rightarrow> bool" where
+definition nonneg_on :: "'k set \<Rightarrow> ('k, 'n::linordered_idom) amounts \<Rightarrow> bool" where
   "nonneg_on K v \<longleftrightarrow> (\<forall>k. 0 \<le> v k) \<and> (\<forall>k. k \<notin> K \<longrightarrow> v k = 0)"
+```
 
-type_synonym 'k rule = "'k amounts \<Rightarrow> amount \<Rightarrow> 'k amounts"
+**What a rule must do.** A rule takes an amount vector and an amount to split, and there are two kinds of split. Rationing divides what is available among claims that together exceed it. Under `rations` no part is negative or above its claim, the parts sum to no more than the amount shared, and splitting the whole returns the whole. What the parts leave of the amount is the rule's `residual`, and a rule is `exact` where it leaves none. `lawful` is rationing with no residual, so the parts sum to the amount, no part exceeds its claim, no part is negative, and the whole returns the whole. Apportionment divides an amount into proper shares by a stated basis, with no part bounded by its basis, and under `apportions` the shares are non-negative and sum to the amount, and the whole basis returns itself.
 
-definition lawful :: "'k set \<Rightarrow> 'k rule \<Rightarrow> bool" where
-  "lawful K R \<longleftrightarrow>
+```isabelle-spec
+type_synonym ('k, 'n) rule = "('k, 'n) amounts \<Rightarrow> 'n \<Rightarrow> ('k, 'n) amounts"
+
+definition rations :: "'k set \<Rightarrow> ('k, 'n::linordered_idom) rule \<Rightarrow> bool" where
+  "rations K R \<longleftrightarrow>
      (\<forall>v x. nonneg_on K v \<and> 0 \<le> x \<and> x \<le> total K v \<longrightarrow>
-        total K (R v x) = x \<and> fits_in (R v x) v \<and> nonneg_on K (R v x))
+        nonneg_on K (R v x) \<and> fits_in (R v x) v \<and> total K (R v x) \<le> x)
      \<and> (\<forall>v. nonneg_on K v \<longrightarrow> R v (total K v) = v)"
 
-definition proportional :: "'k set \<Rightarrow> 'k rule" where
+definition residual :: "'k set \<Rightarrow> ('k, 'n::linordered_idom) rule \<Rightarrow> ('k, 'n) amounts \<Rightarrow> 'n \<Rightarrow> 'n" where
+  "residual K R v x = x - total K (R v x)"
+
+definition exact :: "'k set \<Rightarrow> ('k, 'n::linordered_idom) rule \<Rightarrow> bool" where
+  "exact K R \<longleftrightarrow> (\<forall>v x. nonneg_on K v \<and> 0 \<le> x \<and> x \<le> total K v \<longrightarrow> residual K R v x = 0)"
+
+definition lawful :: "'k set \<Rightarrow> ('k, 'n::linordered_idom) rule \<Rightarrow> bool" where
+  "lawful K R \<longleftrightarrow> rations K R \<and> exact K R"
+
+definition apportions :: "'k set \<Rightarrow> ('k, 'n::linordered_idom) rule \<Rightarrow> bool" where
+  "apportions K R \<longleftrightarrow>
+     (\<forall>w x. nonneg_on K w \<and> 0 < total K w \<and> 0 \<le> x \<longrightarrow> nonneg_on K (R w x) \<and> total K (R w x) = x)
+     \<and> (\<forall>w. nonneg_on K w \<longrightarrow> R w (total K w) = w)"
+```
+
+**A rule over exact amounts.** `proportional`, `ldg:Proportional` over exact amounts, gives each key the amount in proportion to its claim, over an ordered field, and gives nothing where the claims total zero.
+
+```isabelle-spec
+definition proportional :: "'k set \<Rightarrow> ('k, 'n::linordered_field) rule" where
   "proportional K v x = (\<lambda>k. if k \<notin> K \<or> total K v = 0 then 0 else x * v k / total K v)"
+```
 
-definition ahead :: "'k::linorder set \<Rightarrow> 'k amounts \<Rightarrow> 'k \<Rightarrow> amount" where
-  "ahead K v k = (\<Sum>j\<in>{j\<in>K. j < k}. v j)"
+**Ranks.** An order reaches a rule as a rank on each request, derived from the criterion its account declares, and a lower rank is served first. No rule reads anything else of a key. `ahead` is what the requests of a lower rank ask, and `beside` is the requests of the same rank. Under `by_rank` the ranks are served in order. A rank whose requests fit what is left is granted whole, the first that does not fit shares what is left by the rule the account declares for a tie, and what that rule cannot place reaches no later rank. With a rank injective on the keys it is priority, `ldg:InPriorityOrder`. `tie_arises` says where the rank that does not fit holds more than one request. `whole_each` serves requests that are of no use in part, such as blocks. In the declared order, given as a list, each request is granted whole where it fits what is left and nothing otherwise, and what no request fitted is the residual.
 
-definition in_priority :: "'k::linorder set \<Rightarrow> 'k rule" where
-  "in_priority K v x = (\<lambda>k. if k \<in> K then max 0 (min (v k) (x - ahead K v k)) else 0)"
+```isabelle-spec
+definition ahead :: "'k set \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('k, 'n::linordered_idom) amounts \<Rightarrow> 'k \<Rightarrow> 'n" where
+  "ahead K rank v k = (\<Sum>j\<in>{j\<in>K. rank j < rank k}. v j)"
 
-type_synonym 'a balances = "'a \<Rightarrow> amount"
+definition beside :: "'k set \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> 'k \<Rightarrow> 'k set" where
+  "beside K rank k = {j\<in>K. rank j = rank k}"
+
+definition by_rank ::
+  "('k \<Rightarrow> nat) \<Rightarrow> ('k set \<Rightarrow> ('k, 'n::linordered_idom) rule) \<Rightarrow> 'k set \<Rightarrow> ('k, 'n) rule" where
+  "by_rank rank tie K v x = (\<lambda>k.
+     if k \<notin> K then 0
+     else (let left = x - ahead K rank v k; G = beside K rank k in
+           if total G v \<le> left then v k
+           else if left \<le> 0 then 0
+           else if G = {k} then left
+           else tie G (\<lambda>j. if j \<in> G then v j else 0) left k))"
+
+definition tie_arises :: "'k set \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('k, 'n::linordered_idom) amounts \<Rightarrow> 'n \<Rightarrow> bool" where
+  "tie_arises K rank v x \<longleftrightarrow>
+     (\<exists>k\<in>K. 0 < x - ahead K rank v k \<and> x - ahead K rank v k < total (beside K rank k) v \<and> beside K rank k \<noteq> {k})"
+
+fun whole_each :: "'k list \<Rightarrow> ('k, 'n::linordered_idom) amounts \<Rightarrow> 'n \<Rightarrow> ('k, 'n) amounts" where
+  "whole_each [] v x = nothing"
+| "whole_each (k # ks) v x =
+     (if v k \<le> x then (whole_each ks v (x - v k))(k := v k) else whole_each ks v x)"
+```
+
+**Rules over whole units.** Rounding is over whole minor units, as integers. `floor_part` is a key's share of a total by weights rounded down, `half_up_part` and `half_even_part` round it to the nearest, and `remainder` is what the floor division leaves. `short` is what a base of parts leaves short of the total, and is negative where the base is over.
+
+```isabelle-spec
+definition floor_part :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "floor_part t K w k = (if k \<in> K then (t * w k) div (\<Sum>j\<in>K. w j) else 0)"
+
+definition half_up_part :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "half_up_part t K w k = (if k \<in> K then (2 * t * w k + (\<Sum>j\<in>K. w j)) div (2 * (\<Sum>j\<in>K. w j)) else 0)"
+
+definition remainder :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "remainder t K w k = (t * w k) mod (\<Sum>j\<in>K. w j)"
+
+definition half_even_part :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "half_even_part t K w k =
+     (if k \<notin> K then 0
+      else (let T = (\<Sum>j\<in>K. w j); q = (t * w k) div T; r = 2 * remainder t K w k in
+            if r < T then q else if T < r then q + 1 else if even q then q else q + 1))"
+
+definition short :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> int" where
+  "short t K base = t - (\<Sum>k\<in>K. base k)"
+```
+
+A preference says which key takes a unit before which. `placed` puts a key among the first n of a set where it and every key it is not preferred to number n or fewer, so keys the preference leaves level are placed together or not at all, and no key decides between them. `units` is the one rule for whole units. Its parts are a base, a unit short goes to the keys placed by one preference, a unit over is taken from the keys placed by another, and what the preferences do not decide is left, as the residual. `first_in` prefers the key first in a declared order, `larger_remainder` the key with the larger remainder, `then_by` breaks the ties of one preference by another, and `no_order` prefers no key to any.
+
+```isabelle-spec
+definition placed :: "'k set \<Rightarrow> ('k \<Rightarrow> 'k \<Rightarrow> bool) \<Rightarrow> int \<Rightarrow> 'k \<Rightarrow> bool" where
+  "placed E pref n k \<longleftrightarrow> k \<in> E \<and> int (card {j\<in>E. \<not> pref k j}) \<le> n"
+
+definition units ::
+  "('k \<Rightarrow> int) \<Rightarrow> int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> 'k \<Rightarrow> bool) \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> 'k \<Rightarrow> bool) \<Rightarrow> 'k \<Rightarrow> int" where
+  "units base n E gain L lose k =
+     base k + (if 0 < n \<and> placed E gain n k then 1 else 0) - (if n < 0 \<and> placed L lose (- n) k then 1 else 0)"
+
+definition first_in :: "('k \<Rightarrow> nat) \<Rightarrow> 'k \<Rightarrow> 'k \<Rightarrow> bool" where
+  "first_in order j k \<longleftrightarrow> order j < order k"
+
+definition larger_remainder :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> 'k \<Rightarrow> bool" where
+  "larger_remainder t K w j k \<longleftrightarrow> remainder t K w k < remainder t K w j"
+
+definition then_by :: "('k \<Rightarrow> 'k \<Rightarrow> bool) \<Rightarrow> ('k \<Rightarrow> 'k \<Rightarrow> bool) \<Rightarrow> 'k \<Rightarrow> 'k \<Rightarrow> bool" where
+  "then_by p q j k \<longleftrightarrow> p j k \<or> (\<not> p k j \<and> q j k)"
+
+definition no_order :: "'k \<Rightarrow> 'k \<Rightarrow> bool" where
+  "no_order j k \<longleftrightarrow> False"
+```
+
+The two residual rules the vocabulary names each take the keys that may take a unit and the order the account declares for odd units. `to_first` is `ldg:ToFirstInOrder`, the floor parts with each unit short given to the first keys in the declared order. `largest_remainder` is `ldg:LargestRemainder`, the floor parts with each unit short given to the largest remainders, ties taken in the declared order, and with no order declared it leaves the units that equal remainders do not decide. `to_nearest` rounds each share to the nearest, for a wording that says how the difference is settled. The rounded shares can sum to more than the amount or to less, a unit over is taken from a share rounded up and a unit short goes to a share rounded down, so no share strays a whole unit from its exact value. Where the wording does not say how the difference is settled, rounding to the nearest beside a residual rule is refused. In rationing a unit goes only to a claim not yet met in full, `unmet`, which is what `ration` gives the rule, and in apportionment every key the wording names may take one, which is what `apportion` gives it.
+
+```isabelle-spec
+definition to_first :: "('k \<Rightarrow> nat) \<Rightarrow> 'k set \<Rightarrow> int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "to_first order E t K w = units (floor_part t K w) (short t K (floor_part t K w)) E (first_in order) {} no_order"
+
+definition largest_remainder :: "('k \<Rightarrow> 'k \<Rightarrow> bool) \<Rightarrow> 'k set \<Rightarrow> int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "largest_remainder tiebreak E t K w =
+     units (floor_part t K w) (short t K (floor_part t K w)) E (then_by (larger_remainder t K w) tiebreak) {} no_order"
+
+definition to_nearest ::
+  "(int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int) \<Rightarrow> ('k \<Rightarrow> 'k \<Rightarrow> bool) \<Rightarrow> ('k \<Rightarrow> 'k \<Rightarrow> bool) \<Rightarrow> int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
+  "to_nearest part gain lose t K w =
+     units (part t K w) (short t K (part t K w))
+       {k\<in>K. part t K w k = floor_part t K w k \<and> 0 < remainder t K w k} gain
+       {k\<in>K. floor_part t K w k < part t K w k} lose"
+
+definition unmet :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k set" where
+  "unmet t K w = {k\<in>K. floor_part t K w k < w k}"
+
+definition ration :: "('k set \<Rightarrow> int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int) \<Rightarrow> 'k set \<Rightarrow> ('k, int) rule" where
+  "ration U K v x = U (unmet x K v) x K v"
+
+definition apportion :: "('k set \<Rightarrow> int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int) \<Rightarrow> 'k set \<Rightarrow> ('k, int) rule" where
+  "apportion U K w x = U K x K w"
+```
+
+**Accounts.** The account tree is a parent function over a finite set of accounts, closed under the parent and with no cycle, `tree`. An account's `path` is the account and every ancestor, and `chain` lists it by following the parent at most a given number of times, so what reads a path evaluates. `reach` is the path of an account together with, for a purpose, the path of every account that counts it. `least` is the least balance over a set of accounts, the path of one or the reach of a purpose, and an account's availability is the least along its path. `debit` takes an amount from every account of a set, and `draw_on` does so only where the amount is non-negative and within every balance of the set, as one operation that succeeds whole or changes nothing. A `draw` debits the reach of the account it names.
+
+```isabelle-spec
+type_synonym ('a, 'n) balances = "'a \<Rightarrow> 'n"
 
 definition up :: "('a \<Rightarrow> 'a option) \<Rightarrow> ('a \<times> 'a) set" where
   "up parent = {(a, b). parent a = Some b}"
@@ -1542,103 +1679,259 @@ definition path :: "('a \<Rightarrow> 'a option) \<Rightarrow> 'a \<Rightarrow> 
 definition tree :: "'a set \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> bool" where
   "tree A parent \<longleftrightarrow> finite A \<and> (\<forall>a\<in>A. \<forall>b. parent a = Some b \<longrightarrow> b \<in> A) \<and> acyclic (up parent)"
 
-definition available :: "('a \<Rightarrow> 'a option) \<Rightarrow> 'a balances \<Rightarrow> 'a \<Rightarrow> amount" where
-  "available parent bal a = Min (bal ` path parent a)"
-
-definition debit :: "'a set \<Rightarrow> amount \<Rightarrow> 'a balances \<Rightarrow> 'a balances" where
-  "debit S x bal = (\<lambda>b. if b \<in> S then bal b - x else bal b)"
-
-definition draw_on :: "'a set \<Rightarrow> amount \<Rightarrow> 'a balances \<Rightarrow> 'a balances \<times> bool" where
-  "draw_on S x bal = (if 0 \<le> x \<and> (\<forall>b\<in>S. x \<le> bal b) then (debit S x bal, True) else (bal, False))"
+fun chain :: "nat \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> 'a \<Rightarrow> 'a list" where
+  "chain 0 parent a = [a]"
+| "chain (Suc n) parent a = (case parent a of None \<Rightarrow> [a] | Some b \<Rightarrow> a # chain n parent b)"
 
 definition reach :: "('a \<Rightarrow> 'a option) \<Rightarrow> ('p \<Rightarrow> 'a set) \<Rightarrow> 'a \<Rightarrow> 'p option \<Rightarrow> 'a set" where
   "reach parent counts a purpose =
      path parent a \<union> (case purpose of None \<Rightarrow> {} | Some p \<Rightarrow> (\<Union>c\<in>counts p. path parent c))"
 
-definition draw :: "('a \<Rightarrow> 'a option) \<Rightarrow> ('p \<Rightarrow> 'a set) \<Rightarrow> 'a \<Rightarrow> 'p option \<Rightarrow> amount \<Rightarrow> 'a balances \<Rightarrow> 'a balances \<times> bool" where
+definition least :: "('a, 'n::linordered_idom) balances \<Rightarrow> 'a set \<Rightarrow> 'n" where
+  "least bal S = Min (bal ` S)"
+
+definition available :: "('a \<Rightarrow> 'a option) \<Rightarrow> ('a, 'n::linordered_idom) balances \<Rightarrow> 'a \<Rightarrow> 'n" where
+  "available parent bal a = least bal (path parent a)"
+
+definition debit :: "'a set \<Rightarrow> 'n::linordered_idom \<Rightarrow> ('a, 'n) balances \<Rightarrow> ('a, 'n) balances" where
+  "debit S x bal = (\<lambda>b. if b \<in> S then bal b - x else bal b)"
+
+definition draw_on :: "'a set \<Rightarrow> 'n::linordered_idom \<Rightarrow> ('a, 'n) balances \<Rightarrow> ('a, 'n) balances \<times> bool" where
+  "draw_on S x bal = (if 0 \<le> x \<and> (\<forall>b\<in>S. x \<le> bal b) then (debit S x bal, True) else (bal, False))"
+
+definition draw ::
+  "('a \<Rightarrow> 'a option) \<Rightarrow> ('p \<Rightarrow> 'a set) \<Rightarrow> 'a \<Rightarrow> 'p option \<Rightarrow> 'n::linordered_idom \<Rightarrow> ('a, 'n) balances \<Rightarrow> ('a, 'n) balances \<times> bool" where
   "draw parent counts a purpose x bal = draw_on (reach parent counts a purpose) x bal"
+```
 
-definition credit :: "('a \<Rightarrow> 'a option) \<Rightarrow> 'a balances \<Rightarrow> 'a \<Rightarrow> amount \<Rightarrow> 'a balances \<Rightarrow> 'a balances" where
-  "credit parent cap a x bal = (\<lambda>b. if b \<in> path parent a then min (cap b) (bal b + x) else bal b)"
+**A merge at one position.** Draws proposed at one position are merged from the requests taken together, which `requested` sums by key and whose keys `proposers` collects. What an account declares for a merge is its `policy`. It says whether requests beyond what is available are refused whole, whether the rank is checked to be injective before any rule runs, the rule for requests of one rank if any, whether a residual may be left, which is off by default, and whether requests of different purposes are refused together. A merge's `outcome` is the grants with the residual, or a refusal with its `reason`. `Exceeds` refuses requests beyond what is available, `Unranked` a rank that is not injective where one is declared, `Tied` a tie where no rule for one is declared, `Undecided` a residual where none may be left, `Mixed` requests of different purposes where they are refused together, and `Crossing` requests whose sets of accounts cross. Requests that fit are granted as asked, whatever the policy. `settle` merges at an account by what is available on its path and charges the path what was granted, and on a refusal changes nothing.
 
-type_synonym position = "nat \<times> nat"
-
-definition before :: "position \<Rightarrow> position \<Rightarrow> bool" where
-  "before p q \<longleftrightarrow> fst p < fst q \<or> (fst p = fst q \<and> snd p < snd q)"
-
-definition requested :: "('k \<times> amount) list \<Rightarrow> 'k amounts" where
+```isabelle-spec
+definition requested :: "('k \<times> 'n::linordered_idom) list \<Rightarrow> ('k, 'n) amounts" where
   "requested ps = (\<lambda>k. sum_list (map snd (filter (\<lambda>q. fst q = k) ps)))"
 
-definition proposers :: "('k \<times> amount) list \<Rightarrow> 'k set" where
+definition proposers :: "('k \<times> 'n) list \<Rightarrow> 'k set" where
   "proposers ps = fst ` set ps"
 
-definition merge :: "('k set \<Rightarrow> 'k rule) \<Rightarrow> amount \<Rightarrow> ('k \<times> amount) list \<Rightarrow> 'k amounts" where
-  "merge rule av ps =
-     (if total (proposers ps) (requested ps) \<le> av then requested ps
-      else rule (proposers ps) (requested ps) (max 0 av))"
+record ('k, 'n) policy =
+  refuses :: bool
+  ranked :: bool
+  tie :: "('k set \<Rightarrow> ('k, 'n) rule) option"
+  leaves :: bool
+  unmixed :: bool
 
-definition settle_at ::
-  "('k::linorder set \<Rightarrow> 'k rule) \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> 'a \<Rightarrow> ('k \<times> amount) list \<Rightarrow> 'a balances
-     \<Rightarrow> ('k \<times> amount) list \<times> 'a balances" where
-  "settle_at rule parent a ps bal =
-     (let g = merge rule (available parent bal a) ps
-      in (map (\<lambda>k. (k, g k)) (sorted_list_of_set (proposers ps)),
-          debit (path parent a) (total (proposers ps) g) bal))"
+datatype reason = Exceeds | Unranked | Tied | Undecided | Mixed | Crossing
 
+datatype ('k, 'n) outcome = Granted "('k, 'n) amounts" 'n | Refused reason
+
+definition merge_of ::
+  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> 'n \<Rightarrow> 'k set \<Rightarrow> ('k, 'n) amounts \<Rightarrow> ('k, 'n) outcome" where
+  "merge_of pol rank av K v =
+     (let x = max 0 av in
+      if total K v \<le> av then Granted v 0
+      else if refuses pol then Refused Exceeds
+      else if ranked pol \<and> \<not> inj_on rank K then Refused Unranked
+      else (case tie pol of
+              None \<Rightarrow>
+                if tie_arises K rank v x then Refused Tied
+                else (let g = by_rank rank (\<lambda>_ _ _. nothing) K v x in Granted g (x - total K g))
+            | Some t \<Rightarrow>
+                (let g = by_rank rank t K v x; r = x - total K g in
+                 if r = 0 \<or> leaves pol then Granted g r else Refused Undecided)))"
+
+definition merge ::
+  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> 'n \<Rightarrow> ('k \<times> 'n) list \<Rightarrow> ('k, 'n) outcome" where
+  "merge pol rank av ps = merge_of pol rank av (proposers ps) (requested ps)"
+
+definition settle ::
+  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> 'a \<Rightarrow> ('k \<times> 'n) list \<Rightarrow> ('a, 'n) balances
+     \<Rightarrow> ('k, 'n) outcome \<times> ('a, 'n) balances" where
+  "settle pol rank parent a ps bal =
+     (case merge pol rank (available parent bal a) ps of
+        Granted g r \<Rightarrow> (Granted g r, debit (path parent a) (total (proposers ps) g) bal)
+      | Refused why \<Rightarrow> (Refused why, bal))"
+```
+
+**Requests with a purpose at one position.** A request may carry a purpose that accounts off the path count. Each account a request reaches limits the set of requests that reach it, `limited`, and what is available to a set is the least its accounts hold, `room`. The sets are settled from the narrowest to the widest, `narrowest_first`, each a merge of its requests as they then stand, so a request is cut to its own limits before it competes. The widest set is the path of the account drawn on, which every request reaches, and a refusal at any set refuses the position, `admit`. Two sets that overlap with neither inside the other have no such order, and the position is refused, `crossing`, as it is where the wording refuses a position of more than one purpose, `mixed`.
+
+```isabelle-spec
+definition limited :: "'k set \<Rightarrow> ('k \<Rightarrow> 'a set) \<Rightarrow> 'a \<Rightarrow> 'k set" where
+  "limited K R b = {k\<in>K. b \<in> R k}"
+
+definition room :: "'k set \<Rightarrow> ('k \<Rightarrow> 'a set) \<Rightarrow> ('a, 'n::linordered_idom) balances \<Rightarrow> 'k set \<Rightarrow> 'n" where
+  "room K R bal G = least bal {b. limited K R b = G}"
+
+definition crossing :: "'k set \<Rightarrow> ('k \<Rightarrow> 'a set) \<Rightarrow> bool" where
+  "crossing K R \<longleftrightarrow>
+     (\<exists>b c. limited K R b \<inter> limited K R c \<noteq> {}
+            \<and> \<not> limited K R b \<subseteq> limited K R c \<and> \<not> limited K R c \<subseteq> limited K R b)"
+
+definition mixed :: "'k set \<Rightarrow> ('k \<Rightarrow> 'p option) \<Rightarrow> bool" where
+  "mixed K purpose \<longleftrightarrow> (\<exists>j\<in>K. \<exists>k\<in>K. purpose j \<noteq> purpose k)"
+
+definition narrowest_first :: "'k set list \<Rightarrow> bool" where
+  "narrowest_first Gs \<longleftrightarrow> distinct Gs \<and> (\<forall>i<length Gs. \<forall>j<length Gs. Gs ! i \<subset> Gs ! j \<longrightarrow> i < j)"
+
+fun admit ::
+  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('k set \<times> 'n) list \<Rightarrow> ('k, 'n) amounts \<Rightarrow> 'n \<Rightarrow> ('k, 'n) outcome" where
+  "admit pol rank [] v r = Granted v r"
+| "admit pol rank ((G, x) # rest) v r =
+     (case merge_of pol rank x G (\<lambda>k. if k \<in> G then v k else 0) of
+        Refused why \<Rightarrow> Refused why
+      | Granted g s \<Rightarrow> admit pol rank rest (\<lambda>k. if k \<in> G then g k else v k) (r + s))"
+
+definition settle_purposes ::
+  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> ('p \<Rightarrow> 'a set) \<Rightarrow> 'a \<Rightarrow> ('k \<Rightarrow> 'p option)
+     \<Rightarrow> 'k set list \<Rightarrow> ('k \<times> 'n) list \<Rightarrow> ('a, 'n) balances \<Rightarrow> ('k, 'n) outcome \<times> ('a, 'n) balances" where
+  "settle_purposes pol rank parent counts a purpose Gs ps bal =
+     (let K = proposers ps; R = (\<lambda>k. reach parent counts a (purpose k)) in
+      if unmixed pol \<and> mixed K purpose then (Refused Mixed, bal)
+      else if crossing K R then (Refused Crossing, bal)
+      else (case admit pol rank (map (\<lambda>G. (G, room K R bal G)) Gs) (requested ps) 0 of
+              Refused why \<Rightarrow> (Refused why, bal)
+            | Granted g r \<Rightarrow> (Granted g r, (\<lambda>b. bal b - total (limited K R b) g))))"
+```
+
+**Ranks that hold an amount of their own.** `pots` settles pots under one fund in rank order. What a pot could not place is carried down the list and withheld from what the later pots see of the fund and of every account above it, since any of them may be the one that binds, and a refusal at any pot refuses them all.
+
+```isabelle-spec
+fun pots ::
+  "('k, 'n::linordered_idom) policy \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> 'a \<Rightarrow> ('a \<times> ('k \<times> 'n) list) list \<Rightarrow> 'n
+     \<Rightarrow> ('a, 'n) balances \<Rightarrow> (('k, 'n) amounts list \<times> 'n \<times> ('a, 'n) balances) option" where
+  "pots pol rank parent fund [] held bal = Some ([], held, bal)"
+| "pots pol rank parent fund ((a, ps) # rest) held bal =
+     (case merge pol rank (available parent (debit (path parent fund) held bal) a) ps of
+        Refused why \<Rightarrow> None
+      | Granted g r \<Rightarrow>
+          (case pots pol rank parent fund rest (held + r) (debit (path parent a) (total (proposers ps) g) bal) of
+             None \<Rightarrow> None
+           | Some (gs, h, bal') \<Rightarrow> Some (g # gs, h, bal')))"
+```
+
+**One amount allocated across accounts.** `spread` charges each account in turn what its rule grants of what is still asked, and what no account takes is the residual. The accounts charged for an account are its path, or the reach of the amount's purpose. Where the wording refuses a shortfall, `spread_whole` is the allocation whole or changes nothing. An attribution splits the total of each part among parties by a basis for that part and a rule that apportions, and `shares_ok` says each basis is non-negative with a positive total. A share matrix whose rows sum to one is the case of the proportional rule with the rows as the bases.
+
+```isabelle-spec
 fun spread ::
-  "'k set \<Rightarrow> 'k rule \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> 'a list \<Rightarrow> 'a balances \<Rightarrow> 'k amounts
-     \<Rightarrow> 'k amounts list \<times> 'k amounts \<times> 'a balances" where
-  "spread K R parent [] bal v = ([], v, bal)"
-| "spread K R parent (a # rest) bal v =
-     (let x = min (total K v) (max 0 (available parent bal a)); p = R v x
-      in case spread K R parent rest (debit (path parent a) x bal) (less v p) of
+  "'k set \<Rightarrow> ('k, 'n::linordered_idom) rule \<Rightarrow> ('a \<Rightarrow> 'a set) \<Rightarrow> 'a list \<Rightarrow> ('a, 'n) balances \<Rightarrow> ('k, 'n) amounts
+     \<Rightarrow> ('k, 'n) amounts list \<times> ('k, 'n) amounts \<times> ('a, 'n) balances" where
+  "spread K R charged [] bal v = ([], v, bal)"
+| "spread K R charged (a # rest) bal v =
+     (let p = R v (min (total K v) (max 0 (least bal (charged a))))
+      in case spread K R charged rest (debit (charged a) (total K p) bal) (less v p) of
            (ps, r, bal') \<Rightarrow> (p # ps, r, bal'))"
 
-definition shares_ok :: "'q set \<Rightarrow> nat \<Rightarrow> (nat \<Rightarrow> 'q \<Rightarrow> rat) \<Rightarrow> bool" where
-  "shares_ok Q n S \<longleftrightarrow> (\<forall>i<n. (\<Sum>q\<in>Q. S i q) = 1) \<and> (\<forall>i q. 0 \<le> S i q)"
+definition spread_whole ::
+  "'k set \<Rightarrow> ('k, 'n::linordered_idom) rule \<Rightarrow> ('a \<Rightarrow> 'a set) \<Rightarrow> 'a list \<Rightarrow> ('a, 'n) balances \<Rightarrow> ('k, 'n) amounts
+     \<Rightarrow> (('k, 'n) amounts list \<times> ('a, 'n) balances) option" where
+  "spread_whole K R charged as bal v =
+     (case spread K R charged as bal v of (ps, r, bal') \<Rightarrow> if total K r = 0 then Some (ps, bal') else None)"
 
-definition attributed :: "'k set \<Rightarrow> (nat \<Rightarrow> 'q \<Rightarrow> rat) \<Rightarrow> 'k amounts list \<Rightarrow> 'q \<Rightarrow> amount" where
-  "attributed K S ps q = (\<Sum>i<length ps. S i q * total K (ps ! i))"
+definition shares_ok :: "'q set \<Rightarrow> nat \<Rightarrow> (nat \<Rightarrow> ('q, 'n::linordered_idom) amounts) \<Rightarrow> bool" where
+  "shares_ok Q n basis \<longleftrightarrow> (\<forall>i<n. nonneg_on Q (basis i) \<and> 0 < total Q (basis i))"
 
-definition floor_part :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
-  "floor_part t K w k = (if k \<in> K then (t * w k) div (\<Sum>j\<in>K. w j) else 0)"
+definition attributed ::
+  "'k set \<Rightarrow> ('q, 'n::linordered_idom) rule \<Rightarrow> (nat \<Rightarrow> ('q, 'n) amounts) \<Rightarrow> ('k, 'n) amounts list \<Rightarrow> 'q \<Rightarrow> 'n" where
+  "attributed K R basis ps q = (\<Sum>i<length ps. R (basis i) (total K (ps ! i)) q)"
+```
 
-definition leftover :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> int" where
-  "leftover t K w = t - (\<Sum>k\<in>K. floor_part t K w k)"
+**Credits, and what a posting records.** A `credit` is applied at the account it is posted to, up to that account's room under its ceiling. Each ancestor that accepts its kind takes the least of the amount applied and its own room, and where it takes less the difference is a cut at that ancestor. A `book` states each account's parent, its stated amount, its ceiling, the kinds of credit it accepts and whether it refuses a debit that no longer fits. A `request` is a draw or a restoration, and a posting keeps what was offered, what was applied and the cuts. `post` applies one request and `run` a list of them in turn. A credit posted to an account that does not accept its kind is refused, so nothing is posted and no balance moves, while `credit` itself stays total. `moved` is what one posting moves an account by, read from what the posting records, and `summed` is a balance as a sum, the stated amount less the debits, plus the credits applied, less the cuts.
 
-definition to_first :: "int \<Rightarrow> 'k::linorder set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
-  "to_first t K w k =
-     floor_part t K w k
-     + (if k \<in> set (take (nat (leftover t K w)) (sorted_list_of_set K)) then 1 else 0)"
+```isabelle-spec
+definition credit ::
+  "('a \<Rightarrow> 'a option) \<Rightarrow> ('a, 'n::linordered_idom) balances \<Rightarrow> ('a \<Rightarrow> bool) \<Rightarrow> 'a \<Rightarrow> 'n \<Rightarrow> ('a, 'n) balances
+     \<Rightarrow> 'n \<times> ('a, 'n) amounts \<times> ('a, 'n) balances" where
+  "credit parent cap accepts a x bal =
+     (let applied = max 0 (min x (cap a - bal a));
+          take = (\<lambda>b. if b \<in> path parent a \<and> accepts b then min applied (cap b - bal b) else 0)
+      in (applied,
+          (\<lambda>b. if b \<in> path parent a \<and> accepts b then applied - take b else 0),
+          (\<lambda>b. bal b + take b)))"
 
-definition weights :: "('k \<times> int) list \<Rightarrow> 'k \<Rightarrow> int" where
-  "weights ps = (\<lambda>k. sum_list (map snd (filter (\<lambda>q. fst q = k) ps)))"
+record ('a, 'c, 'n) book =
+  parent_of :: "'a \<Rightarrow> 'a option"
+  stated :: "'a \<Rightarrow> 'n"
+  ceiling :: "'a \<Rightarrow> 'n"
+  restores :: "'a \<Rightarrow> 'c option \<Rightarrow> bool"
+  refusing :: "'a \<Rightarrow> bool"
 
-definition remainder :: "int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
-  "remainder t K w k = (t * w k) mod (\<Sum>j\<in>K. w j)"
+datatype ('a, 'c, 'n) request = Draw 'a 'n | Restore 'a "'c option" 'n
 
-definition largest_remainder :: "int \<Rightarrow> 'k::linorder set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int" where
-  "largest_remainder t K w k =
-     floor_part t K w k
-     + (if k \<in> set (take (nat (leftover t K w))
-                       (sort_key (\<lambda>j. - remainder t K w j) (sorted_list_of_set K))) then 1 else 0)"
+datatype ('a, 'c, 'n) posted = Drawn 'a 'n | Restored 'a "'c option" 'n 'n "('a, 'n) amounts"
 
-fun spread_int ::
-  "'k set \<Rightarrow> (int \<Rightarrow> 'k set \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> 'k \<Rightarrow> int) \<Rightarrow> ('a \<Rightarrow> 'a option) \<Rightarrow> 'a list
-     \<Rightarrow> ('a \<Rightarrow> int) \<Rightarrow> ('k \<Rightarrow> int) \<Rightarrow> ('k \<Rightarrow> int) list \<times> ('k \<Rightarrow> int) \<times> ('a \<Rightarrow> int)" where
-  "spread_int K R parent [] bal v = ([], v, bal)"
-| "spread_int K R parent (a # rest) bal v =
-     (let x = min (\<Sum>k\<in>K. v k) (max 0 (Min (bal ` path parent a))); p = R x K v
-      in case spread_int K R parent rest (\<lambda>b. if b \<in> path parent a then bal b - x else bal b)
-                (\<lambda>k. v k - p k) of
-           (ps, r, bal') \<Rightarrow> (p # ps, r, bal'))"
+definition post ::
+  "('a, 'c, 'n::linordered_idom) book \<Rightarrow> ('a, 'c, 'n) request \<Rightarrow> ('a, 'n) balances
+     \<Rightarrow> ('a, 'c, 'n) posted option \<times> ('a, 'n) balances" where
+  "post B q bal =
+     (case q of
+        Draw a x \<Rightarrow>
+          (case draw_on (path (parent_of B) a) x bal of (bal', ok) \<Rightarrow> (if ok then Some (Drawn a x) else None, bal'))
+      | Restore a c x \<Rightarrow>
+          (if restores B a c then
+             (case credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal of
+                (applied, cuts, bal') \<Rightarrow> (Some (Restored a c x applied cuts), bal'))
+           else (None, bal)))"
+
+fun run ::
+  "('a, 'c, 'n::linordered_idom) book \<Rightarrow> ('a, 'c, 'n) request list \<Rightarrow> ('a, 'n) balances
+     \<Rightarrow> ('a, 'c, 'n) posted list \<times> ('a, 'n) balances" where
+  "run B [] bal = ([], bal)"
+| "run B (q # qs) bal =
+     (case post B q bal of
+        (p, bal') \<Rightarrow> (case run B qs bal' of (ps, bal'') \<Rightarrow> ((case p of None \<Rightarrow> ps | Some e \<Rightarrow> e # ps), bal'')))"
+
+definition moved :: "('a, 'c, 'n::linordered_idom) book \<Rightarrow> ('a, 'c, 'n) posted \<Rightarrow> 'a \<Rightarrow> 'n" where
+  "moved B p b =
+     (case p of
+        Drawn a x \<Rightarrow> (if b \<in> path (parent_of B) a then - x else 0)
+      | Restored a c x applied cuts \<Rightarrow> (if b \<in> path (parent_of B) a \<and> restores B b c then applied - cuts b else 0))"
+
+definition summed :: "('a, 'c, 'n::linordered_idom) book \<Rightarrow> ('a, 'c, 'n) posted list \<Rightarrow> 'a \<Rightarrow> 'n" where
+  "summed B ps b = stated B b + sum_list (map (\<lambda>p. moved B p b) ps)"
+```
+
+**Readings by effective day.** A history is the postings in recorded order, each with its effective day, and a recording is a length of that list. The postings `counted` for a day and a recording are those recorded by the recording and effective by the day. Reading A, `reading_a`, places the recorded amounts on their effective days. Reading B, `reading_b`, settles the same postings again in effective order, by each account's own policy, `replay`, so a debit that no longer fits is refused where its account refuses and cut to what is available where it rations, and the reading never shows a balance an account could not hold. Reading C, `flows`, is what was drawn and what was offered in credits the account accepts.
+
+```isabelle-spec
+definition counted :: "nat \<Rightarrow> nat \<Rightarrow> (nat \<times> 'e) list \<Rightarrow> (nat \<times> 'e) list" where
+  "counted day recording es = filter (\<lambda>e. fst e \<le> day) (take recording es)"
+
+definition reading_a ::
+  "('a, 'c, 'n::linordered_idom) book \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> (nat \<times> ('a, 'c, 'n) posted) list \<Rightarrow> 'a \<Rightarrow> 'n" where
+  "reading_a B day recording es b = summed B (map snd (counted day recording es)) b"
+
+definition asked :: "('a, 'c, 'n) posted \<Rightarrow> ('a, 'c, 'n) request" where
+  "asked p = (case p of Drawn a x \<Rightarrow> Draw a x | Restored a c x applied cuts \<Rightarrow> Restore a c x)"
+
+fun replay ::
+  "('a, 'c, 'n::linordered_idom) book \<Rightarrow> ('a, 'c, 'n) request list \<Rightarrow> ('a, 'n) balances \<Rightarrow> ('a, 'n) balances" where
+  "replay B [] bal = bal"
+| "replay B (Draw a x # qs) bal =
+     replay B qs
+       (if x \<le> available (parent_of B) bal a then debit (path (parent_of B) a) x bal
+        else if refusing B a then bal
+        else debit (path (parent_of B) a) (max 0 (available (parent_of B) bal a)) bal)"
+| "replay B (Restore a c x # qs) bal =
+     replay B qs (snd (snd (credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal)))"
+
+definition reading_b ::
+  "('a, 'c, 'n::linordered_idom) book \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> (nat \<times> ('a, 'c, 'n) posted) list \<Rightarrow> 'a \<Rightarrow> 'n" where
+  "reading_b B day recording es b =
+     replay B (map (asked \<circ> snd) (sort_key fst (counted day recording es))) (stated B) b"
+
+definition flows ::
+  "('a, 'c, 'n::linordered_idom) book \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> (nat \<times> ('a, 'c, 'n) posted) list \<Rightarrow> 'a \<Rightarrow> 'n \<times> 'n" where
+  "flows B day recording es b =
+     (let ps = map snd (counted day recording es) in
+      (sum_list (map (\<lambda>p. case p of Drawn a x \<Rightarrow> (if b \<in> path (parent_of B) a then x else 0) | Restored a c x applied cuts \<Rightarrow> 0) ps),
+       sum_list (map (\<lambda>p. case p of Drawn a x \<Rightarrow> 0
+                              | Restored a c x applied cuts \<Rightarrow> (if b \<in> path (parent_of B) a \<and> restores B b c then x else 0)) ps)))"
 
 end
 ```
 
 ## 11. Dependencies
 
-Ledger imports Foundation, for persistent identity, and Quantification, for value spaces, quantities and recurrences. It imports Vocabulary only transitively, through Quantification, and declares no term of its own as a subclass of a Vocabulary term. Ledger names no term of Party, Eligibility, Wording, Instrument or Behaviour.
+Ledger imports Foundation, for persistent identity, and Quantification, for value spaces, quantities and recurrences. It imports Vocabulary only transitively, through Quantification, and declares no term of its own as a subclass of a Vocabulary term. Ledger names no term of Party, Eligibility, Wording, Instrument or Behaviour, so a lower layer never depends on a higher one.
 
 ## 12. Release Notes
 
@@ -1648,13 +1941,11 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   - changes meaning. `ldg:ToFirstInOrder`'s definition says the residual is allocated one unit at a time to the first proposals in order. It said the whole residual went to the first proposal, which the rule never did, so no allocation changes and a reader of the definition is no longer misled.
 - **0.21.1**.
   - no effect. The runtime document, `ledger-runtime`: `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:BalanceRecord`, `ldg:MergeRecord`, `ldg:Grant` and `ldg:Checkpoint`, their properties, and the runtime laws of section 7.3 in `shapes/runtime.ttl`. Every term is new, so no record stated before is read differently.
-  - no effect. New `ldg:periodRecurrence` and `ldg:closingRecurrence` on `ldg:AccountDefinition` (PDD-15), each at most one.
-  - changes meaning (PDD-15). `ldg:resetRecurrence` is deprecated. A definition that states it still conforms, but nothing resets an account any more, so a periodic amount is one account per period under `ldg:periodRecurrence`.
-  - changes meaning (TD-98). `ldg:keyDimension`'s range is `skos:ConceptScheme` or `qnt:ValueSpace`, which its prose and its shape already said. A reasoner no longer infers a value space named as a key dimension to be a concept scheme, and no shape result changes.
+  - no effect. New `ldg:periodRecurrence` and `ldg:closingRecurrence` on `ldg:AccountDefinition`, each at most one, so a periodic amount is one account per period, closed on its own recurrence.
+  - changes meaning. `ldg:resetRecurrence` is deprecated. A definition that states it still conforms, but nothing resets an account any more, so a periodic amount is one account per period under `ldg:periodRecurrence`.
+  - changes meaning. `ldg:keyDimension`'s range is `skos:ConceptScheme` or `qnt:ValueSpace`, which its prose and its shape already said. A reasoner no longer infers a value space named as a key dimension to be a concept scheme, and no shape result changes.
 
-- 0.18.0, the first release of Ledger, joining the substrate's release at its number
-  ([ADR-A129](../../docs/architecture/decisions/ADR-A129-one-release-for-the-substrate.md),
-  [ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). The configuration document:
+- 0.18.0, the first release of Ledger, joining the substrate's release at its number, one version for every layer. The configuration document:
   `ldg:AccountDefinition`, the account tree (`ldg:partOf`), owner kinds, merge rules and their rounding and
   residual parameters, reset, key dimension, purposes, credit ceiling and conversion method. The vocabulary
   document: `ldg:MergeRules`, `ldg:PostingDirections`, `ldg:RoundingMethods`, `ldg:ResidualAllocations` and
@@ -1664,10 +1955,16 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 ## 13. Open Issues
 
 - **The running balance on a posting.** With postings at the drawn account only, which account's running balance a posting would carry is ambiguous where its account has an ancestor. Balance records state the balance per account per pass instead.
-- **A ceiling cut before a later debit.** The fold of section 7.3 applies the credit ceiling once, to the total, which is exact unless a credit was cut by the ceiling before a later debit in the same subtree. Checking such a history needs a running balance on each posting.
+- **A ceiling cut before a later debit.** The fold of section 7.3 applies the credit ceiling once, to the total, which is exact unless a credit was cut by the ceiling before a later debit in the same subtree. Checking such a history needs the running balance on a posting, above.
 - **A purpose under a shared ancestor.** A draw naming a purpose writes a posting at the purpose-counting account too, and an ancestor of both would fold the draw twice. No example has such an ancestor, and the rule that prevents the double count is not yet decided.
 - **A reinstatement under a capacity pool.** A credit rolls up, so restoring an aggregate also restores the pool above it, and the insurance example debits the reinstatement at the pool to keep the pool the measure of capacity left. Whether a reinstatement is built that way, or the pool is stated otherwise, is not yet decided.
 - **Persistence's record families** for postings, balance records and merge records, append-only, are not yet declared. The storage shape they take is not yet measured.
 - **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects and threshold regimes drawing on and reading them.
+- **Terms proposed for review.** The definitions of section 10 name what the README has no term for, and each is proposed here and not yet declared.
+  - The two kinds of split, a concept scheme `ldg:SplitKinds` with `ldg:Rationing`, what is available divided among claims that together exceed it with no part above its claim (`rations`), and `ldg:Apportionment`, an amount divided into proper shares by a stated basis with no part bounded by its basis (`apportions`).
+  - A rule that leaves a residual, `ldg:leavesResidual`, a boolean on `ldg:AccountDefinition`, false by default, saying that a merge may grant less than is available where its rule cannot place every unit, as `ldg:LargestRemainder` with no order declared does (`leaves`).
+  - What an account declares for a merge beyond `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation`, which is the kernel's `policy`. `ldg:declaredOrder` names the criterion each request's rank is derived from, the order `ldg:InPriorityOrder`, `ldg:ToFirstInOrder` and `ldg:LargestRemainder` read, never the identifiers'. `ldg:distinctRanks` says the rank is checked to be injective before any rule runs (`ranked`). `ldg:tieRule` names the rule for requests of one rank (`tie`). `ldg:refusesMixedPurposes` says requests of different purposes at one position are refused together (`unmixed`). Refusing requests beyond what is available (`refuses`) is `ldg:Refuse` already.
+  - The reasons a merge is refused, a concept scheme `ldg:RefusalReasons`, the range of `ldg:refusalReason`, with `ldg:Exceeds`, `ldg:Unranked`, `ldg:Tied`, `ldg:Undecided`, `ldg:Mixed` and `ldg:Crossing`, each as `reason` defines it in section 10.
+  - How the difference left by rounding to the nearest is settled, `ldg:roundingDifference` on `ldg:AccountDefinition`, which the constraint of section 7.2 reads, with a concept scheme `ldg:RoundingDifferences`. `ldg:ShownOnly` says the rounding method governs only how a share is shown and the split is floor then residual. `ldg:SettledToNearest` says a unit over is taken from a share rounded up and a unit short goes to a share rounded down, in the declared order and never by the keys (`to_nearest`).
 - **Allocation with conservation**, one amount split across several accounts by a merge rule, is not yet specified.
 - **A benchmark** under `benchmark/ledger/`, at realistic volumes of accounts and draws, is not yet written.

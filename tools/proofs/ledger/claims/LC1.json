@@ -1,9 +1,9 @@
 {
   "subject": "LC1",
   "statedAs": "Draws.conservation_with_residual",
-  "statementDigest": "sha256:67f407e6f24245c2b3d8eec07e1e619c23bf6bad6cc5f971b4f0328a055b092e",
+  "statementDigest": "sha256:b9981dccc902e000c63cb56b86e2f23bff907b76434e4d2253a57857ea4315e6",
   "method": "Proof",
-  "scope": "EveryLawfulRuleTreeAndSequence",
+  "scope": "EveryRuleAndSequence",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
   "tool": {
     "name": "Isabelle",

@@ -1,0 +1,13 @@
+{
+  "subject": "LT4",
+  "statedAs": "Ranks.no_tie_no_tie_rule",
+  "statementDigest": "sha256:47e0335701f4d907e0e497e7925761f188680ea05a1c78862d13fcb782893406",
+  "method": "Proof",
+  "scope": "EveryRankAndTieRule",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

@@ -1,0 +1,13 @@
+{
+  "subject": "LVn",
+  "statedAs": "Predicates.no_whole_or_nothing_rule_is_exact",
+  "statementDigest": "sha256:8f181e0f448b10e1d842b512849eca1c4c568daede8ce504fded0c69f7597831",
+  "method": "Proof",
+  "scope": "OneArrangement",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

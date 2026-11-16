@@ -1,0 +1,13 @@
+{
+  "subject": "LS2",
+  "statedAs": "Predicates.a_key_of_no_weight",
+  "statementDigest": "sha256:7395719afe2f4d3b8d466a995f2b8882603c9b18121286b5ea100170dc5883e1",
+  "method": "Proof",
+  "scope": "EveryRationingAndOneApportionment",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

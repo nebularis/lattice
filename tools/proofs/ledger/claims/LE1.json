@@ -1,0 +1,13 @@
+{
+  "subject": "LE1",
+  "statedAs": "Readings.reading_a_from_a_recorded_balance",
+  "statementDigest": "sha256:9f9c589b9cce2c32b1b571a09a24ecff84c7776ba37cfc05be50646f47720cce",
+  "method": "Proof",
+  "scope": "EveryHistoryRecordingAndDay",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

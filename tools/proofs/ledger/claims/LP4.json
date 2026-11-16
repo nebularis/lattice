@@ -1,0 +1,13 @@
+{
+  "subject": "LP4",
+  "statedAs": "Pots.a_bound_at_the_fund_pays_no_later_pot",
+  "statementDigest": "sha256:609291e5bb5b246c15a7ce97995ca69d0fb47a7a7b4b5d768c8631b2ce0552d8",
+  "method": "Proof",
+  "scope": "EveryTreeAndPotList",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

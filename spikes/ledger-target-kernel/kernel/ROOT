@@ -1,0 +1,11 @@
+(* The cases of the target kernel spike against the kernel extracted from ontology/ledger/README.md
+   (plan ledger, LG-9's R0). The kernel is loaded from source, as the prelude loads HOL-Library, so
+   no Ledger heap is built. A directory of its own, so the spike's ROOT still builds alone. Build
+   with -d tools/proofs/base -d tools/proofs/ledger as well. *)
+
+session Ledger_Target_Kernel = HOL +
+  options [document = false, quick_and_dirty = false, timeout = 900]
+  sessions
+    Ledger
+  theories
+    Kernel_Cases

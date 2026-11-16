@@ -1,0 +1,13 @@
+{
+  "subject": "LP2",
+  "statedAs": "Pots.pots_never_overdraw",
+  "statementDigest": "sha256:fc8c4f7f5b52eac0b1d4c31c89bb02f6fd37fe547eace6875fa558b96967994b",
+  "method": "Proof",
+  "scope": "EveryTreeAndPotList",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

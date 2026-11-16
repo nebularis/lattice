@@ -202,6 +202,8 @@ def post(book, q, bal):
             return ("drawn", a, x), [v - x if b in chain(parent, a) else v for b, v in enumerate(bal)]
         return None, bal
     _, a, c, x = q
+    if not restores(a, c):
+        return None, bal
     applied, cuts, after = credit(parent, cap, lambda b: restores(b, c), a, x, bal)
     return ("restored", a, c, x, applied, cuts), after
 
@@ -428,29 +430,34 @@ def draw_book(rng):
 def search_history(cases, seed):
     """A credit's closed form against the benchmark writer's loop, the balance as a sum less its cuts against the stepped balance, and the readings by effective day."""
     rng = random.Random(seed)
-    found = {"cases": 0, "postings": 0, "credits cut at an ancestor": 0, "draws refused": 0, "histories with a late posting": 0, "B differs from the ledger": 0,
+    found = {"cases": 0, "postings": 0, "credits cut at an ancestor": 0, "draws refused": 0, "credits refused": 0, "credits under LU3": 0, "histories with a late posting": 0, "B differs from the ledger": 0,
              "A below zero or above the ceiling": 0, "B charged in full below zero": 0}
     for _ in range(cases):
         book, kinds = draw_book(rng)
         parent, stated, cap, restores = book[:4]
         n, bal, posted, es = len(stated), list(stated), [], []
+        on_leaves = True
         for step in range(rng.randint(1, 25)):
             a = rng.randrange(n)
             if rng.random() < 0.6:
                 q = ("draw", a, rng.randint(1, 15))
             else:
                 c = rng.choice(kinds)
-                if not restores(a, c):
-                    continue
                 q = ("restore", a, c, rng.randint(1, 25))
-                applied, cuts, after = credit(parent, cap, lambda b: restores(b, c), a, q[3], bal)
-                assert (applied, {b: x for b, x in cuts.items() if x}, after) == credit_by_loop(parent, cap, lambda b: restores(b, c), a, q[3], bal), "a credit's closed form is not the writer's loop"
-                assert all(x >= 0 for x in cuts.values()), "a cut below zero"
+                if restores(a, c):
+                    applied, cuts, after = credit(parent, cap, lambda b: restores(b, c), a, q[3], bal)
+                    assert (applied, {b: x for b, x in cuts.items() if x}, after) == credit_by_loop(parent, cap, lambda b: restores(b, c), a, q[3], bal), "a credit's closed form is not the writer's loop"
+                    assert all(x >= 0 for x in cuts.values()), "a cut below zero"
             p, bal = post(book, q, bal)
             if p is None:
-                found["draws refused"] += 1
+                found["draws refused" if q[0] == "draw" else "credits refused"] += 1
                 continue
             posted.append(p)
+            if p[0] == "restored":
+                on_leaves = on_leaves and all(parent[y] != p[1] for y in range(n))
+                if cap == stated and on_leaves:
+                    found["credits under LU3"] += 1
+                    assert not any(p[5].values()), "a cut where every ceiling is its stated amount and every credit is on a leaf"
             es.append((len(posted) - (rng.randint(1, 4) if rng.random() < 0.15 else 0), p))
             found["credits cut at an ancestor"] += p[0] == "restored" and any(p[5].values())
             assert all(0 <= bal[b] <= cap[b] for b in range(n)), "a balance left the range from zero to its ceiling"
@@ -706,6 +713,14 @@ def examples():
     assert settle_purposes((False, False, share, False), True, *args) == ("refused", "mixed")
     assert settle_purposes((True, False, share, False), False, *args) == ("refused", "exceeds")
     assert whole_each(["a", "b"], {"a": 5, "b": 4}, 7) == {"a": 5, "b": 0}
+    # LG-Q29: `credit` at a leaf that does not accept the kind, under a parent that does, leaves a cut, so `post` refuses such a credit
+    leafy = ([None, 0], [10, 10], [10, 10], lambda b, c: b == 0)
+    on_parent = lambda b: b == 0
+    _, cuts, bal = credit(leafy[0], leafy[2], on_parent, 1, 5, [5, 5])
+    assert cuts == {0: 0} and bal == [10, 5]
+    assert credit(leafy[0], leafy[2], on_parent, 1, 5, bal)[1] == {0: 5}
+    p, bal = post(leafy, ("draw", 1, 5), [10, 10])
+    assert post(leafy, ("restore", 1, "recovery", 5), bal) == (None, [5, 5])
     print("a loan of 90 and a letter of credit of 40, facility 100, sublimit 30:", {k: str(x) for k, x in k3.items()}, "balances after", [str(x) for x in after])
     print("the sketch's example: reading A", [reading_a(d) for d in (1, 2, 4)], "reading B where the account rations", [reading_b(d, True) for d in (1, 2, 4)],
           "where it refuses", [reading_b(d, True, refuser) for d in (1, 2, 4)], "and charged in full", [reading_b(d, False) for d in (1, 2, 4)])

@@ -1,9 +1,9 @@
 {
   "subject": "LC4",
   "statedAs": "Allocation.attribution_conserves",
-  "statementDigest": "sha256:a92ce55e0e046273d35e271276bab5add77e91c63b8bf525546e5c18415054a9",
+  "statementDigest": "sha256:5346ec73238c997a7d106b570afe679ac815f4cb4fcae0155dff46cb2cd001a9",
   "method": "Proof",
-  "scope": "EveryShareMatrix",
+  "scope": "EveryApportioningRuleAndBasis",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
   "tool": {
     "name": "Isabelle",

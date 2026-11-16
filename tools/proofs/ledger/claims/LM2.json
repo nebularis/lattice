@@ -1,0 +1,13 @@
+{
+  "subject": "LM2",
+  "statedAs": "Merge.whole_units_settle_in_proportion",
+  "statementDigest": "sha256:93bd50734e4fe8ac614f2c65b7c3f71f23978598e68574cea4374f0733fbb7ef",
+  "method": "Proof",
+  "scope": "EveryTreeAndPosition",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

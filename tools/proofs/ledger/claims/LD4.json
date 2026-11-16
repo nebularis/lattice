@@ -1,7 +1,7 @@
 {
   "subject": "LD4",
   "statedAs": "Draws.a_purpose_debits_the_counting_path_in_the_same_draw",
-  "statementDigest": "sha256:f366261c71e82aaac8dadddf2944dcd25453b553939da0aafe7f02db4409cd47",
+  "statementDigest": "sha256:0fabbedba8be51348f8dc0ee83c76d7100036f9bd88592a00b372839be953244",
   "method": "Proof",
   "scope": "EveryParentFunction",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

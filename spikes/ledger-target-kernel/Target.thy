@@ -401,8 +401,10 @@ definition post ::
         Draw a x \<Rightarrow>
           (case draw_on (path (parent_of B) a) x bal of (bal', ok) \<Rightarrow> (if ok then Some (Drawn a x) else None, bal'))
       | Restore a c x \<Rightarrow>
-          (case credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal of
-             (applied, cuts, bal') \<Rightarrow> (Some (Restored a c x applied cuts), bal')))"
+          (if restores B a c then
+             (case credit (parent_of B) (ceiling B) (\<lambda>b. restores B b c) a x bal of
+                (applied, cuts, bal') \<Rightarrow> (Some (Restored a c x applied cuts), bal'))
+           else (None, bal)))"
 
 fun run ::
   "('a, 'c, 'n::linordered_idom) book \<Rightarrow> ('a, 'c, 'n) request list \<Rightarrow> ('a, 'n) balances

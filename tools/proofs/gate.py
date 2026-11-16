@@ -4,7 +4,7 @@ spike). For one layer's directory under tools/proofs/:
 
 1. Recomputes each claim's statement digest from its theory source, between
    ``(* GATE:BEGIN <subject> *)`` and ``(* GATE:END *)`` markers, **together with the normalised
-   text of every datatype/fun/definition/abbreviation block found anywhere in the layer**
+   text of every datatype/record/fun/definition/abbreviation block found anywhere in the layer**
    (E1.4, the formal-methods epic's second review \u00a72.1), and fails on an unreviewed mismatch
    against the committed claim. Before E1.4, a gated lemma's digest covered only the lemma's own
    statement text, so redefining a constant the lemma mentions (``or3``, say) changed what every
@@ -35,8 +35,11 @@ import sys
 from pathlib import Path
 
 BANNED = re.compile(r"\b(Admitted|admit|sorry|oracle|axiomatization)\b|\bby\s+eval(uation)?\b")
+# Admitted and admit are Coq's. In an Isabelle theory they mark nothing, and the ledger kernel
+# defines a function named admit (LG-9), so a .thy file is scanned for Isabelle's markers alone.
+BANNED_THY = re.compile(r"\b(sorry|oracle|axiomatization)\b|\bby\s+eval(uation)?\b")
 MARKER = re.compile(r"\(\*\s*GATE:BEGIN\s+(\S+)\s*\*\)(.*?)\(\*\s*GATE:END\s*\*\)", re.S)
-DEF_HEADER = re.compile(r"^(datatype|type_synonym|fun|definition|abbreviation)\b")
+DEF_HEADER = re.compile(r"^(datatype|record|type_synonym|fun|definition|abbreviation)\b")
 
 
 def normalise(statement: str) -> str:
@@ -67,7 +70,7 @@ def extract_statements(track_dir: Path) -> dict[str, str]:
 
 
 def extract_definitions(track_dir: Path) -> str:
-    """The normalised text of every ``datatype``/``type_synonym``/``fun``/``definition``/
+    """The normalised text of every ``datatype``/``record``/``type_synonym``/``fun``/``definition``/
     ``abbreviation`` block in any .thy file in this layer, outside ``defects/`` -- included in
     every claim's digest input (E1.4), not only the gated statement's own text, so changing a
     definition a statement depends on, even one declared in a file the statement's own theory
@@ -101,7 +104,7 @@ def scan_for_banned(track_dir: Path) -> list[str]:
         if "defects" in path.parts:
             continue  # a defect file's Admitted/sorry is the defect, not a gate failure
         text = path.read_text(encoding="utf-8")
-        for m in BANNED.finditer(text):
+        for m in (BANNED_THY if path.suffix == ".thy" else BANNED).finditer(text):
             line = text.count("\n", 0, m.start()) + 1
             hits.append(f"{path.relative_to(track_dir)}:{line}: {m.group(0)}")
     return hits

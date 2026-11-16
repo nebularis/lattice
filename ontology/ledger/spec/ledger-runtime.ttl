@@ -50,7 +50,7 @@ ldg:Account a owl:Class ;
 
 ldg:BalanceRecord a owl:Class ;
     rdfs:comment "An account's remaining balance and availability after one pass." ;
-    fnd:utility "Materialise one per account a pass moved, and for its ancestors where a reader needs them. It is keyed by the account and the pass, so it reads along the recorded axis. A reading as of an effective position folds the postings instead (STD-278)." ;
+    fnd:utility "Materialise one per account a pass moved, and for its ancestors where a reader needs them. It is keyed by the account and the pass, so it reads along the recorded axis. A reading as of an effective position folds the postings instead." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:availableValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:inPass ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:onAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:remainingValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:DerivedArtefact .
 
 ldg:Checkpoint a owl:Class ;
@@ -70,7 +70,7 @@ ldg:MergeRecord a owl:Class ;
 
 ldg:Pass a owl:Class ;
     rdfs:comment "One evaluation's write of records, recorded at one position." ;
-    fnd:utility "What an evaluation records about itself beyond its postings. Every posting, balance record, merge record and checkpoint names the pass that wrote it. A pass's position is on the effective axis, so the records it writes are effective no later than it (STD-294), and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged." ;
+    fnd:utility "What an evaluation records about itself beyond its postings. Every posting, balance record, merge record and checkpoint names the pass that wrote it. A pass's position is on the effective axis, so the records it writes are effective no later than it, and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:passPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 ldg:Posting a owl:Class ;
@@ -84,7 +84,7 @@ ldg:accountKey a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( skos:Concept qnt:Value ) ] .
 
 ldg:amountAsDrawn a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "The amount as drawn, in another value space than the account's (LG-Q8)." ;
+    rdfs:comment "The amount as drawn, in another value space than the account's." ;
     fnd:utility "State it with ldg:conversionUsed, both or neither." ;
     rdfs:domain ldg:Posting ;
     rdfs:range qnt:Quantity .
@@ -115,7 +115,7 @@ ldg:closePosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:range xsd:integer .
 
 ldg:conversionUsed a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "The conversion a draw in another value space used, with its rate's source and date (LG-Q8)." ;
+    rdfs:comment "The conversion a draw in another value space used, with its rate's source and date." ;
     rdfs:domain ldg:Posting ;
     rdfs:range qnt:ConversionContext .
 
@@ -126,7 +126,7 @@ ldg:direction a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:effectivePosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "Where a fact sits in the arrangement the accounts describe." ;
-    fnd:utility "Supplied by the domain and comparable across accounts. Never later than the position of the pass that recorded the fact (STD-294)." ;
+    fnd:utility "Supplied by the domain and comparable across accounts. Never later than the position of the pass that recorded the fact." ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( ldg:Posting ldg:MergeRecord ) ] ;
     rdfs:range xsd:integer .
 
@@ -138,11 +138,11 @@ ldg:forOwner a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:forProposal a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The evaluation that proposed a grant's draw." ;
-    fnd:utility "Deliberately has no range: the layer above names its evaluations (LG-4)." ;
+    fnd:utility "Deliberately has no range: the layer above names its evaluations." ;
     rdfs:domain ldg:Grant .
 
 ldg:forPurpose a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "The purpose a draw names (LG-Q2)." ;
+    rdfs:comment "The purpose a draw names." ;
     rdfs:domain ldg:Posting ;
     rdfs:range skos:Concept .
 
@@ -201,7 +201,7 @@ ldg:proportionDenominator a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 ldg:proportionNumerator a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The numerator of a proportional grant's exact share." ;
-    fnd:utility "State it with ldg:proportionDenominator. The share is kept exact because other evaluations cite it, and the posting is rounded (LG-Q6)." ;
+    fnd:utility "State it with ldg:proportionDenominator. The share is kept exact because other evaluations cite it, and the posting is rounded." ;
     rdfs:domain ldg:Grant ;
     rdfs:range xsd:integer .
 

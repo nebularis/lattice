@@ -1,0 +1,13 @@
+{
+  "subject": "LV2",
+  "statedAs": "Predicates.whole_each_rations",
+  "statementDigest": "sha256:9a26bc47795c1d1403848c42b722b0cecfab664cd0582944eb74f13f84241737",
+  "method": "Proof",
+  "scope": "EveryListOfDistinctKeys",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

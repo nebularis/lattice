@@ -1,0 +1,13 @@
+{
+  "subject": "LB1n",
+  "statedAs": "Credits.the_ceiling_applied_once_overstates",
+  "statementDigest": "sha256:fc5695038c3ddf787eb19e24fe57818b440616062b19f32eae64f02e519d9d1f",
+  "method": "Proof",
+  "scope": "OneHistory",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

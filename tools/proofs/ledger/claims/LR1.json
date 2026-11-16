@@ -1,7 +1,7 @@
 {
   "subject": "LR1",
   "statedAs": "Rounding.floor_split_conserves",
-  "statementDigest": "sha256:2ac2f0c7a6b215b00e3f32f333be07fd325af2ac79bd915aaff757c06b0e259f",
+  "statementDigest": "sha256:d589aa9fa32d522d2cf9efdd409d1fab92e48bb10f3cc322e1b45840a682649c",
   "method": "Proof",
   "scope": "EveryFiniteKeySet",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

@@ -1,0 +1,13 @@
+{
+  "subject": "LEn",
+  "statedAs": "Readings.a_debit_recorded_last_and_effective_second",
+  "statementDigest": "sha256:7456091ebd5b4fb20221a70e9721744da305d0f89629b10847530650a1a2e6e2",
+  "method": "Proof",
+  "scope": "OneHistory",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

@@ -1,0 +1,13 @@
+{
+  "subject": "LT2",
+  "statedAs": "Ranks.by_rank_rations_where_the_tie_rule_does",
+  "statementDigest": "sha256:e30ec7be96f337bb431275c3364ecf9d904e6e7887d9bc8e31c983fc579f308b",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySetRankAndTieRule",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}
