@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-16. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -35,7 +35,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-B2d | the writer reads an import's content from its fence job, and the jobless fence command goes | built 2026-11-16, building 2026-11-16 | SVA-B2a |
 | SVA-B3 | the Baseline view's imports list, import dialog and missing report | built 2026-11-13, building 2026-11-13 | SVA-B1, SVA-B2a |
 | SVA-B4 | the import graph | built 2026-11-13, building 2026-11-13 | SVA-B3, SVA-O1 |
-| SVA-B5 | a sample with imports and schemes, the dialog's drop area, and dependencies kept apart in the state | planned | SVA-B4 |
+| SVA-B5 | a sample with imports and schemes, the dialog's drop area, and dependencies kept apart in the state | building 2026-11-16 | SVA-B4 |
 | SVA-O1 | the canvas kit, with our own layered layout behind one function | built 2026-11-12, building 2026-11-12 |  |
 | SVA-O2 | the class and object property view and the class hierarchy, with the shapes toggle | built 2026-11-13, building 2026-11-12 | SVA-O1 |
 | SVA-O2a | edge labels placed apart, and edges against the layout's direction attached by the sides that face | built 2026-11-13, building 2026-11-13 |  |
@@ -134,3 +134,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: SVA-B2d picked up.
 - 2026-11-16: SVA-B2d built, [Validation Pack](../validation/SVA-B2d.md). A fence command now carries only each import's digest, label and fence job, the writer reads the content from the job's import.nt in the store, and the older form is refused and its factory removed. The digest is not recomputed, because no RDFC-1.0 canonicalisation is on the studio's classpath, so a worker's job-update can still hold an artefact under a digest it lacks until one is added.
 - 2026-11-16: SVA-B2d verified by a second run of the three Java modules' tests, 24, 207 and 10 passed, and by the counts of `mise run check:config-studio`, 21, 284 and 365. The digest is not recomputed by the writer, since nothing on its classpath canonicalises as the worker does, which is recorded as TD-167.
+- 2026-11-16: SVA-B5 picked up.
