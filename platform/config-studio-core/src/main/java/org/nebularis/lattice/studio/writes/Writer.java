@@ -353,8 +353,12 @@ public final class Writer {
          */
         private Reply fence(int index, Command c) {
             List<Command.Fenced> imports;
+            List<Model> contents = new ArrayList<>();
             try {
                 imports = fenced(c);
+                for (Command.Fenced held : imports) {
+                    contents.add(Skolem.skolemise(content(held)));
+                }
             } catch (IllegalArgumentException e) {
                 return Reply.refused(e.getMessage());
             }
@@ -364,10 +368,11 @@ public final class Writer {
             }
             Workspace updated = found.get();
             Steps s = new Steps(c);
-            for (Command.Fenced held : imports) {
+            for (int i = 0; i < imports.size(); i++) {
+                Command.Fenced held = imports.get(i);
+                Model content = contents.get(i);
                 String root = Graphs.importGraph(held.digest());
-                updated = held.job() == null ? updated.withImport(root, held.label()) : updated.withImport(root, held.label(), declared(held.job()));
-                Model content = Skolem.skolemise(held.content());
+                updated = updated.withImport(root, held.label(), declared(held.job()));
                 s.op(Graphs.importedGraph(held.digest()), txn -> ops.create(Family.IMPORT, root, content, txn));
             }
             describe(s, updated, false);
@@ -378,18 +383,14 @@ public final class Writer {
         }
 
         /**
-         * The imports a fence command holds, or an {@link IllegalArgumentException} saying why it is not one. The older form carries one
-         * import, its digest as the part and its graph as the default graph, and names no job. The other carries no part, names each import's
-         * root with its label and its fence job in the default graph and holds each graph as a named graph, and every job must be a finished
-         * fence job of this workspace that digested that import.
+         * The imports a fence command holds, or an {@link IllegalArgumentException} saying why it is not one. A fence carries no part and no
+         * named graph, and names each import by its root with its label and its fence job in the default graph. Every job must be a finished
+         * fence job of this workspace that digested that import, and the import's content is the job's {@code import.nt} read from the store,
+         * never anything the command carries (PRI-75).
          */
         private List<Command.Fenced> fenced(Command c) {
-            if (c.part() != null) {
-                Model content = c.body().getDefaultModel();
-                if (!Graphs.isDigest(c.part()) || content.isEmpty() || named(c).hasNext()) {
-                    throw new IllegalArgumentException("a fence names a digest of 64 lower-case hexadecimal digits and carries the imported graph alone, which is not empty");
-                }
-                return List.of(new Command.Fenced(c.part(), labelOf(c.label() == null || c.label().isBlank() ? "Import" : c.label()), null, content));
+            if (c.part() != null || named(c).hasNext()) {
+                throw new IllegalArgumentException("a fence names its imports by their fence jobs and carries no part and no graph");
             }
             Model entries = c.body().getDefaultModel();
             Set<String> roots = new java.util.TreeSet<>();
@@ -403,22 +404,14 @@ public final class Writer {
             if (roots.isEmpty() || roots.size() > Command.MAX_FENCED) {
                 throw new IllegalArgumentException("a fence holds 1 to " + Command.MAX_FENCED + " imports");
             }
-            Set<String> graphs = new java.util.TreeSet<>();
-            named(c).forEachRemaining(g -> graphs.add(g.getURI()));
-            Set<String> expected = new java.util.TreeSet<>();
-            roots.forEach(root -> expected.add(Graphs.importedGraphOf(root)));
-            if (!graphs.equals(expected)) {
-                throw new IllegalArgumentException("a fence carries the graph of each import it names, and no other");
-            }
             List<Command.Fenced> out = new ArrayList<>();
             for (String root : roots) {
                 String digest = root.substring(Graphs.IMPORT_PREFIX.length());
                 Resource node = entries.createResource(root);
                 List<RDFNode> labels = entries.listObjectsOfProperty(node, RDFS.label).toList();
                 List<RDFNode> jobs = entries.listObjectsOfProperty(node, Cst.job).toList();
-                Model content = c.body().getNamedModel(Graphs.importedGraphOf(root));
-                if (labels.size() != 1 || jobs.size() != 1 || content.isEmpty()) {
-                    throw new IllegalArgumentException("an import of a fence has one label, one fence job and a graph that is not empty: " + root);
+                if (labels.size() != 1 || jobs.size() != 1) {
+                    throw new IllegalArgumentException("an import of a fence has one label and one fence job: " + root);
                 }
                 String job = jobs.get(0).asResource().getURI();
                 String id = job.startsWith(Graphs.job("")) ? job.substring(Graphs.job("").length()) : null;
@@ -432,9 +425,39 @@ public final class Writer {
                     || !held.get().contains(jobNode, Cst.digest, digest)) {
                     throw new IllegalArgumentException("an import of a fence comes from a finished fence job of this workspace that digested it: " + root);
                 }
-                out.add(new Command.Fenced(digest, labelOf(labels.get(0).asLiteral().getLexicalForm()), id, content));
+                out.add(new Command.Fenced(digest, labelOf(labels.get(0).asLiteral().getLexicalForm()), id));
             }
             return out;
+        }
+
+        /**
+         * The graph fence job {@code held.job()} digested, read from the job's one {@code import.nt} artefact in the store. The artefact must be
+         * present, be the only one of its path, parse as N-Triples and hold a triple, or the command is refused.
+         */
+        private Model content(Command.Fenced held) {
+            Model m = job(held.job()).orElseThrow();
+            Resource node = m.createResource(Graphs.job(held.job()));
+            List<String> texts = new ArrayList<>();
+            for (RDFNode o : m.listObjectsOfProperty(node, Cst.artefact).toList()) {
+                if (o.isResource() && o.asResource().hasLiteral(Cst.path, "import.nt")) {
+                    List<RDFNode> values = m.listObjectsOfProperty(o.asResource(), Cst.content).toList();
+                    texts.add(values.size() == 1 && values.get(0).isLiteral() ? values.get(0).asLiteral().getLexicalForm() : null);
+                }
+            }
+            if (texts.size() != 1 || texts.get(0) == null) {
+                throw new IllegalArgumentException("the fence job of an import has exactly one import.nt with its content: " + Graphs.importGraph(held.digest()));
+            }
+            Model content = ModelFactory.createDefaultModel();
+            try {
+                org.apache.jena.riot.RDFParser.create().source(new java.io.ByteArrayInputStream(texts.get(0).getBytes(java.nio.charset.StandardCharsets.UTF_8)))
+                    .lang(org.apache.jena.riot.Lang.NTRIPLES).base("urn:lattice:studio:input:").strict(true).parse(content);
+            } catch (org.apache.jena.riot.RiotException e) {
+                throw new IllegalArgumentException("the import.nt of a fence job does not parse as N-Triples: " + Graphs.importGraph(held.digest()));
+            }
+            if (content.isEmpty()) {
+                throw new IllegalArgumentException("the import.nt of a fence job holds no triple: " + Graphs.importGraph(held.digest()));
+            }
+            return content;
         }
 
         private String labelOf(String label) {

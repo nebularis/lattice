@@ -144,10 +144,11 @@ class ReceiptsTest {
         StudioStore store = interfered(real, before);
         Writer writer = created(store);
         Writer other = new Writer(Fixture.textual(real), Fixture.OPS, Fixture.MAINTENANCE, CLOCK);
+        Model content = Fixture.model(Fixture.PREFIXES + "ex:term a ex:Term .");
+        Fixture.fenceJob(store, WS, Fixture.id(501), "e".repeat(64), content);
         // Between this writer's read of the description's sequence and its update, another writer replaces the description.
         before.set(() -> assertEquals(Reply.ok(), other.apply(Command.setAccess(WS, "shared", null))));
-        Model content = Fixture.model(Fixture.PREFIXES + "ex:term a ex:Term .");
-        Command fence = Command.fence(WS, "e".repeat(64), "Reference", content);
+        Command fence = Command.fence(WS, List.of(new Command.Fenced("e".repeat(64), "Reference", Fixture.id(501))));
         Reply mine = writer.apply(fence);
         assertEquals(400, mine.status(), mine.message());
         assertTrue(store.graph(Graphs.receipts(WS)).contains(null, Cst.commandId, fence.id()) == false, "no receipt for the command");
@@ -168,6 +169,7 @@ class ReceiptsTest {
         Writer writer = created(store);
         Writer other = new Writer(Fixture.textual(real), Fixture.OPS, Fixture.MAINTENANCE, CLOCK);
         List<Command.Fenced> imports = new java.util.ArrayList<>();
+        Map<String, Model> contents = new java.util.HashMap<>();
         for (int n = 1; n <= 3; n++) {
             String digest = String.format("%064x", n);
             String job = Fixture.id(500 + n);
@@ -179,8 +181,12 @@ class ReceiptsTest {
             node.addProperty(Cst.status, Cst.Succeeded);
             node.addProperty(Cst.digest, digest);
             node.addProperty(Cst.declaresOntology, m.createResource("https://example.org/onto/" + n));
+            Model graph = Fixture.model(Fixture.PREFIXES + "ex:term" + n + " a ex:Term .");
+            node.addProperty(Cst.artefact, m.createResource(Graphs.job(job) + "#artefact-1").addProperty(Cst.path, "import.nt")
+                .addProperty(Cst.mediaType, "application/n-triples").addProperty(Cst.content, Fixture.nTriples(graph)));
             store.write(List.of(), Map.of(Graphs.job(job), m));
-            imports.add(new Command.Fenced(digest, "Import " + n, job, Fixture.model(Fixture.PREFIXES + "ex:term" + n + " a ex:Term .")));
+            imports.add(new Command.Fenced(digest, "Import " + n, job));
+            contents.put(digest, graph);
         }
         // Between this writer's read of the description's sequence and its update, another writer replaces the description.
         before.set(() -> assertEquals(Reply.ok(), other.apply(Command.setAccess(WS, "shared", null))));
@@ -191,7 +197,7 @@ class ReceiptsTest {
         assertTrue(Fixture.OPS.workspace(store, WS).imports().isEmpty(), "no description names any import");
         assertTrue(Fixture.OPS.workspace(store, WS).declared().isEmpty());
         for (Command.Fenced held : imports) {
-            assertTrue(held.content().isIsomorphicWith(store.graph(Graphs.importedGraph(held.digest()))), "the imports applied first, which read as nothing");
+            assertTrue(contents.get(held.digest()).isIsomorphicWith(store.graph(Graphs.importedGraph(held.digest()))), "the imports applied first, which read as nothing");
         }
 
         assertEquals(Reply.ok(), writer.apply(fence), "the same command again completes it");

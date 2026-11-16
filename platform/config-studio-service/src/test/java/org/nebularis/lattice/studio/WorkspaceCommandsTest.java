@@ -161,8 +161,10 @@ class WorkspaceCommandsTest {
     void aFencedImportTwoWorkspacesHoldIsOneGraphAndAReleaseLeavesIt() {
         assertEquals(Reply.ok(1), writer.apply(Command.create(OTHER, "Other", AT, null, model("other"))));
         Model content = Fixture.model(Fixture.PREFIXES + "ex:term a ex:Term ; ex:label \"t\" .");
-        assertEquals(Reply.ok(), writer.apply(Command.fence(WS, DIGEST, "Reference", content)));
-        assertEquals(Reply.ok(), writer.apply(Command.fence(OTHER, DIGEST, "Same", content)));
+        Fixture.fenceJob(store, WS, Fixture.id(801), DIGEST, content);
+        Fixture.fenceJob(store, OTHER, Fixture.id(802), DIGEST, content);
+        assertEquals(Reply.ok(), writer.apply(Command.fence(WS, List.of(new Command.Fenced(DIGEST, "Reference", Fixture.id(801))))));
+        assertEquals(Reply.ok(), writer.apply(Command.fence(OTHER, List.of(new Command.Fenced(DIGEST, "Same", Fixture.id(802))))));
         String graph = Graphs.importedGraph(DIGEST);
         assertEquals(2, quads(graph).size());
         assertTrue(content.isIsomorphicWith(store.graph(graph)));
@@ -174,7 +176,7 @@ class WorkspaceCommandsTest {
         assertTrue(content.isIsomorphicWith(store.graph(graph)), "the other workspace still holds it");
         assertEquals(Reply.ok(), writer.apply(Command.release(OTHER, DIGEST)));
         assertTrue(content.isIsomorphicWith(store.graph(graph)), "an import is never tombstoned");
-        assertEquals(Reply.ok(), writer.apply(Command.fence(WS, DIGEST, "Again", content)), "and can be held again");
+        assertEquals(Reply.ok(), writer.apply(Command.fence(WS, List.of(new Command.Fenced(DIGEST, "Again", Fixture.id(801))))), "and can be held again");
     }
 
     @Test

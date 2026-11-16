@@ -1110,7 +1110,8 @@ public final class StudioApi {
      * one command, so the description is replaced once. {@code job} is given once or more, at most {@link Command#MAX_FENCED} times,
      * and {@code label} once for each in the same order, or not at all for a single job, which is then labelled "Import". A job that is
      * not a finished fence job of this workspace refuses the whole request, and two jobs of one digest hold it once, under the first's
-     * label. Answers 201 with the workspace's description.
+     * label. The command sent carries each import's digest, label and job and no content, which the writer reads from the job. The
+     * job's import.nt is read here only to answer 409 or 422 as the contract says. Answers 201 with the workspace's description.
      */
     private ApiResponse fence(ApiRequest req, String id) {
         Map<String, List<String>> query = queryAll(req.query());
@@ -1150,13 +1151,12 @@ public final class StudioApi {
             if (held.containsKey(digest.getString())) {
                 continue;
             }
-            Model graph;
             try {
-                graph = Turtle.parse(content.getBytes(StandardCharsets.UTF_8), Lang.NTRIPLES);
+                Turtle.parse(content.getBytes(StandardCharsets.UTF_8), Lang.NTRIPLES);
             } catch (RiotException e) {
                 return ApiResponse.text(422, "the job's import.nt does not parse as N-Triples");
             }
-            held.put(digest.getString(), new Command.Fenced(digest.getString(), named.get(i), job, graph));
+            held.put(digest.getString(), new Command.Fenced(digest.getString(), named.get(i), job));
         }
         Reply reply = writes.send(Command.fence(id, List.copyOf(held.values())));
         Workspace now = reply.applied() ? load(id) : null;

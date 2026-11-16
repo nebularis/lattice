@@ -288,7 +288,7 @@ class ImportsClosureTest {
         assertEquals(Map.of(root(1), new Workspace.Declared(ONTOLOGY, VERSION)), stored(WS).declared(), "the job's, and none for the job that gave none");
         // the writer takes no claim in a command either
         String c = done(WS, 3);
-        Command base = Command.fence(WS, List.of(new Command.Fenced(digest(3), "C", c, content(3))));
+        Command base = Command.fence(WS, List.of(new Command.Fenced(digest(3), "C", c)));
         Dataset body = DatasetFactory.create();
         body.getDefaultModel().add(base.body().getDefaultModel());
         base.body().listNames().forEachRemaining(n -> body.addNamedModel(n, base.body().getNamedModel(n)));
@@ -303,20 +303,22 @@ class ImportsClosureTest {
         String own = done(WS, 1);
         long before = steps(WS);
         long receipts = fenceReceipts(WS);
-        Command.Fenced good = new Command.Fenced(digest(1), "Good", own, content(1));
-        assertEquals(400, f.writes.send(Command.fence(WS, List.of(good, new Command.Fenced(digest(2), "Failed", job(WS, 2, Cst.Failed, null, null), content(2))))).status());
-        assertEquals(400, f.writes.send(Command.fence(WS, List.of(good, new Command.Fenced(digest(3), "Foreign", job(OTHER, 3, Cst.Succeeded, null, null), content(3))))).status());
-        assertEquals(400, f.writes.send(Command.fence(WS, List.of(good, new Command.Fenced(digest(4), "Other digest", job(WS, 5, Cst.Succeeded, null, null), content(4))))).status(),
+        Command.Fenced good = new Command.Fenced(digest(1), "Good", own);
+        assertEquals(400, f.writes.send(Command.fence(WS, List.of(good, new Command.Fenced(digest(2), "Failed", job(WS, 2, Cst.Failed, null, null))))).status());
+        assertEquals(400, f.writes.send(Command.fence(WS, List.of(good, new Command.Fenced(digest(3), "Foreign", job(OTHER, 3, Cst.Succeeded, null, null))))).status());
+        assertEquals(400, f.writes.send(Command.fence(WS, List.of(good, new Command.Fenced(digest(4), "Other digest", job(WS, 5, Cst.Succeeded, null, null))))).status(),
             "a job that digested another import");
-        assertEquals(400, f.writes.send(Command.fence(WS, List.of(good, new Command.Fenced(digest(6), "Missing", Fixture.id(77777), content(6))))).status(), "no such job");
+        assertEquals(400, f.writes.send(Command.fence(WS, List.of(good, new Command.Fenced(digest(6), "Missing", Fixture.id(77777))))).status(), "no such job");
         assertEquals(400, f.writes.send(Command.fence(WS, List.of())).status(), "nothing to hold");
         List<Command.Fenced> many = new ArrayList<>();
         for (int n = 0; n <= Command.MAX_FENCED; n++) {
-            many.add(new Command.Fenced(digest(100 + n), "L", own, content(100 + n)));
+            many.add(new Command.Fenced(digest(100 + n), "L", own));
         }
         assertEquals(400, f.writes.send(Command.fence(WS, many)).status(), "more than the limit");
-        assertEquals(400, f.writes.send(Command.fence(WS, List.of(new Command.Fenced(digest(1), "x".repeat(201), own, content(1))))).status(), "a long label");
-        assertEquals(400, f.writes.send(Command.fence(WS, List.of(new Command.Fenced(digest(1), "Empty", own, ModelFactory.createDefaultModel())))).status(), "an empty graph");
+        assertEquals(400, f.writes.send(Command.fence(WS, List.of(new Command.Fenced(digest(1), "x".repeat(201), own)))).status(), "a long label");
+        String empty = Fixture.id(7001);
+        Fixture.fenceJob(f.store, WS, empty, digest(1), "");
+        assertEquals(400, f.writes.send(Command.fence(WS, List.of(new Command.Fenced(digest(1), "Empty", empty)))).status(), "an empty graph");
         assertTrue(nothingWritten(WS, before, receipts, 1, 2, 3, 4, 6));
     }
 
@@ -324,7 +326,7 @@ class ImportsClosureTest {
     void aFenceCommandSurvivesTheWireAsTheWriterReadsIt() {
         String a = job(WS, 1, Cst.Succeeded, ONTOLOGY, null);
         String b = done(WS, 2);
-        Command sent = Command.fence(WS, List.of(new Command.Fenced(digest(1), "A", a, content(1)), new Command.Fenced(digest(2), "B", b, content(2))));
+        Command sent = Command.fence(WS, List.of(new Command.Fenced(digest(1), "A", a), new Command.Fenced(digest(2), "B", b)));
         Command read = org.nebularis.lattice.studio.writes.Codec.decode(org.nebularis.lattice.studio.writes.Codec.headers(sent),
             org.nebularis.lattice.studio.writes.Codec.body(sent));
         assertEquals(Reply.ok(), f.writes.send(read));
@@ -337,7 +339,7 @@ class ImportsClosureTest {
         String a = done(WS, 1);
         assertEquals(200, f.send("POST", "/api/workspaces/" + WS + "/access", "mode=read-only", Map.of(), new byte[0]).status());
         long before = steps(WS);
-        Reply reply = f.writes.send(Command.fence(WS, List.of(new Command.Fenced(digest(1), "A", a, content(1)))).by("reviewer", false));
+        Reply reply = f.writes.send(Command.fence(WS, List.of(new Command.Fenced(digest(1), "A", a))).by("reviewer", false));
         assertEquals(403, reply.status());
         assertEquals(before, steps(WS));
         assertTrue(f.store.graph(Graphs.importedGraph(digest(1))).isEmpty());
@@ -373,5 +375,74 @@ class ImportsClosureTest {
         Workspace again = stored(id);
         assertEquals(Map.of(root(1), "Reference"), again.imports(), "held by name, with its label");
         assertEquals(Map.of(root(1), new Workspace.Declared(ONTOLOGY, VERSION)), again.declared());
+    }
+
+    private Reply send(Command c) {
+        return f.writes.send(c);
+    }
+
+    private Dataset withGraph(Command base, String graph, Model content) {
+        Dataset body = DatasetFactory.create();
+        body.getDefaultModel().add(base.body().getDefaultModel());
+        body.addNamedModel(graph, content);
+        return body;
+    }
+
+    @Test
+    void theContentStoredIsTheJobsArtefactAndNothingACommandCarriesCanReplaceIt() {
+        String a = done(WS, 1);
+        long before = steps(WS);
+        long receipts = fenceReceipts(WS);
+        Command base = Command.fence(WS, List.of(new Command.Fenced(digest(1), "A", a)));
+        assertTrue(base.body().listNames().hasNext() == false, "a fence carries no named graph");
+        Model forged = Fixture.model(Fixture.PREFIXES + "ex:forged ex:p ex:o .");
+        for (String graph : List.of(Graphs.importedGraph(digest(1)), "urn:example:elsewhere")) {
+            Reply r = send(new Command(base.id(), base.sender(), base.type(), WS, null, null, null, null, null, null, withGraph(base, graph, forged), null, false));
+            assertEquals(400, r.status(), r.message());
+            assertTrue(nothingWritten(WS, before, receipts, 1), "nothing written for a command that carries " + graph);
+        }
+        Reply withPart = send(new Command(base.id(), base.sender(), base.type(), WS, null, digest(1), null, null, null, null, base.body(), null, false));
+        assertEquals(400, withPart.status(), withPart.message());
+        assertTrue(nothingWritten(WS, before, receipts, 1));
+        assertEquals(Reply.ok(), send(base));
+        assertTrue(content(1).isIsomorphicWith(f.store.graph(Graphs.importedGraph(digest(1)))), "what the job digested");
+    }
+
+    @Test
+    void theOlderFormOfAFenceNamingNoJobIsRefusedWithAMessageSayingWhatAFenceNames() {
+        long before = steps(WS);
+        long receipts = fenceReceipts(WS);
+        Command older = new Command(Fixture.id(9001), Command.SERVICE, Command.Type.FENCE, WS, null, digest(1), null, null, "Old", null, Fixture.dataset(content(1)), null, false);
+        Reply r = send(older);
+        assertEquals(400, r.status());
+        assertTrue(r.message().contains("names its imports by their fence jobs"), r.message());
+        assertTrue(nothingWritten(WS, before, receipts, 1));
+    }
+
+    @Test
+    void aJobWhoseArtefactIsAbsentDuplicatedEmptyOrUnparseableRefusesTheCommandAndWritesNothing() {
+        long before = steps(WS);
+        long receipts = fenceReceipts(WS);
+        String absent = Fixture.id(7101);
+        Fixture.fenceJob(f.store, WS, absent, digest(1), (String) null);
+        String empty = Fixture.id(7102);
+        Fixture.fenceJob(f.store, WS, empty, digest(2), "# nothing\n");
+        String garbled = Fixture.id(7103);
+        Fixture.fenceJob(f.store, WS, garbled, digest(3), "this is not N-Triples\n");
+        String twice = Fixture.id(7104);
+        Fixture.fenceJob(f.store, WS, twice, digest(4), content(4));
+        Model m = ModelFactory.createDefaultModel().add(f.store.graph(Graphs.job(twice)));
+        Resource node = m.createResource(Graphs.job(twice));
+        node.addProperty(Cst.artefact, m.createResource(Graphs.job(twice) + "#artefact-2").addProperty(Cst.path, "import.nt")
+            .addProperty(Cst.content, Fixture.nTriples(Fixture.model(Fixture.PREFIXES + "ex:other ex:p ex:o ."))));
+        f.store.write(List.of(), Map.of(Graphs.job(twice), m));
+        String good = done(WS, 5);
+        int n = 1;
+        for (String job : List.of(absent, empty, garbled, twice)) {
+            Reply r = send(Command.fence(WS, List.of(new Command.Fenced(digest(5), "Good", good), new Command.Fenced(digest(n), "Bad", job))));
+            assertEquals(400, r.status(), "job " + n + ": " + r.message());
+            assertTrue(nothingWritten(WS, before, receipts, 1, 2, 3, 4, 5), "job " + n);
+            n++;
+        }
     }
 }

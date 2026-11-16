@@ -116,6 +116,43 @@ final class Fixture {
             }));
     }
 
+    /**
+     * A finished fence job of {@code ws} as the worker leaves it, in {@code store}: its digest, and the N-Triples of {@code content} as
+     * its import.nt. {@code digest} is as given, so a test may name one the content does not have, since the writer does not recompute it.
+     */
+    static void fenceJob(StudioStore store, String ws, String job, String digest, Model content) {
+        fenceJob(store, ws, job, digest, nTriples(content));
+    }
+
+    static org.apache.jena.query.Dataset dataset(Model defaultGraph) {
+        org.apache.jena.query.Dataset d = org.apache.jena.query.DatasetFactory.create();
+        d.getDefaultModel().add(defaultGraph);
+        return d;
+    }
+
+    static String nTriples(Model content) {
+        java.io.StringWriter nt = new java.io.StringWriter();
+        RDFDataMgr.write(nt, content, Lang.NTRIPLES);
+        return nt.toString();
+    }
+
+    static void fenceJob(StudioStore store, String ws, String job, String digest, String importNt) {
+        String iri = org.nebularis.lattice.studio.store.Graphs.job(job);
+        Model m = ModelFactory.createDefaultModel();
+        org.apache.jena.rdf.model.Resource node = m.createResource(iri);
+        node.addProperty(org.apache.jena.vocabulary.RDF.type, org.nebularis.lattice.studio.store.Cst.Job);
+        node.addProperty(org.nebularis.lattice.studio.store.Cst.workspace, m.createResource(org.nebularis.lattice.studio.store.Graphs.workspace(ws)));
+        node.addProperty(org.nebularis.lattice.studio.store.Cst.kind, org.nebularis.lattice.studio.store.Cst.Fence);
+        node.addProperty(org.nebularis.lattice.studio.store.Cst.status, org.nebularis.lattice.studio.store.Cst.Succeeded);
+        node.addProperty(org.nebularis.lattice.studio.store.Cst.digest, digest);
+        if (importNt != null) {
+            node.addProperty(org.nebularis.lattice.studio.store.Cst.artefact, m.createResource(iri + "#artefact-1")
+                .addProperty(org.nebularis.lattice.studio.store.Cst.path, "import.nt").addProperty(org.nebularis.lattice.studio.store.Cst.mediaType, "application/n-triples")
+                .addProperty(org.nebularis.lattice.studio.store.Cst.content, importNt));
+        }
+        store.write(java.util.List.of(), Map.of(iri, m));
+    }
+
     static String id(long n) {
         return new UUID(0, n).toString();
     }
