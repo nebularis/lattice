@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-16. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -27,7 +27,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | planned | SVA-R1 |
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
 | SVA-R4 | the browser's run controller and the dock's run pane | built 2026-11-16, building 2026-11-16 | SVA-R1 |
-| SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line | planned | SVA-R4 |
+| SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line | building 2026-11-16 | SVA-R4 |
 | SVA-U1 | columns the author collapses and resizes, kept in the browser | built 2026-11-16, building 2026-11-16 | SVA-R4 |
 | SVA-R5 | the run protocol's failure cases on the real stack | planned | SVA-R2, SVA-R3, SVA-R4 |
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
@@ -148,3 +148,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: the maintainer, looking at SVA-R4's screenshot, asked for columns an author can collapse to make room, to be built now, and agreed that SVA-R4a comes before SVA-R2. SVA-U1 added to the plan and picked up.
 - 2026-11-16: SVA-U1 built, [Validation Pack](../validation/SVA-U1.md). The navigation, each view's list and the dock collapse to rails and resize by handles, kept in the browser, with the two dock workarounds removed, the run pane stacking by a container query and canvases refitting when their pane resizes. The dock's wide default needed the middle to keep 700 px so an existing canvas link test passes unchanged, and the fixed dock overlay at 1100 px was removed. Touch drags are not covered.
 - 2026-11-16: SVA-U1 verified by a second run of its checks, 427 unit tests, the type check and 58 browser tests on the fake service. The list column's width is kept for each view, not each mode, since each view's list differs. A canvas that opens fitted is fitted again when its pane's width changes, which also resets a pan or zoom its author made, and SVA-M4 now takes that up. Not tried: touch, and two tabs of one browser following each other's layout.
+- 2026-11-16: SVA-R4a picked up.
