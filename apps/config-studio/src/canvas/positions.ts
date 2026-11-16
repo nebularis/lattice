@@ -3,6 +3,8 @@
 // graph, since where a node sits says nothing about what it means. A browser that keeps nothing lays the canvas out afresh on
 // the next visit, and a canvas still draws.
 
+import { placeClear, type PlaceBox, type Size, type Spacing } from "./place";
+
 export interface Point {
   x: number;
   y: number;
@@ -51,11 +53,31 @@ export function clearPositions(key: string, store: PositionStore | undefined = b
   }
 }
 
+/** What `resolvePositions` needs to keep a new node off the nodes that kept their places. */
+export interface Clearance extends Spacing {
+  /** The size of a node, as measured where it is known and else as it is expected to be. */
+  sizeOf: (id: string) => Size;
+}
+
 /**
  * Where each node sits. A node the author or an edit already placed stays where it is, so a link dropped where a node was still
- * lands on it, then the author's saved position, then the layout's. Only a new node is laid out. Laying out again ignores what is
- * placed on the canvas now, and the caller clears what was saved.
+ * lands on it, then the author's saved position, then the layout's. Only a new node is laid out. Given `clearance`, a new node whose
+ * layout place would cover a node that kept its place is drawn at the nearest place that covers none (place.ts), and the nodes that
+ * kept their places never move. Where nothing kept a place, as when laying out again, every node has the layout's own place.
  */
-export function resolvePositions(ids: readonly string[], laid: ReadonlyMap<string, Point>, saved: Positions, current?: ReadonlyMap<string, Point>): Map<string, Point> {
-  return new Map(ids.map((id) => [id, current?.get(id) ?? saved[id] ?? laid.get(id) ?? { x: 0, y: 0 }]));
+export function resolvePositions(
+  ids: readonly string[],
+  laid: ReadonlyMap<string, Point>,
+  saved: Positions,
+  current?: ReadonlyMap<string, Point>,
+  clearance?: Clearance,
+): Map<string, Point> {
+  const at = new Map(ids.map((id) => [id, current?.get(id) ?? saved[id] ?? laid.get(id) ?? { x: 0, y: 0 }]));
+  if (!clearance) return at;
+  const isKept = (id: string) => current?.has(id) || saved[id] !== undefined;
+  const kept: PlaceBox[] = ids.filter(isKept).map((id) => ({ ...at.get(id)!, ...clearance.sizeOf(id) }));
+  if (kept.length === 0) return at;
+  const fresh = new Map(ids.filter((id) => !isKept(id)).map((id) => [id, at.get(id)!]));
+  for (const [id, p] of placeClear(fresh, clearance.sizeOf, kept, clearance)) at.set(id, p);
+  return at;
 }

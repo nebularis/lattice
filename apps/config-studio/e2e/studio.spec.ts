@@ -1235,3 +1235,81 @@ test("each item of the mapping canvas's menus does what it says", async ({ page 
   const places = await mappings.evaluateAll((els) => els.map((e) => (e as HTMLElement).style.transform));
   expect(new Set(places).size).toBe(places.length);
 });
+
+// --- A node an edit adds is drawn clear of the nodes that kept their places, and a label never hides the edge it names (SVA-O7) ---
+
+/** The boxes on the screen of every mapping node, by the name it shows. */
+const mappingBoxes = (page: Page) =>
+  page.locator(".react-flow__node-mapping").evaluateAll((els) =>
+    els.map((el) => {
+      const r = el.getBoundingClientRect();
+      return { name: (el.textContent ?? "").trim().slice(0, 20), x: r.x, y: r.y, width: r.width, height: r.height };
+    }),
+  );
+
+/** The pairs of boxes that share an area, by name. */
+const overlapping = (boxes: { name: string; x: number; y: number; width: number; height: number }[]) =>
+  boxes.flatMap((a, i) => boxes.slice(i + 1).filter((b) => Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 0.5).map((b) => `${a.name} over ${b.name}`));
+
+test("a node an edit adds is drawn clear of every mapping that kept its place, so each can be clicked", async ({ page }) => {
+  const fake = new FakeService();
+  await openMappingProbe(page, fake);
+  const menu = page.getByRole("menu");
+  const item = (name: string) => menu.getByRole("menuitem", { name });
+  const mappings = page.locator(".react-flow__node-mapping");
+  const cover = mappingNode(page, "Cover");
+  const policy = mappingNode(page, "Policy");
+  await expect(mappings).toHaveCount(5);
+  expect(await overlapping(await mappingBoxes(page))).toEqual([]);
+
+  // The sequence SVA-O5 met it in. A mapping is detached, and children are added under its old parent and under it.
+  await cover.click({ button: "right" });
+  await item("Detach from its parent").click();
+  await expect(linkEdge(page, "parent", "Cover")).toHaveCount(0);
+  answerNext(page, "Premium");
+  await policy.click({ button: "right" });
+  await item("Add a child datum").click();
+  await expect(mappings).toHaveCount(6);
+  answerNext(page, "Rate");
+  await cover.click({ button: "right" });
+  await item("Add a child data mapping").click();
+  await expect(mappings).toHaveCount(7);
+  answerNext(page, "Second root");
+  await page.locator(".react-flow__pane").click({ button: "right", position: { x: 5, y: 5 } });
+  await item("Add a root datum").click();
+  await expect(mappings).toHaveCount(8);
+
+  // No two nodes share an area, and each, the one a new node would have covered included, opens its card on a click.
+  expect(await overlapping(await mappingBoxes(page))).toEqual([]);
+  for (const name of ["Policy", "Cover", "Holder", "Status", "Template", "Premium", "Rate", "Second root"]) {
+    await mappingNode(page, name).click();
+    await expect(page.getByRole("region", { name: `Mapping ${name}` })).toBeVisible();
+  }
+
+  // Laying the scheme out again still gives every node the layout's own place, and none shares it.
+  const places = await mappings.evaluateAll((els) => els.map((e) => (e as HTMLElement).style.transform));
+  await page.locator(".react-flow__pane").click({ button: "right", position: { x: 5, y: 5 } });
+  await item("Lay the scheme out again").click();
+  expect(await overlapping(await mappingBoxes(page))).toEqual([]);
+  expect(new Set(await mappings.evaluateAll((els) => els.map((e) => (e as HTMLElement).style.transform))).size).toBe(places.length);
+});
+
+test("the template edge of a mapping is seen beside its label and opens its menu where it is drawn", async ({ page }) => {
+  const fake = new FakeService();
+  await openMappingProbe(page, fake);
+  const edgeId = `template|${PROBE}Status`;
+  const label = page.locator(".canvas-edge-label").filter({ hasText: "template" });
+  const line = linkEdge(page, "template", "Status").locator("path.react-flow__edge-path");
+  await expect(label).toBeVisible();
+  const own = (await line.boundingBox())!;
+  const text = (await label.boundingBox())!;
+  // The label is clear of the edge's own path, the edge being the shorter of the two along its direction.
+  expect(Math.min(own.x + own.width, text.x + text.width) - Math.max(own.x, text.x) > 0 && Math.min(own.y + own.height, text.y + text.height) - Math.max(own.y, text.y) > 0).toBe(false);
+  expect(Math.max(own.width, own.height)).toBeLessThan(text.height);
+
+  // A right click on the line itself opens the edge's menu, which the label no longer covers.
+  const at = await pointOnEdge(page, edgeId);
+  expect(at.x < text.x || at.x > text.x + text.width || at.y < text.y || at.y > text.y + text.height).toBe(true);
+  await page.mouse.click(at.x, at.y, { button: "right" });
+  await expect(page.getByRole("menu").getByRole("menuitem")).toHaveText(["Remove the template link"]);
+});

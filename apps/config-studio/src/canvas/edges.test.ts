@@ -470,3 +470,63 @@ describe("the facility sample on the ontology canvas", () => {
     });
   }
 });
+
+describe("the label of an edge shorter than itself", () => {
+  // Two nodes one above the other with a gap of 13, as the mapping canvas draws a mapping and its template.
+  const wide = (x: number, y: number) => box(x, y, 240, 51);
+  const stacked = () => nodesOf({ a: wide(0, 0), b: wide(0, 64) });
+  const pathBox = (r: EdgeRoute): Box => {
+    const pts = along(r.curve, 1);
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) };
+  };
+  const length = (r: EdgeRoute) => Math.hypot(end(r.path)[0] - start(r.path)[0], end(r.path)[1] - start(r.path)[1]);
+
+  it("is beside the edge and not on it, so the line stays visible", () => {
+    const [r] = routeEdges(stacked(), [edge("e", "a", "b", "template")]);
+    expect(length(r)).toBeLessThan(21);
+    expect(overlap(r.label!, pathBox(r))).toBe(0);
+    for (const p of along(r.curve, 1)) expect(p.x < r.label!.x || p.x > r.label!.x + r.label!.width || p.y < r.label!.y || p.y > r.label!.y + r.label!.height).toBe(true);
+  });
+
+  it("covers no node and no other label, the place beside it being free of both", () => {
+    const ns = stacked();
+    const r = routeEdges(ns, [edge("e", "a", "b", "template"), edge("f", "a", "b", "template")]);
+    for (const x of r) for (const [, b] of ns) expect(overlap(x.label!, b)).toBe(0);
+    expect(overlap(r[0].label!, r[1].label!)).toBe(0);
+    for (const x of r) expect(overlap(x.label!, pathBox(x))).toBe(0);
+  });
+
+  it("takes the right side of a path that runs down, and the left where the right is taken by a node", () => {
+    const [free] = routeEdges(stacked(), [edge("e", "a", "b", "template")]);
+    expect(centre(free.label!).x).toBeGreaterThan(centre(wide(0, 0)).x);
+    const blocked = nodesOf({ a: wide(0, 0), b: wide(0, 64), c: box(250, 0, 300, 115) });
+    const [r] = routeEdges(blocked, [edge("e", "a", "b", "template")]);
+    expect(centre(r.label!).x).toBeLessThan(0);
+    for (const [, b] of blocked) expect(overlap(r.label!, b)).toBe(0);
+    expect(overlap(r.label!, pathBox(r))).toBe(0);
+  });
+
+  it("is on the path of an edge as long as its label, as before", () => {
+    const [r] = routeEdges(nodesOf({ a: wide(0, 0), b: wide(0, 300) }), [edge("e", "a", "b", "template")]);
+    const c = centre(r.label!);
+    const p = curvePoint(r.curve, 0.5);
+    expect([c.x, c.y]).toEqual([p.x, p.y]);
+  });
+
+  it("is on the path of an edge between two ranks that is longer than its label", () => {
+    const [r] = routeEdges(nodesOf({ a: box(0, 0), b: box(200, 0) }), [edge("e", "a", "b", "template")]);
+    const c = centre(r.label!);
+    const p = curvePoint(r.curve, 0.5);
+    expect([c.x, c.y]).toEqual([p.x, p.y]);
+  });
+
+  it("gives the same labels for any order of the nodes and the edges, and on a repeat", () => {
+    const ns = stacked();
+    const es = [edge("e", "a", "b", "template"), edge("f", "a", "b", "source")];
+    const first = routeEdges(ns, es);
+    expect(routeEdges(new Map([...ns].reverse()), [...es].reverse())).toEqual(first);
+    expect(routeEdges(ns, es)).toEqual(first);
+  });
+});

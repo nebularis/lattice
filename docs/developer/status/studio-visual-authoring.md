@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-O5 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-R2, SVA-R3 and SVA-R4 against the runs contract, the smaller SVA-B2c, SVA-B2d and SVA-O7, and SVA-B5.
+**Next action:** paused after SVA-O7 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Phase O is built. Ready to start: SVA-R2, SVA-R3 and SVA-R4 against the runs contract, the smaller SVA-B2c and SVA-B2d, and SVA-B5.
 
 ## Slices
 
@@ -43,7 +43,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-O4 | routing finished: edges bent around nodes, attachments spread, drawings fitted, unlinked nodes placed beside | built 2026-11-15, building 2026-11-15 | SVA-O2a |
 | SVA-O5 | the kit's behaviour held in a browser, and the mapping canvas on the kit's routing | built 2026-11-15, building 2026-11-15 | SVA-O4 |
 | SVA-O6 | one reader of shapes for the forms and the drawing | built 2026-11-15, building 2026-11-15 | SVA-O2 |
-| SVA-O7 | a new node clear of the others, and a label beside an edge shorter than it | building 2026-11-16 | SVA-O5 |
+| SVA-O7 | a new node clear of the others, and a label beside an edge shorter than it | built 2026-11-16, building 2026-11-16 | SVA-O5 |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | planned | SVA-O1 |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | planned | SVA-R3 |
@@ -85,6 +85,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-15, SVA-O6: the shared rule was made to ignore a class that is itself a shape. Tests of the new reader, of the drawing and of the forms' vocabulary failed together, which shows the three read one rule. Restored.
 - 2026-11-15, SVA-O4: the test of whether a path comes near a node was made to find nothing, so no edge was routed. The tests of routing and the acceptance tests over the facility sample failed. Restored.
 - 2026-11-15, SVA-O5: the kit was stopped from storing positions. Both tests of a position kept after a reload failed. Restored, both passing. The slice's pack records ten more breaks, tried as each test was written.
+- 2026-11-16, SVA-O7: two browser tests and eighteen unit tests were added. Detaching a mapping and adding children drew Cover over Rate before the fix. Removing the clearance in the kit failed the first test with that overlap, and making the beside placement unreachable failed the second and three unit tests.
 
 ## Log
 
@@ -123,3 +124,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-15: SVA-O5 picked up.
 - 2026-11-15: SVA-O5 built, [Validation Pack](../validation/SVA-O5.md). Five browser tests hold what the kit does when a node is dragged, a page is loaded again, a link is dropped and a menu item is chosen, each tried against a break in the source that it had to catch, and the first of them rewritten when its first form did not catch its break. The mapping canvas draws its edges with the kit's routing, its tests written and passed on the old edges first, and its nodes where they were. The mapping tests use a workspace made from Turtle of their own, since the mapping sample declares no source concept. Two faults found and planned as SVA-O7: a node added by an edit can land exactly on another, and a label can hide an edge shorter than it. One test this slice did not touch failed in one full run of six, recorded as TD-166. Verified with 344 unit tests, the type check, and the browser suite twice, 36 passed each time.
 - 2026-11-16: SVA-O7 picked up.
+- 2026-11-16: SVA-O7 built, [Validation Pack](../validation/SVA-O7.md). A node an edit adds is now drawn at the nearest place clear of the nodes that kept theirs, and the label of an edge shorter than itself is placed beside it, so the line stays visible and opens its menu.
+- 2026-11-16: SVA-O7 verified by a second run of its checks, 362 unit tests, the type check and 38 browser tests on the fake service. The label of a short edge is moved out until it covers no node, which for two stacked mappings puts it beyond their sides, some way from the line, since no nearer place is free. The test of the label was written after the fix, so no run of it on the old code exists, and it was shown to fail on a break. Every commit of this unit since 2026-11-12 carries that day in its AI disclosure trailer, the script that writes it having held the date fixed, and from this commit the trailer carries the day of the commit.

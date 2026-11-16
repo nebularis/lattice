@@ -87,6 +87,13 @@ export const LABEL_CANDIDATES: readonly number[] = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2
 /** The finer parameters tried, nearest the middle first, when none of those covers nothing. Where one of them covers nothing the label takes it. */
 const FINE_CANDIDATES: readonly number[] = Array.from({ length: 73 }, (_, i) => 0.05 + i * 0.0125).sort((a, b) => Math.abs(a - 0.5) - Math.abs(b - 0.5) || a - b);
 
+/** How much longer than its label an edge must be for the label to sit on it, and how far from the edge a label placed beside it is kept. */
+const SHORT_MARGIN = 4;
+const BESIDE_GAP = 4;
+/** How far a label beside an edge is moved out at each try, and the room kept between it and a node. */
+const BESIDE_STEP = 6;
+const BESIDE_CLEARANCE = 2;
+
 const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 const round = (n: number) => Math.round(n * 100) / 100;
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
@@ -208,6 +215,56 @@ const overlapArea = (a: Box, b: Box) => {
   const h = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
   return w > 0 && h > 0 ? w * h : 0;
 };
+
+/** The length of a path, approximated by 32 chords for each segment. */
+function arcLength(path: readonly Curve[]): number {
+  let total = 0;
+  for (const s of path) {
+    let prev = s.p0;
+    for (let k = 1; k <= ARC_STEPS; k++) {
+      const p = bezier(s, k / ARC_STEPS);
+      total += Math.hypot(p.x - prev.x, p.y - prev.y);
+      prev = p;
+    }
+  }
+  return total;
+}
+
+/**
+ * The box of a label of the given size beside its edge, for an edge shorter than the label along the edge's own direction, which a
+ * label on it would hide. The direction is the one from the path's start to its end. The label is centred on the path's middle and
+ * moved out across the path, to the right of it (below it where the path runs across) and then to the left, by half its own extent
+ * across the path and a gap, and then further in steps, to the first place that covers no node and no label placed before it. It is
+ * moved out no further than clears the two nodes of the edge together. Nothing is returned, and the label is placed on the path as for
+ * any edge, where the edge is as long as its label, where the label is longer than the two nodes together along the path, which no
+ * place beside the edge would suit, and where no place is free.
+ */
+function besideEdge(path: readonly Curve[], from: Box, to: Box, width: number, height: number, obstacles: readonly Box[], placed: readonly Box[]): Box | undefined {
+  const a = path[0].p0;
+  const b = path[path.length - 1].p3;
+  const length = Math.hypot(b.x - a.x, b.y - a.y);
+  if (length < 1e-6) return undefined;
+  const [ux, uy] = [(b.x - a.x) / length, (b.y - a.y) / length];
+  const extentOf = (w: number, h: number, nx: number, ny: number) => w * Math.abs(nx) + h * Math.abs(ny);
+  if (arcLength(path) >= extentOf(width, height, ux, uy) + SHORT_MARGIN) return undefined;
+  const x0 = Math.min(from.x, to.x);
+  const y0 = Math.min(from.y, to.y);
+  const pair = { x: x0, y: y0, width: Math.max(from.x + from.width, to.x + to.width) - x0, height: Math.max(from.y + from.height, to.y + to.height) - y0 };
+  if (extentOf(width, height, ux, uy) > extentOf(pair.width, pair.height, ux, uy)) return undefined;
+  let [nx, ny] = [-uy, ux];
+  if (nx < -1e-9 || (Math.abs(nx) <= 1e-9 && ny < 0)) [nx, ny] = [-nx, -ny];
+  const near = extentOf(width, height, nx, ny) / 2 + BESIDE_GAP;
+  const far = extentOf(pair.width, pair.height, nx, ny) / 2 + near;
+  const m = curvePoint(path, 0.5);
+  for (let d = near; d <= far + BESIDE_STEP; d += BESIDE_STEP) {
+    for (const side of [1, -1]) {
+      const box = { x: m.x + side * nx * d - width / 2, y: m.y + side * ny * d - height / 2, width, height };
+      const roomy = { x: box.x - BESIDE_CLEARANCE, y: box.y - BESIDE_CLEARANCE, width: width + 2 * BESIDE_CLEARANCE, height: height + 2 * BESIDE_CLEARANCE };
+      if (obstacles.every((n) => overlapArea(roomy, n) === 0) && placed.every((n) => overlapArea(box, n) === 0)) return box;
+    }
+  }
+  return undefined;
+}
 
 /** The points of a path about `SAMPLE_STEP` apart, the ends included. */
 function sampled(path: readonly Curve[]): Point[] {
@@ -347,7 +404,8 @@ interface End { id: string; end: "s" | "t"; key: number }
  * Labels are then placed greedily in order of id. A label takes the first of `LABEL_CANDIDATES` along its path whose box covers no
  * node and no label placed before. Where every candidate covers something it looks for a free place among finer fractions, nearest
  * the middle first, and where there is none it takes the candidate covering the least area, ties by the order of preference, so a
- * label is always placed.
+ * label is always placed. An edge shorter than its label along its own direction would be hidden by a label on it, so its label is put
+ * beside it instead, where a place beside it is free (`besideEdge`).
  */
 export function routeEdges(nodes: ReadonlyMap<string, Box>, edges: readonly RouteEdge[], options: Partial<RouteOptions> = {}): EdgeRoute[] {
   // An option given as undefined is the default, so a caller can pass what it was given without checking each.
@@ -466,6 +524,12 @@ export function routeEdges(nodes: ReadonlyMap<string, Box>, edges: readonly Rout
     const text = byId.get(r.id)!.label;
     if (!text) return r;
     const width = text.length * o.labelCharWidth + 2 * o.labelPadding;
+    const edge = byId.get(r.id)!;
+    const beside = edge.source === edge.target ? undefined : besideEdge(r.curve, nodes.get(edge.source)!, nodes.get(edge.target)!, width, o.labelHeight, obstacles, placed);
+    if (beside) {
+      placed.push(beside);
+      return { ...r, label: beside };
+    }
     let best: Box | undefined;
     let least = Infinity;
     for (const t of LABEL_CANDIDATES) {

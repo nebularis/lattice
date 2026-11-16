@@ -26,7 +26,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { DEFAULT_NODE_SIZE, routeEdges, type EdgeRoute, type RouteOptions } from "./edges";
 import { layered, type Layout, type LayoutNode, type LayoutOptions } from "./layout";
-import { clearPositions, readPositions, resolvePositions, writePositions, type Point, type Positions } from "./positions";
+import { clearPositions, readPositions, resolvePositions, writePositions, type Clearance, type Point, type Positions } from "./positions";
 
 export type { Layout, LayoutEdge, LayoutNode, LayoutOptions } from "./layout";
 export type { Point, Positions } from "./positions";
@@ -183,18 +183,24 @@ export function Canvas(props: CanvasProps) {
   }, [shape, layout, direction, columnGap, rowGap, afterLayout]);
 
   const ids = useMemo(() => given.map((n) => n.id), [given]);
+  // A new node is drawn clear of the nodes that kept their places, by their boxes as measured where they are and else as expected.
+  const clearance = (...lists: readonly (readonly Node[])[]): Clearance => {
+    const sizes = new Map(lists.flat().map((n) => [n.id, { width: n.measured?.width ?? n.width ?? DEFAULT_NODE_SIZE.width, height: n.measured?.height ?? n.height ?? DEFAULT_NODE_SIZE.height }]));
+    return { direction, columnGap, rowGap, sizeOf: (id) => sizes.get(id) ?? DEFAULT_NODE_SIZE };
+  };
   const laid = useMemo<Node[]>(() => {
-    const at = resolvePositions(ids, computed, saved);
+    const at = resolvePositions(ids, computed, saved, undefined, clearance(given));
     return given.map((n) => ({ ...n, position: at.get(n.id)! }));
-  }, [given, ids, computed, saved]);
+  }, [given, ids, computed, saved]); // eslint-disable-line react-hooks/exhaustive-deps
   const [nodes, setNodes] = useState<Node[]>(laid);
-  // An edit keeps every node where it is, so a link dropped where a node was still lands on it. Only a new node is laid out.
+  // An edit keeps every node where it is, so a link dropped where a node was still lands on it. Only a new node is laid out, and it
+  // is moved to the nearest free place where the layout's place is taken (place.ts).
   const relayout = useRef(false);
   useEffect(() => {
     const again = relayout.current;
     relayout.current = false;
     setNodes((prev) => {
-      const at = resolvePositions(ids, computed, saved, again ? undefined : new Map(prev.map((n) => [n.id, n.position])));
+      const at = resolvePositions(ids, computed, saved, again ? undefined : new Map(prev.map((n) => [n.id, n.position])), clearance(laid, prev));
       return laid.map((n) => ({ ...n, position: at.get(n.id)! }));
     });
   }, [laid]); // eslint-disable-line react-hooks/exhaustive-deps
