@@ -118,7 +118,7 @@ A slice's documents change in the slice. Estimates are in tokens.
 | SVA-M2e | template cards, as a tool of the proposer and of the MCP server | `workers`, `platform/config-studio-service` | a proposal over the sample source instantiates a library's template | SVA-M2b, SVA-M2c | 160k |
 | SVA-M3a | a mapping's CONSTRUCT queries over an RDF sample, by stratum, as a run | `platform/config-studio-transforms` | the run's output equals the dry-run job's for the ODRL sample | SVA-P3 | 150k |
 | SVA-M3b | the sample pane: the scheme, the compiled form with whether it has a runtime, the sample, Run, and marks on what is out of date. The automatic rerun goes | `apps/config-studio` | nothing runs until Run is pressed, and an RML form is shown as waiting on BL-20 | SVA-R4, SVA-M3a | 200k |
-| SVA-M4 | the output explorer: RDF as a graph on the canvas kit, JSON and XML as a tree, text with Turtle the default for RDF, and a table | `apps/config-studio` | a run's output opens in each rendering, and the simulators use the same component | SVA-O1, SVA-R4 | 220k |
+| SVA-M4 | the output explorer: RDF as a graph on the canvas kit, JSON and XML as a tree, text with Turtle the default for RDF, and a table. A canvas keeps the pan and zoom its author set when its pane is resized, which SVA-U1's refit resets | `apps/config-studio` | a run's output opens in each rendering, and the simulators use the same component | SVA-O1, SVA-R4 | 220k |
 
 ### Closing
 

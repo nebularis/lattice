@@ -11,7 +11,7 @@ import type { Issue } from "../rdf/report";
 import type { Part } from "../state";
 import { FieldControl, TermPicker } from "./Fields";
 import { ConceptsSection, ExpansionSection, LineSection, ProfileTestsSection, RangesSection, ResolutionSection, TemporalSection, TestsSection } from "./Specials";
-import { Modal, SeverityIcon, useDismiss } from "./kit";
+import { Modal, SeverityIcon, Split, useDismiss } from "./kit";
 import { useStudio } from "./Workspace";
 
 export function ConfigView({ part, selected, field }: { part: Part; selected?: string; field?: string }) {
@@ -28,7 +28,7 @@ export function ConfigView({ part, selected, field }: { part: Part; selected?: s
   let group = "";
 
   return (
-    <div className="split">
+    <Split>
       <div className="list">
         <div className="list-head">
           <div className="row" style={{ position: "relative" }} ref={menuRef}>
@@ -93,7 +93,7 @@ export function ConfigView({ part, selected, field }: { part: Part; selected?: s
         )}
       </div>
       {adding && <AddNode part={part} kind={adding} onClose={() => setAdding(undefined)} />}
-    </div>
+    </Split>
   );
 }
 

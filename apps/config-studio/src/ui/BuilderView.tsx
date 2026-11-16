@@ -33,7 +33,7 @@ import type { Issue, Job } from "../rdf/report";
 import { PARTS, type WorkspaceModel } from "../state";
 import { NodeEditor, PART_INFO } from "./ConfigView";
 import { TermPicker } from "./Fields";
-import { Code, Conforms, SeverityIcon, Spinner, download } from "./kit";
+import { Code, Conforms, download, SeverityIcon, Spinner, Split } from "./kit";
 import { useStudio } from "./Workspace";
 
 // ---- Running an assemble job -------------------------------------------------------
@@ -79,7 +79,7 @@ export function LibraryView({ selected, field }: { selected?: string; field?: st
   // A condition is eligibility's, so the outline reads the configurations as edited.
   const forms = useMemo(() => formsOf(studio.world).map((f) => outline(studio.world, f)), [studio.world]);
   return (
-    <div className="split" style={{ gridTemplateColumns: "minmax(380px, 460px) 1fr" }}>
+    <Split defaultWidth={460} minWidth={300}>
       <div className="list" role="tree" aria-label="Library">
         <div className="list-head">
           <div className="row">
@@ -104,7 +104,7 @@ export function LibraryView({ selected, field }: { selected?: string; field?: st
           </div>
         )}
       </div>
-    </div>
+    </Split>
   );
 }
 
@@ -195,7 +195,7 @@ export function AssemblyView({ selected, assembler }: { selected?: string; assem
   const stale = run && (run.inputs[0] !== graph || run.inputs[1] !== model.state.configs.library!.current);
 
   return (
-    <div className="split">
+    <Split>
       <div className="list">
         <div className="list-head">
           <div className="row">
@@ -231,7 +231,7 @@ export function AssemblyView({ selected, assembler }: { selected?: string; assem
         )}
         {run && <Outcome run={run} stale={!!stale} />}
       </div>
-    </div>
+    </Split>
   );
 }
 

@@ -1620,3 +1620,213 @@ test("the Sample tab is in mapping mode's dock only", async ({ page }) => {
   await expect(page.getByRole("tab", { name: "Sample" })).toHaveCount(0);
 });
 
+
+// --- The page's columns, collapsed and resized by the author and kept in the browser (SVA-U1) ---
+
+const widthOf = async (locator: Locator): Promise<number> => (await locator.boundingBox())!.width;
+
+test("each of the navigation, the list and the dock collapses to a rail and expands again, and the middle takes the room", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const fake = new FakeService();
+  await sampleDock(page, fake);
+  const columns = [
+    { noun: "navigation", box: page.getByRole("navigation", { name: "Workspace" }) },
+    { noun: "list", box: page.locator(".col-list") },
+    { noun: "dock", box: page.getByRole("complementary", { name: "Inspector" }) },
+  ];
+  for (const { noun, box } of columns) {
+    // the list is inside the main area, so its middle is the pane beside it
+    const main = noun === "list" ? page.locator(".detail-pane") : page.locator("main.main");
+    const open = await widthOf(main);
+    const collapse = page.getByRole("button", { name: `Collapse the ${noun}` });
+    await expect(collapse).toHaveAttribute("aria-expanded", "true");
+    await collapse.click();
+    const expand = page.getByRole("button", { name: `Expand the ${noun}` });
+    await expect(expand).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByRole("button", { name: `Collapse the ${noun}` })).toHaveCount(0);
+    expect(Math.round(await widthOf(box))).toBe(36);
+    expect(await widthOf(main)).toBeGreaterThan(open + 100);
+    await expand.click();
+    await expect(page.getByRole("button", { name: `Collapse the ${noun}` })).toHaveAttribute("aria-expanded", "true");
+    expect(Math.abs((await widthOf(main)) - open)).toBeLessThan(1.5);
+  }
+  // the header's toggle means the same as the dock's own button
+  await page.getByRole("button", { name: "Toggle inspector" }).click();
+  await expect(page.getByRole("button", { name: "Expand the dock" })).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("button", { name: "Toggle inspector" })).toHaveAttribute("aria-pressed", "false");
+  await page.getByRole("button", { name: "Expand the dock" }).click();
+  await expect(page.getByRole("button", { name: "Toggle inspector" })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("with the Sample tab open, collapsing the navigation and the scheme list leaves the mapping tree unclipped", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const fake = new FakeService();
+  await sampleDock(page, fake);
+  const tree = page.getByRole("tree", { name: /^Mappings of/ });
+  const container = tree.locator("xpath=..");
+  await page.getByRole("button", { name: "Collapse the navigation" }).click();
+  await page.getByRole("button", { name: "Collapse the list" }).click();
+  await expect(page.getByRole("button", { name: "Expand the list" })).toBeVisible();
+  const [t, c] = [(await tree.boundingBox())!, (await container.boundingBox())!];
+  expect(t.x + t.width).toBeLessThanOrEqual(c.x + c.width + 0.5);
+  expect(await container.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+  // the dock's run pane is whole beside it
+  const pane = page.getByRole("region", { name: "Sample", exact: true });
+  const [p, d] = [(await pane.boundingBox())!, (await page.getByRole("complementary", { name: "Inspector" }).boundingBox())!];
+  expect(p.x + p.width).toBeLessThanOrEqual(d.x + d.width + 0.5);
+  expect(c.x + c.width).toBeLessThanOrEqual(d.x + 8);
+});
+
+test("dragging the dock's handle resizes it down to its minimum, and its width and a collapsed column are the same after a reload", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const fake = new FakeService();
+  await sampleDock(page, fake);
+  const dock = page.getByRole("complementary", { name: "Inspector" });
+  const handle = page.getByRole("separator", { name: "Resize the dock" });
+  const before = await widthOf(dock);
+  const at = (await handle.boundingBox())!;
+  const [x, y] = [at.x + at.width / 2, at.y + at.height / 2];
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x - 80, y, { steps: 6 });
+  await page.mouse.up();
+  const wider = await widthOf(dock);
+  expect(Math.abs(wider - (before + 80))).toBeLessThan(2);
+  const grip = (await handle.boundingBox())!;
+  await page.mouse.move(grip.x + grip.width / 2, y);
+  await page.mouse.down();
+  await page.mouse.move(1400, y, { steps: 8 });
+  await page.mouse.up();
+  expect(Math.round(await widthOf(dock))).toBe(300);
+  await expect(handle).toHaveAttribute("aria-valuenow", "300");
+  const again = (await handle.boundingBox())!;
+  await page.mouse.move(again.x + again.width / 2, y);
+  await page.mouse.down();
+  await page.mouse.move(again.x + again.width / 2 - 150, y, { steps: 8 });
+  await page.mouse.up();
+  const kept = Math.round(await widthOf(dock));
+  expect(kept).toBe(450);
+  await page.getByRole("button", { name: "Collapse the list" }).click();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Expand the list" })).toHaveAttribute("aria-expanded", "false");
+  expect(Math.round(await widthOf(page.getByRole("complementary", { name: "Inspector" })))).toBe(kept);
+  await expect(page.getByRole("separator", { name: "Resize the dock" })).toHaveAttribute("aria-valuenow", String(kept));
+});
+
+test("a handle moves with the arrow keys, Home and End, and a collapsed column takes no focus on Tab", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const fake = new FakeService();
+  await sampleDock(page, fake);
+  const dock = page.getByRole("separator", { name: "Resize the dock" });
+  const list = page.getByRole("separator", { name: "Resize the list" });
+  for (const h of [dock, list]) {
+    await expect(h).toHaveAttribute("aria-orientation", "vertical");
+    await h.focus();
+    const min = Number(await h.getAttribute("aria-valuemin"));
+    const max = Number(await h.getAttribute("aria-valuemax"));
+    expect(max).toBeGreaterThan(min);
+    await page.keyboard.press("Home");
+    await expect(h).toHaveAttribute("aria-valuenow", String(min));
+    await page.keyboard.press("End");
+    await expect(h).toHaveAttribute("aria-valuenow", String(max));
+    await page.keyboard.press("Home");
+  }
+  // the arrow that moves a boundary toward the middle shrinks the dock's column and the one away from it grows it
+  await dock.focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(dock).toHaveAttribute("aria-valuenow", "316");
+  await page.keyboard.press("ArrowRight");
+  await expect(dock).toHaveAttribute("aria-valuenow", "300");
+  await list.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(list).toHaveAttribute("aria-valuenow", String(Number(await list.getAttribute("aria-valuemin")) + 16));
+  await page.keyboard.press("ArrowLeft");
+  await expect(list).toHaveAttribute("aria-valuenow", String(Number(await list.getAttribute("aria-valuemin"))));
+  // a collapsed column holds nothing that Tab reaches
+  await page.getByRole("button", { name: "Collapse the navigation" }).click();
+  await page.getByRole("button", { name: "Collapse the list" }).click();
+  await page.getByRole("button", { name: "Collapse the dock" }).click();
+  await expect(page.getByRole("navigation", { name: "Workspace" }).getByRole("link")).toHaveCount(0);
+  const inside = new Set<string>();
+  await page.locator("body").focus();
+  for (let i = 0; i < 40; i++) {
+    await page.keyboard.press("Tab");
+    inside.add(await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return el?.closest(".col-body, .dock-sample, .nav a") ? "hidden column" : "ok";
+    }));
+  }
+  expect([...inside]).toEqual(["ok"]);
+});
+
+test("at 1100 pixels the page has no horizontal scroll bar with every column open and the run pane stacks, and where there is room its controls are left of its displays", async ({ page }) => {
+  await page.setViewportSize({ width: 1100, height: 800 });
+  const fake = new FakeService();
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Policies from XML and JSON/ }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`/#/w/${[...fake.workspaces.keys()][0]}/mapping`);
+  // the window cannot give the middle its minimum beside an open dock, so the dock starts collapsed
+  await expect(page.getByRole("button", { name: "Expand the dock" })).toBeVisible();
+  await page.getByRole("button", { name: "Expand the dock" }).click();
+  await page.getByRole("tab", { name: "Sample" }).click();
+  await expect(page.getByRole("button", { name: "Collapse the navigation" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Collapse the list" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth && document.body.scrollWidth <= window.innerWidth)).toBe(true);
+  const controls = page.getByRole("group", { name: "Sample controls" });
+  const display = page.getByRole("status", { name: "Sample status" });
+  const [c, d] = [(await controls.boundingBox())!, (await display.boundingBox())!];
+  expect(c.y + c.height).toBeLessThanOrEqual(d.y + 1);
+  // a wide window gives the dock its wide default, and the controls sit beside the displays
+  await page.setViewportSize({ width: 1920, height: 1000 });
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.getByRole("tab", { name: "Sample" }).click();
+  const [c2, d2] = [(await page.getByRole("group", { name: "Sample controls" }).boundingBox())!, (await page.getByRole("status", { name: "Sample status" }).boundingBox())!];
+  expect(c2.x + c2.width).toBeLessThanOrEqual(d2.x + 1);
+  expect(Math.abs(c2.y - d2.y)).toBeLessThan(40);
+});
+
+/** Every node of the canvas lies inside its pane, polled since a refit follows the resize. */
+async function expectDrawingWhole(page: Page): Promise<void> {
+  await expect
+    .poll(async () => {
+      const pane = (await page.locator(".react-flow").first().boundingBox())!;
+      const boxes = await page.locator(".react-flow__node").evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()));
+      return boxes.length > 0 && boxes.every((b) => b.x >= pane.x - 1 && b.y >= pane.y - 1 && b.x + b.width <= pane.x + pane.width + 1 && b.y + b.height <= pane.y + pane.height + 1);
+    })
+    .toBe(true);
+}
+
+test("the mapping canvas and the ontology drawing are whole after a column is collapsed or resized", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const fake = new FakeService();
+  await sampleDock(page, fake);
+  await page.getByRole("button", { name: "Canvas" }).click();
+  await expectDrawingWhole(page);
+  const handle = page.getByRole("separator", { name: "Resize the dock" });
+  const at = (await handle.boundingBox())!;
+  await page.mouse.move(at.x + at.width / 2, 400);
+  await page.mouse.down();
+  await page.mouse.move(at.x - 200, 400, { steps: 6 });
+  await page.mouse.up();
+  await expectDrawingWhole(page);
+  await page.getByRole("button", { name: "Collapse the dock" }).click();
+  await expectDrawingWhole(page);
+  await page.getByRole("button", { name: "Collapse the navigation" }).click();
+  await expectDrawingWhole(page);
+  // the ontology drawing in the Baseline view
+  const fake2 = new FakeService();
+  const ws = await lendingWorkspace(page, fake2);
+  await page.goto(`/#/w/${ws}/baseline`);
+  await page.getByRole("button", { name: "Diagram" }).click();
+  await expectDrawingWhole(page);
+  await page.getByRole("button", { name: "Collapse the list" }).click();
+  await expectDrawingWhole(page);
+  await page.getByRole("button", { name: "Expand the list" }).click();
+  await page.getByRole("button", { name: "Expand the dock" }).click();
+  await expectDrawingWhole(page);
+});

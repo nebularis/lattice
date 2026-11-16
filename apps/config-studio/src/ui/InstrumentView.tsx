@@ -13,7 +13,7 @@ import { readsOf, relationsOf, say, termsOf } from "../rdf/meaning";
 import type { Issue, TestResult } from "../rdf/report";
 import { NodeEditor, PART_INFO } from "./ConfigView";
 import { ReadsCard, useMeaning, type M } from "./MeaningView";
-import { SeverityIcon, Spinner, go } from "./kit";
+import { go, SeverityIcon, Spinner, Split } from "./kit";
 import { UnderConstruction } from "./Specials";
 
 export function InstrumentView({ selected, field }: { selected?: string; field?: string }) {
@@ -27,7 +27,7 @@ export function InstrumentView({ selected, field }: { selected?: string; field?:
   const regime = selected ? regimeOfNode(regimes, selected) : undefined;
 
   return (
-    <div className="split" style={{ gridTemplateColumns: "minmax(380px, 460px) 1fr" }}>
+    <Split defaultWidth={460} minWidth={300}>
       <div className="list" role="tree" aria-label="Instrument">
         <div className="list-head">
           <div className="row">
@@ -93,7 +93,7 @@ export function InstrumentView({ selected, field }: { selected?: string; field?:
           </div>
         )}
       </div>
-    </div>
+    </Split>
   );
 }
 

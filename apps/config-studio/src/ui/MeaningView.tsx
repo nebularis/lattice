@@ -11,7 +11,7 @@ import { api, awaitJob } from "../api";
 import { isAbort, useAttach, useUnmountSignal } from "../jobs";
 import type { Issue, Job } from "../rdf/report";
 import { PARTS } from "../state";
-import { SeverityIcon, Spinner } from "./kit";
+import { SeverityIcon, Spinner, Split } from "./kit";
 import { flatten, formsOf, outline, type OutlineNode } from "../rdf/builder";
 import {
   DECISIONS,
@@ -292,7 +292,7 @@ export function MeaningView({ selected, field }: { selected?: string; field?: st
   let group = "";
 
   return (
-    <div className="split" style={{ gridTemplateColumns: "minmax(380px, 460px) 1fr" }}>
+    <Split defaultWidth={460} minWidth={300}>
       <div className="list" role="tree" aria-label="Meaning">
         <div className="list-head">
           <div className="row">
@@ -343,7 +343,7 @@ export function MeaningView({ selected, field }: { selected?: string; field?: st
           </div>
         )}
       </div>
-    </div>
+    </Split>
   );
 }
 

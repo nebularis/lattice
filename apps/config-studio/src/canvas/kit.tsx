@@ -21,6 +21,7 @@ import {
   type Node,
   type NodeChange,
   type NodeTypes,
+  type ReactFlowInstance,
   type Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -225,13 +226,31 @@ export function Canvas(props: CanvasProps) {
     if (items?.length) setMenu({ x: event.clientX, y: event.clientY, items });
   };
 
+  // A canvas that opens fitted is fitted again when its pane changes width, as when the author collapses or resizes a column (SVA-U1).
+  const flow = useRef<ReactFlowInstance | undefined>(undefined);
+  const frame = useRef<HTMLDivElement>(null);
+  const refit = ownOpening ? laid.length <= (props.fitViewUpTo ?? 30) : true;
+  useEffect(() => {
+    const el = frame.current;
+    if (!el || !refit || typeof ResizeObserver === "undefined") return;
+    let width = el.clientWidth;
+    const watch = new ResizeObserver(() => {
+      if (el.clientWidth === width) return;
+      width = el.clientWidth;
+      void flow.current?.fitView({ padding: 0.1, maxZoom: 1 });
+    });
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, [refit]);
+
   return (
-    <div style={{ height: props.height, position: "relative" }} onClick={() => setMenu(undefined)}>
+    <div ref={frame} style={{ height: props.height, position: "relative" }} onClick={() => setMenu(undefined)}>
       <ReactFlow
         nodes={nodes}
         edges={shown}
         nodeTypes={props.nodeTypes}
         edgeTypes={props.edgeTypes}
+        onInit={(instance) => (flow.current = instance)}
         onNodesChange={(changes: NodeChange[]) => setNodes((ns) => applyNodeChanges(changes, ns))}
         onNodeDragStop={() => setNodes((ns) => (keep(ns), ns))}
         onConnect={props.onConnect}

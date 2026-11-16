@@ -16,7 +16,7 @@ import { applyArtefacts, importDocument, mediaTypeOf } from "../rdf/odrl";
 import { mint } from "../rdf/editors";
 import { CONFIG_PARTS } from "../rdf/split";
 import { SAMPLE_FORMATS, exampleSources, reviewGraph, sampleFormat, schemeSummary, schemesOf, written, type MappingNode, type RunCost, type SampleFormat, type Scheme } from "../rdf/mapping";
-import { Spinner, download, go } from "./kit";
+import { download, go, Spinner, Split } from "./kit";
 import { NodeEditor } from "./ConfigView";
 import { MappingCanvas } from "./MappingCanvas";
 import { useStudio } from "./Workspace";
@@ -102,7 +102,7 @@ export function MappingView({ selected }: { selected?: string }) {
     );
   }
   return (
-    <div className="split" style={{ gridTemplateColumns: "minmax(280px, 340px) 1fr" }}>
+    <Split defaultWidth={340} minWidth={280}>
       <div className="list" aria-label="Source">
         <SchemeList
           groups={[{ title: "Schemes", schemes }]}
@@ -176,7 +176,7 @@ export function MappingView({ selected }: { selected?: string }) {
           </section>
         </div>
       </div>
-    </div>
+    </Split>
   );
 }
 

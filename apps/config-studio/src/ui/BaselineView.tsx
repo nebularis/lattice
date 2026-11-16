@@ -9,7 +9,7 @@ import { KINDS, checkReferences } from "../rdf/editors";
 import { DAL, Graph, SRF, compact } from "@lattice/authoring-domain";
 import { ontologyList, shortIri, type HeldImport } from "../rdf/held";
 import { split } from "../rdf/split";
-import { Modal, Spinner, download, go, readFiles } from "./kit";
+import { download, go, Modal, readFiles, Spinner, Split } from "./kit";
 import { addFor, declaredFor } from "./Overview";
 import { useStudio } from "./Workspace";
 import { ClassAxioms, IndividualAxioms, PropertyAxioms } from "./AxiomForms";
@@ -47,7 +47,7 @@ export function BaselineView({ selected }: { selected?: string }) {
   const individual = selected && !current && !property && !scheme && baseline.declares(selected) ? selected : undefined;
 
   return (
-    <div className="split">
+    <Split>
       <div className="list">
         <div className="list-head">
           <div className="row">
@@ -178,7 +178,7 @@ export function BaselineView({ selected }: { selected?: string }) {
       </div>
       {replacing && <ReplaceBaseline onClose={() => setReplacing(false)} />}
       {importing && <ImportDialog workspace={id} baseline={baseline.graph} held={held} onHeld={studio.model.setSummary} onClose={() => setImporting(false)} />}
-    </div>
+    </Split>
   );
 }
 

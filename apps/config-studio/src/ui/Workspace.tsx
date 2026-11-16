@@ -4,7 +4,7 @@
 
 import { PublishView } from "./PublishView";
 import { ModeControl, PrincipalMenu } from "./Session";
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   BookOpen,
   ChevronDown,
@@ -46,7 +46,8 @@ import { InstrumentView } from "./InstrumentView";
 import { MappingView } from "./MappingView";
 import { MeaningView } from "./MeaningView";
 import { ConfigView } from "./ConfigView";
-import { Code, Diff, Modal, SeverityIcon, Spinner, go, href } from "./kit";
+import { CollapseButton, Code, ColumnsContext, Diff, Modal, ResizeHandle, SeverityIcon, Spinner, go, href, useStoredColumn, useWindowWidth } from "./kit";
+import { DOCK, LIST, NAV_WIDTH, RAIL, columnKey, dockDefaultCollapsed, dockDefaultWidth, maxWidth, resolveWidth } from "./columns";
 import { RunSourceContext, SamplePane, type RunSource } from "./RunPane";
 import { Overview } from "./Overview";
 
@@ -101,12 +102,25 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
   lastView.current[mode] = view;
   const node = route[1];
   const activePart: Part = (PARTS as string[]).includes(view) ? (view as Part) : view === "instrument" ? "meaning" : "persistence";
-  const [inspector, setInspector] = useState(() => window.innerWidth >= 1560);
+  // How the page's width is shared (SVA-U1). The navigation and the dock are collapsed and the dock is resized by the author, and each is kept in this browser.
+  const windowWidth = useWindowWidth();
+  const [navState, updateNav] = useStoredColumn(columnKey("nav"));
+  const [dockState, updateDock] = useStoredColumn(columnKey("dock"));
+  const [listWidth, setListWidth] = useState(0);
   // The dock holds the inspector and, in mapping mode, the Sample pane, which runs what the mapping view keeps (SVA-R4).
   const [dock, setDock] = useState<"inspector" | "sample">("inspector");
   const [runSource, setRunSource] = useState<RunSource>();
   const [problemsOpen, setProblemsOpen] = useState(true);
   const [palette, setPalette] = useState(false);
+
+  const navCollapsed = navState.collapsed ?? false;
+  const navWidth = navCollapsed ? RAIL : NAV_WIDTH;
+  const dockCollapsed = dockState.collapsed ?? dockDefaultCollapsed(windowWidth);
+  // the default does not follow what is collapsed, so collapsing a column gives its room to the middle and never to the dock
+  const dockOthers = navWidth + listWidth;
+  const dockOpenWidth = resolveWidth(dockState.width, { min: DOCK.min, default: dockDefaultWidth(windowWidth, NAV_WIDTH + LIST.default, mode === "mapping") }, windowWidth, dockOthers);
+  const dockWidth = dockCollapsed ? RAIL : dockOpenWidth;
+  const columns = useMemo(() => ({ view, navWidth, dockWidth, reportList: setListWidth }), [view, navWidth, dockWidth]);
 
   const baseline = state.baseline?.index;
   const itemLists = useMemo(
@@ -177,7 +191,8 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
   return (
     <StudioContext.Provider value={studio}>
       <RunSourceContext.Provider value={{ source: runSource, set: setRunSource }}>
-      <div className="shell">
+      <ColumnsContext.Provider value={columns}>
+      <div className="shell" style={{ "--nav-w": `${navWidth}px`, "--dock-w": `${dockWidth}px` } as CSSProperties}>
         <header className="topbar">
           <a href="#/" className="brand" style={{ textDecoration: "none", color: "inherit" }} aria-label="All workspaces">
             <span className="mark">
@@ -212,12 +227,19 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           <button className="btn primary" onClick={() => go("w", id, "build")}>
             <Hammer size={15} /> Build
           </button>
-          <button className="btn ghost icon" aria-label="Toggle inspector" aria-pressed={inspector} onClick={() => setInspector(!inspector)}>
+          <button className="btn ghost icon" aria-label="Toggle inspector" aria-pressed={!dockCollapsed} onClick={() => updateDock({ collapsed: !dockCollapsed })}>
             <PanelRight size={16} />
           </button>
         </header>
 
-        <nav className="nav" aria-label="Workspace">
+        <nav className={`nav${navCollapsed ? " rail" : ""}`} aria-label="Workspace">
+          {navCollapsed ? (
+            <CollapseButton column="nav" noun="navigation" collapsed onToggle={() => updateNav({ collapsed: false })} />
+          ) : (
+            <>
+          <div className="col-head">
+            <CollapseButton column="nav" noun="navigation" collapsed={false} onToggle={() => updateNav({ collapsed: true })} />
+          </div>
           <div className="mode-switch" role="group" aria-label="Mode">
             <button aria-pressed={mode === "configure"} onClick={() => go("w", id, lastView.current.configure)}>
               Configure
@@ -260,6 +282,8 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
               <NavLink to="publish" view={view} id={id} icon={<Send size={16} />} label="Publish" />
             </>
           )}
+            </>
+          )}
         </nav>
 
         <main className="main" id="main">
@@ -275,8 +299,11 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           {view === "publish" && <PublishView />}
         </main>
 
-        <aside className={`side${inspector ? "" : " closed"}${inspector && mode === "mapping" && dock === "sample" ? " wide" : ""}`} aria-label="Inspector">
-          {inspector && mode === "mapping" && (
+        <aside className={`side${dockCollapsed ? " collapsed" : ""}`} aria-label="Inspector">
+          <div className={dockCollapsed ? "rail" : "col-head"}>
+            <CollapseButton column="dock" noun="dock" collapsed={dockCollapsed} onToggle={() => updateDock({ collapsed: !dockCollapsed })} />
+          </div>
+          {!dockCollapsed && mode === "mapping" && (
             <div className="tabs" role="tablist" aria-label="Dock">
               <button role="tab" aria-selected={dock === "inspector"} onClick={() => setDock("inspector")}>
                 Inspector
@@ -286,17 +313,29 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
               </button>
             </div>
           )}
-          {inspector && (mode !== "mapping" || dock === "inspector") && <Inspector part={activePart} node={editing ? node : undefined} />}
-          {/* kept mounted while the Inspector shows, so a run in flight and its result stay */}
-          {inspector && mode === "mapping" && (
-            <div className="dock-sample" hidden={dock !== "sample"}>
+          {!dockCollapsed && (mode !== "mapping" || dock === "inspector") && <Inspector part={activePart} node={editing ? node : undefined} />}
+          {/* kept mounted while the Inspector shows or the dock is collapsed, so a run in flight and its result stay */}
+          {mode === "mapping" && (
+            <div className="dock-sample" hidden={dockCollapsed || dock !== "sample"}>
               <SamplePane />
             </div>
+          )}
+          {!dockCollapsed && (
+            <ResizeHandle
+              label="Resize the dock"
+              width={dockOpenWidth}
+              min={DOCK.min}
+              max={maxWidth(windowWidth, dockOthers)}
+              grows="ArrowLeft"
+              onResize={(width) => updateDock({ width })}
+              onReset={() => updateDock({ width: undefined })}
+            />
           )}
         </aside>
 
         <Problems open={problemsOpen} toggle={() => setProblemsOpen(!problemsOpen)} />
       </div>
+      </ColumnsContext.Provider>
 
       {palette && <Palette onClose={() => setPalette(false)} />}
       {state.conflict && <ConflictDialog />}

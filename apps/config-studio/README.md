@@ -21,7 +21,7 @@ It talks to the [service](../../platform/config-studio-service) in Turtle, as [c
 
 What waits on other work is shown and marked as under construction: testing an admission profile's composed decision, testing a condition that reads bound subjects, and quantification's comparisons, conversions and canonical range sets.
 
-The inspector shows the selected node's Turtle and the unsaved changes as a diff. The problems drawer lists every finding and opens the node it concerns. The baseline is validated live as a part is, and again when an import is held or released, so an import no held document declares is listed as a warning that opens the Baseline view. `⌘K` goes to any view, node or class, `⌘S` saves, `⌘Z` and `⇧⌘Z` undo and redo.
+The author shares the page's width: the navigation, the mode's list column and the right-hand dock each collapse to a rail, the list and the dock are resized by a handle on their boundary with the middle (by the pointer, or the arrow keys, Home and End), and a double click on a handle restores its default, with each choice kept in the browser and nowhere else. The inspector shows the selected node's Turtle and the unsaved changes as a diff. The problems drawer lists every finding and opens the node it concerns. The baseline is validated live as a part is, and again when an import is held or released, so an import no held document declares is listed as a warning that opens the Baseline view. `⌘K` goes to any view, node or class, `⌘S` saves, `⌘Z` and `⇧⌘Z` undo and redo.
 
 ## How it is built
 

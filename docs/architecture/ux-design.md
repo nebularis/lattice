@@ -228,3 +228,5 @@ Every field and option comes from the vocabularies, with the option's `rdfs:comm
 
 A layer's engine answers the questions its shapes cannot, in the same live validation: how a scheme contract resolves for every period and set of scopes, shown as a table the author can try a moment against, and how a condition decides every concept of its scheme and each test, shown as a coloured tree and a pass or fail per test. What waits on other work is shown and marked as under construction, with what it waits on, rather than left out. The studio's [README](../../apps/config-studio/README.md) describes the views.
 
+The author decides how the page's width is shared. The navigation, the mode's list column and the dock collapse to a rail and return, the list and the dock are resized within limits that keep the middle usable, and the choice is kept in the browser and never in a graph or sent to the service.
+

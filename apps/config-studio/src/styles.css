@@ -217,7 +217,7 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; }
 
 /* --- workspace shell -------------------------------------------------------- */
 
-.shell { height: 100%; display: grid; grid-template-rows: 52px 1fr auto; grid-template-columns: 236px 1fr auto; grid-template-areas: "top top top" "nav main side" "nav problems problems"; }
+.shell { height: 100%; display: grid; grid-template-rows: 52px 1fr auto; grid-template-columns: var(--nav-w, 236px) minmax(0, 1fr) var(--dock-w, 340px); grid-template-areas: "top top top" "nav main side" "nav problems problems"; }
 .topbar { grid-area: top; display: flex; align-items: center; gap: 12px; padding: 0 12px 0 16px; background: var(--surface); border-bottom: 1px solid var(--border); }
 .crumb { display: flex; align-items: center; gap: 6px; color: var(--text-3); }
 .crumb strong { color: var(--text); font-weight: 600; }
@@ -233,8 +233,7 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; }
 .dot.ok { background: var(--ok); }
 .dot.dirty { background: var(--accent); }
 main.main { grid-area: main; overflow: auto; min-width: 0; }
-.side { grid-area: side; width: 340px; border-left: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
-.side.closed { width: 0; border: 0; overflow: hidden; }
+.side { grid-area: side; position: relative; min-width: 0; border-left: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
 .tabs { display: flex; gap: 2px; padding: 8px 8px 0; border-bottom: 1px solid var(--border); }
 .tabs button { all: unset; cursor: pointer; padding: 8px 12px; border-bottom: 2px solid transparent; color: var(--text-3); font-weight: 600; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
 .tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
@@ -269,7 +268,7 @@ table.grid tr.clickable:hover td { background: var(--surface-2); }
 
 /* --- split views ------------------------------------------------------------ */
 
-.split { display: grid; grid-template-columns: 280px 1fr; height: 100%; min-height: 0; }
+.split { display: grid; grid-template-columns: 280px minmax(0, 1fr); height: 100%; min-height: 0; }
 .list { border-right: 1px solid var(--border); overflow: auto; background: var(--surface); }
 .list .list-head { position: sticky; top: 0; z-index: 2; background: var(--surface); padding: 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
 .list h4 { margin: 14px 14px 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
@@ -362,7 +361,6 @@ table.grid tr.clickable:hover td { background: var(--surface-2); }
 .timeline .bar.on { background: var(--accent); }
 
 @media (max-width: 1100px) {
-  .side { position: fixed; right: 0; top: 52px; bottom: 0; z-index: 20; box-shadow: var(--shadow-lg); }
   .field { grid-template-columns: 1fr; }
   .field .help, .field .errors { grid-column: 1; }
 }
@@ -490,9 +488,29 @@ table.axiom-rows.nested th { position: static; }
 /* An import node's name and IRI wrap, so two IRIs that differ only at their end, such as two layers of one namespace, stay told apart (SVA-B5). */
 .import-node strong.ellipsis, .import-node .canvas-terms { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
 
-/* The run pane in the dock, controls on the left and displays on the right (SVA-R4). */
-.side.wide { width: min(620px, 52vw); }
-.dock-sample { flex: 1; min-height: 0; display: flex; }
+/* The columns of the page (SVA-U1). A column collapses to a rail that holds only the button that brings it back, and the list and the dock are
+   resized by a handle on the boundary with the middle. */
+.col-head { display: flex; justify-content: flex-end; padding: 4px 6px 0; flex: none; }
+.rail { display: flex; flex-direction: column; align-items: center; padding: 6px 0; width: 36px; flex: none; }
+.nav.rail { padding: 0; width: auto; overflow: hidden; }
+.nav.rail > .col-toggle { margin: 6px auto; }
+.nav > .col-head { padding: 0 0 4px; }
+.side.collapsed { overflow: hidden; }
+.col-list { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--surface); border-right: 1px solid var(--border); }
+.col-list.collapsed { overflow: hidden; }
+.col-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.col-body[hidden] { display: none; }
+.col-body > .list { flex: 1; min-height: 0; border-right: 0; }
+.col-handle { position: absolute; top: 0; bottom: 0; width: 8px; z-index: 6; cursor: col-resize; touch-action: none; user-select: none; outline: none; }
+.col-handle.after { right: -4px; }
+.col-handle.before { left: -4px; }
+.col-handle::before { content: ""; position: absolute; top: 50%; left: 2px; width: 4px; height: 34px; margin-top: -17px; border-radius: 2px; background: var(--border-strong); opacity: 0.7; }
+.col-handle::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; background: transparent; }
+.col-handle:hover::after, .col-handle:focus-visible::after, .col-handle.dragging::after { background: var(--accent); }
+.col-handle:hover::before, .col-handle:focus-visible::before, .col-handle.dragging::before { background: var(--accent); opacity: 1; }
+
+/* The run pane in the dock, controls on the left and displays on the right (SVA-R4). Where the dock is too narrow for both, the controls stack above the displays (SVA-U1). */
+.dock-sample { flex: 1; min-height: 0; display: flex; container-type: inline-size; }
 .dock-sample[hidden] { display: none; }
 .run-pane { flex: 1; min-width: 0; min-height: 0; display: grid; grid-template-columns: minmax(104px, 150px) minmax(0, 1fr); }
 .run-controls { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px; border-right: 1px solid var(--border); overflow: auto; }
@@ -507,3 +525,7 @@ table.axiom-rows.nested th { position: static; }
 .run-part-head { padding: 6px 10px; background: var(--surface-2); font-size: 12.5px; overflow-wrap: anywhere; }
 .run-part-text { margin: 0; padding: 8px 10px; font: 12px/1.5 var(--mono); max-height: 240px; overflow: auto; white-space: pre; }
 .run-problem { color: var(--bad); overflow-wrap: anywhere; }
+@container (max-width: 479px) {
+  .run-pane { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .run-controls { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 16px; border-right: 0; border-bottom: 1px solid var(--border); overflow: visible; }
+}
