@@ -66,8 +66,7 @@ Ledger accounts do not hold observed values such as prices or temperatures, whic
 mise exec -- python tools/literate_extract.py ontology/ledger/README.md --layer ledger --root . --check
 ```
 
-The module's entry in the [repository catalogue](../../repository-catalogue.md)
-([ADR-A121](../../docs/architecture/decisions/ADR-A121-repository-catalogue.md)) follows.
+The module's entry in the [repository catalogue](../../repository-catalogue.md) follows.
 
 ```toml repository-catalogue
 [module]

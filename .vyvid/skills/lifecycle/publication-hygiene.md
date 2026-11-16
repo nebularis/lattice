@@ -16,12 +16,12 @@ Examples are `LG-1`, a phrase such as "not yet written in LG-2", `AIR-4.2`, `CCS
 
 A decision record is the contract between those who build, agents and maintainers, for what is built and how it works. It is not written for a reader of a layer. That reader needs the constraint or the feature a decision gives, and never how it was arrived at (STD-337).
 
-- **Cite a decision only in the README's Design decisions section**, section 5.1 of the ADR-A126 layout, as a link to the record. That section is where a reader who wants the background finds it.
+- **Cite a decision only in the README's Design decisions section**, section 5.1 of the ADR-A126 layout, as a link to the record. That section is where a reader who wants the background finds it. A release note may also cite the decision its change rests on.
 - **Everywhere else, state the rule as a fact of the layer.** Write "the two documents share one version", never "the two documents share one version (ADR-A131 decision 2)". This holds for the README's other sections, the documents generated from it, a shape's comment and its message, and an example.
 - **Never a bare "decision 6".** A number with no record named resolves to nothing, and a reader cannot tell whether it means a bullet of the README or a decision somewhere else.
 - **The exception is rare.** Cite a decision outside that section only where the reader is meant to read it, for example because it teaches something about a technology that the layer's own text cannot. Link it, and say why it is worth reading.
 - **Existing occurrences are debt, not precedent** (TD-163). Almost every layer README has them. Do not copy them, and do not add to them. Remove them from text you edit, and regenerate where the text is extracted.
-- **Check before handing off.** Search what you wrote under `ontology/` for `ADR-` and for the word "decision" outside the Design decisions section.
+- **The commit hook refuses it.** The writing check fails a line a change adds to a layer README that cites a decision outside the Design decisions section and the release notes, in prose or inside a fenced block, and a bare decision number anywhere. `mise exec -- python tools/writing_rules.py ontology/<layer>/README.md` lists what a README still holds.
 
 ## AI disclosure
 

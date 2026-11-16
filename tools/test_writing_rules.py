@@ -90,3 +90,59 @@ def test_gh3_09_the_staged_lines_of_a_repository(tmp_path: Path) -> None:
 def test_gh3_11_header_fields_are_not_wraps() -> None:
     text = "# A title\n\n**Status:** proposed\n**Date:** 2026-10-23\n**Unit:** `x`. More: text\n"
     assert rules("a.md", text) == []
+
+
+README = "\n".join([
+    "# A layer",
+    "",
+    "Literate specification, in the layout of [ADR-A126](../../docs/architecture/decisions/ADR-A126-x.md).",
+    "",
+    "## 3. Extraction Contract",
+    "",
+    "The two documents share one version (ADR-A131 decision 2).",
+    "",
+    "### 5.1 Design decisions",
+    "",
+    "- **Two documents.** Configuration and records ([ADR-A131](../../docs/architecture/decisions/ADR-A131-x.md)).",
+    "- **Exact shares.** As decision 6 asks.",
+    "",
+    "### 5.2 Worked reading",
+    "",
+    "The example debits the pool (ADR-A131).",
+    "",
+    "## 7. Shapes",
+    "",
+    "```turtle-shapes",
+    "# constraints for the account definition (ADR-A131 decisions 2 and 3)",
+    'sh:message "A record must not be forward-dated." ;',
+    "```",
+    "",
+    "## 12. Release Notes",
+    "",
+    "- **0.1.0**. no effect. New terms ([ADR-A131](../../docs/architecture/decisions/ADR-A131-x.md)).",
+    "",
+])
+CITED = "a decision cited outside the Design decisions section"
+BARE = "a bare decision number, which names no record"
+
+
+def test_gh3_12_a_layer_readme_cites_a_decision_only_in_its_design_decisions_and_release_notes() -> None:
+    found = rules("ontology/ledger/README.md", README)
+    assert found == [(7, CITED, True), (12, BARE, True), (16, CITED, True), (21, CITED, True)]
+
+
+def test_gh3_13_the_layout_line_before_the_first_section_and_other_documents_are_not_judged() -> None:
+    assert not [f for f in rules("ontology/ledger/README.md", README) if f[0] == 3]
+    assert rules("docs/developer/plans/ledger.md", README) == []
+    assert rules("benchmark/ledger-credit-kinds/README.md", README) == []
+
+
+def test_gh3_14_a_decision_inside_a_fenced_block_is_judged_since_the_block_is_published() -> None:
+    assert (21, CITED, True) in rules("ontology/ledger/README.md", README)
+    assert rules("ontology/ledger/README.md", README, lines=[22]) == []
+
+
+def test_gh3_15_only_the_added_lines_of_a_readme_are_judged_for_decisions() -> None:
+    assert rules("ontology/ledger/README.md", README, lines=[11, 27]) == []
+    assert rules("ontology/ledger/README.md", README, lines=[7]) == [(7, CITED, True)]
+

@@ -6,11 +6,15 @@
   python tools/writing_rules.py FILE...        every line of the named files
 
 Prose only: a fenced code block, front matter, an HTML comment, an inline code span, a URL and an
-HTML entity are never judged. Two rules fail and one warns:
+HTML entity are never judged. Four rules fail and one warns:
 
 - a semicolon in prose. Use a period or a comma
 - "this document" in a literate README, which generates several documents (skill
   lattice-ontology-authoring)
+- a decision cited in a layer README outside its Design decisions section and its release notes,
+  in prose or inside a fenced block, since a block is extracted into a published document. State
+  the constraint or feature the decision gives (STD-337, skill lattice-publication-hygiene)
+- a bare "decision 6" anywhere in a layer README, which names no record
 - a hard-wrapped line: paragraph or list text that continues the line before it, where a paragraph
   belongs on one line (a warning, since editing one word of an older wrapped paragraph adds such a
   line)
@@ -35,6 +39,9 @@ ENTITY = re.compile(r"&(?:[A-Za-z][A-Za-z0-9]*|#[0-9]+|#x[0-9A-Fa-f]+);")
 LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 FIELD = re.compile(r"^\*\*[^*\n]{1,60}?(?::\*\*|\*\*:)")
+DECISION = re.compile(r"\bADR-A[-0-9A-Z]*\d")
+BARE_DECISION = re.compile(r"\b[Dd]ecisions? \d")
+CITES_DECISIONS = ("design decisions", "release notes")
 
 
 @dataclass(frozen=True)
@@ -110,17 +117,46 @@ def prose(text: str) -> str:
     return ENTITY.sub("", URL.sub("", CODE_SPAN.sub("", text)))
 
 
+def sections(lines: Sequence[str], line_kinds: Sequence[str]) -> list[str | None]:
+    """For each line, the nearest heading of a section above it, in lower case, or None before the first. The
+    document's title is no section, so the lines under it are before the first."""
+    out: list[str | None] = []
+    current = None
+    for line, kind in zip(lines, line_kinds):
+        if kind == "heading" and line.lstrip().startswith("##"):
+            current = line.strip().lstrip("#").strip().lower()
+        out.append(current)
+    return out
+
+
+def decision_rule(line: str, section: str | None) -> str | None:
+    """What an added line of a layer README breaks by naming a decision, if anything (STD-337). A decision is cited
+    in the Design decisions section and in a release note, and before the first section, where the layout is named."""
+    cited = DECISION.search(line)
+    if BARE_DECISION.search(line) and not cited:
+        return 'a bare decision number, which names no record. State the constraint or feature it gives'
+    if cited and section is not None and not any(name in section for name in CITES_DECISIONS):
+        return ("a decision cited outside the Design decisions section. State the constraint or feature it gives, "
+                "since a decision record is written for those who build")
+    return None
+
+
 def check_file(path: str, text: str, added: Iterable[int]) -> list[Finding]:
     """The findings on the given line numbers (1-based) of one file."""
     if not judged(path):
         return []
     lines = text.splitlines()
     line_kinds = kinds(lines)
+    line_sections = sections(lines, line_kinds)
     findings = []
     for number in sorted(set(added)):
         if not 1 <= number <= len(lines):
             continue
         kind, line = line_kinds[number - 1], lines[number - 1]
+        if literate_readme(path) and kind not in ("frontmatter", "blank"):
+            broken = decision_rule(line, line_sections[number - 1])
+            if broken:
+                findings.append(Finding(path, number, broken, True))
         if kind in ("code", "frontmatter", "comment", "blank"):
             continue
         if ";" in prose(line):
