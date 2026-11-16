@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 // A run's result from its frames, and the controller that keeps one run in flight a pane (ADR-A154 decisions 8, 9 and 10, contracts/config-studio
 // README, "Runs"). Frames reach a tab at QoS 0, so one can be lost, repeated or late, and a run is never read again. The assembler is a pure
-// function of the frames it is given, in any order, and the controller holds everything that depends on time, taking the clock and the timers
-// as inputs.
+// function of the frames it is given, in any order, and the controller holds everything that depends on time, taking the timers as an input
+// and timing a run by a duration from sending its request, never by a time compared with the service's clock.
 
 export type RunKind = "sample" | "simulate";
 export type PartRole = "check" | "request" | "report" | "artefact" | "delta" | "outcome";
@@ -41,7 +41,9 @@ export interface RunEnd {
 export type Assembly =
   /** Every sequence number from 0 to the last frame's is present. */
   | ({ state: "complete"; run: string; parts: RunPart[] } & RunEnd)
-  /** `missing` holds each absent number below the highest one seen (or below the last frame's), `next` the lowest absent number, and `end` the last frame's outcome where that frame arrived. */
+  /** The last frame says `failed` and frames before it are missing. The run is settled by that frame's message, and `parts` are those whole and contiguous from 0, shown as partial output. */
+  | { state: "failed"; run: string; parts: RunPart[]; message: string; partial: true }
+  /** `missing` holds each absent number below the highest one seen (or below the last frame's), `next` the lowest absent number, and `end` the outcome of a `succeeded` last frame that arrived with a gap before it. */
   | { state: "partial"; run: string; parts: RunPart[]; received: number; missing: number[]; next: number; end?: RunEnd }
   | { state: "invalid"; reason: string };
 
@@ -128,6 +130,8 @@ export function assemble(frames: readonly unknown[], run?: string): Assembly {
   }
   const outcome = end && { status: end.status!, ...(end.message === undefined ? {} : { message: end.message }), ...(end.conforms === undefined ? {} : { conforms: end.conforms }) };
   if (end && missing.length === 0) return { state: "complete", run: wanted, parts, ...outcome! };
+  // A failed last frame settles the run whatever is missing. The last part before the gap is not whole, since the missing frames may continue it.
+  if (end?.status === "failed") return { state: "failed", run: wanted, parts: parts.slice(0, -1), message: end.message!, partial: true };
   return { state: "partial", run: wanted, parts, received: bySeq.size, missing, next, ...(outcome ? { end: outcome } : {}) };
 }
 
@@ -154,7 +158,7 @@ export type StartRunResult =
 export interface RunApi {
   startRun(
     workspace: string,
-    query: { kind: RunKind; target: string; job: string; tab: string; deadline: string; wait: boolean },
+    query: { kind: RunKind; target: string; job: string; tab: string; deadline?: string; wait: boolean },
     body: string,
     mediaType: string,
     signal?: AbortSignal,
@@ -167,6 +171,7 @@ export interface RunEvents {
   tabId(): string;
 }
 
+/** Kept for callers that pass a clock. The controller reads none, since it times a run by a duration. */
 export interface RunClock {
   now(): number;
 }
@@ -176,7 +181,11 @@ export interface RunTimers {
   clearTimeout(handle: unknown): void;
 }
 
+/** The kind's default and maximum deadline, which the service sets when a request leaves `deadline` out. */
 export const DEADLINE_MS: Record<RunKind, number> = { simulate: 15_000, sample: 120_000 };
+
+/** How long a client waits after a run's deadline before it calls the run incomplete, so that the service's failed frame at the deadline can arrive. */
+export const GRACE_MS = 2_000;
 
 /** The most frames held while a request waits for the run's IRI. A run sends at most 129, and other runs' frames are dropped once it is known. */
 const BUFFER_LIMIT = 512;
@@ -186,7 +195,8 @@ export type RunState =
   | { phase: "queued"; number: number; job: string }
   | { phase: "running"; number: number; job: string; parts: RunPart[]; received: number }
   | { phase: "complete"; number: number; job: string; parts: RunPart[]; conforms?: boolean }
-  | { phase: "failed"; number: number; job: string; parts: RunPart[]; message: string }
+  /** `partial` is set where frames were missing, and `parts` are then only those that arrived whole. */
+  | { phase: "failed"; number: number; job: string; parts: RunPart[]; message: string; partial?: boolean }
   | { phase: "incomplete"; number: number; job: string; parts: RunPart[]; received: number; missing: number[]; next: number; message?: string }
   | { phase: "refused"; number: number; job: string; status: number; message: string; retryAfter?: number };
 
@@ -217,10 +227,10 @@ interface Flight {
  * One controller a pane. A frame can arrive before the `202` that names its run, since the service forwards frames as soon as it reads them, so
  * a request that waits for its IRI keeps every run frame it is given, up to a limit, and reads them again once the IRI is known, keeping those
  * of that run and dropping the rest. Where the tab's events are not connected at the start, the request waits (`wait=true`) and its answer is
- * assembled the same way. A connection that drops in flight is not repaired and the run ends at its deadline.
+ * assembled the same way. A connection that drops in flight is not repaired and the run ends at its deadline plus the grace. Closing a waiting request early is the abort at the timer, at the end of a run and on dispose.
  */
-export function createRunController(deps: { api: RunApi; events: RunEvents; clock: RunClock; timers: RunTimers }): RunController {
-  const { api, events, clock, timers } = deps;
+export function createRunController(deps: { api: RunApi; events: RunEvents; clock?: RunClock; timers: RunTimers }): RunController {
+  const { api, events, timers } = deps;
   const listeners = new Set<() => void>();
   let state: RunState = { phase: "idle" };
   let flight: Flight | undefined;
@@ -250,6 +260,7 @@ export function createRunController(deps: { api: RunApi; events: RunEvents; cloc
     const a = assemble(entry.frames, entry.run);
     const job = entry.request.job;
     if (a.state === "invalid") finish(entry, { phase: "failed", number: entry.number, job, parts: [], message: `The result broke the contract: ${a.reason}.` });
+    else if (a.state === "failed") finish(entry, { phase: "failed", number: entry.number, job, parts: a.parts, message: a.message, partial: true });
     else if (a.state === "complete") {
       if (a.status === "failed") finish(entry, { phase: "failed", number: entry.number, job, parts: a.parts, message: a.message ?? "The run failed." });
       else finish(entry, { phase: "complete", number: entry.number, job, parts: a.parts, ...(a.conforms === undefined ? {} : { conforms: a.conforms }) });
@@ -259,8 +270,9 @@ export function createRunController(deps: { api: RunApi; events: RunEvents; cloc
   const incomplete = (entry: Flight) => {
     const a = assemble(entry.frames, entry.run);
     const job = entry.request.job;
-    if (a.state === "partial") {
-      finish(entry, { phase: "incomplete", number: entry.number, job, parts: a.parts, received: a.received, missing: a.missing, next: a.next, ...(a.end?.message ? { message: a.end.message } : {}) });
+    if (a.state === "failed") finish(entry, { phase: "failed", number: entry.number, job, parts: a.parts, message: a.message, partial: true });
+    else if (a.state === "partial") {
+      finish(entry, { phase: "incomplete", number: entry.number, job, parts: a.parts, received: a.received, missing: a.missing, next: a.next });
     } else finish(entry, { phase: "incomplete", number: entry.number, job, parts: [], received: 0, missing: [], next: 0 });
   };
 
@@ -278,15 +290,14 @@ export function createRunController(deps: { api: RunApi; events: RunEvents; cloc
   };
 
   const begin = (number: number, request: RunRequest) => {
-    const length = DEADLINE_MS[request.kind];
-    const deadline = clock.now() + length;
+    // The request leaves the deadline to the service, and the run is timed by the kind's default plus the grace from now, with no clock to agree on.
     const entry: Flight = { number, request, mode: events.connected() ? "events" : "wait", timer: undefined, abort: new AbortController(), frames: [], early: [] };
     flight = entry;
     set({ phase: "running", number, job: request.job, parts: [], received: 0 });
-    entry.timer = timers.setTimeout(() => incomplete(entry), Math.max(0, deadline - clock.now()));
+    entry.timer = timers.setTimeout(() => incomplete(entry), DEADLINE_MS[request.kind] + GRACE_MS);
     const wait = entry.mode === "wait";
     api
-      .startRun(request.workspace, { kind: request.kind, target: request.target, job: request.job, tab: events.tabId(), deadline: new Date(deadline).toISOString(), wait }, request.body, request.mediaType, entry.abort.signal)
+      .startRun(request.workspace, { kind: request.kind, target: request.target, job: request.job, tab: events.tabId(), wait }, request.body, request.mediaType, entry.abort.signal)
       .then(
         (result) => {
           if (disposed || flight !== entry) return;

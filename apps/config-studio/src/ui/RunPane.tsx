@@ -73,7 +73,7 @@ function statusText(state: RunState): string {
     case "complete":
       return `Complete, ${state.parts.length} ${state.parts.length === 1 ? "part" : "parts"}${state.conforms === undefined ? "" : state.conforms ? ", conforms" : ", does not conform"}.`;
     case "failed":
-      return `Failed. ${state.message}`;
+      return `Failed. ${state.message}${state.partial ? " Frames were missing, so the parts shown are only those that arrived whole, as partial output." : ""}`;
     case "incomplete": {
       const gaps = state.missing.length ? `Frames ${state.missing.join(", ")} did not arrive.` : `The last frame did not arrive, after frame ${state.next - 1}.`;
       return `Incomplete, the run did not finish before its deadline. ${state.received} ${state.received === 1 ? "frame" : "frames"} arrived. ${gaps}${state.message ? ` The service said: ${state.message}` : ""}`;

@@ -213,7 +213,7 @@ A run executes the artefacts of a finished compile job over an input that is not
 | `kind`, `target` | a pair of the table above. Any other pair is `400` |
 | `job` | the id of a compile job of the workspace. `404` when the workspace does not hold it, `409` when it is not a finished compilation of the part `target` names, by the rule the transforms route states |
 | `tab` | the tab's identifier, 1 to 32 of `a-z0-9`, the one the tab uses for its events. `400` otherwise |
-| `deadline` | an absolute time, an `xsd:dateTime` with a time zone. When it is left out the service sets it to now plus the kind's default. `400` when it is in the past or further off than the kind's maximum |
+| `deadline` | an absolute time, an `xsd:dateTime` with a time zone. When it is left out the service sets it to now plus the kind's default. `400` when it is in the past or further off than the kind's maximum. The service compares it with its own clock, so a client whose clock runs ahead could be refused, and a client that has no reason to shorten the deadline leaves the parameter out |
 | `wait` | `true` to have the service collect the run's frames and answer on the request, as below |
 
 The principal must be one who may read the workspace, by the rule of `GET /api/workspaces/{ws}`, and a workspace it may not read answers `404`. A run writes nothing, so reading is enough. A body over 5 MiB is `413`, and a media type the kind does not take is `415`.
@@ -230,7 +230,7 @@ Without `wait` the answer is `202`, `Content-Type` `text/turtle` as every other 
 
 The service answers `429` when the tab already has 4 runs pending, with `Retry-After` in seconds until the earliest of their deadlines, and `503` when it cannot reach the broker. A run is pending from the `202` until the service has seen its last frame or its deadline has passed.
 
-With `wait=true` the service collects the run's frames from the events it already reads and answers `200`, `application/json`, a JSON array of the frames in sequence order, each exactly the frame object below, so the same schema holds both ways a result arrives. It answers `504` when the deadline passes first. This is how a tab with no events, or whose connection is down, runs. The worker behaves the same either way.
+With `wait=true` the service collects the run's frames from the events it already reads and answers `200`, `application/json`, a JSON array of the frames in sequence order, each exactly the frame object below, so the same schema holds both ways a result arrives. It answers `504` when the deadline passes first. This is how a tab with no events, or whose connection is down, runs. The worker behaves the same either way. A client may close a waiting request before it is answered. The service then stops collecting that run's frames and forgets it, and the run itself still ends at its deadline in the worker.
 
 ### The message to the run worker
 
@@ -257,14 +257,14 @@ The run worker publishes each frame to the topic exchange `lattice.studio.events
 | `last` | `true` on the run's final frame and on no other |
 | `part` | optional. The part the frame's text belongs to, given on the first frame of each part only |
 | `text` | optional. A piece of the current part's text. A part's text is the concatenation of the `text` of its frames in sequence order. At most 49,152 bytes as UTF-8, and never split inside a character |
-| `more` | optional. `true` when the current part continues in the next frame |
+| `more` | optional. A hint that the current part continues in the next frame, so that a display can say more of it is coming. A frame with no `part` continues the current part, whatever the frame before it said, and a client must not rely on `more` |
 | `status` | on the last frame only, `succeeded` or `failed` |
-| `message` | on a last frame whose `status` is `failed`, why, in plain words |
+| `message` | on a last frame whose `status` is `failed`, why, in plain words. A failed last frame settles the run, whatever frames are missing before it |
 | `conforms` | optional, on a last frame whose `status` is `succeeded` |
 
 | `part` field | Holds |
 |---|---|
-| `index` | a whole number from 0, counting the run's parts |
+| `index` | a whole number from 0, counting the run's parts with no gap |
 | `role` | one of `check`, `request`, `report`, `artefact`, `delta` and `outcome` |
 | `mediaType` | the media type of the part's text |
 | `path`, `group` | optional. As `cst:path` and `cst:group` give them for an artefact |
@@ -276,24 +276,40 @@ The run worker publishes each frame to the topic exchange `lattice.studio.events
 | `artefact` | what a mapping wrote, as a mapping dry run's artefact is, with `group` the mapping and `step` the stratum | this contract |
 | `check`, `request`, `delta`, `outcome` | the four parts of a simulator step | the slices that build the simulators |
 
-A run sends at most 128 frames. A result that would need more ends the run with a failed last frame whose `message` says the result is too large and to narrow what is run. A run that cannot start, for example one whose compile job it cannot read or whose input it cannot parse, is one frame, `seq` 0, `last` `true` and `failed`. [`samples/run-frames.example.json`](samples/run-frames.example.json) is a complete `sample` run, a report part, one artefact part split across two frames and a succeeded last frame, and [`samples/run-frames-failed.example.json`](samples/run-frames-failed.example.json) is a run that could not start.
+A run sends at most 128 frames. A result that would need more ends the run with a failed last frame whose `message` says the result is too large and to narrow what is run. A run that cannot start, for example one whose compile job it cannot read or whose input it cannot parse, is one frame, `seq` 0, `last` `true` and `failed`. [`samples/run-frames.example.json`](samples/run-frames.example.json) is a complete `sample` run, a report part, one artefact part split across two frames and a succeeded last frame, [`samples/run-frames-failed.example.json`](samples/run-frames-failed.example.json) is a run that could not start, and [`samples/run-frames-deadline.example.json`](samples/run-frames-deadline.example.json) is a run that lost frame 2 and ended with the service's failed frame at the deadline, so the array has a gap.
 
 ### Delivery to the tab
 
 The service instance that accepted the run keeps in memory who submitted it, from which tab, for which workspace and until when. That entry is coordination state (PRI-52), and losing it loses only runs in flight. Every instance reads every event, and only the instance holding the entry forwards a run's frames, so a frame reaches a tab once and in the order one consumer read it. It forwards each frame to the submitting tab's events topic, `studio/u/<name>/<tab>/events`, as the CloudEvent in JSON in the message body, the way a job's event reaches a tab, after checking that the principal may read the workspace by the rule of `GET /api/workspaces/{ws}`, from the graph as it is then. A tab sends no `watch` frame for a run. A frame whose run no instance holds is dropped.
 
-At the deadline the accepting instance sends a failed last frame for a run it has not seen end, with `seq` one past the last it forwarded, and forgets the run. A job's event is unchanged and never holds content.
+| Attribute | Holds |
+|---|---|
+| `specversion` | `1.0` |
+| `id` | a unique identifier of the event |
+| `source` | where the event was published |
+| `type` | `org.nebularis.lattice.studio.run.frame` |
+| `subject` | the run's IRI |
+| `time` | when the event was published |
+| `datacontenttype` | `application/json` |
+| `data` | the frame object |
+
+A client reads the frame from `data` and recognises a frame by `type`, as it recognises a job's event, which has another type and holds no content. A job's event is unchanged.
+
+At the deadline the accepting instance sends a failed last frame for a run it has not seen end, with `seq` one past the last it forwarded, and forgets the run. Its message says the run did not finish by its deadline. When a frame was lost during the run, this frame arrives with a gap before it.
 
 ### What a client must do
 
 Events are sent at QoS 0 on a clean session, so a frame can be lost, and a run is not read again from anywhere.
 
 - Keep the first frame it sees for each `seq`.
-- Ignore a frame of a run it no longer shows.
-- Treat the run as complete when every `seq` from 0 to the last frame's is present.
-- Treat the run as incomplete when that is not so at the deadline, and offer to run it again.
+- Ignore a frame of a run it no longer shows. Frames may reach a tab before the `202` that names the run does, so keep the frames it cannot yet match until it learns the run's IRI, then drop those of other runs.
+- Read a part's text from the frames that follow one another from 0. A frame with no `part` continues the current part, and a client does not rely on `more`.
+- Treat the run as failed when the frame with `last` true has status `failed`, with that frame's message, even when earlier frames are missing, since its outcome is known and nothing more is coming. Show the parts that are whole and contiguous from 0 as partial output. The last part before a gap is not whole, since the missing frames may continue it.
+- Treat the run as complete only when its last frame says `succeeded` and every `seq` from 0 to it is present. A `succeeded` last frame with a gap before it is partial.
+- Treat the run as incomplete when it is neither complete nor failed after the deadline and a grace of 2 seconds, and offer to run it again. The grace lets the failed last frame the accepting instance sends at the deadline arrive, so that a client holding the deadline itself would not call the run incomplete just before it.
+- Time a run by duration, not by a time to compare with the service's clock. A client that leaves `deadline` out sets its timer to the kind's default plus the grace from when it sent the request. That can only be later than the service's deadline, by the time the request took to arrive, and needs no agreement between clocks.
 - Send at most one run a pane at a time, and of the requests waiting behind it only the newest.
-- Ask the service to wait, with `wait=true`, where the studio offers no events or the tab's connection is down.
+- Ask the service to wait, with `wait=true`, where the studio offers no events or the tab's connection is down. Close that request when the run is no longer shown or the timer ends.
 
 ### Limits
 
@@ -305,7 +321,8 @@ The limits are held to what the probes of the broker observed it deliver to a sl
 | text of a frame | 49,152 bytes as UTF-8 | the worker |
 | frames of a run | 128 | the worker |
 | pending runs of a tab | 4 | the service, `429` |
-| deadline | 15 seconds for `simulate`, 120 seconds for `sample`, each the default and the maximum | the service sets and checks it, the worker stops an execution that passes it, and the browser holds the same one |
+| deadline | 15 seconds for `simulate`, 120 seconds for `sample`, each the default and the maximum | the service sets and checks it, and the worker stops an execution that passes it |
+| grace after the deadline | 2 seconds | the client, which times a run by the kind's default plus the grace from sending its request |
 
 ## Promotions
 

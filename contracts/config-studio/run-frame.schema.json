@@ -31,7 +31,7 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 127,
-          "description": "The part's place in the run, from 0"
+          "description": "The part's place in the run. Parts are counted from 0 with no gap"
         },
         "role": {
           "enum": ["check", "request", "report", "artefact", "delta", "outcome"],
@@ -50,16 +50,16 @@
     },
     "more": {
       "type": "boolean",
-      "description": "True when the current part continues in the next frame"
+      "description": "A hint that the current part continues in the next frame, so that a display can say more of it is coming. A frame with no part continues the current part whatever the frame before it said, and a client must not rely on more"
     },
     "status": {
       "enum": ["succeeded", "failed"],
-      "description": "On the last frame only"
+      "description": "On the last frame only. A failed last frame settles the run whatever is missing before it, and a run is complete only when its last frame succeeded and every frame from 0 to it is present"
     },
     "message": {
       "type": "string",
       "minLength": 1,
-      "description": "Why the run failed, in plain words. On a last frame whose status is failed"
+      "description": "Why the run failed, in plain words. On a last frame whose status is failed. Such a frame settles the run as failed, whatever frames before it are missing"
     },
     "conforms": {
       "type": "boolean",

@@ -340,12 +340,13 @@ export const api = {
    */
   async startRun(
     id: string,
-    query: { kind: RunKind; target: string; job: string; tab: string; deadline: string; wait: boolean },
+    query: { kind: RunKind; target: string; job: string; tab: string; deadline?: string; wait: boolean },
     body: string,
     mediaType: string,
     signal?: AbortSignal,
   ): Promise<StartRunResult> {
-    const params = new URLSearchParams({ kind: query.kind, target: query.target, job: query.job, tab: query.tab, deadline: query.deadline });
+    const params = new URLSearchParams({ kind: query.kind, target: query.target, job: query.job, tab: query.tab });
+    if (query.deadline !== undefined) params.set("deadline", query.deadline);
     if (query.wait) params.set("wait", "true");
     const response = await fetch(`/api/workspaces/${id}/runs?${params}`, {
       method: "POST",

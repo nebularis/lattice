@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { assemble, createRunController, DEADLINE_MS, type RunApi, type RunEvents, type RunFrame, type RunRequest, type StartRunResult } from "./runs";
+import { assemble, createRunController, DEADLINE_MS, GRACE_MS, type RunApi, type RunEvents, type RunFrame, type RunRequest, type StartRunResult } from "./runs";
 
 const samples = join(__dirname, "../../../contracts/config-studio/samples");
 const example = (name: string) => JSON.parse(readFileSync(join(samples, name), "utf-8")) as RunFrame[];
@@ -72,6 +72,40 @@ describe("assemble", () => {
   it("gives a failed run for the example that could not start", () => {
     const failed = assemble(example("run-frames-failed.example.json"));
     expect(failed).toEqual({ state: "complete", run: "urn:lattice:studio:run:9d1c4e72-0b3a-4f6d-8a25-1e7f3c5b2d90", parts: [], status: "failed", message: "The compile job could not be read, so nothing was run." });
+  });
+
+  it("gives failed, with the whole parts before the gap as partial output, for the run that was cut at its deadline", () => {
+    const frames = example("run-frames-deadline.example.json");
+    const run = frames[0].run;
+    expect(assemble(frames)).toEqual({
+      state: "failed",
+      run,
+      parts: [{ index: 0, role: "report", mediaType: "text/turtle", text: frames[0].text }],
+      message: "The run did not finish by its deadline.",
+      partial: true,
+    });
+    // in any order, with any duplicates
+    const random = seeded(17);
+    for (let i = 0; i < 50; i++) expect(assemble(shuffled([...frames, ...frames.filter(() => random() < 0.5)], random))).toEqual(assemble(frames));
+  });
+
+  it("settles a failed last frame whatever is missing, and a succeeded one only with every frame", () => {
+    const random = seeded(23);
+    for (let i = 0; i < 100; i++) {
+      const frames = generated(random);
+      const removed = Math.floor(random() * (frames.length - 1));
+      const gapped = frames.filter((f) => f.seq !== removed);
+      const failedEnd: RunFrame = { run: RUN, seq: frames.length - 1, last: true, status: "failed", message: "stopped" };
+      const failed = assemble(shuffled([...gapped.slice(0, -1), failedEnd], random), RUN);
+      expect(failed.state).toBe("failed");
+      if (failed.state !== "failed") continue;
+      expect(failed.message).toBe("stopped");
+      // only parts that a later part follows, before the gap, are whole
+      const before = assemble(frames.slice(0, removed), RUN);
+      const held = before.state === "partial" ? before.parts : [];
+      expect(failed.parts).toEqual(held.slice(0, -1));
+      expect(assemble(shuffled(gapped, random), RUN).state).toBe("partial");
+    }
   });
 
   it("gives the same result for any order of a run's frames (permutation, 200 seeded runs)", () => {
@@ -270,23 +304,28 @@ function setup() {
 }
 
 describe("the run controller", () => {
-  it("starts idle, sends a run with the tab, a deadline from the clock and no wait, and shows running", async () => {
+  it("starts idle, sends a run with the tab, no deadline and no wait, and shows running", async () => {
     const { controller, calls, time } = setup();
     expect(controller.getState()).toEqual({ phase: "idle" });
     controller.start(request());
     expect(controller.getState()).toMatchObject({ phase: "running", number: 1, job: JOB, parts: [], received: 0 });
     expect(calls).toHaveLength(1);
-    expect(calls[0].query).toEqual({ kind: "sample", target: "mapping", job: JOB, tab: "tab1", deadline: new Date(time.now + 120_000).toISOString(), wait: false });
+    expect(calls[0].query).toEqual({ kind: "sample", target: "mapping", job: JOB, tab: "tab1", wait: false });
+    expect(calls[0].query).not.toHaveProperty("deadline");
     expect(calls[0].body).toBe("<s> <p> <o> .");
     expect(calls[0].mediaType).toBe("text/turtle");
     expect(time.open).toBe(1);
   });
 
-  it("uses the kind's own deadline", () => {
-    const { controller, calls, time } = setup();
+  it("times a run by the kind's own default plus the grace", () => {
+    const { controller, time } = setup();
     controller.start(request("t", "simulate"));
-    expect(calls[0].query.deadline).toBe(new Date(time.now + DEADLINE_MS.simulate).toISOString());
     expect(DEADLINE_MS).toEqual({ simulate: 15_000, sample: 120_000 });
+    expect(GRACE_MS).toBe(2_000);
+    time.advance(DEADLINE_MS.simulate + GRACE_MS - 1);
+    expect(controller.getState().phase).toBe("running");
+    time.advance(1);
+    expect(controller.getState().phase).toBe("incomplete");
   });
 
   it("assembles the frames the events deliver for the run the 202 names, in order of arrival of the parts, and completes", async () => {
@@ -374,7 +413,7 @@ describe("the run controller", () => {
     calls[0].resolve({ kind: "accepted", run: RUN });
     await settle();
     controller.start(request("two"));
-    time.advance(120_000);
+    time.advance(DEADLINE_MS.sample + GRACE_MS);
     expect(calls).toHaveLength(2);
     calls[1].resolve({ kind: "accepted", run: OTHER });
     await settle();
@@ -396,7 +435,7 @@ describe("the run controller", () => {
         calls[0].resolve({ kind: "accepted", run: RUN });
         await settle();
         if (ending === "failed") events.serve({ run: RUN, seq: 0, last: true, status: "failed", message: "boom" });
-        else time.advance(120_000);
+        else time.advance(DEADLINE_MS.sample + GRACE_MS);
       }
       await settle();
       expect(calls, ending).toHaveLength(2);
@@ -421,21 +460,84 @@ describe("the run controller", () => {
     await settle();
     events.serve(frame(0, first("a")));
     events.serve(frame(2, { text: "c" }));
-    time.advance(119_999);
+    time.advance(DEADLINE_MS.sample + GRACE_MS - 1);
     expect(controller.getState().phase).toBe("running");
     time.advance(1);
     expect(controller.getState()).toEqual({ phase: "incomplete", number: 1, job: JOB, parts: [{ index: 0, role: "report", mediaType: "text/turtle", text: "a" }], received: 2, missing: [1], next: 1 });
     expect(calls[0].signal?.aborted).toBe(true);
   });
 
-  it("gives incomplete, with the service's own failure, for a last frame that came without the frames before it", async () => {
+  it("gives failed, with the service's own message, for a failed last frame that came without the frames before it", async () => {
     const { controller, calls, events, time } = setup();
     controller.start(request("t", "simulate"));
     calls[0].resolve({ kind: "accepted", run: RUN });
     await settle();
     events.serve({ run: RUN, seq: 3, last: true, status: "failed", message: "The run did not finish before its deadline." });
-    time.advance(15_000);
-    expect(controller.getState()).toMatchObject({ phase: "incomplete", missing: [0, 1, 2], message: "The run did not finish before its deadline." });
+    expect(controller.getState()).toEqual({ phase: "failed", number: 1, job: JOB, parts: [], message: "The run did not finish before its deadline.", partial: true });
+    expect(time.open).toBe(0);
+  });
+
+  it("gives failed, not incomplete, for the service's failed frame that arrives within the grace after the deadline", async () => {
+    const { controller, calls, events, time } = setup();
+    controller.start(request("t", "simulate"));
+    calls[0].resolve({ kind: "accepted", run: RUN });
+    await settle();
+    events.serve(frame(0, first("a")));
+    events.serve(frame(1, { part: { index: 1, role: "artefact", mediaType: "text/plain" }, text: "b" }));
+    // frame 2 is lost, and the service sends its failed frame at the deadline
+    time.advance(DEADLINE_MS.simulate + GRACE_MS - 1);
+    expect(controller.getState().phase).toBe("running");
+    events.serve({ run: RUN, seq: 3, last: true, status: "failed", message: "The run did not finish by its deadline." });
+    expect(controller.getState()).toEqual({ phase: "failed", number: 1, job: JOB, parts: [{ index: 0, role: "report", mediaType: "text/turtle", text: "a" }], message: "The run did not finish by its deadline.", partial: true });
+    time.advance(10_000);
+    expect(controller.getState().phase).toBe("failed");
+  });
+
+  it("keeps a succeeded last frame with a gap before it as running, and gives incomplete after the grace", async () => {
+    const { controller, calls, events, time } = setup();
+    controller.start(request());
+    calls[0].resolve({ kind: "accepted", run: RUN });
+    await settle();
+    events.serve(frame(0, first("a")));
+    events.serve(end(2));
+    time.advance(DEADLINE_MS.sample);
+    expect(controller.getState()).toMatchObject({ phase: "running", received: 2 });
+    time.advance(GRACE_MS - 1);
+    expect(controller.getState().phase).toBe("running");
+    time.advance(1);
+    expect(controller.getState()).toMatchObject({ phase: "incomplete", received: 2, missing: [1], next: 1 });
+  });
+
+  it("times a run by a duration from the send, and reads no clock to compare with anything the service said", async () => {
+    const time = new FakeTimers();
+    const { api, calls } = fakeApi();
+    const clock = { now: (): number => { throw new Error("the controller must not read a clock"); } };
+    const controller = createRunController({ api, events: new FakeEvents(), clock, timers: time.timers });
+    controller.start(request());
+    expect(calls[0].query).not.toHaveProperty("deadline");
+    calls[0].resolve({ kind: "accepted", run: RUN });
+    await settle();
+    // however far the page's clock is from the service's, the run ends a duration after the send
+    time.now += 3_600_000;
+    time.advance(DEADLINE_MS.sample + GRACE_MS);
+    expect(controller.getState().phase).toBe("incomplete");
+    const bare = createRunController({ api, events: new FakeEvents(), timers: time.timers });
+    bare.start(request("again"));
+    expect(bare.getState().phase).toBe("running");
+    bare.dispose();
+  });
+
+  it("closes a waiting request when the timer ends and on dispose", async () => {
+    const a = setup();
+    a.events.up = false;
+    a.controller.start(request());
+    a.time.advance(DEADLINE_MS.sample + GRACE_MS);
+    expect(a.calls[0].signal?.aborted).toBe(true);
+    const b = setup();
+    b.events.up = false;
+    b.controller.start(request());
+    b.controller.dispose();
+    expect(b.calls[0].signal?.aborted).toBe(true);
   });
 
   it("gives incomplete when the connection drops, the run is not sent again, and the run ends at its deadline", async () => {
@@ -445,7 +547,7 @@ describe("the run controller", () => {
     await settle();
     events.serve(frame(0, first("a")));
     events.up = false;
-    time.advance(120_000);
+    time.advance(DEADLINE_MS.sample + GRACE_MS);
     expect(calls).toHaveLength(1);
     expect(controller.getState()).toMatchObject({ phase: "incomplete", received: 1 });
   });

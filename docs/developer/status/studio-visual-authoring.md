@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-U1 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Next in the order the maintainer gave: SVA-R4a, the runs contract corrected, then SVA-R2 against it.
+**Next action:** paused after SVA-R4a for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start against the corrected contract: SVA-R2, the service's runs, and SVA-R3, the run worker.
 
 ## Slices
 
@@ -27,7 +27,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | planned | SVA-R1 |
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
 | SVA-R4 | the browser's run controller and the dock's run pane | built 2026-11-16, building 2026-11-16 | SVA-R1 |
-| SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line | building 2026-11-16 | SVA-R4 |
+| SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line | built 2026-11-16, building 2026-11-16 | SVA-R4 |
 | SVA-U1 | columns the author collapses and resizes, kept in the browser | built 2026-11-16, building 2026-11-16 | SVA-R4 |
 | SVA-R5 | the run protocol's failure cases on the real stack | planned | SVA-R2, SVA-R3, SVA-R4 |
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
@@ -93,6 +93,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16, SVA-B5: two breaks were tried. With importGraph dropping derived edges the library sample test failed, the derived edge was expected once and drawn 0 times. With a fetch of each held import's graph restored in BaselineView when the diagram opens, the no-extra-request test failed, 3 requests expected and 4 seen. Both were restored.
 - 2026-11-16, SVA-R4: the assembler was made to keep the last frame seen for a number, which failed the keep-the-first test, and then to drop the completeness check, which failed five tests. Both were restored.
 - 2026-11-16, SVA-U1: the middle taking freed room was broken by keeping the navigation and list widths when collapsed, and the tree clipping test failed. Storing a dragged width was broken by not writing it, and the reload test failed. The canvas refit was switched off and the whole-drawing test failed. Each was restored.
+- 2026-11-16, SVA-R4a: two breaks were tried and each was restored. A timer with no grace failed 4 tests in runs.test.ts, and assemble treating a failed last frame with a gap as partial failed 4 tests there. The browser suite ran once and 58 passed.
 
 ## Log
 
@@ -149,3 +150,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: SVA-U1 built, [Validation Pack](../validation/SVA-U1.md). The navigation, each view's list and the dock collapse to rails and resize by handles, kept in the browser, with the two dock workarounds removed, the run pane stacking by a container query and canvases refitting when their pane resizes. The dock's wide default needed the middle to keep 700 px so an existing canvas link test passes unchanged, and the fixed dock overlay at 1100 px was removed. Touch drags are not covered.
 - 2026-11-16: SVA-U1 verified by a second run of its checks, 427 unit tests, the type check and 58 browser tests on the fake service. The list column's width is kept for each view, not each mode, since each view's list differs. A canvas that opens fitted is fitted again when its pane's width changes, which also resets a pan or zoom its author made, and SVA-M4 now takes that up. Not tried: touch, and two tabs of one browser following each other's layout.
 - 2026-11-16: SVA-R4a picked up.
+- 2026-11-16: SVA-R4a built, [Validation Pack](../validation/SVA-R4a.md). The run contract now states the event's shape, a grace of 2 seconds after the deadline, a client that leaves the deadline to the service and times by duration, a failed last frame that settles a run whatever is missing, and a waiting request that may be abandoned, and the client and a new deadline example follow it. The service and worker sides of each rule are left to SVA-R2 and SVA-R3, and frames over real MQTT to SVA-R5.
+- 2026-11-16: SVA-R4a verified by a second run of its checks, 32 contract tests, 433 unit tests, the type check and 58 browser tests on the fake service. Seven unit tests of the controller changed with the behaviour they stated, each listed in the Validation Pack, and no browser test changed. For the maintainer: ADR-A154's decision 6 says the browser holds the same deadline as the service, and the browser now holds the same length plus a grace, timed from its own send, which the contract states and the decision record does not yet.

@@ -1,0 +1,30 @@
+[
+  {
+    "run": "urn:lattice:studio:run:5a7e1d34-2c8b-4f90-b6d1-0e3a9c4f7b82",
+    "seq": 0,
+    "last": false,
+    "part": {"index": 0, "role": "report", "mediaType": "text/turtle"},
+    "text": "@prefix sh: <http://www.w3.org/ns/shacl#> .\n\n[] a sh:ValidationReport ;\n    sh:conforms true .\n"
+  },
+  {
+    "run": "urn:lattice:studio:run:5a7e1d34-2c8b-4f90-b6d1-0e3a9c4f7b82",
+    "seq": 1,
+    "last": false,
+    "part": {"index": 1, "role": "artefact", "mediaType": "application/n-triples", "path": "loan-intake.0.nt", "group": "https://example.org/lattice/mapping/loan-intake", "step": 0},
+    "text": "<https://example.org/lattice/data/loan-1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.org/lending#LoanApplication> .\n",
+    "more": true
+  },
+  {
+    "run": "urn:lattice:studio:run:5a7e1d34-2c8b-4f90-b6d1-0e3a9c4f7b82",
+    "seq": 3,
+    "last": false,
+    "text": "<https://example.org/lattice/data/loan-1> <https://example.org/lending#term> \"30\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n"
+  },
+  {
+    "run": "urn:lattice:studio:run:5a7e1d34-2c8b-4f90-b6d1-0e3a9c4f7b82",
+    "seq": 4,
+    "last": true,
+    "status": "failed",
+    "message": "The run did not finish by its deadline."
+  }
+]

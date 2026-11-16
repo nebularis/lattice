@@ -49,6 +49,16 @@ def test_each_example_frame_validates_against_the_schema(name: str) -> None:
         assert list(VALIDATOR.iter_errors(frame)) == [], frame
 
 
+def test_the_deadline_example_validates_and_has_a_gap_before_the_services_failed_frame() -> None:
+    frames = example("run-frames-deadline.example.json")
+    for frame in frames:
+        assert list(VALIDATOR.iter_errors(frame)) == [], frame
+    assert [f["seq"] for f in frames] == [0, 1, 3, 4]
+    assert [f["last"] for f in frames] == [False, False, False, True]
+    assert frames[-1]["status"] == "failed"
+    assert {f["run"] for f in frames} == {frames[0]["run"]}
+
+
 @pytest.mark.parametrize("name", EXAMPLES)
 def test_an_example_is_a_whole_run(name: str) -> None:
     frames = example(name)
