@@ -146,3 +146,46 @@ def test_gh3_15_only_the_added_lines_of_a_readme_are_judged_for_decisions() -> N
     assert rules("ontology/ledger/README.md", README, lines=[11, 27]) == []
     assert rules("ontology/ledger/README.md", README, lines=[7]) == [(7, CITED, True)]
 
+
+WORKING = "\n".join([
+    "# A layer",
+    "",
+    "### 5.1 Design decisions",
+    "",
+    "- **A period is an account.** Nothing resets (PDD-15), by the rule of STD-294.",
+    "- **An exact share is two integers**, since no store compares the literal by value (TSD-70).",
+    "",
+    "## 6. Terms",
+    "",
+    "**Definition.** The purpose a draw names (LG-Q2). Hashed with SHA-256, in UTF-8.",
+    "Removed with the allowance terms (LG-3), as AIR-2.6 planned.",
+    "",
+])
+
+
+def working(path: str, slices=frozenset(), lines=None) -> list[tuple[int, str]]:
+    found = wr.check_file(path, WORKING, lines or range(1, len(WORKING.splitlines()) + 1), slices)
+    return [(f.line, f.rule.split(".")[0]) for f in found if "working-document" in f.rule]
+
+
+def test_gh3_16_a_register_entry_or_a_question_fails_anywhere_in_a_layer_readme() -> None:
+    assert working("ontology/ledger/README.md") == [(5, "a working-document identifier, PDD-15"),
+                                                    (10, "a working-document identifier, LG-Q2")]
+
+
+def test_gh3_17_a_slice_fails_only_where_the_index_defines_it_and_a_finding_or_a_hash_never_does() -> None:
+    assert working("ontology/ledger/README.md", frozenset({"LG-3", "AIR-2.6"}), lines=[11]) == [
+        (11, "a working-document identifier, LG-3")]
+    assert working("ontology/ledger/README.md", frozenset({"LG-3"}), lines=[6]) == []
+    assert working("ontology/ledger/README.md", frozenset({"SHA-256"}), lines=[10]) == [
+        (10, "a working-document identifier, LG-Q2")]
+    assert working("docs/developer/plans/ledger.md", frozenset({"LG-3"})) == []
+
+
+def test_gh3_18_the_slices_are_read_from_the_developer_index(tmp_path: Path) -> None:
+    (tmp_path / "docs" / "developer").mkdir(parents=True)
+    (tmp_path / "docs" / "developer" / "INDEX.md").write_text(
+        "| Slice | Scope |\n|---|---|\n| LG-3 | a migration |\n| ledger | unit |\n", encoding="utf-8", newline="\n")
+    assert wr.slice_ids(tmp_path) == frozenset({"LG-3"})
+    assert wr.slice_ids(tmp_path / "nowhere") == frozenset()
+

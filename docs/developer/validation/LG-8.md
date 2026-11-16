@@ -103,4 +103,4 @@ Built on machine S, 2026-11-09, Isabelle2025-2 through its bundled Cygwin, after
 - the three findings of the handoff above
 - the [sketch on the residual to the first in order](../sketches/ledger-residual-to-first-in-order.md), for LG-Q15 and LG-Q16
 
-**The maintainer's verdict** is written here when given. The row on the board moves to `verified` with it.
+**The maintainer's verdict, 2026-11-16: closed as it stands.** The proofs passed the gate when the maintainer ran them on 2026-11-09, and the kernel they are stated on is restated by LG-9, which proves each of the 19 claims again on the target kernel. The two probes of this slice were machine S's and were not repeated, since no build of the proofs was made for this closure.

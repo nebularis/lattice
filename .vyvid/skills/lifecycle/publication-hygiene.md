@@ -12,6 +12,8 @@ Examples are `LG-1`, a phrase such as "not yet written in LG-2", `AIR-4.2`, `CCS
 
 - **Check before handing off.** Search what you wrote under `ontology/` for slice, question and debt identifiers and for the word "slice". An extracted section carries the identifier into generated Turtle as well, so fix the README and regenerate.
 
+- **The commit hook refuses the identifiers.** The writing check fails a line a change adds to a layer README that names a register entry, a question, or a slice the developer index defines, in prose or inside a fenced block. It does not read delivery phrasing, so the search above is still yours.
+
 ## A decision is named in the Design decisions section and nowhere else
 
 A decision record is the contract between those who build, agents and maintainers, for what is built and how it works. It is not written for a reader of a layer. That reader needs the constraint or the feature a decision gives, and never how it was arrived at (STD-337).

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
-"""Checks for two standards that hold across the repository, STD-003 and STD-025.
+"""Checks for two standards that hold across the repository, STD-003 and STD-025, and for ADR-A124's rule that a
+benchmark is never part of ``check``.
 
 STD-003: a derived file has one source, so nothing a build writes into ``.build`` is tracked, apart
 from the placeholders that keep its directories in a fresh checkout. A derived file committed so a
@@ -14,7 +15,9 @@ own code, not their tests, which write only to temporary directories.
 from __future__ import annotations
 
 import ast
+import json
 import subprocess
+import tomllib
 
 import lattice_repo_catalogue
 
@@ -53,3 +56,36 @@ def test_every_tool_writes_text_with_an_explicit_encoding_and_newline():
             continue
         found += [f"{path}:{line}" for line in unpinned_writes((ROOT / path).read_text(encoding="utf-8"))]
     assert found == []
+
+
+def reached(tasks: dict, name: str, seen: set[str] | None = None) -> set[str]:
+    """The task and every task it depends on, however far."""
+    seen = set() if seen is None else seen
+    if name in tasks and name not in seen:
+        seen.add(name)
+        for dependency in tasks[name].get("depends", []) or []:
+            reached(tasks, dependency if isinstance(dependency, str) else dependency[0], seen)
+    return seen
+
+
+def benchmarks_reached(tasks: dict, entry: str) -> list[str]:
+    """The tasks ``entry`` reaches that run something under ``benchmark/``. A description may name the folder."""
+    def runs(name: str) -> bool:
+        return "benchmark/" in json.dumps({k: v for k, v in tasks[name].items() if k != "description"}, default=str)
+    return sorted(name for name in reached(tasks, entry) if runs(name))
+
+
+def test_a_benchmark_reached_from_a_task_is_found():
+    tasks = {"check": {"depends": ["check:a"]}, "check:a": {"depends": ["check:b"], "run": "python tools/a.py"},
+             "check:b": {"run": "python benchmark/b/check.py", "description": "measures"},
+             "check:c": {"run": "python tools/c.py", "description": "never benchmark/ itself"}}
+    assert benchmarks_reached(tasks, "check") == ["check:b"]
+    assert benchmarks_reached(tasks, "check:c") == []
+
+
+def test_no_benchmark_is_reached_from_check_or_test():
+    tasks = tomllib.loads((ROOT / "mise.toml").read_text(encoding="utf-8"))["tasks"]
+    assert any("benchmark/" in json.dumps(task, default=str) for task in tasks.values())
+    assert benchmarks_reached(tasks, "check") == []
+    assert benchmarks_reached(tasks, "test") == []
+

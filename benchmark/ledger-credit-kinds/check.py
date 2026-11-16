@@ -1043,6 +1043,11 @@ def run_backend_cut_forms(name: str, count: int, share: float, directory: str | 
                             r = (m.cp_reads if cp else m.reads)[("sum-with-cuts", LEVELS[TREE[i].level])]
                             r.reads, r.seconds, r.rows = r.reads + 1, r.seconds + seconds, r.rows + rows
                             r.postings_seconds, r.cuts_seconds = r.postings_seconds + backend.parts[0], r.cuts_seconds + backend.parts[1]
+                if form == "copied":
+                    # The reads above see a copied position only where a read point falls on it, so each copy is held to its posting here.
+                    (row,) = backend.select(f"{PREFIX}SELECT (COUNT(?c) AS ?n) WHERE {{ GRAPH ?g {{ ?c l:cutOf ?p ; l:cutPosition ?cp . ?p l:position ?pos . FILTER(?cp != ?pos) }} }}")
+                    if int(row[0]):
+                        raise WrongResult(f"{name} {count} copied cut: {int(row[0])} cut(s) carry a position that is not their posting's")
             finally:
                 backend.close()
                 backend = None

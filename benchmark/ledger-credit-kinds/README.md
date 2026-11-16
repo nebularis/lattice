@@ -96,7 +96,7 @@ Every read on every backend, from the start of history and from the checkpoint, 
 
 The two-level pass criterion is part of the same check. Every kind-filtered, stepwise and sum-with-cuts read, from the start and from the checkpoint, equals the model, the cuts the writer recorded are the model's, the stored count includes 3 triples a cut, and at 30% credits an ancestor's ceiling binds (a cut exists) and the sum of applied amounts with no cuts differs from the stepwise balance at an ancestor, on the model and on each engine. A corpus where that could not be told is refused. `test_check.py` also shows the check fails when a cut is dropped from the stored data (with the stored count agreeing, so only the balance can tell), when the writer records no cut, and that the four-step history of the sketch gives 9 for the sum of applied amounts, 7 for the stepwise balance and the sum with cuts, with one cut of 2 at the aggregate, and 9 at the annual cap under every fold.
 
-The like-for-like reads, the cut forms, the ceiling variant and the sketch's tree are part of the same check. Every `plain`, `shortcut` and `kind-filtered-union` read on the two-level corpus equals the model. Both cut forms give the model's balance and their stored count equals the arithmetic with 3 or 4 triples a cut. In the ceiling variant every read equals the model, which clamps at the ceiling, the corpus is refused unless some ancestor stands above its stated amount at a read point, and the stored count includes a triple for each ceiling. The sketch's figures are asserted on each engine. `test_check.py` shows the check fails on a `kind-filtered-union` read that is off by one, on a shortcut that skips a fallback on the two-level corpus, on a copied cut with a wrong position, on a read that clamps at the stated amount in the ceiling variant, on a ceiling variant in which nothing stands above its stated amount, and on a writer that records no cut when the sketch is read through an engine.
+The like-for-like reads, the cut forms, the ceiling variant and the sketch's tree are part of the same check. Every `plain`, `shortcut` and `kind-filtered-union` read on the two-level corpus equals the model. Both cut forms give the model's balance and their stored count equals the arithmetic with 3 or 4 triples a cut. Every copied position is its posting's, which is checked on the stored cuts themselves, since a read sees a copied position only where a read point falls on it. In the ceiling variant every read equals the model, which clamps at the ceiling, the corpus is refused unless some ancestor stands above its stated amount at a read point, and the stored count includes a triple for each ceiling. The sketch's figures are asserted on each engine. `test_check.py` shows the check fails on a `kind-filtered-union` read that is off by one, on a shortcut that skips a fallback on the two-level corpus, on a copied cut with a wrong position, on a read that clamps at the stated amount in the ceiling variant, on a ceiling variant in which nothing stands above its stated amount, and on a writer that records no cut when the sketch is read through an engine.
 
 ## Run it
 
@@ -113,6 +113,22 @@ LEDGER_KINDS_NEW_ONLY=1 mise run check:ledger-credit-kinds
 ```
 
 The sizes are 1,000, 5,000 and 20,000 postings at 5% and 30% credits. `LEDGER_KINDS_MAX` caps the postings and `LEDGER_KINDS_QUICK=1` runs the smallest size. `LEDGER_KINDS_NEW_ONLY=1` skips the one-level corpus and runs only the two-level corpus with its like-for-like reads, the cut forms and the ceiling variant, `LEDGER_KINDS_REPORT_DIR` writes the report elsewhere. The full run took 7,300 s (about two hours) on the cloud machine below, with its 180 tests, most of it rdflib at 20,000 postings, where each read from the start of history takes seconds to tens of seconds. Jena needs the test kit jar, built on first use by `mise run bootstrap:sparql-testkit` ([ADR-A125](../../docs/architecture/decisions/ADR-A125-test-support-tooling.md)). Where there is no `java` or no jar, the Jena runs are left out and the report's environment says so. `report.md` and `report.json` are generated, git-ignored and written here, with the native Jena caller's timings merged in by `mise run check:ledger-credit-kinds-jvm`. The Oxigraph store is a temporary directory, removed when the run ends, including on failure.
+
+### The whole benchmark
+
+Seven tasks make up this benchmark, with the native module's two among them. They share one corpus and one writer, so the code as it stands is exercised only by running all seven, and a change to the corpus or the writer moves the figures of every one. Run one at a time, never two together, since they disturb each other's timings. None is part of `mise run check`, which a test holds (ADR-A124).
+
+| Task | What it runs | On the cloud machine below |
+|---|---|---|
+| `check:ledger-credit-kinds` | the reads of both corpora on three engines, with the benchmark's own tests | 7,300 s |
+| `check:ledger-credit-kinds-writes` | the live writer, the guard, the stress and the late postings | 846 s |
+| `check:ledger-credit-kinds-jvm` | the reads on Jena called from Java, and its plans | 259 s |
+| `check:ledger-credit-kinds-jvm-writes` | the writer and the counter probe on Jena called from Java | 622 s |
+| `check:ledger-credit-kinds-single-writer` | one writer per ledger against the guarded writers | 767 s |
+| `check:ledger-credit-kinds-late-readings` | the readings of a balance by effective day | 71 s |
+| `check:ledger-credit-kinds-probes` | the period length and the repeated read of the cuts | 1,036 s |
+
+That is about three hours in all, on 4 cores. The benchmark's own tests alone, 183 here and 22 in the native module, run in about five minutes with `mise exec -- python -m pytest benchmark/ledger-credit-kinds benchmark/ledger-credit-kinds-jvm`, and show that the checks can fail, never what a store costs.
 
 ## Measured results
 

@@ -322,6 +322,20 @@ def test_ck29_a_copied_cut_with_a_wrong_position_fails_the_check(monkeypatch, ba
         check.run_backend_cut_forms(backend, SMALL, HIGH)
 
 
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck29b_a_copied_cut_one_position_from_its_posting_fails_the_check(monkeypatch, backend):
+    """No read point falls on the cut, so the balances still agree, and only the copy held to its posting tells."""
+    real = check.quads
+
+    def one_off(postings, cps, **kw):
+        for s, p, o, g in real(postings, cps, **kw):
+            yield (s, p, ("n", o[1] + 1), g) if p == check.L + "cutPosition" else (s, p, o, g)
+
+    monkeypatch.setattr(check, "quads", one_off)
+    with pytest.raises(check.WrongResult, match="copied cut.*a position that is not their posting's"):
+        check.run_backend_cut_forms(backend, SMALL, HIGH)
+
+
 def test_ck30_a_default_account_has_its_stated_amount_for_a_ceiling_and_the_variant_raises_a_share_of_them():
     assert all(a.ceiling == a.stated and a.ceiling_amount is None for a in check.TREE)
     variant = check.build_ceiling_tree()
