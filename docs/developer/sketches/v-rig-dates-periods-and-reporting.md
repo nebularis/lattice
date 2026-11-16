@@ -12,7 +12,7 @@ A competency question lives in `ontology/v-rig/projection/competency/<layer>.rq`
 
 ## 2. The questions
 
-"Askable today" means a declared term exists, so the query can be written now. "No term" means the knowledge index found none, so the question cannot be written as a query until a term is decided. The second table is the more useful result, since each row is a gap to confirm against a rig and then to decide. The term searches were made on 2026-11-13 with `mise run graph:ask -- find ... --kind term` and `exists`, and a weak answer there never proves that no term exists.
+"Askable today" means a declared term exists, so the query can be written now. "No term" means the knowledge index found none, so the question cannot be written as a query until a term is decided. The second table is the more useful result, since each row is a gap to confirm against a rig and then to decide. The term searches were made on 2026-11-13 with `mise run graph:ask -- find ... --kind term` and `exists`, and a weak answer there never proves that no term exists. Corrected on 2026-11-16, since the search of 2026-11-13 missed `ldg:periodRecurrence`, which the index returns at 0.71 for the question's own words. The question `period` joined 2.1 and `aggregate-period` was narrowed to what that term does not state.
 
 ### 2.1 Askable today
 
@@ -22,6 +22,7 @@ A competency question lives in `ontology/v-rig/projection/competency/<layer>.rq`
 | `instrument.rq` | amendment-effect | Which amendments state when their effect holds? | `?amendment a ins:Amendment ; fnd:hasTemporalScope/fnd:validFrom ?from .` |
 | `instrument.rq` | amendment-source | Which amendments name the document that states them? | `?amendment a ins:Amendment ; ins:statedIn ?document .` |
 | `foundation.rq` | recorded-and-effective | Which records carry both the time they hold from and the time they were recorded? | to be written against Foundation's shapes, since `fnd:hasTemporalScope` and `fnd:recordedAt` have different domains |
+| `ledger.rq` | period | Which account definitions state a recurrence whose periods each have an account of their own? | `?account a ldg:AccountDefinition ; ldg:periodRecurrence ?recurrence .` |
 
 `insurance-common.rq` already asks which loss events state the time they occurred.
 
@@ -34,7 +35,7 @@ A competency question lives in `ontology/v-rig/projection/competency/<layer>.rq`
 | common insurance, or Behaviour | notified | Which loss events state when they were notified, apart from when they occurred? | `claim-notified`, an occasion in a Behaviour example only |
 | Behaviour, or Instrument | reporting | Which agreements oblige a party to report, and state what is reported, to whom, how often and how long after a period ends? | nothing |
 | Behaviour, or Instrument | correction | Which agreements state how a reported figure is corrected, by a later correcting entry or by replacing what was reported? | nothing |
-| Ledger | aggregate-period | Which account definitions state the period their amount runs over, the agreement's own period or a fixed period of their own? | `ldg:resetRecurrence`, deprecated, and PDD-15 is open on whether a periodic amount is one account or one a period |
+| Ledger | aggregate-period | Which account definitions state a single period of their own that differs from the agreement's and does not recur, or state that their amount runs for the agreement's own period? | `ldg:periodRecurrence`, which states a recurring period only, one account for each period (PDD-15, decided (a) on 2026-10-28). Left unset it means an amount that never renews, so a period that is not stated cannot be told from the agreement's own, and a rolling window is out of that decision's scope |
 | Ledger, or a layer for reports | reading | Which reports declare the reading they show, the day and the known-at recording (MEC-107, STD-329)? | nothing, since no report is modelled yet |
 | Instrument | amendment-retrospective | Which amendments take effect before the date of the document that states them? | no term for a document's own date was found |
 
@@ -79,7 +80,7 @@ The keys of a rig are the author's own, so a rig's extension binds each new key 
 
 ## 4. What a run would give, and the order of work
 
-1. For §2.1, add the four questions to their files and run the mini-rig, which gives a row count for each and a finding where it is none.
+1. For §2.1, add the five questions to their files and run the mini-rig, which gives a row count for each and a finding where it is none.
 2. For §2.2, read a rig's blind view for the documents that state such a thing and record each as a finding by hand, since nothing can be queried yet.
 3. Bring each confirmed gap to the maintainer as a modelling question, with its options and the layer it belongs to.
 4. Add the query for each term that is decided.

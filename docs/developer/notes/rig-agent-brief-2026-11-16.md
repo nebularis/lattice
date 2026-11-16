@@ -56,18 +56,19 @@ For this slice the index decides, for every candidate question, whether a term e
 5. [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md), its decisions 3, 4 and 6 and its four addenda from 2026-11-09 onward, which are part B's source. `mise run graph:ask -- read ADR-A131` lists what links to it, and MEC-107 to MEC-112 state the mechanisms one at a time.
 6. The Ledger layer's [README](../../../ontology/ledger/README.md), for what its terms mean today. It is behind the addenda, which is the point of part B.
 
-## 4. Part A, the four questions that can be asked today
+## 4. Part A, the five questions that can be asked today
 
-The sketch's section 2.1 names four questions with a draft query each. Add them to their files under `ontology/v-rig/projection/competency/`.
+The sketch's section 2.1 names five questions, four of them with a draft query. Add them to their files under `ontology/v-rig/projection/competency/`.
 
 | File | Name | Note |
 |---|---|---|
 | `ledger.rq` | `closing` | confirm `ldg:closingRecurrence` with the index |
+| `ledger.rq` | `period` | confirm `ldg:periodRecurrence`, which states a recurring period only |
 | `instrument.rq` | `amendment-effect` | confirm the path to the time an effect holds from |
 | `instrument.rq` | `amendment-source` | confirm `ins:statedIn` |
 | `foundation.rq` | `recorded-and-effective` | has no draft. Read Foundation's shapes first, since the two properties have different domains |
 
-Then run the tool on the mini-rig and record, for each, the row count or the finding. The sketch's section 2.2 lists eight more questions with no term. Leave them as they are, with one exception. The Ledger layer declares `ldg:periodRecurrence`, which the sketch's `aggregate-period` row does not mention, so read its definition and say whether it answers that row.
+Then run the tool on the mini-rig and record, for each, the row count or the finding. The sketch's section 2.2 lists eight more questions with no term. Leave them as they are.
 
 ## 5. Part B, questions for the ledger's decided design
 
