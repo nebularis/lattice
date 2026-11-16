@@ -4,8 +4,8 @@
 
 **Unit ID:** `v-rig`
 **Plan:** [v-rig.md](../plans/v-rig.md)
-**ADR:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), Proposed 2026-11-08
-**Status:** merged 2026-11-08. VR-1 to VR-7 built, the unit awaits the maintainer's review, ADR-A153's acceptance and the module's four release tags.
+**ADR:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), accepted 2026-11-16
+**Status:** merged 2026-11-08. VR-1 to VR-7 built, ADR-A153 accepted and the module's four release tags created. The unit awaits the maintainer's review and a first run on a rig, which follows the ledger's LG-9.
 
 ## Board
 
@@ -21,6 +21,7 @@
 
 ## History
 
+- 2026-11-16: the maintainer accepted ADR-A153. The module's four tags exist on the remote. The maintainer leans to a first run on a rig after the ledger's LG-9, since projection P2 copies the ledger theory of `spikes/isabelle-layers/`, an early model that the target kernel replaces, so P2's and P3's ledger results would describe a superseded model. P1 does not read that theory. Pointing P2 at the kernel's home once LG-9 moves it is work for a slice not yet named.
 - 2026-11-07: unit created on `docs/placement-vehicles-structure`. The plan was approved by the maintainer the same day from a design briefed in chat, with VR-Q1 to VR-Q11 answered and recorded in the plan. The maintainer placed this unit before the formal-methods C4 model, since P1's findings against the ensemble and ledger drafts are what ADR-A130's text should settle before C4 checks it. VR-1 marked building before any other edit.
 - 2026-11-13: a [sketch](../sketches/v-rig-dates-periods-and-reporting.md) added at the maintainer's request, outside any slice, for an agent the maintainer assigns: competency questions on dates, periods and reporting for projection P1, four that can be asked today and eight with no term to ask against, and the kinds of statement a rig must hold to answer them. It follows the ledger's decision on LG-Q26. No run of the rig is due until the ledger's remaining design questions are settled.
 - 2026-11-08: VR-1 built. The module `ontology/v-rig/` at 0.1.0, its six examples committed before the vocabulary, ADR-A153 Proposed, the catalogue and release register updated, `tools/test_v_rig.py` in the catalog check, ten tests passing. The Validation Pack [VR-1](../validation/VR-1.md) records the checks run. Three release tags wait for the maintainer, `v-rig-v0.1.0`, `v-rig-shapes-v0.1.0` and `v-rig-vocab-v0.1.0`. Body nodes carry a kind token under `vrig:` rather than Wording's element types, so the module imports nothing and VR-3's scheme produces Wording's elements. VR-2 marked building in the same commit, under the maintainer's authorisation of 2026-11-07 to build the unit through.
