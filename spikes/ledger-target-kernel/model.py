@@ -575,6 +575,43 @@ def search_pots(cases, seed, whole):
     return found
 
 
+def search_pots_by_rank(cases, seed, whole):
+    """LP1 under its proved condition: every account on a pot's path below the fund holds at least what the fund makes available before the pots run.
+    The pots sit anywhere below the fund, so they may share accounts or lie one above another, and `pots` must then grant what `by_rank` grants over the same groups."""
+    rng = random.Random(seed)
+    found = {"cases": 0, "refused": 0, "no tie rule": 0, "pots sharing an account": 0, "equal to by_rank": 0}
+    for _ in range(cases):
+        ranked = ranks_model.draw_ranks(rng)
+        above = rng.randint(0, 2)
+        fund = above
+        asked = sum(sum(r.values()) for r in ranked)
+        parent = [None] + list(range(above))
+        bal = [rng.randint(0, asked + 5) for _ in range(above + 1)]
+        least = min(bal)
+        below = []
+        for _ in range(rng.randint(len(ranked), len(ranked) + 4)):
+            parent.append(rng.choice([fund] + below))
+            below.append(len(parent) - 1)
+        pot_ids = rng.sample(below, len(ranked))
+        bal += [least + rng.randint(0, 5) for _ in below]
+        own = [set(chain(parent, a)) - set(chain(parent, fund)) for a in pot_ids]
+        found["cases"] += 1
+        found["pots sharing an account"] += any(own[i] & own[j] for i in range(len(own)) for j in range(i))
+        policy = draw_policy(rng, whole)
+        if policy[2] is None:
+            found["no tie rule"] += 1
+            continue
+        result = pots(policy, {k: 0 for r in ranked for k in r}, parent, fund, list(zip(pot_ids, ranked)), bal)
+        if result is None:
+            found["refused"] += 1
+            continue
+        v = {k: x for r in ranked for k, x in r.items()}
+        group = {k: i for i, r in enumerate(ranked) for k in r}
+        assert {k: x for g in result[0] for k, x in g.items()} == by_rank(group, policy[2], v, min(sum(v.values()), least)), "pots whose own amounts cannot bind are not by_rank"
+        found["equal to by_rank"] += 1
+    return found
+
+
 def search_spread(cases, seed, whole):
     """One amount allocated across accounts, charging the reach of its purpose, by an exact rule, by priority and by a rule that leaves a residual."""
     rng = random.Random(seed)
@@ -737,6 +774,8 @@ def main():
     print("merge and its refusals, whole units:", search_merge(100_000 // scale, 26, True))
     print("pots, exact amounts:", search_pots(60_000 // scale, 27, False))
     print("pots, whole units:", search_pots(100_000 // scale, 28, True))
+    print("pots whose own amounts cannot bind, exact amounts:", search_pots_by_rank(100_000 // scale, 33, False))
+    print("pots whose own amounts cannot bind, whole units:", search_pots_by_rank(100_000 // scale, 34, True))
     print("allocation across accounts, exact amounts:", search_spread(60_000 // scale, 29, False))
     print("allocation across accounts, whole units:", search_spread(100_000 // scale, 30, True))
     for family in ("exact", "priority", "units"):

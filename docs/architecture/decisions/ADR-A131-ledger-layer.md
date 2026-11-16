@@ -386,6 +386,36 @@ A read of the recorded amounts or of the flows starts from a checkpoint, which t
 
 **What this does not decide, and what was not measured.** How long a writer may hold a batch before it writes it. What a restart costs while the balances are read again. How a second writer is caught on a store where the guard itself cannot be relied on, which is why the single writer is provided in front of the store. Writers in several processes or reached over HTTP, since the measurements were of threads in one process.
 
+## Addendum (proposed 2026-11-16, fourth): a credit is posted to an account that accepts its kind
+
+**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided the rule on 2026-11-16, after the proof of a law of the first addendum of that day met a case its words do not cover. Decision 8 says new evaluation semantics come by an addendum with conformance cases, and the cases are at its end.
+
+**Narrows decision 3.**
+
+**A credit posted to an account that does not accept its kind is refused.** The first addendum of 2026-11-16 has a credit applied at the account it is posted to, up to that account's room, and has each ancestor count it only where the ancestor accepts its kind. It does not say what happens where the account posted to does not accept the kind. There the credit is refused with a reason, no posting is written and no balance moves. The amount applied is therefore always the amount by which the account posted to was restored.
+
+**The wording names the account, and the ledger never chooses it.** The account a credit is posted to is the one its term says is restored. A term may name that account directly, or by its relation to another, for example the aggregate under which a sublimit is stated, and such a relation is resolved along the stated tree when the term is instantiated. The ledger does not look along a path for an account that accepts the kind, and where a term does not say what a credit restores, nothing supplies an account by default.
+
+| The term says a credit arising under a lower account restores | Posted at | What the kinds do |
+|---|---|---|
+| the lower account and the one above it | the lower account | both accept the kind |
+| the lower account and not the one above it | the lower account | the one above does not accept the kind |
+| the one above and not the lower account | the one above | nothing is needed, and a lower account that declares it does not accept the kind guards against a wrong posting |
+
+**A credit is not bounded by what was drawn through an account it does not restore.** An account's room falls only with the credits it accepts, so the room of an account that does not accept a kind says nothing of how much of that kind has come back. Where a recovery must not exceed its loss, the amount is sized before the ledger.
+
+**Where no cut is recorded.** Where every ceiling equals its stated amount and every credit is posted to an account with none below it, no ancestor has less room than the account credited, so no cut is recorded. A cut arises only where a ceiling stands above a stated amount or a credit is posted above the lowest accounts.
+
+**Conformance cases.** Amounts are whole units.
+
+| Case | Given | Result |
+|---|---|---|
+| a credit its account does not accept | a parent and its child, each stated at 10 with a ceiling of 10. The child does not accept a kind and the parent does. A debit of 5 at the child, then a credit of 5 of that kind posted to the child | refused. Both balances stay at 5 |
+| the same credit at the account that accepts it | as above, with the credit posted to the parent | 5 is applied. The parent holds 10 and the child 5 |
+| a second such credit | as the last, then another credit of 5 of that kind posted to the parent | nothing is applied, since the parent has no room, and no cut is recorded |
+
+**Releases.** The reason for refusing a credit adds a published term, made with the minor release of the substrate that the first addendum of 2026-11-16 names.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -416,3 +446,5 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 **The second addendum of 2026-11-16.** The maintainer decided LG-Q12, LG-Q13, LG-Q17 and LG-Q18 on 2026-11-13 and ruled on scenarios A1, D2, D3, F1 and G1 to G3 of the [posting scenarios note](../../developer/notes/ledger-posting-scenarios.md) by 2026-11-15. The rules were then written once in their decided form, in the [target kernel's sketch](../../developer/sketches/ledger-target-kernel.md), whose questions K1 and K3 to K6 the maintainer decided the same day (LG-Q28). The registers hold the same decisions as MEC-108 to MEC-112, STD-332 and STD-333. The conformance cases are examples evaluated on the definitions of [spikes/ledger-target-kernel](../../../spikes/ledger-target-kernel/README.md), and the laws are owed by the proofs, LG-9 and LG-20.
 
 **The third addendum of 2026-11-16.** The maintainer decided on 2026-11-16 that a ledger has one writer with the guard kept, and that kept balances are a permitted cache rebuilt from the last checkpoint. The measurements are those of the writes, the single writer and the native writer in [benchmark/ledger-credit-kinds](../../../benchmark/ledger-credit-kinds/README.md), in the Validation Packs of LG-17, LG-18 and LG-22, and the store that loses guarded writes is TSD-73, with TSD-74 for the stores that do not. It applies PAT-18, PAT-21 and PAT-04 to the ledger, keeps PRI-52 for the balances a writer holds, and answers the first part of TD-162, which stays open for the conformance test and the patterns guide. The registers hold it as MEC-113.
+
+**The fourth addendum proposed on 2026-11-16.** Raised as LG-Q29 of the [Ledger plan](../../developer/plans/ledger.md) by the proof of LU3 in LG-20, which found that the kernel bounded a credit's applied amount by the room of an account that did not accept it, so a cut was recorded with every ceiling at its stated amount and every credit on a leaf. The maintainer decided (b) of its three options on 2026-11-16, with the rule that a wording naming the restored account by relation is resolved at instantiation. The kernel's `post` refuses such a credit, and the law is proved as `Credits.no_cut_where_ceilings_are_stated_and_credits_on_leaves`, with the case for `credit` alone kept as LU3n ([LG-20's pack](../../developer/validation/LG-20.md)).
