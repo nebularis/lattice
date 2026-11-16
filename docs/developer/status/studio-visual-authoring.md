@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-16. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -26,7 +26,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | built 2026-11-15, building 2026-11-12 | SVA-R0 |
 | SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | planned | SVA-R1 |
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
-| SVA-R4 | the browser's run controller and the dock's run pane | planned | SVA-R1 |
+| SVA-R4 | the browser's run controller and the dock's run pane | building 2026-11-16 | SVA-R1 |
 | SVA-R5 | the run protocol's failure cases on the real stack | planned | SVA-R2, SVA-R3, SVA-R4 |
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2a | several imports held by one write, each with its ontology and version IRI | built 2026-11-12, building 2026-11-12 |  |
@@ -138,3 +138,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: SVA-B5 picked up.
 - 2026-11-16: SVA-B5 built, [Validation Pack](../validation/SVA-B5.md). Built the library-imports sample whose import graph draws a stated import, a binds edge and a derived edge once its imports are held, a drop area on the import dialog that walks a dropped folder, the state's own per-dependency and per-import graphs that the Baseline view now reads instead of fetching, and the baseline's validation in the state pill and the Overview's count. Found that the Overview counts violations only, so a baseline's missing-import warnings do not move it, and that the two LATTICE layers shared a namespace so their import node labels were cut alike, which a wrapping rule fixes. Left undone is a run on the live stack, where the two layers also import skos and prov-o, which are not staged and draw as missing.
 - 2026-11-16: SVA-B5 verified by a second run of its checks, 13 stage tests, 374 unit tests, the type check and 47 browser tests on the fake service, and by the counts of `mise run check:config-studio`, 21, 285 and 374. The derived edge of the import graph was seen drawn for the first time, dashed, from the library sample's ontology to the foundation layer. One existing test was edited, the stage test that lists every sample by name, which gained the new sample's name. For SVA-V1 to see on the real stack: both LATTICE layers the sample holds import SKOS and PROV-O, which the service does not stage, so the sample's import graph will show two missing imports there that the fake's stand-ins leave out. A held import's node shows its IRI twice, as its label and as its IRI, where its label is the IRI.
+- 2026-11-16: SVA-R4 picked up.
