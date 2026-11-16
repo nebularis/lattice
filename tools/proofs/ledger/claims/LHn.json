@@ -1,0 +1,13 @@
+{
+  "subject": "LHn",
+  "statedAs": "Units.a_unit_to_the_first_among_all_keys_strays",
+  "statementDigest": "sha256:56ea4bd4646f28a7f33bb9013d80f5f64d8bfbbc04d374ba9a8e681e0be19f7a",
+  "method": "Proof",
+  "scope": "OneArrangement",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

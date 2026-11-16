@@ -1,0 +1,13 @@
+{
+  "subject": "LS1",
+  "statedAs": "Predicates.the_rules_for_whole_units_apportion",
+  "statementDigest": "sha256:6484e014abd0df8366b4d20d261a7d6ec64297b5b8cbeca6a0379afed7fe4357",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySetAndInjectiveOrder",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

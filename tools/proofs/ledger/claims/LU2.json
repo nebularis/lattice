@@ -1,0 +1,13 @@
+{
+  "subject": "LU2",
+  "statedAs": "Credits.a_credit_depends_on_its_path",
+  "statementDigest": "sha256:02554c37abe0a873fd9ade59520e8ab41df6a190978fdb044bb29b63ab187b59",
+  "method": "Proof",
+  "scope": "EveryParentFunctionAndCredit",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

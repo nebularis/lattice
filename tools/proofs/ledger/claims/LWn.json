@@ -1,0 +1,13 @@
+{
+  "subject": "LWn",
+  "statedAs": "Units.a_declared_order_treats_equal_requests_unequally",
+  "statementDigest": "sha256:0690efde7d38b5e87b9be0df5debd629eade71f1e94a867f58bfbdd040f0e92a",
+  "method": "Proof",
+  "scope": "OneArrangement",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

@@ -1,0 +1,13 @@
+{
+  "subject": "LB2",
+  "statedAs": "Credits.recorded_balances_follow_step_by_step",
+  "statementDigest": "sha256:e990c191f50807a4e2af61b7310b496a0c506a66f0a150a509542946a7f2857e",
+  "method": "Proof",
+  "scope": "EveryBookAndRequestList",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

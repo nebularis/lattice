@@ -1,0 +1,13 @@
+{
+  "subject": "LB1",
+  "statedAs": "Credits.the_step_agrees_with_debit_and_credit",
+  "statementDigest": "sha256:807e5b1948bdfa0aaa3cf5a4956daa508f08ced9ffb1fb112f24c0167acb8a67",
+  "method": "Proof",
+  "scope": "EveryBookAndRequest",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

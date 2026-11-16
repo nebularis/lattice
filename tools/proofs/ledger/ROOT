@@ -8,3 +8,10 @@ session Ledger = LatticeBase +
     Allocation
     Draws
     Rounding
+    Predicates
+    Ranks
+    Units
+    Merge
+    Pots
+    Credits
+    Readings

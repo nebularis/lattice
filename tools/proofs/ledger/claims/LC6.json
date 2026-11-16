@@ -1,0 +1,13 @@
+{
+  "subject": "LC6",
+  "statedAs": "Pots.whole_or_no_result",
+  "statementDigest": "sha256:d5c1a877af304df7f86294c560faf342d34eb3f066dd10d3af2796f3d81a73d7",
+  "method": "Proof",
+  "scope": "EveryRuleAndSequence",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

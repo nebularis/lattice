@@ -1,0 +1,13 @@
+{
+  "subject": "LE3",
+  "statedAs": "Readings.flows_from_recorded_totals",
+  "statementDigest": "sha256:b85cd8cf3b6944b923f94fb80fa388c6b840cdc0437b244cfc5b27cc35832b81",
+  "method": "Proof",
+  "scope": "EveryHistoryRecordingAndDay",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

@@ -1,0 +1,13 @@
+{
+  "subject": "LP3",
+  "statedAs": "Pots.the_fund_falls_by_the_grants",
+  "statementDigest": "sha256:68a3f483d35fd14e5d3e320b26d43851913651b7bd5ed0fbb83371d837abe516",
+  "method": "Proof",
+  "scope": "EveryPolicyAndPotsUnderTheFund",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

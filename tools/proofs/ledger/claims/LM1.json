@@ -1,0 +1,13 @@
+{
+  "subject": "LM1",
+  "statedAs": "Merge.each_refusal_where_its_condition_holds",
+  "statementDigest": "sha256:cb230082834eedf7762612c1a974f62db8927a913c807f142eb240f9de811177",
+  "method": "Proof",
+  "scope": "EveryPolicyRankAndRequest",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

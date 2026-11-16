@@ -1,0 +1,13 @@
+{
+  "subject": "LJ4",
+  "statedAs": "Merge.mixed_or_crossing_refused",
+  "statementDigest": "sha256:2acadd41233ed639c3c3469be19f902c1c96ff086f1c92dbe1a3cd11cc6446f2",
+  "method": "Proof",
+  "scope": "EveryPolicyAndPosition",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

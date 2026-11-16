@@ -1,0 +1,13 @@
+{
+  "subject": "LJ1",
+  "statedAs": "Merge.no_purpose_is_settle",
+  "statementDigest": "sha256:28a7f1ff4cabb765b6d75a9b120485fe4060a56dd6efdf6fe1c024c53608a1d6",
+  "method": "Proof",
+  "scope": "EveryNonEmptyProposalList",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

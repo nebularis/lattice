@@ -1,7 +1,7 @@
 {
   "subject": "LX1",
   "statedAs": "Draws.chain_is_the_path",
-  "statementDigest": "sha256:b7f47fa5a13a5372584ff43d60c156b99adf488f1b02d9fc39130af3bd024ce1",
+  "statementDigest": "sha256:1143eca1f92f7f0f414095b183bb43f2b7039546a04b88e342b471b8394a61f3",
   "method": "Proof",
   "scope": "EveryTree",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

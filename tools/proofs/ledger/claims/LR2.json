@@ -1,7 +1,7 @@
 {
   "subject": "LR2",
   "statedAs": "Rounding.ration_to_first_sums_exactly, ration_to_first_the_same_in_every_order",
-  "statementDigest": "sha256:df44dbef9b8708dc8708dd02ac9e1e1b826ef31e5b56255d3fec03f52fa4b191",
+  "statementDigest": "sha256:ddc4495414b8bbe4f0537ad3ea111b1311492d6541b57144b3581667bbb31898",
   "method": "Proof",
   "scope": "EveryFiniteKeySetAndInjectiveOrder",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

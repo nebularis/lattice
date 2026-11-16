@@ -1,7 +1,7 @@
 {
   "subject": "LC4",
   "statedAs": "Allocation.attribution_conserves",
-  "statementDigest": "sha256:1aaf66b1899107da143181df76f58cddbda5bceb0486b8d2cbffdfab773e5fcc",
+  "statementDigest": "sha256:62fba67a453b28edebc5d1f481609657d08c2a5eb5fc97fd49a859bc5b4ae3a5",
   "method": "Proof",
   "scope": "EveryApportioningRuleAndBasis",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

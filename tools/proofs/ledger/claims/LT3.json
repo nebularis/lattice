@@ -1,0 +1,13 @@
+{
+  "subject": "LT3",
+  "statedAs": "Ranks.cut_short_leaves_later_ranks_nothing",
+  "statementDigest": "sha256:a0e1cee0ec1e13473ae0d2cfba0e59173632feca037cbd189d38cd5dda1aaa0d",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySetRankAndTieRule",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

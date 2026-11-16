@@ -1,7 +1,7 @@
 {
   "subject": "LC2",
   "statedAs": "Draws.conservation_in_total",
-  "statementDigest": "sha256:7204a6aebab17b982e2dc197d9f1083d1d35c9e9437a40be18145002efe87088",
+  "statementDigest": "sha256:1c9fe7043ff8073320b1d800752e39d3ac78e502a53a59100216d0d5fc7c720a",
   "method": "Proof",
   "scope": "EveryRuleAndSequence",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

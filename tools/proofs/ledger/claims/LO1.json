@@ -1,7 +1,7 @@
 {
   "subject": "LO1",
   "statedAs": "Draws.settled_the_same_in_every_order_of_proposal",
-  "statementDigest": "sha256:e94c8e47e685282d3ac5d99c52f6e09d49c145c25018c91f56c244bbc6196399",
+  "statementDigest": "sha256:a49a360909faca6f929a655f236835bec1f937011d1a8b45a287f58d642c5804",
   "method": "Proof",
   "scope": "EveryProposalListWithTheSameMultiset",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

@@ -1,0 +1,13 @@
+{
+  "subject": "LW5",
+  "statedAs": "Units.whole_groups_need_no_order",
+  "statementDigest": "sha256:61f76c6e5c28a9d7c6ea85cbf622364023d11ca6875ba100ef925989957a7637",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySetAndInjectiveOrder",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

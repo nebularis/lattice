@@ -11,6 +11,7 @@ The laws of [ADR-A131](../../../docs/architecture/decisions/ADR-A131-ledger-laye
 | `Draws.thy` | the account tree: the path as a list and its code equation, examples of `settle`, `spread`, `pots` and `credit` evaluated, draws, availability, credits, purposes, a settlement at one position, an amount allocated across accounts | yes |
 | `Rounding.thy` | whole minor units: floor division and what it leaves short, the units a declared order places, to the first in order and largest remainder under rationing, both lawful, each part within one unit of its exact share, the refinement to exact amounts across accounts | yes |
 | `claims/*.json` | one claim record per law, in `../claim-schema.json`'s shape | written with the theorems |
+| `Predicates.thy`, `Ranks.thy`, `Units.thy`, `Merge.thy`, `Pots.thy`, `Credits.thy`, `Readings.thy` | LG-20's laws, one theory per group of definitions, in the plan's order, each with its examples first | yes |
 
 ## What is proved
 
@@ -41,6 +42,47 @@ Each row is a theorem between `(* GATE:BEGIN <id> *)` and `(* GATE:END *)` marke
 
 The pack's checks LG9-g and LG9-f are `mise run check:proofs -- ledger` and `mise run check:formal-freshness`, and have no claim record.
 
+LG-20, with [its pack](../../../docs/developer/validation/LG-20.md), adds 36 claims. Instances kept on purpose end in `n`.
+
+| Claim | Theorem | Law |
+|---|---|---|
+| LV1 | `Predicates.lawful_is_rationing_with_no_residual` | a lawful rule rations and leaves no residual |
+| LS1 | `Predicates.the_rules_for_whole_units_apportion` | both rules for whole units apportion with an order injective on the keys |
+| LS2 | `Predicates.a_key_of_no_weight` | rationed, a key of no weight is granted nothing, and apportioned it may take a unit |
+| LV2 | `Predicates.whole_each_rations` | granting whole in a declared order over a list holding each key once rations |
+| LVn | `Predicates.no_whole_or_nothing_rule_is_exact` | with 7 available and requests of 5 and 4, no rule granting whole or nothing is exact |
+| LK | `Ranks.renaming_carries_the_result` | a bijection on the keys that carries the ranks, and a rule for a tie that commutes with it, carries the result |
+| LK2 | `Ranks.distinct_ranks_are_priority` | with a rank injective on the keys, by rank is the priority formula and never reads the rule for a tie |
+| LT1 | `Ranks.one_rank_is_the_tie_rule` | with one rank and a lawful rule for a tie, by rank is that rule |
+| LT2 | `Ranks.by_rank_rations_where_the_tie_rule_does` | by rank rations where the rule for a tie does on every set of keys, and is lawful where it is |
+| LT3 | `Ranks.cut_short_leaves_later_ranks_nothing` | a request granted less than it asked leaves every later rank nothing |
+| LT4 | `Ranks.no_tie_no_tie_rule` | where no tie arises the result does not depend on the rule for a tie |
+| LW0 | `Units.a_strict_total_order_places_exactly_n` | a strict total order places exactly n keys, n from 0 to their number |
+| LW1 | `Units.no_order_rations` | largest remainder with no order declared rations |
+| LW2 | `Units.equal_requests_equal_grants` | under it equal requests receive equal grants |
+| LW3 | `Units.residual_below_the_number_of_keys` | its residual is from zero to less than the number of keys |
+| LW5 | `Units.whole_groups_need_no_order` | where the units short reach whole groups of equal remainders, it leaves no residual and equals the rule with any declared order |
+| LWn | `Units.a_declared_order_treats_equal_requests_unequally` | three requests of 5 sharing 10 are granted 4, 3 and 3 with an order declared |
+| LHn | `Units.a_unit_to_the_first_among_all_keys_strays` | weights 3, 0, 11 and 11 sharing 62 round to 61, and the unit given to the first among all keys goes to the key of no weight |
+| LM1 | `Merge.each_refusal_where_its_condition_holds` | each of the four reasons of a merge arises exactly where its condition holds, with no rule for a tie a merge refuses exactly where a tie arises, and a refusal changes no balance |
+| LM3 | `Merge.no_residual_unless_declared` | a granted outcome has no residual unless the account declares one may be left |
+| LJ1 | `Merge.no_purpose_is_settle` | with no purpose and the one set of every proposer, settling purposes is `settle` |
+| LJ4 | `Merge.mixed_or_crossing_refused` | a mixed position is refused exactly where declared and the purposes differ, a crossing one is refused, and no refusal changes a balance |
+| LJ5 | `Merge.two_purposes_never_cross` | with at most two purposes among the requests no two sets cross |
+| LJn | `Merge.a_facility_with_a_sublimit` | the facility of 100 with a sublimit of 30 grants 75 and 25 and leaves 5 on the sublimit |
+| LC5 | `Pots.a_purpose_charges_every_account_counting_it` | an allocation over the reach of a purpose charges every account that counts it by the whole |
+| LC6 | `Pots.whole_or_no_result` | an allocation that must be whole is the allocation or no result |
+| LV3 | `Pots.rationing_allocation_accounts_for_what_was_asked` | with a rule that rations, parts and what is left are what was asked, and each account is charged what was granted at it |
+| LP3 | `Pots.the_fund_falls_by_the_grants` | the fund and every account above it fall by the grants of its pots |
+| LB1 | `Credits.the_step_agrees_with_debit_and_credit` | each step of a run moves an account by what its posting records |
+| LB2 | `Credits.recorded_balances_follow_step_by_step` | a list of balances is the run's exactly when each follows from the one before |
+| LU1 | `Credits.the_sum_is_the_balance` | the sum of what a run posted is the balance it ends at |
+| LU2 | `Credits.a_credit_depends_on_its_path` | what a credit applies and cuts depends on the balances on its path alone, and no cut is negative |
+| LE1 | `Readings.reading_a_from_a_recorded_balance` | reading A from a recorded balance, plus what was recorded after and effective by the day, is reading A from the start |
+| LE2 | `Readings.reading_a_at_the_head` | at the head with every posting counted, reading A is the recorded balance |
+| LE3 | `Readings.flows_from_recorded_totals` | the two totals of the flows split the same way |
+| LEn | `Readings.a_debit_recorded_last_and_effective_second` | reading A is minus 10, reading B 50 or 100, and the recorded balance 20 |
+
 Supporting lemmas with no claim of their own: the examples of each theory, proved by `code_simp` before any theorem, among them the target kernel's six, `Draws.example_settle`, `example_spread`, `example_pots` and `example_credit`, which evaluate through the path, and `Rounding.example_a_key_of_no_weight`, where apportioning gives a key of weight zero a unit and rationing does not. `Allocation.lawfulI`, the four axioms before LG-9 giving `lawful`, `Allocation.by_rank_injective`, by rank with an injective rank as the priority formula, `Draws.path_step`, the path unfolded one step and its code equation, `Draws.spread_sums`, `Draws.spread_rations` and `Draws.spread_step`, `Rounding.placed_count`, a strict total order placing exactly n keys, `Rounding.short_within_unmet`, the shortfall at most the requests not yet met, `Rounding.floor_units_total`, `Rounding.placed_remainder_positive` and `Rounding.spread_refines`.
 
 ## What is assumed
@@ -57,7 +99,7 @@ Every hypothesis is in the theorem's statement, and nothing is assumed outside t
 
 ## What is not covered
 
-- The laws the target kernel gains, which are LG-20's.
+- LG-20's laws not yet built: LW4, LH1, LH2, LM2, LJ2, LJ3, LP1, LP2, LP4, LPn, LB1n, LU1n, LU3, LE4 and LE5 (its pack says why).
 - The composition law, the uniqueness of a solution and the least fixpoint over the information order, which are ADR-A130 decision 5's and the formal-methods plan's E4b.
 - The runtime terms, postings and balance records as records with natural keys, which LG-2 writes against these theorems.
 - Conversion between value spaces (LG-Q8), and the derivation of one account per key value (LG-Q7).

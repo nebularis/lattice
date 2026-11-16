@@ -1,0 +1,13 @@
+{
+  "subject": "LJ5",
+  "statedAs": "Merge.two_purposes_never_cross",
+  "statementDigest": "sha256:6342e684a0931ce277fa25eda77d707c7c27c5c0540df7d6f39ec6c8546b4cea",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySetWithAtMostTwoPurposes",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

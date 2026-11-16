@@ -1,0 +1,13 @@
+{
+  "subject": "LE2",
+  "statedAs": "Readings.reading_a_at_the_head",
+  "statementDigest": "sha256:5189379deff11584525ad8cd6408de58826a8492eabb545592389435c58a4e61",
+  "method": "Proof",
+  "scope": "EveryRunAndDay",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}
