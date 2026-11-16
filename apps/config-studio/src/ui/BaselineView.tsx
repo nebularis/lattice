@@ -2,12 +2,11 @@
 // The baseline: its class tree and schemes, a class's properties and what configures it, and
 // replacing the baseline with a new revision.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronRight, Download, Network, Plus, RefreshCw, Shapes, Upload } from "lucide-react";
 import { Baseline, type BaselineClass } from "../rdf/baseline";
 import { KINDS, checkReferences } from "../rdf/editors";
-import { CST, DAL, Graph, SRF, compact } from "@lattice/authoring-domain";
-import { api } from "../api";
+import { DAL, Graph, SRF, compact } from "@lattice/authoring-domain";
 import { ontologyList, shortIri, type HeldImport } from "../rdf/held";
 import { split } from "../rdf/split";
 import { Modal, Spinner, download, go, readFiles } from "./kit";
@@ -27,36 +26,14 @@ export function BaselineView({ selected }: { selected?: string }) {
   // The ontology drawing takes the place of the detail, around the selected class when one is selected.
   const [diagram, setDiagram] = useState(false);
   const [importing, setImporting] = useState(false);
-  // What the workspace holds, with each held import's graph as far as the browser has loaded it, for what the imports import.
+  // What the workspace holds, with each held import's graph as far as the workspace has loaded it, for what the imports import.
+  // The workspace's state loads them once, and this view reads them from it and fetches nothing.
   const summary = studio.model.state.summary!;
-  const [graphs, setGraphs] = useState<Record<string, Graph>>({});
-  useEffect(() => {
-    for (const i of summary.imports) {
-      if (!graphs[i.digest]) void api.importGraph(id, i.digest).then((g) => setGraphs((m) => ({ ...m, [i.digest]: g })), () => undefined);
-    }
-  }, [summary.imports]); // eslint-disable-line react-hooks/exhaustive-deps
-  // The graphs of what the workspace depends on, read only and loaded where the import graph is drawn, as the workspace reads them.
-  const [dependencies, setDependencies] = useState<Graph[]>([]);
-  const dependsOn = summary.dependsOn.join(" ");
-  useEffect(() => {
-    if (!diagram) return;
-    let stale = false;
-    void (async () => {
-      const loaded: Graph[] = [];
-      for (const d of dependsOn.split(" ").filter(Boolean)) {
-        const version = d.includes("/rev/1-") ? d : (await api.lineage(d).catch(() => null))?.value(d, CST("current"));
-        const content = version ? await api.version(version).catch(() => null) : null;
-        if (content) loaded.push(content);
-      }
-      if (!stale) setDependencies(loaded);
-    })();
-    return () => {
-      stale = true;
-    };
-  }, [diagram, dependsOn]);
+  const { heldGraphs, dependencyGraphs } = studio.model;
+  const dependencies = useMemo(() => Object.keys(dependencyGraphs).sort().map((d) => dependencyGraphs[d]), [dependencyGraphs]);
   const held = useMemo<HeldImport[]>(
-    () => summary.imports.map((i) => ({ digest: i.digest, label: i.label, ontology: i.ontology, version: i.version, graph: graphs[i.digest] })),
-    [summary.imports, graphs],
+    () => summary.imports.map((i) => ({ digest: i.digest, label: i.label, ontology: i.ontology, version: i.version, graph: heldGraphs[i.digest] })),
+    [summary.imports, heldGraphs],
   );
   const ontologies = useMemo(() => ontologyList(baseline.graph, held), [baseline.graph, held]);
   const missing = ontologies.filter((e) => e.kind === "missing").length;

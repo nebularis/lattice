@@ -137,6 +137,12 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+/** What the state pill reports of the validations in flight: whether any is running, and the first that could not run, a part's or the baseline's alike. */
+export function validationSummary(state: Pick<State, "configs" | "baselineValidation">): { running: boolean; failed?: Validation } {
+  const all = [...PARTS.map((p) => state.configs[p]?.validation), state.baselineValidation].filter((v): v is Validation => v !== undefined);
+  return { running: all.some((v) => v.state === "running"), failed: all.find((v) => v.state === "failed") };
+}
+
 export function isDirty(c?: Config): boolean {
   return !!c && c.current !== c.saved && c.current.toTurtle() !== c.saved.toTurtle();
 }
@@ -225,25 +231,37 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
 
   // What the workspace depends on and imports, read only (ADR-A149 decisions 6 and 7). A followed lineage is read under
   // the lineage's IRI, which a draft names, and a pinned version under its own.
-  const [context, setContext] = useState<Graph>(Graph.empty());
+  // Each dependency's graph and each held import's graph are kept apart as well as merged, so a view that draws them reads them here
+  // and never fetches them again. A dependency is keyed by the IRI the workspace names, a held import by its digest.
+  const [loaded, setLoaded] = useState<{ context: Graph; dependencies: Record<string, Graph>; imports: Record<string, Graph> }>({ context: Graph.empty(), dependencies: {}, imports: {} });
+  const context = loaded.context;
   const dependsOn = state.summary?.dependsOn.join(" ") ?? "";
   const imports = state.summary?.imports.map((i) => i.digest).join(" ") ?? "";
   useEffect(() => {
     let stale = false;
     void (async () => {
       let g = Graph.empty();
+      const dependencies: Record<string, Graph> = {};
+      const held: Record<string, Graph> = {};
       for (const d of dependsOn.split(" ").filter(Boolean)) {
         const pinned = d.includes("/rev/1-");
         const version = pinned ? d : (await api.lineage(d).catch(() => null))?.value(d, CST("current"));
         if (!version) continue;
         const content = await api.version(version).catch(() => null);
-        if (content) g = g.merge(pinned ? content : content.edit((e) => e.rename(version, d)));
+        if (content) {
+          const graph = pinned ? content : content.edit((e) => e.rename(version, d));
+          dependencies[d] = graph;
+          g = g.merge(graph);
+        }
       }
       for (const digest of imports.split(" ").filter(Boolean)) {
         const content = await api.importGraph(id, digest).catch(() => null);
-        if (content) g = g.merge(content);
+        if (content) {
+          held[digest] = content;
+          g = g.merge(content);
+        }
       }
-      if (!stale) setContext(g);
+      if (!stale) setLoaded({ context: g, dependencies, imports: held });
     })();
     return () => {
       stale = true;
@@ -275,6 +293,9 @@ export function useWorkspace(id: string, vocab: Vocabulary) {
     state,
     issues,
     world,
+    /** The graph of each dependency by the IRI the workspace names, and of each held import by its digest, as the workspace loaded them. */
+    dependencyGraphs: loaded.dependencies,
+    heldGraphs: loaded.imports,
     edit,
     save,
     resolve,

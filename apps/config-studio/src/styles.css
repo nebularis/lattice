@@ -482,3 +482,10 @@ table.axiom-rows.nested th { position: static; }
 .import-node.missing { border: 1.5px dashed var(--warn); background: var(--warn-2); color: var(--warn); }
 .import-node.missing .import-note, .import-node.missing .muted { color: var(--warn); }
 .import-node.scheme { border-color: var(--baseline-c); background: var(--baseline-c2); border-radius: 18px; }
+
+/* The drop area of the import dialog (SVA-B5). */
+.import-drop { border: 1.5px dashed var(--border-strong); border-radius: var(--radius); padding: 18px 14px; text-align: center; color: var(--text-2); }
+.import-drop.over { border-color: var(--accent); background: var(--accent-2); color: var(--text); }
+
+/* An import node's name and IRI wrap, so two IRIs that differ only at their end, such as two layers of one namespace, stay told apart (SVA-B5). */
+.import-node strong.ellipsis, .import-node .canvas-terms { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }

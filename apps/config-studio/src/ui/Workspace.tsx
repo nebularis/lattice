@@ -38,7 +38,7 @@ import { termsOf } from "../rdf/meaning";
 import { INS, MORK, compact, type Graph } from "@lattice/authoring-domain";
 import type { Issue } from "../rdf/report";
 import type { Vocabulary } from "../rdf/vocabulary";
-import { PARTS, isDirty, useWorkspace, type Part, type WorkspaceModel } from "../state";
+import { PARTS, isDirty, useWorkspace, validationSummary, type Part, type WorkspaceModel } from "../state";
 import { BaselineView } from "./BaselineView";
 import { BuildView } from "./BuildView";
 import { AssemblyView, LibraryView, useAssembler } from "./BuilderView";
@@ -306,8 +306,7 @@ function NavLink(props: { to: View; view: View; id: string; icon: React.ReactNod
 }
 
 function ValidationPill({ model }: { model: WorkspaceModel }) {
-  const running = PARTS.some((p) => model.state.configs[p]?.validation.state === "running");
-  const failed = PARTS.find((p) => model.state.configs[p]?.validation.state === "failed");
+  const { running, failed } = validationSummary(model.state);
   const all = [...PARTS.flatMap((p) => model.issues[p]), ...model.issues.baseline];
   const violations = all.filter((i) => i.severity === "Violation").length;
   const warnings = all.filter((i) => i.severity === "Warning").length;
@@ -320,7 +319,7 @@ function ValidationPill({ model }: { model: WorkspaceModel }) {
   }
   if (failed) {
     return (
-      <span className="chip warn" role="status" title={model.state.configs[failed]?.validation.message}>
+      <span className="chip warn" role="status" title={failed.message}>
         Validation unavailable
       </span>
     );

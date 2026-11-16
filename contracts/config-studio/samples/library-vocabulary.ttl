@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The vocabulary configuration of the library sample. One scheme contract governs the subject of a
+# catalogue entry, and one binding hands it a scheme of subject headings from 2026-01-01. The contract
+# constrains lib:subject, which library-baseline.ttl declares, and the binding names a scheme of this
+# configuration, so the import graph draws a binds edge from the workspace's ontology to the scheme.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix lib:  <https://example.org/library#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+lib:SubjectHeadings a voc:ConceptScheme ;
+    fnd:hasIdentity lib:subject-headings-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "Subject headings"@en ;
+    skos:hasTopConcept lib:Fiction , lib:Science , lib:History .
+
+lib:Fiction a skos:Concept ; skos:prefLabel "Fiction"@en ;
+    skos:inScheme lib:SubjectHeadings .
+lib:Novel a skos:Concept ; skos:prefLabel "Novel"@en ;
+    skos:broader lib:Fiction ;
+    skos:inScheme lib:SubjectHeadings .
+lib:Science a skos:Concept ; skos:prefLabel "Science"@en ;
+    skos:inScheme lib:SubjectHeadings .
+lib:History a skos:Concept ; skos:prefLabel "History"@en ;
+    skos:inScheme lib:SubjectHeadings .
+
+lib:SubjectContract a voc:SchemeContract ;
+    fnd:hasIdentity lib:subject-contract-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    voc:constrainsProperty lib:subject ;
+    voc:requiresGovernanceState fnd:Active .
+
+lib:subject-binding a voc:SchemeBinding ;
+    voc:forContract lib:SubjectContract ;
+    voc:bindsScheme lib:SubjectHeadings ;
+    fnd:hasTemporalScope [
+        a fnd:TemporalScope ;
+        fnd:validFrom "2026-01-01T00:00:00Z"^^xsd:dateTime
+    ] .

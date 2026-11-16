@@ -75,3 +75,9 @@
     cst:part [ cst:fileName "../../../tools/mork_transforms/tests/examples/policies/xml.mork.ttl" ] ,
              [ cst:fileName "../../../tools/mork_transforms/tests/examples/policies/json.mork.ttl" ] ,
              [ cst:fileName "policies-sources.ttl" ] .
+
+<urn:lattice:studio:sample:library-imports> a cst:Sample ;
+    rdfs:label "Library, with imports" ;
+    rdfs:comment "A small library baseline that imports LATTICE's vocabulary layer, which imports the foundation layer, and a subject scheme bound to a catalogue entry's subject. Hold its imports to see the import graph draw a stated import, a binding and an edge derived from the foundation term the baseline uses." ;
+    cst:part [ cst:fileName "library-baseline.ttl" ] ,
+             [ cst:fileName "library-vocabulary.ttl" ] .

@@ -1,0 +1,71 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The baseline of the library sample, written for the Configuration Studio's samples. A library lends
+# books to members, and its catalogue entries move through a review lifecycle before they are trusted.
+#
+# The ontology imports LATTICE's vocabulary layer by its ontology IRI, since nothing under
+# contracts/config-studio/samples is rewritten when a layer's version moves, and an ontology IRI
+# names the layer whatever its version. The vocabulary layer imports the foundation layer, which the
+# baseline does not import. It uses a foundation term all the same, fnd:Governable, as the superclass
+# of a catalogue entry, so the import graph shows a derived edge from this ontology to the foundation
+# layer, beside the stated import of the vocabulary layer and the vocabulary configuration's binding.
+# Every IRI of the sample's own is a placeholder under example.org.
+
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix lib:  <https://example.org/library#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/library> a owl:Ontology ;
+    rdfs:label "Library" ;
+    rdfs:comment "Books, their catalogue entries and the members who borrow them." ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/vocabulary> .
+
+lib:CatalogueEntry a owl:Class ;
+    rdfs:subClassOf fnd:Governable ;
+    rdfs:label "Catalogue entry" ;
+    rdfs:comment "The record of one title, reviewed before it is trusted." .
+
+lib:Book a owl:Class ;
+    rdfs:label "Book" ;
+    rdfs:comment "One physical copy a member may borrow." .
+
+lib:Member a owl:Class ;
+    rdfs:label "Member" ;
+    rdfs:comment "A person who may borrow books." .
+
+lib:Loan a owl:Class ;
+    rdfs:label "Loan" ;
+    rdfs:comment "A book lent to a member until a due date." .
+
+lib:title a owl:DatatypeProperty ;
+    rdfs:label "title" ;
+    rdfs:domain lib:CatalogueEntry ;
+    rdfs:range xsd:string .
+
+lib:subject a owl:ObjectProperty ;
+    rdfs:label "subject" ;
+    rdfs:domain lib:CatalogueEntry ;
+    rdfs:range skos:Concept .
+
+lib:entry a owl:ObjectProperty ;
+    rdfs:label "entry" ;
+    rdfs:domain lib:Book ;
+    rdfs:range lib:CatalogueEntry .
+
+lib:borrower a owl:ObjectProperty ;
+    rdfs:label "borrower" ;
+    rdfs:domain lib:Loan ;
+    rdfs:range lib:Member .
+
+lib:loanedBook a owl:ObjectProperty ;
+    rdfs:label "loaned book" ;
+    rdfs:domain lib:Loan ;
+    rdfs:range lib:Book .
+
+lib:dueDate a owl:DatatypeProperty ;
+    rdfs:label "due date" ;
+    rdfs:domain lib:Loan ;
+    rdfs:range xsd:date .

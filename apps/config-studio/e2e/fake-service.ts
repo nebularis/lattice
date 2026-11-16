@@ -160,6 +160,8 @@ interface Workspace {
   revisions: Record<string, number>;
   /** The imports it holds, in the order they were held. */
   imports: Held[];
+  /** The published versions it pins, by IRI (SVA-B5). A version is served by `published`. */
+  dependsOn?: string[];
 }
 
 const OWL_ONTOLOGY = "http://www.w3.org/2002/07/owl#Ontology";
@@ -189,10 +191,34 @@ function fence(body: string, mediaType: string): { digest: string; ontology?: st
 export const STAGED_FIRST = "https://example.org/lattice/staged/alpha";
 export const STAGED_FIRST_VERSION = "https://example.org/lattice/staged/alpha/1.0";
 export const STAGED_SECOND = "https://example.org/lattice/staged/beta";
+export const LAYER_VOCABULARY = "https://www.nebularis.org/neuro-semantic/vocabulary";
+export const LAYER_FOUNDATION = "https://www.nebularis.org/neuro-semantic/foundation";
+const LAYER_VOCABULARY_VERSION = "https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1";
+const LAYER_FOUNDATION_VERSION = "https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1";
+const VOC_NS = "https://www.nebularis.org/neuro-semantic/lattice/vocabulary#";
+const FND_NS = "https://www.nebularis.org/neuro-semantic/lattice/foundation#";
 const OWL_HEAD = "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n";
 const STAGED: { iri: string; version?: string; imports: string[]; text: string }[] = [
   { iri: STAGED_FIRST, version: STAGED_FIRST_VERSION, imports: [STAGED_SECOND], text: `${OWL_HEAD}<${STAGED_FIRST}> a owl:Ontology ; owl:versionIRI <${STAGED_FIRST_VERSION}> ; owl:imports <${STAGED_SECOND}> .\n` },
   { iri: STAGED_SECOND, imports: [], text: `${OWL_HEAD}<${STAGED_SECOND}> a owl:Ontology .\n` },
+  // Small stand-ins for the two LATTICE layers the library sample imports (SVA-B5), under their real IRIs. The vocabulary layer imports the
+  // foundation layer by its version IRI as the real one does, and each declares the few terms the sample and its tests use.
+  {
+    iri: LAYER_VOCABULARY,
+    version: LAYER_VOCABULARY_VERSION,
+    imports: [LAYER_FOUNDATION_VERSION],
+    text: `${OWL_HEAD}@prefix voc: <${VOC_NS}> .\n<${LAYER_VOCABULARY}> a owl:Ontology ; owl:versionIRI <${LAYER_VOCABULARY_VERSION}> ; owl:imports <${LAYER_FOUNDATION_VERSION}> .\n` +
+      ["ConceptScheme", "SchemeContract", "SchemeBinding"].map((c) => `voc:${c} a owl:Class .\n`).join("") +
+      ["constrainsProperty", "forContract", "bindsScheme"].map((p) => `voc:${p} a owl:ObjectProperty .\n`).join(""),
+  },
+  {
+    iri: LAYER_FOUNDATION,
+    version: LAYER_FOUNDATION_VERSION,
+    imports: [],
+    text: `${OWL_HEAD}@prefix fnd: <${FND_NS}> .\n<${LAYER_FOUNDATION}> a owl:Ontology ; owl:versionIRI <${LAYER_FOUNDATION_VERSION}> .\n` +
+      ["Governable", "GovernanceState"].map((c) => `fnd:${c} a owl:Class .\n`).join("") +
+      ["hasIdentity", "hasGovernanceState"].map((p) => `fnd:${p} a owl:ObjectProperty .\n`).join(""),
+  },
 ];
 const OWL_IMPORTS = "http://www.w3.org/2002/07/owl#imports";
 
@@ -278,8 +304,14 @@ export class FakeService {
   readonly saves: { name: string; ifMatch: string | null; body: string }[] = [];
   /** Jobs that never finish while held, as a proposal that waits on a model does not (plan studio-worker-liveness): a kind, or `kind:target`. */
   readonly hold = new Set<string>();
+  /** Jobs that finish as failed, as one the worker could not run does (SVA-B5): a kind, or `kind:target`. */
+  readonly fail = new Set<string>();
+  /** A violation the baseline's validation reports, so a test can read it where a part's would show (SVA-B5). */
+  baselineViolation?: string;
   /** Whether the service stages LATTICE's ontology documents, and so answers the two reads of /api/ontologies. Off, it answers 404 as an older one does. */
   stagedOntologies = true;
+  /** The published versions the registry serves, by version IRI, for a workspace that pins one (SVA-B5). A pinned version's IRI holds `/rev/1-`. */
+  readonly published = new Map<string, string>();
   /** Whether a language model is configured, so that a proposal by it succeeds. */
   modelConfigured = false;
   /** What the service's status reports, such as a queue no worker consumes. */
@@ -304,7 +336,7 @@ export class FakeService {
   private describe(id: string): string {
     const w = this.workspaces.get(id)!;
     const revisions = Object.entries(w.revisions).map(([name, n]) => `cst:${name}Revision ${n}`).join(" ; ");
-    const held = w.imports.map((i) => `cst:holdsImport <urn:lattice:studio:import:${i.digest}> ;`).join(" ");
+    const held = w.imports.map((i) => `cst:holdsImport <urn:lattice:studio:import:${i.digest}> ;`).join(" ") + (w.dependsOn ?? []).map((d) => ` cst:dependsOn <${d}> ;`).join("");
     const roots = w.imports
       .map(
         (i) =>
@@ -328,6 +360,9 @@ export class FakeService {
       job.finished = true;
       return `${PREFIX}${head} ; cst:status cst:Running .\n`;
     }
+    if (this.fail.has(job.kind) || this.fail.has(`${job.kind}:${job.target}`)) {
+      return `${PREFIX}${head} ; cst:status cst:Failed ; cst:failureMessage "The worker could not run the validation." .\n`;
+    }
     if (job.kind === "fence") {
       const result = fence(job.body, job.mediaType ?? "text/turtle");
       if ("failure" in result) return `${PREFIX}${head} ; cst:status cst:Failed ; cst:failureMessage ${JSON.stringify(result.failure)} .\n`;
@@ -336,7 +371,7 @@ export class FakeService {
     }
     if (job.kind === "validate" && job.target === "baseline") {
       const held = this.workspaces.get(job.ws)?.imports ?? [];
-      return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${importWarnings(job.body, held)}\n`;
+      return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${importWarnings(job.body, held)}\n${this.baselineViolation === undefined ? "" : `<urn:r> sh:result [ sh:resultSeverity sh:Violation ; sh:resultMessage ${JSON.stringify(this.baselineViolation)} ; cst:code "BaselineFinding" ; sh:focusNode <https://example.org/ont/base> ] .\n`}`;
     }
     if (job.kind === "dry-run") return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${dryRunResults(iri, job.body)}`;
     if (job.kind === "propose") {
@@ -430,6 +465,11 @@ export class FakeService {
       const found = STAGED.find((o) => o.iri === iri || o.version === iri);
       return found ? turtle(found.text) : route.fulfill({ status: 404, body: "not found" });
     }
+    if (parts[0] === "registry" && parts[1] === "version") {
+      const text = this.published.get(url.searchParams.get("iri") ?? "");
+      return text === undefined ? route.fulfill({ status: 404, body: "not found" }) : turtle(text);
+    }
+    if (parts[0] === "registry" && parts[1] === "lineage") return route.fulfill({ status: 404, body: "not found" });
     if (parts[0] === "samples" && parts.length === 1) return turtle(readFileSync(join(assets, "samples.ttl"), "utf-8"));
     if (parts[0] === "samples") return turtle(readFileSync(join(assets, "samples", `${parts[1]}.ttl`), "utf-8") + (parts[1] === "builder" ? REGIME : ""));
     if (parts[0] === "workspaces" && parts.length === 1) {

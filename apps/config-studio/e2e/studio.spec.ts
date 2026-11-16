@@ -1388,3 +1388,147 @@ test("leaving a workspace ends the waiting on the baseline's validation, and com
   await page.waitForTimeout(1500);
   expect(open()).toBe(first);
 });
+
+// --- The library sample's import graph, the import dialog's drop area, the graphs the state keeps, and the baseline's validation (SVA-B5) ---
+
+async function libraryWorkspace(page: Page, fake: FakeService): Promise<string> {
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Library, with imports/ }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  const ws = [...fake.workspaces.keys()][0];
+  await page.goto(`/#/w/${ws}/baseline`);
+  return ws;
+}
+
+/** Holds what the baseline imports from LATTICE's documents, with no file given. */
+async function holdFromLattice(page: Page, count: number): Promise<void> {
+  await page.getByRole("button", { name: "Import ontologies" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import ontologies" });
+  await dialog.getByRole("button", { name: "Show the plan" }).click();
+  await dialog.getByRole("button", { name: `Hold ${count} imports` }).click();
+  await expect(dialog).toHaveCount(0);
+}
+
+test("the library sample's import graph draws a stated import, a binds edge and an edge derived from a term the baseline uses", async ({ page }) => {
+  const fake = new FakeService();
+  await libraryWorkspace(page, fake);
+  await holdFromLattice(page, 2);
+  await expect(page.getByRole("region", { name: "Ontologies" }).getByText("held", { exact: true })).toHaveCount(2);
+
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Diagram" }).click();
+  const diagram = page.getByRole("region", { name: "Ontology diagram" });
+  await diagram.getByRole("group", { name: "Ontology view" }).getByRole("button", { name: "Import graph" }).click();
+
+  const nodes = diagram.locator(".react-flow__node-imp");
+  await expect(nodes).toHaveCount(4);
+  await expect(nodes.filter({ hasText: "workspace ontology" })).toContainText("example.org/library");
+  await expect(nodes.filter({ hasText: "held import" })).toHaveCount(2);
+  await expect(nodes.filter({ hasText: "held import" }).filter({ hasText: "neuro-semantic/vocabulary" })).toHaveCount(1);
+  await expect(nodes.filter({ hasText: "held import" }).filter({ hasText: "neuro-semantic/foundation" })).toHaveCount(1);
+  await expect(diagram.getByRole("status")).toHaveText("1 ontology of the workspace, 2 imports held, 0 missing, 1 scheme.");
+
+  const edge = (text: string) => diagram.locator(".react-flow__edge title").filter({ hasText: text });
+  // Stated: the baseline imports the vocabulary layer, which imports the foundation layer. The baseline does not import the foundation layer.
+  await expect(edge("imports")).toHaveCount(2);
+  await expect(edge("example.org/library imports www.nebularis.org/neuro-semantic/vocabulary")).toHaveCount(1);
+  await expect(edge("neuro-semantic/vocabulary imports www.nebularis.org/neuro-semantic/foundation")).toHaveCount(1);
+  await expect(edge("example.org/library imports www.nebularis.org/neuro-semantic/foundation")).toHaveCount(0);
+  // Stated: the scheme contract binds the scheme of the sample's own, drawn from the ontology that declares the property it constrains.
+  await expect(edge("lib:SubjectContract binds Subject headings")).toHaveCount(1);
+  // Derived: the baseline uses fnd:Governable, which only the foundation layer declares, and no stated edge joins the two.
+  await expect(edge("Derived from the terms used")).toHaveCount(1);
+  await expect(edge("Derived from the terms used")).toContainText("example.org/library uses terms of www.nebularis.org/neuro-semantic/foundation");
+  await expect(diagram.locator(".react-flow__edge").filter({ has: page.locator("title", { hasText: "Derived from the terms used" }) })).toHaveCount(1);
+});
+
+test("a drop area on the import dialog adds dropped files as the inputs do, and a drop does not navigate the page", async ({ page }) => {
+  const fake = new FakeService();
+  await importingWorkspace(page, fake, [IMPORT_A]);
+  await page.getByRole("button", { name: "Import ontologies" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import ontologies" });
+  const area = dialog.getByRole("group", { name: "Drop area" });
+  await expect(area).toContainText("Drop Turtle or RDF/XML files here, or a whole folder with its catalog.");
+  const prevented = await area.evaluate((el, text) => {
+    const data = new DataTransfer();
+    data.items.add(new File([text], "a.ttl", { type: "text/turtle" }));
+    const over = new DragEvent("dragover", { dataTransfer: data, bubbles: true, cancelable: true });
+    el.dispatchEvent(over);
+    const drop = new DragEvent("drop", { dataTransfer: data, bubbles: true, cancelable: true });
+    el.dispatchEvent(drop);
+    return [over.defaultPrevented, drop.defaultPrevented];
+  }, `${OWL_HEAD}<${IMPORT_A}> a owl:Ontology .\n`);
+  expect(prevented).toEqual([true, true]);
+  await expect(dialog.getByRole("list", { name: "Chosen files" })).toContainText("a.ttl");
+  await dialog.getByRole("button", { name: "Show the plan" }).click();
+  await expect(dialog.getByRole("button", { name: "Hold 1 import" })).toBeEnabled();
+});
+
+const PINNED = "https://example.org/published/shared/rev/1-abc";
+const SKOS_HEAD = "@prefix skos: <http://www.w3.org/2004/02/skos/core#> .\n";
+
+/** The pages' requests for a graph the workspace's state loads: a held import's, and a dependency's and its lineage's. */
+function graphReads(page: Page): string[] {
+  const seen: string[] = [];
+  page.on("request", (r) => {
+    const u = new URL(r.url());
+    if (r.method() === "GET" && (/\/imports\/[0-9a-f]{64}$/.test(u.pathname) || u.pathname === "/api/registry/version" || u.pathname === "/api/registry/lineage")) seen.push(`${u.pathname}${u.search}`);
+  });
+  return seen;
+}
+
+test("the import graph shows a scheme a dependency declares, and opening the diagram asks for no graph the state already loaded", async ({ page }) => {
+  const fake = new FakeService();
+  fake.published.set(PINNED, `${SKOS_HEAD}<https://example.org/shared#Colours> a skos:ConceptScheme ; skos:prefLabel "Colours"@en .\n`);
+  const ws = await importingWorkspace(page, fake, [IMPORT_A]);
+  fake.workspaces.get(ws)!.dependsOn = [PINNED];
+  const reads = graphReads(page);
+  await page.reload();
+  await holdImportA(page);
+  await expect(page.getByRole("region", { name: "Ontologies" }).getByText("held", { exact: true })).toHaveCount(1);
+  await page.waitForLoadState("networkidle");
+  // The state has loaded the dependency and the held import by now.
+  expect(reads.some((r) => r.startsWith("/api/registry/version"))).toBe(true);
+  expect(reads.some((r) => /\/imports\//.test(r))).toBe(true);
+  const before = reads.length;
+
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Diagram" }).click();
+  const diagram = page.getByRole("region", { name: "Ontology diagram" });
+  await diagram.getByRole("group", { name: "Ontology view" }).getByRole("button", { name: "Import graph" }).click();
+  const scheme = diagram.locator(".react-flow__node-imp").filter({ hasText: "concept scheme" });
+  await expect(scheme).toHaveCount(1);
+  await expect(scheme).toContainText("Colours");
+  await expect(diagram.getByRole("status")).toHaveText("1 ontology of the workspace, 1 import held, 0 missing, 1 scheme.");
+  await page.waitForLoadState("networkidle");
+  expect(reads.length).toBe(before);
+});
+
+test("a baseline validation that is running shows as validating in the state pill, as a part's does", async ({ page }) => {
+  const fake = new FakeService();
+  fake.hold.add("validate:baseline");
+  await importingWorkspace(page, fake, [IMPORT_A]);
+  await expect(page.getByRole("status").filter({ hasText: "Validating" })).toHaveCount(1);
+  await expect(page.getByRole("status").filter({ hasText: "Conforms" })).toHaveCount(0);
+});
+
+test("a baseline validation that could not run shows as unavailable in the state pill, as a part's does", async ({ page }) => {
+  const fake = new FakeService();
+  fake.fail.add("validate:baseline");
+  await importingWorkspace(page, fake, [IMPORT_A]);
+  const pill = page.getByRole("status").filter({ hasText: "Validation unavailable" });
+  await expect(pill).toHaveCount(1);
+  await expect(pill).toHaveAttribute("title", "The worker could not run the validation.");
+});
+
+test("the overview counts the baseline's violations with the parts'", async ({ page }) => {
+  const fake = new FakeService();
+  fake.baselineViolation = "The baseline declares a class twice.";
+  await importingWorkspace(page, fake, [IMPORT_A]);
+  await page.goto(`/#/w/${[...fake.workspaces.keys()][0]}/overview`);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  const stat = page.locator(".stat").filter({ hasText: "violations" });
+  await expect(stat).toContainText("1");
+  await expect(page.getByRole("status").filter({ hasText: "1 violation" })).toHaveCount(1);
+});

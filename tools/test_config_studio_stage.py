@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 from rdflib import Graph, Literal, Namespace, URIRef
-from rdflib.namespace import OWL, RDF
+from rdflib.namespace import OWL, RDF, RDFS
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -49,13 +49,36 @@ def test_every_sample_is_listed_without_its_parts_and_staged_merged(staged: Path
     samples = sorted(str(s) for s in listing.subjects(RDF.type, CST.Sample))
     assert samples == [
         f"urn:lattice:studio:sample:{n}"
-        for n in ("builder", "employment", "facility", "legalruleml-mappings", "lending", "lending-eligibility", "odrl-mappings", "policies-transforms", "quantities", "saas",
+        for n in ("builder", "employment", "facility", "legalruleml-mappings", "lending", "lending-eligibility", "library-imports", "odrl-mappings", "policies-transforms", "quantities", "saas",
                   "vocabulary-bindings")
     ]
     assert not list(listing.objects(None, CST.part))
     lending = Graph().parse(staged / "samples" / "lending.ttl")
     assert (URIRef("https://example.org/lending#LoanApplication"), RDF.type, OWL.Class) in lending
     assert (URIRef("https://example.org/lending#LoanApplicationStrongProfile"), RDF.type, DAL.DataAccessProfile) in lending
+
+
+def test_the_library_sample_imports_two_layers_and_binds_a_scheme_of_its_own(staged: Path) -> None:
+    sample = Graph().parse(staged / "samples" / "library-imports.ttl")
+    ontology = URIRef("https://example.org/library")
+    vocabulary = URIRef("https://www.nebularis.org/neuro-semantic/vocabulary")
+    foundation = URIRef("https://www.nebularis.org/neuro-semantic/foundation")
+    assert (ontology, RDF.type, OWL.Ontology) in sample
+    # Stated: the baseline imports the vocabulary layer and not the foundation layer it imports.
+    assert set(sample.objects(ontology, OWL.imports)) == {vocabulary}
+    # Both layers are staged and answer by ontology IRI, the vocabulary layer importing the foundation layer.
+    index = Graph().parse(staged / "ontologies" / "index.ttl")
+    assert (vocabulary, RDF.type, OWL.Ontology) in index
+    assert (foundation, RDF.type, OWL.Ontology) in index
+    assert any(o in set(index.objects(vocabulary, OWL.imports)) for o in index.objects(foundation, OWL.versionIRI))
+    # The baseline uses a foundation term, and a scheme contract's binding names a scheme of the sample.
+    fnd = "https://www.nebularis.org/neuro-semantic/lattice/foundation#"
+    assert (URIRef("https://example.org/library#CatalogueEntry"), RDFS.subClassOf, URIRef(f"{fnd}Governable")) in sample
+    voc = "https://www.nebularis.org/neuro-semantic/lattice/vocabulary#"
+    binding = URIRef("https://example.org/library#subject-binding")
+    scheme = URIRef("https://example.org/library#SubjectHeadings")
+    assert (binding, URIRef(f"{voc}bindsScheme"), scheme) in sample
+    assert (scheme, RDF.type, URIRef(f"{voc}ConceptScheme")) in sample
 
 
 def test_the_policies_sample_offers_each_examples_source_as_it_is(staged: Path) -> None:

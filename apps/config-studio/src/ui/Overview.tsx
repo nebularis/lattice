@@ -39,7 +39,7 @@ export function Overview() {
   const persistence = model.state.configs.persistence!.current;
   const surface = model.state.configs.surface!.current;
   const contracts = [...surface.ofType(SRF("PromotionContract")), ...surface.ofType(SRF("IndexContract"))];
-  const issues = PARTS.flatMap((p) => model.issues[p]);
+  const issues = [...PARTS.flatMap((p) => model.issues[p]), ...model.issues.baseline];
   const classes = [...baseline.classes.values()].sort((a, b) => a.label.localeCompare(b.label));
   const configured = classes.filter(
     (c) => declaredFor(persistence, c.iri, baseline.ancestors(c.iri)).length || contracts.some((k) => surface.value(k, SRF("carrier")) === c.iri),

@@ -12,6 +12,7 @@ import { isAbort, useUnmountSignal } from "../jobs";
 import { buildCatalogLookup, normalisePath } from "../rdf/catalog";
 import { heldByIri, shortIri, shortLabel, type HeldImport } from "../rdf/held";
 import { mediaTypeOf, resolveImports, type ImportPlan, type ImportStatus, type MediaType, type OntologyHeader, type PlanNode } from "../rdf/imports";
+import { droppedFiles, type EntryLike } from "../dropEntries";
 import { Modal, Spinner } from "./kit";
 
 /** What the service stages when it stages nothing, or is too old to say. An import only a staged document could give is then missing. */
@@ -153,18 +154,17 @@ export function ImportDialog(props: { workspace: string; baseline: Graph; held: 
   const stagedRef = useRef<ReadonlyMap<string, OntologyHeader> | undefined>(undefined);
   const signal = useUnmountSignal();
 
-  const add = async (list: FileList | null) => {
-    if (!list?.length) return;
-    const files = [...list];
+  const addItems = async (items: { path: string; file: File }[]) => {
+    if (!items.length) return;
     const accepted: Chosen[] = [];
     const left: Ignored[] = [];
-    for (const f of files) {
-      const path = normalisePath((f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name);
+    for (const item of items) {
+      const path = normalisePath(item.path);
       if (!ACCEPTED.test(path)) left.push({ path, reason: "not a Turtle or RDF/XML file" });
       else if (path === BASELINE_PATH) left.push({ path, reason: "the name stands for the workspace's own baseline" });
       else {
         try {
-          accepted.push({ path, text: await f.text() });
+          accepted.push({ path, text: await item.file.text() });
         } catch {
           left.push({ path, reason: "could not be read" });
         }
@@ -172,6 +172,23 @@ export function ImportDialog(props: { workspace: string; baseline: Graph; held: 
     }
     setChosen((c) => [...c.filter((x) => !accepted.some((a) => a.path === x.path)), ...accepted].sort((a, b) => compare(a.path, b.path)));
     setIgnored((i) => [...i, ...left]);
+  };
+
+  const add = (list: FileList | null) => addItems([...(list ?? [])].map((f) => ({ path: (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name, file: f })));
+
+  // A drop adds files and folders as the inputs do. The entries are taken before anything is awaited, since the browser empties the
+  // drop's data once the handler returns, and the page must not navigate to a dropped file, so both events are cancelled.
+  const [over, setOver] = useState(false);
+  const drop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setOver(false);
+    const entries = [...e.dataTransfer.items].filter((i) => i.kind === "file").map((i) => i.webkitGetAsEntry?.() ?? null);
+    const plain = [...e.dataTransfer.files];
+    if (entries.length > 0 && entries.every((x) => x !== null)) {
+      void droppedFiles(entries as unknown as EntryLike<File>[]).then((found) => addItems(found), () => setIgnored((i) => [...i, { path: "the drop", reason: "could not be read" }]));
+    } else {
+      void addItems(plain.map((f) => ({ path: f.name, file: f })));
+    }
   };
 
   const showPlan = async () => {
@@ -274,6 +291,16 @@ export function ImportDialog(props: { workspace: string; baseline: Graph; held: 
     >
       {step === "choose" && (
         <div className="import-step">
+          <div
+            role="group"
+            aria-label="Drop area"
+            className={`import-drop${over ? " over" : ""}`}
+            onDragOver={(e) => { e.preventDefault(); setOver(true); }}
+            onDragLeave={() => setOver(false)}
+            onDrop={drop}
+          >
+            Drop Turtle or RDF/XML files here, or a whole folder with its catalog.
+          </div>
           <div className="import-inputs">
             <label className="field-label" htmlFor="import-files"><FileUp size={14} /> Files</label>
             <input id="import-files" type="file" multiple aria-label="Files" onChange={(e) => { const list = e.target.files; void add(list).then(() => { e.target.value = ""; }); }} />
