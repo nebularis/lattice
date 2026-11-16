@@ -51,6 +51,10 @@ Since then the work has been design rather than build, and it has answered the w
 
 **Next action:** the maintainer's verification of LG-7 and LG-2 from their packs, and LG-Q9 and LG-Q10. Then LG-3, Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and no longer waits on LG-2. **Then, as soon as the design is settled:** the documentation unit's OD-DOC4, the layer interactions record, whose brief holds the inputs this unit's design discussions produced.
 
+## 2026-11-16, LG-20 forty laws built, LU3 refuted
+
+On machine S, committed locally, [its pack](../validation/LG-20.md). LB1n, LU1n, LE4 and LE5 are built, so forty of the plan's fifty-one laws are theorems with claim records. LU3 is false as planned. A leaf that does not accept a credit's kind, under a parent that does, leaves a cut with every ceiling at its stated amount. It is kept as LU3n, added to the model's examples and raised as LG-Q29. LW4, LH1, LH2, LM2, LJ2, LJ3, LP1, LP2, LP4 and LPn are not built, each left for want of time and held by the model's search, so the row stays building.
+
 ## 2026-11-16, LG-20 part built
 
 On machine S, committed locally, [its pack](../validation/LG-20.md). Thirty-six of the plan's fifty-one laws are theorems with claim records, in seven theories by group, and the predicates and ranks are whole. No counterexample was found and no definition changed. LW4, LH1, LH2, LM2, LJ2, LJ3, LP1, LP2, LP4, LPn, LB1n, LU1n, LU3, LE4 and LE5 are not built, each left for want of time and held by the model's search, so the row stays building.

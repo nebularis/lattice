@@ -1,0 +1,13 @@
+{
+  "subject": "LU3n",
+  "statedAs": "Credits.a_leaf_that_refuses_its_credit_leaves_a_cut",
+  "statementDigest": "sha256:c12eba49daabb21ccb5565324d8cfde5456c8a636f92c922361e127ff5fdc3a5",
+  "method": "Proof",
+  "scope": "OneHistory",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

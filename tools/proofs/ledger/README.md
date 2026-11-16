@@ -78,9 +78,14 @@ LG-20, with [its pack](../../../docs/developer/validation/LG-20.md), adds 36 cla
 | LB2 | `Credits.recorded_balances_follow_step_by_step` | a list of balances is the run's exactly when each follows from the one before |
 | LU1 | `Credits.the_sum_is_the_balance` | the sum of what a run posted is the balance it ends at |
 | LU2 | `Credits.a_credit_depends_on_its_path` | what a credit applies and cuts depends on the balances on its path alone, and no cut is negative |
+| LB1n | `Credits.the_ceiling_applied_once_overstates` | the sketch's one account: stepped, the balance is 70, and the ceiling applied once to the fold gives 100 |
+| LU1n | `Credits.the_sum_with_no_cuts_overstates` | the sketch's cap, aggregate and two sections: the aggregate steps to 7, the sum with its cuts is 7, and with no cuts 9 |
+| LU3n | `Credits.a_leaf_that_refuses_its_credit_leaves_a_cut` | a counterexample to LU3 as planned: a leaf that does not accept a credit's kind, under a parent that does, leaves a cut of 5 at the parent (LG-Q29) |
 | LE1 | `Readings.reading_a_from_a_recorded_balance` | reading A from a recorded balance, plus what was recorded after and effective by the day, is reading A from the start |
 | LE2 | `Readings.reading_a_at_the_head` | at the head with every posting counted, reading A is the recorded balance |
 | LE3 | `Readings.flows_from_recorded_totals` | the two totals of the flows split the same way |
+| LE4 | `Readings.with_nothing_late_the_readings_agree` | where every posting is effective on the day it is recorded, reading B and reading A at the head are the recorded balance |
+| LE5 | `Readings.reading_b_within_range` | under a tree, with stated amounts from zero to the ceiling and every draw posted non-negative, reading B is never below zero or above the ceiling |
 | LEn | `Readings.a_debit_recorded_last_and_effective_second` | reading A is minus 10, reading B 50 or 100, and the recorded balance 20 |
 
 Supporting lemmas with no claim of their own: the examples of each theory, proved by `code_simp` before any theorem, among them the target kernel's six, `Draws.example_settle`, `example_spread`, `example_pots` and `example_credit`, which evaluate through the path, and `Rounding.example_a_key_of_no_weight`, where apportioning gives a key of weight zero a unit and rationing does not. `Allocation.lawfulI`, the four axioms before LG-9 giving `lawful`, `Allocation.by_rank_injective`, by rank with an injective rank as the priority formula, `Draws.path_step`, the path unfolded one step and its code equation, `Draws.spread_sums`, `Draws.spread_rations` and `Draws.spread_step`, `Rounding.placed_count`, a strict total order placing exactly n keys, `Rounding.short_within_unmet`, the shortfall at most the requests not yet met, `Rounding.floor_units_total`, `Rounding.placed_remainder_positive` and `Rounding.spread_refines`.

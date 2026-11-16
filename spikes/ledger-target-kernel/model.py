@@ -706,6 +706,13 @@ def examples():
     assert settle_purposes((False, False, share, False), True, *args) == ("refused", "mixed")
     assert settle_purposes((True, False, share, False), False, *args) == ("refused", "exceeds")
     assert whole_each(["a", "b"], {"a": 5, "b": 4}, 7) == {"a": 5, "b": 0}
+    # LU3 as the plan states it is false: a leaf that does not accept the credit's kind under a parent that does, LG-Q29
+    leafy = ([None, 0], [10, 10], [10, 10], lambda b, c: b == 0)
+    bal, cuts = [10, 10], []
+    for q in (("draw", 1, 5), ("restore", 1, "recovery", 5), ("restore", 1, "recovery", 5)):
+        p, bal = post(leafy, q, bal)
+        cuts.append(p[5].get(0, 0) if p[0] == "restored" else 0)
+    assert cuts == [0, 0, 5] and bal == [10, 5]
     print("a loan of 90 and a letter of credit of 40, facility 100, sublimit 30:", {k: str(x) for k, x in k3.items()}, "balances after", [str(x) for x in after])
     print("the sketch's example: reading A", [reading_a(d) for d in (1, 2, 4)], "reading B where the account rations", [reading_b(d, True) for d in (1, 2, 4)],
           "where it refuses", [reading_b(d, True, refuser) for d in (1, 2, 4)], "and charged in full", [reading_b(d, False) for d in (1, 2, 4)])

@@ -159,4 +159,56 @@ proof -
 qed
 (* GATE:END *)
 
+
+section \<open>Three instances kept on purpose\<close>
+
+text \<open>The sketch on balances under post-once, its section 3. One account at a ceiling of 100, a debit
+  of 20, a credit of 50 cut to the ceiling, and a debit of 30. Stepped, the balance is 70. The
+  ceiling applied once to the whole fold gives 100.\<close>
+
+(* GATE:BEGIN LB1n *)
+theorem the_ceiling_applied_once_overstates:
+  "snd (run \<lparr>parent_of = (\<lambda>_. None), stated = (\<lambda>_. 100), ceiling = (\<lambda>_. 100), restores = (\<lambda>_ _. True), refusing = (\<lambda>_. False)\<rparr>
+          [Draw (0::nat) 20, Restore 0 (None :: unit option) 50, Draw 0 30] (\<lambda>_. 100 :: int)) 0 = 70
+   \<and> min (100 - 20 + 50 - 30) (100::int) = 100"
+  by code_simp
+(* GATE:END *)
+
+text \<open>The same sketch, its section 4.8. An annual cap of 20, account 0, accepting recoveries only,
+  kind 1, an aggregate of 10, account 1, under it, and sections of 10, accounts 2 and 3, under the
+  aggregate, every ceiling its stated amount. A loss of 10 at 2, a reinstatement, kind 0, at the
+  aggregate, a recovery of 2 at 2 and a loss of 3 at 3. The aggregate steps to 7, the sum with its
+  cuts gives 7, and the sum with no cuts gives 9.\<close>
+
+(* GATE:BEGIN LU1n *)
+theorem the_sum_with_no_cuts_overstates:
+  "(case run \<lparr>parent_of = map_of [(1::nat, 0::nat), (2, 1), (3, 1)], stated = (\<lambda>a. if a = 0 then 20 else 10),
+             ceiling = (\<lambda>a. if a = 0 then 20 else 10), restores = (\<lambda>b c. b \<noteq> 0 \<or> c = Some (1::nat)), refusing = (\<lambda>_. False)\<rparr>
+             [Draw 2 10, Restore 1 (Some 0) 10, Restore 2 (Some 1) 2, Draw 3 3] (\<lambda>a. if a = 0 then 20 else (10::int)) of
+     (ps, bal) \<Rightarrow>
+       (bal 1,
+        summed \<lparr>parent_of = map_of [(1::nat, 0::nat), (2, 1), (3, 1)], stated = (\<lambda>a. if a = 0 then 20 else 10),
+                ceiling = (\<lambda>a. if a = 0 then 20 else 10), restores = (\<lambda>b c. b \<noteq> 0 \<or> c = Some (1::nat)), refusing = (\<lambda>_. False)\<rparr> ps 1,
+        summed \<lparr>parent_of = map_of [(1::nat, 0::nat), (2, 1), (3, 1)], stated = (\<lambda>a. if a = 0 then 20 else 10),
+                ceiling = (\<lambda>a. if a = 0 then 20 else 10), restores = (\<lambda>b c. b \<noteq> 0 \<or> c = Some (1::nat)), refusing = (\<lambda>_. False)\<rparr>
+          (map (\<lambda>p. case p of Drawn a x \<Rightarrow> Drawn a x | Restored a c x ap cuts \<Rightarrow> Restored a c x ap (\<lambda>_. 0)) ps) 1))
+   = (7, 7, 9)"
+  by code_simp
+(* GATE:END *)
+
+text \<open>A counterexample to the law as the plan states it. Every ceiling equals its stated amount
+  and every credit lands on a leaf, but the leaf does not accept the credit's kind and its parent
+  does. Account 1, a leaf of 10 under account 0 of 10, is drawn 5 and credited 5 twice. The first
+  credit restores the parent, the leaf keeps its room, and the second is applied in full at the
+  leaf and cut by 5 at the parent.\<close>
+
+(* GATE:BEGIN LU3n *)
+theorem a_leaf_that_refuses_its_credit_leaves_a_cut:
+  "map (\<lambda>p. case p of Drawn a x \<Rightarrow> 0 | Restored a c x ap cuts \<Rightarrow> cuts 0)
+     (fst (run \<lparr>parent_of = map_of [(1::nat, 0::nat)], stated = (\<lambda>_. 10), ceiling = (\<lambda>_. 10),
+                restores = (\<lambda>b (_ :: unit option). b = 0), refusing = (\<lambda>_. False)\<rparr>
+           [Draw 1 5, Restore 1 None 5, Restore 1 None 5] (\<lambda>_. 10 :: int))) = [0, 0, 5]"
+  by code_simp
+(* GATE:END *)
+
 end
