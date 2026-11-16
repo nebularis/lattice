@@ -20,8 +20,8 @@ Asset class answers what kind of thing an asset is, and nothing else. What the a
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/asset-class.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.1.1> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.1>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.1> |
-| `vocab/asset-class-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.1> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.1.1>, <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.1> |
+| `spec/asset-class.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.1.2> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.2>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.2> |
+| `vocab/asset-class-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.2> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.1.2>, <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.2> |
 
 | Prefix | Namespace |
 |---|---|

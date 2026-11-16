@@ -97,3 +97,14 @@ that independence a matter of directory layout instead of a stated fact).
 - B4's ADR extension, when CCS's C12 clears, inherits this ADR's home and E1/E3 restatements
   without needing to re-argue them; it adds only what B4's own scope needs (`DesignEnv`/`RunEnv`,
   the conformance kit's shape).
+
+## Addendum (proposed 2026-11-09): generated code may serve as the evaluator
+
+**Status of this addendum:** Proposed, for the maintainer's acceptance. It narrows decision 3.
+
+Decision 3 restated the epic's principle E3, that no generated OCaml or Haskell runs against the live graph, and held the hand-written reference evaluator to it as a test-time oracle. On 2026-11-09 the maintainer decided that code generated from the proofs may serve as the evaluator itself, and is preferred, provided its performance can be optimised appropriately.
+
+**What changes.** A runtime path may import code generated from a theory under `tools/proofs/`, behind a host that keeps the store interface, authorisation, concurrency and persistence, as the evaluator implementation plan's EV-3 sets out. Which targets are generated, on which hosts, and how their performance is measured are EV-3's.
+
+**What stays.** The reference evaluator under `tools/reference/` remains hand-written and a test-time oracle, imported by tests and differential suites and never by a runtime path, so it stays an independent check on the generated code. Decisions 1, 2 and 4 are unchanged.
+

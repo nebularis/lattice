@@ -43,7 +43,7 @@ Microsoft's documentation sets these limits on junctions and on reparse points i
 
 Two more facts were observed on the machine this was written on:
 
-- **A junction stores an absolute target**, even when `mklink /J` is given a relative one. `mklink /J rel target`, run in a scratch directory, stored `\\?\C:\Users\...\target`. Moving or renaming the checkout therefore leaves every junction pointing at the old place. Re-run `mise run skills:link` after moving a checkout.
+- **A junction stores an absolute target**, even when `mklink /J` is given a relative one. `mklink /J rel target`, run in a scratch directory, stored `\\?\D:\scratch\target`. Moving or renaming the checkout therefore leaves every junction pointing at the old place. Re-run `mise run skills:link` after moving a checkout.
 - **A junction whose target is gone stays behind.** `Path.exists()` is false, since the target cannot be opened, while `Path.is_junction()` is still true. The tooling tests `is_junction()` before `exists()` for that reason, and removes such a junction like any other.
 
 ## Is a junction available everywhere

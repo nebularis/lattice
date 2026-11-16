@@ -4,8 +4,8 @@
 
 **Unit ID:** `v-rig`
 **Plan:** [v-rig.md](../plans/v-rig.md)
-**ADR:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), Proposed 2026-11-08
-**Status:** merged 2026-11-08. VR-1 to VR-7 built, the unit awaits the maintainer's review, ADR-A153's acceptance and the module's four release tags.
+**ADR:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), accepted 2026-11-16
+**Status:** merged 2026-11-08. VR-1 to VR-7 built, ADR-A153 accepted and the module's four release tags created. The unit awaits the maintainer's review and a first run on a rig, which follows the ledger's LG-9.
 
 ## Board
 
@@ -18,10 +18,15 @@
 | VR-5 | P2 and P3, the generated theory and the test vectors | merged 2026-11-08, built 2026-11-08 |  |
 | VR-6 | P4, findings as RDF with stable ids and the report rendered from them | merged 2026-11-08, built 2026-11-08 |  |
 | VR-7 | the seam for a read case | merged 2026-11-08, built 2026-11-08 |  |
+| VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | briefed 2026-11-16 |  |
 
 ## History
 
+- 2026-11-16: the dates sketch corrected before VR-8 starts. Its search of 2026-11-13 missed `ldg:periodRecurrence`, which states a recurring period with one account for each (PDD-15, decided (a) on 2026-10-28). The question `period` joins the askable ones, now five, and `aggregate-period` is narrowed to a single period that does not recur and to an amount that runs for the agreement's own period, neither of which the term states. The brief and the plan say five.
+- 2026-11-16: VR-8 added and briefed at the maintainer's request, for an agent the maintainer assigns, in the [brief](../notes/rig-agent-brief-2026-11-16.md). It takes step 1 of the dates sketch's order of work and adds questions for the ledger's decided design, on the mini-rig only. It needs neither a rig nor the ledger's LG-9, so it starts ahead of the first run.
+- 2026-11-16: the maintainer accepted ADR-A153. The module's four tags exist on the remote. The maintainer leans to a first run on a rig after the ledger's LG-9, since projection P2 copies the ledger theory of `spikes/isabelle-layers/`, an early model that the target kernel replaces, so P2's and P3's ledger results would describe a superseded model. P1 does not read that theory. Pointing P2 at the kernel's home once LG-9 moves it is work for a slice not yet named.
 - 2026-11-07: unit created on `docs/placement-vehicles-structure`. The plan was approved by the maintainer the same day from a design briefed in chat, with VR-Q1 to VR-Q11 answered and recorded in the plan. The maintainer placed this unit before the formal-methods C4 model, since P1's findings against the ensemble and ledger drafts are what ADR-A130's text should settle before C4 checks it. VR-1 marked building before any other edit.
+- 2026-11-13: a [sketch](../sketches/v-rig-dates-periods-and-reporting.md) added at the maintainer's request, outside any slice, for an agent the maintainer assigns: competency questions on dates, periods and reporting for projection P1, four that can be asked today and eight with no term to ask against, and the kinds of statement a rig must hold to answer them. It follows the ledger's decision on LG-Q26. No run of the rig is due until the ledger's remaining design questions are settled.
 - 2026-11-08: VR-1 built. The module `ontology/v-rig/` at 0.1.0, its six examples committed before the vocabulary, ADR-A153 Proposed, the catalogue and release register updated, `tools/test_v_rig.py` in the catalog check, ten tests passing. The Validation Pack [VR-1](../validation/VR-1.md) records the checks run. Three release tags wait for the maintainer, `v-rig-v0.1.0`, `v-rig-shapes-v0.1.0` and `v-rig-vocab-v0.1.0`. Body nodes carry a kind token under `vrig:` rather than Wording's element types, so the module imports nothing and VR-3's scheme produces Wording's elements. VR-2 marked building in the same commit, under the maintainer's authorisation of 2026-11-07 to build the unit through.
 - 2026-11-08: VR-2 built. The mini-rig under `tools/v_rig/tests/mini-rig/` and the lifter `tools/v_rig/`, a catalogued tool package with `bootstrap:v-rig` and `check:v-rig`, 27 tests passing. The Validation Pack [VR-2](../validation/VR-2.md) records the checks. The deny-terms check reads one list, so the generated list is fed by `LATTICE_DENY_TERMS` for a run of the check, and reading every candidate list is proposed as a debt row rather than changed here. VR-3 marked building in the same commit.
 - 2026-11-08: VR-3 built. The tracked scheme `ontology/v-rig/projection/layers.mork.ttl` with its reference data, the mini-rig's extension beside the mini-rig, and the P1 runner in `tools/v_rig/p1.py`, 41 tests passing. The Validation Pack [VR-3](../validation/VR-3.md) records the checks and what the scheme leaves to the competency queries. The module gained the `projection` role, ordered lists as fact values and `vrig:readingKey`, all within the unreleased 0.1.0. VR-4 marked building in the same commit.

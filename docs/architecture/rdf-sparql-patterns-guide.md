@@ -2815,7 +2815,7 @@ Consumers must: persist `(epoch, seq, opSeq)`; be idempotent (delivery is at-lea
 
 **RDFox.** Explicit transactions via shell and REST (`/datastores/{n}/transactions`) with read-only and read-write levels; do the read and the guarded write inside one read-write transaction.
 
-**Oxigraph, QLever and other in-process stores.** Usually a single-writer transaction API. Do the check-then-write and allocate-and-write in-process; lean on the single-writer queue pattern. The simplest correct implementation of everything in this guide.
+**Oxigraph, QLever and other in-process stores.** Usually a single-writer transaction API. Do the check-then-write and allocate-and-write in-process, and lean on the single-writer queue pattern. The simplest correct implementation of everything in this guide. **Note, 2026-11-12.** Oxigraph 0.5.13 serialises writers only in memory. On disk two concurrent updates both commit, so a guard on an expected value loses a write there unless the caller sends updates one at a time (TSD-73). Where this guide lists Oxigraph as a single-writer store, read it as the in-memory store or as Oxigraph behind one writer.
 
 **Rya, Halyard, Trino-style federations and other non-ACID backends.** No usable transaction, no usable dense sequence, no safe CAS. Use P0 + P6 + P7 for uniqueness, S8 + S7 for ordering (`PER_STREAM_DENSE` from the external sequencer at best, `PARTIAL_CAUSAL` across streams), and a mandatory reconciler. **Do not attempt guarded updates or S1.** The `min_level` declarations for any family deployed here must be low enough to be met, or the deployment must fail.
 

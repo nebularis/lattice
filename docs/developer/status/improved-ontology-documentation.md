@@ -46,6 +46,7 @@ and the versioning check passes against `main`.
 | OD-DOC1 | published decisions | verified 2026-10-19, committed locally, [Validation Pack](../validation/OD-DOC1.md) |  |
 | OD-DOC2 | site sections | merged 2026-10-20, [Validation Pack](../validation/OD-DOC2.md) |  |
 | OD-DOC3 | tutorial and Field Guide review | planned | OD-DOC2, `lattice-tutorial` merged |
+| OD-DOC4 | the layer interactions record, with its register entries and STD-326 | planned |  |
 | OD-RC4 | downstream extension | planned | OD-RC3 |
 | OD-RC5 | package promotion | planned | OD-RC4 |
 | OD-RC6 | XML catalogue folded in | planned | OD-RC5, a new ADR on ADR-A88 |
@@ -73,6 +74,7 @@ and the versioning check passes against `main`.
 
 ## Log
 
+- 2026-11-12: OD-DOC4 added and planned on `docs/placement-vehicles-structure`, the layer interactions record, at the maintainer's request after a design discussion on Ledger, Behaviour and Surface had to rebuild the cross-layer narrative from eleven documents. STD-326 is in the register from today, and the brief keeps a list of inputs until the slice is built.
 - 2026-10-14: branch `docs/literate-v2` and its worktree created from `main`. Sketch reviewed, first plan
   and this record written. Measured: prose, annotation and Turtle sizes per layer, and README-only commits
   since 2026-09-15 (36 of 84).

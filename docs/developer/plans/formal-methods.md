@@ -46,7 +46,7 @@ The sketch's FP1 to FP4 and goals G1 to G5 govern every track. Nine rules bind h
 |---|---|---|
 | E1 | The literate README stays the one normative source. Shapes and the theory's closed datatypes are generated from it. Laws in the theory are hand-written, with their statements extracted back into it | FP1, FM-D12 |
 | E2 | Every claim names its method, scope, bound and assumptions. A bounded check is never reported as a proof. Every assurance statement anywhere is generated from the record | FP3, assurance records |
-| E3 | No generated OCaml or Haskell runs against the live graph. Proved artefacts reach the runtime as data | sketch §13.1 |
+| E3 | No generated OCaml or Haskell runs against the live graph. Proved artefacts reach the runtime as data. **Narrowed 2026-11-09** by PDD-19's decision: generated code may serve as the evaluator, preferred where its performance can be optimised, and EV-3's ADR states how | sketch §13.1 |
 | E4 | No track blocks a CCS or insurml-alignment slice that does not need it | G5 |
 | E5 | Slices are built and verified on a branch, and a maintainer commits, merges, tags and pushes. Toolchain installs are approved by a maintainer | CCS practice |
 | E6 | Toolchains, build outputs, generated binaries and generated data never enter git. Toolchain distributions and build outputs live under `.build/formal/`, and data that must not reach GitHub but is not a build artefact under `.local/formal/`. A host that needs a short path for native toolchains, as Windows does without long paths enabled, sets `LATTICE_FORMAL_ROOT` to a location outside the repository. On `main`, `mise` tasks create the `.build/` locations and `.gitignore` excludes them. Every slice's handoff checks `git status` for them | decided 2026-10-06 |

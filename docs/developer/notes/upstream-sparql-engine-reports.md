@@ -15,8 +15,10 @@ Each engine departure from the SPARQL 1.1 specification that the store-discovery
 | Report | Engine | Finding | State |
 |---|---|---|---|
 | [oxigraph-left-join-reads-every-graph](#oxigraph-left-join-reads-every-graph) | Oxigraph | TSD-42 | filed 2026-10-27 as [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008) |
-| [oxigraph-count-error](#oxigraph-count-error) | Oxigraph | TSD-43 | filed 2026-10-27 as [oxigraph/oxigraph#2009](https://github.com/oxigraph/oxigraph/issues/2009) |
+| [oxigraph-optional-inside-graph-reads-every-graph](#oxigraph-optional-inside-graph-reads-every-graph) | Oxigraph | TSD-71 | not filed. Drafted 2026-11-11 and amended the same day as a new issue, since it is on 0.5.11, 0.5.12 and 0.5.13 and so is not the 0.5.13 regression of [oxigraph/oxigraph#2008](https://github.com/oxigraph/oxigraph/issues/2008). It narrows [oxigraph/oxigraph#1980](https://github.com/oxigraph/oxigraph/issues/1980) to a cause and a suggested fix |
+| [oxigraph-count-error](#oxigraph-count-error) | Oxigraph | TSD-43 | filed 2026-10-27 as [oxigraph/oxigraph#2009](https://github.com/oxigraph/oxigraph/issues/2009), fixed by the merged [oxigraph/oxigraph#2025](https://github.com/oxigraph/oxigraph/pull/2025), not yet released, checked 2026-11-11 from a source build. One case as filed expects the wrong value, with a correction ready to paste |
 | [oxigraph-avg-all-unbound](#oxigraph-avg-all-unbound) | Oxigraph | TSD-43 | not filed |
+| [oxigraph-on-disk-store-loses-concurrent-updates](#oxigraph-on-disk-store-loses-concurrent-updates) | Oxigraph | TSD-73 | not filed. Drafted 2026-11-12 from a full read of the storage source at `v0.5.13`. The behaviour is a trade-off the project made on purpose in 0.5.0 ([oxigraph/oxigraph#1310](https://github.com/oxigraph/oxigraph/issues/1310)), so this asks for a change of design or of documentation and offers a patch, which was built and tested on `v0.5.13` and on `main` the same day |
 | [jena-avg-all-unbound](#jena-avg-all-unbound) | Apache Jena ARQ | TSD-43 | not filed |
 | [jena-str-of-blank-node](#jena-str-of-blank-node) | Apache Jena ARQ | TSD-43 | not filed |
 | [jena-clear-graph-of-a-store-without-empty-graphs](#jena-clear-graph-of-a-store-without-empty-graphs) | Apache Jena ARQ | TSD-50 | not filed |
@@ -101,6 +103,125 @@ def test_a_graph_variable_bound_outside_an_optional_reads_one_graph():
     assert ratio < 10, f"100 graphs cost {ratio:.0f} times one graph"
 ```
 
+### oxigraph-optional-inside-graph-reads-every-graph
+
+**`VALUES ?g { … } GRAPH ?g { A OPTIONAL { B } }` reads every graph, because the LATERAL fitness check misreads the rewritten left join**
+
+Oxigraph, TSD-71, not filed. Drafted 2026-11-11 and amended the same day after testing 0.5.11, 0.5.12 and 0.5.13 in scratch environments: the defect is in all three, so it is a new issue and not a second shape of #2008, which is a regression in 0.5.13 alone. It is a narrow, statistics-free cause for part of #1980's first symptom. The fix suggested below was read from the source, then **compiled and checked on 2026-11-11** (rustc 1.95.0, release, in-memory store, on top of `v0.5.13`): the reported form's ratio fell from 99.5 to 1.0 with every result count unchanged across the eight forms of the table, and #2008's shape was unchanged at about 80, as expected of a different defect. No regression suite was run, since `sparopt` has no unit tests of its own and the W3C suite needs the RocksDB build. The merged [oxigraph/oxigraph#2025](https://github.com/oxigraph/oxigraph/pull/2025) does not touch `sparopt` and does not fix it, with ratios of 96.9 at its head and 86.6 at its parent.
+
+**Versions:** pyoxigraph 0.5.11, 0.5.12 and 0.5.13, Python 3.14.7, macOS arm64. Source read at tag `v0.5.13`.
+
+**Query:**
+
+```sparql
+SELECT (COUNT(*) AS ?n) WHERE { VALUES ?g { <urn:g:0> } GRAPH ?g { ?s <urn:p> ?o OPTIONAL { ?s <urn:q> ?x } } }
+```
+
+**What we measured.** Each graph holds 2,000 subjects, each with one `<urn:p>` triple and a `<urn:q>` or `<urn:r>` triple. The ratio is the best of five over a store of 100 graphs divided by the best of five over a store of 1 graph. Every form reads only `<urn:g:0>` and returns 2,000 rows in both stores.
+
+| Form | 0.5.11 | 0.5.12 | 0.5.13 |
+|---|---|---|---|
+| reported: `VALUES ?g` outside, `OPTIONAL` inside `GRAPH ?g` | 101.1 | 95.5 | 99.2 |
+| no `OPTIONAL`: `VALUES ?g { <g> } GRAPH ?g { A }` | 1.0 | 1.1 | 1.1 |
+| constant graph: `GRAPH <g> { A OPTIONAL { B } }` | 1.0 | 1.0 | 1.0 |
+| `UNION` in place of the `OPTIONAL` | 1.0 | 1.0 | 1.0 |
+| `VALUES ?g` moved inside the block: `GRAPH ?g { VALUES ?g { <g> } A OPTIONAL { B } }` | 1.0 | 1.0 | 1.0 |
+| `?g` given by the `substitutions` option instead of `VALUES` (with `?g` projected and grouped) | 1.0 | 1.0 | 1.0 |
+| `OPTIONAL` outside the block: `VALUES ?g { <g> } GRAPH ?g { A } OPTIONAL { GRAPH ?g { B } }` | 1.0 | 1.0 | 1.0 |
+| #2008's shape: `VALUES ?g { <g> } OPTIONAL { GRAPH ?g { ?s ?p ?o } }` | 1.0 | 1.0 | 77.9 |
+
+So the cost follows the number of graphs in the store only where `?g` is bound outside the `GRAPH` block and the block holds an `OPTIONAL`.
+
+**The cause, as read from the source.** All references are to `lib/sparopt/src/optimizer.rs` at `v0.5.13`, built with `sep-0006` as the `oxigraph` crate builds it.
+
+1. `GRAPH ?g { A OPTIONAL { B } }` lowers to `LeftJoin(A@?g, B@?g)`, with `?g` as the graph name of both quad patterns (`algebra.rs`, `from_sparql_algebra`).
+2. `reorder_joins` on the outer `Join(VALUES ?g, LeftJoin(…))` first reorders each child with the outer input types, so the left join is planned without knowing that `VALUES` binds `?g`. In the `LeftJoin` arm the lateral estimate is under the hash estimate times 100, so it is rewritten to `Lateral(A@?g, LeftJoin(EmptySingleton, B@?g))`.
+3. Back in the outer join, `VALUES` is the smallest child and comes first, and the rewritten left join is joined to it as a LATERAL only if `is_fit_for_for_loop_join(next, input_types, output_types)` holds, with `?g` in `output_types`.
+4. In that check, the `Lateral` arm passes the same `global_input_types` to both sides: `is_fit_for_for_loop_join(left, …) && is_fit_for_for_loop_join(right, global_input_types, entry_types)`. The right side is the inner `LeftJoin(EmptySingleton, B@?g)`, whose conflict test asks whether `B` binds a variable that the left join's own left side leaves undefined and the entry binds. Its own left side is the empty singleton, which binds nothing, and the entry binds `?g`, so `?g` is reported as a conflict. But inside the `Lateral` the left side `A@?g` always binds `?g`, so `B`'s `?g` is a join with it, not a fresh binding, and there is no conflict.
+5. So the check fails, the outer join becomes `HashBuildLeftProbeRight`, and the rewritten left join is evaluated once with no binding for `?g`. Both `A@?g` and `B@?g` then read every graph.
+
+Each measurement agrees with this. Without the `OPTIONAL` there is no rewritten left join, so the outer join stays a LATERAL. With `VALUES` inside the block, or `?g` substituted, the left join's own left side binds `?g` and no outer join needs the check. With the `OPTIONAL` outside the block, its left side binds both `?s` and `?g`.
+
+**A suggested fix.** In the `Lateral` arm of `is_fit_for_for_loop_join`, check the right side against the types the left side produces, so that a variable the left side always binds counts as bound for the right side's conflict test:
+
+```diff
+         #[cfg(feature = "sep-0006")]
+         GraphPattern::Lateral { left, right } => {
+             is_fit_for_for_loop_join(left, global_input_types, entry_types)
+-                && is_fit_for_for_loop_join(right, global_input_types, entry_types)
++                && is_fit_for_for_loop_join(
++                    right,
++                    &infer_graph_pattern_types(left, global_input_types.clone()),
++                    entry_types,
++                )
+         }
+```
+
+It keeps the conflict test for a variable the left side may leave unbound, since `infer_graph_pattern_types` carries the `undef` flag, so a right side that could rebind a possibly unbound variable is still refused. A test for it would assert the plan of the reported query is a LATERAL from `VALUES` into the left join, or the timing test below. Checked against the eight forms only, as said above.
+
+**Workarounds, until it is fixed.** Bind the graph inside the block, `GRAPH ?g { VALUES ?g { … } … }`, or pass `?g` through `substitutions`, or write the optional part as a `UNION` that keeps every row the `OPTIONAL` keeps.
+
+**Why it matters.** A read over a named set of graphs that joins an optional property inside the `GRAPH` block, for example a balance summed over the period graphs of one account's subtree with each credit's kind or applied amount joined optionally, costs in proportion to the whole store. In our benchmark it stopped a checkpoint from shortening such a read: the read limited to the graphs after the last checkpoint cost 0.92 of the full read on Oxigraph, where every other engine fell to 0.02 to 0.05.
+
+#### Issue text, ready to paste
+
+> **Title:** `VALUES ?g { … } GRAPH ?g { A OPTIONAL { B } }` reads every graph: the LATERAL fitness check misreads the rewritten left join
+>
+> On 0.5.11, 0.5.12 and 0.5.13, `SELECT (COUNT(*) AS ?n) WHERE { VALUES ?g { <urn:g:0> } GRAPH ?g { ?s <urn:p> ?o OPTIONAL { ?s <urn:q> ?x } } }` costs about 100 times as much in a store of 100 graphs as in a store of one, though it reads one graph and returns the same rows. Without the `OPTIONAL`, with a constant graph, with `VALUES` inside the block, or with `?g` substituted, the ratio is 1.0. This looks like a statistics-free cause for part of the first symptom in #1980, and is a different defect from #2008, which regressed in 0.5.13 alone.
+>
+> Reading `sparopt/src/optimizer.rs` at v0.5.13: the left join is rewritten to `Lateral(A@?g, LeftJoin(EmptySingleton, B@?g))`. When the outer join with `VALUES ?g` checks `is_fit_for_for_loop_join`, the `Lateral` arm checks its right side with the same `global_input_types` as its left. The inner left join's conflict test then sees `B` binding `?g`, its own left side (the empty singleton) leaving `?g` undefined, and the entry binding `?g`, and refuses. Inside the lateral, `?g` is always bound by the left side, so there is no conflict. The outer join falls back to a hash join, and both quad patterns scan every graph.
+>
+> A possible fix: in the `Lateral` arm, check `right` against `&infer_graph_pattern_types(left, global_input_types.clone())` instead of `global_input_types`. We built it on top of v0.5.13 with the in-memory store and it brings the reported form from about 100 to 1.0 with every result unchanged across the eight forms below. We have not run the W3C suite on it. It does not affect #2008's shape, and #2025 does not affect this one. A standalone reproduction follows. Measurements for eight forms on the three versions are in the attached table.
+>
+> (the test below, and the table above)
+
+#### Tracker search
+
+Read 2026-11-11. #2008 is open, reports `OPTIONAL { GRAPH ?g { … } }` with `?g` bound outside, a regression in 0.5.13 alone, and is a different defect, as the table's last row shows. #1980 is open, reported on 0.5.11, with "`VALUES ?g` joined after `GRAPH ?g` block" among its symptoms, and the maintainer's reply of 2026-10-20 says the planner needs dataset statistics to fix it and that a backport of #1733 is expected to help. #1883 (`GROUP BY` over `OPTIONAL`) and #2004 (cost-based join ordering) are related and different. No report names the LATERAL fitness check. A new issue linking #1980 and #2008 is the clearer place, or a comment on #1980 if the maintainer prefers its scope.
+
+#### Reproduction, `test_issue.py`
+
+```python
+"""Standalone. Fails on pyoxigraph 0.5.11, 0.5.12 and 0.5.13. Run: python -m pytest test_issue.py
+
+A timing test, so it compares the same query over stores of 1 and of 100 graphs on one machine and allows a wide margin (the observed ratio is about 100)."""
+import time
+
+import pyoxigraph as ox
+
+ROWS = 2000
+QUERY = "SELECT (COUNT(*) AS ?n) WHERE { VALUES ?g { <urn:g:0> } GRAPH ?g { ?s <urn:p> ?o OPTIONAL { ?s <urn:q> ?x } } }"
+
+
+def store(graphs):
+    s = ox.Store()
+    p, q, r = ox.NamedNode("urn:p"), ox.NamedNode("urn:q"), ox.NamedNode("urn:r")
+    quads = []
+    for i in range(graphs):
+        g = ox.NamedNode(f"urn:g:{i}")
+        for j in range(ROWS):
+            subject = ox.NamedNode(f"urn:s{i}-{j}")
+            quads.append(ox.Quad(subject, p, ox.Literal(str(j)), g))
+            quads.append(ox.Quad(subject, q if j % 2 else r, ox.Literal("k"), g))
+    s.extend(quads)
+    return s
+
+
+def best(s):
+    fastest = float("inf")
+    for _ in range(5):
+        start = time.perf_counter()
+        n = int(next(iter(s.query(QUERY)))["n"].value)
+        fastest = min(fastest, time.perf_counter() - start)
+        assert n == ROWS
+    return fastest
+
+
+def test_an_optional_inside_a_graph_bound_outside_reads_one_graph():
+    ratio = best(store(100)) / best(store(1))
+    assert ratio < 10, f"100 graphs cost {ratio:.0f} times one graph"
+```
+
 ### oxigraph-count-error
 
 **`COUNT(expr)` returns no value when `expr` errors on one row, instead of counting the rows where it does not**
@@ -108,6 +229,10 @@ def test_a_graph_variable_bound_outside_an_optional_reads_one_graph():
 Oxigraph, TSD-43, filed 2026-10-27 as [oxigraph/oxigraph#2009](https://github.com/oxigraph/oxigraph/issues/2009).
 
 **Version:** pyoxigraph 0.5.13 (also 0.5.11). Python 3.14, macOS arm64.
+
+**Fixed upstream, checked 2026-11-11.** [oxigraph/oxigraph#2025](https://github.com/oxigraph/oxigraph/pull/2025), "spareval: COUNT(expr) skips the solutions where expr is an error", merged into `main` as one commit, `96e22c912ba2f0059e4b6c454fb7fa38a7a5915f`, after 0.5.13 and not in a release yet. Built from source with the in-memory store (rustc 1.95.0, release), the pull request gives 1 for `COUNT(STR(?x))`, `COUNT(DISTINCT STR(?x))` and `COUNT(LCASE(STR(?x)))`, where 0.5.13 and the commit before the pull request give unbound. Over `VALUES ?x { 1 UNDEF }`, `COUNT(?x + 0)` and `COUNT(DISTINCT ?x + 0)` give 1 on the pull request and unbound on 0.5.13.
+
+**Correction, 2026-11-11.** The `COUNT(?x + 0)` case below, as filed, expects 1, and that is wrong. Over `VALUES ?x { <urn:a> UNDEF }`, `<urn:a> + 0` is a type error as well as the unbound row, so both rows are error elements and the count is 0, which the fixed build gives. The case is right over numeric rows, `VALUES ?x { 1 UNDEF }`, where only the unbound row errors and the count is 1. The tables and tests below keep the case as filed, marked, and a comment for the issue is ready to paste after them.
 
 **Query** (empty store):
 
@@ -129,7 +254,7 @@ SELECT (COUNT(STR(?x)) AS ?n) WHERE { VALUES ?x { <urn:a> UNDEF } }
 | `COUNT(*)` | 2 | 2 |
 | `COUNT(STR(?x))` | unbound | 1 |
 | `COUNT(DISTINCT STR(?x))` | unbound | 1 |
-| `COUNT(?x + 0)` | unbound | 1 |
+| `COUNT(?x + 0)` | unbound | 1 as filed, which is wrong: 0, see the correction above |
 
 `COUNT(?x)` is right because a bare variable takes the internal `CountInternal` path. Any other expression falls back to `AccumulatorWrapper::Expression` or `DistinctExpression` in `lib/spareval/src/eval.rs`, whose `accumulate` sets the accumulator to `None` when the evaluator returns `None`, so the whole group's result is unbound. That suits `SUM`, `AVG` and `GROUP_CONCAT`, where §18.5.1 keeps the error, but `Count` removes it.
 
@@ -149,6 +274,7 @@ def count(expression):
     return None if solution["n"] is None else int(solution["n"].value)
 
 
+# As filed. "?x + 0" over <urn:a> should expect 0, see the correction above.
 @pytest.mark.parametrize("expression", ["STR(?x)", "DISTINCT STR(?x)", "?x + 0", "LCASE(STR(?x))"])
 def test_count_removes_error_elements(expression):
     assert count(expression) == 1
@@ -184,11 +310,16 @@ def test_controls(expression):
     assert count(expression) == (1 if expression == "?x" else 2)
 
 
+# As filed. "?x + 0" over <urn:a> should expect 0, see the correction above.
 @pytest.mark.parametrize("expression", ["STR(?x)", "DISTINCT STR(?x)", "?x + 0", "LCASE(STR(?x))"])
 def test_count_removes_error_elements(expression):
     # Count(M) removes error elements from Flatten(M), then takes its cardinality, so the answer is 1.
     assert count(expression) == 1, f"pyoxigraph {pyoxigraph.__version__}: COUNT({expression}) is unbound"
 ```
+
+#### Correction for #2009, ready to paste
+
+> A correction to one case in this report, and a confirmation of the fix. `COUNT(?x + 0)` over `VALUES ?x { <urn:a> UNDEF }` should be 0, not 1 as the report says: `<urn:a> + 0` is a type error too, so both rows are error elements, and #2025 gives 0. Over `VALUES ?x { 1 UNDEF }` only the unbound row errors, and #2025 gives 1 for `COUNT(?x + 0)` and `COUNT(DISTINCT ?x + 0)`, where 0.5.13 gives unbound. We built the merged commit 96e22c9 from source and checked the other cases too: `COUNT(STR(?x))`, `COUNT(DISTINCT STR(?x))` and `COUNT(LCASE(STR(?x)))` give 1, as SPARQL 1.1 §18.5.1.2 requires. Thank you for the fix.
 
 ### oxigraph-avg-all-unbound
 
@@ -231,6 +362,574 @@ def test_avg_over_a_group_with_no_value_is_zero():
     # SPARQL 1.1 section 18.5.1.4: Avg(M) = "0"^^xsd:integer where Count(M) = 0
     [solution] = list(pyoxigraph.Store().query("SELECT (AVG(?x) AS ?a) WHERE { VALUES ?x { UNDEF UNDEF } }"))
     assert solution["a"] is not None and solution["a"].value == "0"
+```
+
+### oxigraph-on-disk-store-loses-concurrent-updates
+
+**On-disk store: two concurrent SPARQL updates that read the same data both commit, so a guarded `DELETE`/`INSERT`/`WHERE` is not a compare-and-set and an increment loses counts. A small fix is proposed**
+
+Oxigraph, TSD-73, not filed. Drafted 2026-11-12. This is not a departure from the SPARQL 1.1 specification, which asks that one request be atomic and leaves isolation between requests to the store. It is recorded here because it is a report ready to file. The tracker was searched on 2026-11-12 for concurrent updates, lost updates, conflicts, transactions, isolation and `WriteBatchWithIndex`, and holds no report of it. [oxigraph/oxigraph#1310](https://github.com/oxigraph/oxigraph/issues/1310), closed 2025-07-20 as done in 0.5.0-beta.1, is the design change behind it. The Python reproduction and its figures were run here. The patch and the Rust test were **built and run on 2026-11-12**, on `v0.5.13` and on `main` at `78734be`, each from a checkout with its `oxrocksdb-sys/rocksdb` and `oxrocksdb-sys/lz4` submodules, with `cargo test -p oxigraph --test concurrent_updates` first without the patch and then with it. The citation of Berenson and others was checked against the paper on 2026-11-12, its section 4.1 and Table 4.
+
+**Versions:** pyoxigraph 0.5.13, Python 3.14.7, macOS arm64, 8 cores. Source read at tag `v0.5.13` (`2837810`). The same storage code is on `main` at `78734be` (0.6.0-dev), where `rocksdb_wrapper.rs` differs from the tag only in a lint attribute and one removed `From` impl. Both the tag and `main` were built from source with rustc 1.95.0 and run with the test below. Compared with `v0.4.11` (`3f27c43`) by source.
+
+**Summary.** On a `Store` opened on disk, two update requests that overlap in time each evaluate their `WHERE` on their own snapshot and then both write. Nothing makes the second wait and nothing compares its snapshot with what was committed since. A single update request that reads and then writes, such as "move the counter from N to N+1 if it is still N", therefore succeeds for both of two concurrent callers. Each caller can read back its own write, so neither can tell. The in-memory `Store` does not do this, because it runs one write transaction at a time, so a test suite on `Store::new()` passes and the same code on `Store::open()` loses updates.
+
+We know that the trade-off was made on purpose. The 0.5.0-beta.1 changelog says that RocksDB transactions moved from `TransactionDB` to `WriteBatchWithIndex` and that "some write-write conflicts are not detected anymore", #1310 calls the result nearly serializable, and the Architecture wiki page says some read/write conflicts are not detected when a write lands between the snapshot and the batch. This report is about how far the consequence reaches, which those notes understate, and about a small change that removes it and keeps snapshot reads and blind writes as they are.
+
+**Reproduce it.** `pip install pyoxigraph==0.5.13`, then:
+
+```python
+import collections, tempfile, threading
+import pyoxigraph as ox
+
+def run(store, threads, target=1000):
+    store.update("INSERT DATA { <urn:c> <urn:v> 0 }")
+    def work(t):
+        i = 0
+        while True:
+            n = int(next(iter(store.query("SELECT ?n WHERE { <urn:c> <urn:v> ?n }")))[0].value)
+            if n >= target:
+                return
+            i += 1
+            store.update(f"DELETE {{ <urn:c> <urn:v> {n} }} INSERT {{ <urn:c> <urn:v> {n + 1} . <urn:w:{t}:{i}> <urn:at> {n + 1} }} WHERE {{ <urn:c> <urn:v> {n} }}")
+    pool = [threading.Thread(target=work, args=(t,)) for t in range(threads)]
+    [t.start() for t in pool]
+    [t.join() for t in pool]
+    per = collections.Counter(r[0].value for r in store.query("SELECT ?x WHERE { ?w <urn:at> ?x }"))
+    return sum(per.values()), sum(c > 1 for c in per.values())  # markers, revisions with more than one
+
+print("memory", run(ox.Store(), 4))
+with tempfile.TemporaryDirectory() as d:
+    print("disk", run(ox.Store(d), 4))
+```
+
+Each thread reads the counter, sends one guarded update with a marker of its own, and stops at 1,000. A store that applies the guard prints 1,000 markers and 0 values written by more than one update. It printed `memory (1000, 0)` and `disk (1601, 482)`.
+
+Markers confirmed, where 1,000 is correct, three runs a cell:
+
+| Threads | In memory | On disk | On disk, with one `threading.Lock` held around `Store.update` |
+|---|---|---|---|
+| 1 | 1,000 | 1,000 | not run |
+| 2 | 1,000, 1,000, 1,000 | 1,576, 1,607, 1,539 | 1,000, 1,000, 1,000 |
+| 4 | 1,000, 1,000, 1,000 | 1,611, 1,549, 1,542 | 1,000, 1,000, 1,000 |
+| 8 | 1,000, 1,000, 1,000 | 1,368, 1,597, 1,308 | 1,000, 1,000, 1,000 |
+
+On disk 270 to 607 values of the counter in a run carried more than one marker. The counter itself ends at 1,000 as one triple, so the final state shows nothing wrong except through the markers.
+
+A second form needs no read by the caller:
+
+```sparql
+DELETE { <urn:k> <urn:v> ?n } INSERT { <urn:k> <urn:v> ?m } WHERE { <urn:k> <urn:v> ?n . BIND(?n + 1 AS ?m) }
+```
+
+Sent 500 times from each of 2, 4 and 8 threads, it ends in memory at threads times 500 as one triple in every run. On disk it ends near 500 whatever the number of threads, and the counter holds several values at once, from 1 to 60 of them, for example 502 and 503 together after two threads. No serial order of the requests gives that state.
+
+**The cause, as read from the source.** All references are to `v0.5.13`.
+
+- `lib/oxigraph/src/storage/rocksdb_wrapper.rs`, `Db::open_read_write`, opens the database with `rocksdb_open_column_families`, the plain `DB`, with no transaction layer.
+- `Db::start_readable_transaction` takes `rocksdb_create_snapshot` and creates a `rocksdb_writebatch_wi`. `ReadableTransaction::commit` calls `rocksdb_write_writebatch_wi` and nothing else. `Db::start_transaction` creates a plain `rocksdb_writebatch`, and `Transaction::commit` calls `rocksdb_write`. Neither path takes a lock, checks a sequence number or retries.
+- `lib/oxigraph/src/storage/rocksdb.rs` holds no lock for transactions. Its only `Mutex` is the bulk loader's progress counter.
+- `lib/oxigraph/src/sparql/update.rs`, `PreparedSparqlUpdate::on_store`, picks the transaction with `update_requires_read`. A request whose first operation is a `DELETE`/`INSERT`/`WHERE` and whose other operations read nothing does not count as reading, so it gets the write-only transaction, and `WriteOnlyUpdateEvaluator::eval_delete_insert` evaluates its `WHERE` on `storage.snapshot()`, fills the batch and commits. Every other reading request gets the readable transaction. Both have the same window between the snapshot and the write.
+- `lib/oxigraph/src/storage/memory.rs`, `MemoryStorage::start_transaction`, takes `self.transaction_lock.lock()` under the comment "We ensure there is only one transaction running" and keeps the guard until the transaction commits or is dropped. That is why the in-memory store is right.
+- `cli/src/main.rs`, `evaluate_sparql_update`, calls `prepared.on_store(store).execute()` from the request's thread with no lock, so by the source two HTTP clients are enough. We did not measure the server.
+- At `v0.4.11`, `rocksdb_wrapper.rs` opened a `rocksdb_transactiondb`, and `Db::transaction` ran the closure in a loop that began a RocksDB transaction with a snapshot and ran it again when the commit reported `Busy`, `TimedOut` or `TryAgain`. We did not run 0.4.11, so this is the source's word that a caller who relied on a guarded update there loses the guarantee on upgrading.
+
+**Why we think it is worth changing.**
+
+1. It reaches the simplest use of an update. The changelog's example is a graph dropped while a triple is added to it. The case here is one request that reads a value and writes the next, which is how a client does optimistic concurrency, allocates an identifier or keeps a count in a store that speaks SPARQL only.
+2. It is silent. No error, no retry, and reading your own write succeeds.
+3. The two backends differ, so the usual way of testing hides it.
+4. The API documentation does not say it. `Store`, `Store::start_transaction` and pyoxigraph's `Store` promise the "repeatable read" isolation level and atomic operations, and the caveat is in the changelog and the wiki only. A lost update is also the anomaly that repeatable read excludes in Berenson and others, "A Critique of ANSI SQL Isolation Levels" (SIGMOD 1995, [arXiv cs/0701157](https://arxiv.org/abs/cs/0701157)). Its section 4.1 defines P4, Lost Update, as the history `r1[x]...w2[x]...w1[x]...c1`, which is the history above, and says that forbidding P2 precludes it, and its Table 4 gives P4 as "Not Possible" at REPEATABLE READ and at Snapshot. Section 4.2 has Snapshot Isolation prevent it by first-committer-wins, which is the check the on-disk store does not make. So a reader who knows the term expects the guard to hold.
+5. A downstream project met the same thing on 0.5.9 and worked around it with a mutex over its write transactions (coasys/ad4m#1452, closed in favour of its #1453).
+
+**Proposed fix.** Give the RocksDB storage the lock the in-memory storage already has, and hold it only where it is needed.
+
+- A transaction that reads (`start_readable_transaction`, and the write-only transaction of a request that starts with a `DELETE`/`INSERT`/`WHERE`) takes the lock before its snapshot and keeps it until it commits or is dropped.
+- A write that reads nothing (`Store::insert`, `extend`, `remove`, `load_from_reader`, `INSERT DATA`, the bulk loader's ingestion) builds its batch with no lock and takes the lock only while RocksDB applies it, so it cannot land inside a reading transaction's window.
+- Queries and every other snapshot read never take it.
+
+The lock is `memory.rs`'s `Lock`, whose guard is `Send` and `Sync`, so `Transaction` stays `Send` and `Sync` (#1759). The patch below is against `main` at `78734be`. The same change applies to `v0.5.13` with one line different, the pattern `GraphUpdateOperation::DeleteInsert { .. }`.
+
+What we ran, on macOS arm64 with rustc 1.95.0, debug profile, on `main` and on `v0.5.13` alike.
+
+| | Without the patch | With the patch |
+|---|---|---|
+| the three in-memory tests below | pass | pass |
+| the three on-disk tests below | fail in every run, 1 run on `main` and 4 on `v0.5.13` | pass in every run, 4 runs on `main` and 11 on `v0.5.13` |
+| `cargo test -p oxigraph --lib --tests` | not run | passes, 15 unit, 26 store and 1 optimizer test on `main`, 16, 24 and 1 on `v0.5.13` |
+| `cargo clippy -p oxigraph --all-targets` and `cargo fmt --check` | not run | no warning, no difference |
+
+Without the patch the on-disk compare-and-set let 438 to 767 updates succeed for 300 values of the counter, and the two increment tests, the in-store update and the `Transaction` form, ended with 1 to 36 values of the counter, the largest between 204 and 374 where 800 is right. Not run: the doc tests, the `http-client` tests, the CLI's tests, the W3C test suites, and any measurement of throughput.
+
+```diff
+diff --git a/lib/oxigraph/src/sparql/update.rs b/lib/oxigraph/src/sparql/update.rs
+index 9222d6f..33be740 100644
+--- a/lib/oxigraph/src/sparql/update.rs
++++ b/lib/oxigraph/src/sparql/update.rs
+@@ -111,9 +111,16 @@ impl PreparedSparqlUpdate {
+                 .map(UpdateTransaction::OwnedReadable)
+         } else {
+             let storage = store.storage();
+-            storage
+-                .start_transaction()
+-                .map(|transaction| UpdateTransaction::Owned(transaction, storage))
++            let transaction = if matches!(
++                self.update.operations.first(),
++                Some(GraphUpdateOperation::DeleteInsert(_))
++            ) {
++                // The changes are computed from a snapshot of the store taken during the evaluation
++                storage.start_transaction_from_snapshot()
++            } else {
++                storage.start_transaction()
++            };
++            transaction.map(|transaction| UpdateTransaction::Owned(transaction, storage))
+         };
+         BoundPreparedSparqlUpdate {
+             evaluator: self.evaluator,
+diff --git a/lib/oxigraph/src/storage/memory.rs b/lib/oxigraph/src/storage/memory.rs
+index eb5358f..9662b18 100644
+--- a/lib/oxigraph/src/storage/memory.rs
++++ b/lib/oxigraph/src/storage/memory.rs
+@@ -1024,20 +1024,21 @@ fn pop_boxed_slice<T: Copy>(slice: &[T]) -> Box<[T]> {
+     slice[..slice.len() - 1].into()
+ }
+ 
+-struct Lock {
++/// A lock whose guard is `Send` and `Sync`, so a transaction holding it stays `Send` and `Sync`.
++pub(super) struct Lock {
+     mutex: Mutex<bool>,
+     condvar: Condvar,
+ }
+ 
+ impl Lock {
+-    fn new() -> Self {
++    pub(super) fn new() -> Self {
+         Self {
+             mutex: Mutex::new(false),
+             condvar: Condvar::new(),
+         }
+     }
+ 
+-    fn lock(&self) -> LockGuard<'_> {
++    pub(super) fn lock(&self) -> LockGuard<'_> {
+         *self
+             .condvar
+             .wait_while(self.mutex.lock().unwrap(), |v| *v)
+@@ -1049,7 +1050,7 @@ impl Lock {
+     }
+ }
+ 
+-struct LockGuard<'a> {
++pub(super) struct LockGuard<'a> {
+     mutex: &'a Mutex<bool>,
+     condvar: &'a Condvar,
+ }
+diff --git a/lib/oxigraph/src/storage/mod.rs b/lib/oxigraph/src/storage/mod.rs
+index 97f7407..fa2bb15 100644
+--- a/lib/oxigraph/src/storage/mod.rs
++++ b/lib/oxigraph/src/storage/mod.rs
+@@ -126,6 +126,26 @@ impl Storage {
+         })
+     }
+ 
++    /// Starts a write-only transaction whose changes are computed from a [`snapshot`](Self::snapshot)
++    /// taken after this call, with no other write applied in between.
++    #[cfg_attr(
++        not(all(not(target_family = "wasm"), feature = "rocksdb")),
++        expect(clippy::unnecessary_wraps)
++    )]
++    pub fn start_transaction_from_snapshot(&self) -> Result<StorageTransaction<'_>, StorageError> {
++        Ok(StorageTransaction {
++            kind: match &self.kind {
++                #[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
++                StorageKind::RocksDb(storage) => {
++                    StorageTransactionKind::RocksDb(storage.start_transaction_from_snapshot()?)
++                }
++                StorageKind::Memory(storage) => {
++                    StorageTransactionKind::Memory(storage.start_transaction())
++                }
++            },
++        })
++    }
++
+     #[cfg_attr(
+         not(all(not(target_family = "wasm"), feature = "rocksdb")),
+         expect(clippy::unnecessary_wraps)
+diff --git a/lib/oxigraph/src/storage/rocksdb.rs b/lib/oxigraph/src/storage/rocksdb.rs
+index 5cf31cb..e77ef88 100644
+--- a/lib/oxigraph/src/storage/rocksdb.rs
++++ b/lib/oxigraph/src/storage/rocksdb.rs
+@@ -12,6 +12,7 @@ use crate::storage::binary_encoder::{
+     write_pos_quad, write_posg_quad, write_spo_quad, write_spog_quad, write_term,
+ };
+ pub use crate::storage::error::{CorruptionError, StorageError};
++use crate::storage::memory::{Lock, LockGuard};
+ use crate::storage::numeric_encoder::{
+     Decoder, EncodedQuad, EncodedTerm, EncodedTriple, StrHash, StrHashHasher, StrLookup,
+     insert_term,
+@@ -84,6 +85,15 @@ pub struct RocksDbStorage {
+     dpos_cf: ColumnFamily,
+     dosp_cf: ColumnFamily,
+     graphs_cf: ColumnFamily,
++    /// Serializes the transactions that read with every other write.
++    ///
++    /// A transaction that reads computes its changes from a snapshot and RocksDB applies them without
++    /// checking what was committed since, so a write landing between its snapshot and its commit
++    /// would be silently overwritten (a lost update).
++    /// Such a transaction holds this lock from before its snapshot until it is committed or dropped,
++    /// and a write that reads nothing holds it only while it is applied.
++    /// Queries and other snapshot reads never take it.
++    write_lock: Arc<Lock>,
+ }
+ 
+ impl RocksDbStorage {
+@@ -191,6 +201,7 @@ impl RocksDbStorage {
+             dpos_cf: db.column_family(DPOS_CF)?,
+             dosp_cf: db.column_family(DOSP_CF)?,
+             graphs_cf: db.column_family(GRAPHS_CF)?,
++            write_lock: Arc::new(Lock::new()),
+             db,
+         };
+         this.migrate()?;
+@@ -433,21 +444,42 @@ impl RocksDbStorage {
+         }
+     }
+ 
++    /// Starts a write-only transaction whose changes do not depend on the store content.
+     pub fn start_transaction(&self) -> Result<RocksDbStorageTransaction<'_>, StorageError> {
+         Ok(RocksDbStorageTransaction {
+             buffer: Vec::new(),
+             transaction: self.db.start_transaction()?,
+             storage: self,
++            write_guard: None,
++        })
++    }
++
++    /// Starts a write-only transaction whose changes are computed from a [`snapshot`](Self::snapshot)
++    /// taken after this call.
++    ///
++    /// No other write is applied between this call and the commit or the drop of the transaction.
++    pub fn start_transaction_from_snapshot(
++        &self,
++    ) -> Result<RocksDbStorageTransaction<'_>, StorageError> {
++        let write_guard = self.write_lock.lock();
++        Ok(RocksDbStorageTransaction {
++            buffer: Vec::new(),
++            transaction: self.db.start_transaction()?,
++            storage: self,
++            write_guard: Some(write_guard),
+         })
+     }
+ 
+     pub fn start_readable_transaction(
+         &self,
+     ) -> Result<RocksDbStorageReadableTransaction<'_>, StorageError> {
++        // We ensure no other write is applied between the snapshot of this transaction and its commit
++        let write_guard = self.write_lock.lock();
+         Ok(RocksDbStorageReadableTransaction {
+             buffer: Vec::new(),
+             transaction: self.db.start_readable_transaction()?,
+             storage: self,
++            _write_guard: write_guard,
+         })
+     }
+ 
+@@ -1157,6 +1189,7 @@ pub struct RocksDbStorageTransaction<'a> {
+     buffer: Vec<u8>,
+     transaction: Transaction,
+     storage: &'a RocksDbStorage,
++    write_guard: Option<LockGuard<'a>>,
+ }
+ 
+ impl RocksDbStorageTransaction<'_> {
+@@ -1340,6 +1373,11 @@ impl RocksDbStorageTransaction<'_> {
+     }
+ 
+     pub fn commit(self) -> Result<(), StorageError> {
++        // We do not apply the changes while a transaction that reads is running
++        let _write_guard = match self.write_guard {
++            Some(write_guard) => write_guard,
++            None => self.storage.write_lock.lock(),
++        };
+         self.transaction.commit()
+     }
+ }
+@@ -1349,6 +1387,7 @@ pub struct RocksDbStorageReadableTransaction<'a> {
+     buffer: Vec<u8>,
+     transaction: ReadableTransaction<'a>,
+     storage: &'a RocksDbStorage,
++    _write_guard: LockGuard<'a>, // Released when the transaction is committed or dropped
+ }
+ 
+ impl RocksDbStorageReadableTransaction<'_> {
+@@ -1683,7 +1722,11 @@ impl RocksDbStorageBulkLoader<'_> {
+         if self.sst_files.is_empty() {
+             return Ok(());
+         }
+-        self.storage.db.insert_stt_files(&self.sst_files)?;
++        {
++            // We do not apply the changes while a transaction that reads is running
++            let _write_guard = self.storage.write_lock.lock();
++            self.storage.db.insert_stt_files(&self.sst_files)?;
++        }
+         for (_, file) in &self.sst_files {
+             remove_file(file)?;
+         }
+diff --git a/lib/oxigraph/src/store.rs b/lib/oxigraph/src/store.rs
+index 407ddc6..e1a3cfe 100644
+--- a/lib/oxigraph/src/store.rs
++++ b/lib/oxigraph/src/store.rs
+@@ -70,6 +70,9 @@ use std::thread::available_parallelism;
+ /// This store ensures the "repeatable read" isolation level: the store only exposes changes that have
+ /// been "committed" (i.e., no partial writes), and the exposed state does not change for the complete duration
+ /// of a read operation (e.g., a SPARQL query) or a read/write operation (e.g., a SPARQL update).
++/// Read/write operations (a SPARQL update with a `WHERE` clause, a [`Transaction`]) are applied one at a time,
++/// so none of them overwrites the changes another one committed after it started reading.
++/// Read operations are never blocked by them.
+ ///
+ /// Usage example:
+ /// ```
+@@ -375,6 +378,11 @@ impl Store {
+     /// (e.g., a SPARQL query) or a read/write operation (e.g., a SPARQL update).
+     /// Transactional operations are also atomic.
+     ///
++    /// Only one transaction runs at a time: this method waits for the end of the running one, and the other
++    /// write operations on the store wait for the end of the transaction.
++    /// Starting a second transaction, or writing to the store outside of the transaction,
++    /// from the thread that holds a transaction blocks forever.
++    ///
+     /// Note that the transaction keeps the complete set of changes into memory, do not use them to load
+     /// tens of millions of triples.
+     ///
+```
+
+What it costs, as far as we can tell without measuring.
+
+- Two reading updates no longer overlap. Today they overlap and one of them may be wrong.
+- Blind writes are applied one at a time, where RocksDB could group several writers into one write. A shared mode for blind writes and an exclusive mode for reading transactions would keep that grouping, at the price of a second lock type.
+- A request that needs the readable transaction and contains a `LOAD` holds the lock while it fetches.
+- A thread that holds a `Transaction` and starts a second one, or writes to the store outside it, blocks forever. The in-memory store already behaves so.
+
+Alternatives. Detect instead of exclude, by comparing the snapshot's sequence number with the latest one under a short lock at commit, and evaluate the request again when they differ. Or keep today's behaviour as the default and offer the lock as a `StoreOptions` setting. If neither is wanted, a sentence in the documentation of `Store` and of pyoxigraph's `Store` saying that concurrent updates on disk may overwrite each other, and that a caller who needs a guard must send updates one at a time, would have saved us the search.
+
+**A test.** As `lib/oxigraph/tests/concurrent_updates.rs`, for `main`. On `v0.5.13` the `Transaction` test builds its quads with `QuadRef` and `NamedNodeRef` instead. The three in-memory tests pass today and the three on-disk tests fail without the fix.
+
+```rust
+#![cfg(test)]
+#![allow(clippy::panic_in_result_fn)]
+
+//! Concurrent read-modify-write operations on one [`Store`] must not lose updates.
+
+use oxigraph::model::{GraphName, Literal, NamedNode, NamedOrBlankNode, Quad, Term};
+use oxigraph::sparql::{QueryResults, SparqlEvaluator};
+use oxigraph::store::Store;
+use std::error::Error;
+use std::iter::repeat_with;
+use std::thread;
+#[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
+use tempfile::TempDir;
+
+type TestResult<T> = Result<T, Box<dyn Error + Send + Sync>>;
+
+const THREADS: usize = 4;
+const TARGET: u64 = 300;
+const INCREMENTS: u64 = 200;
+
+fn update(store: &Store, update: &str) -> TestResult<()> {
+    SparqlEvaluator::new()
+        .parse_update(update)?
+        .on_store(store)
+        .execute()?;
+    Ok(())
+}
+
+fn number(store: &Store, query: &str) -> TestResult<u64> {
+    if let QueryResults::Solutions(mut solutions) = SparqlEvaluator::new()
+        .parse_query(query)?
+        .on_store(store)
+        .execute()?
+    {
+        if let Some(solution) = solutions.next() {
+            if let Some(Term::Literal(literal)) = solution?.get(0) {
+                return Ok(literal.value().parse()?);
+            }
+        }
+    }
+    Err("the query did not return a number".into())
+}
+
+fn join(handles: Vec<thread::ScopedJoinHandle<'_, TestResult<()>>>) -> TestResult<()> {
+    for handle in handles {
+        handle.join().map_err(|_| "a thread panicked")??;
+    }
+    Ok(())
+}
+
+/// Each thread reads the counter N and sends one update that moves it to N+1 only if it is still N,
+/// together with a marker of its own. Exactly one update may succeed for each value of the counter.
+fn compare_and_set(store: &Store) -> TestResult<()> {
+    update(store, "INSERT DATA { <urn:c> <urn:v> 0 }")?;
+    thread::scope(|scope| {
+        join(
+            (0..THREADS)
+                .map(|t| {
+                    scope.spawn(move || -> TestResult<()> {
+                        for i in 0.. {
+                            let n = number(store, "SELECT ?n WHERE { <urn:c> <urn:v> ?n }")?;
+                            if n >= TARGET {
+                                break;
+                            }
+                            update(
+                                store,
+                                &format!(
+                                    "DELETE {{ <urn:c> <urn:v> {n} }} INSERT {{ <urn:c> <urn:v> {m} . <urn:w:{t}:{i}> <urn:at> {m} }} WHERE {{ <urn:c> <urn:v> {n} }}",
+                                    m = n + 1
+                                ),
+                            )?;
+                        }
+                        Ok(())
+                    })
+                })
+                .collect(),
+        )
+    })?;
+    let markers = number(store, "SELECT (COUNT(?w) AS ?c) WHERE { ?w <urn:at> ?x }")?;
+    let clashes = number(
+        store,
+        "SELECT (COUNT(*) AS ?c) WHERE { SELECT ?x WHERE { ?w <urn:at> ?x } GROUP BY ?x HAVING (COUNT(?w) > 1) }",
+    )?;
+    assert_eq!(
+        (markers, clashes),
+        (TARGET, 0),
+        "{markers} updates succeeded for {TARGET} values of the counter, and {clashes} values were written by more than one update"
+    );
+    Ok(())
+}
+
+/// Each thread increments a counter in a single update.
+fn increment(store: &Store) -> TestResult<()> {
+    update(store, "INSERT DATA { <urn:k> <urn:v> 0 }")?;
+    thread::scope(|scope| {
+        join(
+            repeat_with(|| {
+                    scope.spawn(move || -> TestResult<()> {
+                        for _ in 0..INCREMENTS {
+                            update(
+                                store,
+                                "DELETE { <urn:k> <urn:v> ?n } INSERT { <urn:k> <urn:v> ?m } WHERE { <urn:k> <urn:v> ?n BIND(?n + 1 AS ?m) }",
+                            )?;
+                        }
+                        Ok(())
+                    })
+                })
+                .take(THREADS)
+                .collect(),
+        )
+    })?;
+    let values = number(
+        store,
+        "SELECT (COUNT(?n) AS ?c) WHERE { <urn:k> <urn:v> ?n }",
+    )?;
+    let last = number(store, "SELECT (MAX(?n) AS ?m) WHERE { <urn:k> <urn:v> ?n }")?;
+    assert_eq!(
+        (values, last),
+        (1, u64::try_from(THREADS)? * INCREMENTS),
+        "the counter holds {values} values, the largest being {last}"
+    );
+    Ok(())
+}
+
+/// Each thread increments a counter with the `Transaction` API: read, remove, insert, commit.
+fn transaction_increment(store: &Store) -> TestResult<()> {
+    let k = NamedNode::new_unchecked("urn:t");
+    let v = NamedNode::new_unchecked("urn:v");
+    let subject = NamedOrBlankNode::from(k.clone());
+    let (k, v, subject) = (&k, &v, &subject);
+    store.insert(Quad::new(
+        k.clone(),
+        v.clone(),
+        Literal::from(0_i64),
+        GraphName::DefaultGraph,
+    ))?;
+    thread::scope(|scope| {
+        join(
+            repeat_with(|| {
+                scope.spawn(move || -> TestResult<()> {
+                    for _ in 0..INCREMENTS {
+                        let mut transaction = store.start_transaction()?;
+                        let current = transaction
+                            .quads_for_pattern(Some(subject), Some(v), None, None)
+                            .collect::<Result<Vec<_>, _>>()?;
+                        for quad in &current {
+                            let Term::Literal(literal) = &quad.object else {
+                                return Err("the counter is not a literal".into());
+                            };
+                            let next = literal.value().parse::<i64>()? + 1;
+                            transaction.remove(quad);
+                            transaction.insert(Quad::new(
+                                k.clone(),
+                                v.clone(),
+                                Literal::from(next),
+                                GraphName::DefaultGraph,
+                            ));
+                        }
+                        transaction.commit()?;
+                    }
+                    Ok(())
+                })
+            })
+            .take(THREADS)
+            .collect(),
+        )
+    })?;
+    let values = number(
+        store,
+        "SELECT (COUNT(?n) AS ?c) WHERE { <urn:t> <urn:v> ?n }",
+    )?;
+    let last = number(store, "SELECT (MAX(?n) AS ?m) WHERE { <urn:t> <urn:v> ?n }")?;
+    assert_eq!(
+        (values, last),
+        (1, u64::try_from(THREADS)? * INCREMENTS),
+        "the counter holds {values} values, the largest being {last}"
+    );
+    Ok(())
+}
+
+#[test]
+fn test_concurrent_compare_and_set() -> TestResult<()> {
+    compare_and_set(&Store::new()?)
+}
+
+#[test]
+#[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
+fn test_concurrent_compare_and_set_on_disk() -> TestResult<()> {
+    let dir = TempDir::new()?;
+    compare_and_set(&Store::open(&dir)?)
+}
+
+#[test]
+fn test_concurrent_increment() -> TestResult<()> {
+    increment(&Store::new()?)
+}
+
+#[test]
+#[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
+fn test_concurrent_increment_on_disk() -> TestResult<()> {
+    let dir = TempDir::new()?;
+    increment(&Store::open(&dir)?)
+}
+
+#[test]
+fn test_concurrent_transaction_increment() -> TestResult<()> {
+    transaction_increment(&Store::new()?)
+}
+
+#[test]
+#[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
+fn test_concurrent_transaction_increment_on_disk() -> TestResult<()> {
+    let dir = TempDir::new()?;
+    transaction_increment(&Store::open(&dir)?)
+}
 ```
 
 ### jena-avg-all-unbound
