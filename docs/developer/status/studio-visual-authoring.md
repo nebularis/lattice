@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-16. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -24,7 +24,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 |---|---|---|---|
 | SVA-R0 | probes of the broker for content frames | built 2026-11-13, building 2026-11-12 |  |
 | SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | built 2026-11-15, building 2026-11-12 | SVA-R0 |
-| SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | planned | SVA-R1 |
+| SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | building 2026-11-16 | SVA-R1 |
 | SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
 | SVA-R4 | the browser's run controller and the dock's run pane | built 2026-11-16, building 2026-11-16 | SVA-R1 |
 | SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line | built 2026-11-16, building 2026-11-16 | SVA-R4 |
@@ -152,3 +152,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: SVA-R4a picked up.
 - 2026-11-16: SVA-R4a built, [Validation Pack](../validation/SVA-R4a.md). The run contract now states the event's shape, a grace of 2 seconds after the deadline, a client that leaves the deadline to the service and times by duration, a failed last frame that settles a run whatever is missing, and a waiting request that may be abandoned, and the client and a new deadline example follow it. The service and worker sides of each rule are left to SVA-R2 and SVA-R3, and frames over real MQTT to SVA-R5.
 - 2026-11-16: SVA-R4a verified by a second run of its checks, 32 contract tests, 433 unit tests, the type check and 58 browser tests on the fake service. Seven unit tests of the controller changed with the behaviour they stated, each listed in the Validation Pack, and no browser test changed. For the maintainer: ADR-A154's decision 6 says the browser holds the same deadline as the service, and the browser now holds the same length plus a grace, timed from its own send, which the contract states and the decision record does not yet.
+- 2026-11-16: SVA-R2 picked up.
