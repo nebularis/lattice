@@ -1,7 +1,7 @@
 {
   "subject": "LD1",
   "statedAs": "Draws.draw_succeeds_whole_or_changes_nothing",
-  "statementDigest": "sha256:6cb7cb9cd6ab69633e46331f96bfa74eb61b2b37ad3651c9334426a80eeea035",
+  "statementDigest": "sha256:72d1658104e14a281bf49588b5c7b379b69ac9e1bcd984ff6041b75a0af7b0da",
   "method": "Proof",
   "scope": "EveryParentFunction",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

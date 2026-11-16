@@ -1,9 +1,9 @@
 {
   "subject": "LR4",
-  "statedAs": "Rounding.largest_remainder_lawful, to_first_lawful_on_positive_weights",
-  "statementDigest": "sha256:e29638d8283410b1a261d45a784441990e62c370ddee9cd8740c034f3716d009",
+  "statedAs": "Rounding.ration_lawful",
+  "statementDigest": "sha256:c65f14bbb7e4ce45439646dba91d7a1b797e3b12f1b36c57f7866f12b9dcbe31",
   "method": "Proof",
-  "scope": "EveryFiniteKeySet",
+  "scope": "EveryFiniteKeySetAndInjectiveOrder",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
   "tool": {
     "name": "Isabelle",

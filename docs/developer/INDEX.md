@@ -44,7 +44,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
 | lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-0 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
-| ledger | unit | LG | building 2026-11-16 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 13 Validation Packs |
+| ledger | unit | LG | built 2026-11-16 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 14 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
@@ -416,7 +416,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | ledger | planned | LG-5 | docs/developer/status/ledger.md#board |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | ledger | verified 2026-11-09 |  | docs/developer/status/ledger.md#board |
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | ledger | merged 2026-11-09 |  | docs/developer/status/ledger.md#board |
-| LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | ledger | building 2026-11-16 |  | docs/developer/status/ledger.md#board |
+| LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | ledger | built 2026-11-16 |  | docs/developer/status/ledger.md#board |
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | ledger | merged 2026-11-15 |  | docs/developer/status/ledger.md#board |
 | LG-11 | conversion leaves the ledger, the conversion terms removed | ledger | planned |  | docs/developer/status/ledger.md#board |
 | LG-12 | which draws an account accepts, a shape for compatibility and representability | ledger | planned | LG-11 | docs/developer/status/ledger.md#board |

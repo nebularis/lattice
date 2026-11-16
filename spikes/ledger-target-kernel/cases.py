@@ -357,7 +357,11 @@ def main():
             out.append(f"lemma {name}_{i // CHUNK + 1}:\n  \"([{join.join(left[i : i + CHUNK])}]\n     :: ({kind}) list) =\n    [{join.join(right[i : i + CHUNK])}]\"\n  by eval\n\n")
     out.append("end\n")
     (HERE / "Cases.thy").write_text("".join(out), encoding="utf-8", newline="\n")
-    print(f"wrote Cases.thy with {lemmas} lemmas over {count} cases")
+    # The same cases against the kernel extracted from the ledger README (LG-9's R0), so the move is shown to change no result.
+    kernel = "".join(out).replace("theory Cases\nimports Target\n", "theory Kernel_Cases\nimports \"Ledger.Kernel\"\n", 1)
+    kernel = kernel.replace("the definitions of Target.thy", "the definitions of the kernel extracted to tools/proofs/ledger/Kernel.thy", 1)
+    (HERE / "kernel" / "Kernel_Cases.thy").write_text(kernel, encoding="utf-8", newline="\n")
+    print(f"wrote Cases.thy and kernel/Kernel_Cases.thy with {lemmas} lemmas over {count} cases")
 
 
 if __name__ == "__main__":

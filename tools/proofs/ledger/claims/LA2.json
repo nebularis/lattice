@@ -1,9 +1,9 @@
 {
   "subject": "LA2",
-  "statedAs": "Allocation.in_priority_lawful",
-  "statementDigest": "sha256:74c9c459855e77679f2de42cfb5062633fc1bed6f6765f104839d9ba9ce9b173",
+  "statedAs": "Allocation.by_rank_lawful",
+  "statementDigest": "sha256:d7e5fd012fdd8caceff848a4547aedfc77e512c213344bf40954a9e052b087ff",
   "method": "Proof",
-  "scope": "EveryFiniteKeySet",
+  "scope": "EveryFiniteKeySetAndInjectiveRank",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
   "tool": {
     "name": "Isabelle",

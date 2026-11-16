@@ -72,6 +72,22 @@ ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
 		"""
 	] .
 
+ldg:NearestRoundingStatesTheDifferenceShape a sh:NodeShape ;
+	sh:targetNode ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "Rounding half-even or half-up beside a residual allocation must state how the difference is settled (LG-Q16)." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:roundingMethod ?rounding ;
+					  ldg:residualAllocation ?residual .
+				FILTER (?rounding IN (ldg:HalfEven, ldg:HalfUp))
+				FILTER NOT EXISTS { ?value ldg:roundingDifference ?settled }
+			}
+		"""
+	] .
+
 ldg:CreditCeilingNotBelowStatedShape a sh:NodeShape ;
 	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [

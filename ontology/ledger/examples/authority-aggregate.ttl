@@ -5,21 +5,23 @@
 # capacity. Three proposals, each for 40, arrive at the same position, 120 in
 # all against 100 available. The merge rule is proportional: each proposal's
 # exact share is its request scaled by availability over the total requested,
-# kept as an exact rational, then rounded to the account's unit (half-even)
+# kept as an exact rational, then rounded toward zero to the account's unit
 # and corrected by the largest-remainder residual so the granted values still
-# sum to the availability.
+# sum to the availability. Rounding to the nearest beside a residual rule is
+# refused unless the account states how the difference is settled (LG-Q16),
+# so the account rounds toward zero, as the maintainer chose on 2026-11-09.
 #
-# | Proposal | Requested | Exact share (100 x 40 / 120) | Rounded (half-even) | Residual | Granted |
+# | Proposal | Requested | Exact share (100 x 40 / 120) | Rounded (toward zero) | Residual | Granted |
 # |----------|----------:|------------------------------:|----------------------:|----------|--------:|
 # | 1        |        40 |                        33.3333 |                     33 | +1 (tie, first in order) | 34 |
 # | 2        |        40 |                        33.3333 |                     33 | --        |      33 |
 # | 3        |        40 |                        33.3333 |                     33 | --        |      33 |
 #
-# The three exact shares are equal, so half-even rounding alone would leave
-# the account one unit short (99 of 100). The largest-remainder residual
-# allocates the missing unit, and the three remainders are tied, so it goes
-# to the first proposal in the order they were made (ldg:ResidualAllocations'
-# tie-break).
+# The three exact shares are equal, so rounding alone would leave the account
+# one unit short (99 of 100). The largest-remainder residual allocates the
+# missing unit, and the three remainders are tied, so it goes to the first
+# proposal in the order the account declares, here the order they were made,
+# and never by their identifiers (TD-161).
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -48,7 +50,7 @@ ex:q-100 a qnt:Quantity ; qnt:onSpace ex:capacity ; qnt:numericValue "100"^^xsd:
 ex:delegated-aggregate a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:capacity ;
     ldg:admitsOwnerKind ex:Authority ; ldg:mergeRule ldg:Proportional ;
-    ldg:roundingMethod ldg:HalfEven ; ldg:residualAllocation ldg:LargestRemainder ;
+    ldg:roundingMethod ldg:TowardZero ; ldg:residualAllocation ldg:LargestRemainder ;
     rdfs:comment "100 units of delegated capacity, shared proportionally when oversubscribed." .
 
 # ==== One position, three proposals, one merge record, three postings ========

@@ -110,7 +110,7 @@ ldg:resetRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:residualAllocation a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "How the rounding residual is allocated so a proportional merge's grants still sum to availability." ;
-    fnd:utility "Required wherever ldg:mergeRule is ldg:Proportional. Rounding every share independently can leave the sum short of, or over, availability by a unit or two; state how that residual is allocated: ldg:LargestRemainder (ties broken by the total order of the proposals) or ldg:ToFirstInOrder." ;
+    fnd:utility "Required wherever ldg:mergeRule is ldg:Proportional. Rounding every share independently can leave the sum short of, or over, availability by a unit or two, so state how that residual is allocated, ldg:LargestRemainder (ties taken in the order the account declares, never by the proposals' identifiers) or ldg:ToFirstInOrder." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range skos:Concept .
 

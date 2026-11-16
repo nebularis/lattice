@@ -73,6 +73,7 @@ REFUSALS = {
     "refusal-unit": "ChildUnitMatchesParentShape",
     "refusal-proportional-unrounded": "ProportionalNeedsRoundingShape",
     "refusal-intensive-unit": "ExtensiveUnitOfAccountShape",
+    "refusal-nearest-beside-residual": "NearestRoundingStatesTheDifferenceShape",
 }
 
 
