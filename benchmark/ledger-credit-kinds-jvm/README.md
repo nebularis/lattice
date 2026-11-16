@@ -9,6 +9,20 @@ A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmar
 | `check:ledger-credit-kinds-jvm` | the one-level corpus (plain, kind-filtered, stepwise and shortcut, from the start of history and from the last checkpoint, in each form of the kind join), the two-level corpus with the cuts the writer recorded (plain, kind-filtered, `kind-filtered-union`, stepwise and sum-with-cuts, from the start and from the last checkpoint), and the query plans Jena gives three of the root's reads |
 | `check:ledger-credit-kinds-jvm-writes` | the ledger's live writer and a counter probe of the store's concurrency, each run exported and audited in Python |
 
+## Current figures
+
+The native figures as they stand after the run of 2026-11-15 and 2026-11-16 (LG-22), each with the section that holds it, at 20,000 postings unless said. The dated results stay as the history they are, and a figure here that differs from one there is the newer. The benchmark's README has the corpus's shares and the figures of the Python callers.
+
+| Figure | Now | From |
+|---|---|---|
+| the root read at 30% credits, plain, kind-filtered and stepwise, Jena in memory and TDB2 | 53.3, 79.5 and 171.5 ms, and 122.9, 148.0 and 253.9 ms | the benchmark's README, Measured again with request lists that continue the preload (LG-22) |
+| the kind-filtered and stepwise folds against the plain, over all 27 reads, in memory and on TDB2 | 1.49 and 2.86, 1.51 and 2.22 | the same |
+| a guarded write of a debit, in memory and on TDB2 | 18.6 and 29.8 ms | Measured again with request lists that continue the preload (LG-22) below |
+| a refused request, in memory and on TDB2 | 18.0 and 15.4 ms, each the average of 100 | LG-22 below |
+| debits the writer refuses at 20,000 postings | 0 of 500 in memory and 0 of 100 on TDB2, where it refused 138 and 16 | LG-22 below |
+| one writer that reads its path, closed, 8 producers, commits a second | 68 in memory and 40 on TDB2, against 41 and 21 for 8 guarded threads | LG-22 below |
+| the keeper, backlog, commits a second | 2,194 in memory and 83 on TDB2, 5,008 and 1,745 with batches of 100 | LG-22 below |
+
 ## How the reads run
 
 The Python benchmark writes each corpus as N-Quads and, for every read, the balance and posting count the model gives, as `expected.json` (`check.py --emit`). Both go to `target/corpus/`, which is git-ignored. This module loads a corpus, builds the same query text as `check.py` does, runs every read, checks every balance and posting count against the expected values, and writes its timings to `report.json` in the shape of the Python report. `check.py --merge` then adds them to the Python benchmark's `report.md`, as "Native Jena (Java)" for the one-level corpus and "Native Jena (Java), two-level corpus" for the other. The stepwise fold's time is split into the ordered query, the transfer of its rows into Java arrays, and the clamping loop. The sum with cuts is split into its postings aggregate and its cuts aggregate. The Jena version is read at runtime from the jar the JVM loads.
@@ -64,6 +78,17 @@ The writes, at 20,000 postings, the mean ms of a guarded debit, credit and credi
 | Jena TDB2 | 31.8, 24.4, 26.4 | 25.7, 18.7, 20.4 |
 
 The debits the writer refuses for lack of availability fell from 187 to 138 in memory and from 32 to 16 on TDB2. At 1,000 and 5,000 postings nothing moved. The stress, which draws from request lists that did not change, is a repeat measurement and its commit rates differ by under 10%, with no duplicate position on a guarded run and 99 to 772 on the unguarded. The one writer per ledger ran on the same request lists too. Its commits a second, before and after, were 1,944 and 1,673 for the keeper with one producer in memory, 2,474 and 2,273 in the backlog, 5,895 and 5,116 with batches of 100, and on TDB2 94 and 90 in the backlog and 1,483 and 1,560 with batches of 100. The variation of such a run is up to 20%.
+
+### Measured again with request lists that continue the preload (LG-22)
+
+The plan the native module is given (`writes.py --emit-jvm`) carries, for each preload size, a list of requests that continues the stream the preload came from, so the single writer sent it in order refuses none. The stress and queue lists continue the preload of 5,000 and differ by seed. The plan also carries the debits the writer is asked to refuse, and the native single writer reads their paths and writes nothing, one among every five writes at the 500 writes of the memory store and one among every write at the 100 of TDB2, in step with them, since the writer writes no checkpoint and the reads of a write fold a tail that grows with every write. The benchmark's README has the corpus labels, the variation measured from two baseline runs and the comparison. `check:ledger-credit-kinds-jvm-writes` was run twice before the change (636 and 647 s), once after it (622 s) and once more after the refused sample was moved among the writes (621 s), each exiting 0 with all 26 queue exports audited and equal to the replay. `check:ledger-credit-kinds-jvm` ran in 259 s after the change, against 238 and 231 s in the runs of LG-19.
+
+| store, 20,000 postings | refused before | refused now | debits and credits written now | a written debit ms | a refused request ms |
+|---|---|---|---|---|---|
+| Jena in memory, 500 requests | 138 | 0 | 297 and 203 | 18.62 | 17.97 |
+| Jena on TDB2, 100 requests | 16 | 0 | 60 and 40 | 29.81 | 15.36 |
+
+A refused request costs the reads and settling of a written debit, 17.95 and 16.17 ms, and not its update and confirmation. The stress with one thread refuses none where it refused 24 of 1,000 on 5,000 postings, and at 2 to 8 threads it refuses as it did, 15, 53 and 61 in memory with a guarded run, since the lists of the threads together draw more than the accounts hold. The commits a second of the stress and of the single writer did not move beyond the variation of the two baseline runs (up to 1.14 and 1.44 times), except the keeper in memory with no guard, in a run of 0.3 s, and a durable commit on TDB2 at one thread (43.8 against 35.1 and 38.0). The cost of a written debit at 20,000 postings is 18.6 and 29.8 ms, where LG-19 read 15.7 and 25.7 ms and LG-17 17.3 and 31.8. The writes at 20,000 postings are all written now, and the tail their reads fold is longer than when a third of them were refused.
 
 ## Pass criterion
 
