@@ -66,6 +66,8 @@ Examples are `LG-1`, a phrase such as "not yet written in LG-2", `AIR-4.2`, `CCS
 
 - **Check before handing off.** Search what you wrote under `ontology/` for slice, question and debt identifiers and for the word "slice". An extracted section carries the identifier into generated Turtle as well, so fix the README and regenerate.
 
+- **The commit hook refuses the identifiers.** The writing check fails a line a change adds to a layer README that names a register entry, a question, or a slice the developer index defines, in prose or inside a fenced block. It does not read delivery phrasing, so the search above is still yours.
+
 ## AI disclosure
 
 If an AI agent is making commits, then the project's AI contribution policy, where it has one, governs the disclosure rules. In short:
@@ -100,6 +102,16 @@ It is one of the checks the commit hook runs, which `mise run bootstrap` install
 ## When something slipped through
 
 Remove it in a new commit, and tell the maintainer. Rewriting published history is the maintainer's decision, never the agent's.
+
+## A decision is named in the Design decisions section and nowhere else
+A decision record is the contract between those who build, agents and maintainers, for what is built and how it works. It is not written for a reader of a layer. That reader needs the constraint or the feature a decision gives, and never how it was arrived at (STD-337).
+
+- **Cite a decision only in the README's Design decisions section**, section 5.1 of the ADR-A126 layout, as a link to the record. That section is where a reader who wants the background finds it. A release note may also cite the decision its change rests on.
+- **Everywhere else, state the rule as a fact of the layer.** Write "the two documents share one version", never "the two documents share one version (ADR-A131 decision 2)". This holds for the README's other sections, the documents generated from it, a shape's comment and its message, and an example.
+- **Never a bare "decision 6".** A number with no record named resolves to nothing, and a reader cannot tell whether it means a bullet of the README or a decision somewhere else.
+- **The exception is rare.** Cite a decision outside that section only where the reader is meant to read it, for example because it teaches something about a technology that the layer's own text cannot. Link it, and say why it is worth reading.
+- **Existing occurrences are debt, not precedent** (TD-163). Almost every layer README has them. Do not copy them, and do not add to them. Remove them from text you edit, and regenerate where the text is extracted.
+- **The commit hook refuses it.** The writing check fails a line a change adds to a layer README that cites a decision outside the Design decisions section and the release notes, in prose or inside a fenced block, and a bare decision number anywhere. `mise exec -- python tools/writing_rules.py ontology/<layer>/README.md` lists what a README still holds.
 
 ## The private overlay
 A maintainer's private guidance lives outside every repository, at `~/.config/lattice/private/` (`%USERPROFILE%\.config\lattice\private\` on Windows), usually a link to a private checkout. `AGENTS.md` says when it applies. Its content is held to the same rule as the deny-list. It never appears in a repository, a commit or a pull request, in any form.

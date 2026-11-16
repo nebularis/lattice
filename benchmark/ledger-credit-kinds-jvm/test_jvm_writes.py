@@ -29,7 +29,7 @@ def exported(tmp_path: Path, live: int) -> tuple[Path, int, int]:
     with writes.opened("oxigraph memory") as backend:
         corpus, base = writes.preload(backend, COUNT)
         writer, commits = writes.Live(backend, len(corpus.positions), True), 0
-        for n, request in enumerate(writes.requests(live, writes.SHARE, ck.SEED + 7)):
+        for n, request in enumerate(writes.requests(COUNT, live, writes.SHARE, ck.SEED + 7)):
             commits += not writes.write_one(writer, request, f"W{n}", retry=False)[0].refused
         path = tmp_path / "export.nq"
         path.write_bytes(backend.store.dump(format=ck.ox.RdfFormat.N_QUADS))

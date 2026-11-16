@@ -146,6 +146,7 @@ This repository is public, and so is everything it publishes.
   HTML comments. They cite only published ADRs, and may link durable guidance under `docs/developer/`,
   such as the getting-started guide ([ADR-A127](../docs/architecture/decisions/ADR-A127-published-architecture-decisions.md)).
   Until decisions are published, they cite Accepted ADRs
+- A user-facing document names a decision only in a README's Design decisions section or a release note, as a link. Everywhere else it states the constraint or feature the decision gives, since a decision record is written for those who build and not for a reader of a layer. Never a bare "decision 6" (STD-337).
 - A commit that touches a path where placement matters carries a `Placement:` trailer saying where the change was placed. `T0` is public substrate and `T1` is public applied content, and a change may name both. The guard checks that the trailer is there and a reviewer checks that it is right. When the right value is not clear, ask the maintainer.
 - AI-assisted contributions are disclosed as [GENAI_CONTRIBUTION.md](../GENAI_CONTRIBUTION.md) requires.
 

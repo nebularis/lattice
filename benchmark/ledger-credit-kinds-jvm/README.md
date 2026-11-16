@@ -2,12 +2,26 @@
 
 # Ledger credit kinds on native Jena
 
-A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It repeats [benchmark/ledger-credit-kinds](../ledger-credit-kinds/README.md) on Jena called from Java, so the stepwise fold's ordered query is folded in Java and its rows do not cross the test kit's JSON pipe, which made the stepwise fold look 3.4 to 4.9 times the plain fold. It runs on Jena in memory (an ARQ query over a transactional in-memory dataset) and on Jena TDB2 on disk in a temporary directory that is removed afterwards. It adds no dependency to [benchmark/ledger-store-comparison](../ledger-store-comparison/README.md), whose Jena 5.1.0 and TDB2 it uses. It does three things, in two tasks.
+A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md). It repeats [benchmark/ledger-credit-kinds](../ledger-credit-kinds/README.md) on Jena called from Java, so the stepwise fold's ordered query is folded in Java and its rows do not cross the test kit's JSON pipe, through which the stepwise fold costs 5.72 times the plain fold where it costs 2.86 here. It runs on Jena in memory (an ARQ query over a transactional in-memory dataset) and on Jena TDB2 on disk in a temporary directory that is removed afterwards. It adds no dependency to [benchmark/ledger-store-comparison](../ledger-store-comparison/README.md), whose Jena 5.1.0 and TDB2 it uses. It does three things, in two tasks.
 
 | Task | What it runs |
 |---|---|
 | `check:ledger-credit-kinds-jvm` | the one-level corpus (plain, kind-filtered, stepwise and shortcut, from the start of history and from the last checkpoint, in each form of the kind join), the two-level corpus with the cuts the writer recorded (plain, kind-filtered, `kind-filtered-union`, stepwise and sum-with-cuts, from the start and from the last checkpoint), and the query plans Jena gives three of the root's reads |
 | `check:ledger-credit-kinds-jvm-writes` | the ledger's live writer and a counter probe of the store's concurrency, each run exported and audited in Python |
+
+## Headline figures
+
+At 20,000 postings, on the cloud machine of the benchmark's README, on 2026-11-16. That README has the corpora's shares, the variation between runs and the figures of the Python callers.
+
+| Figure | Value |
+|---|---|
+| the root read at 30% credits drawn, plain, kind-filtered and stepwise, Jena in memory and TDB2 | 53.3, 79.5 and 171.5 ms, and 122.9, 148.0 and 253.9 ms |
+| the kind-filtered and stepwise folds against the plain, over all 27 reads, in memory and on TDB2 | 1.49 and 2.86, 1.51 and 2.22 |
+| a guarded write of a debit, in memory and on TDB2 | 18.6 and 29.8 ms |
+| a refused request, in memory and on TDB2 | 18.0 and 15.4 ms, each the average of 100 |
+| debits one writer refuses | 0 of 500 in memory and 0 of 100 on TDB2 |
+| one writer that reads its path, closed, 8 producers, commits a second | 68 in memory and 40 on TDB2, against 41 and 21 for 8 guarded threads |
+| the keeper, backlog, commits a second | 2,194 in memory and 83 on TDB2, 5,008 and 1,745 with batches of 100 |
 
 ## How the reads run
 
@@ -21,49 +35,31 @@ For the root account's full read of the largest two-level corpus at 30% credits,
 
 ## The writes
 
-`writes.py --emit-jvm` writes, to `target/writes/`, the account tree, a preload of the two-level corpus at 30% credits with the ledger's revision triple at each size (1,000, 5,000 and 20,000 postings), the request lists (the same seeds as the Python benchmark's single writer and stress, so the runs are comparable) and the plan of the runs. `LedgerWrites` then runs, on Jena in memory and on TDB2, with threads in one JVM against one dataset:
+`writes.py --emit-jvm` writes, to `target/writes/`, the account tree, a preload of the two-level corpus at 30% credits with the ledger's revision triple at each size (1,000, 5,000 and 20,000 postings), the request lists, each of which continues the stream its preload came from under the seeds of the Python benchmark's single writer and stress, so the runs are comparable, a list of debits the writer is asked to refuse, and the plan of the runs. `LedgerWrites` then runs, on Jena in memory and on TDB2, with threads in one JVM against one dataset:
 
 | Run | What it does |
 |---|---|
 | the probe (C1) | a counter triple. Each thread reads the counter N, sends `DELETE { N } INSERT { N+1 and its marker } WHERE { N }` as one update request in its own write transaction, and asks in a read transaction whether its marker exists, until the counter reaches 1,000. Then the increment in the store, 500 times a thread. 1, 2, 4 and 8 threads, three runs a cell |
 | the single writer | 500 writes on stores of 1,000, 5,000 and 20,000 postings, guarded and unguarded, with the time of each write split into path reads, settle, update and confirm |
 | the stress | 1, 2, 4 and 8 threads, 1,000 requests in all on a store of 5,000, guarded (three runs a cell at 2, 4 and 8) and once unguarded |
-| one writer per ledger (LG-18, run 2026-11-12) | producers hand the stress's requests to one writer through a queue. Closed runs with 1, 2, 4 and 8 producers, by a writer that reads its path and by one that keeps the balances it has settled. Backlog runs by both, by the keeper with no guard, and by the keeper writing batches of 10 and of 100 in one update. Every export is held to the replay |
+| one writer per ledger | producers hand the stress's requests to one writer through a queue. Closed runs with 1, 2, 4 and 8 producers, by a writer that reads its path and by one that keeps the balances it has settled. Backlog runs by both, by the keeper with no guard, and by the keeper writing batches of 10 and of 100 in one update. Every export is held to the replay |
 
 The writer is the port of `writes.py`'s. It reads the revision and the sum with cuts of every account on the posting's path from the last checkpoint, in one read transaction, settles with the benchmark's arithmetic, refuses a debit larger than the balance of any account on its path, and writes the posting, its applied amount, kind and cuts and the new revision in one guarded update, confirmed by asking for its own posting. After each run the dataset is exported as gzipped N-Quads, and `writes.py --audit-jvm` loads each export into an in-memory Oxigraph and runs `audit` on it, the replay of the commits in revision order through the benchmark's writer. The replay is Python's and none is written in Java. A guarded run on a store is asserted against the replay only if the probe showed that store kept the guard in every guarded run at two threads or more, and is otherwise audited and reported. An unguarded run is never asserted.
 
-### Measured results, one writer per ledger (LG-18)
+### Measured results
 
-Run on 2026-11-12 on a cloud machine with 4 cores, 15 GiB of memory and Linux amd64, with Java 25.0.5.0.3, Apache Jena 5.1.0 and a 2,048 MiB heap. All 26 queue exports were audited and every one equals the replay. Commits a second, 1,000 requests on Jena in memory and 200 on TDB2, with the guarded threads of the same run beside them.
+`check:ledger-credit-kinds-jvm-writes` ran in 621 s and `check:ledger-credit-kinds-jvm` in 259 s on 2026-11-16, each exiting 0, with all 26 queue exports audited and equal to the replay.
 
-| store | guarded, 1 thread | guarded, 8 threads | reads, 8 producers | keeps, 8 producers | keeps, backlog | batches of 10 | batches of 100 |
-|---|---|---|---|---|---|---|---|
-| jena-memory | 61 | 38 to 40 | 62 | 1,709 | 2,019 | 3,492 | 4,275 |
-| jena-tdb2 | 36 | 18 to 21 | 35 | 74 | 80 | 477 | 1,700 |
+| Store, 20,000 postings | Debits refused | Debits and credits written | A written debit, ms | Its reads and settle | A refused request, ms |
+|---|---|---|---|---|---|
+| Jena in memory, 500 requests | 0 | 297 and 203 | 18.62 | 17.95 | 17.97 |
+| Jena on TDB2, 100 requests | 0 | 60 and 40 | 29.81 | 16.17 | 15.36 |
 
-The writer that reads matches the guarded single thread and does not fall with producers, where the guarded writers lose a third to a half at 8 threads. The keeper is 28 to 33 times the guarded single thread on Jena in memory, and on TDB2 it is limited by the commit at about 80 a second until postings share a commit, then 477 and 1,700 a second at batches of 10 and 100. This is more than the 10 a second expected from LG-17's laptop figure, so a commit costs less on this machine. The mean wait at 8 producers is 119 ms for the writer that reads and 4 ms for the keeper on Jena in memory, and 224 and 106 ms on TDB2.
+A refused request costs the reads and settling of a written debit, and not its update and confirmation. The single writer reads the requests it is asked to refuse among its writes, one among every five writes at the 500 writes of the memory store and one among every write at the 100 of TDB2, since the writer writes no checkpoint and the reads of a write fold a tail that grows with every write.
 
-### Measured again on corpora that refuse an overdrawing debit (LG-19)
+The stress with one thread refuses none of its 1,000 requests. At 2, 4 and 8 threads a guarded run in memory refuses 15, 53 and 61, since the lists of the threads are each valid alone and together draw more than the accounts they share hold. No guarded run has a duplicate position.
 
-The corpora that `check.py --emit` and `writes.py --emit-jvm` write no longer post a debit that an account on its path could not cover (the benchmark's README says how). The task `check:ledger-credit-kinds-jvm` and the task `check:ledger-credit-kinds-jvm-writes` were run on 2026-11-13 on the machine of the LG-18 run, before and after the change, and both exited 0, in 231 s after and 238 s before, and 547 s after and 552 s before. All 26 queue exports were audited and equal the replay. Before is the run on the old corpora and after the run on the new.
-
-The native reads at 20,000 postings and 30% credits, mean ms of the root read of the one-level corpus, before and after:
-
-| Store | plain | kind-filtered | stepwise |
-|---|---|---|---|
-| Jena in memory | 49.5 / 50.5 | 71.9 / 77.9 | 177 / 150 |
-| Jena TDB2 | 99.4 / 112.9 | 109.5 / 140.8 | 180 / 228 |
-
-Over all 27 reads the kind-filtered fold against the plain fold is 1.34 and 1.47 on Jena in memory and 1.45 and 1.60 on TDB2, and the stepwise fold 2.43 and 2.66 and 2.16 and 2.31. The variation of a native root read on identical inputs is 0.66 to 2.06 times, so none of these moved beyond it. The stored triples at 20,000 postings are 183,186 at 5% credits and 185,551 at 30% on the one-level corpus, and the shortcut falls back in 10 of 27 checkpointed reads at 5% where it fell back in none, and in 27 where it fell back in 18 at 30%.
-
-The writes, at 20,000 postings, the mean ms of a guarded debit, credit and credit with a cut:
-
-| Store | before | after |
-|---|---|---|
-| Jena in memory | 17.3, 11.2, 13.4 | 15.7, 9.4, 11.6 |
-| Jena TDB2 | 31.8, 24.4, 26.4 | 25.7, 18.7, 20.4 |
-
-The debits the writer refuses for lack of availability fell from 187 to 138 in memory and from 32 to 16 on TDB2. At 1,000 and 5,000 postings nothing moved. The stress, which draws from request lists that did not change, is a repeat measurement and its commit rates differ by under 10%, with no duplicate position on a guarded run and 99 to 772 on the unguarded. The one writer per ledger ran on the same request lists too. Its commits a second, before and after, were 1,944 and 1,673 for the keeper with one producer in memory, 2,474 and 2,273 in the backlog, 5,895 and 5,116 with batches of 100, and on TDB2 94 and 90 in the backlog and 1,483 and 1,560 with batches of 100. The variation of such a run is up to 20%.
+With 8 producers one writer that reads its path commits 68 times a second in memory and 40 on TDB2, where 8 guarded threads commit 41 and 21. On TDB2 the keeper is limited by the durable commit until postings share one, and batches of 100 raise it from 83 to 1,745 commits a second.
 
 ## Pass criterion
 

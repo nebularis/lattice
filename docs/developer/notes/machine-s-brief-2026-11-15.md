@@ -2,7 +2,7 @@
 
 # Machine S brief, 2026-11-15: the ledger proofs on the target kernel
 
-**Not yet handed over.** The maintainer reviews the target kernel's definitions and hands this brief over. Until that day nothing here is started.
+**Handed over by the maintainer on 2026-11-16**, after reviewing the target kernel's definitions, on the branch `fm/ledger-proofs-on-the-target-kernel`, cut from `main` once this brief was on it.
 
 **For:** the agent on machine S, Windows 11, Isabelle2025-2 through its bundled Cygwin, where LG-7, LG-2, FME-0 and LG-8 were built. **Written on** `docs/placement-vehicles-structure` at the maintainer's request, as the end of slice LG-21. It replaces the [brief of 2026-11-13](machine-s-brief-2026-11-13.md), which was never handed over. It is one bundle of work, two slices on one branch, to be returned whole.
 
@@ -43,7 +43,7 @@ What was learned on FME-0 and LG-8 holds. A session's timeout lives in its `ROOT
 
 ## The slices
 
-**LG-9, the target kernel in the README, and the 19 claims proved again on it.** Row LG-9, brief in the plan under that name. Three parts in order. R0 moves the definitions into the README's `isabelle-spec` block, from which `Kernel.thy` is extracted by `mise exec -- python tools/literate_extract.py ontology/ledger/README.md --layer ledger --root . --proofs-root tools/proofs`, never by hand. R1 gives the path as a list, so the examples evaluate. R2 restates each of the 19 claims of LG-7 and LG-8 on the new definitions and proves it, keeping its identifier. Between R0 and the end of R2 the session does not build whole. That is expected, and no commit in that stretch is pushed as a passing state.
+**LG-9, the target kernel in the README, and the 19 claims proved again on it.** Row LG-9, brief in the plan under that name. Three parts in order. R0 moves the definitions into the README's `isabelle-spec` block, and leaves the README naming a decision only in its section 5.1 and no working-document identifier anywhere (STD-337), from which `Kernel.thy` is extracted by `mise exec -- python tools/literate_extract.py ontology/ledger/README.md --layer ledger --root . --proofs-root tools/proofs`, never by hand. R1 gives the path as a list, so the examples evaluate. R2 restates each of the 19 claims of LG-7 and LG-8 on the new definitions and proves it, keeping its identifier. Between R0 and the end of R2 the session does not build whole. That is expected, and no commit in that stretch is pushed as a passing state.
 
 **LG-20, the laws the target kernel gains.** Row LG-20, brief in the plan under that name, after LG-9. Seven groups by definition, in the plan's order: the predicates, ranks, whole units, the merge and settlement with purposes, allocation and pots, credits and the sum, and the readings. Each group names its laws and the negative instances to keep.
 

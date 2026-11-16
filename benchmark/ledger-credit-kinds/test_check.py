@@ -12,6 +12,7 @@ import os
 import pytest
 
 import check
+from probes import legacy_stream
 
 SMALL, HIGH, LOW = 400, 0.30, 0.05
 BACKENDS = check.available_backends()
@@ -321,6 +322,20 @@ def test_ck29_a_copied_cut_with_a_wrong_position_fails_the_check(monkeypatch, ba
         check.run_backend_cut_forms(backend, SMALL, HIGH)
 
 
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_ck29b_a_copied_cut_one_position_from_its_posting_fails_the_check(monkeypatch, backend):
+    """No read point falls on the cut, so the balances still agree, and only the copy held to its posting tells."""
+    real = check.quads
+
+    def one_off(postings, cps, **kw):
+        for s, p, o, g in real(postings, cps, **kw):
+            yield (s, p, ("n", o[1] + 1), g) if p == check.L + "cutPosition" else (s, p, o, g)
+
+    monkeypatch.setattr(check, "quads", one_off)
+    with pytest.raises(check.WrongResult, match="copied cut.*a position that is not their posting's"):
+        check.run_backend_cut_forms(backend, SMALL, HIGH)
+
+
 def test_ck30_a_default_account_has_its_stated_amount_for_a_ceiling_and_the_variant_raises_a_share_of_them():
     assert all(a.ceiling == a.stated and a.ceiling_amount is None for a in check.TREE)
     variant = check.build_ceiling_tree()
@@ -385,32 +400,6 @@ def test_ck35_the_report_has_the_like_for_like_cut_form_and_ceiling_rows(tmp_pat
 # LG-19: the streams refuse a debit that would leave an account below zero, as the writers do
 
 import random
-
-
-def legacy_stream(count, credit_share, two_level):
-    """The generator as it was before LG-19, kept as a reference. It posts every debit it draws, whatever the accounts on its path hold."""
-    rng, kind_rng, place_rng = random.Random(check.SEED), random.Random(check.SEED + 1), random.Random(check.SEED + 2)
-    out, step, pos = [], [a.stated for a in check.TREE], 0
-    while len(out) < count:
-        pos += 1
-        for micro in range(min(rng.randint(1, 3), count - len(out))):
-            debit = rng.random() >= credit_share
-            contract = rng.choice(check.CONTRACTS)
-            amount = rng.randint(1, check.DEBIT_MAX if debit else check.CREDIT_MAX)
-            kind = None if debit else check.L + rng.choice(check.KINDS)
-            if debit:
-                check.settle_debit(step, contract, amount)
-                out.append(check.Posting(pos, micro, contract, True, amount, None, 0 if two_level else amount))
-                continue
-            if kind_rng.random() < check.KINDLESS_SHARE and check.unrestricted(contract):
-                kind = None
-            at = contract
-            if two_level:
-                candidates = [i for i in check.chain(contract)[1:3] if check.accepts_kind(check.TREE[i], kind)]
-                at = place_rng.choice(candidates) if candidates and place_rng.random() < check.UPPER_SHARE else contract
-            applied, cuts = check.settle_credit(step, at, amount, kind)
-            out.append(check.Posting(pos, micro, at, False, amount, kind, applied, cuts if two_level else ()))
-    return out
 
 
 def lowest_balance(postings):
@@ -491,3 +480,67 @@ def test_ck57_refuses_debit_is_the_writers_rule():
     step[path[1]] = check.DEBIT_MAX - 1
     assert check.refuses_debit(step, contract, check.DEBIT_MAX)
     assert not check.refuses_debit(step, contract, check.DEBIT_MAX - 1)
+
+
+# LG-22: a corpus is named by what it holds, and the stream can be continued
+
+def test_ck60_the_balances_a_stream_reaches_are_the_replay_of_its_postings():
+    for two_level in (False, True):
+        base = check.Stream(HIGH, two_level)
+        postings = base.take(2000)
+        step = [a.stated for a in check.TREE]
+        for p in postings:
+            check.settle_debit(step, p.contract, p.amount) if p.debit else check.settle_credit(step, p.contract, p.amount, p.kind)
+        assert base.step == step and postings == check.generate(2000, HIGH, two_level)
+
+
+def test_ck61_a_continued_stream_is_valid_against_the_balances_it_starts_from_and_a_fresh_one_is_not():
+    base = check.Stream(LOW, True)
+    base.take(5000)
+    a, b = base.continued(1).take(300), base.continued(2).take(300)
+    assert a != b and a == base.continued(1).take(300)
+
+    def refused_against(postings):
+        step, refused = list(base.step), 0
+        for p in postings:
+            if p.debit:
+                refused += check.refuses_debit(step, p.contract, p.amount)
+                check.settle_debit(step, p.contract, p.amount)
+            else:
+                check.settle_credit(step, p.contract, p.amount, p.kind)
+        return refused
+
+    assert refused_against(a) == refused_against(b) == 0
+    assert refused_against(check.Stream(LOW, True, seed=1).take(300)) > 0
+
+
+@pytest.mark.parametrize("two_level", [False, True])
+@pytest.mark.parametrize("count,share", [(1000, LOW), (5000, LOW), (5000, HIGH)])
+def test_ck62_the_period_graphs_a_corpus_holds_are_the_graphs_its_quads_name(count, share, two_level):
+    facts = check.corpus_facts(count, share, check.CORPUS_TWO if two_level else check.CORPUS_ONE)
+    postings = check.generate(count, share, two_level)
+    named = {g for _, _, _, g in check.quads(postings, {}) if g and g.startswith("urn:graph:") and "checkpoint" not in g}
+    assert facts["period_graphs"] == len(named)
+    assert facts["holds"] == sum(not p.debit for p in postings) / count and facts["passes"] == postings[-1].pos
+
+
+def test_ck63_a_corpus_is_named_by_what_it_holds_and_the_one_figure_where_they_agree():
+    assert check.credit_label(5000, HIGH, check.CORPUS_TWO) == "30%"
+    assert check.credit_label(20_000, LOW, check.CORPUS_TWO).startswith("drawn 5%, holds 26.")
+    assert check.credit_label(1000, HIGH, check.CORPUS_ONE) == "drawn 30%, holds 30.9%"
+    text = "\n".join(check.corpus_section([(check.CORPUS_ONE, 5000, LOW), (check.CORPUS_TWO, 20_000, LOW)]))
+    assert "not comparable with a run made before LG-19" in text and "drawn 5%, holds" in text
+
+
+def test_ck64_a_period_length_is_in_place_inside_the_context_and_put_back_after_it():
+    before = check.EVERY_POSITIONS
+    shorter = check.corpus_facts(5000, LOW, check.CORPUS_ONE)
+    with check.using_period(before // 2):
+        assert check.EVERY_POSITIONS == before // 2
+        halved = check.corpus_facts(5000, LOW, check.CORPUS_ONE)
+    with pytest.raises(RuntimeError):
+        with check.using_period(640):
+            raise RuntimeError
+    assert check.EVERY_POSITIONS == before
+    assert halved["passes"] == shorter["passes"] and halved["periods"] > shorter["periods"] and halved["period_graphs"] > shorter["period_graphs"]
+    assert check.corpus_facts(5000, LOW, check.CORPUS_ONE) == shorter

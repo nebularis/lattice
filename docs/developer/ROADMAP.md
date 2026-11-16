@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 22 branches, the units' own state from this tree, the newest board day 2026-11-15.
+Built from the status records on 24 branches, the units' own state from this tree, the newest board day 2026-11-16.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -49,7 +49,7 @@ Built from the status records on 22 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | verified 2026-11-15 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 12 merged, 8 planned, 2 verified, 1 blocked |  |
+| [ledger](plans/ledger.md) | unit | verified 2026-11-16 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration | LG-2 | 13 merged, 7 planned, 2 verified, 1 blocked |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -340,18 +340,19 @@ gantt
     section ledger
     LG-0 examples :done, lg0, 2026-10-27, 2026-10-28
     LG-1 the configuration document :done, lg1, 2026-10-27, 2026-10-28
-    LG-10 the residual rule published :done, lg10, 2026-11-09, 2026-11-15
-    LG-13 the insurance example cap :done, lg13, 2026-11-10, 2026-11-15
-    LG-14 a benchmark of the credit :done, lg14, 2026-11-11, 2026-11-15
-    LG-15 LG-14 gaps closed native :done, lg15, 2026-11-11, 2026-11-15
-    LG-16 the cut the writer records :done, lg16, 2026-11-12, 2026-11-15
-    LG-17 LG-16 gaps closed :done, lg17, 2026-11-12, 2026-11-15
-    LG-18 LG-17 follow-ups measured :done, lg18, 2026-11-12, 2026-11-15
-    LG-19 the benchmark corpora refuse :done, lg19, 2026-11-13, 2026-11-15
+    LG-10 the residual rule published :done, lg10, 2026-11-09, 2026-11-16
+    LG-13 the insurance example cap :done, lg13, 2026-11-10, 2026-11-16
+    LG-14 a benchmark of the credit :done, lg14, 2026-11-11, 2026-11-16
+    LG-15 LG-14 gaps closed native :done, lg15, 2026-11-11, 2026-11-16
+    LG-16 the cut the writer records :done, lg16, 2026-11-12, 2026-11-16
+    LG-17 LG-16 gaps closed :done, lg17, 2026-11-12, 2026-11-16
+    LG-18 LG-17 follow-ups measured :done, lg18, 2026-11-12, 2026-11-16
+    LG-19 the benchmark corpora refuse :done, lg19, 2026-11-13, 2026-11-16
     LG-2 the runtime document :lg2, 2026-10-27, 2026-11-09
     LG-21 the target kernel written :done, lg21, 2026-11-15, 2026-11-16
+    LG-22 LG-19 follow-ups rows named :done, lg22, 2026-11-15, 2026-11-16
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
-    LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-10
+    LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-16
 ```
 
 ```mermaid
@@ -880,13 +881,11 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `ccs/board-corrections` | 2026-11-04 | 2 | pushed | FM-4 |
-| `claude/adoring-torvalds-ce7ffe` | 2026-11-08 | 13 | pushed | no mark |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-15 | 33 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-V1 |
-| `docs/placement-vehicles-structure` | 2026-11-15 | 114 | pushed | no mark |
-| `docs/placement-vehicles-structure-h0e5v9` | 2026-11-12 | 89 | pushed | no mark |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-16 | 42 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-V1 |
+| `docs/placement-vehicles-structure` | 2026-11-16 | 14 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
-| `ledger/lg-19-cloud-run` | 2026-11-13 | 99 | pushed | no mark |
+| `ledger/lg-22-cloud-run` | 2026-11-16 | 5 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
 | `spi/sql-backend` | 2026-11-12 | 1 | pushed | no mark |
@@ -949,7 +948,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 109 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 110 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -1035,7 +1034,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 9. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
 10. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
 11. **Start OD-DOC4, the layer interactions record**, once the ledger's design is settled (the scenarios note ruled through, LG-Q23 decided, as it was on 2026-11-13, machine S's brief written). One maintained architecture document on how the layers work together at design time and at runtime, with two events traced end to end, [briefed](plans/improved-ontology-documentation.md) with its inputs, and kept current by STD-326.
-12. **Settle the ledger's writer on LG-17's figures**, added 2026-11-12 ([pack](validation/LG-17.md)). Decide LG-Q23, which the measurements support as (a) with (d). Decide where single-writer is provided for Oxigraph on disk, which loses guarded writes by a design choice of Oxigraph 0.5.0 (TSD-73, TD-162), and file the [drafted report](notes/upstream-sparql-engine-reports.md#oxigraph-on-disk-store-loses-concurrent-updates), whose patch is built and tested on `v0.5.13` and on `main`. Decide whether the guard is one revision per owner or the ledger runs one writer, since retries lose throughput on every store measured. Read LG-18, which ran in a cloud session on 2026-11-12 and is built, awaiting verification ([pack](validation/LG-18.md), [handoff](notes/lg-18-cloud-run-handoff.md)). Its figures bear on the writer: one writer per ledger matches the best guarded writer on each store and, keeping its balances, is 29 to 55 times its rate, and on Oxigraph on disk it equals the replay where guarded writers lose writes. LG-Q26 was decided on 2026-11-13: a reading by effective day is a derivation a report declares, and none is the ledger's. LG-Q23 was decided the same day as (b) with (d), the cut record, a checkpoint carries the two flow totals (STD-331), and STD-278 is narrowed. The ledger's open questions were all decided by 2026-11-13, LG-Q12, LG-Q13, LG-Q17, LG-Q18 and LG-Q22 last. Every posting scenario was ruled by 2026-11-15. Ranks are tiers of an account's rule, and a rank is an account only where it has an amount of its own or money must be held (MEC-110). Machine S receives whatever can be handed over safely and needs no benchmark, since it runs none. Its [brief](notes/machine-s-brief-2026-11-13.md) for LG-9 and LG-20 was amended on 2026-11-15, LG-20 gaining three parts, and waits on LG-21, the target kernel written here first, as LG-Q27 was decided (b) on 2026-11-15. LG-19 ran in a cloud session and is built, awaiting verification ([brief](notes/cloud-brief-lg-19-2026-11-13.md), [pack](validation/LG-19.md), [handoff](notes/lg-19-cloud-run-handoff.md)). The corpora refuse a debit beyond availability, and its figures leave the ratios between folds and LG-Q23's costs standing, change the shortcut's fallbacks at 5% credits and the late readings' impossible counts, and are for the maintainer to read. LG-22, its follow-ups, goes to a cloud session ([brief](notes/cloud-brief-lg-22-2026-11-15.md)): request lists that know the store, rows named by the share they hold, and two probes for the results LG-19 left unexplained. LG-21, the target kernel, is drafted for review ([sketch](sketches/ledger-target-kernel.md)). Its six questions were decided on 2026-11-15 (LG-Q28) and LG-21 is built. LG-9 and LG-20 are restated on it, and machine S's [brief](notes/machine-s-brief-2026-11-15.md) is one bundle, handed over once the maintainer has reviewed the definitions. The verification rig runs after the design work.
+12. **Settle the ledger's writer on LG-17's figures**, added 2026-11-12 ([pack](validation/LG-17.md)). Decide LG-Q23, which the measurements support as (a) with (d). Decide where single-writer is provided for Oxigraph on disk, which loses guarded writes by a design choice of Oxigraph 0.5.0 (TSD-73, TD-162), and file the [drafted report](notes/upstream-sparql-engine-reports.md#oxigraph-on-disk-store-loses-concurrent-updates), whose patch is built and tested on `v0.5.13` and on `main`. Decide whether the guard is one revision per owner or the ledger runs one writer, since retries lose throughput on every store measured. Read LG-18, which ran in a cloud session on 2026-11-12 and is built, awaiting verification ([pack](validation/LG-18.md), [handoff](notes/lg-18-cloud-run-handoff.md)). Its figures bear on the writer: one writer per ledger matches the best guarded writer on each store and, keeping its balances, is 29 to 55 times its rate, and on Oxigraph on disk it equals the replay where guarded writers lose writes. LG-Q26 was decided on 2026-11-13: a reading by effective day is a derivation a report declares, and none is the ledger's. LG-Q23 was decided the same day as (b) with (d), the cut record, a checkpoint carries the two flow totals (STD-331), and STD-278 is narrowed. The ledger's open questions were all decided by 2026-11-13, LG-Q12, LG-Q13, LG-Q17, LG-Q18 and LG-Q22 last. Every posting scenario was ruled by 2026-11-15. Ranks are tiers of an account's rule, and a rank is an account only where it has an amount of its own or money must be held (MEC-110). Machine S receives whatever can be handed over safely and needs no benchmark, since it runs none. Its [brief](notes/machine-s-brief-2026-11-13.md) for LG-9 and LG-20 was amended on 2026-11-15, LG-20 gaining three parts, and waits on LG-21, the target kernel written here first, as LG-Q27 was decided (b) on 2026-11-15. LG-19 ran in a cloud session and is built, awaiting verification ([brief](notes/cloud-brief-lg-19-2026-11-13.md), [pack](validation/LG-19.md), [handoff](notes/lg-19-cloud-run-handoff.md)). The corpora refuse a debit beyond availability, and its figures leave the ratios between folds and LG-Q23's costs standing, change the shortcut's fallbacks at 5% credits and the late readings' impossible counts, and are for the maintainer to read. LG-22, its follow-ups, ran in a cloud session and is built, awaiting verification ([brief](notes/cloud-brief-lg-22-2026-11-15.md), [pack](validation/LG-22.md), [handoff](notes/lg-22-cloud-run-handoff.md)). Request lists continue the preload, so one writer refuses none, rows name the share they hold, and a refused request costs its path reads. The probes found that rdflib's read follows the named graphs a period length makes, which bears on how long a period should be and is for the maintainer, and that the sum less the cuts costs 1.05 and 1.23 of the kind-filtered read from the start and from a checkpoint on Jena, so LG-19's 1.85 did not hold. LG-19's note that a write got cheaper does not hold either. The maintainer decided LG-22's four questions on 2026-11-16: the period length is not chosen for rdflib (TSD-75), the rows drawn at 5% are still measured, the benchmark READMEs state current results only, and the refusals of several writers are left as the joint draw they are. A reading B that follows the account's policy (STD-336) is still owed in the benchmark. The maintainer verified every built ledger slice on 2026-11-16, LG-8, LG-10, LG-13 to LG-19, LG-21 and LG-22, each with an adversarial probe recorded in the status record, and closed LG-8 as it stands. The maintainer accepted three addenda to ADR-A131 on 2026-11-16, and decided the writer: one writer for each owner's ledger with the guard kept, and kept balances a permitted cache (MEC-113), written up as a third addendum of that day, which the maintainer accepted with STD-335 on 2026-11-16. All of it was merged into `main` that day. LG-21, the target kernel, is drafted for review ([sketch](sketches/ledger-target-kernel.md)). Its six questions were decided on 2026-11-15 (LG-Q28) and LG-21 is built. LG-9 and LG-20 are restated on it, and machine S's [brief](notes/machine-s-brief-2026-11-15.md) is one bundle, handed over by the maintainer on 2026-11-16 on the branch `fm/ledger-proofs-on-the-target-kernel`. The verification rig runs after the design work.
 
 ## 11. Completed units
 

@@ -6,11 +6,17 @@
   python tools/writing_rules.py FILE...        every line of the named files
 
 Prose only: a fenced code block, front matter, an HTML comment, an inline code span, a URL and an
-HTML entity are never judged. Two rules fail and one warns:
+HTML entity are never judged. Five rules fail and one warns:
 
 - a semicolon in prose. Use a period or a comma
 - "this document" in a literate README, which generates several documents (skill
   lattice-ontology-authoring)
+- a decision cited in a layer README outside its Design decisions section and its release notes,
+  in prose or inside a fenced block, since a block is extracted into a published document. State
+  the constraint or feature the decision gives (STD-337, skill lattice-publication-hygiene)
+- a bare "decision 6" anywhere in a layer README, which names no record
+- a working-document identifier anywhere in a layer README: a register entry, a question, or a slice
+  the developer index defines. State the fact it stood for (STD-142)
 - a hard-wrapped line: paragraph or list text that continues the line before it, where a paragraph
   belongs on one line (a warning, since editing one word of an older wrapped paragraph adds such a
   line)
@@ -35,6 +41,14 @@ ENTITY = re.compile(r"&(?:[A-Za-z][A-Za-z0-9]*|#[0-9]+|#x[0-9A-Fa-f]+);")
 LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 FIELD = re.compile(r"^\*\*[^*\n]{1,60}?(?::\*\*|\*\*:)")
+DECISION = re.compile(r"\bADR-A[-0-9A-Z]*\d")
+BARE_DECISION = re.compile(r"\b[Dd]ecisions? \d")
+CITES_DECISIONS = ("design decisions", "release notes")
+# ponytail: the registers under docs/developer are listed here. Read vyvid.toml's families if they change often.
+WORKING = re.compile(r"\b(?:(?:STD|PRI|PAT|MEC|CAP|TD|PDD|BL)-\d+|(?!TSD-)[A-Z]{1,4}\d*[a-z]?-Q\d+)\b")
+SLICE = re.compile(r"\b[A-Z]{2,5}-[A-Z]*\d+[a-z]?(?:\.[A-Z]*\d+[a-z]?)*\b")
+SLICE_ROW = re.compile(r"^\| ([A-Z]{2,5}-[A-Za-z0-9.]+) \|")
+INDEX = "docs/developer/INDEX.md"
 
 
 @dataclass(frozen=True)
@@ -110,17 +124,64 @@ def prose(text: str) -> str:
     return ENTITY.sub("", URL.sub("", CODE_SPAN.sub("", text)))
 
 
-def check_file(path: str, text: str, added: Iterable[int]) -> list[Finding]:
-    """The findings on the given line numbers (1-based) of one file."""
+def sections(lines: Sequence[str], line_kinds: Sequence[str]) -> list[str | None]:
+    """For each line, the nearest heading of a section above it, in lower case, or None before the first. The
+    document's title is no section, so the lines under it are before the first."""
+    out: list[str | None] = []
+    current = None
+    for line, kind in zip(lines, line_kinds):
+        if kind == "heading" and line.lstrip().startswith("##"):
+            current = line.strip().lstrip("#").strip().lower()
+        out.append(current)
+    return out
+
+
+def slice_ids(root: Path) -> frozenset[str]:
+    """The slices the developer index defines, by the first cell of its rows. A token is a slice only where it is
+    one of these, so SHA-256 and UTF-8 are never read as one."""
+    index = root / INDEX
+    if not index.is_file():
+        return frozenset()
+    rows = (SLICE_ROW.match(line) for line in index.read_text(encoding="utf-8").splitlines())
+    return frozenset(row.group(1) for row in rows if row)
+
+
+def working_rule(line: str, slices: frozenset[str]) -> str | None:
+    """What an added line of a layer README breaks by naming a working document's entry, if anything (STD-142)."""
+    found = WORKING.search(line) or next((m for m in SLICE.finditer(line) if m.group(0) in slices), None)
+    if found:
+        return f"a working-document identifier, {found.group(0)}. State the fact it stood for"
+    return None
+
+
+def decision_rule(line: str, section: str | None) -> str | None:
+    """What an added line of a layer README breaks by naming a decision, if anything (STD-337). A decision is cited
+    in the Design decisions section and in a release note, and before the first section, where the layout is named."""
+    cited = DECISION.search(line)
+    if BARE_DECISION.search(line) and not cited:
+        return 'a bare decision number, which names no record. State the constraint or feature it gives'
+    if cited and section is not None and not any(name in section for name in CITES_DECISIONS):
+        return ("a decision cited outside the Design decisions section. State the constraint or feature it gives, "
+                "since a decision record is written for those who build")
+    return None
+
+
+def check_file(path: str, text: str, added: Iterable[int], slices: frozenset[str] = frozenset()) -> list[Finding]:
+    """The findings on the given line numbers (1-based) of one file. ``slices`` is the slices the index defines."""
     if not judged(path):
         return []
     lines = text.splitlines()
     line_kinds = kinds(lines)
+    line_sections = sections(lines, line_kinds)
     findings = []
     for number in sorted(set(added)):
         if not 1 <= number <= len(lines):
             continue
         kind, line = line_kinds[number - 1], lines[number - 1]
+        if literate_readme(path) and kind not in ("frontmatter", "blank"):
+            for broken in (decision_rule(line, line_sections[number - 1]), working_rule(line, slices)):
+                if broken:
+                    findings.append(Finding(path, number, broken, True))
         if kind in ("code", "frontmatter", "comment", "blank"):
             continue
         if ";" in prose(line):
@@ -142,11 +203,11 @@ def check(root: Path, added: Iterable[tuple[str, int, str]]) -> list[Finding]:
     by_file: dict[str, list[int]] = {}
     for path, number, _ in added:
         by_file.setdefault(path, []).append(number)
-    findings = []
+    findings, slices = [], slice_ids(root)
     for path, numbers in by_file.items():
         file = root / path
         if judged(path) and file.is_file():
-            findings += check_file(path, file.read_text(encoding="utf-8"), numbers)
+            findings += check_file(path, file.read_text(encoding="utf-8"), numbers, slices)
     return findings
 
 

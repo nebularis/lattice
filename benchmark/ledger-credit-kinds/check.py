@@ -32,6 +32,7 @@ run ends, including on failure. Jena runs when its test kit jar is built (`mise 
 
 from __future__ import annotations
 
+import functools
 import gc
 import json
 import os
@@ -225,48 +226,64 @@ def refuses_debit(step: list[int], at: int, amount: int) -> bool:
 IDLE_PASSES = 10_000  # consecutive passes in which every draw was refused, after which the stream is taken to be unable to reach its count
 
 
-def generate(count: int, credit_share: float, two_level: bool) -> list[Posting]:
-    """`count` postings in passes of one to three, on random contracts, settled as the writer settles them (`settle_debit`, `settle_credit`) against the stepwise balance of every account.
-    A debit more than any account on its path holds is refused, as the writers refuse it (`refuses_debit`), and is not a posting: every value it needs is drawn as for any debit and the debit
-    is then dropped, so the draws that follow do not shift, and the generator draws on until it has `count` postings. A pass in which every draw was refused is drawn again at the same position,
-    so positions stay without a gap and a period holds as many passes as it names. Credits are split evenly across the three kinds, a quarter of those on an unrestricted path carry no kind,
-    and credits are larger than debits, so a ceiling binds at a high share. In the two-level corpus a share `UPPER_SHARE` of the credits is posted at the sublimit or section on the drawn
-    contract's path, chosen at random among those that accept its kind, and the rest at the contract, and each credit records its cuts."""
-    rng, kind_rng, place_rng = random.Random(SEED), random.Random(SEED + 1), random.Random(SEED + 2)
-    out: list[Posting] = []
-    step = [a.stated for a in TREE]
-    pos = idle = 0
-    while len(out) < count:
-        pos += 1
-        micro = 0
-        for _ in range(min(rng.randint(1, 3), count - len(out))):
-            debit = rng.random() >= credit_share
-            contract = rng.choice(CONTRACTS)
-            amount = rng.randint(1, DEBIT_MAX if debit else CREDIT_MAX)
-            kind = None if debit else L + rng.choice(KINDS)
-            if debit:
-                if refuses_debit(step, contract, amount):
-                    continue
-                settle_debit(step, contract, amount)
-                out.append(Posting(pos, micro, contract, True, amount, None, 0 if two_level else amount))
+class Stream:
+    """The generator of the benchmark's postings, which can be asked for more. `take(count)` gives the next `count` postings in passes of one to three, on random contracts, settled as the writer
+    settles them (`settle_debit`, `settle_credit`) against the stepwise balance of every account. A debit more than any account on its path holds is refused, as the writers refuse it (`refuses_debit`),
+    and is not a posting: every value it needs is drawn as for any debit and the debit is then dropped, so the draws that follow do not shift, and the generator draws on until it has `count` postings.
+    A pass in which every draw was refused is drawn again at the same position, so positions stay without a gap and a period holds as many passes as it names. Credits are split evenly across the
+    three kinds, a quarter of those on an unrestricted path carry no kind, and credits are larger than debits, so a ceiling binds at a high share. In the two-level corpus a share `UPPER_SHARE` of the
+    credits is posted at the sublimit or section on the drawn contract's path, chosen at random among those that accept its kind, and the rest at the contract, and each credit records its cuts.
+
+    `continued(seed)` is a stream that starts from the balances this one has reached and draws with another seed. It is how a request list continues the stream a store was preloaded with (LG-22)."""
+
+    def __init__(self, credit_share: float, two_level: bool, seed: int | None = None, step: list[int] | None = None, pos: int = 0):
+        seed = SEED if seed is None else seed
+        self.share, self.two_level, self.pos = credit_share, two_level, pos
+        self.rng, self.kind_rng, self.place_rng = random.Random(seed), random.Random(seed + 1), random.Random(seed + 2)
+        self.step = [a.stated for a in TREE] if step is None else list(step)
+
+    def continued(self, seed: int) -> "Stream":
+        return Stream(self.share, self.two_level, seed, self.step, self.pos)
+
+    def take(self, count: int) -> list[Posting]:
+        out: list[Posting] = []
+        step, idle = self.step, 0
+        while len(out) < count:
+            self.pos += 1
+            micro = 0
+            for _ in range(min(self.rng.randint(1, 3), count - len(out))):
+                debit = self.rng.random() >= self.share
+                contract = self.rng.choice(CONTRACTS)
+                amount = self.rng.randint(1, DEBIT_MAX if debit else CREDIT_MAX)
+                kind = None if debit else L + self.rng.choice(KINDS)
+                if debit:
+                    if refuses_debit(step, contract, amount):
+                        continue
+                    settle_debit(step, contract, amount)
+                    out.append(Posting(self.pos, micro, contract, True, amount, None, 0 if self.two_level else amount))
+                else:
+                    if self.kind_rng.random() < KINDLESS_SHARE and unrestricted(contract):
+                        kind = None
+                    at = contract
+                    if self.two_level:
+                        candidates = [i for i in chain(contract)[1:3] if accepts_kind(TREE[i], kind)]
+                        at = self.place_rng.choice(candidates) if candidates and self.place_rng.random() < UPPER_SHARE else contract
+                    applied, cuts = settle_credit(step, at, amount, kind)
+                    out.append(Posting(self.pos, micro, at, False, amount, kind, applied, cuts if self.two_level else ()))
+                micro += 1
+            if micro == 0:
+                self.pos -= 1
+                idle += 1
+                if idle > IDLE_PASSES:
+                    raise ValueError(f"the accounts cannot take {count} postings at a credit share of {self.share}: {len(out)} are posted and every debit since is refused")
             else:
-                if kind_rng.random() < KINDLESS_SHARE and unrestricted(contract):
-                    kind = None
-                at = contract
-                if two_level:
-                    candidates = [i for i in chain(contract)[1:3] if accepts_kind(TREE[i], kind)]
-                    at = place_rng.choice(candidates) if candidates and place_rng.random() < UPPER_SHARE else contract
-                applied, cuts = settle_credit(step, at, amount, kind)
-                out.append(Posting(pos, micro, at, False, amount, kind, applied, cuts if two_level else ()))
-            micro += 1
-        if micro == 0:
-            pos -= 1
-            idle += 1
-            if idle > IDLE_PASSES:
-                raise ValueError(f"the accounts cannot take {count} postings at a credit share of {credit_share}: {len(out)} are posted and every debit since is refused")
-        else:
-            idle = 0
-    return out
+                idle = 0
+        return out
+
+
+def generate(count: int, credit_share: float, two_level: bool) -> list[Posting]:
+    """The first `count` postings of a stream (see `Stream`)."""
+    return Stream(credit_share, two_level).take(count)
 
 
 def stream(count: int, credit_share: float) -> list[Posting]:
@@ -278,6 +295,50 @@ def stream_two_level(count: int, credit_share: float) -> list[Posting]:
     """The two-level corpus: the same draws as `stream`, but a share `UPPER_SHARE` of the credits is posted at the sublimit or section on the drawn contract's path. The writer holds the
     stepwise balance of every account and records the applied amount and the cuts."""
     return generate(count, credit_share, True)
+
+
+@functools.lru_cache(maxsize=None)
+def _facts(count: int, share: float, two_level: bool, every: int, seed: int) -> dict:
+    postings = generate(count, share, two_level)
+    passes, credits = postings[-1].pos, sum(not p.debit for p in postings)
+    periods = (passes - 1) // every + 1
+    graphs = len({(graph_owner(p.contract), (p.pos - 1) // every) for p in postings})
+    return {"postings": count, "drawn": share, "holds": credits / count, "passes": passes, "periods": periods, "period_graphs": graphs, "postings_a_period": count / periods}
+
+
+def corpus_facts(count: int, share: float, corpus: str = CORPUS_TWO) -> dict:
+    """What a corpus holds, which is not what was drawn where debits are refused: the share of credits among its postings, the passes, the periods, the period graphs and the postings a period."""
+    return _facts(count, share, corpus != CORPUS_ONE, EVERY_POSITIONS, SEED)
+
+
+def credit_label(count: int, share: float, corpus: str = CORPUS_TWO) -> str:
+    """A corpus named by the share drawn and the share it holds, for example "drawn 5%, holds 26.3%". Where the two agree to a tenth of a percent, the one figure."""
+    holds = corpus_facts(count, share, corpus)["holds"]
+    return f"{share:.0%}" if round(100 * holds, 1) == round(100 * share, 1) else f"drawn {share:.0%}, holds {holds:.1%}"
+
+
+NOT_COMPARABLE = ("A period is counted in passes, and since LG-19 a pass holds fewer postings where debits are refused, so a figure taken per period or per checkpoint (the checkpoints, the period graphs, the rows a checkpointed "
+                  "read folds) is not comparable with a run made before LG-19.")
+
+
+def corpus_section(specs, title: str = "Corpora") -> list[str]:
+    """The table that names each corpus of a report by what it holds, one row for each (corpus, postings, share drawn) in `specs`, then the note on what is not comparable."""
+    out = [f"### {title}", "", "| corpus | postings | credits | passes | periods | period graphs | postings a period |", "|---|---|---|---|---|---|---|"]
+    for corpus, count, share in sorted(set(specs), key=lambda x: (x[0], x[2], x[1])):
+        f = corpus_facts(count, share, corpus)
+        out.append(f"| {corpus} | {count:,} | {credit_label(count, share, corpus)} | {f['passes']:,} | {f['periods']:,} | {f['period_graphs']:,} | {f['postings_a_period']:.0f} |")
+    return out + ["", NOT_COMPARABLE, ""]
+
+
+@contextmanager
+def using_period(passes: int):
+    """Runs what needs another period length, in passes, with it in place of the module's, and puts the module's back. For the probe of LG-22 only, and not for threads."""
+    global EVERY_POSITIONS
+    saved, EVERY_POSITIONS = EVERY_POSITIONS, passes
+    try:
+        yield
+    finally:
+        EVERY_POSITIONS = saved
 
 
 @dataclass
@@ -982,6 +1043,11 @@ def run_backend_cut_forms(name: str, count: int, share: float, directory: str | 
                             r = (m.cp_reads if cp else m.reads)[("sum-with-cuts", LEVELS[TREE[i].level])]
                             r.reads, r.seconds, r.rows = r.reads + 1, r.seconds + seconds, r.rows + rows
                             r.postings_seconds, r.cuts_seconds = r.postings_seconds + backend.parts[0], r.cuts_seconds + backend.parts[1]
+                if form == "copied":
+                    # The reads above see a copied position only where a read point falls on it, so each copy is held to its posting here.
+                    (row,) = backend.select(f"{PREFIX}SELECT (COUNT(?c) AS ?n) WHERE {{ GRAPH ?g {{ ?c l:cutOf ?p ; l:cutPosition ?cp . ?p l:position ?pos . FILTER(?cp != ?pos) }} }}")
+                    if int(row[0]):
+                        raise WrongResult(f"{name} {count} copied cut: {int(row[0])} cut(s) carry a position that is not their posting's")
             finally:
                 backend.close()
                 backend = None
@@ -1061,7 +1127,7 @@ def run_cuts(sizes=SIZES, shares=SHARES, backends=None, like_for_like: bool = Fa
             for name in backends or available_backends():
                 m = run_backend_cuts(name, count, share, like_for_like=like_for_like, ceiling=ceiling)
                 out.append(m)
-                print(f"{name:9} {m.corpus:9} events {count:6} credits {share:4.0%} stored {m.stored_triples:7} cuts {m.notes['cuts']:5} write {m.write_seconds:6.2f} s  " + "  ".join(
+                print(f"{name:9} {m.corpus:9} events {count:6} credits {credit_label(count, share, m.corpus)} stored {m.stored_triples:7} cuts {m.notes['cuts']:5} write {m.write_seconds:6.2f} s  " + "  ".join(
                     f"{f} root {1000 * m.reads[(f, 'root')].seconds / m.reads[(f, 'root')].reads:8.2f} ms" for f in CUT_FOLDS), flush=True)
     return out
 
@@ -1074,7 +1140,7 @@ def run_cut_forms(sizes=SIZES, shares=SHARES[-1:], backends=None) -> list[Measur
                 for m in run_backend_cut_forms(name, count, share):
                     out.append(m)
                     c = m.reads[("sum-with-cuts", "root")]
-                    print(f"{name:9} {m.cut_form:7} cut events {count:6} credits {share:4.0%} stored {m.stored_triples:7} cuts {m.notes['cuts']:5} write {m.write_seconds:6.2f} s  root sum-with-cuts "
+                    print(f"{name:9} {m.cut_form:7} cut events {count:6} credits {credit_label(count, share, m.corpus)} stored {m.stored_triples:7} cuts {m.notes['cuts']:5} write {m.write_seconds:6.2f} s  root sum-with-cuts "
                           f"{1000 * c.seconds / c.reads:8.2f} ms of which cuts {1000 * c.cuts_seconds / c.reads:7.2f} ms  checkpointed cuts "
                           f"{1000 * m.cp_reads[('sum-with-cuts', 'root')].cuts_seconds / m.cp_reads[('sum-with-cuts', 'root')].reads:7.2f} ms", flush=True)
     return out
@@ -1088,7 +1154,7 @@ def run(sizes=SIZES, shares=SHARES, backends=None) -> list[Measurement]:
                 m = run_backend(name, count, share)
                 out.append(m)
                 sc = [r for (mode, _), r in m.shortcut.items() if mode == "checkpointed"]
-                print(f"{name:9} events {count:6} credits {share:4.0%} stored {m.stored_triples:7} write {m.write_seconds:6.2f} s  " + "  ".join(
+                print(f"{name:9} events {count:6} credits {credit_label(count, share, m.corpus)} stored {m.stored_triples:7} write {m.write_seconds:6.2f} s  " + "  ".join(
                     f"{f} root {1000 * m.reads[(f, 'root')].seconds / m.reads[(f, 'root')].reads:8.2f} ms" for f in FOLDS)
                     + f"  checkpointed stepwise root {1000 * m.cp_reads[('stepwise', 'root')].seconds / m.cp_reads[('stepwise', 'root')].reads:7.2f} ms"
                     + f"  shortcut fallbacks {sum(r.fallbacks for r in sc)}/{sum(r.reads for r in sc)}", flush=True)
@@ -1119,6 +1185,11 @@ def measurement_row(m: Measurement) -> dict:
             "write_seconds": m.write_seconds, "model_expects": m.notes, "cut_form": m.cut_form, "reads": reads}
 
 
+def credits(r: dict) -> str:
+    """The credits of a report row, named by the share drawn and the share held."""
+    return credit_label(r["events"], r["credit_share"], r.get("corpus", CORPUS_ONE))
+
+
 def render(rows: list[dict], title: str) -> list[str]:
     """The tables of a run, from report rows. Python and the native Jena caller write the same row shape."""
     levels = LEVELS[1:]
@@ -1131,19 +1202,19 @@ def render(rows: list[dict], title: str) -> list[str]:
     for r in rows:
         for f in FOLDS:
             cells = " | ".join(f"{r['reads'][f'{f}/{lv}']['mean_ms']:.2f} | {r['reads'][f'{f}/{lv}']['mean_rows']:.0f}" for lv in levels)
-            out.append(f"| {r['backend']} | {r['kind_join']} | {r['events']} | {r['credit_share']:.0%} | {f} | {cells} | {total(r, f) / total(r, 'plain'):.2f} |")
+            out.append(f"| {r['backend']} | {r['kind_join']} | {r['events']} | {credits(r)} | {f} | {cells} | {total(r, f) / total(r, 'plain'):.2f} |")
     out += ["", "The stepwise fold's time split, at the root, mean ms per read. Fetch is the ordered query and the transfer of its rows, loop is the clamping.", "",
             "| backend | kind join | events | credits | read from | stepwise ms | fetch ms | loop ms | kind-filtered ms |", "|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         for mode, prefix in (("start", ""), ("checkpoint", "cp:")):
             s, k = r["reads"][f"{prefix}stepwise/root"], r["reads"][f"{prefix}kind-filtered/root"]
-            out.append(f"| {r['backend']} | {r['kind_join']} | {r['events']} | {r['credit_share']:.0%} | {mode} | {s['mean_ms']:.2f} | {s['fetch_ms']:.2f} | {s['loop_ms']:.2f} | {k['mean_ms']:.2f} |")
+            out.append(f"| {r['backend']} | {r['kind_join']} | {r['events']} | {credits(r)} | {mode} | {s['mean_ms']:.2f} | {s['fetch_ms']:.2f} | {s['loop_ms']:.2f} | {k['mean_ms']:.2f} |")
     out += ["", "Checkpointed reads against full reads, at the root (mean ms and mean rows per read) and over all 27 ancestor reads (time ratio).", "",
             "| backend | events | credits | fold | full ms | full rows | checkpointed ms | checkpointed rows | all reads, checkpointed / full |", "|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         for f in FOLDS:
             a, b = r["reads"][f"{f}/root"], r["reads"][f"cp:{f}/root"]
-            out.append(f"| {r['backend']} | {r['events']} | {r['credit_share']:.0%} | {f} | {a['mean_ms']:.2f} | {a['mean_rows']:.0f} | {b['mean_ms']:.2f} | {b['mean_rows']:.0f} "
+            out.append(f"| {r['backend']} | {r['events']} | {credits(r)} | {f} | {a['mean_ms']:.2f} | {a['mean_rows']:.0f} | {b['mean_ms']:.2f} | {b['mean_rows']:.0f} "
                        f"| {total(r, 'cp:' + f) / total(r, f):.2f} |")
     out += ["", "The shortcut, over all ancestor reads of a run. Total time against the stepwise fold read the same way.", "",
             "| backend | events | credits | read from | reads | fallbacks | fallback rate | shortcut s | stepwise s | shortcut / stepwise |", "|---|---|---|---|---|---|---|---|---|---|"]
@@ -1153,7 +1224,7 @@ def render(rows: list[dict], title: str) -> list[str]:
             parts = [v for k, v in r["reads"].items() if k.startswith(f"shortcut:{key}/")]
             n, fb = sum(v["reads"] for v in parts), sum(v["fallbacks"] for v in parts)
             sc, st = total(r, f"shortcut:{key}") / 1000, total(r, prefix + "stepwise") / 1000
-            out.append(f"| {r['backend']} | {r['events']} | {r['credit_share']:.0%} | {mode} | {n} | {fb} | {fb / n:.0%} | {sc:.2f} | {st:.2f} | {sc / st:.2f} |")
+            out.append(f"| {r['backend']} | {r['events']} | {credits(r)} | {mode} | {n} | {fb} | {fb / n:.0%} | {sc:.2f} | {st:.2f} | {sc / st:.2f} |")
     return out + [""]
 
 
@@ -1175,18 +1246,18 @@ def render_cuts(rows: list[dict], title: str = "Credits at two levels of a path 
            "|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         n = r["model_expects"]
-        out.append(f"| {r['backend']} | {r['events']} | {r['credit_share']:.0%} | {n['credits_posted_above_a_contract']} of {n['credits']} | {n['credits_with_a_cut']} ({n['credits_with_a_cut'] / n['credits']:.1%}) | {n['cuts']} "
+        out.append(f"| {r['backend']} | {r['events']} | {credits(r)} | {n['credits_posted_above_a_contract']} of {n['credits']} | {n['credits_with_a_cut']} ({n['credits_with_a_cut'] / n['credits']:.1%}) | {n['cuts']} "
                    f"| {n['cut_triples']} | {r['stored_triples']} | {n['ancestor_clamps_binding']} | {n['ancestors_where_uncut_differs']} / {n['ancestors_where_uncut_differs_engine']} of 9 | {n['ancestors_where_filtered_differs']} of 9 |")
     for mode, prefix in (("Full reads, from the start of history", ""), ("Checkpointed reads, from the last checkpoint", "cp:")):
         out += ["", f"{mode}. Mean ms per read of the root, then the time of all 27 ancestor reads of the sum with cuts against the kind-filtered and the stepwise folds.", "",
                 "| backend | events | credits | kind-filtered ms | stepwise ms | sum-with-cuts ms | of which postings ms | of which cuts ms | sum-with-cuts / kind-filtered | sum-with-cuts / stepwise |", "|---|---|---|---|---|---|---|---|---|---|"]
         for r in rows:
             k, st, c = (r["reads"][f"{prefix}{f}/root"] for f in CUT_FOLDS)
-            out.append(f"| {r['backend']} | {r['events']} | {r['credit_share']:.0%} | {k['mean_ms']:.2f} | {st['mean_ms']:.2f} | {c['mean_ms']:.2f} | {c['postings_ms']:.2f} | {c['cuts_ms']:.2f} "
+            out.append(f"| {r['backend']} | {r['events']} | {credits(r)} | {k['mean_ms']:.2f} | {st['mean_ms']:.2f} | {c['mean_ms']:.2f} | {c['postings_ms']:.2f} | {c['cuts_ms']:.2f} "
                        f"| {total(r, prefix + 'sum-with-cuts') / total(r, prefix + 'kind-filtered'):.2f} | {total(r, prefix + 'sum-with-cuts') / total(r, prefix + 'stepwise'):.2f} |")
     out += ["", "Rows per root read, full and checkpointed.", "", "| backend | events | credits | kind-filtered | stepwise | sum-with-cuts | checkpointed sum-with-cuts |", "|---|---|---|---|---|---|---|"]
     for r in rows:
-        out.append(f"| {r['backend']} | {r['events']} | {r['credit_share']:.0%} | " + " | ".join(f"{r['reads'][f'{p}{f}/root']['mean_rows']:.0f}" for p, f in (("", "kind-filtered"), ("", "stepwise"), ("", "sum-with-cuts"), ("cp:", "sum-with-cuts"))) + " |")
+        out.append(f"| {r['backend']} | {r['events']} | {credits(r)} | " + " | ".join(f"{r['reads'][f'{p}{f}/root']['mean_rows']:.0f}" for p, f in (("", "kind-filtered"), ("", "stepwise"), ("", "sum-with-cuts"), ("cp:", "sum-with-cuts"))) + " |")
     return out + [""]
 
 
@@ -1209,7 +1280,7 @@ def render_like(rows: list[dict]) -> list[str]:
             ms = {f: r["reads"][f"{prefix}{f}/root"]["mean_ms"] for f in ("plain", "kind-filtered", UNION_FOLD, "sum-with-cuts")}
             parts = [v for k, v in r["reads"].items() if k.startswith(f"shortcut:{key}/")]
             n, fb = sum(v["reads"] for v in parts), sum(v["fallbacks"] for v in parts)
-            out.append(f"| {r['backend']} | {r['kind_join']} | {r['events']} | {r['credit_share']:.0%} | {mode} | {ms['plain']:.2f} | {ms['kind-filtered']:.2f} | {ms[UNION_FOLD]:.2f} | {ms['sum-with-cuts']:.2f} "
+            out.append(f"| {r['backend']} | {r['kind_join']} | {r['events']} | {credits(r)} | {mode} | {ms['plain']:.2f} | {ms['kind-filtered']:.2f} | {ms[UNION_FOLD]:.2f} | {ms['sum-with-cuts']:.2f} "
                        f"| {_total(r, prefix + 'sum-with-cuts') / _total(r, prefix + UNION_FOLD):.2f} | {_total(r, prefix + 'sum-with-cuts') / _total(r, prefix + 'plain'):.2f} "
                        f"| {_total(r, prefix + UNION_FOLD) / _total(r, prefix + 'kind-filtered'):.2f} | {fb} of {n} | {_total(r, f'shortcut:{key}') / 1000:.2f} | {_total(r, prefix + 'stepwise') / 1000:.2f} |")
     return out + [""]
@@ -1232,7 +1303,7 @@ def render_forms(rows: list[dict]) -> list[str]:
         def cuts(r, prefix):
             return sum(v["cuts_ms"] * v["reads"] for k, v in r["reads"].items() if k.startswith(prefix + "sum-with-cuts/"))
 
-        out.append(f"| {backend} | {events} | {share:.0%} | {j['model_expects']['cuts']} | {j['stored_triples']} | {c['stored_triples']} "
+        out.append(f"| {backend} | {events} | {credit_label(events, share, CORPUS_TWO)} | {j['model_expects']['cuts']} | {j['stored_triples']} | {c['stored_triples']} "
                    f"| {j['reads']['sum-with-cuts/root']['cuts_ms']:.2f} / {j['reads']['cp:sum-with-cuts/root']['cuts_ms']:.2f} | {c['reads']['sum-with-cuts/root']['cuts_ms']:.2f} / {c['reads']['cp:sum-with-cuts/root']['cuts_ms']:.2f} "
                    f"| {cuts(c, '') / cuts(j, ''):.2f} | {cuts(c, 'cp:') / cuts(j, 'cp:'):.2f} | {_total(c, 'sum-with-cuts') / _total(j, 'sum-with-cuts'):.2f} |")
     return out + [""]
@@ -1245,7 +1316,7 @@ def render_ceiling(rows: list[dict]) -> list[str]:
     out += ["Where balances stand above the stated amount, on the model.", "", "| backend | events | credits | accounts with a ceiling above stated | accounts above stated at some read point | ancestor reads above stated | cuts |", "|---|---|---|---|---|---|---|"]
     for r in rows:
         n = r["model_expects"]
-        out.append(f"| {r['backend']} | {r['events']} | {r['credit_share']:.0%} | {n['accounts_with_a_ceiling_above_stated']} | {n['accounts_above_stated_at_some_point']} | {n['ancestor_reads_above_stated']} of 27 | {n['cuts']} |")
+        out.append(f"| {r['backend']} | {r['events']} | {credits(r)} | {n['accounts_with_a_ceiling_above_stated']} | {n['accounts_above_stated_at_some_point']} | {n['ancestor_reads_above_stated']} of 27 | {n['cuts']} |")
     return out + [""]
 
 
@@ -1262,7 +1333,7 @@ def render_native_two(rows: list[dict]) -> list[str]:
         for mode, prefix in (("start", ""), ("checkpoint", "cp:")):
             ms = {f: r["reads"][f"{prefix}{f}/root"] for f in TWO_LEVEL_FOLDS}
             c = _total(r, prefix + "sum-with-cuts")
-            out.append(f"| {r['backend']} | {r['kind_join']} | {r['events']} | {r['credit_share']:.0%} | {mode} | {ms['plain']['mean_ms']:.2f} | {ms['kind-filtered']['mean_ms']:.2f} | {ms[UNION_FOLD]['mean_ms']:.2f} "
+            out.append(f"| {r['backend']} | {r['kind_join']} | {r['events']} | {credits(r)} | {mode} | {ms['plain']['mean_ms']:.2f} | {ms['kind-filtered']['mean_ms']:.2f} | {ms[UNION_FOLD]['mean_ms']:.2f} "
                        f"| {ms['stepwise']['mean_ms']:.2f} | {ms['sum-with-cuts']['mean_ms']:.2f} | {ms['sum-with-cuts']['postings_ms']:.2f} | {ms['sum-with-cuts']['cuts_ms']:.2f} "
                        f"| {c / _total(r, prefix + UNION_FOLD):.2f} | {c / _total(r, prefix + 'stepwise'):.2f} | {c / _total(r, prefix + 'plain'):.2f} |")
     return out + [""]
@@ -1272,6 +1343,7 @@ def write_markdown(data: dict, directory: Path, jvm_report: Path = JVM_REPORT) -
     kinds = {c: [m for m in data["measurements"] if m.get("corpus", CORPUS_ONE) == c] for c in (CORPUS_ONE, CORPUS_TWO, CORPUS_FORMS, CORPUS_CEILING)}
     one, two = kinds[CORPUS_ONE], kinds[CORPUS_TWO]
     lines = ["# Ledger credit kinds (generated)", "", "```", json.dumps(data["environment"]), "```", ""]
+    lines += corpus_section((m.get("corpus", CORPUS_ONE), m["events"], m["credit_share"]) for m in data["measurements"])
     lines += render(one, "Python callers")
     if two:
         lines += render_cuts(two) + render_like(two)
