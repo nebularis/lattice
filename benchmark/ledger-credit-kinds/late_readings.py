@@ -236,6 +236,7 @@ def render(data: dict) -> list[str]:
     out = ["# The readings of a balance by effective day (LG-18 part two)", "", "Environment: " + ", ".join(f"{k} {v}" for k, v in data["environment"].items() if v), "",
            "Every reading is for a day as known at a recording, at each of the 9 ancestors. A is the recorded amounts, B the postings settled again in effective order, C the flows. "
            "Impossible is a balance below zero or above the ceiling. The head is a day read at its own recording, where A is the recorded balance.", ""]
+    out += ck.corpus_section([(ck.CORPUS_TWO, r["postings"], w.SHARE) for r in data["readings"]])
     out += w.table(["postings", "late share", "late postings", "readings", "A impossible", "B impossible", "heads", "B differs from the ledger at the head"],
                    [[r["postings"], f"{r['late_share']:.0%}", r["late_postings"], r["readings"], r["A impossible"], r["B impossible"], r["heads"], r["B differs at the head"]] for r in data["readings"]])
     out += ["", "Restatement, how far a figure as known at the recording has moved by the end of history: the readings that moved, then the largest and the mean movement.", ""]

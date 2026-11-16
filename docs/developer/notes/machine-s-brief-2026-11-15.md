@@ -2,7 +2,7 @@
 
 # Machine S brief, 2026-11-15: the ledger proofs on the target kernel
 
-**Not yet handed over.** The maintainer reviews the target kernel's definitions and hands this brief over. Until that day nothing here is started.
+**Handed over by the maintainer on 2026-11-16**, after reviewing the target kernel's definitions, on the branch `fm/ledger-proofs-on-the-target-kernel`, cut from `main` once this brief was on it.
 
 **For:** the agent on machine S, Windows 11, Isabelle2025-2 through its bundled Cygwin, where LG-7, LG-2, FME-0 and LG-8 were built. **Written on** `docs/placement-vehicles-structure` at the maintainer's request, as the end of slice LG-21. It replaces the [brief of 2026-11-13](machine-s-brief-2026-11-13.md), which was never handed over. It is one bundle of work, two slices on one branch, to be returned whole.
 

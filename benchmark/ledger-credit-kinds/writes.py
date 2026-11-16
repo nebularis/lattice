@@ -67,6 +67,7 @@ LATE_SHARE = 0.05
 LATE_PERIODS = (1, 3)  # a late posting is effective one to three periods before it is recorded
 MAX_ATTEMPTS = 20_000  # a writer that lost this many times in a row has starved, and the run fails
 CLASSES = ("debit", "credit", "credit with a cut")
+REFUSED = "refused debit"  # the class of a request the writer refuses, which costs its path reads and writes nothing
 PARTS = ("reads", "settle", "update", "confirm")
 
 
@@ -88,10 +89,29 @@ class Request:
     kind: str | None
 
 
-def requests(count: int, share: float, seed: int) -> list[Request]:
-    """`count` postings drawn as the two-level stream draws them, with the writer's own settlement discarded, since the live writer settles each against the store."""
-    with seeded(seed):
-        return [Request(p.contract, p.debit, p.amount, p.kind) for p in ck.stream_two_level(count, share)]
+def requests(preload: int, count: int, share: float, seed: int) -> list[Request]:
+    """`count` postings for a store preloaded with `preload` postings of the two-level corpus. They continue the stream the preload came from, so one writer sent them in order against the preload refuses none
+    for lack of availability. `seed` draws them, so a caller that needs several lists, one a thread, gets lists that differ. Each is valid alone, and writers that interleave may still refuse a debit that another's
+    commit left no room for, which is the run's to count."""
+    base = ck.Stream(share, True)
+    base.take(preload)
+    return [Request(p.contract, p.debit, p.amount, p.kind) for p in base.continued(seed).take(count)]
+
+
+REFUSALS = 100  # requests in the sample whose cost is a refusal's
+
+
+def refuse_one(live, request: Request, name: str, count: int) -> "Plan":
+    """Reads the path of a request that must be refused and writes nothing. Raises if the writer does not refuse it."""
+    plan = live.prepare(request, f"R{request.at}")
+    if not plan.refused:
+        raise WrongResult(f"{name} {count}: a debit of {request.amount}, more than the root's stated amount, was not refused")
+    return plan
+
+
+def refusing_requests(count: int) -> list[Request]:
+    """`count` debits that any store refuses, each larger than the stated amount of the root and so than the balance of any account on its path, on the contracts in turn. A writer reads the path of each and writes nothing."""
+    return [Request(ck.CONTRACTS[n % len(ck.CONTRACTS)], True, ck.STATED[-1] + 1, None) for n in range(count)]
 
 
 class LiveOxigraph(ck.OxigraphBackend):
@@ -299,9 +319,10 @@ def audit(backend, base: int, strict: bool = True, expect: int | None = None) ->
         if read != balance[i]:
             raise WrongResult(f"the engine reads {read} at {ck.TREE[i].iri}, the stored records give {balance[i]}")
     live = [s.pos for s in stored if s.pos > base]
+    live_debits = sum(s.debit for s in stored if s.pos > base)
     (revision,) = backend.select(f"SELECT (MAX(?r) AS ?m) WHERE {{ <{LEDGER}> <{REVISION}> ?r }}")
     result = {"postings": len(stored), "live": len(live), "applied_differ": applied_differ, "cuts_differ": cuts_differ, "balances_differ": sum(x != y for x, y in zip(balance, step)),
-              "overdrawn": overdrawn, "dense": sorted(live) == list(range(base + 1, base + len(live) + 1)), "revision": int(revision[0]), "duplicate_positions": len(live) - len(set(live))}
+              "overdrawn": overdrawn, "live_debits": live_debits, "live_credits": len(live) - live_debits, "dense": sorted(live) == list(range(base + 1, base + len(live) + 1)), "revision": int(revision[0]), "duplicate_positions": len(live) - len(set(live))}
     if strict:
         wrong = [k for k in ("applied_differ", "cuts_differ", "balances_differ", "overdrawn") if result[k]]
         if wrong or not result["dense"] or result["revision"] != base + len(live) or (expect is not None and len(live) != expect):
@@ -348,7 +369,11 @@ def run_writes(name: str, count: int, guarded: bool, writes: int = WRITES) -> di
         corpus, base = preload(backend, count)
         live, before = Live(backend, len(corpus.positions), guarded), backend.count()
         seconds, meta, refused, added = {c: {p: [] for p in PARTS} for c in CLASSES}, {c: [] for c in CLASSES}, 0, 0
-        for n, request in enumerate(requests(writes, SHARE, ck.SEED + 7)):
+        asked, sample = refusing_requests(REFUSALS), []
+        for n, request in enumerate(requests(count, writes, SHARE, ck.SEED + 7)):
+            # a refused request is read among the writes, in step with them, since the writer writes no checkpoint and its reads fold a tail that grows with every write
+            while len(sample) < (n + 1) * REFUSALS // writes:
+                sample.append(refuse_one(live, asked[len(sample)], name, count))
             plan, _ = write_one(live, request, f"W{n}", retry=False)
             if plan.refused:
                 refused += 1
@@ -367,6 +392,11 @@ def run_writes(name: str, count: int, guarded: bool, writes: int = WRITES) -> di
             total = [sum(x) for x in zip(*seconds[c].values())]
             classes[c] = {"writes": len(total), "path_reads": statistics.mean(m[0] for m in meta[c]), "queries": statistics.mean(m[1] for m in meta[c]), "triples": statistics.mean(m[2] for m in meta[c]),
                           **{p: {"mean_ms": 1000 * statistics.mean(seconds[c][p]), "p95_ms": 1000 * p95(seconds[c][p])} for p in PARTS}, "total": {"mean_ms": 1000 * statistics.mean(total), "p95_ms": 1000 * p95(total)}}
+    reads, settle = [p.seconds["reads"] for p in sample], [p.seconds["settle"] for p in sample]
+    total = [x + y for x, y in zip(reads, settle)]
+    zero = {"mean_ms": 0.0, "p95_ms": 0.0}
+    classes[REFUSED] = {"writes": len(sample), "path_reads": statistics.mean(p.path for p in sample), "queries": statistics.mean(p.queries for p in sample), "triples": 0, "reads": {"mean_ms": 1000 * statistics.mean(reads), "p95_ms": 1000 * p95(reads)},
+                        "settle": {"mean_ms": 1000 * statistics.mean(settle), "p95_ms": 1000 * p95(settle)}, "update": zero, "confirm": zero, "total": {"mean_ms": 1000 * statistics.mean(total), "p95_ms": 1000 * p95(total)}}
     return {"backend": name, "postings": count, "guarded": guarded, "writes": writes, "refused": refused, "classes": classes, "audit": result}
 
 
@@ -440,7 +470,7 @@ def run_stress(threads: int, guarded: bool, preload_count: int = STRESS_PRELOAD,
     of its commits and dense revisions. Any other run is audited and the differences reported."""
     with opened(name) as backend:
         corpus, base = preload(backend, preload_count)
-        lists = [requests(total // threads, SHARE, ck.SEED + 100 + w) for w in range(threads)]
+        lists = [requests(preload_count, total // threads, SHARE, ck.SEED + 100 + w) for w in range(threads)]
         tallies, errors, barrier = [Tally() for _ in range(threads)], [], threading.Barrier(threads + 1)
         pool = [threading.Thread(target=worker, args=(backend, len(corpus.positions), guarded, lists[w], w, tallies[w], barrier, errors)) for w in range(threads)]
         for t in pool:
@@ -635,9 +665,9 @@ def emit_jvm(directory: Path, sizes=WRITE_SIZES, preload_count: int = STRESS_PRE
                 out.write(f"<{s}> <{p}> {nt(o)}{' <' + g + '>' if g else ''} .\n")
         preloads[str(count)] = {"file": name, "postings": count, "base": base, "checkpoints": len(corpus.positions), "stored": ck.expected_stored(corpus.postings) + 1}
     writes, total = max(v["single"]["writes"] for v in stores.values()), max(v["stress"]["total"] for v in stores.values())
-    lists = {str(t): [asked(requests(total // t, SHARE, ck.SEED + 100 + w)) for w in range(t)] for t in (1,) + tuple(threads)}
+    lists = {str(t): [asked(requests(preload_count, total // t, SHARE, ck.SEED + 100 + w)) for w in range(t)] for t in (1,) + tuple(threads)}
     plan = {"stores": stores, "threads": [1] + list(threads), "sizes": list(sizes), "stressPreload": preload_count}
-    data = {"every": ck.EVERY_POSITIONS, "ns": L, "tree": tree, "preloads": preloads, "plan": plan, "single": asked(requests(writes, SHARE, ck.SEED + 7)), "stress": lists}
+    data = {"every": ck.EVERY_POSITIONS, "ns": L, "tree": tree, "preloads": preloads, "plan": plan, "single": {str(n): asked(requests(n, writes, SHARE, ck.SEED + 7)) for n in sizes}, "refusals": asked(refusing_requests(REFUSALS)), "stress": lists}
     (directory / "writes-input.json").write_text(json.dumps(data), encoding="utf-8", newline="\n")
 
 
@@ -704,6 +734,9 @@ STORE_NAME = {"memory": "jena-memory (java)", "tdb2": "jena-tdb2 (java)"}
 def render_jvm(data: dict) -> list[str]:
     env = data["environment"]
     out = ["# The write benchmark on native Jena (LG-17 part three)", "", "Environment: " + ", ".join(f"{k} {v}" for k, v in env.items() if v), ""]
+    out += ck.corpus_section({(ck.CORPUS_TWO, r["postings"], SHARE) for r in data["single"]} | {(ck.CORPUS_TWO, s["preload"], SHARE) for s in data["stress"]})
+    out += ["The request lists continue the stream of the store's preload (LG-22), so one writer sent a list in order refuses none for lack of availability. The row of a refused debit averages debits larger than the root's stated amount, "
+            "which the writer reads the path of and writes nothing for, and its writes are those requests.", ""]
     out += ["## C1, the probe of TSD-73 on Jena", "", "A counter triple. Each thread reads the counter N, sends the guarded update with its own marker and asks whether its marker exists, until the counter reaches the target. Markers confirmed, where the target is correct. "
             "Revisions with more than one marker is the loss the guard is there to stop. Lost races is the confirmations that found no marker.", ""]
     out += table(["store", "threads", "run", "target", "markers", "revisions with more than one marker", "lost races", "counter triples", "wall s"],
@@ -727,17 +760,17 @@ def render_jvm(data: dict) -> list[str]:
                    r["audit"]["overdrawn"], r["audit"]["dense"]] for r in data["single"]])
     out += ["", "## C2, concurrent writers", "", "Threads in one JVM against one dataset, each with its own seeded requests, on a store holding the preload. Retries is the lost races a request had before it committed or was refused. "
             "Asserted is whether the audit was held to the replay. The last columns are the audit against the replay of the commits in revision order.", ""]
-    out += table(["store", "threads", "writer", "run", "asserted", "commits", "refused", "lost races", "retries mean", "retries max", "wall s", "commits/s", "applied differ", "cuts differ", "balances differ", "overdrawing debits",
-                  "dense", "duplicate positions"],
-                 [[STORE_NAME[s["store"]], s["threads"], "guarded" if s["guarded"] else "unguarded", s["run"], "yes" if s["asserted"] else "no", s["commits"], s["refused"], s["lost_races"], f"{s['retries_mean']:.2f}",
+    out += table(["store", "threads", "writer", "run", "asserted", "commits", "debits written", "credits written", "refused", "lost races", "retries mean", "retries max", "wall s", "commits/s", "applied differ", "cuts differ",
+                  "balances differ", "overdrawing debits", "dense", "duplicate positions"],
+                 [[STORE_NAME[s["store"]], s["threads"], "guarded" if s["guarded"] else "unguarded", s["run"], "yes" if s["asserted"] else "no", s["commits"], s["audit"]["live_debits"], s["audit"]["live_credits"], s["refused"], s["lost_races"], f"{s['retries_mean']:.2f}",
                    s["retries_max"], f"{s['wall_s']:.2f}", f"{s['commits_per_s']:.0f}", s["audit"]["applied_differ"], s["audit"]["cuts_differ"], s["audit"]["balances_differ"], s["audit"]["overdrawn"], s["audit"]["dense"],
                    s["audit"]["duplicate_positions"]] for s in data["stress"]])
     if data.get("queue"):
         out += ["", "## One writer per ledger (LG-18)", "", "Producers hand their requests to one writer through a queue. The writer reads its path for every posting, or keeps the balances it has settled, and may then write a batch in one update. "
                 "In a closed run each producer waits for its answer, and waited is the time from asking to the answer. In a backlog every request is queued before the writer starts, so commits a second is the writer's rate. "
                 "Every run was held to the replay of its commits.", ""]
-        out += table(["store", "load", "producers", "writer", "commits", "refused", "wall s", "commits/s", "waited mean ms", "waited p95 ms", "batches", "postings a batch", "first read of the balances s"],
-                     [[STORE_NAME[q["store"]], q["load"], q["producers"], f"{q['writer']}{f', batches of ' + str(q['batch']) if q['batch'] > 1 else ''}{'' if q['guarded'] else ', no guard'}", q["commits"], q["refused"],
+        out += table(["store", "load", "producers", "writer", "commits", "debits written", "credits written", "refused", "wall s", "commits/s", "waited mean ms", "waited p95 ms", "batches", "postings a batch", "first read of the balances s"],
+                     [[STORE_NAME[q["store"]], q["load"], q["producers"], f"{q['writer']}{f', batches of ' + str(q['batch']) if q['batch'] > 1 else ''}{'' if q['guarded'] else ', no guard'}", q["commits"], q["audit"]["live_debits"], q["audit"]["live_credits"], q["refused"],
                        f"{q['wall_s']:.2f}", f"{q['commits_per_s']:.0f}", f"{q['waited_mean_ms']:.2f}", f"{q['waited_p95_ms']:.2f}", q["batches"], f"{q['batch_mean']:.1f}", f"{q['warm_s']:.2f}"] for q in data["queue"]])
     return out + [""]
 
@@ -754,6 +787,9 @@ def table(head: list[str], rows: list[list]) -> list[str]:
 
 def render(data: dict) -> list[str]:
     out = ["# The write benchmark (LG-17 part two)", "", "Environment: " + ", ".join(f"{k} {v}" for k, v in data["environment"].items() if v), ""]
+    out += ck.corpus_section({(ck.CORPUS_TWO, n, SHARE) for n in [r["postings"] for r in data["writes"]] + [s["preload"] for s in data["stress"]] + [r["postings"] for r in data["late"]]})
+    out += ["The request lists continue the stream of the store's preload (LG-22), so one writer sent a list in order refuses none for lack of availability. A refused debit is a request the writer refuses and writes nothing for, "
+            f"and its row averages {REFUSALS} debits larger than the root's stated amount. Its writes are those requests.", ""]
     out += ["## Piece A, what a write costs", "", "Mean and p95 ms per write by kind of posting. Accounts is the accounts read on the path, queries the SPARQL requests a write makes (the revision read, one or two per account, and the confirmation of a guarded write), triples the triples the write adds. "
             "The unguarded writer replaces the guarded request with `DELETE DATA ; INSERT DATA` and does not confirm.", ""]
     rows = []
@@ -768,8 +804,8 @@ def render(data: dict) -> list[str]:
     out += table(["case", "writer", "retries", "second refused on retry", "applied differ", "cuts differ", "balances differ", "overdrawing debits", "dense", "duplicate positions"],
                  [[i["case"], "guarded" if i["guarded"] else "unguarded", i["retries"], i["second_refused_on_retry"], i["applied_differ"], i["cuts_differ"], i["balances_differ"], i["overdrawn"], i["dense"], i["duplicate_positions"]] for i in data["interleavings"]])
     out += ["", f"The stress, {STRESS_TOTAL if not quick() else data['stress'][0]['requests']} further postings on a store holding {data['stress'][0]['preload']}. Retries is the lost races a request had before it committed or was refused. The last four columns are the audit against the replay of the commits in revision order.", ""]
-    out += table(["backend", "threads", "writer", "commits", "refused", "lost races", "retries mean", "retries max", "wall s", "commits/s", "applied differ", "cuts differ", "balances differ", "overdrawing debits", "dense", "duplicate positions"],
-                 [[s["backend"], s["threads"], "guarded" if s["guarded"] else "unguarded", s["commits"], s["refused"], s["lost_races"], f"{s['retries_mean']:.2f}", s["retries_max"], f"{s['wall_s']:.2f}", f"{s['commits_per_s']:.0f}",
+    out += table(["backend", "threads", "writer", "commits", "debits written", "credits written", "refused", "lost races", "retries mean", "retries max", "wall s", "commits/s", "applied differ", "cuts differ", "balances differ", "overdrawing debits", "dense", "duplicate positions"],
+                 [[s["backend"], s["threads"], "guarded" if s["guarded"] else "unguarded", s["commits"], s["audit"]["live_debits"], s["audit"]["live_credits"], s["refused"], s["lost_races"], f"{s['retries_mean']:.2f}", s["retries_max"], f"{s['wall_s']:.2f}", f"{s['commits_per_s']:.0f}",
                    s["audit"]["applied_differ"], s["audit"]["cuts_differ"], s["audit"]["balances_differ"], s["audit"]["overdrawn"], s["audit"]["dense"], s["audit"]["duplicate_positions"]] for s in data["stress"]])
     out += ["", f"The guard on each store, {ISOLATION_RUNS} guarded runs a cell. A duplicate position is two commits at one revision, which the guard is there to stop. Only the in-memory store is asserted.", ""]
     out += table(["store", "threads", "run", "commits", "lost races", "dense", "duplicate positions", "applied differ", "cuts differ", "balances differ", "overdrawing debits"],

@@ -6,6 +6,28 @@ A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmar
 
 Under the ledger's agreed design a draw or credit is posted once, at the account it names, and an ancestor's balance is a fold over its subtree's postings in the current period's named graph. The decision on LG-Q10 adds a kind to a credit posting, a concept IRI from a scheme, and each account declares which kinds restore it, all kinds by default. A ceiling is already part of the design, since a credit never lifts an account above its stated amount (law LD3), and where it can bind at an ancestor the fold has to be a running balance applied posting by posting.
 
+## Current figures
+
+The headline figures as they stand after the run of 2026-11-15 and 2026-11-16 (LG-22), each with the dated section it comes from. The dated results below stay as the history they are, and a figure here that differs from one there is the newer. A corpus is named by the share of credits drawn and the share it holds, since a corpus that refuses an overdrawing debit holds more credits than were drawn. The figures are for 20,000 postings unless said, and a ratio is within a run on one engine.
+
+| Figure | Now | From |
+|---|---|---|
+| credits of the 5% corpus, one-level and two-level | drawn 5%, holds 26.3% and 26.1%, in 16,190 and 16,028 passes (the 30% corpus holds 41.9% and 36.7%) | Measured again on corpora that refuse an overdrawing debit (LG-19) |
+| the kind-filtered fold against the plain, over all 27 ancestor reads at 30% credits | 1.15 on rdflib, 2.32 on Oxigraph, 1.21 on Jena through the kit, 1.49 on native Jena in memory and 1.51 on TDB2 | Measured again with request lists that continue the preload (LG-22) |
+| the stepwise fold against the plain, the same reads | 1.20, 5.94, 5.72, 2.86 and 2.22 | LG-22 |
+| a checkpointed stepwise read against the full read | 3% on rdflib, Jena and native Jena, 0.89 on Oxigraph | LG-22 |
+| the shortcut's fallbacks in 27 checkpointed reads | 10 at 5% credits and 27 at 30% | LG-19 |
+| the stored triples, one-level and two-level | 183,186 and 189,297 at 5% credits, 185,551 and 193,581 at 30% | LG-19 |
+| the sum less the cuts against the kind-filtered read in the same form, two-level at 30% credits, from the start and from a checkpoint | 1.01, 1.01 and 1.19, then 1.12, 1.35 and 1.32, on rdflib, Oxigraph and Jena through the kit. Repeated 30 times on Jena at 5% credits, 1.05 and 1.23 | LG-22 |
+| the plain root read on rdflib at 5% credits, with the rows fixed at 20,000, by named graphs | 12.2 s at 156, 20.7 s at 306, 32.1 s at 486 and 59.0 s at 969 graphs. Oxigraph does not follow, 214 to 343 ms | LG-22 |
+| the cuts of the two-level corpus at 5% credits | 2,062 in 5,220 credits. The corpus before LG-19 held none in 987 credits | LG-22 |
+| a cut that copies its position, in extra triples | 1.84% at 20,000 postings | LG-19 |
+| a guarded write of a debit, Python on Oxigraph in memory, Oxigraph on disk and Jena, then native Jena in memory and TDB2 | 7.0, 17.5, 81.4, 18.6 and 29.8 ms | LG-22 |
+| a refused request, the same stores | 6.5, 16.5, 75.7, 18.0 and 15.4 ms, which is a written debit's reads and settling, with no write | LG-22 |
+| debits the live writers refuse at 20,000 postings, one writer | 0 of 500, where they refused 187 and then 138 | LG-22 |
+| the writer that reads its path against the best guarded writer, commits a second | 124 against 127 on Oxigraph in memory, 43 against 47 on disk, 16 against 17 on Jena. The keeper is 55.9, 75.1 and 24.6 times, and with batches of 100 138.5, 170.0 and 122.7 times | LG-22 |
+| late readings at 20,000 postings with nothing late | no reading below zero for A or B. With 5% and 20% late, A is below zero at 6 and 9 of 81 readings, B at 4 and 3, and B differs from the ledger at 20 and 22 of 27 heads | LG-19 |
+
 ## What it does
 
 The tree has depth 4: a root, 2 sections, 3 sublimits to a section and 4 contracts to a sublimit, so 33 accounts. The first section is a cap and accepts recoveries only, and every other account accepts all kinds. Each account's ceiling is its stated amount. Postings come in passes of one to three (a pass position, then a micro-position in the pass) on random contracts, and each goes into a named graph keyed by its sublimit and its period of 200 passes. A credit is a recovery, a reinstatement or a write-back, in equal shares, under `https://example.org/`, except that a quarter of the credits on a path where no account restricts kinds (everything under the second section) carry no kind. Credits are larger than debits, so at 30% credits a ceiling binds often and at 5% it seldom does.
@@ -538,6 +560,108 @@ The cost of a write at 20,000 postings fell. A debit took 7.4 and now 5.4 ms on 
 - "A cut that copies its position adds 1.2% to the store" is 1.8% at 20,000 postings.
 - "187 of 500" debits refused by the live writers at 20,000 postings is 138.
 - On late postings, 6 impossible readings at 0% late were the stream's own overdraw and are gone. At 20,000 postings reading A is impossible at 6 and 9 readings and B at 4 and 3, where the section says 9 and 13, and 6 and 6. B differs from the ledger's balance at the head at 20 and 22 of 27 heads, where it said 22 and 25, and at 23 and 25 at 5,000 as before. Reading A from the close costs 1.7 ms and from the start 30 ms at 20,000 postings, B 50 ms and the flows since the close 1.2 ms, none of which moved.
+
+## Measured again with request lists that continue the preload (LG-22)
+
+The write benchmarks drew their request lists from a fresh stream over a full tree and sent them to a store whose accounts the preload had lowered, so the live writers refused 138 of 500 debits at 20,000 postings and wrote a smaller sample than they were asked for. A list for a store preloaded with `n` postings now continues the stream the preload came from (`writes.requests(preload, count, share, seed)`, drawn from `check.Stream.continued`), so one writer sent it in order refuses none. The lists of several threads differ by seed. Every report now names a corpus by the share drawn and the share it holds, with its passes, periods, period graphs and postings a period, and gives the debits and credits each run wrote.
+
+Run on 2026-11-15 and 2026-11-16 on the cloud machine of the earlier runs (4 cores, 15 GiB, Linux x86_64) with Python 3.14.10, Java 25.0.5, Maven 3.9.11, rdflib 7.6.0, pyoxigraph 0.5.13 and Apache Jena 5.1.0. The three tasks that use request lists were run twice before the change, and the six tasks once after it, then the write task and the native write task once more after the refused sample was moved among the writes (below). All exited 0 with no WRONG RESULT, and the tests pass, 180 in `benchmark/ledger-credit-kinds` and 22 in the native module.
+
+**The variation, measured.** The larger of the two baseline runs over the smaller, by kind of figure, over every cell of the two runs. A figure that moves by less than the greatest is "did not move".
+
+| figure | median | 90th percentile | greatest | cells |
+|---|---|---|---|---|
+| cost of a write, Python | 1.03 | 1.08 | 1.20 | 54 |
+| cost of a write, native | 1.07 | 1.17 | 1.26 | 36 |
+| commits a second of the stress, Python | 1.02 | 1.04 | 1.04 | 8 |
+| commits a second of the stress, native | 1.04 | 1.10 | 1.14 | 28 |
+| lost races of the stress, Python and native | 1.07 and 1.11 | 1.07 and 1.17 | 1.27 and 1.29 | 3 and 18 |
+| commits a second of one writer, Python and native | 1.07 and 1.08 | 1.22 and 1.19 | 1.40 and 1.44 | 39 and 26 |
+| the guarded writers of the single-writer task, Python | 1.04 | 1.08 | 1.15 | 9 |
+| the wait of a closed run, Python | 1.09 | 1.21 | 1.34 | 24 |
+
+The reads were not repeated in a pair, since the first task takes about two hours. Their variation is taken from the run of LG-19 on 2026-11-13 and this run, on the same corpora and code apart from the labels. The root reads over 20 ms ran 1.19 times as long in this run in the median on rdflib (0.94 to 1.77), 1.15 on Jena through the kit (0.87 to 1.49) and 1.12 on Oxigraph (0.85 to 1.51), so the machine was slower on the later day and a read compared across days carries that. Ratios between folds inside a run are not affected by it.
+
+**The request lists.** The debits a run refuses, and the debits and credits it wrote, at 20,000 postings for the single writer, and at 5,000 postings for the stress with one thread. Before is the two baseline runs, which are equal.
+
+| run | refused before | refused now | written now, debits and credits |
+|---|---|---|---|
+| a writer on Oxigraph in memory, on disk, on Jena, 500 requests, 20,000 postings | 138 | 0 | 297 and 203 |
+| the native writer on Jena in memory, 500 requests | 138 | 0 | 297 and 203 |
+| the native writer on TDB2, 100 requests | 16 | 0 | 60 and 40 |
+| the stress, one thread, 1,000 requests, Python and native in memory | 24 | 0 | 685 and 315 |
+| one writer, one producer, 1,000 requests, three stores | 24 | 0 | 685 and 315 |
+
+At two threads or more the runs still refuse. The stress on Oxigraph in memory refuses 13 to 18 of 1,000 at 2 threads, 54 to 65 at 4 and 57 to 86 at 8, as it did, and one writer fed by 8 producers refuses 61. A list is valid alone, and 8 lists together draw more than the accounts hold. The lists of the stress sent one after another refuse 10, 63 and 66 at 2, 4 and 8 threads, and round robin 16, 52 and 61, so what they refuse is the joint draw on shared accounts, whatever the order. It is a real refusal and the run reports it beside the lost races.
+
+**A refused request.** One row of the write tables, for a debit larger than the stated amount of the root, which every store refuses after reading its path. Each row averages 100 requests, read among the 500 writes in step with them. A first version read them after the writes and cost 1.4 to 1.5 times a written debit, since the writer writes no checkpoint and its reads fold a tail that grows with every write, so a sample read at the end saw the longest tail.
+
+| store, 20,000 postings | a written debit, total ms | its reads and settle | a refused request, ms | its path reads |
+|---|---|---|---|---|
+| Oxigraph in memory | 7.00 | 6.75 | 6.53 | 4 accounts, 8.1 queries |
+| Oxigraph on disk | 17.45 | 16.97 | 16.48 | 4, 8.1 |
+| Jena through the kit | 81.36 | 79.13 | 75.72 | 4, 8.1 |
+| native Jena in memory | 18.62 | 17.95 | 17.97 | 4 |
+| native Jena on TDB2 | 29.81 | 16.17 | 15.36 | 4 |
+
+A refusal costs the path reads of a write and saves its update and confirmation, which is under 1 ms in memory and 13 ms on TDB2.
+
+**What moved beyond the variation.** New over the mean of the two baseline runs, and a hypothesis for each.
+
+| figure | before | now | likeliest reason |
+|---|---|---|---|
+| a guarded write at 20,000 postings against the run of LG-19 | 5.4, 12.2 and 63.4 ms (Oxigraph memory, disk, Jena) | 7.0, 17.5 and 81.4 ms | LG-19 wrote 362 of 500, since 138 were refused, and the reads of a write fold a tail that grows with the writes. All 500 are written now, so the mean tail is longer. The cost is the same as before LG-19, 7.4, 17.6 and 69.4 ms |
+| a guarded debit on Oxigraph on disk at 20,000 postings, against the two baseline runs | 14.4 and 14.2 ms | 17.5 ms (1.22) | the same, 297 debits written where 218 were |
+| the stress on Oxigraph in memory, 8 threads guarded, commits a second | 37.1 and 38.7 | 41.6 (1.10) | fewer requests refused, and a refusal commits nothing |
+| the stress on TDB2, 1 thread, and 8 threads unguarded, commits a second | 35.1 and 38.0, 56.7 and 50.7 | 43.8 (1.20), 65.7 (1.22) | a durable commit varies with the disk, and the runs are 200 requests |
+| the native keeper in memory, backlog, no guard, commits a second | 2,321 and 2,534 | 3,779 (1.56) | a run of 0.3 s, which varies more than the others |
+
+Every other figure of the writers did not move, the cost of a write at 1,000 and 5,000 postings, the lost races, the duplicate positions of the guarded writers on Oxigraph on disk (24, 28 and 46 at 2, 4 and 8 threads, as before), the commits a second of the guarded writers and of the single writer, and every audit, which stayed as strict as it was.
+
+**The probes.** `mise run check:ledger-credit-kinds-probes`, 1,036 s.
+
+The plain root read from the start of history, on the one-level corpus at 20,000 postings and 5% credits drawn, with the period length at four values and the postings the same. Five reads after one warm-up, the median with the least and the greatest.
+
+| backend | period passes | period graphs | rows folded | median ms | least | greatest |
+|---|---|---|---|---|---|---|
+| rdflib | 100 | 969 | 20,000 | 59,000 | 56,163 | 65,822 |
+| rdflib | 200 | 486 | 20,000 | 32,059 | 31,416 | 33,481 |
+| rdflib | 320 | 306 | 20,000 | 20,708 | 20,346 | 20,959 |
+| rdflib | 640 | 156 | 20,000 | 12,159 | 11,811 | 12,222 |
+| Oxigraph | 100 | 969 | 20,000 | 343 | 302 | 346 |
+| Oxigraph | 200 | 486 | 20,000 | 229 | 214 | 297 |
+| Oxigraph | 320 | 306 | 20,000 | 214 | 211 | 221 |
+| Oxigraph | 640 | 156 | 20,000 | 245 | 219 | 251 |
+
+On rdflib the time follows the named graphs with the rows fixed, 61 ms a graph at 969, 66 at 486, 68 at 306 and 78 at 156, so most of it is a cost for each graph the read visits. The 486 graphs of the 5% corpus against the 306 it had before LG-19 is a factor of 1.59, and the read took 32.1 s against 20.7 s, 1.55. The hypothesis of LG-19 stands for rdflib. It bears on how long a period should be on rdflib, which is the maintainer's to decide, and not for Oxigraph, which stays within 214 to 343 ms and does not follow the graphs.
+
+The sum less the cuts against the kind-filtered read in the same form, on Jena through the kit, the two-level corpus at 20,000 postings and 5% credits drawn, each read 30 times after 5 warm-up reads, over the 27 ancestor reads and at the root.
+
+| read from | of | kind-filtered median, least, greatest ms | sum less the cuts median, least, greatest ms | ratio of the medians |
+|---|---|---|---|---|
+| the start | 27 reads | 2,936, 2,671, 3,968 | 3,089, 2,896, 3,423 | 1.05 |
+| the start | root | 326, 291, 369 | 341, 312, 403 | 1.05 |
+| a checkpoint | 27 reads | 109.8, 86.5, 126.1 | 135.5, 112.3, 167.4 | 1.23 |
+| a checkpoint | root | 5.45, 4.20, 7.15 | 6.98, 5.75, 10.11 | 1.28 |
+
+The ratio of 1.85 that LG-19 read once did not hold. From the start it is 1.05, inside the 1.01 to 1.14 of before, and from a checkpoint 1.23, inside the 1.12 to 1.35 of LG-17 and LG-19. The corpus holds 2,062 cuts in 5,220 credits now. The corpus before LG-19 held none in 987, so the figures of LG-17 and the runs before it for the sum less the cuts at 5% credits and 20,000 postings read an empty set of cuts, and the postings part of the read is what they timed.
+
+**Reading B's impossible readings.** B, the postings settled again in effective order, is below zero at sec0 in every reading it is impossible in, 4 of 81 with 5% late and 3 with 20% late. The smallest reading is the account `urn:acct:sec0`, as known at recording 5,547 for the day 5,000, over 9,615 postings. The first posting that takes sec0 below zero in effective order is the debit 5,902 of 345 on `con1-1`, recorded and effective at position 2,924, so it is not late itself. In recorded order, the writer's own, sec0 stood at 2,084 before it and every account on its path held at least 345, so the writer accepted it. In effective order sec0 stands at 90 before it, and it takes sec0 to minus 255. The difference of 1,994 is the postings that are recorded after it and effective before it, 12 under sec0 of which 6 are debits that sum to 1,391, recorded at positions 2,951 to 3,493 and effective at 2,351 to 2,893. The other 603 is not accounted for by those debits and was not traced. The likeliest reason is credits that apply differently when settled again, since a credit's applied amount and its cuts depend on the room it finds. The hypothesis stands. A debit the writer accepted in recorded order overdraws when the same postings are settled in effective order, because later debits that were effective earlier take their room first. It does not need a late debit of its own. The case cannot be cut below the history that drained sec0, since sec0 starts at 300,000. Nothing in `late_readings.py` was changed.
+
+**The three tests LG-19 did not read.** The corpora they build are the pre-LG-19 corpora posting for posting (checked for each size they use, 400 and 1,000 postings at 30% credits and 400 at 0%, and `test_ck52` covers 1,000 and 5,000), so none of them can pass for a reason the change made.
+
+- The discrimination checks (`test_ck3`, `test_ck21`, `test_ck32b`) each raise for the reason their name gives, now as before. `test_ck3` raises "the cap's plain and kind-filtered balances are equal" on a stream of debits only, `test_ck21` "no ancestor's ceiling binds in the two-level corpus" on the one-level stream, whose credits sit at contracts and so cannot be cut, and `test_ck32b` "no ancestor stands above its stated amount". `build_corpus` and `build_cut_corpus` pass their checks at all six sizes and shares, which the six tasks showed. The name of `test_ck21` says two-level where it builds the one-level stream, which is the point of the test and not a defect.
+- The write benchmark's late postings (`test_wr14` to `test_wr17`) use 1,000 postings, where nothing is refused. `test_wr16` raises "the effective sum reads 997,217 through the engine, the model gives 1,001,221" when the effective fold reads recorded positions, and `test_wr17` when the recorded sum is off by one. `test_wr15` finds 130 late postings at 20% and none at 0%.
+- `test_lr5` raises "reading B is 994,754 through the engine, the model gives 993,179" when B is settled in recorded order at 1,000 postings and 20% late.
+
+No test can no longer fail.
+
+**What no longer holds.** Each statement is quoted from the dated section that makes it, with the new figure.
+
+- "A debit took 7.4 and now 5.4 ms on Oxigraph in memory, 17.6 and 12.2 ms on disk and 69.4 and 63.4 ms on Jena through Python" and "The cost of a write at 20,000 postings fell" (LG-19). It is 7.0, 17.5 and 81.4 ms now, the cost before LG-19, and the reason offered, "a period now holds about 248 postings where it held 398", is not borne out. The sample was thinner then, and the tail the reads fold shorter.
+- "They are not none, because the preload of 20,000 postings still leaves accounts low" and "the debits they refuse for lack of availability fell from 187 to 138" (LG-19) are 0, for one writer.
+- "rdflib's scan cost grows faster than the rows, which we have not tested" (LG-19) is tested, and holds.
+- "Jena through the kit reads 1.01 before and 1.85 after from the start" (LG-19) is 1.05, from 30 reads.
 
 ## What this does not measure
 
