@@ -399,9 +399,14 @@ export class FakeService {
           sh:focusNode <https://example.org/lending#LoanApplicationStrongProfile> ;
           sh:resultPath <https://www.nebularis.org/neuro-semantic/lattice/persistence#erasureStrategy> ] .`
       : "";
+    // A compilation of the facility sample also gives what the worker's landing places say of it, the file its own test keeps equal to the worker's.
+    const landing =
+      job.kind === "compile" && !refused && job.body.includes("FacilityBoundaryProfile")
+        ? ` ; cst:artefact [ cst:path "landing-places.json" ; cst:mediaType "application/json" ; cst:group "profile" ; cst:content ${JSON.stringify(readFileSync(join(import.meta.dirname, "fixtures/landing-places-facility.json"), "utf-8"))} ]`
+        : "";
     const artefact =
       job.kind === "compile" && !refused
-        ? ` ; cst:artefact [ cst:path "LoanApplication/cas-replace.rq" ; cst:mediaType "application/sparql-query" ; cst:group "LoanApplication" ; cst:content "SELECT ?s WHERE { ?s ?p ?o }" ]`
+        ? ` ; cst:artefact [ cst:path "LoanApplication/cas-replace.rq" ; cst:mediaType "application/sparql-query" ; cst:group "LoanApplication" ; cst:content "SELECT ?s WHERE { ?s ?p ?o }" ]${landing}`
         : "";
     return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms ${!refused} ; cst:report <urn:r> ; cst:finishedAt "2026-10-27T10:00:01Z"^^xsd:dateTime${artefact} .\n${finding}\n`;
   }

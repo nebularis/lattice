@@ -10,6 +10,7 @@ import { readPath, writePath, type Step } from "../rdf/path";
 import type { Issue } from "../rdf/report";
 import type { Part } from "../state";
 import { FieldControl, TermPicker } from "./Fields";
+import { PersistenceCanvas } from "./PersistenceCanvas";
 import { ConceptsSection, ExpansionSection, LineSection, ProfileTestsSection, RangesSection, ResolutionSection, TemporalSection, TestsSection } from "./Specials";
 import { Modal, SeverityIcon, Split, useDismiss } from "./kit";
 import { useStudio } from "./Workspace";
@@ -20,6 +21,7 @@ export function ConfigView({ part, selected, field }: { part: Part; selected?: s
   const [filter, setFilter] = useState("");
   const [adding, setAdding] = useState<Kind>();
   const [menu, setMenu] = useState(false);
+  const [canvas, setCanvas] = useState(false);
   const menuRef = useDismiss(menu, () => setMenu(false));
   const issues = studio.model.issues[part];
   const graph = studio.model.state.configs[part]!.current;
@@ -82,7 +84,15 @@ export function ConfigView({ part, selected, field }: { part: Part; selected?: s
         })}
       </div>
       <div className="detail-pane">
-        {selected && graph.has(selected) ? (
+        {part === "persistence" && (
+          <div className="mode-switch" role="group" aria-label="Detail pane" style={{ margin: "12px 16px 0", maxWidth: 240 }}>
+            <button aria-pressed={!canvas} onClick={() => setCanvas(false)}>Details</button>
+            <button aria-pressed={canvas} onClick={() => setCanvas(true)}>Canvas</button>
+          </div>
+        )}
+        {part === "persistence" && canvas ? (
+          <PersistenceCanvas />
+        ) : selected && graph.has(selected) ? (
           <NodeEditor key={selected} part={part} node={selected} focusField={field} />
         ) : (
           <div className="empty">

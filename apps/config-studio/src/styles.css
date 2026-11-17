@@ -564,3 +564,25 @@ table.axiom-rows.nested th { position: static; }
 .tree-value.string, .tree-value.text { color: var(--ok); }
 .tree-value.number { color: var(--warn); }
 .tree-value.boolean, .tree-value.null { color: var(--bad); }
+
+/* The persistence canvas (SVA-P1) */
+.landing { padding: 12px 20px 48px; }
+.landing-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.landing-note { margin: 4px 0 8px; padding: 6px 10px; border: 1px solid var(--warn); border-radius: 6px; background: var(--warn-2); color: var(--text); font-size: 12.5px; }
+.landing-note.muted { border-color: var(--border); background: var(--surface-2); color: var(--text-2); }
+.landing-node { height: auto; width: 200px; }
+.landing-node.place { width: 260px; border-color: var(--persist); }
+.landing-node.root { border-color: var(--persist); background: var(--persist-2); }
+.landing-node.owned { border-color: var(--accent); }
+.landing-node.reference { border-style: dashed; }
+.landing-node.target { border-color: var(--persist); background: var(--persist-2); }
+.landing-node.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+.landing-kind { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--persist); }
+.landing-label { display: block; overflow-wrap: anywhere; }
+.landing-graph { font: 11px/1.4 var(--mono); color: var(--text-2); overflow-wrap: anywhere; white-space: normal; }
+.landing-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.landing-details { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; background: var(--surface); min-width: 0; }
+.landing-details h3 { margin: 6px 0 8px; font-size: 14px; }
+.landing-rule { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); font-size: 12px; overflow-wrap: anywhere; }
+.landing-ops ul, .landing-list { margin: 4px 0 8px; padding-left: 18px; }
+.landing-path { overflow-wrap: anywhere; }

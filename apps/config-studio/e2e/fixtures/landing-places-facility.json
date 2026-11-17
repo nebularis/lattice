@@ -1,0 +1,421 @@
+{
+  "targets": [
+    {
+      "aggregate": {
+        "owned": [],
+        "references": [],
+        "rootClass": "https://example.org/lending#Borrower",
+        "rootShape": null,
+        "strategy": "NamedGraphBoundary"
+      },
+      "class": "https://example.org/lending#Borrower",
+      "deployment": null,
+      "id": "Borrower",
+      "matchedScopes": [
+        "https://example.org/lending#BorrowerEntity"
+      ],
+      "operations": [
+        {
+          "kind": "DeltaReplace",
+          "operation": "cas-replace",
+          "path": "Borrower/cas-replace.rq",
+          "templateId": "cas-replace-named-graph-delta-dataset-guard"
+        },
+        {
+          "kind": "Create",
+          "operation": "create-if-absent",
+          "path": "Borrower/create-if-absent.rq",
+          "templateId": "create-if-absent-named-graph-dataset-guard"
+        },
+        {
+          "kind": "Audit",
+          "operation": "fork-detection-audit",
+          "path": "Borrower/fork-detection-audit.rq",
+          "templateId": "fork-detection-audit"
+        },
+        {
+          "kind": "Audit",
+          "operation": "gap-scan-audit",
+          "path": "Borrower/gap-scan-audit.rq",
+          "templateId": "gap-scan-audit"
+        },
+        {
+          "kind": "Audit",
+          "operation": "key-claim-duplicate-audit:borrower-tax-identifier-unique",
+          "path": "Borrower/key-claim-duplicate-audit_borrower-tax-identifier-unique.rq",
+          "templateId": "key-claim-duplicate-audit"
+        },
+        {
+          "kind": "KeyClaimRetire",
+          "operation": "key-claim-retire:borrower-tax-identifier-unique",
+          "path": "Borrower/key-claim-retire_borrower-tax-identifier-unique.rq",
+          "templateId": "key-claim-retire"
+        },
+        {
+          "kind": "KeyClaimWrite",
+          "operation": "key-claim-write:borrower-tax-identifier-unique",
+          "path": "Borrower/key-claim-write_borrower-tax-identifier-unique.rq",
+          "templateId": "key-claim-write"
+        },
+        {
+          "kind": "Replace",
+          "operation": "replace-whole",
+          "path": "Borrower/replace-whole.rq",
+          "templateId": "cas-replace-named-graph-dataset-guard"
+        },
+        {
+          "kind": "Audit",
+          "operation": "revision-multi-txn-audit",
+          "path": "Borrower/revision-multi-txn-audit.rq",
+          "templateId": "revision-multi-txn-audit"
+        },
+        {
+          "kind": "Tombstone",
+          "operation": "tombstone-delete",
+          "path": "Borrower/tombstone-delete.rq",
+          "templateId": "tombstone-delete-named-graph-dataset-guard"
+        },
+        {
+          "kind": "Audit",
+          "operation": "txn-multi-revision-audit",
+          "path": "Borrower/txn-multi-revision-audit.rq",
+          "templateId": "txn-multi-revision-audit"
+        }
+      ],
+      "places": [
+        {
+          "from": [
+            "cas-replace-named-graph-dataset-guard",
+            "cas-replace-named-graph-delta-dataset-guard",
+            "create-if-absent-named-graph-dataset-guard",
+            "tombstone-delete-named-graph-dataset-guard"
+          ],
+          "graph": "urn:g:borrower/{root, percent-encoded}",
+          "kind": "data-graph",
+          "label": "Data graph, the aggregate's triples",
+          "operations": [
+            "cas-replace",
+            "create-if-absent",
+            "replace-whole",
+            "tombstone-delete"
+          ]
+        },
+        {
+          "from": [
+            "cas-replace-named-graph-dataset-guard",
+            "cas-replace-named-graph-delta-dataset-guard",
+            "create-if-absent-named-graph-dataset-guard",
+            "tombstone-delete-named-graph-dataset-guard"
+          ],
+          "graph": "urn:g:meta/52",
+          "kind": "version-row",
+          "label": "Version row, with the head and the sequence",
+          "operations": [
+            "cas-replace",
+            "create-if-absent",
+            "replace-whole",
+            "tombstone-delete"
+          ]
+        },
+        {
+          "from": [
+            "cas-replace-named-graph-dataset-guard",
+            "cas-replace-named-graph-delta-dataset-guard",
+            "create-if-absent-named-graph-dataset-guard",
+            "tombstone-delete-named-graph-dataset-guard"
+          ],
+          "graph": "urn:g:txlog/{year and month of the write, as YYYY-MM}",
+          "kind": "receipt",
+          "label": "Receipt of each write",
+          "operations": [
+            "cas-replace",
+            "create-if-absent",
+            "replace-whole",
+            "tombstone-delete"
+          ]
+        },
+        {
+          "from": [
+            "cas-replace-named-graph-dataset-guard",
+            "cas-replace-named-graph-delta-dataset-guard",
+            "create-if-absent-named-graph-dataset-guard",
+            "tombstone-delete-named-graph-dataset-guard"
+          ],
+          "graph": "urn:g:txn",
+          "kind": "transaction-claim",
+          "label": "Transaction claim, for a retry",
+          "operations": [
+            "cas-replace",
+            "create-if-absent",
+            "replace-whole",
+            "tombstone-delete"
+          ]
+        },
+        {
+          "from": [
+            "key-claim-retire",
+            "key-claim-write"
+          ],
+          "graph": "urn:g:keys",
+          "kind": "key-claim",
+          "label": "Key claim, borrower-tax-identifier-unique",
+          "operations": [
+            "key-claim-retire:borrower-tax-identifier-unique",
+            "key-claim-write:borrower-tax-identifier-unique"
+          ]
+        }
+      ],
+      "profiles": [
+        "https://example.org/lending#BorrowerAccessProfile",
+        "https://example.org/lending#BorrowerEpoch",
+        "https://example.org/lending#BorrowerIdentity",
+        "https://example.org/lending#BorrowerPrivacy"
+      ],
+      "scopes": [
+        "https://example.org/lending#BorrowerEntity"
+      ]
+    },
+    {
+      "aggregate": {
+        "owned": [
+          {
+            "class": "https://example.org/lending#Drawdown",
+            "inverse": false,
+            "owned": [],
+            "property": "https://example.org/lending#hasDrawdown",
+            "references": [],
+            "shape": "https://example.org/lending#DrawdownShape"
+          }
+        ],
+        "references": [
+          {
+            "class": "https://example.org/lending#Branch",
+            "inverse": false,
+            "mode": "ByIdentity",
+            "ownership": "Reference",
+            "property": "https://example.org/lending#arrangedBy"
+          },
+          {
+            "class": "https://example.org/lending#Borrower",
+            "inverse": false,
+            "mode": "ByIdentity",
+            "ownership": "Reference",
+            "property": "https://example.org/lending#borrower"
+          },
+          {
+            "class": "https://example.org/lending#Lender",
+            "inverse": false,
+            "mode": "ByIdentity",
+            "ownership": "Reference",
+            "property": "https://example.org/lending#lender"
+          }
+        ],
+        "rootClass": "https://example.org/lending#Facility",
+        "rootShape": "https://example.org/lending#FacilityShape",
+        "strategy": "CompositePropertyBoundary"
+      },
+      "class": "https://example.org/lending#Facility",
+      "deployment": null,
+      "id": "Facility",
+      "matchedScopes": [
+        "https://example.org/lending#FacilityClass"
+      ],
+      "operations": [
+        {
+          "kind": "DeltaReplace",
+          "operation": "cas-replace",
+          "path": "Facility/cas-replace.rq",
+          "templateId": "cas-replace-composite-property-delta-patch-log-dataset-guard"
+        },
+        {
+          "kind": "Create",
+          "operation": "create-if-absent",
+          "path": "Facility/create-if-absent.rq",
+          "templateId": "create-if-absent-composite-patch-log-dataset-guard"
+        },
+        {
+          "kind": "Audit",
+          "operation": "fork-detection-audit",
+          "path": "Facility/fork-detection-audit.rq",
+          "templateId": "fork-detection-audit"
+        },
+        {
+          "kind": "Audit",
+          "operation": "gap-scan-audit",
+          "path": "Facility/gap-scan-audit.rq",
+          "templateId": "gap-scan-audit"
+        },
+        {
+          "kind": "Audit",
+          "operation": "key-claim-duplicate-audit:facility-reference-per-branch",
+          "path": "Facility/key-claim-duplicate-audit_facility-reference-per-branch.rq",
+          "templateId": "key-claim-duplicate-audit"
+        },
+        {
+          "kind": "KeyClaimRetire",
+          "operation": "key-claim-retire:facility-reference-per-branch",
+          "path": "Facility/key-claim-retire_facility-reference-per-branch.rq",
+          "templateId": "key-claim-retire"
+        },
+        {
+          "kind": "KeyClaimWrite",
+          "operation": "key-claim-write:facility-reference-per-branch",
+          "path": "Facility/key-claim-write_facility-reference-per-branch.rq",
+          "templateId": "key-claim-write"
+        },
+        {
+          "kind": "PayloadCheck",
+          "operation": "payload-check",
+          "path": "Facility/payload-check.rq",
+          "templateId": "payload-check"
+        },
+        {
+          "kind": "Replace",
+          "operation": "replace-whole",
+          "path": "Facility/replace-whole.rq",
+          "templateId": "cas-replace-composite-property-patch-log-dataset-guard"
+        },
+        {
+          "kind": "Audit",
+          "operation": "revision-multi-txn-audit",
+          "path": "Facility/revision-multi-txn-audit.rq",
+          "templateId": "revision-multi-txn-audit"
+        },
+        {
+          "kind": "Tombstone",
+          "operation": "tombstone-delete",
+          "path": "Facility/tombstone-delete.rq",
+          "templateId": "tombstone-delete-composite-patch-log-dataset-guard"
+        },
+        {
+          "kind": "Audit",
+          "operation": "txn-multi-revision-audit",
+          "path": "Facility/txn-multi-revision-audit.rq",
+          "templateId": "txn-multi-revision-audit"
+        }
+      ],
+      "places": [
+        {
+          "from": [
+            "cas-replace-composite-property-delta-patch-log-dataset-guard",
+            "cas-replace-composite-property-patch-log-dataset-guard",
+            "create-if-absent-composite-patch-log-dataset-guard",
+            "tombstone-delete-composite-patch-log-dataset-guard"
+          ],
+          "graph": "urn:g:facilities",
+          "kind": "data-graph",
+          "label": "Data graph, the aggregate's triples",
+          "operations": [
+            "cas-replace",
+            "create-if-absent",
+            "replace-whole",
+            "tombstone-delete"
+          ]
+        },
+        {
+          "from": [
+            "cas-replace-composite-property-delta-patch-log-dataset-guard",
+            "cas-replace-composite-property-patch-log-dataset-guard",
+            "create-if-absent-composite-patch-log-dataset-guard",
+            "tombstone-delete-composite-patch-log-dataset-guard"
+          ],
+          "graph": "urn:g:meta/6",
+          "kind": "version-row",
+          "label": "Version row, with the head and the sequence",
+          "operations": [
+            "cas-replace",
+            "create-if-absent",
+            "replace-whole",
+            "tombstone-delete"
+          ]
+        },
+        {
+          "from": [
+            "cas-replace-composite-property-delta-patch-log-dataset-guard",
+            "cas-replace-composite-property-patch-log-dataset-guard",
+            "create-if-absent-composite-patch-log-dataset-guard",
+            "tombstone-delete-composite-patch-log-dataset-guard"
+          ],
+          "graph": "urn:g:txlog/{year and month of the write, as YYYY-MM}",
+          "kind": "receipt",
+          "label": "Receipt of each write",
+          "operations": [
+            "cas-replace",
+            "create-if-absent",
+            "replace-whole",
+            "tombstone-delete"
+          ]
+        },
+        {
+          "from": [
+            "cas-replace-composite-property-delta-patch-log-dataset-guard",
+            "cas-replace-composite-property-patch-log-dataset-guard",
+            "create-if-absent-composite-patch-log-dataset-guard",
+            "tombstone-delete-composite-patch-log-dataset-guard"
+          ],
+          "graph": "urn:g:txn",
+          "kind": "transaction-claim",
+          "label": "Transaction claim, for a retry",
+          "operations": [
+            "cas-replace",
+            "create-if-absent",
+            "replace-whole",
+            "tombstone-delete"
+          ]
+        },
+        {
+          "from": [
+            "cas-replace-composite-property-delta-patch-log-dataset-guard",
+            "cas-replace-composite-property-patch-log-dataset-guard",
+            "create-if-absent-composite-patch-log-dataset-guard"
+          ],
+          "graph": "{newRev}/add",
+          "kind": "patch-log-add",
+          "label": "Patch log, the triples added",
+          "operations": [
+            "cas-replace",
+            "create-if-absent",
+            "replace-whole"
+          ]
+        },
+        {
+          "from": [
+            "cas-replace-composite-property-delta-patch-log-dataset-guard",
+            "cas-replace-composite-property-patch-log-dataset-guard",
+            "tombstone-delete-composite-patch-log-dataset-guard"
+          ],
+          "graph": "{newRev}/del",
+          "kind": "patch-log-del",
+          "label": "Patch log, the triples removed",
+          "operations": [
+            "cas-replace",
+            "replace-whole",
+            "tombstone-delete"
+          ]
+        },
+        {
+          "from": [
+            "key-claim-retire",
+            "key-claim-write"
+          ],
+          "graph": "urn:g:keys",
+          "kind": "key-claim",
+          "label": "Key claim, facility-reference-per-branch",
+          "operations": [
+            "key-claim-retire:facility-reference-per-branch",
+            "key-claim-write:facility-reference-per-branch"
+          ]
+        }
+      ],
+      "profiles": [
+        "https://example.org/lending#FacilityBoundaryProfile",
+        "https://example.org/lending#FacilityConcurrencyProfile",
+        "https://example.org/lending#FacilityEpoch",
+        "https://example.org/lending#FacilityReceiptProfile"
+      ],
+      "scopes": [
+        "https://example.org/lending#FacilityClass"
+      ]
+    }
+  ]
+}

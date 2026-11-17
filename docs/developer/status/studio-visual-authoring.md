@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-17. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-17. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-M4 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-P1, the persistence canvas, SVA-S1, the surface canvas, SVA-M3a, a mapping's queries over an RDF sample as a run, and SVA-M2a, MORK's template library, which is a modelling change to present as a design first.
+**Next action:** paused after SVA-P1 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-P2, edits on the persistence canvas, SVA-P3, the persistence simulation executor in the run worker, SVA-S1, the surface canvas, SVA-M3a, and SVA-M2a, which is a modelling change to present as a design first.
 
 ## Slices
 
@@ -46,7 +46,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-O5 | the kit's behaviour held in a browser, and the mapping canvas on the kit's routing | built 2026-11-15, building 2026-11-15 | SVA-O4 |
 | SVA-O6 | one reader of shapes for the forms and the drawing | built 2026-11-15, building 2026-11-15 | SVA-O2 |
 | SVA-O7 | a new node clear of the others, and a label beside an edge shorter than it | built 2026-11-16, building 2026-11-16 | SVA-O5 |
-| SVA-P1 | landing places in a compile job, and the exploded view, read-only | building 2026-11-17 | SVA-O1 |
+| SVA-P1 | landing places in a compile job, and the exploded view, read-only | built 2026-11-17, building 2026-11-17 | SVA-O1 |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | planned | SVA-R3 |
 | SVA-P4 | the persistence simulator pane | planned | SVA-R4, SVA-P1, SVA-P3 |
@@ -98,6 +98,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-17, SVA-R3: two breaks were tried. Cutting a part at a fixed byte count failed 1 of 6 RunFramesTest tests, and acknowledging before publishing failed 6 of 12 RunWorkerTest tests. Both were restored.
 - 2026-11-17, SVA-R5: three breaks were made in a copy of the sources, the worker ignoring the redelivered flag, an instance forwarding the frames of runs it does not hold, and the access check at delivery skipped. R5-T3, R5-T4 and R5-T5 each failed with the whole run reaching the tab where one failed frame, nothing and nothing were expected, and no break was left in place.
 - 2026-11-17, SVA-M4: two breaks were tried and each was seen to fail and was restored. Making the table the default for RDF failed the test of the artefact on the Text button, and refitting on every resize failed the zoom test with 0.293 where 0.259 was kept.
+- 2026-11-17, SVA-P1: two breaks were tried. Leaving the patch log places out of the worker failed five worker tests, and making the freshness comparison always say current failed its unit test and the out of date journey.
 
 ## Log
 
@@ -169,3 +170,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-17: SVA-M4 built, [Validation Pack](../validation/SVA-M4.md). The output explorer shows each run part as text, a table, a graph on the canvas kit or a tree by media type, keeps the author's choice for each media type in the browser, and says so with the parser's message when a part does not parse. A canvas now keeps the zoom and centre its author set when its pane is resized. Found that the table and graph must take the prefixes the Turtle writer declares to read as the text does, and that an existing arrow-key test of the dock failed once in a full run and passed alone and in the next two runs. Left for SVA-P4 and SVA-S3, the simulators' panes, which show their parts through this component.
 - 2026-11-17: SVA-M4 verified by a second run of its checks, 468 unit tests, the type check and 62 browser tests on the fake service. I looked at the graph rendering: literals sit inside their subjects' nodes, types under each label, and the edges carry their predicates. A blank node of the report is written in Turtle under a label the parser made, such as n3-4278, where a reader would expect a bracketed node, a small thing for the explorer to tidy. A second test of the studio failed once in three full runs, the column handle's keyboard test, and is added to TD-166.
 - 2026-11-17: SVA-P1 picked up.
+- 2026-11-17: SVA-P1 built, [Validation Pack](../validation/SVA-P1.md). A persistence compile job now gives landing-places.json, read by the worker from the compiled profile and the compiler's own code, and the Persistence view has a read-only Canvas with Aggregate, Profile and Scope node lenses. Whether the picture is out of date is known only for a compilation this browser started, so one from the Build view is marked unknown, and the Compile button repeats the Build view's submission until the two share one function.
+- 2026-11-17: SVA-P1 verified by a second run of its checks, 14 landing tests, 488 unit tests, the type check and 67 browser tests on the fake service. I looked at the aggregate lens for the Facility: the root, its owned Drawdown, three referenced nodes marked by identity, and seven places each with its graph or naming rule. The landing places are JSON with a schema in the contract, following the analysis artefact, a choice put to the maintainer. Three shortcuts are recorded as TD-170.

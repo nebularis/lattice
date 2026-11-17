@@ -406,12 +406,15 @@ def _compile_persistence(result: _Result, config: Graph, baseline: Graph, root: 
     from persistence.gaps import find_gaps
     from persistence.instantiate import instantiate_by_target
 
+    from . import config_studio_landing as landing
+
     found = _persistence_findings(result, config, baseline, root)
     result.conforms(found is not None)
     if found is None:
         return
     profile, compiled = found
     result.artefact("compiled-profile.ttl", "text/turtle", profile.serialize(format="turtle"), "profile")
+    result.artefact(landing.LANDING_PLACES, "application/json", landing.landing_places_json(profile, _merge(_spec(root, "persistence"), baseline, config)), "profile")
     for group, operations in sorted(instantiate_by_target(profile).items()):
         for operation, text in sorted(operations.items()):
             name = operation.replace(":", "_").replace("/", "_") + ".rq"

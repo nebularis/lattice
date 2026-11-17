@@ -120,7 +120,7 @@ test("a compile follows the job's states and shows what the compiler produced", 
   await page.goto(`/#/w/${ws}/build`);
   await page.getByRole("button", { name: "Compile persistence" }).click();
   await expect(page.getByLabel("Job state")).toContainText("Succeeded");
-  await expect(page.getByText("Compiled", { exact: true })).toBeVisible();
+  await expect(page.getByRole("listbox", { name: "Artefacts" })).toBeVisible();
   await expect(page.getByRole("option", { name: "cas-replace.rq" })).toBeVisible();
   await expect(page.locator("main .code")).toContainText("SELECT ?s WHERE");
   expect(fake.submitted.find((s) => s.kind === "compile")!.body).toContain("dal:DataAccessProfile");
@@ -1964,4 +1964,157 @@ test("a canvas the author zoomed keeps its zoom and centre when the dock is resi
   expect(refitted.zoom).toBeCloseTo(byButton.zoom, 2);
   expect(Math.abs(refitted.x - byButton.x)).toBeLessThan(2);
   expect(Math.abs(refitted.y - byButton.y)).toBeLessThan(2);
+});
+
+// --- the persistence canvas, the exploded view (SVA-P1) ---------------------------------------------------------------------------------
+
+/** The facility sample's Persistence view, with the canvas chosen. */
+async function facilityPersistenceCanvas(page: Page, fake: FakeService): Promise<{ ws: string; canvas: Locator }> {
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Facility agreement/ }).click();
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  const ws = [...fake.workspaces.keys()][0];
+  await page.goto(`/#/w/${ws}/persistence`);
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Canvas" }).click();
+  return { ws, canvas: page.getByRole("region", { name: "Persistence canvas" }) };
+}
+
+const landingNode = (canvas: Locator, kind: string) => canvas.locator(`.landing-node.${kind}`);
+
+test("the persistence view offers a canvas that says there is no compilation and offers one, and draws the facility's aggregate once compiled", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilityPersistenceCanvas(page, fake);
+  // The node list and its editor are still there beside the choice.
+  await expect(page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Details" })).toHaveAttribute("aria-pressed", "false");
+  await expect(canvas.getByRole("heading", { name: "No persistence compilation yet" })).toBeVisible();
+  expect(fake.submitted.filter((s) => s.kind === "compile")).toEqual([]);
+
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await expect(canvas.getByRole("group", { name: "Lens" }).getByRole("button", { name: "Aggregate" })).toHaveAttribute("aria-pressed", "true");
+  const compiles = fake.submitted.filter((s) => s.kind === "compile");
+  expect(compiles.map((s) => s.target)).toEqual(["persistence"]);
+
+  // The first target is the borrower. Pick the facility.
+  const target = canvas.getByRole("combobox", { name: "Target" });
+  await expect(target.getByRole("option")).toHaveText(["Borrower", "Facility"]);
+  await target.selectOption({ label: "Facility" });
+  await expect(landingNode(canvas, "root")).toContainText("Facility");
+  await expect(landingNode(canvas, "owned")).toContainText("Drawdown");
+  await expect(landingNode(canvas, "reference")).toHaveCount(3);
+  // Seven places, each with its kind, its label and its graph or the rule that names it, and one edge from the root to each.
+  const places = landingNode(canvas, "place");
+  await expect(places).toHaveCount(7);
+  for (const text of ["urn:g:facilities", "urn:g:meta/6", "urn:g:txn", "urn:g:keys", "{newRev}/add", "{newRev}/del", "urn:g:txlog/{year and month of the write, as YYYY-MM}"]) {
+    await expect(places.filter({ hasText: text }).first()).toBeVisible();
+  }
+  await expect(canvas.locator(".react-flow__edge title").filter({ hasText: /^Patch log, the triples added, written to/ })).toHaveCount(1);
+  // A referenced edge is dashed and says how it is held, and an owned one is solid.
+  const dashed = canvas.locator(".onto-edge-label.dashed");
+  await expect(dashed).toHaveCount(3);
+  await expect(dashed).toContainText(["arrangedBy · identity", "borrower · identity", "lender · identity"]);
+  await expect(canvas.locator(".onto-edge-label:not(.dashed)")).toHaveText(["hasDrawdown"]);
+  await expect(canvas.getByText(/job [0-9a-f]{8}/)).toBeVisible();
+  await expect(canvas.getByRole("alert")).toHaveCount(0);
+});
+
+test("the lenses draw the profile's targets and the scope node's, and a place is read with the operations that write it", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilityPersistenceCanvas(page, fake);
+  const saved = fake.saves.length;
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  const lenses = canvas.getByRole("group", { name: "Lens" });
+  await expect(lenses.getByRole("button", { name: "Aggregate" })).toBeVisible();
+
+  await lenses.getByRole("button", { name: "Profile" }).click();
+  const profile = canvas.getByRole("combobox", { name: "Profile" });
+  await expect(profile.getByRole("option")).toHaveText(["BorrowerAccessProfile", "BorrowerEpoch", "BorrowerIdentity", "BorrowerPrivacy", "FacilityBoundaryProfile", "FacilityConcurrencyProfile", "FacilityEpoch", "FacilityReceiptProfile"]);
+  await profile.selectOption({ label: "FacilityEpoch" });
+  await expect(landingNode(canvas, "target")).toHaveCount(1);
+  await expect(landingNode(canvas, "target")).toContainText("Facility");
+  await expect(landingNode(canvas, "root")).toHaveCount(0);
+  await expect(landingNode(canvas, "place")).toHaveCount(7);
+
+  await lenses.getByRole("button", { name: "Scope node" }).click();
+  const scope = canvas.getByRole("combobox", { name: "Scope node" });
+  await expect(scope.getByRole("option")).toHaveText(["BorrowerEntity", "FacilityClass"]);
+  await scope.selectOption({ label: "BorrowerEntity" });
+  await expect(landingNode(canvas, "target")).toContainText("Borrower");
+  await expect(landingNode(canvas, "place")).toHaveCount(5);
+  // A borrower keeps no patch log.
+  await expect(landingNode(canvas, "place").filter({ hasText: "Patch log" })).toHaveCount(0);
+
+  // Back in the first lens, a click selects a place and shows what writes it. Nothing on the canvas edits.
+  await lenses.getByRole("button", { name: "Aggregate" }).click();
+  await canvas.getByRole("combobox", { name: "Target" }).selectOption({ label: "Facility" });
+  await landingNode(canvas, "place").filter({ hasText: "{newRev}/add" }).click();
+  const details = canvas.getByRole("complementary", { name: "Selected node" });
+  await expect(details.getByRole("heading", { name: "Patch log, the triples added" })).toBeVisible();
+  await expect(details.getByText("{newRev}/add", { exact: true })).toBeVisible();
+  await expect(details.getByText("Facility/create-if-absent.rq")).toBeVisible();
+  await expect(details.getByText("Facility/cas-replace.rq")).toBeVisible();
+  await expect(details.getByText("Facility/replace-whole.rq")).toBeVisible();
+  await expect(details.getByText("Facility/tombstone-delete.rq")).toHaveCount(0);
+  await expect(details.getByText("cas-replace-composite-property-delta-patch-log-dataset-guard")).toBeVisible();
+  // Selecting the root gives its profiles and scope nodes, and a referenced node says how it is held.
+  await landingNode(canvas, "root").click();
+  await expect(details.getByText("FacilityEpoch")).toBeVisible();
+  await landingNode(canvas, "reference").filter({ hasText: "Lender" }).click();
+  await expect(details.getByText("Outside the boundary, referenced by identity.")).toBeVisible();
+  expect(fake.saves).toHaveLength(saved);
+});
+
+test("the canvas says it is out of date after an edit of the persistence part, and is current again after a compilation", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilityPersistenceCanvas(page, fake);
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await expect(canvas.getByRole("group", { name: "Lens" })).toBeVisible();
+  await expect(canvas.getByRole("alert")).toHaveCount(0);
+
+  // An edit of the persistence part: a new node.
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Details" }).click();
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByRole("menuitem", { name: /^Class scope/ }).click();
+  await page.getByRole("button", { name: "Create" }).click();
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Canvas" }).click();
+  await expect(canvas.getByRole("alert")).toContainText("out of date");
+  // The picture is still the last compilation's, and compiling sends the edit.
+  await expect(landingNode(canvas, "place").first()).toBeVisible();
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await expect(canvas.getByRole("alert")).toHaveCount(0);
+  const compiles = fake.submitted.filter((s) => s.kind === "compile");
+  expect(compiles).toHaveLength(2);
+  expect(compiles[1].body.length).toBeGreaterThan(compiles[0].body.length);
+});
+
+test("a compilation started in the Build view is drawn, and the canvas says it cannot tell whether it is out of date", async ({ page }) => {
+  const fake = new FakeService();
+  const { ws } = await facilityPersistenceCanvas(page, fake);
+  await page.goto(`/#/w/${ws}/build`);
+  await page.getByRole("button", { name: "Compile persistence" }).click();
+  await expect(page.getByRole("listbox", { name: "Artefacts" })).toBeVisible();
+  await page.goto(`/#/w/${ws}/persistence`);
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Canvas" }).click();
+  const canvas = page.getByRole("region", { name: "Persistence canvas" });
+  await expect(canvas.getByRole("group", { name: "Lens" })).toBeVisible();
+  await expect(canvas.getByText(/started elsewhere/)).toBeVisible();
+  await expect(landingNode(canvas, "place").first()).toBeVisible();
+});
+
+test("the canvas keeps where the author moved a node, for the workspace and the lens", async ({ page }) => {
+  const fake = new FakeService();
+  const { ws, canvas } = await facilityPersistenceCanvas(page, fake);
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await canvas.getByRole("combobox", { name: "Target" }).selectOption({ label: "Facility" });
+  const root = landingNode(canvas, "root");
+  await expect(root).toBeVisible();
+  const start = (await root.boundingBox())!;
+  await page.mouse.move(start.x + start.width / 2, start.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(start.x + start.width / 2, start.y + 90, { steps: 6 });
+  await page.mouse.up();
+  const stored = await page.evaluate((key) => localStorage.getItem(key), `lattice-studio:persistence-canvas:${ws}:aggregate:Facility`);
+  expect(Object.keys(JSON.parse(stored!))).toContain("root:Facility");
 });

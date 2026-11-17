@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebularis.org/lattice/config-studio/landing-places/0.1.0",
+  "title": "Configuration Studio: where each target's data lands, the landing-places.json artefact of a persistence compile job",
+  "$ref": "#/$defs/LandingPlaces",
+  "$defs": {
+    "LandingPlaces": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targets"],
+      "properties": {
+        "targets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Target" }
+        }
+      }
+    },
+    "Iri": {
+      "type": "string",
+      "minLength": 1
+    },
+    "Target": {
+      "description": "One compiled target, a class and, where there is more than one, a deployment scope. Its id is the group of its SPARQL artefacts.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "class", "deployment", "profiles", "scopes", "matchedScopes", "aggregate", "places", "operations"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "class": { "$ref": "#/$defs/Iri" },
+        "deployment": { "oneOf": [{ "$ref": "#/$defs/Iri" }, { "type": "null" }] },
+        "profiles": {
+          "description": "The profiles that won a dimension of the target, as the compiled profile records them (dal:wonBy).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Iri" }
+        },
+        "scopes": {
+          "description": "The scope nodes those profiles, and the uniqueness constraints the target applies, apply to.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Iri" }
+        },
+        "matchedScopes": {
+          "description": "Every scope node that matches the target, as persistence.scopes decides, whether or not a profile of it won a dimension.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Iri" }
+        },
+        "aggregate": { "$ref": "#/$defs/Aggregate" },
+        "places": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Place" }
+        },
+        "operations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Operation" }
+        }
+      }
+    },
+    "Aggregate": {
+      "description": "The aggregate as its boundary shape's closure gives it. A family with no boundary shape has a root and no edges.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "rootClass", "rootShape", "owned", "references"],
+      "properties": {
+        "strategy": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "rootClass": { "$ref": "#/$defs/Iri" },
+        "rootShape": { "oneOf": [{ "$ref": "#/$defs/Iri" }, { "type": "null" }] },
+        "owned": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/OwnedEdge" }
+        },
+        "references": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReferenceEdge" }
+        }
+      }
+    },
+    "OwnedEdge": {
+      "description": "An owned edge, with what the owned shape owns and references in turn.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["property", "inverse", "class", "shape", "owned", "references"],
+      "properties": {
+        "property": { "$ref": "#/$defs/Iri" },
+        "inverse": { "type": "boolean" },
+        "class": { "oneOf": [{ "$ref": "#/$defs/Iri" }, { "type": "null" }] },
+        "shape": { "oneOf": [{ "$ref": "#/$defs/Iri" }, { "type": "null" }] },
+        "owned": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/OwnedEdge" }
+        },
+        "references": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReferenceEdge" }
+        }
+      }
+    },
+    "ReferenceEdge": {
+      "description": "An edge to a node outside the boundary, or to a vocabulary node, with its reference mode.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["property", "inverse", "class", "ownership", "mode"],
+      "properties": {
+        "property": { "$ref": "#/$defs/Iri" },
+        "inverse": { "type": "boolean" },
+        "class": { "oneOf": [{ "$ref": "#/$defs/Iri" }, { "type": "null" }] },
+        "ownership": { "enum": ["Reference", "Vocabulary"] },
+        "mode": { "enum": ["ByIdentity", "Pinned"] }
+      }
+    },
+    "Place": {
+      "description": "A place the data of a target lands, written by at least one of its operations. `graph` is the graph IRI, or its naming rule with each part the write supplies as a {placeholder}, as the operation names it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "label", "graph", "from", "operations"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "data-graph", "version", "events", "version-row", "receipt", "transaction-claim", "patch-log-add", "patch-log-del",
+            "key-claim", "merge-record", "key-quarantine", "retention-mark", "dataset-epoch", "derived-rows"
+          ]
+        },
+        "label": { "type": "string", "minLength": 1 },
+        "graph": { "type": "string", "minLength": 1 },
+        "from": {
+          "description": "The dal:templateId of each operation template that writes the place.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "operations": {
+          "description": "The name of each operation of the target that writes the place, as the target's operations list it. A template that a target uses once for each constraint is told apart here.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "Operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "templateId", "kind", "path"],
+      "properties": {
+        "operation": { "type": "string", "minLength": 1 },
+        "templateId": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "path": {
+          "description": "The path of the operation's SPARQL among the artefacts of the same job.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
