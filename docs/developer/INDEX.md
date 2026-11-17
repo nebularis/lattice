@@ -44,7 +44,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
 | lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-0 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
-| ledger | unit | LG | built 2026-11-17 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 17 Validation Packs |
+| ledger | unit | LG | building 2026-11-17 | LG-2 | [plan](plans/ledger.md), [status](status/ledger.md), 17 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
@@ -431,7 +431,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-20 | the laws the target kernel gains, in seven groups by definition, restated 2026-11-15 in place of the third widening | ledger | built 2026-11-16 |  | docs/developer/status/ledger.md#board |
 | LG-21 | the target kernel written first, each changed definition once in its decided form, tried on generated cases and reviewed, before any further proof | ledger | merged 2026-11-16 |  | docs/developer/status/ledger.md#board |
 | LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figur | ledger | merged 2026-11-16 | LG-19 | docs/developer/status/ledger.md#board |
-| LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | ledger | planned | LG-24 | docs/developer/status/ledger.md#board |
+| LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | ledger | building 2026-11-17 |  | docs/developer/status/ledger.md#board |
 | LG-24 | the merge policy node, what an account declares for a merge moved to a policy the account definition refers to | ledger | verified 2026-11-17 |  | docs/developer/status/ledger.md#board |
 | MSA-I1 | `spikes/multi-store-shape-census`. 505 node shapes, none closed and bounded, so 0% of sample subjects against the proposed 80%. 134 fail only on closure and reach 43.4% of subjects. Validati | multi-store-architecture | built 2026-11-17 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I2 | the read-set census | multi-store-architecture | planned | the ledger branch | docs/developer/status/multi-store-architecture.md#position |

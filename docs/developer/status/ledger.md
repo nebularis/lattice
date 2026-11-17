@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-17. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** building 2026-11-17. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-08
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md)
@@ -161,9 +161,10 @@ Results sections. In short:
 | LG-20 | the laws the target kernel gains, in seven groups by definition, restated 2026-11-15 in place of the third widening | built 2026-11-16, building 2026-11-16 |  |
 | LG-21 | the target kernel written first, each changed definition once in its decided form, tried on generated cases and reviewed, before any further proof | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-15, building 2026-11-15 |  |
 | LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figures at the top of the READMEs | merged 2026-11-16, verified 2026-11-16, built 2026-11-16, building 2026-11-15 | LG-19 |
-| LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | planned | LG-24 |
+| LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | building 2026-11-17 |  |
 | LG-24 | the merge policy node, what an account declares for a merge moved to a policy the account definition refers to | verified 2026-11-17, built 2026-11-17, building 2026-11-17 |  |
 - 2026-11-17: the maintainer decided LG-Q36 as (b), a merge policy is content-addressed, its IRI minted from its values. LG-24 marked building before any other edit.
+- 2026-11-17: LG-23 marked building at the maintainer's word, before the release, to be done in one turn. The SQL backend's work was squash-merged into this branch earlier the same day, with `main`.
 - 2026-11-17: **the maintainer verified LG-24** and accepted ADR-A131's addendum of 2026-11-17, the merge policy. The guard on purposes is renamed `ldg:requiresSamePurpose`, to match `ldg:requiresDistinctRanks`.
 - 2026-11-17: LG-24's probe, left to the agent. The runtime law `ldg:MergeWithinAvailabilityShape` was made to read the merge rule from the account definition again. `test_runtime_law_refuses_a_record_that_breaks_it[LG2-06 a proportional merge one unit short]` and `test_literate_extraction_matches_committed_turtle` failed, and with the file restored 40 tests passed. The maintainer renamed the permission to leave a residual to `ldg:allowsResiduals`. The verdict on LG-24 is still the maintainer's.
 - 2026-11-17: LG-24 built, with its [Validation Pack](../validation/LG-24.md). `ldg:MergePolicy` is a versioned class that holds the merge rule, the rounding method and the residual allocation, moved from the account definition, with two order criteria and three booleans new on it, and an account definition names exactly one with `ldg:mergePolicy`. Eleven examples moved and two refusals were added, with the corpus package and the tutorial page. `tools/test_ledger.py` passes 40 tests, the literate check and the freshness check pass, the rig's 73 tests pass unchanged, and the full sweep passes but for the versioning check, which reports the branch unbumped as expected. An addendum to ADR-A131 is proposed for it. It waits for the maintainer's verdict and a probe.
