@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-17. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-17. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -62,7 +62,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-M2e | template cards for the proposer and the MCP server | planned | SVA-M2b, SVA-M2c |
 | SVA-M3a | a mapping's queries over an RDF sample, as a run | planned | SVA-P3 |
 | SVA-M3b | the sample pane | planned | SVA-R4, SVA-M3a |
-| SVA-M4 | the output explorer | planned | SVA-O1, SVA-R4 |
+| SVA-M4 | the output explorer | building 2026-11-17 | SVA-O1, SVA-R4 |
 | SVA-H1 | the stack's secrets in one guarded folder, settings printed redacted, and a guard on reading them | built 2026-11-15, building 2026-11-15 |  |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | planned |  |
 
@@ -164,3 +164,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-17: SVA-R5 picked up.
 - 2026-11-17: SVA-R5 built, [Validation Pack](../validation/SVA-R5.md). Nine real-stack tests of the run protocol (one writer, the Python workers, the run worker and two service instances on a real broker) cover a whole run through either instance, wait=true, a worker killed mid run, an accepting instance killed, a workspace locked mid run, a tab that was away, a run no worker takes, the message's properties and the limit of four, and passed twice in a row in 135 seconds. The harness gained run workers, service instances, signals and a tab subscriber. No fault was found. Left: the limit of four is held per instance, and mise run studio:runs cannot find Erlang where mise has it disabled.
 - 2026-11-17: SVA-R5 verified by a second run of the real-stack suite, 9 passed in 134 seconds, and of the harness's tests, 43 passed. No fault was found in the service, the run worker or the contract. Two rules hold for one instance and not across several, recorded as TD-169 with the port mapper the harness leaves running: the limit of four runs a tab, and the local sign-in's events key. The test of a tab that reconnects publishes its first frames itself, since the real worker sends a run's frames in one burst that cannot be paused between them. In this environment the task needs Erlang put on its path by hand, since mise has Erlang turned off here.
+- 2026-11-17: SVA-M4 picked up.
