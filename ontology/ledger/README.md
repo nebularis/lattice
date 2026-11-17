@@ -37,9 +37,9 @@ Ledger accounts do not hold observed values such as prices or temperatures, whic
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/ledger.ttl` | <https://www.nebularis.org/neuro-semantic/ledger> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.2> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.2>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.2>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.2> |
-| `vocab/ledger-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.21.2> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.2> |
-| `spec/ledger-runtime.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-runtime> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-runtime/0.21.2> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.2> |
+| `spec/ledger.ttl` | <https://www.nebularis.org/neuro-semantic/ledger> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.22.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.22.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.22.0>, <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.22.0> |
+| `vocab/ledger-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-vocab> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.22.0> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.22.0> |
+| `spec/ledger-runtime.ttl` | <https://www.nebularis.org/neuro-semantic/ledger-runtime> | <https://www.nebularis.org/neuro-semantic/lattice/ledger-runtime/0.22.0> | <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.22.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -2135,7 +2135,7 @@ Ledger imports Foundation, for persistent identity, and Quantification, for valu
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
-- **Unreleased**.
+- **0.22.0**.
   - changes meaning. What an account declares for a merge moves to a merge policy ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-17). `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation` have the domain `ldg:MergePolicy`, a new versioned class, and an account definition names its policy with the new `ldg:mergePolicy`, exactly one. A definition that states the three properties itself no longer conforms. To move it, state them on a policy and name the policy from the definition. `ldg:ProportionalNeedsRoundingShape` and `ldg:NearestRoundingStatesTheDifferenceShape` now target the policy.
   - no effect. New on a merge policy, each at most one: `ldg:rankCriterion` and `ldg:unitOrderCriterion`, whose values are concepts of the new scheme `ldg:OrderCriteria` that an applied module fills, and the booleans `ldg:allowsResiduals`, `ldg:requiresDistinctRanks` and `ldg:requiresSamePurpose`.
   - changes meaning. `ldg:InPriorityOrder`, `ldg:LargestRemainder` and `ldg:ToFirstInOrder` say the order they read is declared and never the order of the proposals' identifiers, and that with no order declared the units equal remainders do not decide are left.

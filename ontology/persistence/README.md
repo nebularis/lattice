@@ -26,9 +26,9 @@ Persistence targets classes, graphs and shapes by IRI reference only. It is opti
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.22.2> | none |
-| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.22.2> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.2>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.22.2> |
-| `spec/persistence-store.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store> | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.22.2> | none |
+| `spec/persistence.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence> | <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.23.0> | none |
+| `spec/persistent-foundation.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation> | <https://www.nebularis.org/neuro-semantic/lattice/persistent-foundation/0.23.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.22.0>, <https://www.nebularis.org/neuro-semantic/lattice/persistence/0.23.0> |
+| `spec/persistence-store.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store> | <https://www.nebularis.org/neuro-semantic/lattice/persistence-store/0.23.0> | none |
 
 | Prefix | Namespace |
 |---|---|
@@ -7803,6 +7803,8 @@ version, so that Persistence can enforce Foundation's natural keys (§5.11).
 
 ## 12. Release Notes
 
+- **0.23.0**.
+  - no effect. Imports re-pinned to release 0.22.0, with no other change.
 - **0.22.0**.
   - State digest and bulk load. New: `dal:recordsStateDigest`, `dal:StateDigestRecord`, `dal:StateDigestRead` and `pat:stateDigest`. A family under `dal:ChangedTriples` also generates `replace-whole` (no effect).
   - The rows replace. New: `dal:ReplaceForm`, `dal:TemplateReplace`, `dal:RowsReplace`, `dal:replaceForm` on `dal:ConcurrencyProfile`, `dal:providesSnapshotUpdateSemantics` on `dal:CapabilitySpec`, and `dal:TripleRows` as a `dal:PayloadEncoding`. A configuration that declares none of them compiles to the same operations as before, and every compiled profile gains the resolved `replaceForm` dimension (no effect).

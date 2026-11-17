@@ -20,8 +20,8 @@ Asset class answers what kind of thing an asset is, and nothing else. What the a
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/asset-class.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.1.2> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.2>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.2> |
-| `vocab/asset-class-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.2> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.1.2>, <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.2> |
+| `spec/asset-class.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.2.0> | <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.22.0>, <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.22.0> |
+| `vocab/asset-class-vocab.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/vocab> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.2.0> | <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class/0.2.0>, <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.7.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -544,6 +544,8 @@ The spec document imports Foundation and Vocabulary at release 0.21.0. The vocab
 
 ## 12. Release Notes
 
+- **0.2.0**.
+  - no effect. Imports re-pinned to release 0.22.0, with no other change.
 - **0.1.0**.
   - no effect. The first release: the reference asset class edition after SNA 2008, the mobility scheme and `asc:mobility`, the binding of `cls-voc:AssetClassContract`, and the constraints of section 7.
 

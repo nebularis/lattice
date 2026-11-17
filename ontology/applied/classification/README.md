@@ -55,6 +55,8 @@ roles = ["spec", "vocab"]
 
 ## Release notes
 
+- **0.7.0**.
+  - no effect. Imports re-pinned to release 0.22.0, with no other change.
 - **0.6.0**.
   - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.5.0**.
