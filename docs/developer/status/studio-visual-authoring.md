@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-16. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-17. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -25,7 +25,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R0 | probes of the broker for content frames | built 2026-11-13, building 2026-11-12 |  |
 | SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | built 2026-11-15, building 2026-11-12 | SVA-R0 |
 | SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | built 2026-11-16, building 2026-11-16 | SVA-R1 |
-| SVA-R3 | the run worker, from the transforms worker | planned | SVA-R1 |
+| SVA-R3 | the run worker, from the transforms worker | building 2026-11-17 | SVA-R1 |
 | SVA-R4 | the browser's run controller and the dock's run pane | built 2026-11-16, building 2026-11-16 | SVA-R1 |
 | SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line | built 2026-11-16, building 2026-11-16 | SVA-R4 |
 | SVA-U1 | columns the author collapses and resizes, kept in the browser | built 2026-11-16, building 2026-11-16 | SVA-R4 |
@@ -156,3 +156,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: SVA-R2 picked up.
 - 2026-11-16: SVA-R2 built, [Validation Pack](../validation/SVA-R2.md). The service accepts a run at once, records it in a registry before it publishes the request, validates each frame against the frame schema, checks the reader's access at delivery, ends a run at its deadline with a failed frame, and holds at most four pending runs for a tab, with the run queues declared and the status warning of a run queue no worker consumes. Core 24, service 244 and writer 10 tests passed, and the wider check exited 0 with 286 pytest and 433 browser tests. The registry restates the frame schema in code since the service has no schema library, and the run worker and a real two-instance relay are left to SVA-R3 and SVA-R5.
 - 2026-11-16: SVA-R2 reviewed and corrected before it was committed. As first built, the service made its run registry only where it serves events to browsers, so a deployment with a broker and no events answered 503 to every run, the case ADR-A154's decision 10 keeps the waiting request for. No test saw it, since each built the registry itself. The service now reads run frames whenever it has a broker, a run sent without wait where no events are served is refused with 400, which the contract gained a sentence for, and what starts is decided by one function with its own test. Verified by a second run of the three Java modules, 24, 248 and 10 passed, the contract's 32 tests, and the counts of `mise run check:config-studio`, 21, 286 and 433. Left for SVA-R5: two instances and a real broker, the message's delivery mode and expiration, which no unit test sees, and the split of the relay, which was not run against a broker.
+- 2026-11-17: SVA-R3 picked up.
