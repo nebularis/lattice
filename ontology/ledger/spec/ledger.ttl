@@ -51,13 +51,19 @@ ldg:AccountDefinition a owl:Class ;
 ldg:MergePolicy a owl:Class ;
     rdfs:comment "What a scope declares for requests that compete at one position." ;
     fnd:utility "State one for each scope that says how competing requests are treated, a contract, a document it cites or a deployment, and name it from every account definition it governs. It carries the merge rule always, a rounding method and a residual allocation where the rule shares in proportion, and the criteria, the permission and the guards only where the terms state them. A policy is versioned. A change of treatment is a new version, and an account definition names the version that governs it, so what a past balance was settled under does not change. Where several accounts take part in one merge, the policy of the account the requests are made at governs." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:mayLeaveResidual ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rankCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:refusesMixedPurposes ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresDistinctRanks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:allowsResiduals ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rankCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:refusesMixedPurposes ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresDistinctRanks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
 
 ldg:admitsOwnerKind a owl:ObjectProperty ;
     rdfs:comment "The kinds of owner this account admits." ;
     fnd:utility "Names, by class, who may own this account: an instrument, an authority, an ensemble such as a programme or a vehicle, or any other fnd:PersistentIdentity. State one value for each kind the terms allow." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range rdfs:Class .
+
+ldg:allowsResiduals a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "Whether a merge under this policy may grant less than is available where its rule cannot place every unit." ;
+    fnd:utility "State true where the terms allow a part to stay unplaced, as where requests are of no use in part or equal remainders have no order to decide them. Unstated or false, a merge that would leave a unit is refused." ;
+    rdfs:domain ldg:MergePolicy ;
+    rdfs:range xsd:boolean .
 
 ldg:closingRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The recurrence at whose boundaries the account's book closes and a checkpoint is written." ;
@@ -88,12 +94,6 @@ ldg:keyDimension a owl:FunctionalProperty, owl:ObjectProperty ;
     fnd:utility "States that this definition's amount applies once per key value (a site, a borrower), each key's account derived independently on the first draw that names it. Point at a skos:ConceptScheme naming the key values, or at a qnt:ValueSpace where the key is itself a quantity. Leave unset for an account with no key." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range [ a owl:Class ; owl:unionOf ( skos:ConceptScheme qnt:ValueSpace ) ] .
-
-ldg:mayLeaveResidual a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:comment "Whether a merge under this policy may grant less than is available where its rule cannot place every unit." ;
-    fnd:utility "State true where the terms allow a part to stay unplaced, as where requests are of no use in part or equal remainders have no order to decide them. Unstated or false, a merge that would leave a unit is refused." ;
-    rdfs:domain ldg:MergePolicy ;
-    rdfs:range xsd:boolean .
 
 ldg:mergePolicy a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The merge policy that governs requests competing on this account." ;
