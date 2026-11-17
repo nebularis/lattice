@@ -1,0 +1,8 @@
+[store-writer] WARN com.rabbitmq.stream.impl.OffsetTrackingUtils - Error while checking offset has been stored
+java.util.concurrent.TimeoutException
+	at java.base/java.util.concurrent.CompletableFuture.timedGet(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture.get(Unknown Source)
+	at com.rabbitmq.stream.impl.OffsetTrackingUtils.waitForOffsetToBeStored(OffsetTrackingUtils.java:116)
+	at com.rabbitmq.stream.impl.StreamEnvironment.storeOffset(StreamEnvironment.java:612)
+	at org.nebularis.lattice.probes.msa.Sac.lambda$main$4(Sac.java:120)
+	at java.base/java.lang.Thread.run(Unknown Source)

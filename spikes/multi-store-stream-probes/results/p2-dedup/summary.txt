@@ -1,0 +1,26 @@
+run p2-dedup: 2000 messages per case, kill after 800 confirmations, 5 ms between sends
+[a-named-full-replay] first producer killed, 864 confirmations logged, highest confirmed id 863
+[a-named-full-replay] second producer: {"t":1794937889052,"c":"w2","e":"last-publishing-id","name":"writer-a","value":860}; 2000 confirmations, run to completion
+[a-named-full-replay] {"t":1794937901101,"c":"count","e":"count","super":"msa-i9-p2a","entries":2000,"distinct":2000,"extra_copies":0,"missing_in_range":0,"from":0,"to":1999,"duplicated":""}
+[a-named-full-replay] {"t":1794937901102,"c":"count","e":"seen-ranges","ranges":"0-1999"}
+[a2-named-resume] first producer killed, 876 confirmations logged, highest confirmed id 875
+[a2-named-resume] second producer: {"t":1794937910710,"c":"w2","e":"last-publishing-id","name":"writer-a2","value":872} | {"t":1794937910715,"c":"w2","e":"resume-from","id":873}; 1127 confirmations, run to completion
+[a2-named-resume] {"t":1794937922602,"c":"count","e":"count","super":"msa-i9-p2a2","entries":2000,"distinct":2000,"extra_copies":0,"missing_in_range":0,"from":0,"to":1999,"duplicated":""}
+[a2-named-resume] {"t":1794937922602,"c":"count","e":"seen-ranges","ranges":"0-1999"}
+[b-unnamed-full-replay] first producer killed, 891 confirmations logged, highest confirmed id 890
+[b-unnamed-full-replay] second producer: ; 2000 confirmations, run to completion
+[b-unnamed-full-replay] {"t":1794937944226,"c":"count","e":"count","super":"msa-i9-p2b","entries":2892,"distinct":2000,"extra_copies":892,"missing_in_range":0,"from":0,"to":1999,"duplicated":"0x2 1x2 2x2 3x2 4x2 5x2 6x2 7x2 8x2 9x2 10x2 11x2 12x2 13x2 14x2 15x2 16x2 17x2 18x2 19x2 20x2 21x2 22x2 23x2 24x2 25x2 26x2 27x2 28x2 29x2 30x2 31x2 32x2 33x2 34x2 35x2 36x2 37x2 38x2 39x2 40x2 41x2"}
+[b-unnamed-full-replay] {"t":1794937944226,"c":"count","e":"seen-ranges","ranges":"0-1999"}
+[c1-live-same-name] producer wa : 1000 confirmations logged; {"t":1794937946885,"c":"wa","e":"last-publishing-id","name":"shared","value":0}
+[c1-live-same-name] producer wb : 1000 confirmations logged; {"t":1794937947476,"c":"wb","e":"last-publishing-id","name":"shared","value":0}
+[c1-live-same-name] {"t":1794937960920,"c":"count","e":"count","super":"msa-i9-p2c1","entries":2000,"distinct":2000,"extra_copies":0,"missing_in_range":0,"from":0,"to":1999,"duplicated":""}
+[c1-live-same-name] {"t":1794937960920,"c":"count","e":"seen-ranges","ranges":"0-1999"}
+[c1b-live-same-name-same-partition] producer wa : 250 confirmations logged; {"t":1794937963798,"c":"wa","e":"last-publishing-id","name":"shared","value":0}
+[c1b-live-same-name-same-partition] producer wb : 250 confirmations logged; {"t":1794937964323,"c":"wb","e":"last-publishing-id","name":"shared","value":0}
+[c1b-live-same-name-same-partition] expected 500 messages (ids 0, 4, ... 1996); {"t":1794937976344,"c":"count","e":"count","super":"msa-i9-p2c1b","entries":251,"distinct":251,"extra_copies":0,"missing_in_range":1749,"from":0,"to":1999,"duplicated":""}
+[c2-sequential-same-name] producer wa : 200 confirmations logged; {"t":1794937978941,"c":"wa","e":"last-publishing-id","name":"shared","value":0}
+[c2-sequential-same-name] producer wb : 200 confirmations logged; {"t":1794937982317,"c":"wb","e":"last-publishing-id","name":"shared","value":1196}
+[c2-sequential-same-name] {"t":1794937994098,"c":"count","e":"count","super":"msa-i9-p2c2","entries":200,"distinct":200,"extra_copies":0,"missing_in_range":1000,"from":0,"to":1199,"duplicated":""} {"t":1794937994098,"c":"count","e":"seen-ranges","ranges":"1000-1199"}
+[d-amqp-twice] {"t":1794937996259,"c":"amqp-dup","e":"amqp-dup-done","messages":100,"publishes":200}
+[d-amqp-twice] {"t":1794938004685,"c":"count","e":"count","super":"msa-i9-p2d","entries":200,"distinct":100,"extra_copies":100,"missing_in_range":0,"from":0,"to":99,"duplicated":"0x2 1x2 2x2 3x2 4x2 5x2 6x2 7x2 8x2 9x2 10x2 11x2 12x2 13x2 14x2 15x2 16x2 17x2 18x2 19x2 20x2 21x2 22x2 23x2 24x2 25x2 26x2 27x2 28x2 29x2 30x2 31x2 32x2 33x2 34x2 35x2 36x2 37x2 38x2 39x2 40x2 41x2"}
+[d-amqp-twice] {"t":1794938004685,"c":"count","e":"seen-ranges","ranges":"0-99"}

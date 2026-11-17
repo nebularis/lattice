@@ -1,0 +1,144 @@
+{
+  "declaration": "config-studio-messaging",
+  "version": 1,
+  "hub": {
+    "name": "lattice.studio",
+    "failures": "lattice.studio.dlx"
+  },
+  "lanes": [
+    {
+      "id": "jobs",
+      "name": "lattice.studio.jobs",
+      "key": "lattice.studio.jobs",
+      "delivery": "competing",
+      "prefetch": 1,
+      "on_failure": "dead-letter"
+    },
+    {
+      "id": "jobs-long",
+      "name": "lattice.studio.jobs.long",
+      "key": "lattice.studio.jobs.long",
+      "delivery": "competing",
+      "prefetch": 1,
+      "on_failure": "dead-letter"
+    },
+    {
+      "id": "transforms",
+      "name": "lattice.studio.transforms",
+      "key": "lattice.studio.transforms",
+      "delivery": "competing",
+      "prefetch": 1,
+      "on_failure": "discard",
+      "expiry": {
+        "set_by": "sender"
+      },
+      "reply": "sender-private"
+    }
+  ],
+  "failure_sink": {
+    "id": "dead",
+    "name": "lattice.studio.dead",
+    "collects": "everything"
+  },
+  "ordered_writes": {
+    "id": "writes",
+    "name": "lattice.studio.writes",
+    "reply": "sender-private",
+    "partitions": 8,
+    "partition_by": {
+      "function": "hex-prefix-modulo",
+      "of": "workspace-id",
+      "hex_digits": 8
+    },
+    "retention": {
+      "max_age": "7D",
+      "max_bytes": 1073741824
+    },
+    "readers": {
+      "group": "lattice.studio.writers",
+      "mode": "single-active-per-partition",
+      "start": "first",
+      "tracking": "manual",
+      "batch_limit": 64
+    }
+  },
+  "broadcasts": [
+    {
+      "id": "events",
+      "name": "lattice.studio.events",
+      "selected_by": "routing-pattern",
+      "subscriber_queues": "private-per-connection",
+      "subscribe_pattern": "org.nebularis.lattice.studio.#",
+      "publishers": ["studio-writer"],
+      "subscribers": ["studio-service"]
+    }
+  ],
+  "builtin_routes": [
+    {
+      "name": "amq.topic",
+      "purpose": "the browser's events and watches over MQTT",
+      "keys": ["studio.u.*.*.watch", "studio.u.*.*.events"],
+      "declared_by": "the broker"
+    }
+  ],
+  "broker": {
+    "name": "rabbitmq",
+    "product": "rabbitmq"
+  },
+  "stores": [
+    {
+      "name": "fuseki",
+      "product": "fuseki"
+    }
+  ],
+  "units": [
+    {
+      "name": "studio-service",
+      "runs_on": "host",
+      "port": 8090,
+      "stores": ["fuseki"],
+      "publishes": ["jobs", "jobs-long", "transforms", "writes"],
+      "consumes": ["events"]
+    },
+    {
+      "name": "studio-writer",
+      "runs_on": "host",
+      "stores": ["fuseki"],
+      "publishes": ["events"],
+      "consumes": ["writes"]
+    },
+    {
+      "name": "studio-worker",
+      "runs_on": "host",
+      "stores": ["fuseki"],
+      "publishes": ["writes"],
+      "consumes": ["jobs"]
+    },
+    {
+      "name": "studio-worker-long",
+      "runs_on": "host",
+      "stores": ["fuseki"],
+      "publishes": ["writes"],
+      "consumes": ["jobs-long"]
+    },
+    {
+      "name": "studio-transforms",
+      "runs_on": "host",
+      "stores": ["fuseki"],
+      "publishes": [],
+      "consumes": ["transforms"]
+    },
+    {
+      "name": "addin-proxy",
+      "runs_on": "compose",
+      "product": "caddy",
+      "stores": [],
+      "calls": [
+        {
+          "unit": "studio-service",
+          "protocol": "http"
+        }
+      ]
+    }
+  ]
+}

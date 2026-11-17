@@ -1,0 +1,9 @@
+name	leader	members	online
+msa-i9-l-p3leaderkill2-0	rabbit@msa-i9-rmq1	[rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq3]	[rabbit@msa-i9-rmq3, rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1]
+msa-i9-l-p3leaderkill2-1	rabbit@msa-i9-rmq1	[rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq3]	[rabbit@msa-i9-rmq3, rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1]
+msa-i9-l-p3leaderkill2-6	rabbit@msa-i9-rmq1	[rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq3]	[rabbit@msa-i9-rmq3, rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1]
+msa-i9-l-p3leaderkill2-3	rabbit@msa-i9-rmq1	[rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq3]	[rabbit@msa-i9-rmq3, rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1]
+msa-i9-l-p3leaderkill2-4	rabbit@msa-i9-rmq1	[rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq3]	[rabbit@msa-i9-rmq3, rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1]
+msa-i9-l-p3leaderkill2-5	rabbit@msa-i9-rmq3	[rabbit@msa-i9-rmq3, rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq2]	[rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq3]
+msa-i9-l-p3leaderkill2-2	rabbit@msa-i9-rmq3	[rabbit@msa-i9-rmq3, rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq2]	[rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq3]
+msa-i9-l-p3leaderkill2-7	rabbit@msa-i9-rmq3	[rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq3]	[rabbit@msa-i9-rmq2, rabbit@msa-i9-rmq1, rabbit@msa-i9-rmq3]

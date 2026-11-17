@@ -1,0 +1,319 @@
+Picked up JAVA_TOOL_OPTIONS: -Dorg.slf4j.simpleLogger.defaultLogLevel=info -Dorg.slf4j.simpleLogger.log.com.rabbitmq.stream=debug
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using 1 locator connection(s)
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator wrapper 'msa-i9-rmq1:5552 (id 0)' created with no connection at 2026-11-17T17:23:49.890093212
+[main] DEBUG com.rabbitmq.stream.impl.ThreadUtils - Virtual threads enabled: false
+[main] DEBUG com.rabbitmq.stream.impl.ThreadUtils - Java 21 or more: true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Creating scheduled executor service with 16 thread(s)
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Resizing [Executor{id=0, usage=0}], with min = 1, clients per resource = 1
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Total usage is 0
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Target size is 1, current size is 1
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Looking least used executor in [Executor{id=0, usage=0}]
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Least used executor is Executor{id=0, usage=0}
+[main] DEBUG com.rabbitmq.stream.impl.Client - Trying to create stream connection to msa-i9-rmq1:5552, with client connection name 'rabbitmq-stream-locator-0'
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-locator-0': exchanging peer properties
+[rabbitmq-stream-locator-connection-0] DEBUG com.rabbitmq.stream.impl.ServerFrameHandler - Handling peer properties response for connection rabbitmq-stream-locator-0
+[rabbitmq-stream-locator-connection-0] DEBUG com.rabbitmq.stream.impl.ServerFrameHandler - Handling peer properties response for connection rabbitmq-stream-locator-0, correlation ID is 0
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-locator-0': peer properties exchanged
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-locator-0': starting SASL handshake
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-locator-0': SASL mechanisms supported by server ([PLAIN, ANONYMOUS, AMQPLAIN])
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-locator-0': starting authentication
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-locator-0': authenticated
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection tuned with max frame size 1048576 and heartbeat 60
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator wrapper 'msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552]' updated from null to Client{connectionName='172.20.0.6:41268 -> msa-i9-rmq1:5552'}, last changed 2026-11-17T17:23:49.890093212, PT0.337128754S ago
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Created locator connection 'rabbitmq-stream-locator-0'
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator connected to Address{host='msa-i9-rmq1', port=5552}
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Partition lookup for super stream 'msa-i9-o-p3dbg''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Partition lookup for super stream 'msa-i9-o-p3dbg''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Partition lookup for super stream 'msa-i9-o-p3dbg'' succeeded in PT0.00554835S
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-0''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-0''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-0'' succeeded in PT0.003150489S
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Candidates to publish to msa-i9-o-p3dbg-0: [BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Trying to create producer manager on msa-i9-rmq1:5552
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Resizing [Executor{id=1, usage=0}, Executor{id=2, usage=0}, Executor{id=3, usage=0}, Executor{id=4, usage=0}, Executor{id=5, usage=0}, Executor{id=6, usage=0}, Executor{id=7, usage=0}, Executor{id=8, usage=0}, Executor{id=9, usage=0}, Executor{id=10, usage=0}, Executor{id=11, usage=0}, Executor{id=12, usage=0}, Executor{id=13, usage=0}, Executor{id=14, usage=0}, Executor{id=15, usage=0}, Executor{id=16, usage=0}], with min = 16, clients per resource = 10
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Total usage is 0
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Target size is 16, current size is 16
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Looking least used executor in [Executor{id=1, usage=0}, Executor{id=2, usage=0}, Executor{id=3, usage=0}, Executor{id=4, usage=0}, Executor{id=5, usage=0}, Executor{id=6, usage=0}, Executor{id=7, usage=0}, Executor{id=8, usage=0}, Executor{id=9, usage=0}, Executor{id=10, usage=0}, Executor{id=11, usage=0}, Executor{id=12, usage=0}, Executor{id=13, usage=0}, Executor{id=14, usage=0}, Executor{id=15, usage=0}, Executor{id=16, usage=0}]
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Least used executor is Executor{id=1, usage=0}
+[main] DEBUG com.rabbitmq.stream.impl.Client - Trying to create stream connection to msa-i9-rmq1:5552, with client connection name 'rabbitmq-stream-producer-0'
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-producer-0': exchanging peer properties
+[rabbitmq-stream-producer-connection-0] DEBUG com.rabbitmq.stream.impl.ServerFrameHandler - Handling peer properties response for connection rabbitmq-stream-producer-0
+[rabbitmq-stream-producer-connection-0] DEBUG com.rabbitmq.stream.impl.ServerFrameHandler - Handling peer properties response for connection rabbitmq-stream-producer-0, correlation ID is 0
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-producer-0': peer properties exchanged
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-producer-0': starting SASL handshake
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-producer-0': SASL mechanisms supported by server ([PLAIN, ANONYMOUS, AMQPLAIN])
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-producer-0': starting authentication
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-producer-0': authenticated
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection tuned with max frame size 1048576 and heartbeat 60
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Expected client msa-i9-rmq1:5552, got msa-i9-rmq1:5552, viable candidates [Broker{host='msa-i9-rmq1', port=5552}]: success
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Created producer connection 'rabbitmq-stream-producer-0'
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Created producer manager on msa-i9-rmq1:5552, id 0
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Assigned tracking consumer tracker 0 (stream 'msa-i9-o-p3dbg-0') to manager 0 (node msa-i9-rmq1:5552), publisher ID N/A
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.SuperStreamConsumer - Created consumer on stream 'msa-i9-o-p3dbg-0' for super stream 'msa-i9-o-p3dbg'
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-1''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-1''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-1'' succeeded in PT0.001811438S
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Candidates to publish to msa-i9-o-p3dbg-1: [BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Assigned tracking consumer tracker 1 (stream 'msa-i9-o-p3dbg-1') to manager 0 (node msa-i9-rmq1:5552), publisher ID N/A
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.SuperStreamConsumer - Created consumer on stream 'msa-i9-o-p3dbg-1' for super stream 'msa-i9-o-p3dbg'
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-2''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-2''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-2'' succeeded in PT0.001144915S
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Candidates to publish to msa-i9-o-p3dbg-2: [BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Assigned tracking consumer tracker 2 (stream 'msa-i9-o-p3dbg-2') to manager 0 (node msa-i9-rmq1:5552), publisher ID N/A
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.SuperStreamConsumer - Created consumer on stream 'msa-i9-o-p3dbg-2' for super stream 'msa-i9-o-p3dbg'
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-3''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-3''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-3'' succeeded in PT0.001539699S
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Candidates to publish to msa-i9-o-p3dbg-3: [BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Assigned tracking consumer tracker 3 (stream 'msa-i9-o-p3dbg-3') to manager 0 (node msa-i9-rmq1:5552), publisher ID N/A
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.SuperStreamConsumer - Created consumer on stream 'msa-i9-o-p3dbg-3' for super stream 'msa-i9-o-p3dbg'
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-4''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-4''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-4'' succeeded in PT0.002354013S
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Candidates to publish to msa-i9-o-p3dbg-4: [BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Assigned tracking consumer tracker 4 (stream 'msa-i9-o-p3dbg-4') to manager 0 (node msa-i9-rmq1:5552), publisher ID N/A
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.SuperStreamConsumer - Created consumer on stream 'msa-i9-o-p3dbg-4' for super stream 'msa-i9-o-p3dbg'
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-5''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-5''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-5'' succeeded in PT0.00208868S
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Candidates to publish to msa-i9-o-p3dbg-5: [BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Assigned tracking consumer tracker 5 (stream 'msa-i9-o-p3dbg-5') to manager 0 (node msa-i9-rmq1:5552), publisher ID N/A
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.SuperStreamConsumer - Created consumer on stream 'msa-i9-o-p3dbg-5' for super stream 'msa-i9-o-p3dbg'
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-6''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-6''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-6'' succeeded in PT0.001280398S
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Candidates to publish to msa-i9-o-p3dbg-6: [BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Assigned tracking consumer tracker 6 (stream 'msa-i9-o-p3dbg-6') to manager 0 (node msa-i9-rmq1:5552), publisher ID N/A
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.SuperStreamConsumer - Created consumer on stream 'msa-i9-o-p3dbg-6' for super stream 'msa-i9-o-p3dbg'
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-7''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-7''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to publish to 'msa-i9-o-p3dbg-7'' succeeded in PT0.001143723S
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Candidates to publish to msa-i9-o-p3dbg-7: [BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ProducersCoordinator - Assigned tracking consumer tracker 7 (stream 'msa-i9-o-p3dbg-7') to manager 0 (node msa-i9-rmq1:5552), publisher ID N/A
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.SuperStreamConsumer - Created consumer on stream 'msa-i9-o-p3dbg-7' for super stream 'msa-i9-o-p3dbg'
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidate lookup to consumer from 'msa-i9-o-p3dbg-0', forcing replica? false
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-0''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-0''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-0'' succeeded in PT0.001199106S
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Replicas for consuming from msa-i9-o-p3dbg-0: [Broker{host='msa-i9-rmq2', port=5552}, Broker{host='msa-i9-rmq3', port=5552}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidates to consume from msa-i9-o-p3dbg-0: [BrokerWrapper{broker=Broker{host='msa-i9-rmq2', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq3', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Finding a manager for consumer 0
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Creating subscription manager on msa-i9-rmq3:5552
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Resizing [Executor{id=17, usage=0}, Executor{id=18, usage=0}, Executor{id=19, usage=0}, Executor{id=20, usage=0}, Executor{id=21, usage=0}, Executor{id=22, usage=0}, Executor{id=23, usage=0}, Executor{id=24, usage=0}, Executor{id=25, usage=0}, Executor{id=26, usage=0}, Executor{id=27, usage=0}, Executor{id=28, usage=0}, Executor{id=29, usage=0}, Executor{id=30, usage=0}, Executor{id=31, usage=0}, Executor{id=32, usage=0}], with min = 16, clients per resource = 10
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Total usage is 0
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Target size is 16, current size is 16
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Looking least used executor in [Executor{id=17, usage=0}, Executor{id=18, usage=0}, Executor{id=19, usage=0}, Executor{id=20, usage=0}, Executor{id=21, usage=0}, Executor{id=22, usage=0}, Executor{id=23, usage=0}, Executor{id=24, usage=0}, Executor{id=25, usage=0}, Executor{id=26, usage=0}, Executor{id=27, usage=0}, Executor{id=28, usage=0}, Executor{id=29, usage=0}, Executor{id=30, usage=0}, Executor{id=31, usage=0}, Executor{id=32, usage=0}]
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Least used executor is Executor{id=17, usage=0}
+[main] DEBUG com.rabbitmq.stream.impl.Client - Trying to create stream connection to msa-i9-rmq3:5552, with client connection name 'rabbitmq-stream-consumer-0'
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-0': exchanging peer properties
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.ServerFrameHandler - Handling peer properties response for connection rabbitmq-stream-consumer-0
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.ServerFrameHandler - Handling peer properties response for connection rabbitmq-stream-consumer-0, correlation ID is 0
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-0': peer properties exchanged
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-0': starting SASL handshake
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-0': SASL mechanisms supported by server ([ANONYMOUS, PLAIN, AMQPLAIN])
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-0': starting authentication
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-0': authenticated
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection tuned with max frame size 1048576 and heartbeat 60
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Expected client msa-i9-rmq3:5552, got msa-i9-rmq3:5552, viable candidates [Broker{host='msa-i9-rmq2', port=5552}, Broker{host='msa-i9-rmq3', port=5552}, Broker{host='msa-i9-rmq1', port=5552}]: success
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - creating subscription manager on msa-i9-rmq3:5552
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Created consumer connection 'rabbitmq-stream-consumer-0'
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Created subscription manager on msa-i9-rmq3:5552, id 0
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribing to msa-i9-o-p3dbg-0, requested offset specification is OffsetSpecification{type=1, offset=-1}, offset tracking reference is lattice.studio.writers, properties are {name=lattice.studio.writers, single-active-consumer=true, super-stream=msa-i9-o-p3dbg}, subscription ID is 0, consumer 0
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Offset query for consumer 0 on stream 'msa-i9-o-p3dbg-0' (reference lattice.studio.writers)'
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Offset query for consumer 0 on stream 'msa-i9-o-p3dbg-0' (reference lattice.studio.writers)' completed in 2 ms after 1 attempt(s)
+[main] INFO com.rabbitmq.stream.impl.ConsumersCoordinator - Computed offset specification OffsetSpecification{type=1, offset=-1}, offset specification used after subscription listener OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Subscribe request for consumer 0 on stream 'msa-i9-o-p3dbg-0''
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Subscribe request for consumer 0 on stream 'msa-i9-o-p3dbg-0'' completed in 5 ms after 1 attempt(s)
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 0 from stream msa-i9-o-p3dbg-0 with name lattice.studio.writers received consumer update notification, active = true
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribed to 'msa-i9-o-p3dbg-0'
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Assigned tracker [id 0, stream msa-i9-o-p3dbg-0, name lattice.studio.writers, consumer 0] to manager 0 (node msa-i9-rmq3:5552), subscription ID 0, consumer 0
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidate lookup to consumer from 'msa-i9-o-p3dbg-1', forcing replica? false
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-1''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-1''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-1'' succeeded in PT0.001547016S
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Replicas for consuming from msa-i9-o-p3dbg-1: [Broker{host='msa-i9-rmq2', port=5552}, Broker{host='msa-i9-rmq3', port=5552}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidates to consume from msa-i9-o-p3dbg-1: [BrokerWrapper{broker=Broker{host='msa-i9-rmq2', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq3', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Finding a manager for consumer 1
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribing to msa-i9-o-p3dbg-1, requested offset specification is OffsetSpecification{type=1, offset=-1}, offset tracking reference is lattice.studio.writers, properties are {name=lattice.studio.writers, single-active-consumer=true, super-stream=msa-i9-o-p3dbg}, subscription ID is 1, consumer 1
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Offset query for consumer 1 on stream 'msa-i9-o-p3dbg-1' (reference lattice.studio.writers)'
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Offset query for consumer 1 on stream 'msa-i9-o-p3dbg-1' (reference lattice.studio.writers)' completed in 3 ms after 1 attempt(s)
+[main] INFO com.rabbitmq.stream.impl.ConsumersCoordinator - Computed offset specification OffsetSpecification{type=1, offset=-1}, offset specification used after subscription listener OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Subscribe request for consumer 1 on stream 'msa-i9-o-p3dbg-1''
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Subscribe request for consumer 1 on stream 'msa-i9-o-p3dbg-1'' completed in 4 ms after 1 attempt(s)
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 1 from stream msa-i9-o-p3dbg-1 with name lattice.studio.writers received consumer update notification, active = true
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribed to 'msa-i9-o-p3dbg-1'
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Assigned tracker [id 1, stream msa-i9-o-p3dbg-1, name lattice.studio.writers, consumer 1] to manager 0 (node msa-i9-rmq3:5552), subscription ID 1, consumer 1
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidate lookup to consumer from 'msa-i9-o-p3dbg-2', forcing replica? false
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-2''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-2''
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-2'' succeeded in PT0.002401718S
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Replicas for consuming from msa-i9-o-p3dbg-2: [Broker{host='msa-i9-rmq2', port=5552}, Broker{host='msa-i9-rmq3', port=5552}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidates to consume from msa-i9-o-p3dbg-2: [BrokerWrapper{broker=Broker{host='msa-i9-rmq2', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq3', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Finding a manager for consumer 2
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribing to msa-i9-o-p3dbg-2, requested offset specification is OffsetSpecification{type=1, offset=-1}, offset tracking reference is lattice.studio.writers, properties are {name=lattice.studio.writers, single-active-consumer=true, super-stream=msa-i9-o-p3dbg}, subscription ID is 2, consumer 2
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Offset query for consumer 2 on stream 'msa-i9-o-p3dbg-2' (reference lattice.studio.writers)'
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Offset query for consumer 2 on stream 'msa-i9-o-p3dbg-2' (reference lattice.studio.writers)' completed in 1 ms after 1 attempt(s)
+[main] INFO com.rabbitmq.stream.impl.ConsumersCoordinator - Computed offset specification OffsetSpecification{type=1, offset=-1}, offset specification used after subscription listener OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Subscribe request for consumer 2 on stream 'msa-i9-o-p3dbg-2''
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Subscribe request for consumer 2 on stream 'msa-i9-o-p3dbg-2'' completed in 5 ms after 1 attempt(s)
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribed to 'msa-i9-o-p3dbg-2'
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Assigned tracker [id 2, stream msa-i9-o-p3dbg-2, name lattice.studio.writers, consumer 2] to manager 0 (node msa-i9-rmq3:5552), subscription ID 2, consumer 2
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 2 from stream msa-i9-o-p3dbg-2 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidate lookup to consumer from 'msa-i9-o-p3dbg-3', forcing replica? false
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-3''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-3''
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-3'' succeeded in PT0.001776812S
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Replicas for consuming from msa-i9-o-p3dbg-3: [Broker{host='msa-i9-rmq2', port=5552}, Broker{host='msa-i9-rmq3', port=5552}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidates to consume from msa-i9-o-p3dbg-3: [BrokerWrapper{broker=Broker{host='msa-i9-rmq2', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq3', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Finding a manager for consumer 3
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribing to msa-i9-o-p3dbg-3, requested offset specification is OffsetSpecification{type=1, offset=-1}, offset tracking reference is lattice.studio.writers, properties are {name=lattice.studio.writers, single-active-consumer=true, super-stream=msa-i9-o-p3dbg}, subscription ID is 3, consumer 3
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Offset query for consumer 3 on stream 'msa-i9-o-p3dbg-3' (reference lattice.studio.writers)'
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Offset query for consumer 3 on stream 'msa-i9-o-p3dbg-3' (reference lattice.studio.writers)' completed in 1 ms after 1 attempt(s)
+[main] INFO com.rabbitmq.stream.impl.ConsumersCoordinator - Computed offset specification OffsetSpecification{type=1, offset=-1}, offset specification used after subscription listener OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Subscribe request for consumer 3 on stream 'msa-i9-o-p3dbg-3''
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 3 from stream msa-i9-o-p3dbg-3 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Subscribe request for consumer 3 on stream 'msa-i9-o-p3dbg-3'' completed in 3 ms after 1 attempt(s)
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribed to 'msa-i9-o-p3dbg-3'
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Assigned tracker [id 3, stream msa-i9-o-p3dbg-3, name lattice.studio.writers, consumer 3] to manager 0 (node msa-i9-rmq3:5552), subscription ID 3, consumer 3
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidate lookup to consumer from 'msa-i9-o-p3dbg-4', forcing replica? false
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-4''
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-4''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-4'' succeeded in PT0.001144673S
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Replicas for consuming from msa-i9-o-p3dbg-4: [Broker{host='msa-i9-rmq2', port=5552}, Broker{host='msa-i9-rmq3', port=5552}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidates to consume from msa-i9-o-p3dbg-4: [BrokerWrapper{broker=Broker{host='msa-i9-rmq2', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq3', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Finding a manager for consumer 4
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribing to msa-i9-o-p3dbg-4, requested offset specification is OffsetSpecification{type=1, offset=-1}, offset tracking reference is lattice.studio.writers, properties are {name=lattice.studio.writers, single-active-consumer=true, super-stream=msa-i9-o-p3dbg}, subscription ID is 4, consumer 4
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Offset query for consumer 4 on stream 'msa-i9-o-p3dbg-4' (reference lattice.studio.writers)'
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Offset query for consumer 4 on stream 'msa-i9-o-p3dbg-4' (reference lattice.studio.writers)' completed in 2 ms after 1 attempt(s)
+[main] INFO com.rabbitmq.stream.impl.ConsumersCoordinator - Computed offset specification OffsetSpecification{type=1, offset=-1}, offset specification used after subscription listener OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Subscribe request for consumer 4 on stream 'msa-i9-o-p3dbg-4''
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 4 from stream msa-i9-o-p3dbg-4 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Subscribe request for consumer 4 on stream 'msa-i9-o-p3dbg-4'' completed in 3 ms after 1 attempt(s)
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribed to 'msa-i9-o-p3dbg-4'
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Assigned tracker [id 4, stream msa-i9-o-p3dbg-4, name lattice.studio.writers, consumer 4] to manager 0 (node msa-i9-rmq3:5552), subscription ID 4, consumer 4
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidate lookup to consumer from 'msa-i9-o-p3dbg-5', forcing replica? false
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-5''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-5''
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-5'' succeeded in PT0.001532872S
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Replicas for consuming from msa-i9-o-p3dbg-5: [Broker{host='msa-i9-rmq2', port=5552}, Broker{host='msa-i9-rmq3', port=5552}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidates to consume from msa-i9-o-p3dbg-5: [BrokerWrapper{broker=Broker{host='msa-i9-rmq2', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq3', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Finding a manager for consumer 5
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribing to msa-i9-o-p3dbg-5, requested offset specification is OffsetSpecification{type=1, offset=-1}, offset tracking reference is lattice.studio.writers, properties are {name=lattice.studio.writers, single-active-consumer=true, super-stream=msa-i9-o-p3dbg}, subscription ID is 5, consumer 5
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Offset query for consumer 5 on stream 'msa-i9-o-p3dbg-5' (reference lattice.studio.writers)'
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Offset query for consumer 5 on stream 'msa-i9-o-p3dbg-5' (reference lattice.studio.writers)' completed in 1 ms after 1 attempt(s)
+[main] INFO com.rabbitmq.stream.impl.ConsumersCoordinator - Computed offset specification OffsetSpecification{type=1, offset=-1}, offset specification used after subscription listener OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Subscribe request for consumer 5 on stream 'msa-i9-o-p3dbg-5''
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Subscribe request for consumer 5 on stream 'msa-i9-o-p3dbg-5'' completed in 3 ms after 1 attempt(s)
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 5 from stream msa-i9-o-p3dbg-5 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribed to 'msa-i9-o-p3dbg-5'
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Assigned tracker [id 5, stream msa-i9-o-p3dbg-5, name lattice.studio.writers, consumer 5] to manager 0 (node msa-i9-rmq3:5552), subscription ID 5, consumer 5
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidate lookup to consumer from 'msa-i9-o-p3dbg-6', forcing replica? false
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-6''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-6''
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-6'' succeeded in PT0.001278129S
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Replicas for consuming from msa-i9-o-p3dbg-6: [Broker{host='msa-i9-rmq2', port=5552}, Broker{host='msa-i9-rmq3', port=5552}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidates to consume from msa-i9-o-p3dbg-6: [BrokerWrapper{broker=Broker{host='msa-i9-rmq2', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq3', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Finding a manager for consumer 6
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Creating subscription manager on msa-i9-rmq2:5552
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Resizing [Executor{id=17, usage=1}, Executor{id=18, usage=0}, Executor{id=19, usage=0}, Executor{id=20, usage=0}, Executor{id=21, usage=0}, Executor{id=22, usage=0}, Executor{id=23, usage=0}, Executor{id=24, usage=0}, Executor{id=25, usage=0}, Executor{id=26, usage=0}, Executor{id=27, usage=0}, Executor{id=28, usage=0}, Executor{id=29, usage=0}, Executor{id=30, usage=0}, Executor{id=31, usage=0}, Executor{id=32, usage=0}], with min = 16, clients per resource = 10
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Total usage is 1
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Target size is 16, current size is 16
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Looking least used executor in [Executor{id=17, usage=1}, Executor{id=18, usage=0}, Executor{id=19, usage=0}, Executor{id=20, usage=0}, Executor{id=21, usage=0}, Executor{id=22, usage=0}, Executor{id=23, usage=0}, Executor{id=24, usage=0}, Executor{id=25, usage=0}, Executor{id=26, usage=0}, Executor{id=27, usage=0}, Executor{id=28, usage=0}, Executor{id=29, usage=0}, Executor{id=30, usage=0}, Executor{id=31, usage=0}, Executor{id=32, usage=0}]
+[main] DEBUG com.rabbitmq.stream.impl.DefaultExecutorServiceFactory - Least used executor is Executor{id=18, usage=0}
+[main] DEBUG com.rabbitmq.stream.impl.Client - Trying to create stream connection to msa-i9-rmq2:5552, with client connection name 'rabbitmq-stream-consumer-1'
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-1': exchanging peer properties
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.ServerFrameHandler - Handling peer properties response for connection rabbitmq-stream-consumer-1
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.ServerFrameHandler - Handling peer properties response for connection rabbitmq-stream-consumer-1, correlation ID is 0
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-1': peer properties exchanged
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-1': starting SASL handshake
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-1': SASL mechanisms supported by server ([PLAIN, ANONYMOUS, AMQPLAIN])
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-1': starting authentication
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection 'rabbitmq-stream-consumer-1': authenticated
+[main] DEBUG com.rabbitmq.stream.impl.Client - Connection tuned with max frame size 1048576 and heartbeat 60
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Expected client msa-i9-rmq2:5552, got msa-i9-rmq2:5552, viable candidates [Broker{host='msa-i9-rmq2', port=5552}, Broker{host='msa-i9-rmq3', port=5552}, Broker{host='msa-i9-rmq1', port=5552}]: success
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - creating subscription manager on msa-i9-rmq2:5552
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Created consumer connection 'rabbitmq-stream-consumer-1'
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Created subscription manager on msa-i9-rmq2:5552, id 1
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribing to msa-i9-o-p3dbg-6, requested offset specification is OffsetSpecification{type=1, offset=-1}, offset tracking reference is lattice.studio.writers, properties are {name=lattice.studio.writers, single-active-consumer=true, super-stream=msa-i9-o-p3dbg}, subscription ID is 0, consumer 6
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Offset query for consumer 6 on stream 'msa-i9-o-p3dbg-6' (reference lattice.studio.writers)'
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Offset query for consumer 6 on stream 'msa-i9-o-p3dbg-6' (reference lattice.studio.writers)' completed in 0 ms after 1 attempt(s)
+[main] INFO com.rabbitmq.stream.impl.ConsumersCoordinator - Computed offset specification OffsetSpecification{type=1, offset=-1}, offset specification used after subscription listener OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Subscribe request for consumer 6 on stream 'msa-i9-o-p3dbg-6''
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Subscribe request for consumer 6 on stream 'msa-i9-o-p3dbg-6'' completed in 4 ms after 1 attempt(s)
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribed to 'msa-i9-o-p3dbg-6'
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 6 from stream msa-i9-o-p3dbg-6 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Assigned tracker [id 6, stream msa-i9-o-p3dbg-6, name lattice.studio.writers, consumer 6] to manager 1 (node msa-i9-rmq2:5552), subscription ID 0, consumer 6
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidate lookup to consumer from 'msa-i9-o-p3dbg-7', forcing replica? false
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Starting locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-7''
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locators: msa-i9-rmq1:5552 [id 0, advertised msa-i9-rmq1:5552] is set true
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Using locator 0 on msa-i9-rmq1:5552 to run operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-7''
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.StreamEnvironment - Locator operation 'Candidate lookup to consume from 'msa-i9-o-p3dbg-7'' succeeded in PT0.001205474S
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Replicas for consuming from msa-i9-o-p3dbg-7: [Broker{host='msa-i9-rmq2', port=5552}, Broker{host='msa-i9-rmq3', port=5552}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Candidates to consume from msa-i9-o-p3dbg-7: [BrokerWrapper{broker=Broker{host='msa-i9-rmq2', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq3', port=5552}, leader=false}, BrokerWrapper{broker=Broker{host='msa-i9-rmq1', port=5552}, leader=true}]
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Finding a manager for consumer 7
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribing to msa-i9-o-p3dbg-7, requested offset specification is OffsetSpecification{type=1, offset=-1}, offset tracking reference is lattice.studio.writers, properties are {name=lattice.studio.writers, single-active-consumer=true, super-stream=msa-i9-o-p3dbg}, subscription ID is 6, consumer 7
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Offset query for consumer 7 on stream 'msa-i9-o-p3dbg-7' (reference lattice.studio.writers)'
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Offset query for consumer 7 on stream 'msa-i9-o-p3dbg-7' (reference lattice.studio.writers)' completed in 1 ms after 1 attempt(s)
+[main] INFO com.rabbitmq.stream.impl.ConsumersCoordinator - Computed offset specification OffsetSpecification{type=1, offset=-1}, offset specification used after subscription listener OffsetSpecification{type=1, offset=-1}
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Starting attempt #1 for operation 'Subscribe request for consumer 7 on stream 'msa-i9-o-p3dbg-7''
+[main] DEBUG com.rabbitmq.stream.impl.Utils - Operation 'Subscribe request for consumer 7 on stream 'msa-i9-o-p3dbg-7'' completed in 3 ms after 1 attempt(s)
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Subscribed to 'msa-i9-o-p3dbg-7'
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 7 from stream msa-i9-o-p3dbg-7 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[main] DEBUG com.rabbitmq.stream.impl.ConsumersCoordinator - Assigned tracker [id 7, stream msa-i9-o-p3dbg-7, name lattice.studio.writers, consumer 7] to manager 0 (node msa-i9-rmq3:5552), subscription ID 6, consumer 7
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
