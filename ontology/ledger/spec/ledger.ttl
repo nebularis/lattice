@@ -51,7 +51,7 @@ ldg:AccountDefinition a owl:Class ;
 ldg:MergePolicy a owl:Class ;
     rdfs:comment "What a scope declares for requests that compete at one position." ;
     fnd:utility "State one for each scope that says how competing requests are treated, a contract, a document it cites or a deployment, and name it from every account definition it governs. It carries the merge rule always, a rounding method and a residual allocation where the rule shares in proportion, and the criteria, the permission and the guards only where the terms state them. A policy is versioned. A change of treatment is a new version, and an account definition names the version that governs it, so what a past balance was settled under does not change. Where several accounts take part in one merge, the policy of the account the requests are made at governs." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:allowsResiduals ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rankCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:refusesMixedPurposes ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresDistinctRanks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:allowsResiduals ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rankCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresDistinctRanks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresSamePurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
 
 ldg:admitsOwnerKind a owl:ObjectProperty ;
     rdfs:comment "The kinds of owner this account admits." ;
@@ -125,15 +125,15 @@ ldg:rankCriterion a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:domain ldg:MergePolicy ;
     rdfs:range skos:Concept .
 
-ldg:refusesMixedPurposes a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:comment "Whether requests that name different purposes at one position are refused together." ;
-    fnd:utility "State true where the terms do not let requests of different purposes compete in one merge. Unstated or false, each request is first cut to what the accounts counting its purpose hold, and then competes." ;
-    rdfs:domain ldg:MergePolicy ;
-    rdfs:range xsd:boolean .
-
 ldg:requiresDistinctRanks a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "Whether the ranks of the requests at one position are checked to be distinct before any rule runs." ;
     fnd:utility "State true where the terms give every request a place of its own, so two requests of one rank are refused outright. Unstated or false, a tie is settled by the merge rule, and refused only where it arises and the rule cannot settle it." ;
+    rdfs:domain ldg:MergePolicy ;
+    rdfs:range xsd:boolean .
+
+ldg:requiresSamePurpose a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "Whether the requests at one position must agree on purpose." ;
+    fnd:utility "State true where the terms do not let requests of different purposes compete in one merge. Requests agree where all name the same purpose or all name none, and a position where they do not is refused before any rule runs. Unstated or false, each request is first cut to what the accounts counting its purpose hold, and then competes." ;
     rdfs:domain ldg:MergePolicy ;
     rdfs:range xsd:boolean .
 

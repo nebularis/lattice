@@ -416,9 +416,9 @@ A read of the recorded amounts or of the flows starts from a checkpoint, which t
 
 **Releases.** The reason for refusing a credit adds a published term, made with the minor release of the substrate that the first addendum of 2026-11-16 names.
 
-## Addendum (proposed 2026-11-17): what an account declares for a merge is a versioned policy that its definition names
+## Addendum (2026-11-17): what an account declares for a merge is a versioned policy that its definition names
 
-**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided each point on 2026-11-17. It adds no evaluation semantics, so it carries no conformance cases.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-17, who decided each point the same day. It adds no evaluation semantics, so it carries no conformance cases.
 
 **Narrows decision 6.**
 
@@ -471,4 +471,4 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 
 **The fourth addendum of 2026-11-16.** Raised as LG-Q29 of the [Ledger plan](../../developer/plans/ledger.md) by the proof of LU3 in LG-20, which found that the kernel bounded a credit's applied amount by the room of an account that did not accept it, so a cut was recorded with every ceiling at its stated amount and every credit on a leaf. The maintainer decided (b) of its three options on 2026-11-16, with the rule that a wording naming the restored account by relation is resolved at instantiation. The kernel's `post` refuses such a credit, and the law is proved as `Credits.no_cut_where_ceilings_are_stated_and_credits_on_leaves`, with the case for `credit` alone kept as LU3n ([LG-20's pack](../../developer/validation/LG-20.md)).
 
-**The addendum proposed on 2026-11-17.** The terms the layer's README proposed after LG-9 were walked through with the maintainer as LG-Q30 to LG-Q36 of the [Ledger plan](../../developer/plans/ledger.md). The maintainer decided for a policy node on 2026-11-17 (LG-Q32), for one policy resolved before the ledger (LG-Q35), and for a versioned policy in place of a content-addressed one first chosen that day, once that was seen to need a canonicalisation rule in the layer and a mark two other layers' checks would have to learn (LG-Q36, TD-127). LG-Q33 gave the two criteria and the two guards and found no need for a separate rule for a tie, and LG-Q34 deferred the kinds of split. Built as LG-24 ([its pack](../../developer/validation/LG-24.md)).
+**The addendum of 2026-11-17.** The terms the layer's README proposed after LG-9 were walked through with the maintainer as LG-Q30 to LG-Q36 of the [Ledger plan](../../developer/plans/ledger.md). The maintainer decided for a policy node on 2026-11-17 (LG-Q32), for one policy resolved before the ledger (LG-Q35), and for a versioned policy in place of a content-addressed one first chosen that day, once that was seen to need a canonicalisation rule in the layer and a mark two other layers' checks would have to learn (LG-Q36, TD-127). LG-Q33 gave the two criteria and the two guards and found no need for a separate rule for a tie, and LG-Q34 deferred the kinds of split. Built as LG-24 ([its pack](../../developer/validation/LG-24.md)).
