@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-17. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-17. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -46,7 +46,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-O5 | the kit's behaviour held in a browser, and the mapping canvas on the kit's routing | built 2026-11-15, building 2026-11-15 | SVA-O4 |
 | SVA-O6 | one reader of shapes for the forms and the drawing | built 2026-11-15, building 2026-11-15 | SVA-O2 |
 | SVA-O7 | a new node clear of the others, and a label beside an edge shorter than it | built 2026-11-16, building 2026-11-16 | SVA-O5 |
-| SVA-P1 | landing places in a compile job, and the exploded view, read-only | planned | SVA-O1 |
+| SVA-P1 | landing places in a compile job, and the exploded view, read-only | building 2026-11-17 | SVA-O1 |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | planned | SVA-R3 |
 | SVA-P4 | the persistence simulator pane | planned | SVA-R4, SVA-P1, SVA-P3 |
@@ -168,3 +168,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-17: SVA-M4 picked up.
 - 2026-11-17: SVA-M4 built, [Validation Pack](../validation/SVA-M4.md). The output explorer shows each run part as text, a table, a graph on the canvas kit or a tree by media type, keeps the author's choice for each media type in the browser, and says so with the parser's message when a part does not parse. A canvas now keeps the zoom and centre its author set when its pane is resized. Found that the table and graph must take the prefixes the Turtle writer declares to read as the text does, and that an existing arrow-key test of the dock failed once in a full run and passed alone and in the next two runs. Left for SVA-P4 and SVA-S3, the simulators' panes, which show their parts through this component.
 - 2026-11-17: SVA-M4 verified by a second run of its checks, 468 unit tests, the type check and 62 browser tests on the fake service. I looked at the graph rendering: literals sit inside their subjects' nodes, types under each label, and the edges carry their predicates. A blank node of the report is written in Turtle under a label the parser made, such as n3-4278, where a reader would expect a bracketed node, a small thing for the explorer to tidy. A second test of the studio failed once in three full runs, the column handle's keyboard test, and is added to TD-166.
+- 2026-11-17: SVA-P1 picked up.
