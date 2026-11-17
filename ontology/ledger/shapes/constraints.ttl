@@ -90,6 +90,20 @@ ldg:NearestRoundingStatesTheDifferenceShape a sh:NodeShape ;
 		"""
 	] .
 
+ldg:SettledToNearestStatesTheExcessShape a sh:NodeShape ;
+	sh:targetNode ldg:MergePolicy ;
+	sh:sparql [
+		sh:message "A policy that settles a rounding difference to the nearest must state where a unit over is taken from." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:roundingDifference ldg:SettledToNearest .
+				FILTER NOT EXISTS { ?value ldg:excessRecovery ?from }
+			}
+		"""
+	] .
+
 ldg:CreditCeilingNotBelowStatedShape a sh:NodeShape ;
 	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [

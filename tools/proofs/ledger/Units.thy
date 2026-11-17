@@ -530,4 +530,35 @@ proof -
 qed
 (* GATE:END *)
 
+lemma first_in_strict_order: "inj_on order E \<Longrightarrow> strict_order_on E (first_in order)"
+  unfolding strict_order_on_def first_in_def
+  by (auto simp: linorder_not_less order_le_less) (metis inj_onD)
+
+lemma larger_remainder_then_order_strict:
+  "inj_on order E \<Longrightarrow> strict_order_on E (then_by (larger_remainder t K w) (first_in order))"
+  unfolding strict_order_on_def first_in_def then_by_def larger_remainder_def
+  by (auto dest: inj_onD) (metis less_trans nat_neq_iff inj_onD)+
+
+lemma smaller_remainder_then_order_strict:
+  "inj_on order E \<Longrightarrow> strict_order_on E (then_by (\<lambda>j k. larger_remainder t K w k j) (first_in order))"
+  unfolding strict_order_on_def first_in_def then_by_def larger_remainder_def
+  by (auto dest: inj_onD) (metis less_trans nat_neq_iff inj_onD)+
+
+(* GATE:BEGIN LH3 *)
+theorem every_stated_way_settles_to_the_nearest_exactly:
+  assumes fin: "finite K" and pos: "0 < (\<Sum>j\<in>K. w j)" and pt: "part = half_up_part \<or> part = half_even_part"
+    and inj: "inj_on order K"
+    and gain: "gain = first_in order \<or> gain = then_by (larger_remainder t K w) (first_in order)"
+    and lose: "lose = first_in order \<or> lose = then_by (\<lambda>j k. larger_remainder t K w k j) (first_in order)"
+  shows "total K (to_nearest part gain lose t K w) = t"
+proof -
+  have g: "strict_order_on K gain"
+    using gain first_in_strict_order[OF inj] larger_remainder_then_order_strict[OF inj] by blast
+  have l: "strict_order_on K lose"
+    using lose first_in_strict_order[OF inj] smaller_remainder_then_order_strict[OF inj] by blast
+  show ?thesis
+    by (rule to_nearest_sums_exactly[OF fin pos pt strict_order_on_subset[OF g] strict_order_on_subset[OF l]]) blast+
+qed
+(* GATE:END *)
+
 end

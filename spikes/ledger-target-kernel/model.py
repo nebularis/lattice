@@ -612,6 +612,53 @@ def search_pots_by_rank(cases, seed, whole):
     return found
 
 
+def search_nearest(cases, seed):
+    """Rounding to the nearest with the difference settled, in each way a wording can state it: a unit short given by the declared order or to the share
+    rounded down most, and a unit over taken by the declared order or from the share rounded up most. `to_nearest` under those preferences is compared
+    with the words written as a sort, which uses neither `units` nor `placed`."""
+    rng = random.Random(seed)
+    found = {"cases": 0, "a unit over": 0, "a unit short": 0, "the ways differ": 0}
+
+    def words(part, t, K, w, give, take, order):
+        base, floor, rem = part(t, K, w), floor_part(t, K, w), remainder(t, K, w)
+        out = dict(base)
+        diff = t - sum(base[k] for k in K)
+        if diff < 0:
+            up = sorted((k for k in K if floor[k] < base[k]), key=(lambda k: order[k]) if take == "order" else (lambda k: (rem[k], order[k])))
+            for k in up[:-diff]:
+                out[k] -= 1
+        elif diff > 0:
+            down = sorted((k for k in K if base[k] == floor[k] and rem[k] > 0), key=(lambda k: order[k]) if give == "order" else (lambda k: (-rem[k], order[k])))
+            for k in down[:diff]:
+                out[k] += 1
+        return out
+
+    for _ in range(cases):
+        K = [f"k{i}" for i in range(rng.randint(1, 6))]
+        w = {k: rng.randint(0, 12) for k in K}
+        if sum(w.values()) == 0:
+            continue
+        t = rng.randint(0, 60)
+        order = dict(zip(K, rng.sample(range(len(K)), len(K))))
+        rem = remainder(t, K, w)
+        prefs = {"order": (first_in(order), first_in(order)),
+                 "most": (then_by(lambda j, k: rem[k] < rem[j], first_in(order)), then_by(lambda j, k: rem[j] < rem[k], first_in(order)))}
+        for part in (half_up_part, half_even_part):
+            diff = t - sum(part(t, K, w).values())
+            seen = set()
+            for give in ("order", "most"):
+                for take in ("order", "most"):
+                    got = to_nearest(part, prefs[give][0], prefs[take][1])(t, K, w)
+                    assert got == words(part, t, K, w, give, take, order), "to_nearest is not the words of the rule"
+                    assert sum(got.values()) == t, "rounding to the nearest does not sum to the amount"
+                    seen.add(tuple(sorted(got.items())))
+            found["cases"] += 1
+            found["a unit over"] += diff < 0
+            found["a unit short"] += diff > 0
+            found["the ways differ"] += len(seen) > 1
+    return found
+
+
 def search_spread(cases, seed, whole):
     """One amount allocated across accounts, charging the reach of its purpose, by an exact rule, by priority and by a rule that leaves a residual."""
     rng = random.Random(seed)
@@ -776,6 +823,7 @@ def main():
     print("pots, whole units:", search_pots(100_000 // scale, 28, True))
     print("pots whose own amounts cannot bind, exact amounts:", search_pots_by_rank(100_000 // scale, 33, False))
     print("pots whose own amounts cannot bind, whole units:", search_pots_by_rank(100_000 // scale, 34, True))
+    print("rounding to the nearest, each stated way:", search_nearest(100_000 // scale, 35))
     print("allocation across accounts, exact amounts:", search_spread(60_000 // scale, 29, False))
     print("allocation across accounts, whole units:", search_spread(100_000 // scale, 30, True))
     for family in ("exact", "priority", "units"):

@@ -49,6 +49,15 @@ ldg:Credit a skos:Concept ;
 ldg:Debit a skos:Concept ;
     rdfs:comment "A draw, reducing the balance." .
 
+ldg:ExcessRecoveries a skos:ConceptScheme ;
+    rdfs:comment "Where a unit over is taken from." .
+
+ldg:FromFirstInOrder a skos:Concept ;
+    rdfs:comment "A unit over is taken, one at a time, from the first shares rounded up in the order the merge policy declares." .
+
+ldg:FromMostRoundedUp a skos:Concept ;
+    rdfs:comment "A unit over is taken, one at a time, from the shares rounded up by the most, ties taken in the order the merge policy declares." .
+
 ldg:HalfEven a skos:Concept ;
     rdfs:comment "Rounds a tie to the nearest even value." .
 
@@ -79,8 +88,17 @@ ldg:Refuse a skos:Concept ;
 ldg:ResidualAllocations a skos:ConceptScheme ;
     rdfs:comment "How a proportional merge's rounding residual is allocated." .
 
+ldg:RoundingDifferences a skos:ConceptScheme ;
+    rdfs:comment "How the difference left by rounding shares to the nearest is settled." .
+
 ldg:RoundingMethods a skos:ConceptScheme ;
     rdfs:comment "How a proportional merge's exact shares round to the account's unit." .
+
+ldg:SettledToNearest a skos:Concept ;
+    rdfs:comment "Each share is rounded to the nearest. A unit short goes to a share that was rounded down, as the residual allocation says, and a unit over is taken from a share that was rounded up, as the excess recovery says, so no share is a whole unit from its exact value." .
+
+ldg:ShownOnly a skos:Concept ;
+    rdfs:comment "The rounding method governs only how a share is shown. The split is the shares rounded down, with the units short allocated as the residual allocation says." .
 
 ldg:ToFirstInOrder a skos:Concept ;
     rdfs:comment "The residual is allocated one unit at a time to the first proposals in the order the merge policy declares, never in the order of their identifiers." .

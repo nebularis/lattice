@@ -51,7 +51,7 @@ ldg:AccountDefinition a owl:Class ;
 ldg:MergePolicy a owl:Class ;
     rdfs:comment "What a scope declares for requests that compete at one position." ;
     fnd:utility "State one for each scope that says how competing requests are treated, a contract, a document it cites or a deployment, and name it from every account definition it governs. It carries the merge rule always, a rounding method and a residual allocation where the rule shares in proportion, and the criteria, the permission and the guards only where the terms state them. A policy is versioned. A change of treatment is a new version, and an account definition names the version that governs it, so what a past balance was settled under does not change. Where several accounts take part in one merge, the policy of the account the requests are made at governs." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:allowsResiduals ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rankCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresDistinctRanks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresSamePurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:allowsResiduals ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:excessRecovery ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rankCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresDistinctRanks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresSamePurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingDifference ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
 
 ldg:admitsOwnerKind a owl:ObjectProperty ;
     rdfs:comment "The kinds of owner this account admits." ;
@@ -88,6 +88,12 @@ ldg:creditCeiling a owl:FunctionalProperty, owl:ObjectProperty ;
     fnd:utility "States the ceiling a credit may never restore the balance above. Defaults to the stated amount where unset. State a ceiling above the stated amount for a reinstatement (the aggregate's own stated amount stays the per-layer limit, and the ceiling lets one reinstatement credit raise the balance to twice it, without a second account)." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:Quantity .
+
+ldg:excessRecovery a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "Where a unit over is taken from when shares rounded to the nearest sum to more than the amount." ;
+    fnd:utility "Required wherever ldg:roundingDifference is ldg:SettledToNearest. A unit short is given as ldg:residualAllocation says, and a unit over is taken back as this says, ldg:FromFirstInOrder or ldg:FromMostRoundedUp. The two are stated apart, since a wording may settle them differently." ;
+    rdfs:domain ldg:MergePolicy ;
+    rdfs:range skos:Concept .
 
 ldg:keyDimension a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The dimension that derives one account per key value." ;
@@ -146,6 +152,12 @@ ldg:resetRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
 ldg:residualAllocation a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "How the rounding residual is allocated so a proportional merge's grants still sum to availability." ;
     fnd:utility "Required wherever ldg:mergeRule is ldg:Proportional. Rounding every share independently can leave the sum short of, or over, availability by a unit or two, so state how that residual is allocated, ldg:LargestRemainder (ties taken in the order the policy declares, never by the proposals' identifiers) or ldg:ToFirstInOrder." ;
+    rdfs:domain ldg:MergePolicy ;
+    rdfs:range skos:Concept .
+
+ldg:roundingDifference a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "How the difference left by rounding shares to the nearest is settled." ;
+    fnd:utility "Required wherever ldg:roundingMethod is ldg:HalfEven or ldg:HalfUp beside a residual allocation, since shares rounded to the nearest can sum to more than the amount or to less. State ldg:ShownOnly where the wording rounds a share only to show it, so the split is the shares rounded down with the units short given as the residual allocation says. State ldg:SettledToNearest where each share is rounded to the nearest and the difference is settled a unit at a time, and state ldg:excessRecovery with it." ;
     rdfs:domain ldg:MergePolicy ;
     rdfs:range skos:Concept .
 

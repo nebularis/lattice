@@ -49,7 +49,7 @@ Built from the status records on 23 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-17 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · verified 2026-11-16 on spi/sql-backend | LG-2 | 13 merged, 6 planned, 3 verified, 2 built, 1 blocked | docs/placement-vehicles-structure, fm/ledger-proofs-on-the-target-kernel |
+| [ledger](plans/ledger.md) | unit | built 2026-11-17 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · verified 2026-11-16 on spi/sql-backend | LG-2 | 13 merged, 5 planned, 3 verified, 3 built, 1 blocked | docs/placement-vehicles-structure, fm/ledger-proofs-on-the-target-kernel |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-17 | MSA-I1 | 6 built, 6 planned | docs/placement-vehicles-structure |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
@@ -353,6 +353,7 @@ gantt
     LG-20 the laws the target kernel :lg20, 2026-11-16, 2026-11-17
     LG-21 the target kernel written :done, lg21, 2026-11-15, 2026-11-16
     LG-22 LG-19 follow-ups rows named :done, lg22, 2026-11-15, 2026-11-16
+    LG-23 the rounding difference :lg23, 2026-11-17, 2026-11-18
     LG-24 the merge policy node :lg24, 2026-11-17, 2026-11-18
     LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
     LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-16
@@ -907,8 +908,8 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-17 | 56 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
-| `docs/placement-vehicles-structure` | 2026-11-17 | 23 | pushed | LG-20, LG-23, LG-24, LG-9, MSA-I1, MSA-I10, MSA-I11, MSA-I12, MSA-I2, MSA-I3, MSA-I4, MSA-I5, MSA-I6, MSA-I7, MSA-I8, MSA-I9 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-17 | 57 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
+| `docs/placement-vehicles-structure` | 2026-11-17 | 25 | pushed | LG-20, LG-23, LG-24, LG-9, MSA-I1, MSA-I10, MSA-I11, MSA-I12, MSA-I2, MSA-I3, MSA-I4, MSA-I5, MSA-I6, MSA-I7, MSA-I8, MSA-I9 |
 | `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | LG-20, LG-9 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |

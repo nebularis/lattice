@@ -74,6 +74,7 @@ REFUSALS = {
     "refusal-proportional-unrounded": "ProportionalNeedsRoundingShape",
     "refusal-intensive-unit": "ExtensiveUnitOfAccountShape",
     "refusal-nearest-beside-residual": "NearestRoundingStatesTheDifferenceShape",
+    "refusal-settled-without-excess": "SettledToNearestStatesTheExcessShape",
 }
 
 
@@ -186,6 +187,12 @@ def test_refusals_fail_the_named_shape(name: str, shape: str) -> None:
     assert hit, (name, shape, _violating_shapes(report))
     _agree(g, report)
 
+
+
+def test_a_policy_that_settles_to_the_nearest_conforms() -> None:
+    """A policy that rounds to the nearest, says the difference is settled and states both directions conforms. It has no records."""
+    conforms, report, _ = validate(MODEL + _example("rounding-to-the-nearest"), shacl_graph=SHAPES, inference="none", advanced=True)
+    assert conforms, _violating_shapes(report)
 
 # A refusal by a generated structural shape, named by the property whose count is wrong, since such a shape is a blank node in the report.
 STRUCTURAL_REFUSALS = {

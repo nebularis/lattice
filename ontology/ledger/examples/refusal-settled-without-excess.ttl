@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused. A merge policy rounds each share to the nearest and
+# says the difference is settled, and does not say where a unit over is taken
+# from. A unit short has its rule in the residual allocation. A unit over has
+# none, so the policy does not conform.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-settled-without-excess/> .
+
+ex:OwnerKind a owl:Class .
+
+ex:units a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-refusal-settled-without-excess-units" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-refusal-settled-without-excess-units-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
+ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
+
+ex:q-100 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
+
+# ==== The merge policies =======================================================
+
+ex:half-stated a ldg:MergePolicy ;
+    fnd:hasIdentity ex:half-stated-identity ;
+    ldg:mergeRule ldg:Proportional ;
+    ldg:roundingMethod ldg:HalfUp ;
+    ldg:roundingDifference ldg:SettledToNearest ;
+    ldg:residualAllocation ldg:LargestRemainder ;
+    rdfs:comment "Refused. It settles to the nearest and states no excess recovery." .
+
+ex:half-stated-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
+ex:pool a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:half-stated .

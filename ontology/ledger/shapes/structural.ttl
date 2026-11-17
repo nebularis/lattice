@@ -34,7 +34,7 @@ ldg:GrantShape a sh:NodeShape ;
 
 ldg:MergePolicyShape a sh:NodeShape ;
     sh:targetClass ldg:MergePolicy ;
-    sh:property [ sh:path ldg:allowsResiduals ; sh:maxCount 1 ], [ sh:path ldg:mergeRule ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:rankCriterion ; sh:maxCount 1 ], [ sh:path ldg:requiresDistinctRanks ; sh:maxCount 1 ], [ sh:path ldg:requiresSamePurpose ; sh:maxCount 1 ], [ sh:path ldg:residualAllocation ; sh:maxCount 1 ], [ sh:path ldg:roundingMethod ; sh:maxCount 1 ], [ sh:path ldg:unitOrderCriterion ; sh:maxCount 1 ] .
+    sh:property [ sh:path ldg:allowsResiduals ; sh:maxCount 1 ], [ sh:path ldg:excessRecovery ; sh:maxCount 1 ], [ sh:path ldg:mergeRule ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:rankCriterion ; sh:maxCount 1 ], [ sh:path ldg:requiresDistinctRanks ; sh:maxCount 1 ], [ sh:path ldg:requiresSamePurpose ; sh:maxCount 1 ], [ sh:path ldg:residualAllocation ; sh:maxCount 1 ], [ sh:path ldg:roundingDifference ; sh:maxCount 1 ], [ sh:path ldg:roundingMethod ; sh:maxCount 1 ], [ sh:path ldg:unitOrderCriterion ; sh:maxCount 1 ] .
 
 ldg:MergeRecordShape a sh:NodeShape ;
     sh:targetClass ldg:MergeRecord ;

@@ -82,6 +82,9 @@ def units(rng, cases):
         x, t = rng.randint(0, T), rng.randint(0, 3 * T)
         ks, kset, W, O = lst(K, str), keyset(K), fn(w.items(), "nat", "int"), fn(order.items(), "nat", "nat")
         last = lambda j, k: order[k] < order[j]
+        rem = m.remainder(t, K, w)
+        gain = m.then_by(lambda j, k: rem[k] < rem[j], m.first_in(order))
+        lose = m.then_by(lambda j, k: rem[j] < rem[k], m.first_in(order))
         got = [
             m.ration(m.to_first(order))(w, x),
             m.ration(m.largest_remainder(m.first_in(order)))(w, x),
@@ -90,6 +93,10 @@ def units(rng, cases):
             m.apportion(m.largest_remainder(m.first_in(order)))(w, t),
             m.to_nearest(m.half_up_part, m.first_in(order), last)(t, K, w),
             m.to_nearest(m.half_even_part, m.first_in(order), last)(t, K, w),
+            m.to_nearest(m.half_up_part, m.first_in(order), m.first_in(order))(t, K, w),
+            m.to_nearest(m.half_even_part, m.first_in(order), m.first_in(order))(t, K, w),
+            m.to_nearest(m.half_up_part, gain, lose)(t, K, w),
+            m.to_nearest(m.half_even_part, gain, lose)(t, K, w),
         ]
         back = f"(%j k. {O} k < {O} j)"
         terms = [
@@ -100,6 +107,10 @@ def units(rng, cases):
             f"map (apportion (largest_remainder (first_in {O})) {kset} {W} {t}) {ks}",
             f"map (to_nearest half_up_part (first_in {O}) {back} {t} {kset} {W}) {ks}",
             f"map (to_nearest half_even_part (first_in {O}) {back} {t} {kset} {W}) {ks}",
+            f"map (to_nearest half_up_part (first_in {O}) (first_in {O}) {t} {kset} {W}) {ks}",
+            f"map (to_nearest half_even_part (first_in {O}) (first_in {O}) {t} {kset} {W}) {ks}",
+            f"map (to_nearest half_up_part (then_by (larger_remainder {t} {kset} {W}) (first_in {O})) (then_by (%j k. larger_remainder {t} {kset} {W} k j) (first_in {O})) {t} {kset} {W}) {ks}",
+            f"map (to_nearest half_even_part (then_by (larger_remainder {t} {kset} {W}) (first_in {O})) (then_by (%j k. larger_remainder {t} {kset} {W} k j) (first_in {O})) {t} {kset} {W}) {ks}",
         ]
         left.append("[" + ", ".join(terms) + "]")
         right.append(lst([lst([g[k] for k in K]) for g in got], str))

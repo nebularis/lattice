@@ -438,6 +438,35 @@ A read of the recorded amounts or of the flows starts from a checkpoint, which t
 
 **Releases.** Moving the three properties changes published meaning and invalidates a definition that states them itself, a minor release of the substrate at major version zero, made with the change to the layer's documents.
 
+## Addendum (proposed 2026-11-17, second): a rounding difference is settled as the policy states, each direction apart
+
+**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided the rule on 2026-11-17. Decision 8 says new evaluation semantics come by an addendum with conformance cases, and the cases are at its end.
+
+**Narrows decision 6.** It also narrows one sentence of the second addendum of 2026-11-16, which sent a unit short by the declared order alone.
+
+**A policy says how a rounding difference is settled.** The second addendum of 2026-11-09 refuses rounding to the nearest beside a residual rule unless it is stated how a difference is treated. A merge policy states one of two things. Either the rounding governs only how a share is shown, and the split is the shares rounded down with the units short given as the residual allocation says. Or each share is rounded to the nearest and the difference is settled a unit at a time.
+
+**Each direction is stated apart, as the wording has it.** Shares rounded to the nearest can sum to less than the amount or to more. Where the difference is settled, the residual allocation says where a unit short goes: to the first share rounded down in the declared order, or to the share rounded down by the most. A second statement says where a unit over is taken from: the first share rounded up in the declared order, or the share rounded up by the most. Ties fall to the declared order in each. Neither statement is inferred from the other, since a wording may settle the two differently, and a policy that settles a difference and does not say where a unit over is taken from is refused.
+
+**The order is the one for placing units.** The declared order here is the policy's criterion for ordering requests of one rank, never the rank itself, since the requests that share are tied in rank.
+
+**Every pair settles exactly.** Under each of the four pairs a policy can state, the grants sum to the amount and each is within one unit of its exact share, wherever the declared order tells every request apart.
+
+**Conformance cases.** Amounts are whole units, the requests are named in the declared order, and shares are rounded half up.
+
+| Case | Given | Result |
+|---|---|---|
+| a unit short, by the declared order | 1 shared by requests of 1, 2 and 2, a unit short to the first in order | the shares round to 0, 0 and 0, one short. The first takes it: 1, 0 and 0 |
+| a unit short, to the share rounded down most | the same, a unit short to the largest remainder | 0, 1 and 0. The second and third were rounded down alike, and the order decides between them |
+| a unit over, by the declared order | 3 shared by requests of 1, 1 and 2, a unit over from the first in order | the shares round to 1, 1 and 2, one over. It is taken from the first: 0, 1 and 2 |
+| a unit over, from the share rounded up most | the same, a unit over from the share rounded up by the most | 1, 1 and 1, since the third was rounded up by a half and the others by a quarter |
+| rounding only for show | 1 shared by requests of 1, 2 and 2, the rounding stated as for show, with the largest remainder | the split is the shares rounded down, 0, 0 and 0, and the unit short goes to the largest remainder: 0, 1 and 0 |
+| one direction unstated | a policy that settles the difference and does not say where a unit over is taken from | refused |
+
+The case of a unit short in the second addendum of 2026-11-16, members with a basis of 3, 0, 11 and 11 sharing 62, is settled by the declared order. To the share rounded down by the most, its unit goes to the first member.
+
+**Releases.** The rounding difference, the source of a unit over and their values add published terms, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -472,3 +501,5 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 **The fourth addendum of 2026-11-16.** Raised as LG-Q29 of the [Ledger plan](../../developer/plans/ledger.md) by the proof of LU3 in LG-20, which found that the kernel bounded a credit's applied amount by the room of an account that did not accept it, so a cut was recorded with every ceiling at its stated amount and every credit on a leaf. The maintainer decided (b) of its three options on 2026-11-16, with the rule that a wording naming the restored account by relation is resolved at instantiation. The kernel's `post` refuses such a credit, and the law is proved as `Credits.no_cut_where_ceilings_are_stated_and_credits_on_leaves`, with the case for `credit` alone kept as LU3n ([LG-20's pack](../../developer/validation/LG-20.md)).
 
 **The addendum of 2026-11-17.** The terms the layer's README proposed after LG-9 were walked through with the maintainer as LG-Q30 to LG-Q36 of the [Ledger plan](../../developer/plans/ledger.md). The maintainer decided for a policy node on 2026-11-17 (LG-Q32), for one policy resolved before the ledger (LG-Q35), and for a versioned policy in place of a content-addressed one first chosen that day, once that was seen to need a canonicalisation rule in the layer and a mark two other layers' checks would have to learn (LG-Q36, TD-127). LG-Q33 gave the two criteria and the two guards and found no need for a separate rule for a tie, and LG-Q34 deferred the kinds of split. Built as LG-24 ([its pack](../../developer/validation/LG-24.md)).
+
+**The second addendum proposed on 2026-11-17.** LG-Q30 of the [Ledger plan](../../developer/plans/ledger.md), raised by a constraint that read a term the layer had not declared. The maintainer decided on 2026-11-17 to declare it and asked that where a unit short goes be driven by the wording, as a unit over is, so the reading by symmetry first proposed was dropped. Built as LG-23 ([its pack](../../developer/validation/LG-23.md)), which holds the model's search of the four pairs and the theorem that each settles exactly.
