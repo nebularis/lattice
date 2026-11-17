@@ -59,7 +59,7 @@ ldg:ExtensiveUnitOfAccountShape a sh:NodeShape ;
 	] .
 
 ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
-	sh:targetNode ldg:AccountDefinition ;
+	sh:targetNode ldg:MergePolicy ;
 	sh:sparql [
 		sh:message "A proportional merge rule must state a rounding method and a residual allocation." ;
 		sh:select """
@@ -75,7 +75,7 @@ ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
 	] .
 
 ldg:NearestRoundingStatesTheDifferenceShape a sh:NodeShape ;
-	sh:targetNode ldg:AccountDefinition ;
+	sh:targetNode ldg:MergePolicy ;
 	sh:sparql [
 		sh:message "Rounding half-even or half-up beside a residual allocation must state how the difference is settled." ;
 		sh:select """

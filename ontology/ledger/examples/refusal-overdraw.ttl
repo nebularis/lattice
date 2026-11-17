@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Premise. Refused, under ldg:Refuse (ADR-A131 decision 6). Two proposals at
-# one position together exceed an account's availability, and its merge rule
-# is Refuse, not Proportional or InPriorityOrder. The whole merge is refused:
+# one position together exceed an account's availability, and its merge policy's
+# rule is Refuse, not Proportional or InPriorityOrder. The whole merge is refused:
 # a merge record carries the reason, neither proposal is granted, and no
 # posting is written. Both proposals stay Undetermined.
 #
@@ -32,9 +32,18 @@ ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference
 
 ex:q-100 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
 
+# ==== The merge policies =======================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
 ex:tight-account a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:units ;
-    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "100 units, refusing whole where proposals together overdraw it." .
 
 ex:overdrawn a skos:Concept ;

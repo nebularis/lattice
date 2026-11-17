@@ -12,6 +12,7 @@ from rdflib import Graph, Namespace
 LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
 LDG = Namespace(LATTICE + "ledger#")
 QNT = Namespace(LATTICE + "quantification#")
+FND = Namespace(LATTICE + "foundation#")
 XSD = "http://www.w3.org/2001/XMLSchema#"
 
 
@@ -23,22 +24,24 @@ def _turtle(lines: list[str]) -> Graph:
 
 def account_tree(definitions: int = 10_000, sections: int = 99) -> Graph:
     """`definitions` account definitions in a wide tree: a root, `sections` sections each part of it, and the rest sublimits spread
-    across the sections. Every definition states the same amount on one extensive value space and refuses to merge."""
-    lines = [f"@prefix ldg: <{LDG}> .", f"@prefix qnt: <{QNT}> .", "@prefix ex: <https://example.org/lattice/ledger/scale/> .",
+    across the sections. Every definition states the same amount on one extensive value space and names one merge policy, which refuses to merge."""
+    lines = [f"@prefix ldg: <{LDG}> .", f"@prefix qnt: <{QNT}> .", f"@prefix fnd: <{FND}> .", "@prefix ex: <https://example.org/lattice/ledger/scale/> .",
              "ex:space a qnt:ValueSpace ; qnt:spaceKey \"scale\" ; qnt:orderKind qnt:TotalOrder ; "
              "qnt:densityKind qnt:Discrete ; qnt:spaceHash \"scale-v1\" ; qnt:additivity qnt:Extensive ; "
              "qnt:hasOperationCapability ex:sum , ex:diff .",
              "ex:sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:space .",
              "ex:diff a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:space .",
              f"ex:amount a qnt:Quantity ; qnt:onSpace ex:space ; qnt:numericValue \"100\"^^<{XSD}decimal> .",
+             "ex:refused-when-exceeded a ldg:MergePolicy ; fnd:hasIdentity ex:refused-when-exceeded-identity ; ldg:mergeRule ldg:Refuse .",
+             "ex:refused-when-exceeded-identity a fnd:PersistentIdentity ; <http://www.w3.org/2000/01/rdf-schema#comment> \"The merge policy these terms state.\" .",
              "ex:root a ldg:AccountDefinition ; ldg:statedAmount ex:amount ; ldg:unitOfAccount ex:space ; "
-             "ldg:admitsOwnerKind qnt:ValueSpace ; ldg:mergeRule ldg:Refuse ."]
+             "ldg:admitsOwnerKind qnt:ValueSpace ; ldg:mergePolicy ex:refused-when-exceeded ."]
     for s in range(sections):
         lines.append(f"ex:section{s} a ldg:AccountDefinition ; ldg:statedAmount ex:amount ; ldg:unitOfAccount ex:space ; "
-                     f"ldg:admitsOwnerKind qnt:ValueSpace ; ldg:mergeRule ldg:Refuse ; ldg:partOf ex:root .")
+                     f"ldg:admitsOwnerKind qnt:ValueSpace ; ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:root .")
     for i in range(definitions - 1 - sections):
         lines.append(f"ex:sublimit{i} a ldg:AccountDefinition ; ldg:statedAmount ex:amount ; ldg:unitOfAccount ex:space ; "
-                     f"ldg:admitsOwnerKind qnt:ValueSpace ; ldg:mergeRule ldg:Refuse ; ldg:partOf ex:section{i % sections} .")
+                     f"ldg:admitsOwnerKind qnt:ValueSpace ; ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:section{i % sections} .")
     return _turtle(lines)
 
 
@@ -47,7 +50,7 @@ def one_pass(leaves: int = 5_000) -> Graph:
     one debit of 1 in the pass, and every account moved has a balance record, `2 * leaves` in all, whose remaining and available
     values are what the postings give."""
     sections = leaves - 1
-    lines = [f"@prefix ldg: <{LDG}> .", f"@prefix qnt: <{QNT}> .", f"@prefix xsd: <{XSD}> .",
+    lines = [f"@prefix ldg: <{LDG}> .", f"@prefix qnt: <{QNT}> .", f"@prefix fnd: <{FND}> .", f"@prefix xsd: <{XSD}> .",
              "@prefix ex: <https://example.org/lattice/ledger/runtime-scale/> .",
              "ex:space a qnt:ValueSpace ; qnt:spaceKey \"runtime-scale\" ; qnt:orderKind qnt:TotalOrder ; "
              "qnt:densityKind qnt:Discrete ; qnt:spaceHash \"runtime-scale-v1\" ; qnt:additivity qnt:Extensive ; "
@@ -58,8 +61,10 @@ def one_pass(leaves: int = 5_000) -> Graph:
              "ex:small a qnt:Quantity ; qnt:onSpace ex:space ; qnt:numericValue \"10\"^^xsd:decimal .",
              "ex:Owner a <http://www.w3.org/2002/07/owl#Class> . ex:owner a ex:Owner .",
              "ex:pass a ldg:Pass ; ldg:passPosition \"1\"^^xsd:integer .",
+             "ex:refused-when-exceeded a ldg:MergePolicy ; fnd:hasIdentity ex:refused-when-exceeded-identity ; ldg:mergeRule ldg:Refuse .",
+             "ex:refused-when-exceeded-identity a fnd:PersistentIdentity ; <http://www.w3.org/2000/01/rdf-schema#comment> \"The merge policy these terms state.\" .",
              "ex:root a ldg:AccountDefinition ; ldg:statedAmount ex:big ; ldg:unitOfAccount ex:space ; "
-             "ldg:admitsOwnerKind ex:Owner ; ldg:mergeRule ldg:Refuse .",
+             "ldg:admitsOwnerKind ex:Owner ; ldg:mergePolicy ex:refused-when-exceeded .",
              "ex:account-root a ldg:Account ; ldg:ofDefinition ex:root ; ldg:forOwner ex:owner .",
              f"ex:balance-root a ldg:BalanceRecord ; ldg:onAccount ex:account-root ; ldg:inPass ex:pass ; "
              f"ldg:remainingValue \"{10_000 - leaves}\"^^xsd:decimal ; ldg:availableValue \"{10_000 - leaves}\"^^xsd:decimal ."]
@@ -69,14 +74,14 @@ def one_pass(leaves: int = 5_000) -> Graph:
     for s in range(sections):
         remaining = 10 - drawn[s]
         lines += [f"ex:section{s} a ldg:AccountDefinition ; ldg:statedAmount ex:small ; ldg:unitOfAccount ex:space ; "
-                  f"ldg:admitsOwnerKind ex:Owner ; ldg:mergeRule ldg:Refuse ; ldg:partOf ex:root .",
+                  f"ldg:admitsOwnerKind ex:Owner ; ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:root .",
                   f"ex:account-section{s} a ldg:Account ; ldg:ofDefinition ex:section{s} ; ldg:forOwner ex:owner ; "
                   f"ldg:partOfAccount ex:account-root .",
                   f"ex:balance-section{s} a ldg:BalanceRecord ; ldg:onAccount ex:account-section{s} ; ldg:inPass ex:pass ; "
                   f"ldg:remainingValue \"{remaining}\"^^xsd:decimal ; ldg:availableValue \"{remaining}\"^^xsd:decimal ."]
     for i in range(leaves):
         lines += [f"ex:leaf{i} a ldg:AccountDefinition ; ldg:statedAmount ex:small ; ldg:unitOfAccount ex:space ; "
-                  f"ldg:admitsOwnerKind ex:Owner ; ldg:mergeRule ldg:Refuse ; ldg:partOf ex:section{i % sections} .",
+                  f"ldg:admitsOwnerKind ex:Owner ; ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:section{i % sections} .",
                   f"ex:account-leaf{i} a ldg:Account ; ldg:ofDefinition ex:leaf{i} ; ldg:forOwner ex:owner ; "
                   f"ldg:partOfAccount ex:account-section{i % sections} .",
                   f"ex:posting{i} a ldg:Posting ; ldg:onAccount ex:account-leaf{i} ; ldg:inPass ex:pass ; "

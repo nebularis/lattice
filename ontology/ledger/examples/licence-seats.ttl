@@ -61,11 +61,20 @@ ex:licence-year a qnt:Recurrence ;
 ex:year-2027 a qnt:RecurrenceBin ; qnt:generatedByRecurrence ex:licence-year ; qnt:binKey "2027" .
 ex:year-2028 a qnt:RecurrenceBin ; qnt:generatedByRecurrence ex:licence-year ; qnt:binKey "2028" .
 
+# ==== The merge policies =======================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
 ex:seat-licence a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-500 ;
     ldg:unitOfAccount ex:seats ;
     ldg:admitsOwnerKind ex:Licensee ;
-    ldg:mergeRule ldg:Refuse ;
+    ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:periodRecurrence ex:licence-year ;
     ldg:keyDimension ex:sites ;
     rdfs:comment "500 seats a year, one account derived per site and licence year." .

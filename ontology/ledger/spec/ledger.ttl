@@ -31,7 +31,7 @@ Avoiding storing a balance also ensures that a balance agrees with its posting h
 When disparate evaluations draw on the same account at the same position (being logically simultaneous, not \"whoever runs first\"), the model follows a fixed path, 'propose -> merge -> settle'.
 
 - Propose - each evaluation states what it requires (e.g., a requested value)
-- Merge - the account's own merge rule (priority order / proportionality / refusal) looks at the whole batch together and decides every grant in one pass, producing one merge record
+- Merge - the merge rule of the account's policy (priority order / proportionality / refusal) looks at the whole batch together and decides every grant in one pass, producing one merge record
 - Settle - each evaluation then posts whatever it was actually granted
 
 Because the merge step is a pure function of the complete set of proposals, the result can't depend on what order the evaluations happened to run in. No evaluation's outcome therefore, depends on the order in which the others ran, so they may run in parallel. Given exact arithmetic in the account's unit, the account's stated rounding and residual rules, and ties broken by an order defined on the data rather than on arrival, two conforming implementations reach the same grants in any execution order, and the same bytes once their records are written in canonical form. Conformance cases check this.
@@ -45,8 +45,13 @@ dct:description a owl:AnnotationProperty .
 
 ldg:AccountDefinition a owl:Class ;
     rdfs:comment "An amount consumed and restored, as the terms state it." ;
-    fnd:utility "Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge rule always, and state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion method only where the terms need them." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsOwnerKind ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:closingRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:conversionMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditCeiling ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:keyDimension ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:partOf ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:periodRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:resetRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:statedAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOfAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+    fnd:utility "Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion method only where the terms need them." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsOwnerKind ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:closingRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:conversionMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditCeiling ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:keyDimension ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergePolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:partOf ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:periodRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:resetRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:statedAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOfAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+ldg:MergePolicy a owl:Class ;
+    rdfs:comment "What a scope declares for requests that compete at one position." ;
+    fnd:utility "State one for each scope that says how competing requests are treated, a contract, a document it cites or a deployment, and name it from every account definition it governs. It carries the merge rule always, a rounding method and a residual allocation where the rule shares in proportion, and the criteria, the permission and the guards only where the terms state them. A policy is versioned. A change of treatment is a new version, and an account definition names the version that governs it, so what a past balance was settled under does not change. Where several accounts take part in one merge, the policy of the account the requests are made at governs." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:mayLeaveResidual ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rankCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:refusesMixedPurposes ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresDistinctRanks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
 
 ldg:admitsOwnerKind a owl:ObjectProperty ;
     rdfs:comment "The kinds of owner this account admits." ;
@@ -84,10 +89,22 @@ ldg:keyDimension a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range [ a owl:Class ; owl:unionOf ( skos:ConceptScheme qnt:ValueSpace ) ] .
 
+ldg:mayLeaveResidual a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "Whether a merge under this policy may grant less than is available where its rule cannot place every unit." ;
+    fnd:utility "State true where the terms allow a part to stay unplaced, as where requests are of no use in part or equal remainders have no order to decide them. Unstated or false, a merge that would leave a unit is refused." ;
+    rdfs:domain ldg:MergePolicy ;
+    rdfs:range xsd:boolean .
+
+ldg:mergePolicy a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The merge policy that governs requests competing on this account." ;
+    fnd:utility "Name the version of the policy in force for the account. Which policy governs is resolved when the definition is written, from the contract's clauses, then a document it cites, then the deployment's rules. A definition states exactly one, so nothing is looked up when requests are merged, and it names a version, so a later change to the policy does not reach it." ;
+    rdfs:domain ldg:AccountDefinition ;
+    rdfs:range ldg:MergePolicy .
+
 ldg:mergeRule a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "What happens when several draws at one position together exceed availability." ;
-    fnd:utility "Selects the arbitration rule for this account: ldg:InPriorityOrder, ldg:Proportional (also state ldg:roundingMethod and ldg:residualAllocation), or ldg:Refuse (the whole merge is refused, with no grant, where proposals together overdraw the account)." ;
-    rdfs:domain ldg:AccountDefinition ;
+    fnd:utility "Selects the arbitration rule of this policy: ldg:InPriorityOrder, ldg:Proportional (also state ldg:roundingMethod and ldg:residualAllocation), or ldg:Refuse (the whole merge is refused, with no grant, where proposals together overdraw the account)." ;
+    rdfs:domain ldg:MergePolicy ;
     rdfs:range skos:Concept .
 
 ldg:partOf a owl:FunctionalProperty, owl:ObjectProperty ;
@@ -102,6 +119,24 @@ ldg:periodRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:Recurrence .
 
+ldg:rankCriterion a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "What a request's rank is derived from." ;
+    fnd:utility "Name the criterion the terms order requests by, for example the order in which they were notified. Each request carries the rank derived from it, a lower rank is served first, and requests of one rank are a tie. Its value is a concept of ldg:OrderCriteria, which an applied module supplies." ;
+    rdfs:domain ldg:MergePolicy ;
+    rdfs:range skos:Concept .
+
+ldg:refusesMixedPurposes a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "Whether requests that name different purposes at one position are refused together." ;
+    fnd:utility "State true where the terms do not let requests of different purposes compete in one merge. Unstated or false, each request is first cut to what the accounts counting its purpose hold, and then competes." ;
+    rdfs:domain ldg:MergePolicy ;
+    rdfs:range xsd:boolean .
+
+ldg:requiresDistinctRanks a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "Whether the ranks of the requests at one position are checked to be distinct before any rule runs." ;
+    fnd:utility "State true where the terms give every request a place of its own, so two requests of one rank are refused outright. Unstated or false, a tie is settled by the merge rule, and refused only where it arises and the rule cannot settle it." ;
+    rdfs:domain ldg:MergePolicy ;
+    rdfs:range xsd:boolean .
+
 ldg:resetRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "Deprecated: when the account was to return to its stated amount." ;
     fnd:utility "Use ldg:periodRecurrence. A reset credit restoring the account lets a draw effective in the old period but recorded after the reset be tested against the new period's amount, so a periodic amount is one account per period instead. Removed with Behaviour's allowance terms." ;
@@ -110,14 +145,14 @@ ldg:resetRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:residualAllocation a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "How the rounding residual is allocated so a proportional merge's grants still sum to availability." ;
-    fnd:utility "Required wherever ldg:mergeRule is ldg:Proportional. Rounding every share independently can leave the sum short of, or over, availability by a unit or two, so state how that residual is allocated, ldg:LargestRemainder (ties taken in the order the account declares, never by the proposals' identifiers) or ldg:ToFirstInOrder." ;
-    rdfs:domain ldg:AccountDefinition ;
+    fnd:utility "Required wherever ldg:mergeRule is ldg:Proportional. Rounding every share independently can leave the sum short of, or over, availability by a unit or two, so state how that residual is allocated, ldg:LargestRemainder (ties taken in the order the policy declares, never by the proposals' identifiers) or ldg:ToFirstInOrder." ;
+    rdfs:domain ldg:MergePolicy ;
     rdfs:range skos:Concept .
 
 ldg:roundingMethod a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "How a proportional merge's exact shares are rounded to the account's unit." ;
     fnd:utility "Required wherever ldg:mergeRule is ldg:Proportional. An exact proportional share need not be a whole unit of account, so state how it rounds: ldg:HalfEven, ldg:HalfUp or ldg:TowardZero." ;
-    rdfs:domain ldg:AccountDefinition ;
+    rdfs:domain ldg:MergePolicy ;
     rdfs:range skos:Concept .
 
 ldg:statedAmount a owl:FunctionalProperty, owl:ObjectProperty ;
@@ -131,5 +166,13 @@ ldg:unitOfAccount a owl:FunctionalProperty, owl:ObjectProperty ;
     fnd:utility "Names the value space an account's amounts are stated and posted in. The space must be extensive (qnt:additivity qnt:Extensive) with qnt:Sum and qnt:Difference capabilities, since Ledger holds only amounts whose parts add to the whole (§1)." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:ValueSpace .
+
+ldg:unitOrderCriterion a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "What orders requests of one rank where a single unit is placed or taken back." ;
+    fnd:utility "State it where a rule places units one at a time, as ldg:ToFirstInOrder does and as ldg:LargestRemainder does among equal remainders. The rank criterion cannot serve, since requests of one rank are tied under it. Where none is stated, a unit that needs an order is left where the policy permits a residual, and the merge is refused where it does not. Its value is a concept of ldg:OrderCriteria." ;
+    rdfs:domain ldg:MergePolicy ;
+    rdfs:range skos:Concept .
+
+ldg:mergePolicy fnd:meaningBearing true .
 
 ldg:resetRecurrence owl:deprecated true .

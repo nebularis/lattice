@@ -36,13 +36,22 @@ ex:dollars-difference a qnt:OperationCapability ; qnt:operationKind qnt:Differen
 ex:q-100000-gbp a qnt:Quantity ; qnt:onSpace ex:pounds ; qnt:numericValue "100000"^^xsd:decimal .
 ex:q-10000-usd  a qnt:Quantity ; qnt:onSpace ex:dollars ; qnt:numericValue "10000"^^xsd:decimal .
 
+# ==== The merge policies =======================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
 ex:parent-account a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-100000-gbp ; ldg:unitOfAccount ex:pounds ;
-    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "A section stated in pounds." .
 
 ex:child-account a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-10000-usd ; ldg:unitOfAccount ex:dollars ;
-    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:parent-account ;
     rdfs:comment "Refused. A dollar sublimit part of a pound section." .

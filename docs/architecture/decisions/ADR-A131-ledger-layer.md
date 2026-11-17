@@ -416,6 +416,28 @@ A read of the recorded amounts or of the flows starts from a checkpoint, which t
 
 **Releases.** The reason for refusing a credit adds a published term, made with the minor release of the substrate that the first addendum of 2026-11-16 names.
 
+## Addendum (proposed 2026-11-17): what an account declares for a merge is a versioned policy that its definition names
+
+**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided each point on 2026-11-17. It adds no evaluation semantics, so it carries no conformance cases.
+
+**Narrows decision 6.**
+
+**A merge policy is a node of its own.** Decision 6 has an account definition name its merge rule, and the configuration of decision 2 held the rule, its rounding method and its residual allocation on the definition. They move to a merge policy, with what the second addendum of 2026-11-16 has an account declare: the criterion a request's rank is derived from, the criterion that orders requests of one rank where a single unit is placed, whether a residual may be left, whether the ranks are checked to be distinct before any rule runs, and whether a position of more than one purpose is refused. An account definition names its policy. Nothing else of the definition moves.
+
+**A policy belongs to the scope that states it.** A contract, a document it cites and a deployment can each state how competing requests are treated, and a later source can override an earlier one, as general terms do a contract's silence. Each such statement is one policy, named by every account definition it governs, so a treatment stated once is recorded once.
+
+**Every stored definition names exactly one policy, resolved before the ledger.** Which policy governs a definition is resolved when the definition is written, from the contract's clauses, then a document it cites, then the deployment's rules. The ledger reads one policy for a merge and looks nothing up. Where several accounts take part in one merge, the policy of the account the requests are made at governs, and a fund's policy governs the accounts that hold amounts for its ranks.
+
+**A policy is versioned, and a definition names one version.** A policy changes when its source does, as general terms are amended or a deployment changes its rules. Each change is a new version, and a definition names the version that governs it, so a balance settled under an earlier version is reproduced under that version. The edge from a definition to its policy bears meaning, in the sense of ADR-A142. Two unrelated scopes that state the same treatment have two policies, since they have not made the same statement.
+
+**The permission and the guards are booleans, and the criteria are concepts.** Each is unstated or false by default, so a policy that states none behaves as an account did before. The two criteria take a concept of a scheme Ledger declares with no member, which an applied module fills, since what requests are ordered by belongs to a domain.
+
+**No rule for a tie is stated apart from the merge rule.** Ranks are served in turn, and the merge rule says what requests of one rank share by. Sharing in proportion is a rule for a tie, priority order is ranks with no rule for a tie, and refusal is the guard.
+
+**Not declared yet.** The two kinds of split have no term until an apportionment is configured, which defers the line of the second addendum of 2026-11-09 that lists them among its releases. The reasons for a refusal, how a rounding difference is settled, and the rank on a request follow with the documents that state them.
+
+**Releases.** Moving the three properties changes published meaning and invalidates a definition that states them itself, a minor release of the substrate at major version zero, made with the change to the layer's documents.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -448,3 +470,5 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 **The third addendum of 2026-11-16.** The maintainer decided on 2026-11-16 that a ledger has one writer with the guard kept, and that kept balances are a permitted cache rebuilt from the last checkpoint. The measurements are those of the writes, the single writer and the native writer in [benchmark/ledger-credit-kinds](../../../benchmark/ledger-credit-kinds/README.md), in the Validation Packs of LG-17, LG-18 and LG-22, and the store that loses guarded writes is TSD-73, with TSD-74 for the stores that do not. It applies PAT-18, PAT-21 and PAT-04 to the ledger, keeps PRI-52 for the balances a writer holds, and answers the first part of TD-162, which stays open for the conformance test and the patterns guide. The registers hold it as MEC-113.
 
 **The fourth addendum of 2026-11-16.** Raised as LG-Q29 of the [Ledger plan](../../developer/plans/ledger.md) by the proof of LU3 in LG-20, which found that the kernel bounded a credit's applied amount by the room of an account that did not accept it, so a cut was recorded with every ceiling at its stated amount and every credit on a leaf. The maintainer decided (b) of its three options on 2026-11-16, with the rule that a wording naming the restored account by relation is resolved at instantiation. The kernel's `post` refuses such a credit, and the law is proved as `Credits.no_cut_where_ceilings_are_stated_and_credits_on_leaves`, with the case for `credit` alone kept as LU3n ([LG-20's pack](../../developer/validation/LG-20.md)).
+
+**The addendum proposed on 2026-11-17.** The terms the layer's README proposed after LG-9 were walked through with the maintainer as LG-Q30 to LG-Q36 of the [Ledger plan](../../developer/plans/ledger.md). The maintainer decided for a policy node on 2026-11-17 (LG-Q32), for one policy resolved before the ledger (LG-Q35), and for a versioned policy in place of a content-addressed one first chosen that day, once that was seen to need a canonicalisation rule in the layer and a mark two other layers' checks would have to learn (LG-Q36, TD-127). LG-Q33 gave the two criteria and the two guards and found no need for a separate rule for a tie, and LG-Q34 deferred the kinds of split. Built as LG-24 ([its pack](../../developer/validation/LG-24.md)).

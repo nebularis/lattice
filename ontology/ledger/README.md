@@ -26,7 +26,7 @@ Avoiding storing a balance also ensures that a balance agrees with its posting h
 When disparate evaluations draw on the same account at the same position (being logically simultaneous, not "whoever runs first"), the model follows a fixed path, 'propose -> merge -> settle'. 
 
 1. Propose - each evaluation states what it requires (e.g., a requested value)
-2. Merge - the account's own merge rule (priority order / proportionality / refusal) looks at the whole batch together and decides every grant in one pass, producing one merge record
+2. Merge - the merge rule of the account's policy (priority order / proportionality / refusal) looks at the whole batch together and decides every grant in one pass, producing one merge record
 3. Settle - each evaluation then posts whatever it was actually granted
 
 Because the merge step is a pure function of the complete set of proposals, the result can't depend on what order the evaluations happened to run in. No evaluation's outcome therefore, depends on the order in which the others ran, so they may run in parallel. Given exact arithmetic in the account's unit, the account's stated rounding and residual rules, and ties broken by an order defined on the data rather than on arrival, two conforming implementations reach the same grants in any execution order, and the same bytes once their records are written in canonical form. Conformance cases check this.
@@ -105,12 +105,10 @@ classDiagram
         conversionMethod, at most one
         creditCeiling, at most one
         keyDimension, at most one
-        mergeRule, exactly one
+        mergePolicy, exactly one
         partOf, at most one
         periodRecurrence, at most one
         resetRecurrence, at most one
-        residualAllocation, at most one
-        roundingMethod, at most one
         statedAmount, exactly one
         unitOfAccount, exactly one
     }
@@ -135,6 +133,16 @@ classDiagram
         proportionDenominator, at most one
         proportionNumerator, at most one
         requestedValue, exactly one
+    }
+    class MergePolicy {
+        mayLeaveResidual, at most one
+        mergeRule, exactly one
+        rankCriterion, at most one
+        refusesMixedPurposes, at most one
+        requiresDistinctRanks, at most one
+        residualAllocation, at most one
+        roundingMethod, at most one
+        unitOrderCriterion, at most one
     }
     class MergeRecord {
         availableBefore, at most one
@@ -163,6 +171,7 @@ classDiagram
     class Recurrence
     class RecurrenceBin
     class ValueSpace
+    class Versioned
     Account --> Account : partOfAccount
     Account --> AccountDefinition : ofDefinition
     Account --> PersistentIdentity : forOwner
@@ -170,10 +179,8 @@ classDiagram
     AccountDefinition --> AccountDefinition : partOf
     AccountDefinition --> Class : admitsOwnerKind
     AccountDefinition --> Concept : countsPurpose
-    AccountDefinition --> Concept : mergeRule
-    AccountDefinition --> Concept : residualAllocation
-    AccountDefinition --> Concept : roundingMethod
     AccountDefinition --> ConversionContext : conversionMethod
+    AccountDefinition --> MergePolicy : mergePolicy
     AccountDefinition --> Quantity : creditCeiling
     AccountDefinition --> Quantity : statedAmount
     AccountDefinition --> Recurrence : closingRecurrence
@@ -184,12 +191,18 @@ classDiagram
     DerivedArtefact <|-- Checkpoint
     DerivedArtefact <|-- MergeRecord
     DerivedArtefact <|-- Posting
+    MergePolicy --> Concept : mergeRule
+    MergePolicy --> Concept : rankCriterion
+    MergePolicy --> Concept : residualAllocation
+    MergePolicy --> Concept : roundingMethod
+    MergePolicy --> Concept : unitOrderCriterion
     MergeRecord --> Concept : refusalReason
     MergeRecord --> Grant : grant
     Posting --> Concept : direction
     Posting --> Concept : forPurpose
     Posting --> ConversionContext : conversionUsed
     Posting --> Quantity : amountAsDrawn
+    Versioned <|-- MergePolicy
     class DatatypeProperty_effectivePosition["Datatype Property - effectivePosition"]
     class ObjectProperty_inPass["Object Property - inPass"]
     class ObjectProperty_onAccount["Object Property - onAccount"]
@@ -208,6 +221,7 @@ classDiagram
 - **Post at the drawn account only.** A draw writes one posting, on the account drawn, and an ancestor's balance is derived by a fold over its subtree. A purpose-counting account is outside the drawn account's subtree, so it keeps a posting of its own from the same draw. Where a purpose-counting account and the drawn account share an ancestor, that ancestor's fold would count the draw twice, and the rule that prevents it is open (section 13).
 - **An exact share is two integers.** A proportional grant keeps its exact share as a numerator and a denominator, not as one `owl:rational`, because no store LATTICE runs compares that literal by value (TSD-70), and the merge shapes compare and sum grants.
 - **The running balance waits.** A balance record states what remains and what is available after a pass, for each account the pass moved. A running balance on each posting is not stated, since with postings at the drawn account only, a posting's running balance is ambiguous for an ancestor.
+- **A merge policy is a node of its own, and it is versioned.** What a scope declares for competing requests is stated once, on a `ldg:MergePolicy`, and each account definition it governs names a version of it. A contract, a document it cites and a deployment can each state one, and which governs a definition is resolved when the definition is written, so the ledger reads exactly one ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-17).
 - **`ldg:AccountDefinition` is a plain class.** It is part of the terms that state it and changes only with them, as Behaviour's allowance definition is, so it needs no superclass from Foundation.
   `ldg:AccountDefinition` is a plain `owl:Class` until then. See Open Issues.
 - **All four concept schemes are declared now**, including `ldg:PostingDirections`, which only the runtime terms use. A concept scheme is a freestanding declaration, independent of which class first points at it.
@@ -225,7 +239,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** An amount consumed and restored, as the terms state it.
 
-**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge rule always, and state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion method only where the terms need them.
+**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion method only where the terms need them.
 
 **Restrictions.**
 
@@ -235,15 +249,34 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 | `ldg:unitOfAccount` | exactly 1 |  |  |
 | `ldg:partOf` | max 1 |  |  |
 | `ldg:admitsOwnerKind` | min 1 |  |  |
-| `ldg:mergeRule` | exactly 1 |  |  |
-| `ldg:roundingMethod` | max 1 |  |  |
-| `ldg:residualAllocation` | max 1 |  |  |
+| `ldg:mergePolicy` | exactly 1 |  |  |
 | `ldg:resetRecurrence` | max 1 |  |  |
 | `ldg:keyDimension` | max 1 |  |  |
 | `ldg:creditCeiling` | max 1 |  |  |
 | `ldg:conversionMethod` | max 1 |  |  |
 | `ldg:periodRecurrence` | max 1 |  |  |
 | `ldg:closingRecurrence` | max 1 |  |  |
+
+#### `ldg:MergePolicy`
+
+**Definition.** What a scope declares for requests that compete at one position.
+
+**Utility.** State one for each scope that says how competing requests are treated, a contract, a document it cites or a deployment, and name it from every account definition it governs. It carries the merge rule always, a rounding method and a residual allocation where the rule shares in proportion, and the criteria, the permission and the guards only where the terms state them. A policy is versioned. A change of treatment is a new version, and an account definition names the version that governs it, so what a past balance was settled under does not change. Where several accounts take part in one merge, the policy of the account the requests are made at governs.
+
+**Subclass of.** `fnd:Versioned`
+
+**Restrictions.**
+
+| Property | Values | Asserted in | Message |
+|---|---|---|---|
+| `ldg:mergeRule` | exactly 1 |  |  |
+| `ldg:roundingMethod` | max 1 |  |  |
+| `ldg:residualAllocation` | max 1 |  |  |
+| `ldg:rankCriterion` | max 1 |  |  |
+| `ldg:unitOrderCriterion` | max 1 |  |  |
+| `ldg:mayLeaveResidual` | max 1 |  |  |
+| `ldg:requiresDistinctRanks` | max 1 |  |  |
+| `ldg:refusesMixedPurposes` | max 1 |  |  |
 
 <!-- start: {"output-file": "spec/ledger-runtime.ttl"} -->
 
@@ -423,15 +456,25 @@ allow.
 
 **Range.** `rdfs:Class`
 
+#### `ldg:mergePolicy`
+
+**Definition.** The merge policy that governs requests competing on this account.
+
+**Utility.** Name the version of the policy in force for the account. Which policy governs is resolved when the definition is written, from the contract's clauses, then a document it cites, then the deployment's rules. A definition states exactly one, so nothing is looked up when requests are merged, and it names a version, so a later change to the policy does not reach it.
+
+**Domain.** `ldg:AccountDefinition`
+
+**Range.** `ldg:MergePolicy`
+
+**Characteristics.** functional
+
 #### `ldg:mergeRule`
 
 **Definition.** What happens when several draws at one position together exceed availability.
 
-**Utility.** Selects the arbitration rule for this account: `ldg:InPriorityOrder`, `ldg:Proportional` (also
-state `ldg:roundingMethod` and `ldg:residualAllocation`), or `ldg:Refuse` (the whole merge is refused, with
-no grant, where proposals together overdraw the account).
+**Utility.** Selects the arbitration rule of this policy: `ldg:InPriorityOrder`, `ldg:Proportional` (also state `ldg:roundingMethod` and `ldg:residualAllocation`), or `ldg:Refuse` (the whole merge is refused, with no grant, where proposals together overdraw the account).
 
-**Domain.** `ldg:AccountDefinition`
+**Domain.** `ldg:MergePolicy`
 
 **Range.** `skos:Concept`
 
@@ -441,10 +484,9 @@ no grant, where proposals together overdraw the account).
 
 **Definition.** How a proportional merge's exact shares are rounded to the account's unit.
 
-**Utility.** Required wherever `ldg:mergeRule` is `ldg:Proportional`. An exact proportional share need not
-be a whole unit of account, so state how it rounds: `ldg:HalfEven`, `ldg:HalfUp` or `ldg:TowardZero`.
+**Utility.** Required wherever `ldg:mergeRule` is `ldg:Proportional`. An exact proportional share need not be a whole unit of account, so state how it rounds: `ldg:HalfEven`, `ldg:HalfUp` or `ldg:TowardZero`.
 
-**Domain.** `ldg:AccountDefinition`
+**Domain.** `ldg:MergePolicy`
 
 **Range.** `skos:Concept`
 
@@ -452,12 +494,35 @@ be a whole unit of account, so state how it rounds: `ldg:HalfEven`, `ldg:HalfUp`
 
 #### `ldg:residualAllocation`
 
-**Definition.** How the rounding residual is allocated so a proportional merge's grants still sum to
-availability.
+**Definition.** How the rounding residual is allocated so a proportional merge's grants still sum to availability.
 
-**Utility.** Required wherever `ldg:mergeRule` is `ldg:Proportional`. Rounding every share independently can leave the sum short of, or over, availability by a unit or two, so state how that residual is allocated, `ldg:LargestRemainder` (ties taken in the order the account declares, never by the proposals' identifiers) or `ldg:ToFirstInOrder`.
+**Utility.** Required wherever `ldg:mergeRule` is `ldg:Proportional`. Rounding every share independently can leave the sum short of, or over, availability by a unit or two, so state how that residual is allocated, `ldg:LargestRemainder` (ties taken in the order the policy declares, never by the proposals' identifiers) or `ldg:ToFirstInOrder`.
 
-**Domain.** `ldg:AccountDefinition`
+**Domain.** `ldg:MergePolicy`
+
+**Range.** `skos:Concept`
+
+**Characteristics.** functional
+
+#### `ldg:rankCriterion`
+
+**Definition.** What a request's rank is derived from.
+
+**Utility.** Name the criterion the terms order requests by, for example the order in which they were notified. Each request carries the rank derived from it, a lower rank is served first, and requests of one rank are a tie. Its value is a concept of `ldg:OrderCriteria`, which an applied module supplies.
+
+**Domain.** `ldg:MergePolicy`
+
+**Range.** `skos:Concept`
+
+**Characteristics.** functional
+
+#### `ldg:unitOrderCriterion`
+
+**Definition.** What orders requests of one rank where a single unit is placed or taken back.
+
+**Utility.** State it where a rule places units one at a time, as `ldg:ToFirstInOrder` does and as `ldg:LargestRemainder` does among equal remainders. The rank criterion cannot serve, since requests of one rank are tied under it. Where none is stated, a unit that needs an order is left where the policy permits a residual, and the merge is refused where it does not. Its value is a concept of `ldg:OrderCriteria`.
+
+**Domain.** `ldg:MergePolicy`
 
 **Range.** `skos:Concept`
 
@@ -707,7 +772,43 @@ which may differ by date, is recorded with that draw.
 
 ### 6.3 Datatype Properties
 
-The configuration declares none. The runtime document's positions are whole numbers and its amounts decimals in the account's unit of account.
+The configuration declares three, a permission and two guards of a merge policy. The runtime document's positions are whole numbers and its amounts decimals in the account's unit of account.
+
+#### `ldg:mayLeaveResidual`
+
+**Definition.** Whether a merge under this policy may grant less than is available where its rule cannot place every unit.
+
+**Utility.** State true where the terms allow a part to stay unplaced, as where requests are of no use in part or equal remainders have no order to decide them. Unstated or false, a merge that would leave a unit is refused.
+
+**Domain.** `ldg:MergePolicy`
+
+**Range.** `xsd:boolean`
+
+**Characteristics.** functional
+
+#### `ldg:requiresDistinctRanks`
+
+**Definition.** Whether the ranks of the requests at one position are checked to be distinct before any rule runs.
+
+**Utility.** State true where the terms give every request a place of its own, so two requests of one rank are refused outright. Unstated or false, a tie is settled by the merge rule, and refused only where it arises and the rule cannot settle it.
+
+**Domain.** `ldg:MergePolicy`
+
+**Range.** `xsd:boolean`
+
+**Characteristics.** functional
+
+#### `ldg:refusesMixedPurposes`
+
+**Definition.** Whether requests that name different purposes at one position are refused together.
+
+**Utility.** State true where the terms do not let requests of different purposes compete in one merge. Unstated or false, each request is first cut to what the accounts counting its purpose hold, and then competes.
+
+**Domain.** `ldg:MergePolicy`
+
+**Range.** `xsd:boolean`
+
+**Characteristics.** functional
 
 <!-- start: {"output-file": "spec/ledger-runtime.ttl"} -->
 
@@ -863,9 +964,7 @@ The configuration declares none. The runtime document's positions are whole numb
 
 ### 6.4 Individuals
 
-The merge rules, posting directions, rounding methods and residual allocations are each a `skos:Concept`
-in a scheme of its own. `ldg:PostingDirections` is used only by the runtime terms, not yet specified
-(§5.1).
+The merge rules, posting directions, rounding methods and residual allocations are each a `skos:Concept` in a scheme of its own. `ldg:PostingDirections` is used only by the runtime terms. `ldg:OrderCriteria` is declared with no member, since what requests are ordered by belongs to a domain, and an applied module adds its concepts to it.
 
 **Concept schemes.**
 
@@ -875,13 +974,14 @@ in a scheme of its own. `ldg:PostingDirections` is used only by the runtime term
 | `ldg:PostingDirections` | `skos:ConceptScheme` | Whether a posting debits or credits its account. |
 | `ldg:RoundingMethods` | `skos:ConceptScheme` | How a proportional merge's exact shares round to the account's unit. |
 | `ldg:ResidualAllocations` | `skos:ConceptScheme` | How a proportional merge's rounding residual is allocated. |
+| `ldg:OrderCriteria` | `skos:ConceptScheme` | What requests are ordered by, for their rank and for the placing of single units. |
 
 **`ldg:MergeRules`.**
 
 | Individual | Type | Definition |
 |---|---|---|
-| `ldg:InPriorityOrder` | `skos:Concept` | Draws are granted in the priority order the account declares until availability is exhausted. The order is the account's declaration, never the order of the proposals' identifiers. |
-| `ldg:Proportional` | `skos:Concept` | Draws are granted in proportion to the amounts requested, rounded and allocated per the account's `ldg:roundingMethod` and `ldg:residualAllocation`. |
+| `ldg:InPriorityOrder` | `skos:Concept` | Draws are granted in the priority order the merge policy declares until availability is exhausted. The order is the policy's declaration, never the order of the proposals' identifiers. |
+| `ldg:Proportional` | `skos:Concept` | Draws are granted in proportion to the amounts requested, rounded and allocated per the policy's `ldg:roundingMethod` and `ldg:residualAllocation`. |
 | `ldg:Refuse` | `skos:Concept` | Where proposals together exceed availability, the whole merge is refused: no grant, a reason recorded, no posting. |
 
 **`ldg:PostingDirections`.**
@@ -903,8 +1003,8 @@ in a scheme of its own. `ldg:PostingDirections` is used only by the runtime term
 
 | Individual | Type | Definition |
 |---|---|---|
-| `ldg:LargestRemainder` | `skos:Concept` | The residual is allocated one unit at a time to the proposals with the largest rounding remainders, ties taken in the order the account declares, never in the order of the proposals' identifiers. With no order declared, the units that equal remainders do not decide are left. |
-| `ldg:ToFirstInOrder` | `skos:Concept` | The residual is allocated one unit at a time to the first proposals in the order the account declares, never in the order of their identifiers. |
+| `ldg:LargestRemainder` | `skos:Concept` | The residual is allocated one unit at a time to the proposals with the largest rounding remainders, ties taken in the order the merge policy declares, never in the order of the proposals' identifiers. With no order declared, the units that equal remainders do not decide are left. |
+| `ldg:ToFirstInOrder` | `skos:Concept` | The residual is allocated one unit at a time to the first proposals in the order the merge policy declares, never in the order of their identifiers. |
 
 ### 6.5 Disjointness and Keys
 
@@ -924,6 +1024,12 @@ The runtime document's classes are pairwise disjoint, and disjoint from the acco
 ldg:resetRecurrence owl:deprecated true .
 ```
 
+`ldg:mergePolicy` bears meaning, since every balance on an account is settled under the policy its definition names.
+
+```turtle-spec
+ldg:mergePolicy fnd:meaningBearing true .
+```
+
 ### 6.7 Axiom Index
 
 <!-- start: {"generated": "axiom-index"} -->
@@ -931,10 +1037,11 @@ ldg:resetRecurrence owl:deprecated true .
 | Term | Kind | Summary |
 |---|---|---|
 | `ldg:Account` | Class | Disjoint with `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:accountKey` max 1, `ldg:forOwner` exactly 1, `ldg:ofDefinition` exactly 1, `ldg:partOfAccount` max 1, `ldg:periodKey` max 1. |
-| `ldg:AccountDefinition` | Class | Disjoint with `ldg:Account`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:admitsOwnerKind` min 1, `ldg:closingRecurrence` max 1, `ldg:conversionMethod` max 1, `ldg:creditCeiling` max 1, `ldg:keyDimension` max 1, `ldg:mergeRule` exactly 1, `ldg:partOf` max 1, `ldg:periodRecurrence` max 1, `ldg:resetRecurrence` max 1, `ldg:residualAllocation` max 1, `ldg:roundingMethod` max 1, `ldg:statedAmount` exactly 1, `ldg:unitOfAccount` exactly 1. |
+| `ldg:AccountDefinition` | Class | Disjoint with `ldg:Account`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:admitsOwnerKind` min 1, `ldg:closingRecurrence` max 1, `ldg:conversionMethod` max 1, `ldg:creditCeiling` max 1, `ldg:keyDimension` max 1, `ldg:mergePolicy` exactly 1, `ldg:partOf` max 1, `ldg:periodRecurrence` max 1, `ldg:resetRecurrence` max 1, `ldg:statedAmount` exactly 1, `ldg:unitOfAccount` exactly 1. |
 | `ldg:BalanceRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:availableValue` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:remainingValue` exactly 1. |
 | `ldg:Checkpoint` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:balanceValue` exactly 1, `ldg:closePosition` exactly 1, `ldg:onAccount` exactly 1. |
 | `ldg:Grant` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:forProposal` exactly 1, `ldg:grantedValue` exactly 1, `ldg:proportionDenominator` max 1, `ldg:proportionNumerator` max 1, `ldg:requestedValue` exactly 1. |
+| `ldg:MergePolicy` | Class | Subclass of `fnd:Versioned`. Restrictions `ldg:mayLeaveResidual` max 1, `ldg:mergeRule` exactly 1, `ldg:rankCriterion` max 1, `ldg:refusesMixedPurposes` max 1, `ldg:requiresDistinctRanks` max 1, `ldg:residualAllocation` max 1, `ldg:roundingMethod` max 1, `ldg:unitOrderCriterion` max 1. |
 | `ldg:MergeRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:availableBefore` max 1, `ldg:effectivePosition` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:refusalReason` max 1. |
 | `ldg:Pass` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Posting`. Restrictions `ldg:passPosition` exactly 1. |
 | `ldg:Posting` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`. Restrictions `ldg:amountAsDrawn` max 1, `ldg:amountValue` exactly 1, `ldg:conversionUsed` max 1, `ldg:direction` exactly 1, `ldg:effectivePosition` exactly 1, `ldg:forPurpose` max 1, `ldg:inPass` exactly 1, `ldg:microPosition` exactly 1, `ldg:onAccount` exactly 1, `ldg:recordedPosition` exactly 1. |
@@ -953,19 +1060,22 @@ ldg:resetRecurrence owl:deprecated true .
 | `ldg:grant` | Object property | Domain `ldg:MergeRecord`. Range `ldg:Grant`. |
 | `ldg:inPass` | Object property | Domain `ldg:Posting` or `ldg:BalanceRecord` or `ldg:MergeRecord`. Range `ldg:Pass`. Functional. |
 | `ldg:keyDimension` | Object property | Domain `ldg:AccountDefinition`. Range `skos:ConceptScheme` or `qnt:ValueSpace`. Functional. |
-| `ldg:mergeRule` | Object property | Domain `ldg:AccountDefinition`. Range `skos:Concept`. Functional. |
+| `ldg:mergePolicy` | Object property | Domain `ldg:AccountDefinition`. Range `ldg:MergePolicy`. Functional. |
+| `ldg:mergeRule` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:ofDefinition` | Object property | Domain `ldg:Account`. Range `ldg:AccountDefinition`. Functional. |
 | `ldg:onAccount` | Object property | Domain `ldg:Posting` or `ldg:BalanceRecord` or `ldg:MergeRecord` or `ldg:Checkpoint`. Range `ldg:Account`. Functional. |
 | `ldg:partOf` | Object property | Domain `ldg:AccountDefinition`. Range `ldg:AccountDefinition`. Functional. |
 | `ldg:partOfAccount` | Object property | Domain `ldg:Account`. Range `ldg:Account`. Functional. |
 | `ldg:periodKey` | Object property | Domain `ldg:Account`. Range `qnt:RecurrenceBin`. Functional. |
 | `ldg:periodRecurrence` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Recurrence`. Functional. |
+| `ldg:rankCriterion` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:refusalReason` | Object property | Domain `ldg:MergeRecord`. Range `skos:Concept`. Functional. |
 | `ldg:resetRecurrence` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Recurrence`. Functional. |
-| `ldg:residualAllocation` | Object property | Domain `ldg:AccountDefinition`. Range `skos:Concept`. Functional. |
-| `ldg:roundingMethod` | Object property | Domain `ldg:AccountDefinition`. Range `skos:Concept`. Functional. |
+| `ldg:residualAllocation` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
+| `ldg:roundingMethod` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:statedAmount` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Quantity`. Functional. |
 | `ldg:unitOfAccount` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:ValueSpace`. Functional. |
+| `ldg:unitOrderCriterion` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:amountValue` | Datatype property | Domain `ldg:Posting`. Range `xsd:decimal`. Functional. |
 | `ldg:availableBefore` | Datatype property | Domain `ldg:MergeRecord`. Range `xsd:decimal`. Functional. |
 | `ldg:availableValue` | Datatype property | Domain `ldg:BalanceRecord`. Range `xsd:decimal`. Functional. |
@@ -973,13 +1083,16 @@ ldg:resetRecurrence owl:deprecated true .
 | `ldg:closePosition` | Datatype property | Domain `ldg:Checkpoint`. Range `xsd:integer`. Functional. |
 | `ldg:effectivePosition` | Datatype property | Domain `ldg:Posting` or `ldg:MergeRecord`. Range `xsd:integer`. Functional. |
 | `ldg:grantedValue` | Datatype property | Domain `ldg:Grant`. Range `xsd:decimal`. Functional. |
+| `ldg:mayLeaveResidual` | Datatype property | Domain `ldg:MergePolicy`. Range `xsd:boolean`. Functional. |
 | `ldg:microPosition` | Datatype property | Domain `ldg:Posting`. Range `xsd:integer`. Functional. |
 | `ldg:passPosition` | Datatype property | Domain `ldg:Pass`. Range `xsd:integer`. Functional. |
 | `ldg:proportionDenominator` | Datatype property | Domain `ldg:Grant`. Range `xsd:integer`. Functional. |
 | `ldg:proportionNumerator` | Datatype property | Domain `ldg:Grant`. Range `xsd:integer`. Functional. |
 | `ldg:recordedPosition` | Datatype property | Domain `ldg:Posting`. Range `xsd:integer`. Functional. |
+| `ldg:refusesMixedPurposes` | Datatype property | Domain `ldg:MergePolicy`. Range `xsd:boolean`. Functional. |
 | `ldg:remainingValue` | Datatype property | Domain `ldg:BalanceRecord`. Range `xsd:decimal`. Functional. |
 | `ldg:requestedValue` | Datatype property | Domain `ldg:Grant`. Range `xsd:decimal`. Functional. |
+| `ldg:requiresDistinctRanks` | Datatype property | Domain `ldg:MergePolicy`. Range `xsd:boolean`. Functional. |
 | `ldg:Credit` | Individual | Type `skos:Concept`. |
 | `ldg:Debit` | Individual | Type `skos:Concept`. |
 | `ldg:HalfEven` | Individual | Type `skos:Concept`. |
@@ -987,6 +1100,7 @@ ldg:resetRecurrence owl:deprecated true .
 | `ldg:InPriorityOrder` | Individual | Type `skos:Concept`. |
 | `ldg:LargestRemainder` | Individual | Type `skos:Concept`. |
 | `ldg:MergeRules` | Individual | Type `skos:ConceptScheme`. |
+| `ldg:OrderCriteria` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:PostingDirections` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:Proportional` | Individual | Type `skos:Concept`. |
 | `ldg:Refuse` | Individual | Type `skos:Concept`. |
@@ -1068,7 +1182,7 @@ ldg:ExtensiveUnitOfAccountShape a sh:NodeShape ;
 	] .
 
 ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
-	sh:targetNode ldg:AccountDefinition ;
+	sh:targetNode ldg:MergePolicy ;
 	sh:sparql [
 		sh:message "A proportional merge rule must state a rounding method and a residual allocation." ;
 		sh:select """
@@ -1084,7 +1198,7 @@ ldg:ProportionalNeedsRoundingShape a sh:NodeShape ;
 	] .
 
 ldg:NearestRoundingStatesTheDifferenceShape a sh:NodeShape ;
-	sh:targetNode ldg:AccountDefinition ;
+	sh:targetNode ldg:MergePolicy ;
 	sh:sparql [
 		sh:message "Rounding half-even or half-up beside a residual allocation must state how the difference is settled." ;
 		sh:select """
@@ -1284,7 +1398,8 @@ ldg:MergeWithinAvailabilityShape a sh:NodeShape ;
                                 }
                                 ?value ldg:onAccount ?account .
                                 ?account ldg:ofDefinition ?definition .
-                                ?definition ldg:mergeRule ?rule .
+                                ?definition ldg:mergePolicy ?policy .
+                                ?policy ldg:mergeRule ?rule .
                                 FILTER (?grantedTotal > ?available
                                         || (?rule = ldg:Proportional && ?requestedTotal > ?available && ?grantedTotal != ?available))
                         }
@@ -1486,10 +1601,7 @@ ldg:ConversionTogetherShape a sh:NodeShape ;
 
 ## 8. Examples
 
-The examples in [`examples/`](examples/) are five accepted arrangements (licensing, lending, grants,
-delegated authority, insurance) and five refusals (cycle, unit mismatch, overdraw under
-`ldg:Refuse`, an unrounded proportional rule, an intensive unit of account), validated against the
-structural shapes and the constraints of section 7. §5.2 walks through one of them.
+The examples in [`examples/`](examples/) are five accepted arrangements (licensing, lending, grants, delegated authority, insurance) and eight refusals (cycle, unit mismatch, overdraw under `ldg:Refuse`, an unrounded proportional rule, an intensive unit of account, rounding to the nearest beside a residual allocation with no difference stated, an account definition that names no merge policy, a merge policy with no merge rule), validated against the structural shapes and the constraints of section 7. §5.2 walks through one of them.
 
 The accepted examples and the refusal under `ldg:Refuse` carry their records too: the account instances, the passes, and the postings, balance records and merge records each position writes, which the runtime laws of section 7.3 check. The licensing example keeps one account per site and licence year, with no reset credit.
 
@@ -1937,6 +2049,11 @@ Ledger imports Foundation, for persistent identity, and Quantification, for valu
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
+- **Unreleased**.
+  - changes meaning. What an account declares for a merge moves to a merge policy ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-17). `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation` have the domain `ldg:MergePolicy`, a new versioned class, and an account definition names its policy with the new `ldg:mergePolicy`, exactly one. A definition that states the three properties itself no longer conforms. To move it, state them on a policy and name the policy from the definition. `ldg:ProportionalNeedsRoundingShape` and `ldg:NearestRoundingStatesTheDifferenceShape` now target the policy.
+  - no effect. New on a merge policy, each at most one: `ldg:rankCriterion` and `ldg:unitOrderCriterion`, whose values are concepts of the new scheme `ldg:OrderCriteria` that an applied module fills, and the booleans `ldg:mayLeaveResidual`, `ldg:requiresDistinctRanks` and `ldg:refusesMixedPurposes`.
+  - changes meaning. `ldg:InPriorityOrder`, `ldg:LargestRemainder` and `ldg:ToFirstInOrder` say the order they read is declared and never the order of the proposals' identifiers, and that with no order declared the units equal remainders do not decide are left.
+  - may invalidate. `ldg:NearestRoundingStatesTheDifferenceShape` is new. Rounding half-even or half-up beside a residual allocation is refused unless the policy states how the difference is settled.
 - **0.21.2**.
   - changes meaning. `ldg:ToFirstInOrder`'s definition says the residual is allocated one unit at a time to the first proposals in order. It said the whole residual went to the first proposal, which the rule never did, so no allocation changes and a reader of the definition is no longer misled.
 - **0.21.1**.
@@ -1960,11 +2077,8 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 - **A reinstatement under a capacity pool.** A credit rolls up, so restoring an aggregate also restores the pool above it, and the insurance example debits the reinstatement at the pool to keep the pool the measure of capacity left. Whether a reinstatement is built that way, or the pool is stated otherwise, is not yet decided.
 - **Persistence's record families** for postings, balance records and merge records, append-only, are not yet declared. The storage shape they take is not yet measured.
 - **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects and threshold regimes drawing on and reading them.
-- **Terms proposed for review.** The definitions of section 10 name what the README has no term for, and each is proposed here and not yet declared.
-  - The two kinds of split, a concept scheme `ldg:SplitKinds` with `ldg:Rationing`, what is available divided among claims that together exceed it with no part above its claim (`rations`), and `ldg:Apportionment`, an amount divided into proper shares by a stated basis with no part bounded by its basis (`apportions`).
-  - A rule that leaves a residual, `ldg:leavesResidual`, a boolean on `ldg:AccountDefinition`, false by default, saying that a merge may grant less than is available where its rule cannot place every unit, as `ldg:LargestRemainder` with no order declared does (`leaves`).
-  - What an account declares for a merge beyond `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation`, which is the kernel's `policy`. `ldg:declaredOrder` names the criterion each request's rank is derived from, the order `ldg:InPriorityOrder`, `ldg:ToFirstInOrder` and `ldg:LargestRemainder` read, never the identifiers'. `ldg:distinctRanks` says the rank is checked to be injective before any rule runs (`ranked`). `ldg:tieRule` names the rule for requests of one rank (`tie`). `ldg:refusesMixedPurposes` says requests of different purposes at one position are refused together (`unmixed`). Refusing requests beyond what is available (`refuses`) is `ldg:Refuse` already.
+- **Terms proposed for review.** The definitions of section 10 name two things the README has no term for yet, and each is proposed here and not yet declared.
   - The reasons a merge is refused, a concept scheme `ldg:RefusalReasons`, the range of `ldg:refusalReason`, with `ldg:Exceeds`, `ldg:Unranked`, `ldg:Tied`, `ldg:Undecided`, `ldg:Mixed` and `ldg:Crossing`, each as `reason` defines it in section 10.
-  - How the difference left by rounding to the nearest is settled, `ldg:roundingDifference` on `ldg:AccountDefinition`, which the constraint of section 7.2 reads, with a concept scheme `ldg:RoundingDifferences`. `ldg:ShownOnly` says the rounding method governs only how a share is shown and the split is floor then residual. `ldg:SettledToNearest` says a unit over is taken from a share rounded up and a unit short goes to a share rounded down, in the declared order and never by the keys (`to_nearest`).
+  - How the difference left by rounding to the nearest is settled, `ldg:roundingDifference` on `ldg:MergePolicy`, which the constraint of section 7.2 reads, with a concept scheme `ldg:RoundingDifferences`. `ldg:ShownOnly` says the rounding method governs only how a share is shown and the split is floor then residual. `ldg:SettledToNearest` says a unit over is taken from a share rounded up and a unit short goes to a share rounded down, in the declared order and never by the keys (`to_nearest`).
 - **Allocation with conservation**, one amount split across several accounts by a merge rule, is not yet specified.
 - **A benchmark** under `benchmark/ledger/`, at realistic volumes of accounts and draws, is not yet written.

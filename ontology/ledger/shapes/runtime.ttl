@@ -119,7 +119,8 @@ ldg:MergeWithinAvailabilityShape a sh:NodeShape ;
                                 }
                                 ?value ldg:onAccount ?account .
                                 ?account ldg:ofDefinition ?definition .
-                                ?definition ldg:mergeRule ?rule .
+                                ?definition ldg:mergePolicy ?policy .
+                                ?policy ldg:mergeRule ?rule .
                                 FILTER (?grantedTotal > ?available
                                         || (?rule = ldg:Proportional && ?requestedTotal > ?available && ?grantedTotal != ?available))
                         }

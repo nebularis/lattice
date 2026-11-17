@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Premise. Refused: an account whose merge rule is Proportional but which
-# states no rounding method. A proportional merge can produce a share no
+# Premise. Refused: an account whose merge policy has the rule Proportional but
+# which states no rounding method. A proportional merge can produce a share no
 # decimal in the account's unit states exactly, so a rounding method (and a
 # residual allocation) must be stated wherever the rule is chosen. Refused by
 # the shape requiring a proportional rule to carry a rounding method and a
@@ -28,7 +28,16 @@ ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference
 
 ex:q-100 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
 
+# ==== The merge policies =======================================================
+
+ex:shared-in-proportion a ldg:MergePolicy ;
+    fnd:hasIdentity ex:shared-in-proportion-identity ;
+    ldg:mergeRule ldg:Proportional .
+
+ex:shared-in-proportion-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
 ex:unrounded-account a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:units ;
-    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergeRule ldg:Proportional ;
-    rdfs:comment "Refused. Proportional, with no ldg:roundingMethod and no ldg:residualAllocation stated." .
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:shared-in-proportion ;
+    rdfs:comment "Refused. Its merge policy is Proportional, with no ldg:roundingMethod and no ldg:residualAllocation stated." .
