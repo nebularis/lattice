@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 23 branches, the units' own state from this tree, the newest board day 2026-11-16.
+Built from the status records on 23 branches, the units' own state from this tree, the newest board day 2026-11-17.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -882,8 +882,8 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-16 | 49 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
-| `docs/placement-vehicles-structure` | 2026-11-16 | 15 | pushed | LG-20, LG-23, LG-24, LG-9 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-17 | 50 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
+| `docs/placement-vehicles-structure` | 2026-11-17 | 16 | pushed | LG-20, LG-23, LG-24, LG-9 |
 | `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | LG-20, LG-9 |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
