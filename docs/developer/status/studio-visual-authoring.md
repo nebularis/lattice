@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-17. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-17. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -29,7 +29,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R4 | the browser's run controller and the dock's run pane | built 2026-11-16, building 2026-11-16 | SVA-R1 |
 | SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line | built 2026-11-16, building 2026-11-16 | SVA-R4 |
 | SVA-U1 | columns the author collapses and resizes, kept in the browser | built 2026-11-16, building 2026-11-16 | SVA-R4 |
-| SVA-R5 | the run protocol's failure cases on the real stack | planned | SVA-R2, SVA-R3, SVA-R4 |
+| SVA-R5 | the run protocol's failure cases on the real stack | building 2026-11-17 | SVA-R2, SVA-R3, SVA-R4 |
 | SVA-B1 | catalog reading, ontology headers, the import closure and its plan | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2a | several imports held by one write, each with its ontology and version IRI | built 2026-11-12, building 2026-11-12 |  |
 | SVA-B2b | LATTICE's documents served by IRI, and the missing import warning | built 2026-11-13, building 2026-11-13 | SVA-B2a |
@@ -160,3 +160,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-17: SVA-R3 picked up.
 - 2026-11-17: SVA-R3 built, [Validation Pack](../validation/SVA-R3.md). The transforms worker is now the run worker. One execution core serves the deprecated transform route and a run, and a sample run is published as schema-valid frames on the events exchange, cut only between characters and never past 128, with each message acknowledged after its frames are confirmed. Each of the three queues has its own channel and pool, redelivered, expired and overdue runs are handled as the contract states, and the Python worker's topology now binds each queue to the exchange its bindTo field names. Found that a Turtle writer orders a report by node hash, so the report is written in a fixed order, and that the contract test for the run queues needed the new field. RDF samples and simulations are answered with one failed frame until SVA-M3a and SVA-P3, and a real broker is left to SVA-R5.
 - 2026-11-17: SVA-R3 verified by a second run of the four Java modules, 24, 248, 10 and 20 passed, and of the contract's and the Python worker's tests, 106 passed. I read the frame cutting, which moves a cut back off a continuation byte, and the execution pool, which is unbounded and is recorded as TD-168. A failed publish part way through a run requeues the message, and its redelivery publishes a failed frame numbered 0 that a client already holding frame 0 ignores, so that client sees the run end only at the service's deadline frame, which SVA-R5 should show on the real stack. One line of the contract's tests changed with the topology's new field.
+- 2026-11-17: SVA-R5 picked up.
