@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-17. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-17. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-R2 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Next: SVA-R3, the run worker, then SVA-R5, the failure cases on the real stack with two service instances and a real broker.
+**Next action:** paused after SVA-R3 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Next: SVA-R5, the run protocol's failure cases on the real stack with two service instances and a real broker, which also covers what no unit test of SVA-R2 and SVA-R3 sees: the message's delivery mode and expiration, the relay's two consumers, and publisher confirms on the broker.
 
 ## Slices
 
@@ -25,7 +25,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-R0 | probes of the broker for content frames | built 2026-11-13, building 2026-11-12 |  |
 | SVA-R1 | the decision record, the contract's Runs section, the topology and the fake service's runs | built 2026-11-15, building 2026-11-12 | SVA-R0 |
 | SVA-R2 | the service's runs: pending entries, the relay's run sink, the waiting sink, the limits | built 2026-11-16, building 2026-11-16 | SVA-R1 |
-| SVA-R3 | the run worker, from the transforms worker | building 2026-11-17 | SVA-R1 |
+| SVA-R3 | the run worker, from the transforms worker | built 2026-11-17, building 2026-11-17 | SVA-R1 |
 | SVA-R4 | the browser's run controller and the dock's run pane | built 2026-11-16, building 2026-11-16 | SVA-R1 |
 | SVA-R4a | the runs contract corrected from what its first client found, and the client brought into line | built 2026-11-16, building 2026-11-16 | SVA-R4 |
 | SVA-U1 | columns the author collapses and resizes, kept in the browser | built 2026-11-16, building 2026-11-16 | SVA-R4 |
@@ -95,6 +95,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16, SVA-U1: the middle taking freed room was broken by keeping the navigation and list widths when collapsed, and the tree clipping test failed. Storing a dragged width was broken by not writing it, and the reload test failed. The canvas refit was switched off and the whole-drawing test failed. Each was restored.
 - 2026-11-16, SVA-R4a: two breaks were tried and each was restored. A timer with no grace failed 4 tests in runs.test.ts, and assemble treating a failed last frame with a gap as partial failed 4 tests there. The browser suite ran once and 58 passed.
 - 2026-11-16, SVA-R2: two breaks were tried. Skipping the access check at delivery failed 3 of the 17 registry tests, and publishing a run before recording it failed 4 of the 19 route tests, among them the test that gives a frame from inside the publish call.
+- 2026-11-17, SVA-R3: two breaks were tried. Cutting a part at a fixed byte count failed 1 of 6 RunFramesTest tests, and acknowledging before publishing failed 6 of 12 RunWorkerTest tests. Both were restored.
 
 ## Log
 
@@ -157,3 +158,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16: SVA-R2 built, [Validation Pack](../validation/SVA-R2.md). The service accepts a run at once, records it in a registry before it publishes the request, validates each frame against the frame schema, checks the reader's access at delivery, ends a run at its deadline with a failed frame, and holds at most four pending runs for a tab, with the run queues declared and the status warning of a run queue no worker consumes. Core 24, service 244 and writer 10 tests passed, and the wider check exited 0 with 286 pytest and 433 browser tests. The registry restates the frame schema in code since the service has no schema library, and the run worker and a real two-instance relay are left to SVA-R3 and SVA-R5.
 - 2026-11-16: SVA-R2 reviewed and corrected before it was committed. As first built, the service made its run registry only where it serves events to browsers, so a deployment with a broker and no events answered 503 to every run, the case ADR-A154's decision 10 keeps the waiting request for. No test saw it, since each built the registry itself. The service now reads run frames whenever it has a broker, a run sent without wait where no events are served is refused with 400, which the contract gained a sentence for, and what starts is decided by one function with its own test. Verified by a second run of the three Java modules, 24, 248 and 10 passed, the contract's 32 tests, and the counts of `mise run check:config-studio`, 21, 286 and 433. Left for SVA-R5: two instances and a real broker, the message's delivery mode and expiration, which no unit test sees, and the split of the relay, which was not run against a broker.
 - 2026-11-17: SVA-R3 picked up.
+- 2026-11-17: SVA-R3 built, [Validation Pack](../validation/SVA-R3.md). The transforms worker is now the run worker. One execution core serves the deprecated transform route and a run, and a sample run is published as schema-valid frames on the events exchange, cut only between characters and never past 128, with each message acknowledged after its frames are confirmed. Each of the three queues has its own channel and pool, redelivered, expired and overdue runs are handled as the contract states, and the Python worker's topology now binds each queue to the exchange its bindTo field names. Found that a Turtle writer orders a report by node hash, so the report is written in a fixed order, and that the contract test for the run queues needed the new field. RDF samples and simulations are answered with one failed frame until SVA-M3a and SVA-P3, and a real broker is left to SVA-R5.
+- 2026-11-17: SVA-R3 verified by a second run of the four Java modules, 24, 248, 10 and 20 passed, and of the contract's and the Python worker's tests, 106 passed. I read the frame cutting, which moves a cut back off a continuation byte, and the execution pool, which is unbounded and is recorded as TD-168. A failed publish part way through a run requeues the message, and its redelivery publishes a failed frame numbered 0 that a client already holding frame 0 ignores, so that client sees the run end only at the service's deadline frame, which SVA-R5 should show on the real stack. One line of the contract's tests changed with the topology's new field.

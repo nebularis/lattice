@@ -144,7 +144,7 @@ def test_the_two_run_queues_sit_in_the_topology_with_the_transforms_queues_setti
     queues = {q["name"]: q for q in json.loads((CONTRACT / "amqp-topology.json").read_text(encoding="utf-8"))["queues"]}
     transforms = queues["lattice.studio.transforms"]
     for name in ("lattice.studio.runs.interactive", "lattice.studio.runs"):
-        assert queues[name] == {"name": name, "routingKey": name, "deadLetter": transforms["deadLetter"]}
+        assert queues[name] == {"name": name, "routingKey": name, "deadLetter": transforms["deadLetter"], "bindTo": transforms["bindTo"]}
     assert transforms["deadLetter"] is False
 
 

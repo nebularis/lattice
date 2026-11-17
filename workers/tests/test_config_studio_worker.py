@@ -16,7 +16,7 @@ from rdflib.namespace import RDF, XSD
 from lattice_workers import config_studio_jobs as jobs
 from lattice_workers.config_studio_jobs import CST, SH
 from lattice_workers.config_studio_consumer import InvalidMessage
-from lattice_workers.config_studio_worker import ConfigStudioWorker, WriterStore
+from lattice_workers.config_studio_worker import ConfigStudioWorker, WriterStore, declare_topology
 from lattice_workers.fuseki_gsp import GraphNotFound
 from lattice_workers.config_studio_publish import version_graph
 
@@ -976,3 +976,44 @@ def test_a_job_reads_its_workspaces_parts_and_the_imports_it_holds_as_context():
         store.graphs[job_iri].add((job, CST.contextGraph, URIRef(name)))
     context = ConfigStudioWorker(store, ROOT, _clock())._context(store.graphs[job_iri], job)
     assert {str(o) for o in context.objects(example, example)} == {"part", "import"}
+
+
+# The worker declares each queue bound to the exchange the topology names for it, and to no other.
+class RecordingTopologyChannel:
+    def __init__(self) -> None:
+        self.declared: dict[str, dict] = {}
+        self.bindings: list[tuple[str, str, str]] = []
+
+    def exchange_declare(self, **_kwargs) -> None:
+        pass
+
+    def queue_declare(self, queue, durable=False, arguments=None) -> None:
+        self.declared[queue] = arguments or {}
+
+    def queue_bind(self, queue, exchange, routing_key) -> None:
+        self.bindings.append((queue, exchange, routing_key))
+
+
+def _packaged_topology() -> dict:
+    return json.loads(resources.files("lattice_workers").joinpath("config-studio-topology.json").read_text(encoding="utf-8"))
+
+
+def test_each_queue_is_bound_to_the_exchange_its_field_names_and_to_no_other() -> None:
+    topology = _packaged_topology()
+    channel = RecordingTopologyChannel()
+    declare_topology(channel, topology)
+    exchanges = {"exchange": topology["exchange"], "deadLetterExchange": topology["deadLetterExchange"]}
+    assert len(topology["queues"]) == 6
+    for queue in topology["queues"]:
+        bound = [(e, k) for q, e, k in channel.bindings if q == queue["name"]]
+        assert bound == [(exchanges[queue["bindTo"]], queue["routingKey"])], queue["name"]
+    assert {q["name"] for q in topology["queues"] if q["bindTo"] == "deadLetterExchange"} == {"lattice.studio.dead"}
+
+
+def test_only_a_dead_lettered_queue_names_the_dead_letter_exchange_as_an_argument() -> None:
+    topology = _packaged_topology()
+    channel = RecordingTopologyChannel()
+    declare_topology(channel, topology)
+    for queue in topology["queues"]:
+        expected = {"x-dead-letter-exchange": topology["deadLetterExchange"]} if queue["deadLetter"] else {}
+        assert channel.declared[queue["name"]] == expected, queue["name"]

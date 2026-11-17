@@ -1,33 +1,52 @@
 // SPDX-License-Identifier: MPL-2.0
 package org.nebularis.lattice.studio.transforms;
 
-import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.Delivery;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
+import java.util.UUID;
+import java.util.function.Function;
 import org.nebularis.lattice.studio.jobs.Amqp;
 import org.nebularis.lattice.studio.jobs.Topology;
 import org.nebularis.lattice.studio.settings.Secrets;
-import org.nebularis.lattice.studio.store.Graphs;
 import org.nebularis.lattice.studio.store.StudioStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The Configuration Studio's transforms worker (ADR-A148). It answers each request on {@code lattice.studio.transforms},
- * a sample source naming a compile job of the mapping part in its {@code job} header, on the sender's reply queue, and
- * stays running so the engines and the stylesheets they compiled stay warm. It reads the store and never writes it.
+ * The Configuration Studio's run worker, the transforms worker of ADR-A148 generalised by ADR-A154. It consumes three queues, each on a
+ * channel and a pool of threads of its own so that a long sample run never delays a simulator's step and the deprecated transforms
+ * route keeps its behaviour: {@code lattice.studio.transforms} (a sample source answered on the sender's reply queue),
+ * {@code lattice.studio.runs.interactive} and {@code lattice.studio.runs}, whose runs it answers as frames on the events exchange. It stays
+ * running so the engines and the stylesheets they compiled stay warm. It reads the store and never writes it.
  */
 public final class TransformsMain {
     private static final Logger LOG = LoggerFactory.getLogger(TransformsMain.class);
+    static final String INTERACTIVE_CONCURRENCY = "LATTICE_RUNS_INTERACTIVE_CONCURRENCY";
+    static final String SAMPLE_CONCURRENCY = "LATTICE_RUNS_CONCURRENCY";
+    private static final int DEFAULT_CONCURRENCY = 2;
 
     private TransformsMain() {
+    }
+
+    /** The requests a run queue handles at once, from the setting {@code name}, at least 1. */
+    static int concurrency(Map<String, String> env, String name) {
+        String v = env.get(name);
+        if (v == null || v.isBlank()) {
+            return DEFAULT_CONCURRENCY;
+        }
+        try {
+            int n = Integer.parseInt(v.trim());
+            if (n >= 1) {
+                return n;
+            }
+        } catch (NumberFormatException e) {
+            // Falls through to the refusal below.
+        }
+        throw new IllegalArgumentException(name + " is a whole number from 1");
     }
 
     public static void main(String[] args) throws Exception {
@@ -36,56 +55,49 @@ public final class TransformsMain {
         if (fuseki == null || fuseki.isBlank()) {
             throw new IllegalArgumentException("LATTICE_FUSEKI_URL is required");
         }
+        int interactive = concurrency(env, INTERACTIVE_CONCURRENCY);
+        int samples = concurrency(env, SAMPLE_CONCURRENCY);
         StudioStore store = StudioStore.fuseki(fuseki.trim(), env.getOrDefault("LATTICE_FUSEKI_DATASET", "studio"),
             env.get("LATTICE_FUSEKI_USER"), Secrets.secret(env, "LATTICE_FUSEKI_PASSWORD"));
         Connection connection = Amqp.connect(Secrets.required(env, "LATTICE_AMQP_URI"), "config-studio-transforms");
-        Channel channel = connection.createChannel();
-        Topology.declare(channel);
-        channel.basicQos(1);
-        channel.basicConsume(Topology.TRANSFORMS_QUEUE, false, (tag, delivery) -> {
-            try {
-                answer(channel, store, delivery);
-            } finally {
-                channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-            }
-        }, tag -> LOG.warn("the transforms queue cancelled this consumer"));
+        Channel setup = connection.createChannel();
+        Topology.declare(setup);
+        setup.close();
+        List<AutoCloseable> closeables = new ArrayList<>();
+        Clock clock = Clock.systemUTC();
+        // Each queue has a channel to consume and settle on, and each run queue a channel of its own to publish its frames on.
+        Channel transformsChannel = connection.createChannel();
+        consume(transformsChannel, Topology.TRANSFORMS_QUEUE, 1, new LegacyTransforms(store::graph, LegacyTransforms.onChannel(transformsChannel)), closeables);
+        for (Object[] q : new Object[][] {{Topology.RUNS_INTERACTIVE_QUEUE, "simulate", interactive}, {Topology.RUNS_QUEUE, "sample", samples}}) {
+            RunWorker worker = new RunWorker((String) q[1], store::graph, new AmqpFrameSink(connection.createChannel(), clock, UUID::randomUUID), clock);
+            closeables.add(worker);
+            consume(connection.createChannel(), (String) q[0], (Integer) q[2], worker, closeables);
+        }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 connection.close();
             } catch (Exception e) {
                 LOG.debug("closing the RabbitMQ connection failed", e);
             }
+            for (AutoCloseable c : closeables) {
+                try {
+                    c.close();
+                } catch (Exception e) {
+                    LOG.debug("closing a worker failed", e);
+                }
+            }
             store.close();
         }));
-        LOG.info("Configuration Studio transforms worker running");
+        LOG.info("Configuration Studio run worker running");
     }
 
-    /** Checks the request, whatever its sender checked (PRI-75), runs it and replies. A request it cannot answer is dropped. */
-    static void answer(Channel channel, StudioStore store, Delivery delivery) {
-        AMQP.BasicProperties p = delivery.getProperties();
-        Object job = p.getHeaders() == null ? null : p.getHeaders().get("job");
-        String jobIri = job == null ? "" : job.toString();
-        String id = p.getCorrelationId();
-        if (p.getReplyTo() == null || id == null || !Graphs.isId(id) || !jobIri.startsWith(Graphs.JOB_PREFIX)
-            || !Graphs.isId(jobIri.substring(Graphs.JOB_PREFIX.length()))) {
-            LOG.warn("dropped a transform request without a reply queue, a correlation id and a job");
-            return;
-        }
-        Model reply;
-        try {
-            reply = TransformRun.run(store.graph(jobIri), jobIri, "urn:lattice:studio:transform:" + id, p.getContentType(),
-                new String(delivery.getBody(), StandardCharsets.UTF_8));
-        } catch (RuntimeException e) {
-            LOG.error("a transform of {} failed", jobIri, e);
-            return;
-        }
-        StringWriter turtle = new StringWriter();
-        RDFDataMgr.write(turtle, reply, Lang.TURTLE);
-        try {
-            channel.basicPublish("", p.getReplyTo(), new AMQP.BasicProperties.Builder().contentType("text/turtle").correlationId(id).build(),
-                turtle.toString().getBytes(StandardCharsets.UTF_8));
-        } catch (Exception e) {
-            LOG.warn("replying to a transform request failed", e);
-        }
+    /** Consumes {@code queue} on {@code channel}, taking at most {@code threads} messages at once, each handled on a pool of that many threads. */
+    private static void consume(Channel channel, String queue, int threads, Function<Message, Outcome> handler, List<AutoCloseable> closeables)
+        throws Exception {
+        channel.basicQos(threads);
+        QueueWorker worker = new QueueWorker(queue, threads, handler, QueueWorker.onChannel(channel));
+        closeables.add(worker);
+        channel.basicConsume(queue, false, (tag, delivery) -> worker.deliver(Message.of(delivery)),
+            tag -> LOG.warn("the queue {} cancelled this consumer", queue));
     }
 }

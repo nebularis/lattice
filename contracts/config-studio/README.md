@@ -9,7 +9,7 @@ Every body is RDF. The terms are in [`studio-vocabulary.ttl`](studio-vocabulary.
 | File | Holds |
 |---|---|
 | `studio-vocabulary.ttl` | workspaces, samples, jobs, runs, job status, artefacts and gaps |
-| `amqp-topology.json` | the exchange, the job queues, the transforms queue, the two queues of runs, `lattice.studio.runs.interactive` and `lattice.studio.runs`, the dead-letter queue, and the writes super stream with its partitions, declared identically by the service, the writer and the worker |
+| `amqp-topology.json` | the exchange, the job queues, the transforms queue, the two queues of runs, `lattice.studio.runs.interactive` and `lattice.studio.runs`, the dead-letter queue, and the writes super stream with its partitions, declared identically by the service, the writer and the worker. Each queue's `bindTo` names the exchange it is bound to, `exchange` or `deadLetterExchange`, and only the dead-letter queue is bound to the dead-letter exchange |
 | `run-frame.schema.json` | the JSON Schema of one frame of a run, which is the body of a `run.frame` event and an element of a `wait=true` response (see Runs) |
 | `samples/run-frames.example.json`, `samples/run-frames-failed.example.json` | a complete small `sample` run as a `wait=true` response gives it, and a run that could not start. Each is valid against `run-frame.schema.json` |
 | `promotions.ttl` | the surface promotions of the registry, jobs, holders and terms, their generation profile and the target namespace `prm:` (`https://www.nebularis.org/neuro-semantic/lattice/config-studio/promotion#`). The terms promotion covers `skos:Concept` only, and the members of the other units of `publication-units.ttl` are not covered yet |

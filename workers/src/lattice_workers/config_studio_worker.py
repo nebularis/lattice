@@ -503,15 +503,13 @@ def declare_topology(channel: Any, topology: Mapping[str, Any]) -> None:
     dead_letter_exchange = topology["deadLetterExchange"]
     channel.exchange_declare(exchange=exchange, exchange_type="topic", durable=True)
     channel.exchange_declare(exchange=dead_letter_exchange, exchange_type="topic", durable=True)
+    exchanges = {"exchange": exchange, "deadLetterExchange": dead_letter_exchange}
     for queue in topology["queues"]:
-        if queue["deadLetter"]:
-            channel.queue_declare(
-                queue=queue["name"], durable=True, arguments={"x-dead-letter-exchange": dead_letter_exchange}
-            )
-            channel.queue_bind(queue=queue["name"], exchange=exchange, routing_key=queue["routingKey"])
-        else:
-            channel.queue_declare(queue=queue["name"], durable=True)
-            channel.queue_bind(queue=queue["name"], exchange=dead_letter_exchange, routing_key=queue["routingKey"])
+        # Each queue states the exchange it is bound to. Only the dead-letter queue is bound to the dead-letter exchange, so a
+        # queue that is not dead-lettered is not thereby bound to it.
+        arguments = {"x-dead-letter-exchange": dead_letter_exchange} if queue["deadLetter"] else None
+        channel.queue_declare(queue=queue["name"], durable=True, arguments=arguments)
+        channel.queue_bind(queue=queue["name"], exchange=exchanges[queue["bindTo"]], routing_key=queue["routingKey"])
 
 
 def routing_key(workspace: str) -> str:

@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
@@ -27,6 +29,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.nebularis.lattice.morktransforms.TransformException;
@@ -86,17 +89,67 @@ public final class TransformRun {
     private TransformRun() {
     }
 
+    /** How serious a finding is. */
+    public enum Severity { VIOLATION, INFO }
+
+    /** One finding of a run, on a mapping or a scheme, or on nothing when {@code focus} is null. */
+    public record Finding(Severity severity, String message, String code, String focus) {
+    }
+
+    /** What one mapping wrote, as N-Triples, at the path a mapping dry run's artefact would have. */
+    public record Output(String group, String path, String ntriples) {
+    }
+
+    /**
+     * What a run did, apart from how it is told. {@code events} holds the findings and the outputs in the order they were found,
+     * which is deterministic since schemes and mappings are visited in code point order. {@code failure} is null for a run that
+     * finished, and else says why it did not, with the events found before it.
+     */
+    public record Result(String failure, List<Object> events) {
+        public Result {
+            events = List.copyOf(events);
+        }
+
+        public List<Finding> findings() {
+            return events.stream().filter(Finding.class::isInstance).map(Finding.class::cast).toList();
+        }
+
+        /** The outputs in canonical order, by group and then by path. */
+        public List<Output> outputs() {
+            return events.stream().filter(Output.class::isInstance).map(Output.class::cast)
+                .sorted(java.util.Comparator.comparing(Output::group).thenComparing(Output::path)).toList();
+        }
+
+        public boolean conforms() {
+            return findings().stream().noneMatch(f -> f.severity() == Severity.VIOLATION);
+        }
+    }
+
     /** The reply to a run of {@code jobIri}'s transforms over {@code sample}, described under {@code runIri}. */
     public static Model run(Model job, String jobIri, String runIri, String mediaType, String sample) {
+        Result result = execute(job, jobIri, mediaType, sample);
         Reply reply = new Reply(runIri, jobIri);
+        for (Object event : result.events()) {
+            if (event instanceof Finding f) {
+                reply.finding(f);
+            } else {
+                reply.artefact((Output) event);
+            }
+        }
+        return result.failure() != null ? reply.failed(result.failure()) : reply.done();
+    }
+
+    /** Runs the transforms of the compile job {@code jobIri} over {@code sample}, and says what happened without telling it as any reply. */
+    public static Result execute(Model job, String jobIri, String mediaType, String sample) {
+        List<Object> events = new ArrayList<>();
         Resource compile = job.createResource(jobIri);
         Format format = Format.of(mediaType);
         if (format == null) {
-            return reply.failed("a sample source is application/xml, text/xml or application/json, not " + mediaType);
+            return new Result("a sample source is application/xml, text/xml or application/json, not " + mediaType, events);
         }
         if (!compile.hasProperty(Cst.kind, Cst.Compile) || !compile.hasProperty(Cst.target, Cst.target("mapping"))
             || !compile.hasProperty(Cst.status, Cst.Succeeded)) {
-            return reply.failed("the job is not a finished compilation of the mapping part");
+            return new Result("the job is not a finished compilation of the mapping part", events);
         }
         Map<String, List<Artefact>> groups = new TreeMap<>();
         for (Statement s : compile.listProperties(Cst.artefact).toList()) {
@@ -113,13 +166,13 @@ public final class TransformRun {
             Artefact transform = group.getValue().stream().filter(a -> format.isTransform(a.path(), a.mediaType())).findFirst().orElse(null);
             if (transform == null) {
                 if (group.getValue().stream().anyMatch(a -> a.path().endsWith(".attribution.json") || a.path().endsWith(".compiled.ttl"))) {
-                    reply.finding(SHACLM.Info, scheme + " was not run, since it reads no " + format.label + " source", "NotRun", scheme);
+                    events.add(new Finding(Severity.INFO, scheme + " was not run, since it reads no " + format.label + " source", "NotRun", scheme));
                 }
                 continue;
             }
             Artefact table = group.getValue().stream().filter(a -> a.path().equals(transform.path() + ".attribution.json")).findFirst().orElse(null);
             if (table == null) {
-                reply.finding(SHACLM.Violation, scheme + " has no attribution table beside its transform", "NoAttribution", scheme);
+                events.add(new Finding(Severity.VIOLATION, scheme + " has no attribution table beside its transform", "NoAttribution", scheme));
                 continue;
             }
             Graph written = GraphFactory.createDefaultGraph();
@@ -127,17 +180,53 @@ public final class TransformRun {
                 String output = format == Format.XML ? Transforms.xslt(transform.content(), sample) : Transforms.jolt(transform.content(), sample);
                 RDFParser.fromString(output, format.output).parse(written);
             } catch (TransformException | RuntimeException e) {
-                return reply.failed(scheme + ": " + e.getMessage());
+                return new Result(scheme + ": " + e.getMessage(), events);
             }
             ran = true;
             for (Map.Entry<String, Set<String>> wrote : attribute(written, JSON.parseAny(table.content()).getAsArray()).entrySet()) {
-                reply.artefact(wrote.getKey(), String.join("", wrote.getValue()));
+                String name = wrote.getKey().replaceAll(".*[#/]", "").replaceAll("[^A-Za-z0-9_-]+", "-");
+                events.add(new Output(wrote.getKey(), "0/" + (name.isEmpty() ? "mapping" : name) + ".nt", String.join("", wrote.getValue())));
             }
         }
         if (!ran) {
-            reply.finding(SHACLM.Info, "no scheme of the mapping part reads a " + format.label + " source", "NotRun", null);
+            events.add(new Finding(Severity.INFO, "no scheme of the mapping part reads a " + format.label + " source", "NotRun", null));
         }
-        return reply.done();
+        return new Result(null, events);
+    }
+
+    /** Writes finding number {@code n} of a report as {@code <base>#result-n}, as the reply and a run's report both state it. */
+    static void writeFinding(Model m, Resource report, String base, int n, Finding f) {
+        Resource severity = f.severity() == Severity.VIOLATION ? SHACLM.Violation : SHACLM.Info;
+        Resource r = m.createResource(base + "#result-" + n).addProperty(RDF.type, SHACLM.ValidationResult)
+            .addProperty(SHACLM.resultSeverity, severity).addProperty(SHACLM.resultMessage, f.message()).addProperty(Cst.code, f.code());
+        if (f.focus() != null && f.focus().contains(":")) {
+            r.addProperty(SHACLM.focusNode, m.createResource(f.focus()));
+        }
+        report.addProperty(SHACLM.result, r);
+    }
+
+    /**
+     * The report of a finished run, as Turtle: an {@code sh:ValidationReport} minted under the run's IRI, written statement by statement in
+     * a fixed order. A Turtle writer orders a graph's subjects by how its nodes hash, so the same report could be written in another order
+     * for another run IRI, and a run's output is a function of its input alone (ADR-A154 decision 1).
+     */
+    static String reportTurtle(String runIri, Result result) {
+        StringBuilder t = new StringBuilder("@prefix sh: <" + SHACLM.NS + "> .\n@prefix cst: <" + Cst.NS + "> .\n\n");
+        List<Finding> findings = result.findings();
+        String results = IntStream.rangeClosed(1, findings.size()).mapToObj(n -> "<" + runIri + "#result-" + n + ">").collect(Collectors.joining(" , "));
+        t.append("<").append(runIri).append("#report> a sh:ValidationReport ;\n    sh:conforms ").append(result.conforms());
+        t.append(findings.isEmpty() ? " .\n" : " ;\n    sh:result " + results + " .\n");
+        int n = 0;
+        for (Finding f : findings) {
+            t.append("\n<").append(runIri).append("#result-").append(++n).append("> a sh:ValidationResult ;\n");
+            if (f.focus() != null && f.focus().contains(":")) {
+                t.append("    sh:focusNode ").append(NodeFmtLib.strNT(NodeFactory.createURI(f.focus()))).append(" ;\n");
+            }
+            t.append("    sh:resultMessage ").append(NodeFmtLib.strNT(NodeFactory.createLiteralString(f.message()))).append(" ;\n");
+            t.append("    sh:resultSeverity sh:").append(f.severity() == Severity.VIOLATION ? "Violation" : "Info").append(" ;\n");
+            t.append("    cst:code ").append(NodeFmtLib.strNT(NodeFactory.createLiteralString(f.code()))).append(" .\n");
+        }
+        return t.toString();
     }
 
     /**
@@ -216,21 +305,15 @@ public final class TransformRun {
             run.addProperty(Cst.report, report);
         }
 
-        void finding(Resource severity, String message, String code, String focus) {
-            violation |= severity.equals(SHACLM.Violation);
-            Resource r = m.createResource(run.getURI() + "#result-" + ++count).addProperty(RDF.type, SHACLM.ValidationResult)
-                .addProperty(SHACLM.resultSeverity, severity).addProperty(SHACLM.resultMessage, message).addProperty(Cst.code, code);
-            if (focus != null && focus.contains(":")) {
-                r.addProperty(SHACLM.focusNode, m.createResource(focus));
-            }
-            report.addProperty(SHACLM.result, r);
+        void finding(Finding f) {
+            violation |= f.severity() == Severity.VIOLATION;
+            writeFinding(m, report, run.getURI(), ++count, f);
         }
 
-        void artefact(String mapping, String ntriples) {
-            String name = mapping.replaceAll(".*[#/]", "").replaceAll("[^A-Za-z0-9_-]+", "-");
+        void artefact(Output o) {
             run.addProperty(Cst.artefact, m.createResource(run.getURI() + "#artefact-" + ++count).addProperty(RDF.type, Cst.Artefact)
-                .addProperty(Cst.path, "0/" + (name.isEmpty() ? "mapping" : name) + ".nt").addProperty(Cst.mediaType, "application/n-triples")
-                .addProperty(Cst.content, ntriples).addProperty(Cst.group, mapping)
+                .addProperty(Cst.path, o.path()).addProperty(Cst.mediaType, "application/n-triples")
+                .addProperty(Cst.content, o.ntriples()).addProperty(Cst.group, o.group())
                 .addLiteral(Cst.stratum, m.createTypedLiteral("0", XSDDatatype.XSDnonNegativeInteger)));
         }
 

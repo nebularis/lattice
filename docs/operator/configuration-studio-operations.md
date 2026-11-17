@@ -17,7 +17,7 @@ The Configuration Studio is a browser application for authoring and checking con
 | Browser application | React, built with Vite ([README](../../apps/config-studio/README.md)) | The authoring views. Served by the service once built, or by a hot-reload dev server | `127.0.0.1:4175` for the dev server only |
 | Service | Java on Helidon SE with Apache Jena ([README](../../platform/config-studio-service/README.md)) | The HTTP API under `/api`, workspaces and jobs as named graphs, the built browser application, and publishing each job to RabbitMQ | `127.0.0.1:8090` |
 | Worker | Python, `lattice_workers.config_studio_main` ([README](../../workers/README.md#configuration-studio-jobs-adr-a136)) | Consumes jobs, validates or compiles the configuration with each layer's own engine, and writes the result back | nothing |
-| Transforms worker | Java, with Saxon-HE and JOLT ([README](../../platform/config-studio-transforms/README.md)) | Runs the mapping part's compiled XSLT stylesheets and JOLT chains over an XML or JSON sample source, answering each request on its sender's reply queue. It reads the store and never writes it | nothing |
+| Transforms worker | Java, with Saxon-HE and JOLT ([README](../../platform/config-studio-transforms/README.md)) | Runs the mapping part's compiled XSLT stylesheets and JOLT chains over an XML or JSON sample source, answering a transform on its sender's reply queue and a `sample` run as frames on the events exchange. It is the run worker of ADR-A154. It reads the store and never writes it | nothing |
 | Fuseki | Apache Jena Fuseki ([version pinned below](#download-pins)) | The graph store. One dataset, `studio`, in TDB2 on disk | `127.0.0.1:3130` |
 | RabbitMQ | RabbitMQ on Erlang | Carries job messages from the service to the worker | `127.0.0.1:5673` (AMQP), `127.0.0.1:25673` (Erlang distribution) |
 
@@ -111,7 +111,14 @@ Read by `config_studio_main.read_config`, and the proposer settings by each prop
 
 ### Transforms worker
 
-Read by `TransformsMain`. `LATTICE_FUSEKI_URL` and `LATTICE_AMQP_URI` are required, `LATTICE_FUSEKI_DATASET` defaults to `studio`, and `LATTICE_FUSEKI_USER` and `LATTICE_FUSEKI_PASSWORD` are as the worker's. `LATTICE_AMQP_URI` and `LATTICE_FUSEKI_PASSWORD` may instead be read from a file (see [Secrets in files](#secrets-in-files)). `studio:up` gives it the service's values.
+Read by `TransformsMain`. `LATTICE_FUSEKI_URL` and `LATTICE_AMQP_URI` are required, `LATTICE_FUSEKI_DATASET` defaults to `studio`, and `LATTICE_FUSEKI_USER` and `LATTICE_FUSEKI_PASSWORD` are as the worker's. `LATTICE_AMQP_URI` and `LATTICE_FUSEKI_PASSWORD` may instead be read from a file (see [Secrets in files](#secrets-in-files)). `studio:up` gives it the service's values. It consumes three queues, each on a channel and a pool of threads of its own, so a long sample run never delays a simulator step and the transforms queue keeps its behaviour.
+
+| Variable | Required | Default | Meaning |
+|---|---|---|---|
+| `LATTICE_RUNS_INTERACTIVE_CONCURRENCY` | no | `2` | The requests the worker handles at once from `lattice.studio.runs.interactive`, a whole number from 1 |
+| `LATTICE_RUNS_CONCURRENCY` | no | `2` | The requests the worker handles at once from `lattice.studio.runs`, a whole number from 1 |
+
+A run is stopped at its deadline and a run the broker redelivers is answered with a failed frame and not run again. Until the slices that build them land, an RDF sample and a `simulate` run are each answered with one failed frame that says so.
 
 ### Values the stack sets
 
@@ -256,6 +263,8 @@ Declared identically, and idempotently, by the service when it connects and by t
 | Queue | `lattice.studio.jobs` | durable. Bound to `lattice.studio` with key `lattice.studio.jobs`. Dead-letters to `lattice.studio.dlx` |
 | Queue | `lattice.studio.jobs.long` | durable. Bound to `lattice.studio` with key `lattice.studio.jobs.long`. Dead-letters to `lattice.studio.dlx`. Jobs that take minutes, a proposal by a language model and a publication, which the service chooses by kind (`Lanes`), so a validation never waits behind one |
 | Queue | `lattice.studio.transforms` | durable, with no dead-lettering. Bound to `lattice.studio` with key `lattice.studio.transforms`. Each request expires when the service stops waiting for it, after 30 seconds |
+| Queue | `lattice.studio.runs.interactive` | durable, with no dead-lettering. Bound to `lattice.studio` with key `lattice.studio.runs.interactive`. The steps of simulators, each expiring at its run's deadline, 15 seconds at most |
+| Queue | `lattice.studio.runs` | durable, with no dead-lettering. Bound to `lattice.studio` with key `lattice.studio.runs`. Sample runs, each expiring at its run's deadline, 120 seconds at most |
 | Queue | `lattice.studio.dead` | durable. Bound to `lattice.studio.dlx` with key `#` |
 | Super stream | `lattice.studio.writes` | a direct exchange with `x-super-stream`. A write's routing key is its workspace's partition, `0` to `7` |
 | Streams | `lattice.studio.writes-0` to `-7` | one per partition, bound with `x-stream-partition-order`, keeping a week or 1 GiB. Consumed by the group `lattice.studio.writers` with a single active consumer per partition |
@@ -398,7 +407,7 @@ A host that speaks MCP over stdio only reaches it through a bridge from stdio to
 | Dataset | `curl -s -o /dev/null -w '%{http_code}\n' 'http://127.0.0.1:3130/studio/sparql?query=ASK%7B%7D'` | `200` |
 | RabbitMQ, downloaded | `mise exec -- .build/config-studio/infra/rabbitmq_server-4.4.0/sbin/rabbitmq-diagnostics -n studio@localhost -q ping` | exit status 0 and no error. Use the version the stack script pins |
 | RabbitMQ, Docker | `docker compose -f deployment/compose/config-studio/docker-compose.yml exec rabbitmq rabbitmq-diagnostics -q ping` | exit status 0. This is also the container's health check |
-| Topology and workers | `mise exec -- .build/config-studio/infra/rabbitmq_server-4.4.0/sbin/rabbitmqctl -n studio@localhost list_queues name messages consumers` | `lattice.studio.jobs`, `lattice.studio.jobs.long` and `lattice.studio.transforms` each with `consumers` 1, and `messages` 0 when idle. `consumers` 0 means no worker, or no transforms worker, is connected, and a transform then answers `504` |
+| Topology and workers | `mise exec -- .build/config-studio/infra/rabbitmq_server-4.4.0/sbin/rabbitmqctl -n studio@localhost list_queues name messages consumers` | `lattice.studio.jobs`, `lattice.studio.jobs.long`, `lattice.studio.transforms`, `lattice.studio.runs.interactive` and `lattice.studio.runs` each with `consumers` 1, and `messages` 0 when idle. `consumers` 0 means no worker, or no transforms worker, is connected, and a transform then answers `504` |
 
 The worker has no port. It is healthy when `worker.log` shows no error, each jobs queue has one consumer, `studio:status` shows no part as `exited`, and a submitted job reaches `cst:Succeeded` or `cst:Failed`. The studio shows a warning when a queue has none.
 

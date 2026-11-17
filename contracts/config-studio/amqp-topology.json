@@ -5,32 +5,38 @@
     {
       "name": "lattice.studio.jobs",
       "routingKey": "lattice.studio.jobs",
-      "deadLetter": true
+      "deadLetter": true,
+      "bindTo": "exchange"
     },
     {
       "name": "lattice.studio.jobs.long",
       "routingKey": "lattice.studio.jobs.long",
-      "deadLetter": true
+      "deadLetter": true,
+      "bindTo": "exchange"
     },
     {
       "name": "lattice.studio.transforms",
       "routingKey": "lattice.studio.transforms",
-      "deadLetter": false
+      "deadLetter": false,
+      "bindTo": "exchange"
     },
     {
       "name": "lattice.studio.runs.interactive",
       "routingKey": "lattice.studio.runs.interactive",
-      "deadLetter": false
+      "deadLetter": false,
+      "bindTo": "exchange"
     },
     {
       "name": "lattice.studio.runs",
       "routingKey": "lattice.studio.runs",
-      "deadLetter": false
+      "deadLetter": false,
+      "bindTo": "exchange"
     },
     {
       "name": "lattice.studio.dead",
       "routingKey": "#",
-      "deadLetter": false
+      "deadLetter": false,
+      "bindTo": "deadLetterExchange"
     }
   ],
   "writes": {
