@@ -138,6 +138,24 @@ class Client:
     def delete_job(self, job: str) -> Reply:
         return self.request("DELETE", f"/api/jobs/{job}")
 
+    # --- runs ------------------------------------------------------------------------------------
+
+    def submit_run(self, ws: str, job: str, tab: str, body: bytes | str, content_type: str, kind: str = "sample", target: str = "mapping",
+                   deadline: Optional[str] = None, wait: bool = False) -> Reply:
+        """A run of a finished compile job over `body` (contracts/config-studio/README.md, Runs). `deadline` is an `xsd:dateTime` with a time zone, left to the service when None.
+        Answers `202` with the run (`run_iri(reply)`), or with `wait` `200` and the frames as a JSON array."""
+        params = {"kind": kind, "target": target, "job": job, "tab": tab}
+        if deadline:
+            params["deadline"] = deadline
+        if wait:
+            params["wait"] = "true"
+        return self.request("POST", f"/api/workspaces/{ws}/runs?{urllib.parse.urlencode(params)}", body, {"Content-Type": content_type})
+
+    @staticmethod
+    def run_iri(reply: Reply) -> str:
+        found = re.search(r"urn:lattice:studio:run:[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", reply.text)
+        return found.group(0) if found else ""
+
     # --- the registry ----------------------------------------------------------------------------
 
     def registry(self) -> Reply:

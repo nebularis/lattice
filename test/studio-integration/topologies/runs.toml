@@ -1,0 +1,10 @@
+# One writer, the Python workers, the run worker and two service instances sharing the one broker and store, for the run protocol's failure cases (SVA-R5).
+name = "runs"
+writers = 1
+workers = 1
+long_workers = 1
+run_workers = 1
+instances = 2
+store = "tdb2"
+auth = "local"
+runner = "processes"

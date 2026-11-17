@@ -20,11 +20,14 @@ A TOML file with these keys, all but `name` optional.
 | `name` | letters, digits, `-`, `_` | | names the topology |
 | `writers` | 1 or more | 1 | store writer processes. They join one consumer group and RabbitMQ spreads the writes super stream's partitions across them |
 | `workers` | 0 or more | 1 | Python workers consuming the jobs queue |
+| `long_workers` | 0 or more | 1 | Python workers consuming the long jobs queue |
+| `run_workers` | 0 or more | 0 | run workers (the transforms jar) consuming the run queues. Only the `processes` runner starts them |
+| `instances` | 1 or more | 1 | service instances sharing the one broker and store, each on a port of its own. Only the `processes` runner starts more than one |
 | `store` | `tdb2`, `memory` | `tdb2` | Fuseki over TDB2 in the run's folder (or a Docker volume), or over a dataset in memory |
 | `auth` | `local` | `local` | the service's authentication. `oidc` is not supported yet |
 | `runner` | `processes`, `compose` | `processes` | how the components run. `start(runner=...)` overrides it |
 
-The number of partitions is fixed at 8 by `contracts/config-studio/amqp-topology.json`, so `writers` is a number of writer processes and not of partitions. The transforms worker is not started, since no scenario here uses it.
+The number of partitions is fixed at 8 by `contracts/config-studio/amqp-topology.json`, so `writers` is a number of writer processes and not of partitions. A run worker is started only where `run_workers` asks. The broker asks the first service instance about a browser, so a tab reads its events key from that instance (`client(instance=0)`) and may send its runs to any.
 
 ## The two runners
 
@@ -55,7 +58,7 @@ A run folder is `.build/studio-harness/{run id}` (git-ignored). Setting `STUDIO_
 
 ## The client
 
-`Client(url, principal="developer")` sends `X-Lattice-Principal`. Each method returns a `Reply` (`status`, `body`, `text`, `headers`, `location`, `revision`, `nanos`) and never raises on a status. `nanos` is the time of the request, from sending to the last byte read, on `time.perf_counter_ns`. Methods are `create_workspace`, `list_workspaces`, `get_workspace`, `delete_workspace`, `export_workspace`, `read_part`, `save_part`, `set_access`, `set_dependencies`, `submit_job`, `get_job`, `wait_job`, `publish`, `delete_job`, `registry_terms`, `registry_holders`, `registry_bundle` and `health`. Each request opens its own connection, so a client may be shared by threads.
+`Client(url, principal="developer")` sends `X-Lattice-Principal`. Each method returns a `Reply` (`status`, `body`, `text`, `headers`, `location`, `revision`, `nanos`) and never raises on a status. `nanos` is the time of the request, from sending to the last byte read, on `time.perf_counter_ns`. Methods are `create_workspace`, `list_workspaces`, `get_workspace`, `delete_workspace`, `export_workspace`, `read_part`, `save_part`, `set_access`, `set_dependencies`, `submit_job`, `get_job`, `wait_job`, `publish`, `delete_job`, `registry_terms`, `registry_holders`, `registry_bundle`, `health` and `submit_run`, with `run_iri` to read a run from its `202`. A `ProcessStudio` also has `client(principal, instance)` for the instance of a topology, `signal(name, "STOP" | "CONT" | "KILL")` to hold, continue or crash a process of the run, `start_run_worker`, `start_service` and `wait_service` to start one again, `stop_worker(name, kill=True)` and `queue_counts(queue, *columns)` for a queue's messages and consumers. Each request opens its own connection, so a client may be shared by threads.
 
 `smoke(client)` runs create, list, two saves, a stale save refused with `412`, a read of revision 1, a publish job and publish, the registry, lock and delete, and returns the steps with their times.
 
@@ -63,6 +66,10 @@ A run folder is `.build/studio-harness/{run id}` (git-ignored). Setting `STUDIO_
 
 `reports` writes a benchmark's report, one JSON file per run in `benchmark/reports/{benchmark}/{UTC date and time}-{short commit}.json`, described by [report.schema.json](../../../benchmark/reports/report.schema.json). `reports.machine()` records the kind of machine, never its name or its user. `reports.measure()` gives a measure's median, interquartile range, minimum and maximum, and `reports.time_ms()` times a Python action on `time.perf_counter_ns` with warm-up repeats discarded. `compare` (`mise run benchmark:compare -- {benchmark} [--base REPORT] [--head REPORT]`) tables two reports, marks a change whose medians lie outside both runs' interquartile ranges, warns when the machines differ, and exits 1 only on a malformed or missing report (STD-290). They live here because the harness is the one consumer so far and is already installed where the checks run. Move them to their own package when a benchmark that does not use the harness needs them.
 
+## A tab
+
+`tab.Tab(url, principal, tab)` starts `tab_events.mjs`, which connects over the broker's Web MQTT as the studio's browser does, with the events key read from the session of the service at `url` inside the helper and never printed, and records each event it receives. `frames(run)` gives the run frames, `wait_last(run, seconds)` waits for a frame with `last`, and `stop()` disconnects, so a second `start()` is a tab that reconnects on a clean session. `settle(frames)` applies the contract's rule for what a client shows. The helper needs `node` and the repository's `mqtt` and `ws` packages. It does not verify the broker's certificate, which is the run's own.
+
 ## Tests
 
-`tests/` holds the package's own tests (SH-T1 to SH-T8, and SR-T1 to SR-T12 for the reports). They start nothing and run in `mise run check:config-studio`. The suite that starts studios is [`test/studio-integration`](../../../test/studio-integration/README.md).
+`tests/` holds the package's own tests (SH-T1 to SH-T14, and SR-T1 to SR-T12 for the reports). They start nothing and run in `mise run check:config-studio`. The suite that starts studios is [`test/studio-integration`](../../../test/studio-integration/README.md).

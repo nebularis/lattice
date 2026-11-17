@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -14,11 +15,12 @@ from typing import Dict, List, Optional, Tuple
 from . import _build, reaper
 from ._tools import catalogue, stack as stack_module
 from .client import Client
-from .topology import HarnessError, Studio, Topology, free_ports, new_run_id, queue_consumers
+from .topology import HarnessError, Studio, Topology, free_ports, new_run_id, queue_consumers, queue_counts
 
 READY_TIMEOUT = 240.0
 # Files the developer's own stack downloaded, seeded into the cache so a first run does not download them again.
 SEED = ("jena-fuseki-server-*.jar", "rabbitmq-server-*")
+RUNS_QUEUE = "lattice.studio.runs"
 
 
 def certificate(into: Path) -> Tuple[Path, Path, Path]:
@@ -76,10 +78,11 @@ class ProcessStudio(Studio):
 
     def _start(self) -> None:
         t = self.topology
-        fuseki, amqp, dist, stream, service, web_mqtt, web_mqtts = free_ports(7)
+        fuseki, amqp, dist, stream, service, web_mqtt, web_mqtts, *others = free_ports(6 + t.instances)
         cache = _build.cache_dir(self.root)
         _seed(cache, self.root / ".build" / "config-studio" / "infra")
-        jars = _build.jars(self.root)
+        jars = _build.jars(self.root, ("service", "writer", "transforms") if t.run_workers else _build.DEFAULT_JARS)
+        self.jars = jars
         assets = _build.assets(self.root, self.run_dir / "assets")
         stack = stack_module.Stack(self.root)
         stack.run, stack.infra, stack.data, stack.cache = self.run_dir / "run", self.run_dir / "infra", self.run_dir / "data", cache
@@ -121,9 +124,14 @@ class ProcessStudio(Studio):
             self._track(name)
         for i in range(1, t.writers + 1):
             self._wait_log(f"writer-{i}", "store writer running")
-        stack.spawn("service", ["java", "-jar", str(jars["service"])], service_env)
-        self._track("service")
-        stack.wait_for("service", service, READY_TIMEOUT)
+        # Every instance takes the same broker, store and secret, and answers on a port of its own. The broker asks the first about a browser,
+        # so a tab reads the events key from the first (`client(instance=0)`) and may submit its runs to any.
+        self.service_ports = {"service": service, **{f"service-{i}": port for i, port in enumerate(others, start=2)}}
+        self.service_env = service_env
+        for name, port in self.service_ports.items():
+            self.start_service(name)
+        for name, port in self.service_ports.items():
+            stack.wait_for(name, port, READY_TIMEOUT)
         for i in range(1, t.workers + 1):
             name = f"worker-{i}"
             stack.spawn(name, [sys.executable, "-m", "lattice_workers.config_studio_main"], self._worker_env(env))
@@ -132,7 +140,10 @@ class ProcessStudio(Studio):
             name = f"worker-long-{i}"
             stack.spawn(name, [sys.executable, "-m", "lattice_workers.config_studio_main"], self._worker_env({**env, "LATTICE_WORKER_QUEUE": "lattice.studio.jobs.long"}))
             self._track(name)
+        for i in range(1, t.run_workers + 1):
+            self.start_run_worker(f"run-worker-{i}")
         self.url = f"http://127.0.0.1:{service}"
+        self.urls = [f"http://127.0.0.1:{port}" for port in self.service_ports.values()]
         self._wait_health()
         self._wait_workers()
 
@@ -163,8 +174,12 @@ class ProcessStudio(Studio):
         raise HarnessError(f"{name} did not report '{text}'. Last lines of {log}:\n{tail}")
 
     def _wait_health(self) -> None:
+        for url in self.urls:
+            self._wait_url(url)
+
+    def _wait_url(self, url: str) -> None:
         deadline = time.monotonic() + READY_TIMEOUT
-        client = Client(self.url)
+        client = Client(url)
         while time.monotonic() < deadline:
             try:
                 if client.health().status == 200:
@@ -172,16 +187,16 @@ class ProcessStudio(Studio):
             except OSError:
                 pass
             time.sleep(0.3)
-        raise HarnessError(f"the service did not answer {self.url}/api/health")
+        raise HarnessError(f"the service did not answer {url}/api/health")
 
     def _wait_workers(self) -> None:
         """Waits until each jobs queue has a consumer for each of its workers, so the first job does not wait for a cold start."""
-        wants = {"lattice.studio.jobs": self.topology.workers, "lattice.studio.jobs.long": self.topology.long_workers}
+        wants = {"lattice.studio.jobs": self.topology.workers, "lattice.studio.jobs.long": self.topology.long_workers, RUNS_QUEUE: self.topology.run_workers}
         deadline = time.monotonic() + READY_TIMEOUT
         while any(wants.values()) and time.monotonic() < deadline:
             if all(self.consumers(queue) >= want for queue, want in wants.items()):
                 return
-            for name in [n for n in self.pids if n.startswith("worker-")]:
+            for name in [n for n in self.pids if n.startswith(("worker-", "run-worker-"))]:
                 if self.stack.pid(name) is None:
                     log = self.stack.run / f"{name}.log"
                     raise HarnessError(f"{name} stopped. Last lines of {log}:\n" + "\n".join(log.read_text(errors="replace").splitlines()[-20:]))
@@ -201,15 +216,57 @@ class ProcessStudio(Studio):
         self._track(name)
 
     def stop_worker(self, name: str, kill: bool = False) -> None:
-        """Stops a worker started with `start_worker`, through its shutdown, or with `kill` at once, as a crash would."""
+        """Stops a worker started with `start_worker`, or any process of the run by its name, through its shutdown, or with `kill` at once, as a crash would.
+        A process held with `signal(name, "STOP")` is continued first, since a stopped process cannot shut itself down."""
         pid = self.pids.pop(name, None)
         if pid is None:
             return
         if kill:
-            os.kill(pid, 9)
+            os.kill(pid, signal.SIGKILL)
             self.stack._pid_file(name).unlink(missing_ok=True)
         else:
+            self._continue(pid)
             self.stack.stop(name)
+
+    @staticmethod
+    def _continue(pid: int) -> None:
+        try:
+            os.kill(pid, signal.SIGCONT)
+        except ProcessLookupError:
+            pass
+
+    def signal(self, name: str, which: str) -> None:
+        """Sends a process of the run `STOP`, `CONT` or `KILL`, as a test freezes a worker or crashes it without the process's own shutdown. A `KILL`ed process stays a name of the run until `stop_worker` or a restart."""
+        pid = self.pids.get(name)
+        if pid is None:
+            raise HarnessError(f"{name} is not a process of this run")
+        os.kill(pid, {"STOP": signal.SIGSTOP, "CONT": signal.SIGCONT, "KILL": signal.SIGKILL}[which])
+
+    def start_run_worker(self, name: str, env: Optional[Dict[str, str]] = None) -> None:
+        """Starts a run worker (the transforms jar) as the process `name`. It needs a topology with `run_workers` of at least one, which is what builds the jar into the run. `env` is added to its settings."""
+        if "transforms" not in self.jars:
+            raise HarnessError("the run worker's jar is not in this run. Declare run_workers in the topology")
+        self.stack.spawn(name, ["java", "-jar", str(self.jars["transforms"])], {**self.env, **(env or {})})
+        self._track(name)
+
+    def start_service(self, name: str = "service") -> None:
+        """Starts the service instance `name` (`service`, `service-2`, ...) on its own port, or again after `stop_worker(name, kill=True)`, on the same port."""
+        self.pids.pop(name, None)
+        self.stack.spawn(name, ["java", "-jar", str(self.jars["service"])], {**self.service_env, "LATTICE_STUDIO_PORT": str(self.service_ports[name])})
+        self._track(name)
+
+    def wait_service(self, name: str = "service") -> None:
+        """Waits until the instance `name` answers its health check."""
+        self._wait_url(f"http://127.0.0.1:{self.service_ports[name]}")
+
+    def client(self, principal: str = "developer", instance: int = 0) -> Client:
+        """The client of service instance `instance`, 0 being the first. The events key is the first's, which the broker asks."""
+        return Client(self.urls[instance], principal)
+
+    def queue_counts(self, queue: str, *columns: str) -> Dict[str, int]:
+        """The counts of a queue, from `messages`, `messages_ready`, `messages_unacknowledged` and `consumers`."""
+        listed = self.ctl("list_queues", "name", *columns, "--formatter", "csv", "--silent")
+        return queue_counts(listed, queue, columns)
 
     def worker_running(self, name: str) -> bool:
         return self.stack.pid(name) is not None
@@ -260,6 +317,8 @@ class ProcessStudio(Studio):
         self.started = False
         stack = getattr(self, "stack", None)
         if stack is not None:
+            for pid in self.pids.values():
+                self._continue(pid)
             for name in reversed(list(self.pids)):
                 stack.stop(name)
         _build.remove(self.run_dir)

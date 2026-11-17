@@ -17,6 +17,8 @@ The task is on demand and never a dependency of `check` (SQ-D7). The tests carry
 |---|---|
 | `topologies/single.toml` | one writer, one worker |
 | `topologies/pair.toml` | two writers, two workers |
+| `topologies/runs.toml` | one writer, the Python worker, a run worker and two service instances |
+| `test_runs.py` | the failure cases of the run protocol on a real stack, by stopping, continuing and killing the run worker and a service instance, with a tab that subscribes over Web MQTT (`mise run studio:runs`, marker `studio_runs`) |
 | `test_smoke.py` | for each topology, starts it, runs the smoke scenario, stops it, and asserts that no process or container it started remains, its run folder is gone and its port is closed |
 
 A topology is added by adding a file to `topologies/`. Output is printed with the time of each step, so run with `-s` (the task does).

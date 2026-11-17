@@ -16,7 +16,8 @@ from lattice_testing_studio_harness import Client, HarnessError, Reply, Topology
 from lattice_testing_studio_harness._tools import catalogue, stack
 from lattice_testing_studio_harness.compose import Paths, compose_config, fuseki_config
 from lattice_testing_studio_harness.processes import ProcessStudio
-from lattice_testing_studio_harness.topology import new_run_id, queue_consumers
+from lattice_testing_studio_harness.tab import settle
+from lattice_testing_studio_harness.topology import new_run_id, queue_consumers, queue_counts
 
 ROOT = catalogue.find_root()
 TOPOLOGIES = sorted((ROOT / "test" / "studio-integration" / "topologies").glob("*.toml"))
@@ -129,3 +130,45 @@ def test_sh_t10_a_workers_proposer_settings_come_from_the_test_and_never_the_she
     studio = ProcessStudio(Topology(name="env"), ROOT)
     assert studio._worker_env({"LATTICE_ROOT": "r"}) == {"LATTICE_ROOT": "r", "LATTICE_PROPOSER_KEY_FILE": "", "LATTICE_PROPOSER_MODEL": ""}
     assert studio._worker_env({"LATTICE_PROPOSER_MODEL": "from-the-test"})["LATTICE_PROPOSER_MODEL"] == "from-the-test"
+
+
+def test_sh_t11_a_topology_declares_run_workers_and_service_instances() -> None:
+    runs = Topology.load(ROOT / "test" / "studio-integration" / "topologies" / "runs.toml")
+    assert (runs.run_workers, runs.instances) == (1, 2)
+    assert (Topology(name="x").run_workers, Topology(name="x").instances) == (0, 1), "a topology has one service and no run worker unless it says so"
+    with pytest.raises(HarnessError, match="at least one service instance"):
+        Topology.parse('name = "x"\ninstances = 0')
+    with pytest.raises(HarnessError, match="whole number"):
+        Topology.parse('name = "x"\nrun_workers = "1"')
+    with pytest.raises(HarnessError, match="cannot be negative"):
+        Topology.parse('name = "x"\nrun_workers = -1')
+    with pytest.raises(HarnessError, match="compose runner starts one service instance"):
+        runs.start(runner="compose")
+
+
+def test_sh_t12_queue_counts_reads_rabbitmqctl_csv() -> None:
+    out = '"name","messages","messages_unacknowledged"\n"lattice.studio.runs","3","1"\n"lattice.studio.jobs","0","0"\n'
+    assert queue_counts(out, "lattice.studio.runs", ("messages", "messages_unacknowledged")) == {"messages": 3, "messages_unacknowledged": 1}
+    assert queue_counts(out, "absent", ("messages",)) == {"messages": 0}
+
+
+def test_sh_t13_a_run_is_read_from_its_reply_and_a_run_request_is_built_from_its_parts() -> None:
+    iri = "urn:lattice:studio:run:0b3c7f2e-1111-4222-8333-444455556666"
+    assert Client.run_iri(Reply(202, f"<{iri}> a cst:Run .".encode())) == iri
+    assert Client.run_iri(Reply(400, b"deadline is in the past")) == ""
+    calls = []
+    client = Client("http://127.0.0.1:1")
+    client.request = lambda method, path, body=b"", headers=None: calls.append((method, path, body, headers)) or Reply(202, b"")  # type: ignore[method-assign]
+    client.submit_run("w1", "j1", "tab1", "<x/>", "application/xml", deadline="2026-11-17T10:00:00Z", wait=True)
+    method, path, body, headers = calls[0]
+    assert method == "POST" and body == "<x/>" and headers == {"Content-Type": "application/xml"}
+    assert path == "/api/workspaces/w1/runs?kind=sample&target=mapping&job=j1&tab=tab1&deadline=2026-11-17T10%3A00%3A00Z&wait=true"
+
+
+def test_sh_t14_a_client_settles_a_run_by_the_contracts_rule() -> None:
+    ok = {"seq": 0, "last": False}
+    assert settle([]) == {"state": "open", "message": None, "missing": []}
+    assert settle([ok, {"seq": 1, "last": True, "status": "succeeded"}])["state"] == "complete"
+    assert settle([{"seq": 1, "last": False}, ok, ok, {"seq": 2, "last": True, "status": "succeeded"}])["state"] == "complete", "the first frame of a seq counts and a repeat does not"
+    assert settle([ok, {"seq": 2, "last": True, "status": "succeeded"}]) == {"state": "partial", "message": None, "missing": [1]}
+    assert settle([ok, {"seq": 3, "last": True, "status": "failed", "message": "it did not finish"}]) == {"state": "failed", "message": "it did not finish", "missing": [1, 2]}

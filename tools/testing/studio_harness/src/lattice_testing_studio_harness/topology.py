@@ -9,7 +9,7 @@ import tomllib
 from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence
 
 if TYPE_CHECKING:
     from .client import Client
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 STORES = ("tdb2", "memory")
 AUTHS = ("local",)
 RUNNERS = ("processes", "compose")
-KEYS = {"name", "writers", "workers", "long_workers", "store", "auth", "runner"}
+KEYS = {"name", "writers", "workers", "long_workers", "run_workers", "instances", "store", "auth", "runner"}
 
 
 class HarnessError(RuntimeError):
@@ -30,6 +30,8 @@ class Topology:
     writers: int = 1
     workers: int = 1
     long_workers: int = 1
+    run_workers: int = 0
+    instances: int = 1
     store: str = "tdb2"
     auth: str = "local"
     runner: str = "processes"
@@ -39,8 +41,10 @@ class Topology:
             raise HarnessError(f"topology name {self.name!r} is letters, digits, hyphens and underscores")
         if self.writers < 1:
             raise HarnessError("a topology has at least one writer")
-        if self.workers < 0 or self.long_workers < 0:
+        if self.workers < 0 or self.long_workers < 0 or self.run_workers < 0:
             raise HarnessError("workers cannot be negative")
+        if self.instances < 1:
+            raise HarnessError("a topology has at least one service instance")
         for field, value, allowed in (("store", self.store, STORES), ("auth", self.auth, AUTHS), ("runner", self.runner, RUNNERS)):
             if value not in allowed:
                 note = " (oidc is not supported by the harness yet)" if field == "auth" and value == "oidc" else ""
@@ -54,7 +58,7 @@ class Topology:
             raise HarnessError(f"unknown topology keys {sorted(unknown)}")
         if "name" not in data:
             raise HarnessError("a topology has a name")
-        for key in ("writers", "workers", "long_workers"):
+        for key in ("writers", "workers", "long_workers", "run_workers", "instances"):
             if key in data and (type(data[key]) is not int):
                 raise HarnessError(f"{key} is a whole number")
         return cls(**data)
@@ -66,6 +70,8 @@ class Topology:
     def start(self, runner: Optional[str] = None, root: Optional[Path] = None) -> "Studio":
         """Starts the studio with `runner` (the topology's own by default) and returns it once it answers. Stop it with `stop()` or by using it in a `with`."""
         chosen = runner or self.runner
+        if chosen == "compose" and (self.instances != 1 or self.run_workers):
+            raise HarnessError("the compose runner starts one service instance and no run worker. Use the processes runner")
         if chosen == "processes":
             from .processes import ProcessStudio
             studio: Studio = ProcessStudio(self, root)
@@ -132,3 +138,12 @@ def queue_consumers(csv_text: str, queue: str) -> int:
         if name.strip('"') == queue and count.isdigit():
             return int(count)
     return 0
+
+
+def queue_counts(csv_text: str, queue: str, columns: Sequence[str]) -> Dict[str, int]:
+    """The counts of `queue` named by `columns`, in the output of `rabbitmqctl list_queues name {columns} --formatter csv --silent`, each 0 for a queue the output lacks."""
+    for line in csv_text.splitlines():
+        cells = [cell.strip().strip('"') for cell in line.split(",")]
+        if cells and cells[0] == queue and len(cells) == len(columns) + 1:
+            return {column: int(cell) if cell.isdigit() else 0 for column, cell in zip(columns, cells[1:])}
+    return {column: 0 for column in columns}

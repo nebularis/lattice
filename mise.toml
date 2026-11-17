@@ -794,6 +794,11 @@ description = "Run the studio worker through a job longer than the broker's hear
 depends = ["build:config-studio-assets", "bootstrap:testing-studio-harness"]
 run = "python -m pytest test/studio-integration/test_worker_liveness.py -q -s -m studio_liveness"
 
+[tasks."studio:runs"]
+description = "Run the run protocol's failure cases (a worker that stops, an instance that stops, a workspace locked mid run, a tab that was away, a run no worker takes, the message's properties and the limit of four) on a real stack with a broker, a run worker and two service instances of the harness's own (slice SVA-R5). Needs the jars built under platform/*/target, as studio:integration does. On demand, never a dependency of check"
+depends = ["build:config-studio-assets", "bootstrap:testing-studio-harness"]
+run = "python -m pytest test/studio-integration/test_runs.py -q -s -m studio_runs --durations=0"
+
 [tasks."studio:status"]
 description = "Show what studio:up started and which of the studio's ports are listening"
 run = "python tools/config_studio_stack.py status"

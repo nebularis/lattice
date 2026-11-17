@@ -8,12 +8,13 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 from ._tools import catalogue
 from .topology import HarnessError
 
-JARS = {"service": "config-studio-service", "writer": "config-studio-writer"}
+JARS = {"service": "config-studio-service", "writer": "config-studio-writer", "transforms": "config-studio-transforms"}
+DEFAULT_JARS = ("service", "writer")
 KEEP_ENV = "STUDIO_HARNESS_KEEP"
 JARS_ENV = "LATTICE_STUDIO_HARNESS_JARS"
 ASSETS_ENV = "LATTICE_STUDIO_HARNESS_ASSETS"
@@ -30,8 +31,8 @@ def cache_dir(root: Path) -> Path:
     return harness_dir(root) / "_cache"
 
 
-def jars(root: Path) -> Dict[str, Path]:
-    """The service's and the writer's jars, copied once into the cache under their content hash.
+def jars(root: Path, names: Sequence[str] = DEFAULT_JARS) -> Dict[str, Path]:
+    """The service's and the writer's jars, and the run worker's (the transforms jar) when `names` asks, copied once into the cache under their content hash.
 
     The copy is made from `platform/{module}/target/{module}.jar`, which is only read, so a stack running from those jars is not disturbed. A jar that is
     missing is built with Maven, which writes `target`, so that happens only in a checkout where no stack runs from `target`.
@@ -39,7 +40,7 @@ def jars(root: Path) -> Dict[str, Path]:
     override = os.environ.get(JARS_ENV)
     platform = root / catalogue.load(root).area("platform")
     out: Dict[str, Path] = {}
-    for key, module in JARS.items():
+    for key, module in ((k, JARS[k]) for k in names):
         if override:
             flat, nested = Path(override) / f"{module}.jar", Path(override) / module / "target" / f"{module}.jar"
             source = flat if flat.is_file() else nested
