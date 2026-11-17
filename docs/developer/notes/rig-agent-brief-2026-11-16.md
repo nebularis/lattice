@@ -74,6 +74,8 @@ Then run the tool on the mini-rig and record, for each, the row count or the fin
 
 The addenda to ADR-A131 decided what an account declares and what a request carries. Most of it has no term yet, because the layer's vocabulary is reworked in a later slice of the ledger unit. Each question below is therefore one of two things, a query where a term exists and a recorded gap where none does. The gaps are the result that matters, since they are the requirements that rework has to meet.
 
+**Changed on 2026-11-17, before the slice started.** What an account declares for a merge is moving from the account definition to a merge policy node, in slice LG-24 of the ledger unit, and its terms are decided or being decided as LG-Q30 to LG-Q36 of the [ledger plan](../plans/ledger.md). So do part A now, and in part B take only the rows whose terms do not move: `ceiling` and `purposes` in 5.1, and `whole-or-nothing`, `held-rank`, `restoring-kinds` and `floor` in 5.2. Leave `merge-rule`, `residual-rule`, `rounding`, `order-criterion`, `tie-rule`, `refuse-or-cut`, `order-check`, `residual-allowed`, `mixed-position` and `rounding-treatment` until LG-24 is built, and ask the maintainer then. One is already answered: the rule for requests of one rank is what `ldg:mergeRule` states, so `tie-rule` is no gap.
+
 ### 5.1 A term appears to exist
 
 | Name | Question | Term to confirm |
