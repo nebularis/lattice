@@ -226,9 +226,12 @@ export function Canvas(props: CanvasProps) {
     if (items?.length) setMenu({ x: event.clientX, y: event.clientY, items });
   };
 
-  // A canvas that opens fitted is fitted again when its pane changes width, as when the author collapses or resizes a column (SVA-U1).
+  // A canvas that opens fitted is fitted again when its pane changes width, as when the author collapses or resizes a column (SVA-U1),
+  // for as long as the author has not moved the view since its last fit. A pan, a zoom with the wheel or the buttons, counts as moving
+  // it, and the fit button makes it fitted again. Once it is moved, a resize keeps the centre of the view and its zoom (SVA-M4).
   const flow = useRef<ReactFlowInstance | undefined>(undefined);
   const frame = useRef<HTMLDivElement>(null);
+  const moved = useRef(false);
   const refit = ownOpening ? laid.length <= (props.fitViewUpTo ?? 30) : true;
   useEffect(() => {
     const el = frame.current;
@@ -236,8 +239,13 @@ export function Canvas(props: CanvasProps) {
     let width = el.clientWidth;
     const watch = new ResizeObserver(() => {
       if (el.clientWidth === width) return;
+      const before = width;
       width = el.clientWidth;
-      void flow.current?.fitView({ padding: 0.1, maxZoom: 1 });
+      const instance = flow.current;
+      if (!instance) return;
+      if (!moved.current) return void instance.fitView({ padding: 0.1, maxZoom: 1 });
+      const view = instance.getViewport();
+      void instance.setViewport({ x: view.x + (width - before) / 2, y: view.y, zoom: view.zoom });
     });
     watch.observe(el);
     return () => watch.disconnect();
@@ -251,6 +259,10 @@ export function Canvas(props: CanvasProps) {
         nodeTypes={props.nodeTypes}
         edgeTypes={props.edgeTypes}
         onInit={(instance) => (flow.current = instance)}
+        // an event is null where the view was moved by a call, such as a fit, and is the author's where it came from a pointer or the wheel
+        onMoveStart={(event) => {
+          if (event) moved.current = true;
+        }}
         onNodesChange={(changes: NodeChange[]) => setNodes((ns) => applyNodeChanges(changes, ns))}
         onNodeDragStop={() => setNodes((ns) => (keep(ns), ns))}
         onConnect={props.onConnect}
@@ -266,7 +278,7 @@ export function Canvas(props: CanvasProps) {
         proOptions={{ hideAttribution: true }}
       >
         <Background />
-        <Controls showInteractive={false} />
+        <Controls showInteractive={false} onZoomIn={() => (moved.current = true)} onZoomOut={() => (moved.current = true)} onFitView={() => (moved.current = false)} />
       </ReactFlow>
       {menu && <ContextMenu menu={menu} close={() => setMenu(undefined)} />}
     </div>

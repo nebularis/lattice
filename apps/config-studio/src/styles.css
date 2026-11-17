@@ -529,3 +529,38 @@ table.axiom-rows.nested th { position: static; }
   .run-pane { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
   .run-controls { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 16px; border-right: 0; border-bottom: 1px solid var(--border); overflow: visible; }
 }
+
+/* The output explorer (SVA-M4): the renderings of one part of a run's result, in the run pane and wherever a simulator shows a part. */
+.output-explorer { display: flex; flex-direction: column; gap: 6px; padding: 6px 8px 8px; min-width: 0; }
+.output-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.output-switch { margin: 0; }
+.output-switch button { flex: 0 0 auto; padding: 4px 10px; }
+.output-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.output-text-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.output-explorer .run-part-text { border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); padding: 8px 10px; }
+.output-problem { margin: 0; padding: 6px 10px; border: 1px solid var(--bad); border-radius: 6px; font-size: 12.5px; color: var(--text); overflow-wrap: anywhere; }
+.output-table-wrap { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; min-width: 0; }
+.output-table-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; align-self: stretch; }
+.output-table-tools .input { flex: 0 1 220px; min-width: 120px; }
+.output-table-scroll { align-self: stretch; max-height: 320px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+.output-table { border-collapse: collapse; width: 100%; font: 12px/1.45 var(--mono); }
+.output-table th { position: sticky; top: 0; background: var(--surface-2); text-align: left; font-weight: 600; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+.output-table td { padding: 3px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+.output-graph { min-width: 0; }
+.output-count { margin: 0 0 6px; }
+.output-deferred { padding: 24px 16px; }
+.term-node { width: 240px; }
+.term-node.blank { border-style: dashed; }
+.term-label { display: block; }
+.term-row { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.output-tree, .output-tree ul { list-style: none; margin: 0; padding: 0 0 0 16px; font: 12px/1.6 var(--mono); }
+.output-tree { padding-left: 0; max-height: 360px; overflow: auto; }
+.tree-toggle { all: unset; cursor: pointer; }
+.tree-toggle:focus-visible { outline: 2px solid var(--accent); }
+.tree-leaf { overflow-wrap: anywhere; }
+.tree-key, .tree-attr { color: var(--accent); }
+.tree-attr::before { content: "@"; }
+.tree-value { overflow-wrap: anywhere; }
+.tree-value.string, .tree-value.text { color: var(--ok); }
+.tree-value.number { color: var(--warn); }
+.tree-value.boolean, .tree-value.null { color: var(--bad); }

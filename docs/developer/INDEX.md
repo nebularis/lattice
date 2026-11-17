@@ -76,7 +76,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | spc-package-split | unit |  | merged 2026-09-20 |  | [status](status/spc-package-split.md) |
 | studio-publication | multi-slice unit in four phases | PB | built 2026-10-31 | PB-1 | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
 | studio-quality | multi-slice unit | SQ | built 2026-10-31 | SQ-1 | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
-| studio-visual-authoring | multi-slice unit | SVA | building 2026-11-17 | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md), 26 Validation Packs |
+| studio-visual-authoring | multi-slice unit | SVA | built 2026-11-17 | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md), 27 Validation Packs |
 | studio-worker-liveness | multi-slice unit | WL | built 2026-11-06 | WL-0 | [plan](plans/studio-worker-liveness.md), [status](status/studio-worker-liveness.md) |
 | surface-mork-unified-projection | unit |  | merged 2026-09-22 |  | [status](status/surface-mork-unified-projection.md) |
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
@@ -556,7 +556,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-M2e | template cards for the proposer and the MCP server | studio-visual-authoring | planned | SVA-M2b, SVA-M2c | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M3a | a mapping's queries over an RDF sample, as a run | studio-visual-authoring | planned | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M3b | the sample pane | studio-visual-authoring | planned | SVA-R4, SVA-M3a | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-M4 | the output explorer | studio-visual-authoring | building 2026-11-17 | SVA-O1, SVA-R4 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-M4 | the output explorer | studio-visual-authoring | built 2026-11-17 | SVA-O1, SVA-R4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-H1 | the stack's secrets in one guarded folder, settings printed redacted, and a guard on reading them | studio-visual-authoring | built 2026-11-15 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
 | WL-0 | the plan, this record, the board | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |

@@ -275,11 +275,11 @@ interface RunFrame {
 }
 
 /** The frames of a `sample` run over the canned result: a report part and an artefact part for each mapping, then a succeeded last frame. */
-function sampleRunFrames(run: string): RunFrame[] {
+function sampleRunFrames(run: string, artefact: string = RUN_ARTEFACT): RunFrame[] {
   const frames: RunFrame[] = [];
   RUN_MAPPINGS.forEach((mapping, i) => {
     frames.push({ run, seq: frames.length, last: false, part: { index: 2 * i, role: "report", mediaType: "text/turtle", group: mapping }, text: RUN_REPORT });
-    frames.push({ run, seq: frames.length, last: false, part: { index: 2 * i + 1, role: "artefact", mediaType: "application/n-triples", path: `${i}.nt`, group: mapping, step: 0 }, text: RUN_ARTEFACT });
+    frames.push({ run, seq: frames.length, last: false, part: { index: 2 * i + 1, role: "artefact", mediaType: "application/n-triples", path: `${i}.nt`, group: mapping, step: 0 }, text: artefact });
   });
   frames.push({ run, seq: frames.length, last: true, status: "succeeded", conforms: true });
   return frames;
@@ -316,6 +316,8 @@ export class FakeService {
   runRefusal?: number;
   /** A message every run ends with as a failed last frame, as a run that could not finish does (SVA-R4). */
   runFailure?: string;
+  /** The text of the n-triples artefact each sample run gives in place of the canned one, so a test can give a larger or a broken one (SVA-M4). */
+  runArtefact?: string;
   /** Milliseconds a run is held before the fake answers it, so a test can see the pane while it runs (SVA-R4). */
   runDelayMs = 0;
   /** The number of the next waiting runs the fake ends with `504` at once, as the service does at a deadline (SVA-R4). */
@@ -448,7 +450,7 @@ export class FakeService {
         cst:compileJob <urn:lattice:studio:job:${jobId}> ; cst:deadline "${new Date(ends).toISOString().replace(/\.\d+Z$/, "Z")}"^^xsd:dateTime .\n`;
       return turtle(PREFIX + description, 202);
     }
-    const frames: RunFrame[] = this.runFailure !== undefined ? [{ run, seq: 0, last: true, status: "failed", message: this.runFailure }] : kind === "sample" ? sampleRunFrames(run) : [{ run, seq: 0, last: true, status: "failed", message: "The fake service runs no simulator." }];
+    const frames: RunFrame[] = this.runFailure !== undefined ? [{ run, seq: 0, last: true, status: "failed", message: this.runFailure }] : kind === "sample" ? sampleRunFrames(run, this.runArtefact) : [{ run, seq: 0, last: true, status: "failed", message: "The fake service runs no simulator." }];
     return route.fulfill({ status: 200, body: JSON.stringify(frames), headers: { "Content-Type": "application/json" } });
   }
 

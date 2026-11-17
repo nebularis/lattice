@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 // The run pane (SVA-R4, ADR-A154): a shell for the right-hand dock that every mode's runs use. The controls are on the left and the displays on
-// the right. The displays are deliberately plain, a status line and each part of the result as a block of text, since the output explorer
-// (SVA-M4) replaces them.
+// the right, a status line and each part of the result, which the output explorer (SVA-M4) shows in the renderings its media type allows.
 
 import { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Play, RotateCcw } from "lucide-react";
 import { api, jobId } from "../api";
 import { onRunFrame, connected, tabId } from "../events";
 import { createRunController, pageClock, pageTimers, type RunController, type RunPart, type RunState } from "../runs";
+import { OutputExplorer } from "./OutputExplorer";
 import { Spinner } from "./kit";
 
 /** What the mapping view keeps for the pane to run: the sample, its media type, and a way to find or make the compilation of the part as it is. */
@@ -56,7 +56,7 @@ function PartBlock({ part }: { part: RunPart }) {
         {where && <div className="small run-part-where">{where}</div>}
         <div className="small muted">{part.mediaType}</div>
       </div>
-      <pre className="run-part-text">{part.text}</pre>
+      <OutputExplorer part={part} />
     </section>
   );
 }

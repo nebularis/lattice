@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-17. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-17. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-R5 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Phases B, O and R are built. Ready to start: SVA-P1, the persistence canvas, SVA-S1, the surface canvas, SVA-M2a, MORK's template library, and SVA-M4, the output explorer, which the sample pane and the simulators all show their results in.
+**Next action:** paused after SVA-M4 for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each. Ready to start: SVA-P1, the persistence canvas, SVA-S1, the surface canvas, SVA-M3a, a mapping's queries over an RDF sample as a run, and SVA-M2a, MORK's template library, which is a modelling change to present as a design first.
 
 ## Slices
 
@@ -62,7 +62,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-M2e | template cards for the proposer and the MCP server | planned | SVA-M2b, SVA-M2c |
 | SVA-M3a | a mapping's queries over an RDF sample, as a run | planned | SVA-P3 |
 | SVA-M3b | the sample pane | planned | SVA-R4, SVA-M3a |
-| SVA-M4 | the output explorer | building 2026-11-17 | SVA-O1, SVA-R4 |
+| SVA-M4 | the output explorer | built 2026-11-17, building 2026-11-17 | SVA-O1, SVA-R4 |
 | SVA-H1 | the stack's secrets in one guarded folder, settings printed redacted, and a guard on reading them | built 2026-11-15, building 2026-11-15 |  |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | planned |  |
 
@@ -97,6 +97,7 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-16, SVA-R2: two breaks were tried. Skipping the access check at delivery failed 3 of the 17 registry tests, and publishing a run before recording it failed 4 of the 19 route tests, among them the test that gives a frame from inside the publish call.
 - 2026-11-17, SVA-R3: two breaks were tried. Cutting a part at a fixed byte count failed 1 of 6 RunFramesTest tests, and acknowledging before publishing failed 6 of 12 RunWorkerTest tests. Both were restored.
 - 2026-11-17, SVA-R5: three breaks were made in a copy of the sources, the worker ignoring the redelivered flag, an instance forwarding the frames of runs it does not hold, and the access check at delivery skipped. R5-T3, R5-T4 and R5-T5 each failed with the whole run reaching the tab where one failed frame, nothing and nothing were expected, and no break was left in place.
+- 2026-11-17, SVA-M4: two breaks were tried and each was seen to fail and was restored. Making the table the default for RDF failed the test of the artefact on the Text button, and refitting on every resize failed the zoom test with 0.293 where 0.259 was kept.
 
 ## Log
 
@@ -165,3 +166,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-17: SVA-R5 built, [Validation Pack](../validation/SVA-R5.md). Nine real-stack tests of the run protocol (one writer, the Python workers, the run worker and two service instances on a real broker) cover a whole run through either instance, wait=true, a worker killed mid run, an accepting instance killed, a workspace locked mid run, a tab that was away, a run no worker takes, the message's properties and the limit of four, and passed twice in a row in 135 seconds. The harness gained run workers, service instances, signals and a tab subscriber. No fault was found. Left: the limit of four is held per instance, and mise run studio:runs cannot find Erlang where mise has it disabled.
 - 2026-11-17: SVA-R5 verified by a second run of the real-stack suite, 9 passed in 134 seconds, and of the harness's tests, 43 passed. No fault was found in the service, the run worker or the contract. Two rules hold for one instance and not across several, recorded as TD-169 with the port mapper the harness leaves running: the limit of four runs a tab, and the local sign-in's events key. The test of a tab that reconnects publishes its first frames itself, since the real worker sends a run's frames in one burst that cannot be paused between them. In this environment the task needs Erlang put on its path by hand, since mise has Erlang turned off here.
 - 2026-11-17: SVA-M4 picked up.
+- 2026-11-17: SVA-M4 built, [Validation Pack](../validation/SVA-M4.md). The output explorer shows each run part as text, a table, a graph on the canvas kit or a tree by media type, keeps the author's choice for each media type in the browser, and says so with the parser's message when a part does not parse. A canvas now keeps the zoom and centre its author set when its pane is resized. Found that the table and graph must take the prefixes the Turtle writer declares to read as the text does, and that an existing arrow-key test of the dock failed once in a full run and passed alone and in the next two runs. Left for SVA-P4 and SVA-S3, the simulators' panes, which show their parts through this component.
+- 2026-11-17: SVA-M4 verified by a second run of its checks, 468 unit tests, the type check and 62 browser tests on the fake service. I looked at the graph rendering: literals sit inside their subjects' nodes, types under each label, and the edges carry their predicates. A blank node of the report is written in Turtle under a label the parser made, such as n3-4278, where a reader would expect a bracketed node, a small thing for the explorer to tidy. A second test of the studio failed once in three full runs, the column handle's keyboard test, and is added to TD-166.

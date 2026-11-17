@@ -1830,3 +1830,138 @@ test("the mapping canvas and the ontology drawing are whole after a column is co
   await page.getByRole("button", { name: "Expand the dock" }).click();
   await expectDrawingWhole(page);
 });
+
+// --- The output explorer in the run pane, and a canvas that keeps the view its author set (SVA-M4) ---
+
+/** The pane's part, found by its heading's accessible name, after a run in mapping mode has completed. */
+async function runSample(page: Page, fake: FakeService): Promise<Locator> {
+  const pane = await sampleDock(page, fake);
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(pane.getByRole("status", { name: "Sample status" })).toContainText("Complete, 2 parts");
+  return pane;
+}
+
+test("a run's artefact opens as Turtle text, switches to a table that filters and to a graph, and the choice is kept after a reload", async ({ page }) => {
+  const fake = new FakeService();
+  const pane = await runSample(page, fake);
+  const artefact = pane.getByRole("region", { name: "Part 2, artefact" });
+  // Turtle text is the default for RDF
+  await expect(artefact.getByRole("group", { name: "Rendering" }).getByRole("button", { name: "Text" })).toHaveAttribute("aria-pressed", "true");
+  await expect(artefact.getByRole("group", { name: "Text format" }).getByRole("button", { name: "Turtle" })).toHaveAttribute("aria-pressed", "true");
+  const text = artefact.getByLabel("Output text");
+  await expect(text).toContainText("<https://example.org/lattice/data/loan-1> a <https://example.org/lending#LoanApplication>");
+  await expect(text).not.toContainText("application/n-triples");
+  await artefact.getByRole("group", { name: "Text format" }).getByRole("button", { name: "N-Triples" }).click();
+  await expect(text).toContainText("<https://example.org/lattice/data/loan-1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.org/lending#LoanApplication> .");
+  await expect(artefact.getByRole("button", { name: "Copy" })).toBeVisible();
+  await expect(artefact.getByRole("button", { name: "Download" })).toBeVisible();
+  // the table, filtered
+  await artefact.getByRole("button", { name: "Table", exact: true }).click();
+  const table = artefact.getByRole("table", { name: "Triples" });
+  await expect(table.getByRole("row")).toHaveCount(2);
+  await expect(artefact).toContainText("Showing 1 of 1 rows.");
+  await artefact.getByRole("searchbox", { name: "Filter rows" }).fill("nothing like this");
+  await expect(table.getByRole("row")).toHaveCount(1);
+  await expect(artefact).toContainText("Showing 0 of 0 matching rows, 1 held.");
+  await artefact.getByRole("searchbox", { name: "Filter rows" }).fill("LoanApplication");
+  await expect(table.getByRole("row")).toHaveCount(2);
+  await expect(table.getByRole("row").nth(1)).toContainText("rdf:type");
+  // the graph
+  await artefact.getByRole("button", { name: "Graph", exact: true }).click();
+  await expect(artefact.locator(".react-flow__node").filter({ hasText: "loan-1" })).toBeVisible();
+  // the choice is kept for the media type
+  await page.reload();
+  await page.getByRole("tab", { name: "Sample" }).click();
+  const again = page.getByRole("region", { name: "Sample", exact: true });
+  await again.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(again.getByRole("status", { name: "Sample status" })).toContainText("Complete, 2 parts");
+  await expect(again.getByRole("region", { name: "Part 2, artefact" }).getByRole("button", { name: "Graph", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(again.getByRole("region", { name: "Part 2, artefact" }).locator(".react-flow__node").filter({ hasText: "loan-1" })).toBeVisible();
+  // and the report, another media type, is still Turtle text
+  await expect(again.getByRole("region", { name: "Part 1, report" }).getByRole("button", { name: "Text", exact: true })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("the report part opens as text and its table lists the report's triples", async ({ page }) => {
+  const fake = new FakeService();
+  const pane = await runSample(page, fake);
+  const report = pane.getByRole("region", { name: "Part 1, report" });
+  await expect(report.getByRole("button", { name: "Text", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(report.getByLabel("Output text")).toContainText("sh:conforms true");
+  await report.getByRole("button", { name: "Table", exact: true }).click();
+  const rows = report.getByRole("table", { name: "Triples" }).getByRole("row");
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(1)).toContainText("rdf:type");
+  await expect(rows.nth(1)).toContainText("sh:ValidationReport");
+  await expect(rows.nth(2)).toContainText("sh:conforms");
+  await expect(rows.nth(2)).toContainText('"true"^^xsd:boolean');
+});
+
+test("a part whose text does not parse in its media type says so with the parser's message, shows its text and leaves the pane whole", async ({ page }) => {
+  const fake = new FakeService();
+  fake.runArtefact = "<https://example.org/a> <https://example.org/p> .\n";
+  const pane = await runSample(page, fake);
+  const artefact = pane.getByRole("region", { name: "Part 2, artefact" });
+  await expect(artefact).toContainText("does not parse");
+  await expect(artefact).toContainText("Its text is shown as received.");
+  await expect(artefact.getByLabel("Output text")).toContainText("<https://example.org/a> <https://example.org/p> .");
+  await artefact.getByRole("button", { name: "Table", exact: true }).click();
+  await expect(artefact).toContainText("does not parse");
+  // the report beside it still reads
+  await expect(pane.getByRole("region", { name: "Part 1, report" }).getByLabel("Output text")).toContainText("sh:conforms true");
+  await expect(pane.getByRole("status", { name: "Sample status" })).toContainText("Complete, 2 parts");
+});
+
+/** The viewport of the first canvas, as React Flow keeps it, and the middle of its pane in the drawing's own coordinates. */
+async function viewOf(page: Page): Promise<{ zoom: number; x: number; y: number; centre: { x: number; y: number } }> {
+  const [transform, pane] = await Promise.all([page.locator(".react-flow__viewport").first().evaluate((el) => (el as HTMLElement).style.transform), page.locator(".react-flow").first().boundingBox()]);
+  const [, x, y, zoom] = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)\s*scale\((-?[\d.]+)\)/.exec(transform)!.map(Number);
+  return { zoom, x, y, centre: { x: (pane!.width / 2 - x) / zoom, y: (pane!.height / 2 - y) / zoom } };
+}
+
+async function dragDock(page: Page, by: number): Promise<void> {
+  const at = (await page.getByRole("separator", { name: "Resize the dock" }).boundingBox())!;
+  await page.mouse.move(at.x + at.width / 2, 400);
+  await page.mouse.down();
+  await page.mouse.move(at.x + at.width / 2 + by, 400, { steps: 6 });
+  await page.mouse.up();
+}
+
+test("a canvas the author zoomed keeps its zoom and centre when the dock is resized, and is fitted again after the fit button", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const fake = new FakeService();
+  await sampleDock(page, fake);
+  await page.getByRole("button", { name: "Canvas" }).click();
+  await expectDrawingWhole(page);
+  const fitted = await viewOf(page);
+  // zoom out with the wheel, over the pane, which moves the view
+  const pane = (await page.locator(".react-flow").first().boundingBox())!;
+  await page.mouse.move(pane.x + pane.width / 2, pane.y + pane.height / 2);
+  await page.mouse.wheel(0, 300);
+  await expect.poll(async () => (await viewOf(page)).zoom).toBeLessThan(fitted.zoom - 0.05);
+  await page.waitForTimeout(400);
+  const zoomed = await viewOf(page);
+  // narrower and then wider: the author's zoom and the centre of the view stay
+  await dragDock(page, -120);
+  await page.waitForTimeout(600);
+  const narrower = await viewOf(page);
+  expect(narrower.zoom).toBeCloseTo(zoomed.zoom, 3);
+  expect(Math.abs(narrower.centre.x - zoomed.centre.x)).toBeLessThan(2);
+  expect(Math.abs(narrower.centre.y - zoomed.centre.y)).toBeLessThan(2);
+  await dragDock(page, 120);
+  await page.waitForTimeout(600);
+  const back = await viewOf(page);
+  expect(back.zoom).toBeCloseTo(zoomed.zoom, 3);
+  expect(Math.abs(back.centre.x - zoomed.centre.x)).toBeLessThan(2);
+  // the fit button fits it again, and a resize then refits it
+  await page.getByRole("button", { name: "fit view" }).first().click();
+  await expect.poll(async () => (await viewOf(page)).zoom).toBeCloseTo(fitted.zoom, 2);
+  await dragDock(page, -200);
+  await expectDrawingWhole(page);
+  const refitted = await viewOf(page);
+  await page.getByRole("button", { name: "fit view" }).first().click();
+  await page.waitForTimeout(400);
+  const byButton = await viewOf(page);
+  expect(refitted.zoom).toBeCloseTo(byButton.zoom, 2);
+  expect(Math.abs(refitted.x - byButton.x)).toBeLessThan(2);
+  expect(Math.abs(refitted.y - byButton.y)).toBeLessThan(2);
+});
