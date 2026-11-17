@@ -80,8 +80,14 @@ def main(argv: list[str]) -> int:
             print(f"SKIP {layer_dir.name}: no ROOT file", file=sys.stderr)
             ok = False
             continue
+        built = True
         for session in session_names(root_file):
-            ok = build(layer_dir, session, ["base", layer_dir.name]) and ok
+            built = build(layer_dir, session, ["base", layer_dir.name]) and built
+        if not built:
+            # The gate reads the claim records, which still say passed, so it would report a pass the build just refuted.
+            print(f"-- gate: {layer_dir.name} --\nGATE: fail, a session of {layer_dir.name} did not build, so no claim of it is proved", flush=True)
+            ok = False
+            continue
         ok = gate(layer_dir) and ok
     return 0 if ok else 1
 

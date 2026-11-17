@@ -438,9 +438,9 @@ A read of the recorded amounts or of the flows starts from a checkpoint, which t
 
 **Releases.** Moving the three properties changes published meaning and invalidates a definition that states them itself, a minor release of the substrate at major version zero, made with the change to the layer's documents.
 
-## Addendum (proposed 2026-11-17, second): a rounding difference is settled as the policy states, each direction apart
+## Addendum (2026-11-17, second): a rounding difference is settled as the policy states, each direction apart
 
-**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided the rule on 2026-11-17. Decision 8 says new evaluation semantics come by an addendum with conformance cases, and the cases are at its end.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-17, who decided the rule the same day. Decision 8 says new evaluation semantics come by an addendum with conformance cases, and the cases are at its end.
 
 **Narrows decision 6.** It also narrows one sentence of the second addendum of 2026-11-16, which sent a unit short by the declared order alone.
 
@@ -502,4 +502,4 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 
 **The addendum of 2026-11-17.** The terms the layer's README proposed after LG-9 were walked through with the maintainer as LG-Q30 to LG-Q36 of the [Ledger plan](../../developer/plans/ledger.md). The maintainer decided for a policy node on 2026-11-17 (LG-Q32), for one policy resolved before the ledger (LG-Q35), and for a versioned policy in place of a content-addressed one first chosen that day, once that was seen to need a canonicalisation rule in the layer and a mark two other layers' checks would have to learn (LG-Q36, TD-127). LG-Q33 gave the two criteria and the two guards and found no need for a separate rule for a tie, and LG-Q34 deferred the kinds of split. Built as LG-24 ([its pack](../../developer/validation/LG-24.md)).
 
-**The second addendum proposed on 2026-11-17.** LG-Q30 of the [Ledger plan](../../developer/plans/ledger.md), raised by a constraint that read a term the layer had not declared. The maintainer decided on 2026-11-17 to declare it and asked that where a unit short goes be driven by the wording, as a unit over is, so the reading by symmetry first proposed was dropped. Built as LG-23 ([its pack](../../developer/validation/LG-23.md)), which holds the model's search of the four pairs and the theorem that each settles exactly.
+**The second addendum of 2026-11-17.** LG-Q30 of the [Ledger plan](../../developer/plans/ledger.md), raised by a constraint that read a term the layer had not declared. The maintainer decided on 2026-11-17 to declare it and asked that where a unit short goes be driven by the wording, as a unit over is, so the reading by symmetry first proposed was dropped. Built as LG-23 ([its pack](../../developer/validation/LG-23.md)), which holds the model's search of the four pairs and the theorem that each settles exactly.

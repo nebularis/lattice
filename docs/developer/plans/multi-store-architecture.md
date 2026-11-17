@@ -4,7 +4,7 @@
 
 **Unit ID:** `multi-store-architecture`
 **Prefix:** MSA
-**Status:** planned 2026-11-17, from the [sketch](../sketches/multi-store-architecture.md) of 2026-11-12. The unit's name and prefix are the sketch's proposal, taken provisionally until the maintainer confirms them (MSA-Q14)
+**Status:** planned 2026-11-17, from the [sketch](../sketches/multi-store-architecture.md) of 2026-11-12. The maintainer confirmed the unit's name and prefix on 2026-11-17 (MSA-Q14)
 **Status record:** [multi-store-architecture.md](../status/multi-store-architecture.md)
 **Decisions it builds on:** the sketch's D1 to D6, ADR-A48, ADR-A74, ADR-A75, ADR-A123, ADR-A124, ADR-A125, PRI-51, PRI-52
 **Placement:** open. Platform, tooling and substrate configuration, nothing domain-specific
@@ -44,8 +44,26 @@ Each slice is the sketch's investigation of the same identifier, with the falsif
 | MSA-I11 | paper | `docs/developer/notes/multi-store/` | MSA-I4 |
 | MSA-I12 | proof of concept | `spikes/multi-store-emitted-topology/` | none |
 
-## Proposed for the maintainer's confirmation
+## Decided by the maintainer, 2026-11-17
 
-- **MSA-Q14.** The unit is `multi-store-architecture` with prefix MSA, as the sketch proposes, and its slices are its investigations.
-- **MSA-I1's threshold.** The sketch's falsifier for MSA-I1 needs a threshold agreed before the census runs. We propose that the mapping is worth building where closed shapes with bounded counts cover at least 80% of the subjects of the sample graphs, counted per family. The census reports the share whatever the threshold, so it runs before the answer and is read against it after.
-- **The protocol toolchain for MSA-I6.** Both TLA+ (TLC 2.19) and Quint 0.33.1 with Apalache run here. The choice is Track H's FMH-5 toolchain spike, which the epic adopts (D5), and is put to the maintainer before MSA-I6 starts.
+- **MSA-Q14.** The unit is `multi-store-architecture`, prefix MSA, and its slices are its investigations and the fixes below.
+- **MSA-I1's threshold.** A mapping is worth building where at least 80% of the subjects of a family's sample graphs fall under shapes that are bounded, counted only for the families chosen for a relational realisation. Closure is declared by the mapping, since a row is closed by construction and the shapes are open by convention. The census of MSA-I1 found 0% on the strict reading and 43.4% bounded across the estate, so a mapping derived from the shapes alone is not built, and a mapping written for a family and checked against its shapes is what MSA-I10 tests.
+- **MSA-I6's toolchain.** TLA+ with TLC. The models are small protocols, and the property that a confirmed write is eventually applied is one of liveness, which TLC checks. The choice is Track H's FMH-5 toolchain spike, which adopts it.
+- **MSAI4-03, the order of the guards.** A resend is answered before a conflict, so a command already applied is always answered as applied.
+- **MSAI4-05, who advances a sequence.** The store computes the successor in both the append and the delta replace, and the caller's expected current value stays the guard.
+- **MSAI4-06, what the patch log holds.** The delta as requested, stated as such. An audit that needs effects derives them by replaying the log.
+
+## Fixes to running code
+
+The investigations found five defects in code that runs and one design point to test. Each is a slice of its own, built in this order, with a test that fails before the fix and passes after it. The order puts first the one that can lose a confirmed write.
+
+| Slice | Fix | Finding |
+|---|---|---|
+| MSA-F1 | the studio's stream writer stores only offsets it has applied, by stream and offset through the environment, so a stop skips no confirmed write | MSAI9-06 |
+| MSA-F2 | a batch the store refuses for a reason that a retry cannot change is answered and the stream goes on, and only a store that cannot be reached is retried | MSAI11-05 |
+| MSA-F3 | a command id resent with a different body is refused, its digest compared with the one its claim holds | MSAI11-02 |
+| MSA-F4 | the queue topology states each queue's dead-letter binding once, and the Python worker and the Java service declare the same broker objects from it | MSAI12-01 |
+| MSA-F5 | the event's logical key names one event, not one append, in the persistence contract | MSAI4-04 |
+| MSA-F6 | a test that a command writing several aggregates, whose later guard fails, leaves nothing a reader acts on and is completed by a resend | MSAI11-01 |
+
+MSAI11-01 is by design under [ADR-A149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md) decision 13, which orders a command's operations so that a guard failing part way leaves nothing a reader acts on. MSA-F6 tests that claim for every command that writes several aggregates. A unit on the port is all or nothing, so moving a studio command onto the port gives its operations one guard, which is the next plan's.
