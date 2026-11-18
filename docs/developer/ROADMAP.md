@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 23 branches, the units' own state from this tree, the newest board day 2026-11-17.
+Built from the status records on 23 branches, the units' own state from this tree, the newest board day 2026-11-18.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -43,7 +43,7 @@ Built from the status records on 23 branches, the units' own state from this tre
 | [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-11-09 | FME-1.0 | 5 planned, 3 built, 1 merged, 1 dropped |  |
 | [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 21 built, 15 merged, 11 planned, 6 verified, 1 briefed |  |
 | [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, realign/config-authoring-studio |
-| [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 | GH-0 | 6 built |  |
+| [git-hooks](plans/git-hooks.md) | unit | built 2026-11-18 | GH-0 | 7 built |  |
 | [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
 | [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 6 planned, 1 merged |  |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
@@ -283,6 +283,7 @@ gantt
     GH-3 :gh3, 2026-10-24, 2026-10-25
     GH-4 :gh4, 2026-10-24, 2026-10-25
     GH-5 test suites leave the hooks :gh5, 2026-11-03, 2026-11-04
+    GH-6 the knowledge index leaves the :gh6, 2026-11-18, 2026-11-19
 ```
 
 ```mermaid

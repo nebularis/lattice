@@ -3,7 +3,7 @@
 # Git hooks: status
 
 **Unit ID:** `git-hooks`
-**Status:** building 2026-11-18.
+**Status:** built 2026-11-18.
 **Plan:** [git-hooks.md](../plans/git-hooks.md)
 **ADR:** [ADR-A133](../../architecture/decisions/ADR-A133-git-hooks.md), Proposed
 **Mode:** autonomous, at the maintainer's request on 2026-10-23. Each slice is committed locally, and the branch is handed back for review before the merge into `main`.
@@ -20,7 +20,7 @@
 | GH-3 |  | built 2026-10-24: `tools/writing_rules.py`, wired as the writing and wrapping checks, 30 tests in all |  |
 | GH-4 |  | built 2026-10-24: `AGENTS.md` and its Copilot copy, the toolchain, publication-hygiene and lifecycle skills, the developer guide (task table and a Git hooks section), the ADR index |  |
 | GH-5 | test suites leave the hooks: the studio's browser gate runs by convention before a merge, and a hook runs quick static checks only | built 2026-11-03, building 2026-11-03 |  |
-| GH-6 | the knowledge index leaves the post-merge hook: the index rebuilds itself when next asked, and the hook regenerates the work board's regions only | building 2026-11-18 |  |
+| GH-6 | the knowledge index leaves the post-merge hook: the index rebuilds itself when next asked, and the hook regenerates the work board's regions only | built 2026-11-18 |  |
 
 ## History
 
@@ -34,3 +34,4 @@
 - 2026-11-03: GH-5 picked up. The studio's browser gate at a merge into `main` held a squash for over a minute, then failed on assets staged before PM-2. Without it the merge checks took 7.5 s over 290 files. The maintainer decided that a hook runs quick scripts and checks only, never a test suite.
 - 2026-11-03: GH-5 built. The studio-browser check is gone from `tools/hooks.py`, by ADR-A133's addendum of 2026-11-03 (decision 13, reversing 11) and STD-318, both for the maintainer. The lifecycle skill's test-suites bullet names `test:config-studio-browser` beside the conformance suites, run by convention before a merge, and AGENTS.md says a hook never runs a test suite. The harness refuses assets staged before the persistence profile or the maintenance manifest existed, naming `build:config-studio-assets`, where the writer had failed on a missing `manifest.json`.
 - 2026-11-18: GH-6 picked up. A squash of 302 files into `main` held the command for 73 s, 71 s of it the post-merge hook's `vyd build`, where ADR-A133 decision 9 expected about two seconds. The maintainer decided that the hook leaves the index to rebuild itself when next asked.
+- 2026-11-18: GH-6 built. `post_merge` in `tools/hooks.py` regenerates INDEX.md's region, and ROADMAP.md's on `main`, and no longer runs `vyd build`, by ADR-A133's addendum of 2026-11-18 (decision 14, narrowing 9). Вивід 0.2.37 makes a file an entry points into that is gone a reason the index is stale, and the lifecycle domain's branching skill and LATTICE's addition to it now say that a squash runs the hook and that the index rebuilds itself. Adversarial probe: the rebuild put back into `post_merge`, and OR1-02 failed until restored.

@@ -94,3 +94,11 @@ Provenance of the addendum: two branches numbered STD-300 upward on 2026-11-02, 
 
 Provenance of the addendum: the browser gate held a squash merge into `main` for over a minute and then failed on assets staged before the change, while the other merge checks took 7.5 s over the same 290 files. The maintainer decided on 2026-11-03 that tests are not hooks (slice GH-5 of `git-hooks`).
 
+## Addendum, 2026-11-18
+
+**Narrows decision 9.**
+
+14. **The post-merge hook leaves the knowledge index to rebuild itself.** After any merge, a squash included, the `post-merge` hook regenerates the work board's regions, which take about two seconds, and no longer runs `mise run build:knowledge`. `vyd` rebuilds a stale index before it answers, finding it stale when a file it reads is newer than its build or a file an entry points into is gone, so the first question after a merge pays for the rebuild and the merge does not. `mise run build:knowledge` rebuilds it ahead of that question.
+
+Provenance of the addendum: `git merge --squash` runs the `post-merge` hook as `git merge` does, and a squash of 302 files into `main` took 73 s, 71 s of it the index rebuild, where decision 9 expected about two seconds. An unchanged rebuild takes 4 s, and the rest is the index's incremental work over the merged entries. The maintainer decided on 2026-11-18 that the hook leaves the rebuild to the index (slice GH-6 of `git-hooks`).
+

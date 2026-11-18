@@ -250,9 +250,10 @@ def test_or1_01_a_register_or_decision_change_runs_the_identifier_check() -> Non
     assert "identifiers" not in names_for("ontology/party/README.md")
 
 
-def test_or1_02_post_merge_rebuilds_the_index_and_never_fails(repo: Path, capsys) -> None:
+def test_or1_02_post_merge_never_fails_and_leaves_the_index_to_rebuild_itself(repo: Path, capsys) -> None:
     assert hooks.run(repo, "post-merge") == 0
-    assert "post-merge" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "post-merge" in out and "knowledge index" not in out
 
 
 # ---- WB-4: the work board check and the post-merge registers, over vyd (ADR-A152, plan vyvid-migration, VM-4) ----
@@ -504,11 +505,11 @@ def test_vm2_01_the_identifiers_check_skips_with_a_note_where_vyd_is_absent(vyd_
     assert "`vyd check identifiers` was skipped" in out and "mise run bootstrap" in out
 
 
-def test_vm2_02_post_merge_says_the_index_was_not_rebuilt_and_never_fails_where_vyd_is_absent(vyd_repo: Path, monkeypatch, capsys) -> None:
+def test_vm2_02_post_merge_says_what_it_did_not_regenerate_and_never_fails_where_vyd_is_absent(vyd_repo: Path, monkeypatch, capsys) -> None:
     without_vyd(monkeypatch)
     assert hooks.run(vyd_repo, "post-merge") == 0
     out = capsys.readouterr().out
-    assert "not rebuilt" in out and "`vyd build` was skipped" in out and "mise run bootstrap" in out
+    assert "not regenerated" in out and "`vyd work build` was skipped" in out and "mise run bootstrap" in out
 
 
 def test_vm2_03_a_vyd_that_did_not_run_skips_with_its_reason(vyd_repo: Path, monkeypatch, tmp_path_factory, capsys) -> None:

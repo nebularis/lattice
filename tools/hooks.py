@@ -4,7 +4,7 @@
 
   python tools/hooks.py run pre-commit          the commit checks over what is staged
   python tools/hooks.py run pre-merge-commit    the merge checks, when merging into main
-  python tools/hooks.py run post-merge          rebuild the knowledge index after a merge
+  python tools/hooks.py run post-merge          regenerate the work board's regions after a merge
   python tools/hooks.py merge [--against main]  the merge checks for the current branch, by hand
   python tools/hooks.py install [--bootstrap]   install the hooks into the shared hooks directory
 
@@ -388,15 +388,10 @@ def install(root: Path, bootstrap: bool = False) -> list[str]:
 # ---- entry ------------------------------------------------------------------------------------
 
 def post_merge(root: Path) -> int:
-    """After a merge, derive the knowledge index again so it is never stale (ADR-A133 addendum), with
-    `vyd build` (ADR-A152). The merge has already happened, so this never fails it."""
+    """After a merge, a squash included, regenerate the work board's regions, which take seconds. The knowledge index is
+    left alone, since `vyd` rebuilds a stale index before it answers and a large merge takes that a minute, too long for
+    a hook (ADR-A133 decision 14). The merge has already happened, so this never fails it."""
     change = Change(root, (), False)
-    try:
-        code, output, skipped = tool_module(change, "vyd").run(["build"], cwd=str(root))
-        lines = [] if code == 0 and not skipped else [line for line in output.strip().splitlines() if line.strip()][-20:]
-    except Unavailable as reason:
-        lines = [f"not rebuilt: {reason}. Run `mise run build:knowledge`"]
-    print("hooks: post-merge, knowledge index " + ("rebuilt" if not lines else "\n  ".join(["not rebuilt"] + lines)))
     # The work board's registers (plan work-board, WB-4, ADR-A152): INDEX.md's region from the merged tree, and
     # ROADMAP.md's regions on main only, by `vyd work`, left changed in the tree for the maintainer to commit.
     steps = [("INDEX.md region", ["work", "build"], "build:work")]
