@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-17. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-18. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** SVA-P1a, as the [compiled landing places sketch](../sketches/compiled-landing-places.md) now settles it, then SVA-P1b and SVA-P1b, before SVA-P3 builds on where data lands. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** SVA-P1a, as the [compiled landing places sketch](../sketches/compiled-landing-places.md) now settles it, then SVA-P1b, before SVA-P3 builds on where data lands. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -47,7 +47,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-O6 | one reader of shapes for the forms and the drawing | built 2026-11-15, building 2026-11-15 | SVA-O2 |
 | SVA-O7 | a new node clear of the others, and a label beside an edge shorter than it | built 2026-11-16, building 2026-11-16 | SVA-O5 |
 | SVA-P1 | landing places in a compile job, and the exploded view, read-only | built 2026-11-17, building 2026-11-17 | SVA-O1 |
-| SVA-P1a | the compiled profile states where a target's data lands | planned | SVA-P1 |
+| SVA-P1a | the compiled profile states where a target's data lands | building 2026-11-18 | SVA-P1 |
 | SVA-P1b | the studio reads the compiled profile for where data lands | planned | SVA-P1a |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | planned | SVA-R3 |
@@ -177,3 +177,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-18: the maintainer chose that the compiled profile, not a studio artefact, states where a target's data lands, and asked for the `dal:` terms to be sketched first. Sketched, with SVA-Q17 to SVA-Q22, and SVA-P1a and SVA-P1b planned. `analysis.json` stays JSON, since it is a view of a clause's text whose meaning already travels as RDF in `proposals.ttl`.
 - 2026-11-18: the maintainer answered SVA-Q17 to SVA-Q22. The logical resource kinds stay as track H settled them, and the realisation is stated beside them: each write access lands in a `dal:GraphPlace` with a minted IRI, a closed `dal:GraphRole` mirroring the IR's roles, and a graph or template. The extra hop is a design-time cost and accepted. The profile names the matched scopes and, on each dimension, the scope it won through. Writing it up raised SVA-Q23, how a patch log's added and removed accesses differ, since the IR gives both graphs one role.
 - 2026-11-18: SVA-Q23 answered (b), a patch access states `dal:patchDirection`, the constant part of its logical key. The month bucket named from `NOW()` recorded as TD-171.
+- 2026-11-18: SVA-P1a started.
