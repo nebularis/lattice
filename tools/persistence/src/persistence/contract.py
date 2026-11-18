@@ -56,7 +56,7 @@ LOGICAL_KEYS: dict[ResourceKind, tuple[str, ...]] = {
     ResourceKind.VERSION_ROW: ("root",),
     ResourceKind.TRANSACTION_CLAIM: ("transaction id",),
     ResourceKind.RECEIPT: ("target", "epoch", "seq"),
-    ResourceKind.EVENT: ("stream", "seq"),
+    ResourceKind.EVENT: ("stream", "seq", "event"),
     ResourceKind.KEY_CLAIM: ("claim",),
     ResourceKind.MERGE_RECORD: ("owner",),
     ResourceKind.KEY_QUARANTINE: ("claim", "owner"),
@@ -66,7 +66,8 @@ LOGICAL_KEYS: dict[ResourceKind, tuple[str, ...]] = {
     ResourceKind.PATCH_CONTENT: ("target", "epoch", "seq", "direction"),
 }
 """The logical key of each resource, as the names of its parts. A stream is the root of its version row, and a bucket month is a
-realisation and never part of a key (design review 2.2)."""
+realisation and never part of a key (design review 2.2). An append writes all its events under one sequence number, so an event is
+named by its IRI as well, which the caller library holds unique within an append."""
 
 _KEY_CLAIM_PREDICATES = frozenset({
     "a", f"<{PAT.claimedBy}>", f"<{PAT.constraint}>", f"<{PAT.retiredBy}>", f"<{PAT.retiredAt}>",

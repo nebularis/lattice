@@ -1821,7 +1821,7 @@ dct:description a owl:AnnotationProperty .
 
 dal:Aggregate dal:logicalKey "root" .
 dal:DatasetEpoch dal:logicalKey "dataset" .
-dal:Event dal:logicalKey "stream, seq" .
+dal:Event dal:logicalKey "stream, seq, event" .
 dal:KeyClaim dal:logicalKey "claim" .
 dal:KeyQuarantine dal:logicalKey "claim, owner" .
 dal:MergeRecord dal:logicalKey "owner" .

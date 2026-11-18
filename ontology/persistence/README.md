@@ -6022,7 +6022,7 @@ The logical key of each kind of logical resource, and the Unicode version of eac
 ```turtle-spec
 dal:Aggregate dal:logicalKey "root" .
 dal:DatasetEpoch dal:logicalKey "dataset" .
-dal:Event dal:logicalKey "stream, seq" .
+dal:Event dal:logicalKey "stream, seq, event" .
 dal:KeyClaim dal:logicalKey "claim" .
 dal:KeyQuarantine dal:logicalKey "claim, owner" .
 dal:MergeRecord dal:logicalKey "owner" .
@@ -7803,6 +7803,8 @@ version, so that Persistence can enforce Foundation's natural keys (§5.11).
 
 ## 12. Release Notes
 
+- **Unreleased**.
+  - The logical key of `dal:Event` is `stream, seq, event`. One append writes all its events under one sequence number, so stream and sequence named the append and not an event, and the event's IRI now names it. A reader that keyed events by stream and sequence alone kept one event of each append (changes meaning).
 - **0.23.0**.
   - no effect. Imports re-pinned to release 0.22.0, with no other change.
 - **0.22.0**.
