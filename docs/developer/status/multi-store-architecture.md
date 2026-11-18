@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** building 2026-11-18.
+**Status:** built 2026-11-18.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous, at the maintainer's request on 2026-11-17, committing on `spi/sql-backend` only and never pushing, with up to two sub-agents.
 
@@ -28,7 +28,7 @@
 | MSA-F3 | a command id resent with a different body is refused, its digest compared with the one its claim holds (MSAI11-02). The receipt holds the command's own digest, `cst:requestDigest`, since an operation's cannot be recomputed for a resend. [Validation Pack](../validation/MSA-F3.md) | built 2026-11-18 |  |
 | MSA-F4 | the queue topology states each queue's dead-letter binding once, and the Python worker and the Java service declare the same broker objects from it (MSAI12-01). Each queue has `bindsTo` and `deadLettersTo`, and the worker and the service declare from the contract. [Validation Pack](../validation/MSA-F4.md) | built 2026-11-18 |  |
 | MSA-F5 | the event's logical key names one event, not one append, in the persistence contract (MSAI4-04). The key is `stream, seq, event` in the contract and the persistence spec. [Validation Pack](../validation/MSA-F5.md) | built 2026-11-18 |  |
-| MSA-F6 | a test that a command writing several aggregates, whose later guard fails, leaves nothing a reader acts on and is completed by a resend (MSAI11-01) | building 2026-11-18 |  |
+| MSA-F6 | a test that a command writing several aggregates, whose later guard fails, leaves nothing a reader acts on and is completed by a resend (MSAI11-01). Six commands tested: nothing a reader acts on remains in each. A resend completes a publication and a new document's save, and does not complete a deletion whose later tombstone failed (MSAF6-01). [Validation Pack](../validation/MSA-F6.md) | built 2026-11-18 |  |
 
 **Next action:** MSA-F1 to MSA-F6 in order, on machine S, then MSA-I2 and MSA-I6, per the [brief of 2026-11-17](../notes/machine-s-brief-2026-11-17.md). The ledger's work is on `main`, so MSA-I2 and MSA-I5 no longer wait on its branch.
 
@@ -53,3 +53,4 @@
 - 2026-11-18: MSA-F5 marked building.
 - 2026-11-18: MSA-F5 built. `dal:Event`'s logical key is `stream, seq, event`, in `contract.py` and the persistence README, whose spec was regenerated and whose release notes gain an Unreleased entry. The branch defers versioning, so `check:ontology-versioning` reports Persistence unbumped until the merge.
 - 2026-11-18: MSA-F6 marked building.
+- 2026-11-18: MSA-F6 built, tests only. ADR-A149 decision 13 holds for every command tested: no reader acts on what a failed later guard leaves. A deletion whose later tombstone loses a race to a save leaves a graph and a live row nothing reaches, and no resend removes them (MSAF6-01), which needs the maintainer's choice. The port note cites decision 13.
