@@ -22,3 +22,4 @@ convention track D and E's toolchains already use — see `tools/proofs/README.m
   of CCS's HQ-4 and insurml-alignment's IMA-D4a.
 - `ensemble-composition/` — track C4, briefed 2026-10-22, not yet built: ADR-A130's evaluation by
   composition, refusal of cycles, two phases at a shared account, and signed shares.
+- `multi-store-protocols/` — the multi-store architecture epic's MSA-I6, in TLA+ checked with TLC: FMH-5's model A, the serialised writer over two stores, evidence read across stores, receipts as the outbox, and a change of authority while live.

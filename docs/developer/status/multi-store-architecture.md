@@ -5,7 +5,7 @@
 **Unit ID:** `multi-store-architecture`
 **Status:** built 2026-11-18.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
-**Mode:** autonomous, at the maintainer's request on 2026-11-17, committing on `spi/sql-backend` only and never pushing, with up to two sub-agents.
+**Mode:** autonomous on machine S, at the maintainer's request of 2026-11-17 and the brief of the same day, committing locally only and never pushing, with up to two sub-agents. The branch defers versioning, so Persistence's spec, changed by MSA-F5, is reported unbumped until the merge.
 
 ## Position
 
@@ -30,7 +30,16 @@
 | MSA-F5 | the event's logical key names one event, not one append, in the persistence contract (MSAI4-04). The key is `stream, seq, event` in the contract and the persistence spec. [Validation Pack](../validation/MSA-F5.md) | built 2026-11-18 |  |
 | MSA-F6 | a test that a command writing several aggregates, whose later guard fails, leaves nothing a reader acts on and is completed by a resend (MSAI11-01). Six commands tested: nothing a reader acts on remains in each. A resend completes a publication and a new document's save, and does not complete a deletion whose later tombstone failed (MSAF6-01). [Validation Pack](../validation/MSA-F6.md) | built 2026-11-18 |  |
 
-**Next action:** MSA-F1 to MSA-F6 in order, on machine S, then MSA-I2 and MSA-I6, per the [brief of 2026-11-17](../notes/machine-s-brief-2026-11-17.md). The ledger's work is on `main`, so MSA-I2 and MSA-I5 no longer wait on its branch.
+**Next action, for the maintainer to decide:**
+
+1. **MSAF6-01.** A document's or a workspace's deletion whose later tombstone loses a race to a save leaves a graph and a live row nothing reaches, and no resend removes them. ADR-A149 decision 13 holds, and completing the deletion needs a choice: a tombstone not guarded on the revision, a sweep of unreached rows, or the port's unit.
+2. **MSA-F2's second half.** A failure of the writer's own code, as against the store's, is answered as refused and not retried. Confirm, or have it retried with an alert.
+3. **MSA-F3's departure.** The receipt holds the command's digest, a new `cst:requestDigest`, rather than comparing the operations' claim digests, which a resend of a save cannot reproduce. Confirm.
+4. **The ledger's aggregate** (MSA-I2). ADR-A131 decision 5 makes the account the aggregate and its addendum serialises writes on the owner's ledger. The census proposes the owner's ledger for MSA-Q1.
+5. **The shared types of positions and amounts**, which MSA-I5 waits on.
+6. **MSAF6-02**, a misleading reply on a lost race of a new document's save, left as found.
+
+Then MSA-I5 once the shared types are agreed, MSA-I10, and the rest of MSA-I6 (FMH-5's models B to D, the probes on PostgreSQL and Fuseki, trace validation).
 
 ## History
 

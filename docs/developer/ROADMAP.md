@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 23 branches, the units' own state from this tree, the newest board day 2026-11-18.
+Built from the status records on 25 branches, the units' own state from this tree, the newest board day 2026-11-18.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -51,7 +51,7 @@ Built from the status records on 23 branches, the units' own state from this tre
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
 | [ledger](plans/ledger.md) | unit | built 2026-11-17 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · verified 2026-11-16 on spi/sql-backend | LG-2 | 13 merged, 5 planned, 3 verified, 3 built, 1 blocked |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
-| [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-17 | MSA-I1 | 12 planned, 6 built |  |
+| [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-18 | MSA-I1 | 14 built, 4 planned | spi/multi-store-architecture |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
 | [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | built 2026-11-03 |  | no board |  |
@@ -368,11 +368,19 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section multi-store-architecture
+    MSA-F1 the studio stream writer :msaf1, 2026-11-18, 2026-11-19
+    MSA-F2 a batch the store refuses for :msaf2, 2026-11-18, 2026-11-19
+    MSA-F3 a command id resent with a :msaf3, 2026-11-18, 2026-11-19
+    MSA-F4 the queue topology states each :msaf4, 2026-11-18, 2026-11-19
+    MSA-F5 the event logical key names :msaf5, 2026-11-18, 2026-11-19
+    MSA-F6 a test that a command writing :msaf6, 2026-11-18, 2026-11-19
     MSA-I1 spikes multi-store-shape-cens :msai1, 2026-11-17, 2026-11-18
     MSA-I11 the logical :msai11, 2026-11-17, 2026-11-18
     MSA-I12 spikes multi-store-emitted-to :msai12, 2026-11-17, 2026-11-18
+    MSA-I2 the read-set :msai2, 2026-11-18, 2026-11-19
     MSA-I3 the :msai3, 2026-11-17, 2026-11-18
     MSA-I4 four operations :msai4, 2026-11-17, 2026-11-18
+    MSA-I6 tools models multi-store-prot :msai6, 2026-11-18, 2026-11-19
     MSA-I9 spikes multi-store-stream-pro :msai9, 2026-11-17, 2026-11-18
 ```
 
@@ -865,11 +873,11 @@ Nothing is built in this unit, and the record reads blocked. CCS took NRS-1, NRS
 
 ### 4.8 Multi-store architecture (MSA)
 
-**Documents.** [sketch](sketches/multi-store-architecture.md), [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md). D1 to D8 decided on 2026-11-12. The unit's name and prefix are provisional until MSA-Q14 is confirmed.
+**Documents.** [sketch](sketches/multi-store-architecture.md), [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md). D1 to D8 decided on 2026-11-12. The maintainer confirmed the unit's name, MSA-I1's threshold, TLA+ for MSA-I6 and MSA-I4's three choices on 2026-11-17.
 
-**Where it is.** Planned on 2026-11-17 on `spi/sql-backend`, with its twelve investigations as slices. Six are built the same day. MSA-I1 found no shape in the estate closed and bounded, so its falsifier fires on the strict reading, and 134 shapes fail only on closure. MSA-I3 found a stable line between semantic and realisation selection once three dimensions split by value. MSA-I4 lowered four operations to a neutral IR and three dialects with no single-dialect construct. MSA-I9 confirmed that a single active consumer is no fence and found the studio writer's offset storing can skip confirmed writes. MSA-I11 wrote the logical port with the studio's writes moved onto it. MSA-I12 emitted the studio's topology from one declaration.
+**Where it is.** Eight investigations are built and the six fixes to running code they found. MSA-I1 found no shape in the estate closed and bounded. MSA-I3 found a stable line between semantic and realisation selection once three dimensions split by value. MSA-I4 lowered four operations to a neutral IR and three dialects. MSA-I9 confirmed that a single active consumer is no fence. MSA-I11 wrote the logical port. MSA-I12 emitted the studio's topology from one declaration. On 2026-11-18, MSA-F1 to MSA-F6 fixed the studio writer's offset storing, its retry of a refused batch, a resent id with another body, the topology's dead-letter binding and the event's logical key, and tested ADR-A149 decision 13. MSA-I2 found one example where a pass's guards read a balance an earlier draw wrote, which the census expects to become common once Behaviour imports Ledger. MSA-I6 checked FMH-5's model A and four new TLA+ models with TLC, and five catalogue rows keep their guarantee with a stated requirement.
 
-**What it waits on.** MSA-I2 and MSA-I5 wait on the ledger branch, MSA-I6 on the choice of TLA+ or Quint, MSA-I7 and MSA-I10 on the ledger's LG-2 reaching this branch, and MSA-I8 on most of the rest. Seven findings about running code are listed in the status record for the maintainer's triage.
+**What it waits on.** Six decisions the status record lists, the first a deletion that leaves an unreached graph when its later tombstone loses a race (MSAF6-01). MSA-I5 waits on the shared types of positions and amounts. MSA-I6's probes on PostgreSQL and Fuseki and its trace validation, MSA-I7, MSA-I8 and MSA-I10 are not started.
 
 ## 5. Smaller units
 
@@ -909,7 +917,7 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-17 | 57 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-18 | 58 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
 | `docs/placement-vehicles-structure` | 2026-11-17 | 29 | pushed | no mark |
 | `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
@@ -1062,7 +1070,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 10. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
 11. **Start OD-DOC4, the layer interactions record**, once the ledger's design is settled (the scenarios note ruled through, LG-Q23 decided, as it was on 2026-11-13, machine S's brief written). One maintained architecture document on how the layers work together at design time and at runtime, with two events traced end to end, [briefed](plans/improved-ontology-documentation.md) with its inputs, and kept current by STD-326.
 12. **Settle the ledger's writer on LG-17's figures**, added 2026-11-12 ([pack](validation/LG-17.md)). Decide LG-Q23, which the measurements support as (a) with (d). Decide where single-writer is provided for Oxigraph on disk, which loses guarded writes by a design choice of Oxigraph 0.5.0 (TSD-73, TD-162), and file the [drafted report](notes/upstream-sparql-engine-reports.md#oxigraph-on-disk-store-loses-concurrent-updates), whose patch is built and tested on `v0.5.13` and on `main`. Decide whether the guard is one revision per owner or the ledger runs one writer, since retries lose throughput on every store measured. Read LG-18, which ran in a cloud session on 2026-11-12 and is built, awaiting verification ([pack](validation/LG-18.md), [handoff](notes/lg-18-cloud-run-handoff.md)). Its figures bear on the writer: one writer per ledger matches the best guarded writer on each store and, keeping its balances, is 29 to 55 times its rate, and on Oxigraph on disk it equals the replay where guarded writers lose writes. LG-Q26 was decided on 2026-11-13: a reading by effective day is a derivation a report declares, and none is the ledger's. LG-Q23 was decided the same day as (b) with (d), the cut record, a checkpoint carries the two flow totals (STD-331), and STD-278 is narrowed. The ledger's open questions were all decided by 2026-11-13, LG-Q12, LG-Q13, LG-Q17, LG-Q18 and LG-Q22 last. Every posting scenario was ruled by 2026-11-15. Ranks are tiers of an account's rule, and a rank is an account only where it has an amount of its own or money must be held (MEC-110). Machine S receives whatever can be handed over safely and needs no benchmark, since it runs none. Its [brief](notes/machine-s-brief-2026-11-13.md) for LG-9 and LG-20 was amended on 2026-11-15, LG-20 gaining three parts, and waits on LG-21, the target kernel written here first, as LG-Q27 was decided (b) on 2026-11-15. LG-19 ran in a cloud session and is built, awaiting verification ([brief](notes/cloud-brief-lg-19-2026-11-13.md), [pack](validation/LG-19.md), [handoff](notes/lg-19-cloud-run-handoff.md)). The corpora refuse a debit beyond availability, and its figures leave the ratios between folds and LG-Q23's costs standing, change the shortcut's fallbacks at 5% credits and the late readings' impossible counts, and are for the maintainer to read. LG-22, its follow-ups, ran in a cloud session and is built, awaiting verification ([brief](notes/cloud-brief-lg-22-2026-11-15.md), [pack](validation/LG-22.md), [handoff](notes/lg-22-cloud-run-handoff.md)). Request lists continue the preload, so one writer refuses none, rows name the share they hold, and a refused request costs its path reads. The probes found that rdflib's read follows the named graphs a period length makes, which bears on how long a period should be and is for the maintainer, and that the sum less the cuts costs 1.05 and 1.23 of the kind-filtered read from the start and from a checkpoint on Jena, so LG-19's 1.85 did not hold. LG-19's note that a write got cheaper does not hold either. The maintainer decided LG-22's four questions on 2026-11-16: the period length is not chosen for rdflib (TSD-75), the rows drawn at 5% are still measured, the benchmark READMEs state current results only, and the refusals of several writers are left as the joint draw they are. A reading B that follows the account's policy (STD-336) is still owed in the benchmark. The maintainer verified every built ledger slice on 2026-11-16, LG-8, LG-10, LG-13 to LG-19, LG-21 and LG-22, each with an adversarial probe recorded in the status record, and closed LG-8 as it stands. The maintainer accepted three addenda to ADR-A131 on 2026-11-16, and decided the writer: one writer for each owner's ledger with the guard kept, and kept balances a permitted cache (MEC-113), written up as a third addendum of that day, which the maintainer accepted with STD-335 on 2026-11-16. All of it was merged into `main` that day. Machine S's bundle then arrived, LG-9 and LG-20 built with all 51 laws proved, and was merged into `docs/placement-vehicles-structure` and built again there. It waits for the maintainer's verdict, for decisions on the terms the README proposes, and for a release at the merge into `main`. LG-Q29 was decided (b), a credit posted to an account that does not accept its kind is refused, in a fourth addendum of 2026-11-16, which the maintainer accepted that day. LG-21, the target kernel, is drafted for review ([sketch](sketches/ledger-target-kernel.md)). Its six questions were decided on 2026-11-15 (LG-Q28) and LG-21 is built. LG-9 and LG-20 are restated on it, and machine S's [brief](notes/machine-s-brief-2026-11-15.md) is one bundle, handed over by the maintainer on 2026-11-16 on the branch `fm/ledger-proofs-on-the-target-kernel`. The verification rig runs after the design work.
-13. **Answer the multi-store architecture's questions**, added 2026-11-17 on `spi/sql-backend` ([status](status/multi-store-architecture.md)). Synchronise the ledger branch for MSA-I2 and MSA-I5, confirm MSA-Q14 and MSA-I1's threshold, choose TLA+ or Quint for MSA-I6, and decide MSA-I4's three choices before MSA-I5. Triage the findings about running code, of which MSAI9-06, the studio writer storing offsets it has not applied, can leave confirmed writes unapplied after a writer stops.
+13. **Review and merge the multi-store fixes, then answer what they raised**, updated 2026-11-18 ([status](status/multi-store-architecture.md)). MSA-F1 to MSA-F6, MSA-I2 and MSA-I6 are built on machine S. MSA-F1 is the one that could lose a confirmed write. Run `mise run check:config-studio`, `mise run check:workers` and `mise run check:persistence`, and before the merge `mise run test:config-studio-browser` and `mise run check:persistence-conformance`, which were not run. Decide the six points at the top of the status record's next action, the first a deletion that leaves an unreached graph (MSAF6-01), and bump Persistence at the merge for the event's logical key.
 
 ## 11. Completed units
 
