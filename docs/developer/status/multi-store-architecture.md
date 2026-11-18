@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** built 2026-11-18.
+**Status:** building 2026-11-18.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous, at the maintainer's request on 2026-11-17, committing on `spi/sql-backend` only and never pushing, with up to two sub-agents.
 
@@ -24,7 +24,7 @@
 | MSA-I11 | [the logical port](../notes/multi-store/MSA-I11-logical-port.md). Every generated studio write moves onto it as a unit, and the port needs five things the guide's lacks. Jobs and same-request promotion maintenance remain outside it. [Validation Pack](../validation/MSA-I11.md) | built 2026-11-17 |  |
 | MSA-I12 | `spikes/multi-store-emitted-topology`. One declaration emits both JSON copies byte for byte and states a binding the copies disagree on. Quanta differ from compose's. [Validation Pack](../validation/MSA-I12.md) | built 2026-11-17 |  |
 | MSA-F1 | the studio's stream writer stores only offsets it has applied, by stream and offset through the environment, so a stop skips no confirmed write (MSAI9-06). P3a rerun through the writer's code skipped 0 against 36 on the old path. [Validation Pack](../validation/MSA-F1.md) | built 2026-11-18 |  |
-| MSA-F2 | a batch the store refuses for a reason that a retry cannot change is answered and the stream goes on, and only a store that cannot be reached is retried (MSAI11-05) | planned |  |
+| MSA-F2 | a batch the store refuses for a reason that a retry cannot change is answered and the stream goes on, and only a store that cannot be reached is retried (MSAI11-05) | building 2026-11-18 |  |
 | MSA-F3 | a command id resent with a different body is refused, its digest compared with the one its claim holds (MSAI11-02) | planned |  |
 | MSA-F4 | the queue topology states each queue's dead-letter binding once, and the Python worker and the Java service declare the same broker objects from it (MSAI12-01) | planned |  |
 | MSA-F5 | the event's logical key names one event, not one append, in the persistence contract (MSAI4-04) | planned |  |
@@ -44,3 +44,4 @@
 - 2026-11-17: MSA-I11 built, the falsifier does not fire for the port written and fires against the guide's. Every slice left is blocked on the ledger branch, a toolchain choice or LG-2.
 - 2026-11-18: on machine S, per the brief of 2026-11-17, autonomous and committing locally only. MSA-F1 marked building.
 - 2026-11-18: MSA-F1 built. The writer stores each partition's applied offset through the environment. The probe's P3a, run through the writer's own `apply`, skipped no confirmed write, and the old path skipped 36 the same day.
+- 2026-11-18: MSA-F2 marked building.
