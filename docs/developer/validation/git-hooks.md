@@ -71,3 +71,20 @@ mise run check:hooks
 - **Installed:** the hooks are in this machine's shared hooks directory, so they already run in every worktree. A worktree without `tools/hooks.py` runs the deny-list check alone, as before.
 - **Check first:** ADR-A133 decision 3's rule for checks of agreement across a set of files, and decision 5's split of blocking and warning checks.
 - **Deviation from the design discussed in chat:** no `pre-push` hook at all, at the maintainer's answer, and the merge gate is a local merge (`pre-merge-commit`, or a commit on `main` while a merge or squash is in progress) since CI is manual.
+
+## GH-6, 2026-11-18: the knowledge index leaves the post-merge hook
+
+**Invariant.** The `post-merge` hook answers in seconds and never rebuilds the knowledge index, and the index is rebuilt at the first question after a merge, a merge that only deletes included.
+
+**Measured before the change.** A squash of `docs/placement-vehicles-structure` (302 files) onto `main` at `bf1bf349`, in a scratch linked worktree, took 72.8 s, of which the hook took 72.0 s: `vyd build` 71.2 s, `vyd work build` 0.3 s, and `vyd work roadmap` 1.5 s when run on its own. An unchanged `vyd build` took 3.8 s and embedded nothing.
+
+| Test | Shows |
+|---|---|
+| OR1-02 | the hook never fails and prints nothing about the knowledge index |
+| VM2-02 | where `vyd` is absent, the hook names what it did not regenerate and never fails |
+| WB4-08 | the regions are regenerated, ROADMAP.md's on `main` only |
+
+**Adversarial probe.** The rebuild put back into `post_merge`, and OR1-02 failed until restored.
+
+**Run.** `mise run check:hooks` 56 passed. In Вивід, `mise run check` passed with 1,564 tests, among them one that a deleted file an entry points into makes the index stale and the link check that now counts what a rebuild refused.
+

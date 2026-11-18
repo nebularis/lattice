@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 23 branches, the units' own state from this tree, the newest board day 2026-11-17.
+Built from the status records on 24 branches, the units' own state from this tree, the newest board day 2026-11-18.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -43,15 +43,15 @@ Built from the status records on 23 branches, the units' own state from this tre
 | [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-11-09 | FME-1.0 | 5 planned, 3 built, 1 merged, 1 dropped |  |
 | [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 21 built, 15 merged, 11 planned, 6 verified, 1 briefed |  |
 | [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, realign/config-authoring-studio |
-| [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 | GH-0 | 6 built |  |
+| [git-hooks](plans/git-hooks.md) | unit | built 2026-11-18 | GH-0 | 7 built |  |
 | [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
 | [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 6 planned, 1 merged |  |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-17 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · verified 2026-11-16 on spi/sql-backend | LG-2 | 13 merged, 5 planned, 3 verified, 3 built, 1 blocked | docs/placement-vehicles-structure, fm/ledger-proofs-on-the-target-kernel |
+| [ledger](plans/ledger.md) | unit | built 2026-11-17 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · verified 2026-11-16 on spi/sql-backend | LG-2 | 13 merged, 5 planned, 3 verified, 3 built, 1 blocked |  |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
-| [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-17 | MSA-I1 | 12 planned, 6 built | docs/placement-vehicles-structure |
+| [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-17 | MSA-I1 | 12 planned, 6 built |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
 | [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | built 2026-11-03 |  | no board |  |
@@ -283,6 +283,7 @@ gantt
     GH-3 :gh3, 2026-10-24, 2026-10-25
     GH-4 :gh4, 2026-10-24, 2026-10-25
     GH-5 test suites leave the hooks :gh5, 2026-11-03, 2026-11-04
+    GH-6 the knowledge index leaves the :gh6, 2026-11-18, 2026-11-19
 ```
 
 ```mermaid
@@ -908,9 +909,9 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-17 | 57 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
-| `docs/placement-vehicles-structure` | 2026-11-17 | 27 | pushed | LG-20, LG-23, LG-24, LG-9, MSA-F1, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-I1, MSA-I10, MSA-I11, MSA-I12, MSA-I2, MSA-I3, MSA-I4, MSA-I5, MSA-I6, MSA-I7, MSA-I8, MSA-I9 |
-| `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | LG-20, LG-9 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-18 | 59 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
+| `docs/placement-vehicles-structure` | 2026-11-17 | 29 | pushed | no mark |
+| `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |

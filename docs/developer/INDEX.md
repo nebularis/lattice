@@ -35,7 +35,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | formal-methods-track-e | phase | FME | built 2026-11-09 | FME-1.0 | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md), 1 Validation Packs |
 | formal-methods-track-h | phase | FMH | built 2026-11-01 | FMH-2.12 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md), 45 Validation Packs |
 | formal-methods | epic | FM | built 2026-11-02 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 1 Validation Packs |
-| git-hooks | unit | GH | built 2026-11-03 | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
+| git-hooks | unit | GH | built 2026-11-18 | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
 | governance-surfaces | unit |  | merged 2026-09-20 |  | [status](status/governance-surfaces.md) |
 | identity-minting | unit | IM | built 2026-09-24 | IM-0 | [plan](plans/identity-minting.md), [status](status/identity-minting.md), 4 Validation Packs |
 | implementation-handover-historical | unit |  | dropped 2026-09-20 |  | [status](status/implementation-handover-historical.md) |
@@ -344,6 +344,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | GH-3 | GH-3 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
 | GH-4 | GH-4 | git-hooks | built 2026-10-24 |  | docs/developer/status/git-hooks.md#position |
 | GH-5 | test suites leave the hooks: the studio's browser gate runs by convention before a merge, and a hook runs quick static checks only | git-hooks | built 2026-11-03 |  | docs/developer/status/git-hooks.md#position |
+| GH-6 | the knowledge index leaves the post-merge hook: the index rebuilds itself when next asked, and the hook regenerates the work board's regions only | git-hooks | built 2026-11-18 |  | docs/developer/status/git-hooks.md#position |
 | IM-0 | ADR-A82 amendment, ADR-A84, licence tracking, contracts and schemas, anchor vectors, specification skeleton | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md#is-this-unit-complete |
 | IM-1 | Vocabulary, compiler recipe emission, `dal:claimsConstraint` checks, `export-recipes` | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md#is-this-unit-complete |
 | IM-2 | Pinned Unicode 16.0 tables, Python library, vector generation | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md#is-this-unit-complete |
