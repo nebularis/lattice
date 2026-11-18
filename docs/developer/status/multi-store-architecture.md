@@ -15,7 +15,8 @@
 | MSA-I2 | [the read-set census](../notes/multi-store/MSA-I2-read-set-census.md). The falsifier fires on one example, a pass whose guards read a balance an earlier draw wrote, and becomes common once Behaviour imports Ledger. Every other cross-aggregate read is pinned. [Validation Pack](../validation/MSA-I2.md) | built 2026-11-18 |  |
 | MSA-I3 | [the classification](../notes/multi-store/MSA-I3-dimensions-by-dialect.md). 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. [Validation Pack](../validation/MSA-I3.md) | built 2026-11-17 |  |
 | MSA-I4 | [four operations lowered](../notes/multi-store/MSA-I4-four-operations-lowered.md). No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. [Validation Pack](../validation/MSA-I4.md) | built 2026-11-17 |  |
-| MSA-I5 | the prover spike | planned | the shared types |
+| MSA-I5 | the prover spike | planned | MSA-I5a |
+| MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount | planned | ADR-A-FM2's addendum proposed 2026-11-18, accepted |
 | MSA-I6 | `tools/models/multi-store-protocols`. TLA+ models A, X1 to X4, 28 configurations. Five catalogue rows keep their guarantee with a stated requirement, and the serialised writer never gives atomic visibility. Probes and trace validation not run. [Validation Pack](../validation/MSA-I6.md) | built 2026-11-18 |  |
 | MSA-I7 | the ledger benchmark with a PostgreSQL arm | planned | the ledger's LG-2 |
 | MSA-I8 | one ledger family in PostgreSQL behind the port | planned | MSA-I5, MSA-I6, MSA-I7, MSA-I10 |
@@ -29,17 +30,11 @@
 | MSA-F4 | the queue topology states each queue's dead-letter binding once, and the Python worker and the Java service declare the same broker objects from it (MSAI12-01). Each queue has `bindsTo` and `deadLettersTo`, and the worker and the service declare from the contract. [Validation Pack](../validation/MSA-F4.md) | built 2026-11-18 |  |
 | MSA-F5 | the event's logical key names one event, not one append, in the persistence contract (MSAI4-04). The key is `stream, seq, event` in the contract and the persistence spec. [Validation Pack](../validation/MSA-F5.md) | built 2026-11-18 |  |
 | MSA-F6 | a test that a command writing several aggregates, whose later guard fails, leaves nothing a reader acts on and is completed by a resend (MSAI11-01). Six commands tested: nothing a reader acts on remains in each. A resend completes a publication and a new document's save, and does not complete a deletion whose later tombstone failed (MSAF6-01). [Validation Pack](../validation/MSA-F6.md) | built 2026-11-18 |  |
+| MSA-F7 | a deletion whose tombstone loses a race to a save of the same part or document still removes it, the tombstone planned again at the revision the save left (MSAF6-01) | planned |  |
+| MSA-F8 | a failure of the stream writer's own code is answered as the writer's fault, a 500, and the service answers it 500 (MSA-F2) | planned |  |
+| MSA-F9 | a new document's save that loses the description's guard is answered as a change to send again, read from the document's own row, not as a deleted id (MSAF6-02) | planned |  |
 
-**Next action, for the maintainer to decide:**
-
-1. **MSAF6-01.** A document's or a workspace's deletion whose later tombstone loses a race to a save leaves a graph and a live row nothing reaches, and no resend removes them. ADR-A149 decision 13 holds, and completing the deletion needs a choice: a tombstone not guarded on the revision, a sweep of unreached rows, or the port's unit.
-2. **MSA-F2's second half.** A failure of the writer's own code, as against the store's, is answered as refused and not retried. Confirm, or have it retried with an alert.
-3. **MSA-F3's departure.** The receipt holds the command's digest, a new `cst:requestDigest`, rather than comparing the operations' claim digests, which a resend of a save cannot reproduce. Confirm.
-4. **The ledger's aggregate** (MSA-I2). ADR-A131 decision 5 makes the account the aggregate and its addendum serialises writes on the owner's ledger. The census proposes the owner's ledger for MSA-Q1.
-5. **The shared types of positions and amounts**, which MSA-I5 waits on.
-6. **MSAF6-02**, a misleading reply on a lost race of a new document's save, left as found.
-
-Then MSA-I5 once the shared types are agreed, MSA-I10, and the rest of MSA-I6 (FMH-5's models B to D, the probes on PostgreSQL and Fuseki, trace validation).
+**Next action:** MSA-F7, MSA-F8 and MSA-F9 in order, then MSA-I2 reworked on the ledger's unit as the maintainer decided it. MSA-I5a once ADR-A-FM2's addendum proposed 2026-11-18 is accepted, then MSA-I5 on it.
 
 ## History
 
@@ -67,3 +62,4 @@ Then MSA-I5 once the shared types are agreed, MSA-I10, and the rest of MSA-I6 (F
 - 2026-11-18: MSA-I6 marked building, with TLA+ and TLC as decided. Its models of the serialised writer rest on MSA-I9's probes, and MSA-I2 runs beside it, since X2's reads are its subject.
 - 2026-11-18: MSA-I2 built. The falsifier fires on the text of `ordered-draws.ttl` and is not shown common, and the leaning of §4.1 survives with a rule placing an identity's Behaviour state with its ledger. ADR-A131 states two units for the ledger, a question for the maintainer.
 - 2026-11-18: MSA-I6 built in part. FMH-5's model A and four new models, X1 to X4, checked with TLC. The falsifier does not fire for the five rows modelled. The saga row, FMH-5's models B to D, the isolation probes on PostgreSQL and Fuseki and the trace validation against Isabelle are not done, and FMH-5's row on Track H's board is unchanged.
+- 2026-11-18: the maintainer answered the six points of the next action, recorded in the [plan](../plans/multi-store-architecture.md): MSA-F7 to MSA-F9 planned from MSAF6-01, MSA-F2's second half and MSAF6-02, MSA-F3's departure confirmed, the owner's ledger as the ledger's unit with no placement rule, and the shared types in a proof session of their own, MSA-I5a, which waits on ADR-A-FM2's addendum.
