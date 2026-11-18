@@ -19,6 +19,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import org.apache.jena.atlas.web.HttpException;
+import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.nebularis.lattice.studio.jobs.Topology;
 import org.nebularis.lattice.studio.writes.Codec;
 import org.nebularis.lattice.studio.writes.Command;
@@ -34,7 +36,8 @@ import org.slf4j.LoggerFactory;
  * waiting, up to {@link #MAX_BATCH}, without waiting for more, and applies them in one request (TSD-44). It replies to
  * each, then stores, for each partition the batch touched, the offset of the last message it applied, so a member that
  * takes a partition over resumes after the last batch applied and skips nothing received but not yet applied. A write
- * delivered again after a failover is answered from its receipt and not applied twice.
+ * delivered again after a failover is answered from its receipt and not applied twice. A store that cannot be reached
+ * holds the batch until it can, and a write the store refuses is answered as refused, so it never holds its partition.
  */
 public final class StreamWriter implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(StreamWriter.class);
@@ -99,18 +102,35 @@ public final class StreamWriter implements AutoCloseable {
 
     static void apply(List<Item> batch, Function<List<Item>, List<Reply>> writer, BiConsumer<Item, Reply> replies, Offsets offsets)
         throws InterruptedException {
-        List<Reply> answers;
-        while (true) {
-            try {
-                answers = writer.apply(batch);
-                break;
-            } catch (RuntimeException e) {
-                // The store is unreachable or refused the request, which ran as one transaction, so none of it applied.
-                // The batch waits and is tried again, holding its partitions in order. Receipts make the retry safe.
-                LOG.error("a batch of {} write(s) could not be applied, and is retried in {}", batch.size(), STORE_RETRY, e);
-                Thread.sleep(STORE_RETRY.toMillis());
+        apply(batch, writer, replies, offsets, STORE_RETRY);
+    }
+
+    /** The statuses that say the request itself is at fault, so sending it again cannot succeed. */
+    private static final java.util.Set<Integer> REFUSED = java.util.Set.of(400, 413, 414, 415, 422);
+
+    /**
+     * Whether a failure says nothing about the request, so the same request may succeed later: the store could not be
+     * reached, answered with no status, failed on its side, or refused the writer itself (its credentials or its dataset)
+     * rather than the request. A status of {@link #REFUSED}, or a failure of the writer's own code before anything was
+     * sent, is the request's fault, and is answered rather than retried (MSAI11-05).
+     */
+    static boolean retried(RuntimeException e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof java.io.IOException || t instanceof java.io.UncheckedIOException) {
+                return true;
+            }
+            int status = t instanceof HttpException h ? h.getStatusCode()
+                : t instanceof QueryExceptionHTTP q ? q.getStatusCode() : Integer.MIN_VALUE;
+            if (status != Integer.MIN_VALUE) {
+                return !REFUSED.contains(status);
             }
         }
+        return false;
+    }
+
+    static void apply(List<Item> batch, Function<List<Item>, List<Reply>> writer, BiConsumer<Item, Reply> replies, Offsets offsets,
+        Duration retry) throws InterruptedException {
+        List<Reply> answers = answer(batch, writer, retry);
         Map<String, Long> last = new HashMap<>();
         for (int i = 0; i < batch.size(); i++) {
             Item item = batch.get(i);
@@ -125,6 +145,37 @@ public final class StreamWriter implements AutoCloseable {
         // other partition the consumer holds, the offset it last received, which may be waiting unapplied (MSAI9-06).
         last.forEach(offsets::store);
         batch.forEach(item -> item.context().processed());
+    }
+
+    /**
+     * The replies to a batch, applied in one request. The request runs as one transaction, so a failure applied none of it.
+     * A store that cannot be reached is tried again with the whole batch, holding its partitions in order, and receipts make
+     * that safe. A batch the store refuses is tried one command at a time in its order, so only the command at fault is
+     * answered as refused and the partition moves on.
+     */
+    private static List<Reply> answer(List<Item> batch, Function<List<Item>, List<Reply>> writer, Duration retry)
+        throws InterruptedException {
+        while (true) {
+            try {
+                return writer.apply(batch);
+            } catch (RuntimeException e) {
+                if (retried(e)) {
+                    LOG.error("a batch of {} write(s) could not be applied, and is retried in {}", batch.size(), retry, e);
+                    Thread.sleep(retry.toMillis());
+                } else if (batch.size() > 1) {
+                    LOG.warn("a batch of {} write(s) was refused, so each is tried alone", batch.size(), e);
+                    List<Reply> answers = new ArrayList<>(batch.size());
+                    for (Item item : batch) {
+                        answers.addAll(answer(List.of(item), writer, retry));
+                    }
+                    return answers;
+                } else {
+                    LOG.error("the write on {} at offset {} was refused, and is answered as refused", batch.get(0).context().stream(),
+                        batch.get(0).context().offset(), e);
+                    return List.of(Reply.refused("the store refused the write: " + e.getMessage()));
+                }
+            }
+        }
     }
 
     /** A write sent by the service carries a reply-to, and the worker's carry none. A lost reply costs only a wait. */
