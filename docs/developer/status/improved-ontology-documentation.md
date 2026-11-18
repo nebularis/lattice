@@ -3,7 +3,7 @@
 # Improved Ontology Documentation: Status
 
 **Unit ID:** `improved-ontology-documentation` (absorbs `repository-catalogue`)
-**Status:** built 2026-10-20. In progress. OD-0 accepted. OD-1, OD-RC1, OD-RC2, OD-2 and OD-3 done. OD-4 and OD-5 built autonomously and committed locally, not pushed.
+**Status:** built 2026-11-02. In progress. OD-0 accepted. OD-1, OD-RC1, OD-RC2, OD-2 and OD-3 done. OD-4 and OD-5 built autonomously and committed locally, not pushed.
 **Last updated:** 2026-10-16
 **Plan:** [improved-ontology-documentation.md](../plans/improved-ontology-documentation.md)
 **Sketches:** [improved-ontology-documentation.md](../sketches/improved-ontology-documentation.md),
@@ -31,30 +31,30 @@ and the versioning check passes against `main`.
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| OD-0 | ADRs, the AGENTS.md rule, the conventions document | verified 2026-10-17, committed, [Validation Pack](../validation/OD-0.md) |  |
-| OD-RC1 | catalogue and reader | built 2026-10-17, tests pass, choices agreed 2026-10-18, [Validation Pack](../validation/OD-RC1.md) |  |
-| OD-RC2 | consumers use the reader | verified 2026-10-18, and committed, [Validation Pack](../validation/OD-RC2.md) |  |
-| OD-RC3 | roots, AGENTS.md table, bypass scan | verified 2026-10-19, after the `reaches` audit, committed locally, [Validation Pack](../validation/OD-RC3.md) |  |
-| OD-1 | scanner and markers | verified 2026-10-17, choices agreed, [Validation Pack](../validation/OD-1.md) | the maintainer's merge |
-| OD-2 | sections 1 to 3 | built 2026-10-18 autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD-2.md) |  |
-| OD-3 | section 6 to OWL | built 2026-10-18 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-3.md) |  |
-| OD-4 | section 6 to SHACL | built 2026-10-18 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-4.md) | the maintainer's review of six decisions taken alone |
-| OD-5 | generated regions | built 2026-10-18 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-5.md) | the maintainer's review of six decisions taken alone |
-| OD-6 | Eligibility pilot | built 2026-10-20 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-6.md) | the maintainer's review of seven decisions, 32 definitions and two changed tests |
-| OD-7 | Vocabulary | verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-7.md) |  |
+| OD-0 | ADRs, the AGENTS.md rule, the conventions document | merged 2026-11-02, verified 2026-10-17, committed, [Validation Pack](../validation/OD-0.md) |  |
+| OD-RC1 | catalogue and reader | merged 2026-11-02, built 2026-10-17, tests pass, choices agreed 2026-10-18, [Validation Pack](../validation/OD-RC1.md) |  |
+| OD-RC2 | consumers use the reader | merged 2026-11-02, verified 2026-10-18, and committed, [Validation Pack](../validation/OD-RC2.md) |  |
+| OD-RC3 | roots, AGENTS.md table, bypass scan | merged 2026-11-02, verified 2026-10-19, after the `reaches` audit, committed locally, [Validation Pack](../validation/OD-RC3.md) |  |
+| OD-1 | scanner and markers | merged 2026-11-02, verified 2026-10-17, choices agreed, [Validation Pack](../validation/OD-1.md) | the maintainer's merge |
+| OD-2 | sections 1 to 3 | merged 2026-11-02, built 2026-10-18 autonomously 2026-10-18, committed locally (`8947e696`), [Validation Pack](../validation/OD-2.md) |  |
+| OD-3 | section 6 to OWL | merged 2026-11-02, built 2026-10-18 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-3.md) |  |
+| OD-4 | section 6 to SHACL | merged 2026-11-02, built 2026-10-18 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-4.md) | the maintainer's review of six decisions taken alone |
+| OD-5 | generated regions | merged 2026-11-02, built 2026-10-18 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-5.md) | the maintainer's review of six decisions taken alone |
+| OD-6 | Eligibility pilot | merged 2026-11-02, built 2026-10-20 autonomously 2026-10-18, committed locally, [Validation Pack](../validation/OD-6.md) | the maintainer's review of seven decisions, 32 definitions and two changed tests |
+| OD-7 | Vocabulary | merged 2026-11-02, verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-7.md) |  |
 | OD-8 | onward, one per layer | planned | OD-7, and for Foundation and Party their part of TD-16 |
-| OD-DOC1 | published decisions | verified 2026-10-19, committed locally, [Validation Pack](../validation/OD-DOC1.md) |  |
+| OD-DOC1 | published decisions | merged 2026-11-02, verified 2026-10-19, committed locally, [Validation Pack](../validation/OD-DOC1.md) |  |
 | OD-DOC2 | site sections | merged 2026-10-20, [Validation Pack](../validation/OD-DOC2.md) |  |
 | OD-DOC3 | tutorial and Field Guide review | planned | OD-DOC2, `lattice-tutorial` merged |
 | OD-DOC4 | the layer interactions record, with its register entries and STD-326 | planned |  |
 | OD-RC4 | downstream extension | planned | OD-RC3 |
 | OD-RC5 | package promotion | planned | OD-RC4 |
 | OD-RC6 | XML catalogue folded in | planned | OD-RC5, a new ADR on ADR-A88 |
-| OD-ELC1 | composition operation | verified 2026-10-19, committed locally, [Validation Pack](../validation/OD-ELC1.md) |  |
-| OD-MC1 | migration check labels | verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-MC1.md) |  |
-| OD-VER1 | one release for the substrate | verified 2026-10-20, committed locally, [Validation Pack](../validation/VER1.md) |  |
+| OD-ELC1 | composition operation | merged 2026-11-02, verified 2026-10-19, committed locally, [Validation Pack](../validation/OD-ELC1.md) |  |
+| OD-MC1 | migration check labels | merged 2026-11-02, verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-MC1.md) |  |
+| OD-VER1 | one release for the substrate | merged 2026-10-20, verified 2026-10-20, committed locally, [Validation Pack](../validation/VER1.md) |  |
 | OD-DOC2b | working documents out of published pages | built 2026-10-20 autonomously 2026-10-20, committed locally, [Validation Pack](../validation/OD-DOC2b.md) |  |
-| OD-REL1 | first release, 0.18.0 | verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL1.md) | the tags, on `main` after the merge |
+| OD-REL1 | first release, 0.18.0 | merged 2026-11-02, verified 2026-10-20, committed locally, [Validation Pack](../validation/OD-REL1.md) | the tags, on `main` after the merge |
 
 ## Open questions
 
@@ -74,6 +74,7 @@ and the versioning check passes against `main`.
 
 ## Log
 
+- 2026-11-18: OD-0 to OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1 to OD-RC3, OD-REL1 and OD-VER1 read merged, on the day each reached `main`, after an audit found each delivered there with the maintainer's verdict on record. Rows of this unit that are on `main` with no verdict found were left as they are.
 - 2026-11-12: OD-DOC4 added and planned on `docs/placement-vehicles-structure`, the layer interactions record, at the maintainer's request after a design discussion on Ledger, Behaviour and Surface had to rebuild the cross-layer narrative from eleven documents. STD-326 is in the register from today, and the brief keeps a list of inputs until the slice is built.
 - 2026-10-14: branch `docs/literate-v2` and its worktree created from `main`. Sketch reviewed, first plan
   and this record written. Measured: prose, annotation and Turtle sizes per layer, and README-only commits

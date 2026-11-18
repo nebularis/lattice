@@ -467,9 +467,9 @@ The case of a unit short in the second addendum of 2026-11-16, members with a ba
 
 **Releases.** The rounding difference, the source of a unit over and their values add published terms, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
 
-## Addendum (proposed 2026-11-18): the owner's ledger is the unit that is consistent, and an account still owns its postings
+## Addendum (2026-11-18): the owner's ledger is the unit that is consistent, and an account still owns its postings
 
-**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided the rule on 2026-11-18. It adds no evaluation semantics, so it carries no conformance cases.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-18, who decided the rule the same day. It adds no evaluation semantics, so it carries no conformance cases.
 
 **Narrows decision 5.** It also says what the third addendum of 2026-11-16 left unsaid, that serialising an owner's ledger moved the unit decision 5 names.
 
@@ -526,4 +526,4 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 
 **The second addendum of 2026-11-17.** LG-Q30 of the [Ledger plan](../../developer/plans/ledger.md), raised by a constraint that read a term the layer had not declared. The maintainer decided on 2026-11-17 to declare it and asked that where a unit short goes be driven by the wording, as a unit over is, so the reading by symmetry first proposed was dropped. Built as LG-23 ([its pack](../../developer/validation/LG-23.md)), which holds the model's search of the four pairs and the theorem that each settles exactly.
 
-**The addendum proposed on 2026-11-18.** LG-Q44 of the [Ledger plan](../../developer/plans/ledger.md), raised by the read-set census of the multi-store architecture epic, MSA-I2, which met decision 5's unit and the third addendum's side by side. The maintainer decided for the owner's ledger on 2026-11-18, with the ledger node of LG-Q37 as its root. The epic's own proposal that an identity's other state be placed with its ledger was not taken, since a read by revision needs no such rule.
+**The addendum of 2026-11-18.** LG-Q44 of the [Ledger plan](../../developer/plans/ledger.md), raised by the read-set census of the multi-store architecture epic, MSA-I2, which met decision 5's unit and the third addendum's side by side. The maintainer decided for the owner's ledger on 2026-11-18, with the ledger node of LG-Q37 as its root. The epic's own proposal that an identity's other state be placed with its ledger was not taken, since a read by revision needs no such rule.

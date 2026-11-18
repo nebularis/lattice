@@ -35,7 +35,7 @@ Each slice is the sketch's investigation of the same identifier, with the falsif
 | MSA-I2 | paper | `docs/developer/notes/multi-store/` | the ledger branch |
 | MSA-I3 | paper | `docs/developer/notes/multi-store/` | none |
 | MSA-I4 | paper | `docs/developer/notes/multi-store/` | MSA-I3 |
-| MSA-I5a | proofs | `tools/proofs/shared/` | the acceptance of ADR-A-FM2's addendum proposed 2026-11-18 |
+| MSA-I5a | proofs | `tools/proofs/shared/` | none, ADR-A-FM2's addendum of 2026-11-18 is accepted |
 | MSA-I5 | proofs | `spikes/multi-store-model/` | MSA-I4, the ledger branch's proof gate, and MSA-I5a, the shared session that holds a position and an amount (sketch §4.14) |
 | MSA-I6 | models | `tools/models/<topic>/` | MSA-I2, MSA-I9, and the choice of TLA+ or Quint (Track H records it as not chosen) |
 | MSA-I7 | benchmark | `benchmark/` | the ledger's runtime document, LG-2 |
@@ -56,14 +56,12 @@ Each slice is the sketch's investigation of the same identifier, with the falsif
 
 ## Decided by the maintainer, 2026-11-18
 
-- **MSA-Q1, for the ledger's families.** The unit of placement is the owner's ledger, every account of one owner, which is also the unit that is consistent and that one writer serialises (LG-Q44 of the [ledger plan](ledger.md), ADR-A131's addendum proposed 2026-11-18). An account still owns its postings and a period's unit is still the partition. The census of MSA-I2 counts a read of another account of the same ledger as inside the unit.
+- **MSA-Q1, for the ledger's families.** The unit of placement is the owner's ledger, every account of one owner, which is also the unit that is consistent and that one writer serialises (LG-Q44 of the [ledger plan](ledger.md), ADR-A131's addendum of 2026-11-18). An account still owns its postings and a period's unit is still the partition. The census of MSA-I2 counts a read of another account of the same ledger as inside the unit.
 - **A guard outside the ledger reads a balance as of a revision.** The read is of a fact that does not change, so it is no read of changeable state in another store. The proposal that an identity's Behaviour state be placed with its ledger is not taken. The revision a pass records is a term of the ledger's LG-27 and is not built yet.
-- **MSA-Q19, where the shared types live.** In a new small proof session, `tools/proofs/shared/`, `LatticeShared`, hand-written and gated (ADR-A-FM2's addendum proposed 2026-11-18). Never in the prelude and never in the ledger's session. It is MSA-I5a, built before MSA-I5.
+- **MSA-Q19, where the shared types live.** In a new small proof session, `tools/proofs/shared/`, `LatticeShared`, hand-written and gated (ADR-A-FM2's addendum of 2026-11-18). Never in the prelude and never in the ledger's session. It is MSA-I5a, built before MSA-I5.
 - **MSA-Q21, the number type.** It stays generic over an ordered ring. A model that only stores an amount treats it as a value of any type.
 
-## Proposed, for the maintainer's confirmation
-
-- **MSA-Q20, what a position is.** A natural number on a named axis, compared only within its axis. On a sequence the writer assigns the next number, with no gap, inside the write the axis serialises, and 0 means nothing is written yet. On an effective axis the arrangement assigns it, and it may skip or be shared. The [brief of 2026-11-18](../notes/machine-s-brief-2026-11-18.md) says what a relational store has to respect for it to hold.
+- **MSA-Q20, what a position is.** Confirmed by the maintainer on 2026-11-18, in the same addendum to ADR-A-FM2. A natural number on a named axis, compared only within its axis. On a sequence the writer assigns the next number, with no gap, inside the write the axis serialises, and 0 means nothing is written yet. On an effective axis the arrangement assigns it, and it may skip or be shared. The [brief of 2026-11-18](../notes/machine-s-brief-2026-11-18.md) says what a relational store has to respect for it to hold.
 
 ## Fixes to running code
 

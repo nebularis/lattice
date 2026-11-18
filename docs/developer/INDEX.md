@@ -22,9 +22,9 @@ Every unit with a status record, its state from the record's Status line, and it
 |---|---|---|---|---|---|
 | DESIGN_SKETCHES_INDEX | unit |  | dropped 2026-09-20 |  | [status](status/DESIGN_SKETCHES_INDEX.md) |
 | applied-insurance-reference | epic | AIR | built 2026-11-02 | AIR-3.3 | [plan](plans/applied-insurance-reference.md), [status](status/applied-insurance-reference.md), [review](review/applied-insurance-reference-review.md), 24 Validation Packs |
-| applied-ontology-readiness | unit | AOR | built 2026-09-25 | AOR-1 | [plan](plans/applied-ontology-readiness.md), [status](status/applied-ontology-readiness.md), [review](review/applied-ontology-readiness-review.md), 12 Validation Packs |
+| applied-ontology-readiness | unit | AOR | built 2026-11-02 | AOR-1 | [plan](plans/applied-ontology-readiness.md), [status](status/applied-ontology-readiness.md), [review](review/applied-ontology-readiness-review.md), 12 Validation Packs |
 | asset-class | unit | ASC | built 2026-11-08 | ASC-1 | [plan](plans/asset-class.md), [status](status/asset-class.md), 3 Validation Packs |
-| computable-contract-substrate | multi-slice unit | CCS, HQ | verified 2026-10-29 | CCS-0 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), 22 Validation Packs |
+| computable-contract-substrate | multi-slice unit | CCS, HQ | merged 2026-11-02 | CCS-9b.3 | [plan](plans/computable-contract-substrate.md), [status](status/computable-contract-substrate.md), 22 Validation Packs |
 | config-studio | unit |  | merged 2026-10-30 |  | [plan](plans/config-studio.md), [status](status/config-studio.md) |
 | design-sketches-validation-summary | unit |  | merged 2026-09-20 |  | [status](status/design-sketches-validation-summary.md) |
 | documentation-link-repair | unit |  | planned |  | [plan](plans/documentation-link-repair.md), [status](status/documentation-link-repair.md) |
@@ -33,17 +33,17 @@ Every unit with a status record, its state from the record's Status line, and it
 | formal-methods-track-b | phase | FMB | building 2026-10-09 | FMB-1 | [plan](plans/formal-methods-track-b.md), [status](status/formal-methods-track-b.md) |
 | formal-methods-track-c | phase | FMC | built 2026-10-27 | FMC-1 | [plan](plans/formal-methods-track-c.md), [status](status/formal-methods-track-c.md), 1 Validation Packs |
 | formal-methods-track-e | phase | FME | built 2026-11-09 | FME-1.0 | [plan](plans/formal-methods-track-e.md), [status](status/formal-methods-track-e.md), 1 Validation Packs |
-| formal-methods-track-h | phase | FMH | built 2026-11-01 | FMH-2.12 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md), 45 Validation Packs |
+| formal-methods-track-h | phase | FMH | built 2026-11-02 | FMH-2.12 | [plan](plans/formal-methods-track-h.md), [status](status/formal-methods-track-h.md), 45 Validation Packs |
 | formal-methods | epic | FM | built 2026-11-02 | FM-D0 | [plan](plans/formal-methods.md), [status](status/formal-methods.md), 1 Validation Packs |
 | git-hooks | unit | GH | built 2026-11-18 | GH-0 | [plan](plans/git-hooks.md), [status](status/git-hooks.md) |
 | governance-surfaces | unit |  | merged 2026-09-20 |  | [status](status/governance-surfaces.md) |
 | identity-minting | unit | IM | built 2026-09-24 | IM-0 | [plan](plans/identity-minting.md), [status](status/identity-minting.md), 4 Validation Packs |
 | implementation-handover-historical | unit |  | dropped 2026-09-20 |  | [status](status/implementation-handover-historical.md) |
-| improved-ontology-documentation | unit | OD | built 2026-10-20 | OD-0 | [plan](plans/improved-ontology-documentation.md), [status](status/improved-ontology-documentation.md), 17 Validation Packs |
+| improved-ontology-documentation | unit | OD | built 2026-11-02 | OD-8 | [plan](plans/improved-ontology-documentation.md), [status](status/improved-ontology-documentation.md), 17 Validation Packs |
 | insurml-alignment | epic | IMA | planned | IMA-0.1 | [plan](plans/insurml-alignment.md), [status](status/insurml-alignment.md) |
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
-| lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-0 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
+| lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-1 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
 | ledger | unit | LG | merged 2026-11-18 | LG-3 | [plan](plans/ledger.md), [status](status/ledger.md), 18 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
@@ -87,7 +87,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
-| vyvid-migration | multi-slice unit | VM | built 2026-11-12 | VM-0 | [plan](plans/vyvid-migration.md), [status](status/vyvid-migration.md), [review](review/vyvid-migration-review.md), 9 Validation Packs |
+| vyvid-migration | multi-slice unit | VM | built 2026-11-12 | VM-9 | [plan](plans/vyvid-migration.md), [status](status/vyvid-migration.md), [review](review/vyvid-migration-review.md), 9 Validation Packs |
 | windows-portability | unit | XP | built 2026-11-07 | XP-0 | [plan](plans/windows-portability.md), [status](status/windows-portability.md) |
 | word-authoring-poc | multi-slice unit | WA | built 2026-10-10 | WA-0 | [plan](plans/word-authoring-poc.md), [status](status/word-authoring-poc.md), 12 Validation Packs |
 | work-board | multi-slice unit | WB | built 2026-11-04 | WB-0 | [plan](plans/work-board.md), [status](status/work-board.md) |
@@ -170,17 +170,17 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | AIR-7.9 | the MRC module, `ontology/applied/insurance/mrc/` (P7-Q6): the unique market reference, the MRC's sections (risk details, information, security details with each insurer's or panel's own pag | applied-insurance-reference | planned | AIR-7.1, Ensemble ES-5 and ES-7 (which follows ES-6), P7-Q6 | docs/developer/status/applied-insurance-reference.md#machine-r |
 | AIR-DT1 | the tests for slices built while testing is deferred, from AIR-4.2a. Test plans collected in the Phase 4 plan | applied-insurance-reference | planned |  | docs/developer/status/applied-insurance-reference.md#machine-r |
 | AOR-1 | AOR-1 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-2 | to AOR-4 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-3 | to AOR-4 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-4 | to AOR-4 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-5 | to AOR-9 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-6 | to AOR-9 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-7 | to AOR-9 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-8 | to AOR-9 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-9 | to AOR-9 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-3b | AOR-3b | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-12 | AOR-12 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
-| AOR-13 | AOR-13 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-2 | to AOR-4 | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-3 | to AOR-4 | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-4 | to AOR-4 | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-5 | to AOR-9 | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-6 | to AOR-9 | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-7 | to AOR-9 | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-8 | to AOR-9 | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-9 | to AOR-9 | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-3b | AOR-3b | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-12 | AOR-12 | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
+| AOR-13 | AOR-13 | applied-ontology-readiness | merged 2026-11-02 |  | docs/developer/status/applied-ontology-readiness.md#slices |
 | AOR-10 | AOR-11 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
 | AOR-11 | AOR-11 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
 | AOR-14 | to AOR-16 | applied-ontology-readiness | built 2026-09-25 |  | docs/developer/status/applied-ontology-readiness.md#slices |
@@ -190,9 +190,9 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | ASC-1 | the literate grammar's property columns in individuals tables, the conventions document and their tests | asset-class | built 2026-11-08 |  | docs/developer/status/asset-class.md#board |
 | ASC-2 | the module `applied/asset-class/`, its README, spec, vocab, shapes, examples, tests and catalogue entries | asset-class | built 2026-11-08 |  | docs/developer/status/asset-class.md#board |
 | ASC-3 | exposure adopts the edition, its examples and the asset shape's mobility rules | asset-class | built 2026-11-08 |  | docs/developer/status/asset-class.md#board |
-| CCS-0 | A-112, A-113, A-01 and ADR-A-C2 addenda | computable-contract-substrate | verified 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-1 | A-104 | computable-contract-substrate | verified 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
-| CCS-2 | A-106 | computable-contract-substrate | verified 2026-10-29 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-0 | A-112, A-113, A-01 and ADR-A-C2 addenda | computable-contract-substrate | merged 2026-11-02 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-1 | A-104 | computable-contract-substrate | merged 2026-11-02 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
+| CCS-2 | A-106 | computable-contract-substrate | merged 2026-11-02 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-3 | Wording spec, vocab and shapes | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-4 | Wording tables, assembly, variable values | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
 | CCS-5 | Wording amendments, law shapes, how-to | computable-contract-substrate | merged 2026-10-10 |  | docs/developer/status/computable-contract-substrate.md#slice-board |
@@ -276,10 +276,10 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FME-4 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-5 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md#slices |
 | FMH-2.12 | the rows replace, selected by capability, LR-Q1 to LR-Q4 | formal-methods-track-h | built 2026-11-01 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.1 | prefix antichain and overlap check | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.2a | witness harness, audit witnesses, measured gap list | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.2b | witnesses for the refusals and warnings | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.2c | witnesses for the 13 remaining shapes | formal-methods-track-h | verified 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.1 | prefix antichain and overlap check | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.2a | witness harness, audit witnesses, measured gap list | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.2b | witnesses for the refusals and warnings | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.2c | witnesses for the 13 remaining shapes | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-1.2d | refuse a multi-valued single-valued property, TD-25 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-1.3 | static template checks S-3 and S-4 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-1.4a | refuse a composite boundary with several node properties, H-D4 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
@@ -288,7 +288,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FMH-1.5 | stable labels | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-HO0 | correct the ownership note and its spike | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-HO1 | composite replace: payload to the default graph, linear sweep, TD-39, TD-36 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO2 | draft ADR-A122, Proposed | formal-methods-track-h | built 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO2 | draft ADR-A122, Proposed | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-HO3 | `dal:` vocabulary 0.3.0: `dal:ownership`, reference data | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-HO4 | ownership tree and path compiler, added beside the old walk | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-HO5 | switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
@@ -296,19 +296,19 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FMH-HO7 | composite create and tombstone delete, TD-04 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-HO8 | injective graph naming within and across families, TD-38 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-HO9 | ownership documentation and close-out | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.0 | ADR-A123 | formal-methods-track-h | built 2026-10-10 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.1 | the typed IR and its renderer | formal-methods-track-h | built 2026-10-12 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.2 | equivalence harness, `bootstrap-version-row` and `append-event` ported | formal-methods-track-h | built 2026-10-12 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.0 | ADR-A123 | formal-methods-track-h | merged 2026-11-02 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.1 | the typed IR and its renderer. Five defects fixed. Validation Pack. Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | formal-methods-track-h | merged 2026-11-02 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.2 | equivalence harness, `bootstrap-version-row` and `append-event` ported. Two review findings fixed. Validation Pack. TD-34 closed for these operations | formal-methods-track-h | merged 2026-11-02 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2 | typed IR | formal-methods-track-h | briefed |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.3 | named-graph row writers | formal-methods-track-h | built 2026-10-12 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.4a | the composite ports | formal-methods-track-h | built 2026-10-13 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.4b | Oxigraph, probes, benchmark | formal-methods-track-h | built 2026-10-13 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.5 | key claims, audits, guard D, the `SELECT` fragment | formal-methods-track-h | built 2026-10-23 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.6 | expected compiled profiles, paper check | formal-methods-track-h | built 2026-10-13 | the maintainer's merge. FMH-2.7 waits for RQ4 to RQ6 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.6b | event slots, patch-log half held, H-D33 | formal-methods-track-h | verified 2026-10-14 | the merge | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.3 | named-graph row writers. One review fix. Validation Pack. Plan §4.1. Countersignature items signed 2026-10-12. TD-34 closed for its operations | formal-methods-track-h | merged 2026-11-02 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.4a | the composite ports. Validation Pack. Plan §4.2 | formal-methods-track-h | merged 2026-11-02 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.4b | Oxigraph, probes, benchmark. Validation Pack. Decision 1 decided (option D, built in FMH-2.5), and the corrected P1 test countersigned | formal-methods-track-h | merged 2026-11-02 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.5 | key claims, audits, guard D, the `SELECT` fragment. Autonomously, in six gates. Validation Pack. Plan §4.3. TD-34 closed. every decision taken | formal-methods-track-h | merged 2026-11-02 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6 | expected compiled profiles, paper check | formal-methods-track-h | merged 2026-11-02 | the maintainer's merge. FMH-2.7 waits for RQ4 to RQ6 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6b | event slots, patch-log half held, H-D33 | formal-methods-track-h | merged 2026-11-02 | the merge | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.6c | write disciplines | formal-methods-track-h | built 2026-10-20 | the review tranche below | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.6d | patch log for in-place families | formal-methods-track-h | planned 2026-10-20 | FMH-2.6c's review | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.8c | edges once, faster `members`, record classes, member parts | formal-methods-track-h | verified 2026-10-20 | the merge | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.8c | edges once, faster `members`, record classes, member parts | formal-methods-track-h | merged 2026-11-02 | the merge | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.9 | Mustache retired, D-12 (a), goldens keyed by operation | formal-methods-track-h | built 2026-10-21 | the review | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.11a | the Persistence README as a literate specification, graph for graph | formal-methods-track-h | built 2026-10-21 | the review | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.11b | the narrative, the pictures, the gotchas | formal-methods-track-h | built 2026-10-21 | the review, and D-59's split | docs/developer/status/formal-methods-track-h.md#slices |
@@ -322,13 +322,13 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FMH-8 | protocol models K-N, grounding | formal-methods-track-h | planned | FMH-7 | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-9 | detection-coverage closure, generated audits | formal-methods-track-h | planned | FMH-3, FMH-4 | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-10 | runtime monitors | formal-methods-track-h | planned | FMH-9 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.2 | FMH-1.2 | formal-methods-track-h | built 2026-10-09 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.6e | FMH-2.6e | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.6f | FMH-2.6f | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.2 | FMH-1.2 | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6e | FMH-2.6e | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6f | FMH-2.6f | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.6g | FMH-2.6g | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.8a | FMH-2.8a | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.8b | FMH-2.8b | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-W65 | FMH-W65 | formal-methods-track-h | built 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-W65 | FMH-W65 | formal-methods-track-h | merged 2026-10-23 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FM-D0 | environments | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-D1 | brief | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
 | FM-D2 | Rocq track | formal-methods | built 2026-10-06 |  | docs/developer/status/formal-methods.md#track-d |
@@ -350,30 +350,30 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | IM-2 | Pinned Unicode 16.0 tables, Python library, vector generation | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md#is-this-unit-complete |
 | IM-3 | Java library, vector coverage of every recipe feature | identity-minting | built 2026-09-24 |  | docs/developer/status/identity-minting.md#is-this-unit-complete |
 | IM-4 | Specification completion, READMEs, human walk-through | identity-minting | planned |  | docs/developer/status/identity-minting.md#is-this-unit-complete |
-| OD-0 | ADRs, the AGENTS.md rule, the conventions document | improved-ontology-documentation | verified 2026-10-17 |  | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-RC1 | catalogue and reader | improved-ontology-documentation | built 2026-10-17 |  | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-RC2 | consumers use the reader | improved-ontology-documentation | verified 2026-10-18 |  | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-RC3 | roots, AGENTS.md table, bypass scan | improved-ontology-documentation | verified 2026-10-19 |  | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-1 | scanner and markers | improved-ontology-documentation | verified 2026-10-17 | the maintainer's merge | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-2 | sections 1 to 3 | improved-ontology-documentation | built 2026-10-18 |  | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-3 | section 6 to OWL | improved-ontology-documentation | built 2026-10-18 |  | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-4 | section 6 to SHACL | improved-ontology-documentation | built 2026-10-18 | the maintainer's review of six decisions taken alone | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-5 | generated regions | improved-ontology-documentation | built 2026-10-18 | the maintainer's review of six decisions taken alone | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-6 | Eligibility pilot | improved-ontology-documentation | built 2026-10-20 | the maintainer's review of seven decisions, 32 definitions and two changed tests | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-7 | Vocabulary | improved-ontology-documentation | verified 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-0 | ADRs, the AGENTS.md rule, the conventions document | improved-ontology-documentation | merged 2026-11-02 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-RC1 | catalogue and reader | improved-ontology-documentation | merged 2026-11-02 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-RC2 | consumers use the reader | improved-ontology-documentation | merged 2026-11-02 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-RC3 | roots, AGENTS.md table, bypass scan | improved-ontology-documentation | merged 2026-11-02 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-1 | scanner and markers | improved-ontology-documentation | merged 2026-11-02 | the maintainer's merge | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-2 | sections 1 to 3 | improved-ontology-documentation | merged 2026-11-02 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-3 | section 6 to OWL | improved-ontology-documentation | merged 2026-11-02 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-4 | section 6 to SHACL | improved-ontology-documentation | merged 2026-11-02 | the maintainer's review of six decisions taken alone | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-5 | generated regions | improved-ontology-documentation | merged 2026-11-02 | the maintainer's review of six decisions taken alone | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-6 | Eligibility pilot | improved-ontology-documentation | merged 2026-11-02 | the maintainer's review of seven decisions, 32 definitions and two changed tests | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-7 | Vocabulary | improved-ontology-documentation | merged 2026-11-02 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-8 | onward, one per layer | improved-ontology-documentation | planned | OD-7, and for Foundation and Party their part of TD-16 | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-DOC1 | published decisions | improved-ontology-documentation | verified 2026-10-19 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-DOC1 | published decisions | improved-ontology-documentation | merged 2026-11-02 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-DOC2 | site sections | improved-ontology-documentation | merged 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-DOC3 | tutorial and Field Guide review | improved-ontology-documentation | planned | OD-DOC2, `lattice-tutorial` merged | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-DOC4 | the layer interactions record, with its register entries and STD-326 | improved-ontology-documentation | planned |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC4 | downstream extension | improved-ontology-documentation | planned | OD-RC3 | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC5 | package promotion | improved-ontology-documentation | planned | OD-RC4 | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-RC6 | XML catalogue folded in | improved-ontology-documentation | planned | OD-RC5, a new ADR on ADR-A88 | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-ELC1 | composition operation | improved-ontology-documentation | verified 2026-10-19 |  | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-MC1 | migration check labels | improved-ontology-documentation | verified 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-VER1 | one release for the substrate | improved-ontology-documentation | verified 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-ELC1 | composition operation | improved-ontology-documentation | merged 2026-11-02 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-MC1 | migration check labels | improved-ontology-documentation | merged 2026-11-02 |  | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-VER1 | one release for the substrate | improved-ontology-documentation | merged 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
 | OD-DOC2b | working documents out of published pages | improved-ontology-documentation | built 2026-10-20 |  | docs/developer/status/improved-ontology-documentation.md#slices |
-| OD-REL1 | first release, 0.18.0 | improved-ontology-documentation | verified 2026-10-20 | the tags, on `main` after the merge | docs/developer/status/improved-ontology-documentation.md#slices |
+| OD-REL1 | first release, 0.18.0 | improved-ontology-documentation | merged 2026-11-02 | the tags, on `main` after the merge | docs/developer/status/improved-ontology-documentation.md#slices |
 | IMA-0.1 | engagement brief | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-0.2 | licence and publication record | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-0.3 | ADR, profile | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
@@ -398,7 +398,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | IMA-4.3 | renderer and numbering, with the rule chosen for Q32 | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-4.4 | verification passes: references in every configuration, dependency acyclicity. Alternatives for every condition kind join when CCS C13a lands | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
 | IMA-4.5 | optimisation passes: question plans, dead components, specialisation | insurml-alignment | planned |  | docs/developer/status/insurml-alignment.md#phase-0 |
-| TUT-0 | the page, its layout, the home page links and `check:tutorial-snippets` | lattice-tutorial | verified 2026-10-14 |  | docs/developer/status/lattice-tutorial.md#position |
+| TUT-0 | the page, its layout, the home page links and `check:tutorial-snippets` | lattice-tutorial | merged 2026-11-06 |  | docs/developer/status/lattice-tutorial.md#position |
 | TUT-1 | chapters 0 to 3 | lattice-tutorial | built 2026-10-15 |  | docs/developer/status/lattice-tutorial.md#position |
 | TUT-2 | chapters 4 to 6 | lattice-tutorial | built 2026-10-15 |  | docs/developer/status/lattice-tutorial.md#position |
 | TUT-3 | chapters 7 to 9 | lattice-tutorial | built 2026-10-16 |  | docs/developer/status/lattice-tutorial.md#position |
@@ -442,7 +442,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | MSA-I2 | the read-set census | multi-store-architecture | planned |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I3 | the classification. 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. Validation Pack | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I4 | four operations lowered. No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. Validation Pack | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
-| MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount defined once | multi-store-architecture | planned | ADR-A-FM2's addendum accepted | docs/developer/status/multi-store-architecture.md#position |
+| MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount defined once | multi-store-architecture | planned |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I5 | the prover spike | multi-store-architecture | planned | MSA-I5a | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I6 | the protocol models | multi-store-architecture | planned | MSA-I2 | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I7 | the ledger benchmark with a PostgreSQL arm | multi-store-architecture | planned | the ledger's LG-2 | docs/developer/status/multi-store-architecture.md#position |
@@ -585,15 +585,15 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-4 | Surface resolves scoped bindings via `vocabulary.resolve` (`tools/surface/src/surface/compile.py`), Eligibility's `HierarchyWellFoundednessShape` checks every scheme a contract could resolve | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
-| VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-1 | the binding, `bootstrap:vyvid`, the comparison | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-6 | the moves, the page at the old path, TD-2 cleared | vyvid-migration | verified 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-7 | cloud sessions: the pin at `v0.2.14`, the setup script and its pasted lines, the hook | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
-| VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | vyvid-migration | verified 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | vyvid-migration | merged 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-1 | the binding, `bootstrap:vyvid`, the comparison | vyvid-migration | merged 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | vyvid-migration | merged 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | vyvid-migration | merged 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | vyvid-migration | merged 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | vyvid-migration | merged 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-6 | the moves, the page at the old path, TD-2 cleared | vyvid-migration | merged 2026-11-05 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-7 | cloud sessions: the pin at `v0.2.14`, the setup script and its pasted lines, the hook | vyvid-migration | merged 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
+| VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | vyvid-migration | merged 2026-11-06 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-9 | the quanta by Вивід's own kind, the pin at v0.2.23 | vyvid-migration | built 2026-11-08 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-10 | the getting-started guide names the local setup of Вивід | vyvid-migration | built 2026-11-09 |  | docs/developer/status/vyvid-migration.md#position |
 | VM-11 | the pin at v0.2.27, and the documents follow it | vyvid-migration | built 2026-11-09 |  | docs/developer/status/vyvid-migration.md#position |

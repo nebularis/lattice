@@ -105,9 +105,9 @@ The prelude's heap is built on first use and never by `bootstrap` (STD-324). `to
 
 Everything else in this record stands. Decision 1's rule, one session per layer generated from its README, holds for every directory under `tools/proofs/` but `base/`, and decision 2's topology rules govern `base/` as they govern the layer directories.
 
-## Addendum (proposed 2026-11-18): a shared session for what two developments both define
+## Addendum (2026-11-18): a shared session for what two developments both define
 
-**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided where the shared types live and that the number type stays generic on 2026-11-18. The definition of a position is proposed here and awaits the maintainer's confirmation.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-18, who decided the same day where the shared types live, what a position is and that the number type stays generic.
 
 **A second session that is not a layer's.** `tools/proofs/shared/` holds the session `LatticeShared`, `session LatticeShared = LatticeBase +`, hand-written, with its claims gated as a layer's are. It holds a definition only where two developments both use it, and today that is positions and amounts. The prelude's rule stands as the addendum of 2026-11-08 states it: `tools/proofs/base/` imports library theories and nothing else.
 

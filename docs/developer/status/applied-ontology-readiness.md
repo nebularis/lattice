@@ -3,7 +3,7 @@
 # Applied Ontology Readiness - Status
 
 **Unit ID:** `applied-ontology-readiness`
-**Status:** built 2026-09-25. AOR-1 to AOR-9, AOR-3b, AOR-12 and AOR-13 committed (`6e36586`,
+**Status:** built 2026-11-02. AOR-1 to AOR-9, AOR-3b, AOR-12 and AOR-13 committed (`6e36586`,
 `6e9acb1`, `54caeb6`).
 AOR-10, AOR-11 and AOR-14 to AOR-17 implemented and self-validated, awaiting
 the maintainer's commands (uncommitted). Every slice is now implemented.
@@ -34,17 +34,17 @@ checks listed under Validation below. The maintainer has not yet run them.
 | Slice | Deliverable | State | Blocked on | Validation Pack |
 |---|---|---|---|---|
 | AOR-1 |  | built 2026-09-25, `6b2a577` |  | n/a |
-| AOR-2 | to AOR-4 | built 2026-09-25, (`6e36586`), commands passed |  | [aor-2](../validation/AOR-2.md), [aor-3](../validation/AOR-3.md), [aor-4](../validation/AOR-4.md) |
-| AOR-3 | to AOR-4 | built 2026-09-25, (`6e36586`), commands passed |  | [aor-2](../validation/AOR-2.md), [aor-3](../validation/AOR-3.md), [aor-4](../validation/AOR-4.md) |
-| AOR-4 | to AOR-4 | built 2026-09-25, (`6e36586`), commands passed |  | [aor-2](../validation/AOR-2.md), [aor-3](../validation/AOR-3.md), [aor-4](../validation/AOR-4.md) |
-| AOR-5 | to AOR-9 | built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
-| AOR-6 | to AOR-9 | built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
-| AOR-7 | to AOR-9 | built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
-| AOR-8 | to AOR-9 | built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
-| AOR-9 | to AOR-9 | built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
-| AOR-3b |  | built 2026-09-25, `54caeb6` |  | [aor-3b](../validation/AOR-3b.md) |
-| AOR-12 |  | built 2026-09-25, `54caeb6` |  | [aor-12](../validation/AOR-12.md) |
-| AOR-13 |  | built 2026-09-25, `54caeb6` |  | [aor-13](../validation/AOR-13.md) |
+| AOR-2 | to AOR-4 | merged 2026-11-02, built 2026-09-25, (`6e36586`), commands passed |  | [aor-2](../validation/AOR-2.md), [aor-3](../validation/AOR-3.md), [aor-4](../validation/AOR-4.md) |
+| AOR-3 | to AOR-4 | merged 2026-11-02, built 2026-09-25, (`6e36586`), commands passed |  | [aor-2](../validation/AOR-2.md), [aor-3](../validation/AOR-3.md), [aor-4](../validation/AOR-4.md) |
+| AOR-4 | to AOR-4 | merged 2026-11-02, built 2026-09-25, (`6e36586`), commands passed |  | [aor-2](../validation/AOR-2.md), [aor-3](../validation/AOR-3.md), [aor-4](../validation/AOR-4.md) |
+| AOR-5 | to AOR-9 | merged 2026-11-02, built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
+| AOR-6 | to AOR-9 | merged 2026-11-02, built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
+| AOR-7 | to AOR-9 | merged 2026-11-02, built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
+| AOR-8 | to AOR-9 | merged 2026-11-02, built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
+| AOR-9 | to AOR-9 | merged 2026-11-02, built 2026-09-25, (`6e9acb1`), commands passed |  | [aor-5](../validation/AOR-5.md) to [aor-9](../validation/AOR-9.md) |
+| AOR-3b |  | merged 2026-11-02, built 2026-09-25, `54caeb6` |  | [aor-3b](../validation/AOR-3b.md) |
+| AOR-12 |  | merged 2026-11-02, built 2026-09-25, `54caeb6` |  | [aor-12](../validation/AOR-12.md) |
+| AOR-13 |  | merged 2026-11-02, built 2026-09-25, `54caeb6` |  | [aor-13](../validation/AOR-13.md) |
 | AOR-10 | AOR-11 | built 2026-09-25, self-validated |  | [aor-10-11](../validation/applied-ontology-readiness-aor-10-11.md) |
 | AOR-11 | AOR-11 | built 2026-09-25, self-validated |  | [aor-10-11](../validation/applied-ontology-readiness-aor-10-11.md) |
 | AOR-14 | to AOR-16 | built 2026-09-25, self-validated |  | [aor-14-16](../validation/applied-ontology-readiness-aor-14-16.md) |
@@ -119,3 +119,7 @@ The catalog is regenerated.
 ## Blockers
 
 None.
+
+## History
+
+- 2026-11-18: AOR-2 to AOR-9, AOR-3b, AOR-12 and AOR-13 read merged, on the day each reached `main`, after an audit found each delivered there with a verdict on record in the validation log, which the agent wrote at the maintainer's direction. Rows of this unit that are on `main` with no verdict found were left as they are.

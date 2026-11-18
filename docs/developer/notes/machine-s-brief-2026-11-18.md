@@ -4,19 +4,18 @@
 
 **For:** the agent on machine S, working the [multi-store architecture epic](../plans/multi-store-architecture.md) on `spi/multi-store-architecture`. **Written on** `docs/placement-vehicles-structure` at the maintainer's request, to answer the two matters MSA-I2 and MSA-I5 raised. It adds to the [brief of 2026-11-17](machine-s-brief-2026-11-17.md), which still holds for the fixes MSA-F1 to MSA-F6 and for how a local workaround stays out of every commit.
 
-Until this branch is merged into `main`, the texts named here are on `docs/placement-vehicles-structure` and nowhere else. Read them there, and do not copy them onto your branch. The two addenda are Proposed, so cite neither as accepted until the maintainer says so.
+Until this branch is merged into `main`, the texts named here are on `docs/placement-vehicles-structure` and nowhere else. Read them there, and do not copy them onto your branch. The maintainer accepted both addenda and confirmed the definition of a position on 2026-11-18.
 
 ## 1. What the maintainer decided
 
 | Matter | Decision | Where it is written |
 |---|---|---|
-| which unit is the ledger's aggregate | the owner's ledger, every account of one owner | LG-Q44 of the [ledger plan](../plans/ledger.md), [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)'s addendum proposed 2026-11-18 |
+| which unit is the ledger's aggregate | the owner's ledger, every account of one owner | LG-Q44 of the [ledger plan](../plans/ledger.md), [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)'s addendum of 2026-11-18 |
 | whether a ledger is a node | yes, one for each owner, holding the revision, with each pass recording the revision it moved the ledger to | LG-Q37 |
 | whether Behaviour's state must sit with the ledger it reads | no | the same addendum |
-| where the shared types live | a new small proof session, `tools/proofs/shared/` | [ADR-A-FM2](../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md)'s addendum proposed 2026-11-18 |
+| where the shared types live | a new small proof session, `tools/proofs/shared/` | [ADR-A-FM2](../../architecture/decisions/ADR-A-FM2-formal-methods-theory-home.md)'s addendum of 2026-11-18 |
 | the number type | generic over an ordered ring | the same addendum |
-
-**Proposed and awaiting the maintainer's confirmation:** what a position is, in section 4.
+| what a position is | a natural number on a named axis, as section 4 has it | the same addendum |
 
 ## 2. The ledger's unit, for MSA-I2
 
@@ -54,7 +53,7 @@ One owner's accounts are written one posting at a time. A single writer that kee
 
 ## 3. The shared proof session, MSA-I5a
 
-MSA-I5 waited on shared types that nothing defines. They get a session of their own, built first as MSA-I5a, once the maintainer accepts the addendum to ADR-A-FM2.
+MSA-I5 waited on shared types that nothing defines. They get a session of their own, built first as MSA-I5a.
 
 | | |
 |---|---|
@@ -72,7 +71,7 @@ MSA-I5 waited on shared types that nothing defines. They get a session of their 
 
 **What MSA-I5a delivers.** The directory with its `ROOT` and README, the two definitions with the small laws both developments need, the session wired into the proof task so `mise run check:proofs` builds and gates it, the agreement lemma on the ledger's side, and a Validation Pack. It changes no kernel, so no existing digest moves.
 
-## 4. What a position is, proposed
+## 4. What a position is
 
 **A position is a natural number on a named axis, and two positions are compared only within one axis.**
 
@@ -115,7 +114,7 @@ It stays generic.
 
 1. The fixes MSA-F1 to MSA-F6, in the order of the brief of 2026-11-17, are unchanged and still first.
 2. MSA-I2, with the ledger's unit as section 2 has it.
-3. MSA-I5a, once the addendum to ADR-A-FM2 is accepted. Until then it is planned and not started.
+3. MSA-I5a, the shared session.
 4. MSA-I5, on the shared session.
 
 ## 7. What else has changed that you will meet

@@ -11,7 +11,7 @@
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| TUT-0 | the page, its layout, the home page links and `check:tutorial-snippets` | verified 2026-10-14 |  |
+| TUT-0 | the page, its layout, the home page links and `check:tutorial-snippets` | merged 2026-11-06, verified 2026-10-14 |  |
 | TUT-1 | chapters 0 to 3 | built 2026-10-15 |  |
 | TUT-2 | chapters 4 to 6 | built 2026-10-15 |  |
 | TUT-3 | chapters 7 to 9 | built 2026-10-16 |  |
@@ -31,6 +31,7 @@ Every question is answered (TUT-D1 to TUT-D5, TUT-Q1 to TUT-Q4, plan §2 and §8
 
 ## History
 
+- 2026-11-18: TUT-0 read merged, on the day each reached `main`, after an audit found each delivered there with the maintainer's verdict on record. Rows of this unit that are on `main` with no verdict found were left as they are.
 - 2026-10-14: at our request, the branch `tutorial/guide` was created from `main` (level with `origin/main`). The maintainer chose the audience (a data architect new to ontologies), a read-only tutorial with a hands-on version deferred, sources from each substrate's own `examples/` folder and from `ontology/applied/`, one page with chapters as includes, and copied excerpts verified by a check task. Plan written.
 - 2026-10-14: the maintainer accepted every leaning, TUT-Q1 to TUT-Q4. TUT-Q3 turned out moot, since Rouge 3.30.0 has a Turtle lexer. TUT-0 authored, not yet run.
 - 2026-10-14: previewing TUT-0 on Windows found `bootstrap:jekyll` ran only `cd docs` under `cmd.exe` and reported success. Rewritten as a `run` array with `dir`, which behaves the same on Windows, macOS and Linux. Run after the fix, it reaches `bundle install`, which on Windows needs MSYS2 for native gems. The per-platform C toolchain is now in getting-started.md §1, and both lessons in the toolchain skill's environment lessons.

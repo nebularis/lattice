@@ -15,7 +15,7 @@
 | MSA-I2 | the read-set census | planned |  |
 | MSA-I3 | [the classification](../notes/multi-store/MSA-I3-dimensions-by-dialect.md). 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. [Validation Pack](../validation/MSA-I3.md) | merged 2026-11-18, built 2026-11-17 |  |
 | MSA-I4 | [four operations lowered](../notes/multi-store/MSA-I4-four-operations-lowered.md). No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. [Validation Pack](../validation/MSA-I4.md) | merged 2026-11-18, built 2026-11-17 |  |
-| MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount defined once | planned | ADR-A-FM2's addendum accepted |
+| MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount defined once | planned |  |
 | MSA-I5 | the prover spike | planned | MSA-I5a |
 | MSA-I6 | the protocol models | planned | MSA-I2 |
 | MSA-I7 | the ledger benchmark with a PostgreSQL arm | planned | the ledger's LG-2 |
@@ -35,7 +35,7 @@
 
 ## History
 
-- 2026-11-18: the maintainer decided the two matters MSA-I2 and MSA-I5 raised. The ledger's unit is the owner's ledger, with a read from outside it made as of a revision, and the shared types live in a new small proof session, MSA-I5a, with the number type left generic. The definition of a position is proposed. The [brief of 2026-11-18](../notes/machine-s-brief-2026-11-18.md) has all of it.
+- 2026-11-18: the maintainer decided the two matters MSA-I2 and MSA-I5 raised. The ledger's unit is the owner's ledger, with a read from outside it made as of a revision, and the shared types live in a new small proof session, MSA-I5a, with the number type left generic. The maintainer then confirmed the definition of a position and accepted both addenda, so MSA-I5a waits on nothing. The [brief of 2026-11-18](../notes/machine-s-brief-2026-11-18.md) has all of it.
 - 2026-11-18: the six built investigations read merged, since the squash into `main` of that day delivered them and did not move their rows.
 - 2026-11-17: the work of machine S brought into `docs/placement-vehicles-structure` as one squashed commit, with a machine path removed from two files. The maintainer confirmed the unit's name, MSA-I1's threshold read per family, TLA+ for MSA-I6, and MSA-I4's three choices, recorded in the [plan](../plans/multi-store-architecture.md). The findings on running code became MSA-F1 to MSA-F6, to be fixed on machine S first, MSA-F1 before the rest.
 - 2026-11-17: planned from the sketch of 2026-11-12. MSA-I1, MSA-I3, MSA-I9 and MSA-I12 marked building.
