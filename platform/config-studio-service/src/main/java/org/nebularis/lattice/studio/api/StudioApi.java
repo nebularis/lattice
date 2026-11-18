@@ -789,6 +789,7 @@ public final class StudioApi {
         return switch (reply.status()) {
             case 403 -> ApiResponse.text(403, reply.message());
             case 404 -> notFound();
+            case 500 -> ApiResponse.text(500, reply.message());
             case 503 -> ApiResponse.text(503, reply.message());
             default -> ApiResponse.text(400, reply.message());
         };

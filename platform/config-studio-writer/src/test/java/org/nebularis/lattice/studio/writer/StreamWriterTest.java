@@ -113,6 +113,31 @@ class StreamWriterTest {
         assertFalse(StreamWriter.retried(new IllegalArgumentException("a payload with a blank node")));
     }
 
+    /**
+     * MSA-F8. A failure of the writer's own code is not retried, as MSA-F2 has it, and is answered as the writer's fault, a 500,
+     * not as a request the store refused, a 400. The other commands of the batch apply and the partition moves on.
+     */
+    @Test
+    void aFailureOfTheWritersOwnCodeIsAnsweredAsTheWritersFaultAndThePartitionMovesOn() {
+        Partitions partitions = new Partitions();
+        StreamWriter.Item first = partitions.received("lattice.studio.writes-0", 1);
+        StreamWriter.Item failing = partitions.received("lattice.studio.writes-0", 2);
+        StreamWriter.Item refused = partitions.received("lattice.studio.writes-0", 3);
+        List<Reply> replies = new ArrayList<>();
+        assertTimeoutPreemptively(Duration.ofSeconds(10), () -> StreamWriter.apply(List.of(first, failing, refused), items -> {
+            if (items.contains(failing)) {
+                throw new IllegalStateException("a bug in the writer");
+            }
+            if (items.contains(refused)) {
+                throw new HttpException(400, "Bad Request", "Parse error");
+            }
+            return items.stream().map(i -> Reply.ok(1)).toList();
+        }, (item, reply) -> replies.add(reply), partitions.stored::put, Duration.ofMillis(10)));
+        assertEquals(List.of(200, 500, 400), replies.stream().map(Reply::status).toList());
+        assertTrue(replies.get(1).message().contains("a bug in the writer"), replies.get(1).message());
+        assertEquals(Map.of("lattice.studio.writes-0", 3L), partitions.stored);
+    }
+
     /** The offsets the broker holds, and what the consumer has received, shared by every context of one consumer. */
     private static final class Partitions {
         final Map<String, Long> lastReceived = new HashMap<>();

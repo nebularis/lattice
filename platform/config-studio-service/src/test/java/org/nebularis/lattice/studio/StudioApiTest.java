@@ -19,11 +19,14 @@ import org.apache.jena.vocabulary.RDFS;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.nebularis.lattice.studio.api.ApiRequest;
 import org.nebularis.lattice.studio.api.ApiResponse;
+import org.nebularis.lattice.studio.api.StudioApi;
 import org.nebularis.lattice.studio.model.Parts;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
 import org.nebularis.lattice.studio.writes.Command;
+import org.nebularis.lattice.studio.writes.Reply;
 
 class StudioApiTest {
     private static final String WS = Fixture.id(1);
@@ -68,6 +71,17 @@ class StudioApiTest {
         assertEquals(Graphs.baseline(WS), node.getProperty(Cst.baselineGraph).getResource().getURI());
         assertEquals("2026-10-27T10:00:00Z", node.getProperty(Cst.createdAt).getLiteral().getLexicalForm());
         assertEquals(1, f.store.graph(Graphs.baseline(WS)).size());
+    }
+
+    /** MSA-F8. A write the writer's own code failed on is the service's fault, so it is answered 500 and never 400. */
+    @Test
+    void aWriteTheWriterFailedOnIsAnsweredAsTheServicesFault() {
+        f.createWorkspace("One");
+        StudioApi failing = new StudioApi(f.store, Fixture.OPS, c -> new Reply(500, 0, "the writer failed on this write"), f.bus,
+            java.time.Clock.systemUTC(), () -> new java.util.UUID(0, 99), f.assets);
+        ApiResponse r = failing.handle(new ApiRequest("DELETE", WS_PATH, null, Map.of(), new byte[0]));
+        assertEquals(500, r.status());
+        assertEquals("the writer failed on this write", new String(r.body(), java.nio.charset.StandardCharsets.UTF_8));
     }
 
     @Test

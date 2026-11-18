@@ -37,7 +37,8 @@ import org.slf4j.LoggerFactory;
  * each, then stores, for each partition the batch touched, the offset of the last message it applied, so a member that
  * takes a partition over resumes after the last batch applied and skips nothing received but not yet applied. A write
  * delivered again after a failover is answered from its receipt and not applied twice. A store that cannot be reached
- * holds the batch until it can, and a write the store refuses is answered as refused, so it never holds its partition.
+ * holds the batch until it can, and a write the store refuses is answered as refused, so it never holds its partition. A write
+ * the writer's own code fails on is answered as the writer's fault, a 500, and does not hold its partition either.
  */
 public final class StreamWriter implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(StreamWriter.class);
@@ -111,21 +112,35 @@ public final class StreamWriter implements AutoCloseable {
     /**
      * Whether a failure says nothing about the request, so the same request may succeed later: the store could not be
      * reached, answered with no status, failed on its side, or refused the writer itself (its credentials or its dataset)
-     * rather than the request. A status of {@link #REFUSED}, or a failure of the writer's own code before anything was
-     * sent, is the request's fault, and is answered rather than retried (MSAI11-05).
+     * rather than the request. A status of {@link #REFUSED} is the request's fault, and a failure of the writer's own code
+     * fails the same way for the same input, so neither is retried, and each is answered (MSAI11-05, MSA-F8).
      */
     static boolean retried(RuntimeException e) {
         for (Throwable t = e; t != null; t = t.getCause()) {
             if (t instanceof java.io.IOException || t instanceof java.io.UncheckedIOException) {
                 return true;
             }
-            int status = t instanceof HttpException h ? h.getStatusCode()
-                : t instanceof QueryExceptionHTTP q ? q.getStatusCode() : Integer.MIN_VALUE;
+            int status = status(t);
             if (status != Integer.MIN_VALUE) {
                 return !REFUSED.contains(status);
             }
         }
         return false;
+    }
+
+    /** Whether a failure that is not retried came from the store, which answered with a status, rather than from the writer's own code. */
+    static boolean fromStore(RuntimeException e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (status(t) != Integer.MIN_VALUE) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int status(Throwable t) {
+        return t instanceof HttpException h ? h.getStatusCode()
+            : t instanceof QueryExceptionHTTP q ? q.getStatusCode() : Integer.MIN_VALUE;
     }
 
     static void apply(List<Item> batch, Function<List<Item>, List<Reply>> writer, BiConsumer<Item, Reply> replies, Offsets offsets,
@@ -135,8 +150,8 @@ public final class StreamWriter implements AutoCloseable {
         for (int i = 0; i < batch.size(); i++) {
             Item item = batch.get(i);
             Reply reply = answers.get(i);
-            if (reply.status() == 400) {
-                LOG.warn("refused a write on {} at offset {}: {}", item.context().stream(), item.context().offset(), reply.message());
+            if (reply.status() == 400 || reply.status() == 500) {
+                LOG.warn("answered a write on {} at offset {} with {}: {}", item.context().stream(), item.context().offset(), reply.status(), reply.message());
             }
             replies.accept(item, reply);
             last.merge(item.context().stream(), item.context().offset(), Math::max);
@@ -169,10 +184,15 @@ public final class StreamWriter implements AutoCloseable {
                         answers.addAll(answer(List.of(item), writer, retry));
                     }
                     return answers;
-                } else {
+                } else if (fromStore(e)) {
                     LOG.error("the write on {} at offset {} was refused, and is answered as refused", batch.get(0).context().stream(),
                         batch.get(0).context().offset(), e);
                     return List.of(Reply.refused("the store refused the write: " + e.getMessage()));
+                } else {
+                    // The same input fails the same way, so retrying would hold the partition. It is the writer's fault (MSA-F8).
+                    LOG.error("the writer failed on the write on {} at offset {}, and answers it as its own fault", batch.get(0).context().stream(),
+                        batch.get(0).context().offset(), e);
+                    return List.of(Reply.failed("the writer failed on this write, which was not applied: " + e.getMessage()));
                 }
             }
         }
