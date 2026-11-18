@@ -3,7 +3,7 @@
 # Sketch: the compiled profile states where a target's data lands
 
 **Unit:** `studio-visual-authoring` (SVA), raised by the maintainer on 2026-11-18 when choosing option (c) for the landing places of SVA-P1
-**Status:** sketch. SVA-Q17 to SVA-Q22 answered by the maintainer on 2026-11-18, SVA-Q23 open. Nothing is built
+**Status:** sketch. SVA-Q17 to SVA-Q23 answered by the maintainer on 2026-11-18. Nothing is built
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md), slices SVA-P1a and SVA-P1b
 **Builds on:** the persistence module (`ontology/persistence`, `tools/persistence`, ADR-A78, ADR-A79), the typed operation IR (ADR-A123), graph naming (ADR-A122 decision 8), and the caller libraries (ADR-A132)
 
@@ -102,7 +102,7 @@ The Borrower, a named-graph family, writes its aggregate to a place with `dal:in
 
 | Where | Change |
 |---|---|
-| `ontology/persistence` README, sections 4, 5.8, 6 and 12 | `dal:GraphPlace`, `dal:GraphRole` and its eleven individuals, `dal:landsIn`, `dal:inGraphRole`, `dal:inGraph`, `dal:inGraphNamed`, `dal:forConstraint`, `dal:matchedScope` and `dal:wonThrough`, the placeholders' definitions, the class diagram of the operation contract, and a release note under Unreleased (no effect) |
+| `ontology/persistence` README, sections 4, 5.8, 6 and 12 | `dal:GraphPlace`, `dal:GraphRole` and its eleven individuals, `dal:landsIn`, `dal:patchDirection` with `dal:Added` and `dal:Removed`, `dal:inGraphRole`, `dal:inGraph`, `dal:inGraphNamed`, `dal:forConstraint`, `dal:matchedScope` and `dal:wonThrough`, the placeholders' definitions, the class diagram of the operation contract, and a release note under Unreleased (no effect) |
 | `ontology/persistence/shapes` | `ResourceAccessShape`: a write access has exactly one `dal:landsIn`, a read access none. A new `GraphPlaceShape`: exactly one role from the closed set, exactly one of the two graph properties, a template's placeholders only from the closed set. `dal:wonThrough` names a scope the same profile states as matched |
 | `tools/persistence` | the contract's emission collects the distinct places from each operation's IR, which it already builds, mints their IRIs and links each write access to its place. The compile stage states the matched scopes and the scope each dimension won through, which it already computes |
 | fixtures | every `ontology/persistence/test/expected-profiles/*.expected.ttl` and `packages/persistence/python/tests/data/*.compiled.ttl` regenerated, since each compiled profile gains triples |
@@ -110,7 +110,7 @@ The Borrower, a named-graph family, writes its aggregate to a place with `dal:in
 | caller libraries | no change. They do not read the accesses |
 | the studio | SVA-P1b, below |
 
-One more effect to name. Today the compiler emits one access for each resource, mode and key, so a patch log's two graphs are one access. Landing in two places makes them two accesses. A reader that counted accesses would see more of them. No reader in the repository counts them, read on 2026-11-18. How the two accesses differ is SVA-Q23.
+One more effect to name. Today the compiler emits one access for each resource, mode and key, so a patch log's two graphs are one access. Landing in two places makes them two accesses. A reader that counted accesses would see more of them. No reader in the repository counts them, read on 2026-11-18. The two accesses differ by `dal:patchDirection`, the constant part of `PatchContent`'s logical key (SVA-Q23).
 
 ## 3. Costs
 
@@ -143,9 +143,9 @@ Answered by the maintainer on 2026-11-18:
 | agreement with the IR | departs from the IR's one `PATCH` role | the IR's roles mirrored as they are | the IR's roles mirrored as they are |
 | what else changes | the role set and its mirror of the IR | the access's shape, and the paper check gains a key part it already names | the place's shape |
 
-Leaning (b). The direction is a value of the logical key, and the access is where the logical facts live. It keeps the role set the IR's, and a reader asking "the removed triples of a patch" asks the access, then its place.
+Answered (b) by the maintainer on 2026-11-18. The direction is a value of the logical key, and the access is where the logical facts live. It keeps the role set the IR's, and a reader asking "the removed triples of a patch" asks the access, then its place.
 
-An observation, not a question: the receipt's month bucket is named from `NOW()` in the generated SPARQL, which PRI-56 forbids in an identity. It is the compiler's behaviour today and is unchanged here. Stating `{month}` as the month of the transaction time says what it should be, and whether the generated query takes it from the transaction time is a question for the persistence unit.
+An observation, not a question: the receipt's month bucket is named from `NOW()` in the generated SPARQL, which PRI-56 forbids in an identity. It is the compiler's behaviour today and is unchanged here. Stating `{month}` as the month of the transaction time says what it should be, and whether the generated query takes it from the transaction time is a question for the persistence unit, recorded as TD-171.
 
 ## 5. Slices
 
