@@ -47,7 +47,7 @@ The logical model stays as track H settled it. What is added is its realisation,
 
 **Each write access lands in one place.** A `dal:ResourceAccess` whose mode is `Insert` or `Delete` gains exactly one `dal:landsIn`, a `dal:GraphPlace`. A read access has none. Every access that lands in the same place points at the same node, so a profile states each distinct place once, and the places the canvas draws are exactly its `dal:GraphPlace` nodes. The access keeps only logical facts, so the paper check, the formal models and any other realisation read it unchanged. A relational realisation would add a place of another class beside it.
 
-**A place's identity.** The compiler mints a place's IRI from the compiled profile's IRI, the role and the graph or template, percent-encoded, for example `<ex/Facility/compiled#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D>`. The same compilation gives the same IRIs, so expected profiles compare as they do today, without graph isomorphism.
+**A place's identity.** A compiled profile is a blank node, so the compiler mints a place's IRI as it mints the profile's other declarations, from the target and the deployment where there is one, with a part made of the role and the graph or template, percent-encoded, for example `<ex/Facility/compiled#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D>`. The same compilation gives the same IRIs, so expected profiles compare as they do today, without graph isomorphism.
 
 **A key claim names its constraint.** A key claim's access gains `dal:forConstraint`, the `dal:UniquenessConstraint` it serves.
 
