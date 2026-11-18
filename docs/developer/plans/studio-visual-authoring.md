@@ -93,6 +93,8 @@ A slice's documents change in the slice. Estimates are in tokens.
 | Slice | What | Modules | Done when | Waits on | Estimate |
 |---|---|---|---|---|---|
 | SVA-P1 | a compile job's description of each target's landing places, and the exploded view with its scope picker, read-only | `workers`, `apps/config-studio` | each lens draws the facility sample's aggregate with every graph its operations name | SVA-O1 | 240k |
+| SVA-P1a | the compiled profile states where a target's data lands, as the [sketch](../sketches/compiled-landing-places.md) proposes: the graph or graph template of each write access, the constraint of a key claim, and the scopes that match the target, in the persistence README and shapes, emitted by the compiler, with its fixtures regenerated | `ontology/persistence`, `tools/persistence` | every compiled example states a graph or template on each write access, the shapes hold it, and the persistence suite and its conformance across engines pass | SVA-P1 | 200k |
+| SVA-P1b | the studio reads the compiled profile for where data lands: the worker's landing code and `landing-places.json` gone, the canvas reading `compiled-profile.ttl` | `workers`, `contracts/config-studio`, `apps/config-studio` | the canvas draws the facility sample as SVA-P1 does, from the compiled profile alone | SVA-P1a | 120k |
 | SVA-P2 | edits on the canvas, the set fixed against the `dal:` shapes in the slice's brief | `apps/config-studio` | each gesture makes the triples its form field makes, and one undo removes them | SVA-P1 | 200k |
 | SVA-P3 | the simulation executor in the run worker: the sample world loaded, the request checked and bound with the caller library, the update run, the delta by landing place, the outcome | `platform/config-studio-transforms`, `packages/persistence/java` | create, replace, delete and a stale replace on the facility sample give the deltas the persistence conformance suite expects, the same on a repeat and under permuted input | SVA-R3 | 300k |
 | SVA-P4 | the simulator pane: the sample world, the object form, an uploaded object, the operations, as another writer, step back, and the four displays | `apps/config-studio` | the journey creates a facility, changes it, loses a race as another writer and steps back, with the canvas lighting each landing place | SVA-R4, SVA-P1, SVA-P3 | 260k |
@@ -152,6 +154,9 @@ flowchart LR
     O1 --> M4["SVA-M4"]
     O2 --> S1["SVA-S1"]
     P1 --> P2["SVA-P2"]
+    P1 --> P1a["SVA-P1a"]
+    P1a --> P1b["SVA-P1b"]
+    P1b --> P3
     R3 --> P3["SVA-P3"]
     P3 --> P4["SVA-P4"]
     P1 --> P4
