@@ -418,6 +418,46 @@ def test_topology_copy_equals_contract():
     assert json.loads(packaged)["queues"][0]["name"] == "lattice.studio.jobs"
 
 
+class RecordingChannel:
+    """A channel that records what is declared, as the broker would receive it."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple] = []
+
+    def exchange_declare(self, exchange: str, exchange_type: str, durable: bool, **kwargs) -> None:
+        self.calls.append(("exchange", exchange, exchange_type, durable, kwargs.get("arguments") or {}))
+
+    def queue_declare(self, queue: str, durable: bool, arguments: dict | None = None, **kwargs) -> None:
+        self.calls.append(("queue", queue, durable, arguments or {}))
+
+    def queue_bind(self, queue: str, exchange: str, routing_key: str, arguments: dict | None = None) -> None:
+        self.calls.append(("bind", queue, exchange, routing_key, arguments or {}))
+
+
+# The objects the operator guide's table lists, which `Topology.declare` in the Java service declares too (TopologyTest, MSA-F4).
+DECLARED = [
+    ("exchange", "lattice.studio", "topic", True, {}),
+    ("exchange", "lattice.studio.dlx", "topic", True, {}),
+    ("queue", "lattice.studio.jobs", True, {"x-dead-letter-exchange": "lattice.studio.dlx"}),
+    ("bind", "lattice.studio.jobs", "lattice.studio", "lattice.studio.jobs", {}),
+    ("queue", "lattice.studio.jobs.long", True, {"x-dead-letter-exchange": "lattice.studio.dlx"}),
+    ("bind", "lattice.studio.jobs.long", "lattice.studio", "lattice.studio.jobs.long", {}),
+    ("queue", "lattice.studio.transforms", True, {}),
+    ("bind", "lattice.studio.transforms", "lattice.studio", "lattice.studio.transforms", {}),
+    ("queue", "lattice.studio.dead", True, {}),
+    ("bind", "lattice.studio.dead", "lattice.studio.dlx", "#", {}),
+]
+
+
+def test_the_worker_declares_each_queue_where_the_contract_binds_it():
+    """MSA-F4, MSAI12-01. The transforms queue dead-letters nowhere and is bound to the main exchange, as the Java service binds it."""
+    from lattice_workers.config_studio_worker import TOPOLOGY, declare_topology
+
+    channel = RecordingChannel()
+    declare_topology(channel, TOPOLOGY)
+    assert channel.calls == DECLARED
+
+
 class FakePublisher:
     def __init__(self) -> None:
         self.sent: list[tuple[str, str, dict, bytes]] = []

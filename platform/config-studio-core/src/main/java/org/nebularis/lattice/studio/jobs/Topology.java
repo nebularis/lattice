@@ -3,9 +3,18 @@ package org.nebularis.lattice.studio.jobs;
 
 import com.rabbitmq.client.Channel;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.Map;
+import org.apache.jena.atlas.json.JSON;
+import org.apache.jena.atlas.json.JsonObject;
+import org.apache.jena.atlas.json.JsonValue;
 
-/** The AMQP topology of `contracts/config-studio/amqp-topology.json`, as declared constants. */
+/**
+ * The AMQP topology of `contracts/config-studio/amqp-topology.json`. The names are constants for the code that
+ * publishes and consumes, and {@link #declare} declares the exchanges and queues from the contract itself.
+ */
 public final class Topology {
     public static final String EXCHANGE = "lattice.studio";
     public static final String DEAD_LETTER_EXCHANGE = "lattice.studio.dlx";
@@ -39,18 +48,36 @@ public final class Topology {
     private Topology() {
     }
 
-    /** Idempotent, so the service, the writer and the worker may each declare it. */
+    /** The contract, `contracts/config-studio/amqp-topology.json`, which the build puts beside this class. */
+    static JsonObject contract() {
+        try (InputStream in = Topology.class.getResourceAsStream("amqp-topology.json")) {
+            if (in == null) {
+                throw new IllegalStateException("amqp-topology.json is not on the classpath beside Topology");
+            }
+            return JSON.parse(in);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Idempotent, so the service, the writer and the worker may each declare it. The exchanges and queues are the
+     * contract's: each queue bound to the exchange its {@code bindsTo} names and dead-lettering to the one its
+     * {@code deadLettersTo} names, or nowhere when that is null, as the worker's {@code declare_topology} does (MSAI12-01).
+     */
     public static void declare(Channel channel) throws IOException {
-        channel.exchangeDeclare(EXCHANGE, "topic", true);
-        channel.exchangeDeclare(DEAD_LETTER_EXCHANGE, "topic", true);
-        channel.queueDeclare(JOBS_QUEUE, true, false, false, Map.of("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE));
-        channel.queueBind(JOBS_QUEUE, EXCHANGE, JOBS_ROUTING_KEY);
-        channel.queueDeclare(JOBS_LONG_QUEUE, true, false, false, Map.of("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE));
-        channel.queueBind(JOBS_LONG_QUEUE, EXCHANGE, JOBS_LONG_ROUTING_KEY);
-        channel.queueDeclare(TRANSFORMS_QUEUE, true, false, false, Map.of());
-        channel.queueBind(TRANSFORMS_QUEUE, EXCHANGE, TRANSFORMS_ROUTING_KEY);
-        channel.queueDeclare(DEAD_QUEUE, true, false, false, Map.of());
-        channel.queueBind(DEAD_QUEUE, DEAD_LETTER_EXCHANGE, DEAD_ROUTING_KEY);
+        JsonObject contract = contract();
+        for (String exchange : List.of(contract.getString("exchange"), contract.getString("deadLetterExchange"))) {
+            channel.exchangeDeclare(exchange, "topic", true);
+        }
+        for (JsonValue entry : contract.get("queues").getAsArray()) {
+            JsonObject queue = entry.getAsObject();
+            JsonValue deadLettersTo = queue.get("deadLettersTo");
+            Map<String, Object> arguments = deadLettersTo.isNull() ? Map.of()
+                : Map.of("x-dead-letter-exchange", deadLettersTo.getAsString().value());
+            channel.queueDeclare(queue.getString("name"), true, false, false, arguments);
+            channel.queueBind(queue.getString("name"), queue.getString("bindsTo"), queue.getString("routingKey"));
+        }
         // A super stream, declared as `rabbitmq-streams add_super_stream` would: the exchange marked as one, and each
         // partition bound with its order, which is how the stream protocol finds the partitions.
         channel.exchangeDeclare(WRITES, "direct", true, false, Map.of("x-super-stream", true));
