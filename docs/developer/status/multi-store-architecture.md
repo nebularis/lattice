@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** built 2026-11-18.
+**Status:** building 2026-11-18.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous, at the maintainer's request on 2026-11-17, committing on `spi/sql-backend` only and never pushing, with up to two sub-agents.
 
@@ -12,7 +12,7 @@
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
 | MSA-I1 | `spikes/multi-store-shape-census`. 505 node shapes, none closed and bounded, so 0% of sample subjects against the proposed 80%. 134 fail only on closure and reach 43.4% of subjects. [Validation Pack](../validation/MSA-I1.md) | built 2026-11-17 |  |
-| MSA-I2 | the read-set census | planned |  |
+| MSA-I2 | the read-set census | building 2026-11-18 |  |
 | MSA-I3 | [the classification](../notes/multi-store/MSA-I3-dimensions-by-dialect.md). 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. [Validation Pack](../validation/MSA-I3.md) | built 2026-11-17 |  |
 | MSA-I4 | [four operations lowered](../notes/multi-store/MSA-I4-four-operations-lowered.md). No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. [Validation Pack](../validation/MSA-I4.md) | built 2026-11-17 |  |
 | MSA-I5 | the prover spike | planned | the shared types |
@@ -54,3 +54,4 @@
 - 2026-11-18: MSA-F5 built. `dal:Event`'s logical key is `stream, seq, event`, in `contract.py` and the persistence README, whose spec was regenerated and whose release notes gain an Unreleased entry. The branch defers versioning, so `check:ontology-versioning` reports Persistence unbumped until the merge.
 - 2026-11-18: MSA-F6 marked building.
 - 2026-11-18: MSA-F6 built, tests only. ADR-A149 decision 13 holds for every command tested: no reader acts on what a failed later guard leaves. A deletion whose later tombstone loses a race to a save leaves a graph and a live row nothing reaches, and no resend removes them (MSAF6-01), which needs the maintainer's choice. The port note cites decision 13.
+- 2026-11-18: MSA-I2 marked building.
