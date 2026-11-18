@@ -104,3 +104,28 @@ This addendum adds one session that is not a layer's. `tools/proofs/base/` holds
 The prelude's heap is built on first use and never by `bootstrap` (STD-324). `tools/proofs/check.py` builds `LatticeBase` before any layer's session and passes `-d tools/proofs/base` to every build, and `isabelle build` builds the parent where its heap is missing and rebuilds it where its sources changed, by its own source digests, so nothing else pins it, and `-f` is never passed. Adding a theory to the prelude is one import in its theory, reviewed as any change under `tools/proofs/` is, and the developer documentation records why each theory is there. A theory outside `HOL-Library` that a layer's proofs might one day need, `HOLCF` for a composition stated over a complete partial order, would make that session the prelude's parent, a decision for the slice that needs it and not taken here.
 
 Everything else in this record stands. Decision 1's rule, one session per layer generated from its README, holds for every directory under `tools/proofs/` but `base/`, and decision 2's topology rules govern `base/` as they govern the layer directories.
+
+## Addendum (proposed 2026-11-18): a shared session for what two developments both define
+
+**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided where the shared types live and that the number type stays generic on 2026-11-18. The definition of a position is proposed here and awaits the maintainer's confirmation.
+
+**A second session that is not a layer's.** `tools/proofs/shared/` holds the session `LatticeShared`, `session LatticeShared = LatticeBase +`, hand-written, with its claims gated as a layer's are. It holds a definition only where two developments both use it, and today that is positions and amounts. The prelude's rule stands as the addendum of 2026-11-08 states it: `tools/proofs/base/` imports library theories and nothing else.
+
+**Why not the prelude, and why not a layer's session.** A definition in the prelude would rebuild the heap every layer parents on at each edit, and the prelude has nothing to gate, so a changed definition there would move no digest. A layer's session is generated from that layer's README, so a development that is no part of the layer would depend on generated text, and on a layer it may sit below.
+
+**Who imports it.** A generated `Kernel.thy` does not. It keeps importing `Main` or `Complex_Main`, so a layer's formal statement stands by itself. Where a kernel defines what the shared session also defines, one of the layer's theorem theories proves the two are the same, so a drift fails a build. A development outside the layers imports the shared session and never a layer's session, unless it models that layer.
+
+**A position.** A position is a natural number on a named axis, and two positions are compared only within one axis. There are two kinds of axis.
+
+| Axis | Who assigns a position | Gaps | For example |
+|---|---|---|---|
+| a sequence | the writer, the next number at each write | none. Position n is the n-th write, and 0 means nothing is written yet | a version row's sequence, an account's recorded position, a ledger's revision |
+| an effective axis | the arrangement the records describe | it may skip, and several facts may share one | the day a posting takes effect |
+
+Where several facts share one position of a sequence, a second number orders them, and the pair is the place. A sequence position is assigned inside the write its axis serialises, as the successor of the value stored. It is never taken from a store's own counter, a clock or a transaction's identifier, since those can run ahead of a commit or differ between stores, and a position has to mean the same in every store that holds it.
+
+The shared session states a position as a synonym for the natural numbers. A type of its own for each axis, which would have the checker refuse a comparison across axes, changes the layers' kernels and is not made here.
+
+**An amount.** The number type stays generic. What only adds, subtracts and compares is stated once over an ordered ring, a rule that divides names a field, and a rule over whole units names the integers. A development that stores an amount and computes nothing with it treats it as a value of any type. Code exported from a theory fixes a number type when it is exported, and no law is restated to do so.
+
+**Provenance.** The maintainer agreed on 2026-11-12 that the layers' proofs and the model of the multi-store architecture epic share one prelude and one treatment of positions and amounts. Its investigation MSA-I5 found on 2026-11-18 that the prelude defines nothing, the ledger's kernel leaves the number type generic, and no theory defines a position.

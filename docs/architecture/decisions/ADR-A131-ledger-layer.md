@@ -467,6 +467,28 @@ The case of a unit short in the second addendum of 2026-11-16, members with a ba
 
 **Releases.** The rounding difference, the source of a unit over and their values add published terms, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
 
+## Addendum (proposed 2026-11-18): the owner's ledger is the unit that is consistent, and an account still owns its postings
+
+**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided the rule on 2026-11-18. It adds no evaluation semantics, so it carries no conformance cases.
+
+**Narrows decision 5.** It also says what the third addendum of 2026-11-16 left unsaid, that serialising an owner's ledger moved the unit decision 5 names.
+
+**Three things the word covered.** Decision 5 has an account and its postings form an aggregate. That said three things at once: who owns a posting, what a store holds together, and what a write must see unchanged. The first two stand. The third was never right for an account.
+
+**An account owns its postings.** A posting belongs to its account, and an account to its owner and to no occasion, so an account outlives a new version of what it belongs to. This is what decision 5 was written to say.
+
+**A period's unit is still the partition.** What a store holds together is named from an account's root and its close, as the second addendum of 2026-10-27 has it.
+
+**The owner's ledger is the unit that is consistent.** A draw reads the balance of every account on its path and may write a second account that counts its purpose, and an allocation writes several accounts in one pass. So the law that no account on a path falls below zero spans accounts. Two draws on two accounts under one parent can each fit and together overdraw it, and under a guard for each account neither writes what the other read, so nothing catches it. The unit a write must see unchanged is therefore every account of one owner. It is the unit one writer serialises, the unit whose revision that writer moves, and the unit a deployment places in one store. Decision 5 already gathers the accounts that interact under one owner, since an account drawn on by several instruments belongs to their ensemble, so the owner is a stable key where the accounts joined by a path or a purpose are not.
+
+**A ledger is a node.** It stands for one owner's ledger, names the profile the deployment gave it, and holds the revision. Each pass records the revision it moved the ledger to. A revision orders every posting of a ledger, where a recorded position orders only those of one account.
+
+**A balance as of a revision does not change.** A guard or a derivation outside the ledger reads a balance by naming the ledger's revision, and records that revision in its read set. What it read cannot change under it, so it need not be held in the ledger's store, and its judgement is defensible as of what it read. Placing an identity's other state beside the ledger it reads is a deployment's choice and no rule of this layer.
+
+**What would reopen the unit.** An owner whose independent accounts need more writes than one writer serves, shown by measurement. The unit would then be a ledger declared within an owner, with a check that no path, purpose or allocation crosses two of them.
+
+**Releases.** The ledger node, its revision and the revision a pass records add published terms, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -503,3 +525,5 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 **The addendum of 2026-11-17.** The terms the layer's README proposed after LG-9 were walked through with the maintainer as LG-Q30 to LG-Q36 of the [Ledger plan](../../developer/plans/ledger.md). The maintainer decided for a policy node on 2026-11-17 (LG-Q32), for one policy resolved before the ledger (LG-Q35), and for a versioned policy in place of a content-addressed one first chosen that day, once that was seen to need a canonicalisation rule in the layer and a mark two other layers' checks would have to learn (LG-Q36, TD-127). LG-Q33 gave the two criteria and the two guards and found no need for a separate rule for a tie, and LG-Q34 deferred the kinds of split. Built as LG-24 ([its pack](../../developer/validation/LG-24.md)).
 
 **The second addendum of 2026-11-17.** LG-Q30 of the [Ledger plan](../../developer/plans/ledger.md), raised by a constraint that read a term the layer had not declared. The maintainer decided on 2026-11-17 to declare it and asked that where a unit short goes be driven by the wording, as a unit over is, so the reading by symmetry first proposed was dropped. Built as LG-23 ([its pack](../../developer/validation/LG-23.md)), which holds the model's search of the four pairs and the theorem that each settles exactly.
+
+**The addendum proposed on 2026-11-18.** LG-Q44 of the [Ledger plan](../../developer/plans/ledger.md), raised by the read-set census of the multi-store architecture epic, MSA-I2, which met decision 5's unit and the third addendum's side by side. The maintainer decided for the owner's ledger on 2026-11-18, with the ledger node of LG-Q37 as its root. The epic's own proposal that an identity's other state be placed with its ledger was not taken, since a read by revision needs no such rule.

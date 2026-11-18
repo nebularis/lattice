@@ -442,7 +442,8 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | MSA-I2 | the read-set census | multi-store-architecture | planned |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I3 | the classification. 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. Validation Pack | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I4 | four operations lowered. No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. Validation Pack | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
-| MSA-I5 | the prover spike | multi-store-architecture | planned | the shared types | docs/developer/status/multi-store-architecture.md#position |
+| MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount defined once | multi-store-architecture | planned | ADR-A-FM2's addendum accepted | docs/developer/status/multi-store-architecture.md#position |
+| MSA-I5 | the prover spike | multi-store-architecture | planned | MSA-I5a | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I6 | the protocol models | multi-store-architecture | planned | MSA-I2 | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I7 | the ledger benchmark with a PostgreSQL arm | multi-store-architecture | planned | the ledger's LG-2 | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I8 | one ledger family in PostgreSQL behind the port | multi-store-architecture | planned | MSA-I5, MSA-I6, MSA-I7, MSA-I10 | docs/developer/status/multi-store-architecture.md#position |
