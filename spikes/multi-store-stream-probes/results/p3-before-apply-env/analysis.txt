@@ -1,0 +1,43 @@
+consumers: [c1, c2]
+events c1: [joined@1794936562536, halt@1794936564830]
+events c2: [joined@1794936577895, stopping@1794936597898]
+confirmed seqs: 1200, unknown (publisher saw an error): 0
+first receiver by partition: 0:c1 1:c1 2:c1 3:c1 4:c1 5:c1 6:c1 7:c1
+
+kill of c1 at t=1794936570830
+partition | previous owner rx | takeover by | takeover after (ms) | owner rx after | owner applies after | owner applies after takeover | last owner apply after takeover (ms)
+0 | yes | c2 | 7052 | 0 | 0 | 0 | 0
+1 | yes | c2 | 7070 | 0 | 0 | 0 | 0
+2 | yes | c2 | 7059 | 0 | 0 | 0 | 0
+3 | yes | c2 | 7025 | 0 | 0 | 0 | 0
+4 | yes | c2 | 7013 | 0 | 0 | 0 | 0
+5 | yes | c2 | 7044 | 0 | 0 | 0 | 0
+6 | yes | c2 | 7035 | 0 | 0 | 0 | 0
+7 | yes | c2 | 7006 | 0 | 0 | 0 | 0
+takeover after: min 7006 ms, max 7070 ms, partitions taken over 8
+applies by c1 after another consumer had begun receiving the same partition: 0
+
+per partition: applies, extra applies of a seq, older seq applied after a newer one, overlapping batches of different consumers, skipped, not yet applied
+0 | 74 | 0 | 0 | 0 (0 ms) | 0 | 76
+1 | 68 | 0 | 0 | 0 (0 ms) | 0 | 82
+2 | 68 | 0 | 0 | 0 (0 ms) | 0 | 82
+3 | 74 | 0 | 0 | 0 (0 ms) | 0 | 76
+4 | 74 | 0 | 0 | 0 (0 ms) | 0 | 76
+5 | 74 | 0 | 0 | 0 (0 ms) | 0 | 76
+6 | 74 | 0 | 0 | 0 (0 ms) | 0 | 76
+7 | 74 | 0 | 0 | 0 (0 ms) | 0 | 76
+total | extra applies 0 | older after newer 0 | overlapping batches of different consumers 0 (0 ms) | confirmed but skipped 0 | confirmed, not yet applied at the end 620
+
+resume of c2 after c1
+partition | last offset stored by first | first offset received by second | offsets between | seqs applied by both
+0 | 9 | 10 | 0 | 0
+1 | 9 | 10 | 0 | 0
+2 | 9 | 10 | 0 | 0
+3 | 9 | 10 | 0 | 0
+4 | 9 | 10 | 0 | 0
+5 | 9 | 10 | 0 | 0
+6 | 9 | 10 | 0 | 0
+7 | 9 | 10 | 0 | 0
+harness note harness at +0.0 s run p3-before-apply-env point before-apply dieAtBatch 3 rate 150 publish 8 s
+harness kill c1 at +18.5 s halt at batch 3 before-apply
+harness note harness at +24.6 s c2 started

@@ -386,6 +386,87 @@ A read of the recorded amounts or of the flows starts from a checkpoint, which t
 
 **What this does not decide, and what was not measured.** How long a writer may hold a batch before it writes it. What a restart costs while the balances are read again. How a second writer is caught on a store where the guard itself cannot be relied on, which is why the single writer is provided in front of the store. Writers in several processes or reached over HTTP, since the measurements were of threads in one process.
 
+## Addendum (2026-11-16, fourth): a credit is posted to an account that accepts its kind
+
+**Status of this addendum:** Accepted by the maintainer on 2026-11-16. The maintainer decided the rule the same day, after the proof of a law of the first addendum of that day met a case its words do not cover. Decision 8 says new evaluation semantics come by an addendum with conformance cases, and the cases are at its end.
+
+**Narrows decision 3.**
+
+**A credit posted to an account that does not accept its kind is refused.** The first addendum of 2026-11-16 has a credit applied at the account it is posted to, up to that account's room, and has each ancestor count it only where the ancestor accepts its kind. It does not say what happens where the account posted to does not accept the kind. There the credit is refused with a reason, no posting is written and no balance moves. The amount applied is therefore always the amount by which the account posted to was restored.
+
+**The wording names the account, and the ledger never chooses it.** The account a credit is posted to is the one its term says is restored. A term may name that account directly, or by its relation to another, for example the aggregate under which a sublimit is stated, and such a relation is resolved along the stated tree when the term is instantiated. The ledger does not look along a path for an account that accepts the kind, and where a term does not say what a credit restores, nothing supplies an account by default.
+
+| The term says a credit arising under a lower account restores | Posted at | What the kinds do |
+|---|---|---|
+| the lower account and the one above it | the lower account | both accept the kind |
+| the lower account and not the one above it | the lower account | the one above does not accept the kind |
+| the one above and not the lower account | the one above | nothing is needed, and a lower account that declares it does not accept the kind guards against a wrong posting |
+
+**A credit is not bounded by what was drawn through an account it does not restore.** An account's room falls only with the credits it accepts, so the room of an account that does not accept a kind says nothing of how much of that kind has come back. Where a recovery must not exceed its loss, the amount is sized before the ledger.
+
+**Where no cut is recorded.** Where every ceiling equals its stated amount and every credit is posted to an account with none below it, no ancestor has less room than the account credited, so no cut is recorded. A cut arises only where a ceiling stands above a stated amount or a credit is posted above the lowest accounts.
+
+**Conformance cases.** Amounts are whole units.
+
+| Case | Given | Result |
+|---|---|---|
+| a credit its account does not accept | a parent and its child, each stated at 10 with a ceiling of 10. The child does not accept a kind and the parent does. A debit of 5 at the child, then a credit of 5 of that kind posted to the child | refused. Both balances stay at 5 |
+| the same credit at the account that accepts it | as above, with the credit posted to the parent | 5 is applied. The parent holds 10 and the child 5 |
+| a second such credit | as the last, then another credit of 5 of that kind posted to the parent | nothing is applied, since the parent has no room, and no cut is recorded |
+
+**Releases.** The reason for refusing a credit adds a published term, made with the minor release of the substrate that the first addendum of 2026-11-16 names.
+
+## Addendum (2026-11-17): what an account declares for a merge is a versioned policy that its definition names
+
+**Status of this addendum:** Accepted by the maintainer on 2026-11-17, who decided each point the same day. It adds no evaluation semantics, so it carries no conformance cases.
+
+**Narrows decision 6.**
+
+**A merge policy is a node of its own.** Decision 6 has an account definition name its merge rule, and the configuration of decision 2 held the rule, its rounding method and its residual allocation on the definition. They move to a merge policy, with what the second addendum of 2026-11-16 has an account declare: the criterion a request's rank is derived from, the criterion that orders requests of one rank where a single unit is placed, whether a residual may be left, whether the ranks are checked to be distinct before any rule runs, and whether a position of more than one purpose is refused. An account definition names its policy. Nothing else of the definition moves.
+
+**A policy belongs to the scope that states it.** A contract, a document it cites and a deployment can each state how competing requests are treated, and a later source can override an earlier one, as general terms do a contract's silence. Each such statement is one policy, named by every account definition it governs, so a treatment stated once is recorded once.
+
+**Every stored definition names exactly one policy, resolved before the ledger.** Which policy governs a definition is resolved when the definition is written, from the contract's clauses, then a document it cites, then the deployment's rules. The ledger reads one policy for a merge and looks nothing up. Where several accounts take part in one merge, the policy of the account the requests are made at governs, and a fund's policy governs the accounts that hold amounts for its ranks.
+
+**A policy is versioned, and a definition names one version.** A policy changes when its source does, as general terms are amended or a deployment changes its rules. Each change is a new version, and a definition names the version that governs it, so a balance settled under an earlier version is reproduced under that version. The edge from a definition to its policy bears meaning, in the sense of ADR-A142. Two unrelated scopes that state the same treatment have two policies, since they have not made the same statement.
+
+**The permission and the guards are booleans, and the criteria are concepts.** Each is unstated or false by default, so a policy that states none behaves as an account did before. The two criteria take a concept of a scheme Ledger declares with no member, which an applied module fills, since what requests are ordered by belongs to a domain.
+
+**No rule for a tie is stated apart from the merge rule.** Ranks are served in turn, and the merge rule says what requests of one rank share by. Sharing in proportion is a rule for a tie, priority order is ranks with no rule for a tie, and refusal is the guard.
+
+**Not declared yet.** The two kinds of split have no term until an apportionment is configured, which defers the line of the second addendum of 2026-11-09 that lists them among its releases. The reasons for a refusal, how a rounding difference is settled, and the rank on a request follow with the documents that state them.
+
+**Releases.** Moving the three properties changes published meaning and invalidates a definition that states them itself, a minor release of the substrate at major version zero, made with the change to the layer's documents.
+
+## Addendum (2026-11-17, second): a rounding difference is settled as the policy states, each direction apart
+
+**Status of this addendum:** Accepted by the maintainer on 2026-11-17, who decided the rule the same day. Decision 8 says new evaluation semantics come by an addendum with conformance cases, and the cases are at its end.
+
+**Narrows decision 6.** It also narrows one sentence of the second addendum of 2026-11-16, which sent a unit short by the declared order alone.
+
+**A policy says how a rounding difference is settled.** The second addendum of 2026-11-09 refuses rounding to the nearest beside a residual rule unless it is stated how a difference is treated. A merge policy states one of two things. Either the rounding governs only how a share is shown, and the split is the shares rounded down with the units short given as the residual allocation says. Or each share is rounded to the nearest and the difference is settled a unit at a time.
+
+**Each direction is stated apart, as the wording has it.** Shares rounded to the nearest can sum to less than the amount or to more. Where the difference is settled, the residual allocation says where a unit short goes: to the first share rounded down in the declared order, or to the share rounded down by the most. A second statement says where a unit over is taken from: the first share rounded up in the declared order, or the share rounded up by the most. Ties fall to the declared order in each. Neither statement is inferred from the other, since a wording may settle the two differently, and a policy that settles a difference and does not say where a unit over is taken from is refused.
+
+**The order is the one for placing units.** The declared order here is the policy's criterion for ordering requests of one rank, never the rank itself, since the requests that share are tied in rank.
+
+**Every pair settles exactly.** Under each of the four pairs a policy can state, the grants sum to the amount and each is within one unit of its exact share, wherever the declared order tells every request apart.
+
+**Conformance cases.** Amounts are whole units, the requests are named in the declared order, and shares are rounded half up.
+
+| Case | Given | Result |
+|---|---|---|
+| a unit short, by the declared order | 1 shared by requests of 1, 2 and 2, a unit short to the first in order | the shares round to 0, 0 and 0, one short. The first takes it: 1, 0 and 0 |
+| a unit short, to the share rounded down most | the same, a unit short to the largest remainder | 0, 1 and 0. The second and third were rounded down alike, and the order decides between them |
+| a unit over, by the declared order | 3 shared by requests of 1, 1 and 2, a unit over from the first in order | the shares round to 1, 1 and 2, one over. It is taken from the first: 0, 1 and 2 |
+| a unit over, from the share rounded up most | the same, a unit over from the share rounded up by the most | 1, 1 and 1, since the third was rounded up by a half and the others by a quarter |
+| rounding only for show | 1 shared by requests of 1, 2 and 2, the rounding stated as for show, with the largest remainder | the split is the shares rounded down, 0, 0 and 0, and the unit short goes to the largest remainder: 0, 1 and 0 |
+| one direction unstated | a policy that settles the difference and does not say where a unit over is taken from | refused |
+
+The case of a unit short in the second addendum of 2026-11-16, members with a basis of 3, 0, 11 and 11 sharing 62, is settled by the declared order. To the share rounded down by the most, its unit goes to the first member.
+
+**Releases.** The rounding difference, the source of a unit over and their values add published terms, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -416,3 +497,9 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 **The second addendum of 2026-11-16.** The maintainer decided LG-Q12, LG-Q13, LG-Q17 and LG-Q18 on 2026-11-13 and ruled on scenarios A1, D2, D3, F1 and G1 to G3 of the [posting scenarios note](../../developer/notes/ledger-posting-scenarios.md) by 2026-11-15. The rules were then written once in their decided form, in the [target kernel's sketch](../../developer/sketches/ledger-target-kernel.md), whose questions K1 and K3 to K6 the maintainer decided the same day (LG-Q28). The registers hold the same decisions as MEC-108 to MEC-112, STD-332 and STD-333. The conformance cases are examples evaluated on the definitions of [spikes/ledger-target-kernel](../../../spikes/ledger-target-kernel/README.md), and the laws are owed by the proofs, LG-9 and LG-20.
 
 **The third addendum of 2026-11-16.** The maintainer decided on 2026-11-16 that a ledger has one writer with the guard kept, and that kept balances are a permitted cache rebuilt from the last checkpoint. The measurements are those of the writes, the single writer and the native writer in [benchmark/ledger-credit-kinds](../../../benchmark/ledger-credit-kinds/README.md), in the Validation Packs of LG-17, LG-18 and LG-22, and the store that loses guarded writes is TSD-73, with TSD-74 for the stores that do not. It applies PAT-18, PAT-21 and PAT-04 to the ledger, keeps PRI-52 for the balances a writer holds, and answers the first part of TD-162, which stays open for the conformance test and the patterns guide. The registers hold it as MEC-113.
+
+**The fourth addendum of 2026-11-16.** Raised as LG-Q29 of the [Ledger plan](../../developer/plans/ledger.md) by the proof of LU3 in LG-20, which found that the kernel bounded a credit's applied amount by the room of an account that did not accept it, so a cut was recorded with every ceiling at its stated amount and every credit on a leaf. The maintainer decided (b) of its three options on 2026-11-16, with the rule that a wording naming the restored account by relation is resolved at instantiation. The kernel's `post` refuses such a credit, and the law is proved as `Credits.no_cut_where_ceilings_are_stated_and_credits_on_leaves`, with the case for `credit` alone kept as LU3n ([LG-20's pack](../../developer/validation/LG-20.md)).
+
+**The addendum of 2026-11-17.** The terms the layer's README proposed after LG-9 were walked through with the maintainer as LG-Q30 to LG-Q36 of the [Ledger plan](../../developer/plans/ledger.md). The maintainer decided for a policy node on 2026-11-17 (LG-Q32), for one policy resolved before the ledger (LG-Q35), and for a versioned policy in place of a content-addressed one first chosen that day, once that was seen to need a canonicalisation rule in the layer and a mark two other layers' checks would have to learn (LG-Q36, TD-127). LG-Q33 gave the two criteria and the two guards and found no need for a separate rule for a tie, and LG-Q34 deferred the kinds of split. Built as LG-24 ([its pack](../../developer/validation/LG-24.md)).
+
+**The second addendum of 2026-11-17.** LG-Q30 of the [Ledger plan](../../developer/plans/ledger.md), raised by a constraint that read a term the layer had not declared. The maintainer decided on 2026-11-17 to declare it and asked that where a unit short goes be driven by the wording, as a unit over is, so the reading by symmetry first proposed was dropped. Built as LG-23 ([its pack](../../developer/validation/LG-23.md)), which holds the model's search of the four pairs and the theorem that each settles exactly.

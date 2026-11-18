@@ -12,8 +12,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://www.nebularis.org/neuro-semantic/ledger-vocab> a owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.21.2> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.21.2> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/ledger-vocab/0.22.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/ledger/0.22.0> ;
     dct:description """Ledger holds amounts that can be consumed and restored, such as a limit, commitment, seat quota, carbon budget, and so on. These are represented by an \"account\", configured by how much it holds when fresh, what unit it's held in, and the rule for arbitrating several claims on it at once. Accounts form a tree by \"part of and not in addition to\", so a single draw or credit can affect several accounts at once, along one stated path.
 
 In order to keep a history of changes to an account, weigh several claims on it together, and let different implementations agree on a shared record, each draw or credit is recorded as a fact of its own: a claim against the account that leaves its stated amount untouched. A balance is always derived by folding an operation over those facts. Conservation then holds by construction, since no balance can disagree with the facts it is derived from. Recording a claim and applying it also become separate acts, so claims made together can be held unresolved and decided together by a stated merge rule.
@@ -31,7 +31,7 @@ Avoiding storing a balance also ensures that a balance agrees with its posting h
 When disparate evaluations draw on the same account at the same position (being logically simultaneous, not \"whoever runs first\"), the model follows a fixed path, 'propose -> merge -> settle'.
 
 - Propose - each evaluation states what it requires (e.g., a requested value)
-- Merge - the account's own merge rule (priority order / proportionality / refusal) looks at the whole batch together and decides every grant in one pass, producing one merge record
+- Merge - the merge rule of the account's policy (priority order / proportionality / refusal) looks at the whole batch together and decides every grant in one pass, producing one merge record
 - Settle - each evaluation then posts whatever it was actually granted
 
 Because the merge step is a pure function of the complete set of proposals, the result can't depend on what order the evaluations happened to run in. No evaluation's outcome therefore, depends on the order in which the others ran, so they may run in parallel. Given exact arithmetic in the account's unit, the account's stated rounding and residual rules, and ties broken by an order defined on the data rather than on arrival, two conforming implementations reach the same grants in any execution order, and the same bytes once their records are written in canonical form. Conformance cases check this.
@@ -49,6 +49,15 @@ ldg:Credit a skos:Concept ;
 ldg:Debit a skos:Concept ;
     rdfs:comment "A draw, reducing the balance." .
 
+ldg:ExcessRecoveries a skos:ConceptScheme ;
+    rdfs:comment "Where a unit over is taken from." .
+
+ldg:FromFirstInOrder a skos:Concept ;
+    rdfs:comment "A unit over is taken, one at a time, from the first shares rounded up in the order the merge policy declares." .
+
+ldg:FromMostRoundedUp a skos:Concept ;
+    rdfs:comment "A unit over is taken, one at a time, from the shares rounded up by the most, ties taken in the order the merge policy declares." .
+
 ldg:HalfEven a skos:Concept ;
     rdfs:comment "Rounds a tie to the nearest even value." .
 
@@ -56,19 +65,22 @@ ldg:HalfUp a skos:Concept ;
     rdfs:comment "Rounds a tie away from zero." .
 
 ldg:InPriorityOrder a skos:Concept ;
-    rdfs:comment "Draws are granted in a stated priority order until availability is exhausted." .
+    rdfs:comment "Draws are granted in the priority order the merge policy declares until availability is exhausted. The order is the policy's declaration, never the order of the proposals' identifiers." .
 
 ldg:LargestRemainder a skos:Concept ;
-    rdfs:comment "The residual is allocated to the proposal(s) with the largest rounding remainder, ties broken by the total order of the proposals." .
+    rdfs:comment "The residual is allocated one unit at a time to the proposals with the largest rounding remainders, ties taken in the order the merge policy declares, never in the order of the proposals' identifiers. With no order declared, the units that equal remainders do not decide are left." .
 
 ldg:MergeRules a skos:ConceptScheme ;
     rdfs:comment "What happens when several draws at one position together exceed availability." .
+
+ldg:OrderCriteria a skos:ConceptScheme ;
+    rdfs:comment "What requests are ordered by, for their rank and for the placing of single units." .
 
 ldg:PostingDirections a skos:ConceptScheme ;
     rdfs:comment "Whether a posting debits or credits its account." .
 
 ldg:Proportional a skos:Concept ;
-    rdfs:comment "Draws are granted in proportion to the amounts requested, rounded and allocated per the account's ldg:roundingMethod and ldg:residualAllocation." .
+    rdfs:comment "Draws are granted in proportion to the amounts requested, rounded and allocated per the policy's ldg:roundingMethod and ldg:residualAllocation." .
 
 ldg:Refuse a skos:Concept ;
     rdfs:comment "Where proposals together exceed availability, the whole merge is refused: no grant, a reason recorded, no posting." .
@@ -76,11 +88,20 @@ ldg:Refuse a skos:Concept ;
 ldg:ResidualAllocations a skos:ConceptScheme ;
     rdfs:comment "How a proportional merge's rounding residual is allocated." .
 
+ldg:RoundingDifferences a skos:ConceptScheme ;
+    rdfs:comment "How the difference left by rounding shares to the nearest is settled." .
+
 ldg:RoundingMethods a skos:ConceptScheme ;
     rdfs:comment "How a proportional merge's exact shares round to the account's unit." .
 
+ldg:SettledToNearest a skos:Concept ;
+    rdfs:comment "Each share is rounded to the nearest. A unit short goes to a share that was rounded down, as the residual allocation says, and a unit over is taken from a share that was rounded up, as the excess recovery says, so no share is a whole unit from its exact value." .
+
+ldg:ShownOnly a skos:Concept ;
+    rdfs:comment "The rounding method governs only how a share is shown. The split is the shares rounded down, with the units short allocated as the residual allocation says." .
+
 ldg:ToFirstInOrder a skos:Concept ;
-    rdfs:comment "The residual is allocated one unit at a time to the first proposals in order." .
+    rdfs:comment "The residual is allocated one unit at a time to the first proposals in the order the merge policy declares, never in the order of their identifiers." .
 
 ldg:TowardZero a skos:Concept ;
     rdfs:comment "Truncates toward zero." .

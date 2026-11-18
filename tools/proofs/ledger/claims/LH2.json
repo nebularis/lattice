@@ -1,0 +1,13 @@
+{
+  "subject": "LH2",
+  "statedAs": "Units.to_nearest_within_one_unit",
+  "statementDigest": "sha256:5dd35a6b5047246592fdc272704026604d796129aee3d0b1bfb76f026ca43229",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySet",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

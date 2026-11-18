@@ -19,15 +19,22 @@ ex:facility a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-commitment ;
     ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Borrower ;
-    ldg:mergeRule ldg:Refuse ;
+    ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:conversionMethod ex:fx-2027-06-01 ;
     rdfs:comment "A 20,000,000 sterling revolving commitment, drawn in euros." .
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
 ```
 
 - **`ldg:statedAmount`** is the commitment. It never changes when money is drawn or repaid.
 - **`ldg:unitOfAccount`** is a value space from chapter 7, and it must be extensive, since a balance only means something if amounts add.
 - **`ldg:admitsOwnerKind`** says whose account it can be, here a borrower.
-- **`ldg:mergeRule`** says what happens when several claims arrive at the same moment. `ldg:Refuse` refuses them all. Other rules take them in priority order or share the amount in proportion.
+- **`ldg:mergePolicy`** names the policy that says what happens when several claims arrive at the same moment. Its `ldg:mergeRule` here is `ldg:Refuse`, which refuses them all. Other rules take them in priority order or share the amount in proportion, and then the policy also states how the shares are rounded and where the residual goes.
 - **`ldg:conversionMethod`** names how a drawing in another currency is converted, here by the day's recorded rate.
 
 ### Every draw is a fact, and the balance is derived

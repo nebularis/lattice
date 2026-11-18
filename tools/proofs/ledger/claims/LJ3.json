@@ -1,0 +1,13 @@
+{
+  "subject": "LJ3",
+  "statedAs": "Pots.narrowest_first_lists_agree",
+  "statementDigest": "sha256:6fbc6884f89847bd1be6e6c876645bda3e6eabc8ae9b965312c84439cb37a3bb",
+  "method": "Proof",
+  "scope": "EveryPositionWithPurposes",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

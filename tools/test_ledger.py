@@ -73,6 +73,8 @@ REFUSALS = {
     "refusal-unit": "ChildUnitMatchesParentShape",
     "refusal-proportional-unrounded": "ProportionalNeedsRoundingShape",
     "refusal-intensive-unit": "ExtensiveUnitOfAccountShape",
+    "refusal-nearest-beside-residual": "NearestRoundingStatesTheDifferenceShape",
+    "refusal-settled-without-excess": "SettledToNearestStatesTheExcessShape",
 }
 
 
@@ -184,6 +186,28 @@ def test_refusals_fail_the_named_shape(name: str, shape: str) -> None:
     hit = {s for s in _violating_shapes(report) if s.endswith(f"#{shape}")}
     assert hit, (name, shape, _violating_shapes(report))
     _agree(g, report)
+
+
+
+def test_a_policy_that_settles_to_the_nearest_conforms() -> None:
+    """A policy that rounds to the nearest, says the difference is settled and states both directions conforms. It has no records."""
+    conforms, report, _ = validate(MODEL + _example("rounding-to-the-nearest"), shacl_graph=SHAPES, inference="none", advanced=True)
+    assert conforms, _violating_shapes(report)
+
+# A refusal by a generated structural shape, named by the property whose count is wrong, since such a shape is a blank node in the report.
+STRUCTURAL_REFUSALS = {
+    "refusal-no-merge-policy": "mergePolicy",
+    "refusal-policy-without-rule": "mergeRule",
+}
+
+
+@pytest.mark.parametrize("name,missing", STRUCTURAL_REFUSALS.items())
+def test_structural_refusals_miss_the_named_property(name: str, missing: str) -> None:
+    conforms, report, _ = validate(MODEL + _example(name), shacl_graph=SHAPES, inference="none", advanced=True)
+    assert not conforms
+    paths = {str(report.value(r, SH.resultPath)) for r in report.subjects(SH.resultSeverity, SH.Violation)
+             if report.value(r, SH.sourceConstraintComponent) == SH.MinCountConstraintComponent}
+    assert paths == {str(LDG[missing])}, (name, missing, paths)
 
 
 # ---- LG1-06: the import guard -------------------------------------------------

@@ -1,9 +1,9 @@
 {
   "subject": "LR3",
-  "statedAs": "Rounding.largest_remainder_sums_exactly, largest_remainder_takes_the_largest, largest_remainder_is_the_same_in_every_order",
-  "statementDigest": "sha256:e4dfd27853e3d8cc3ea607d00f11577c258ea0c7359a94df2f53125827315399",
+  "statedAs": "Rounding.ration_largest_remainder_sums_exactly, ration_largest_remainder_takes_the_largest, ration_largest_remainder_the_same_in_every_order",
+  "statementDigest": "sha256:f5326a7aa6ead5863487222ac8644c0062e78969573ba7729000aad544686632",
   "method": "Proof",
-  "scope": "EveryFiniteKeySet",
+  "scope": "EveryFiniteKeySetAndInjectiveOrder",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
   "tool": {
     "name": "Isabelle",

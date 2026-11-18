@@ -1,5 +1,5 @@
 {
-  "ontology": "sha256:668de954a88626de85a5042ecc92cdc070940ed029225350bc35c160a5826bd2",
+  "ontology": "sha256:4b1cd844cca68fa91f4ee4684aa36340c3d1524db953cf12182c91ae8f165800",
   "term:http://www.nebularis.org/ontologies/Mork#Accepted": "sha256:8870d9332ef893aaeb8a7025fac7684df3c14b09f46d447c6236dd9c1d9c900e",
   "term:http://www.nebularis.org/ontologies/Mork#AnonymousElement": "sha256:9a9d86aab337bf55f07a042b943509c008f88280535fd2667dcee858841cef3d",
   "term:http://www.nebularis.org/ontologies/Mork#Array": "sha256:d7b87f2d42ca7eca59655d696588394950c504d076836d9d91924c806d3f15d0",

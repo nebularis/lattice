@@ -1,0 +1,13 @@
+{
+  "subject": "LC5",
+  "statedAs": "Pots.a_purpose_charges_every_account_counting_it",
+  "statementDigest": "sha256:591360492f37a294de1e9dbb9004fd4e285af705b99e0556d4c7c4a97ead7c41",
+  "method": "Proof",
+  "scope": "EveryRuleAndSequence",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

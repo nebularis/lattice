@@ -28,7 +28,16 @@ ex:temperature-compare a qnt:OperationCapability ; qnt:operationKind qnt:Compare
 
 ex:q-20-degrees a qnt:Quantity ; qnt:onSpace ex:temperature ; qnt:numericValue "20"^^xsd:decimal .
 
+# ==== The merge policies =======================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
 ex:degree-days-account a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-20-degrees ; ldg:unitOfAccount ex:temperature ;
-    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "Refused. Its unit of account, a temperature, is intensive, not extensive." .

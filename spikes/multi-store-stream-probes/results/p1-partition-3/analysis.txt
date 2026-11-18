@@ -1,0 +1,32 @@
+consumers: [c1, c2]
+events c1: [joined@1794937036196]
+events c2: [joined@1794937042706]
+confirmed seqs: 24807, unknown (publisher saw an error): 0
+first receiver by partition: 0:c1 1:c2 2:c1 3:c2 4:c1 5:c2 6:c1 7:c2
+
+cut of c1 at t=1794937122823
+partition | previous owner rx | takeover by | takeover after (ms) | owner rx after | owner applies after | owner applies after takeover | last owner apply after takeover (ms)
+0 | yes | c2 | 23316 | 0 | 6 | 6 | 5950
+2 | yes | c2 | 23311 | 0 | 6 | 0 | 0
+4 | yes | c2 | 23316 | 0 | 6 | 0 | 0
+6 | yes | c2 | 23311 | 0 | 6 | 0 | 0
+takeover after: min 23311 ms, max 23316 ms, partitions taken over 4
+applies by c1 after another consumer had begun receiving the same partition: 6
+
+per partition: applies, extra applies of a seq, older seq applied after a newer one, overlapping batches of different consumers, skipped, not yet applied
+0 | 39 | 6 | 5 | 0 (0 ms) | 0 | 3068
+1 | 35 | 0 | 0 | 0 (0 ms) | 0 | 3066
+2 | 33 | 0 | 0 | 0 (0 ms) | 0 | 3068
+3 | 35 | 0 | 0 | 0 (0 ms) | 0 | 3066
+4 | 33 | 0 | 0 | 0 (0 ms) | 0 | 3068
+5 | 29 | 0 | 0 | 0 (0 ms) | 0 | 3072
+6 | 33 | 0 | 0 | 0 (0 ms) | 0 | 3068
+7 | 29 | 0 | 0 | 0 (0 ms) | 0 | 3071
+total | extra applies 6 | older after newer 5 | overlapping batches of different consumers 0 (0 ms) | confirmed but skipped 0 | confirmed, not yet applied at the end 24547
+harness note harness at +0.0 s run p1-partition-3 mode partition heartbeat 10 rate 150 batchms 15000 messagems 5
+harness note harness at +72.4 s both consumers were not active in 60 s
+harness note harness at +88.0 s before the fault c1 has seen 4 partitions and c2 4
+harness cut c1 at +88.0 s docker network disconnect
+harness note harness at +111.7 s c2 has seen 8 partitions after 23 s, all partitions: True
+harness heal c1 at +149.5 s docker network connect
+harness note harness at +178.0 s publisher stopped

@@ -1,0 +1,5 @@
+stream read back: {"t":1794938254162,"c":"count","e":"count","super":"msa-i9-l-p3leaderkill2","entries":15075,"distinct":15075,"extra_copies":0,"missing_in_range":1,"from":0,"to":15008,"duplicated":""}
+publisher: 15008 sequence numbers confirmed (highest 15008), 1 unconfirmed batches logged
+CONFIRMED BUT NOT IN THE STREAM: 0
+publisher saw failures from t+5401 ms to t+5401 ms of the node kill; first error: "TimeoutException null"}
+publisher connections: 2 (msa-i9-rmq1 msa-i9-rmq3)

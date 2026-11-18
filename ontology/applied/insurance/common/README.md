@@ -92,13 +92,13 @@ vocab = ["vocab/common-vocab.ttl"]
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/common>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.2> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.11.0> ;
     rdfs:label "Insurance domain shared contracts"@en ;
     rdfs:comment "Insurance scheme contracts shared by two or more of the domain's modules (ADR-A98 decision 1, epic D7): peril, mechanism, agency, consequence, harm subject and pool classifications. The liability role types of ADR-A102 are declared in vocab/common-vocab.ttl, alongside these properties' scheme contracts. The loss event (AIR-4.4) and the liability direction scheme (Phase 5) are not yet declared here." ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.6.2> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.22.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.22.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.22.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification/0.7.0> .
 
 icm:peril a owl:ObjectProperty ;
     rdfs:range skos:Concept ;
@@ -177,8 +177,8 @@ without the full peril vocabulary, can depend on `common/` alone.
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.2> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.2> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.11.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.11.0> .
 
 icm-voc:PerilContract a voc:SchemeContract ;
     fnd:hasIdentity icm-voc:PerilContract-identity ;
@@ -592,6 +592,8 @@ every conversion's factor, and every currency's notation, QUDT match and placeme
 
 ## 10. Release notes
 
+- **0.11.0**.
+  - no effect. Imports re-pinned to release 0.22.0, with no other change.
 - **0.10.0**.
   - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.9.0**.

@@ -16,8 +16,8 @@ A compiler reads the mapping graph and writes executable artefacts, such as RML 
 
 | Document | Ontology IRI | Version IRI | Imports |
 |---|---|---|---|
-| `spec/Mork.ttl` | <http://www.nebularis.org/ontologies/Mork> | <http://www.nebularis.org/ontologies/Mork/0.21.2> | <http://www.w3.org/2004/02/skos/core>, <http://www.w3.org/ns/shacl>, <http://www.w3.org/2003/11/swrl>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.2> |
-| `spec/Executable.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/executable> | <https://www.nebularis.org/neuro-semantic/lattice/executable/0.21.2> | <http://www.nebularis.org/ontologies/Mork>, <http://www.w3.org/ns/prov-o-20130430>, <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.2> |
+| `spec/Mork.ttl` | <http://www.nebularis.org/ontologies/Mork> | <http://www.nebularis.org/ontologies/Mork/0.22.0> | <http://www.w3.org/2004/02/skos/core>, <http://www.w3.org/ns/shacl>, <http://www.w3.org/2003/11/swrl>, <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.22.0> |
+| `spec/Executable.ttl` | <https://www.nebularis.org/neuro-semantic/lattice/executable> | <https://www.nebularis.org/neuro-semantic/lattice/executable/0.22.0> | <http://www.nebularis.org/ontologies/Mork>, <http://www.w3.org/ns/prov-o-20130430>, <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.22.0> |
 
 | Prefix | Namespace |
 |---|---|
@@ -5935,6 +5935,8 @@ Not applicable.
 
 ## 12. Release Notes
 
+- **0.22.0**.
+  - no effect. Imports re-pinned to release 0.22.0, with no other change.
 - **0.21.0**.
   - no effect. Imports re-pinned to release 0.21.0, with no other change.
   - no effect. The README follows the layout of [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and generates both spec documents and the shapes file from sections 1, 2, 6 and 7. Both spec documents gain a `dct:description` and a `dct:creator`, and 230 definitions move from `skos:definition` to `rdfs:comment`, where the layout puts a term's definition. 31 terms of MORK and 3 of Executable gain a definition they lacked. 20 definitions and 13 scope notes become `xsd:string` typed literals, which are equal to plain literals in RDF 1.1. Some texts drop a citation of a decision that is not published, a pointer to a document that does not exist or a semicolon, and the closed-world shape for production mode has its message reworded the same way.

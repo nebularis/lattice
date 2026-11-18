@@ -72,6 +72,8 @@ list of substrate layers puts Instrument below Behaviour, the order before ADR-A
 
 Breaking versions at major version zero ([ADR-A113](../../../docs/architecture/decisions/ADR-A113-breaking-changes-at-major-version-zero.md)):
 
+- **0.20.0**.
+  - no effect. Imports re-pinned to release 0.22.0, with no other change.
 - **0.19.0**.
   - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.18.0**.

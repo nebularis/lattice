@@ -202,6 +202,8 @@ def post(book, q, bal):
             return ("drawn", a, x), [v - x if b in chain(parent, a) else v for b, v in enumerate(bal)]
         return None, bal
     _, a, c, x = q
+    if not restores(a, c):
+        return None, bal
     applied, cuts, after = credit(parent, cap, lambda b: restores(b, c), a, x, bal)
     return ("restored", a, c, x, applied, cuts), after
 
@@ -428,29 +430,34 @@ def draw_book(rng):
 def search_history(cases, seed):
     """A credit's closed form against the benchmark writer's loop, the balance as a sum less its cuts against the stepped balance, and the readings by effective day."""
     rng = random.Random(seed)
-    found = {"cases": 0, "postings": 0, "credits cut at an ancestor": 0, "draws refused": 0, "histories with a late posting": 0, "B differs from the ledger": 0,
+    found = {"cases": 0, "postings": 0, "credits cut at an ancestor": 0, "draws refused": 0, "credits refused": 0, "credits under LU3": 0, "histories with a late posting": 0, "B differs from the ledger": 0,
              "A below zero or above the ceiling": 0, "B charged in full below zero": 0}
     for _ in range(cases):
         book, kinds = draw_book(rng)
         parent, stated, cap, restores = book[:4]
         n, bal, posted, es = len(stated), list(stated), [], []
+        on_leaves = True
         for step in range(rng.randint(1, 25)):
             a = rng.randrange(n)
             if rng.random() < 0.6:
                 q = ("draw", a, rng.randint(1, 15))
             else:
                 c = rng.choice(kinds)
-                if not restores(a, c):
-                    continue
                 q = ("restore", a, c, rng.randint(1, 25))
-                applied, cuts, after = credit(parent, cap, lambda b: restores(b, c), a, q[3], bal)
-                assert (applied, {b: x for b, x in cuts.items() if x}, after) == credit_by_loop(parent, cap, lambda b: restores(b, c), a, q[3], bal), "a credit's closed form is not the writer's loop"
-                assert all(x >= 0 for x in cuts.values()), "a cut below zero"
+                if restores(a, c):
+                    applied, cuts, after = credit(parent, cap, lambda b: restores(b, c), a, q[3], bal)
+                    assert (applied, {b: x for b, x in cuts.items() if x}, after) == credit_by_loop(parent, cap, lambda b: restores(b, c), a, q[3], bal), "a credit's closed form is not the writer's loop"
+                    assert all(x >= 0 for x in cuts.values()), "a cut below zero"
             p, bal = post(book, q, bal)
             if p is None:
-                found["draws refused"] += 1
+                found["draws refused" if q[0] == "draw" else "credits refused"] += 1
                 continue
             posted.append(p)
+            if p[0] == "restored":
+                on_leaves = on_leaves and all(parent[y] != p[1] for y in range(n))
+                if cap == stated and on_leaves:
+                    found["credits under LU3"] += 1
+                    assert not any(p[5].values()), "a cut where every ceiling is its stated amount and every credit is on a leaf"
             es.append((len(posted) - (rng.randint(1, 4) if rng.random() < 0.15 else 0), p))
             found["credits cut at an ancestor"] += p[0] == "restored" and any(p[5].values())
             assert all(0 <= bal[b] <= cap[b] for b in range(n)), "a balance left the range from zero to its ceiling"
@@ -565,6 +572,90 @@ def search_pots(cases, seed, whole):
         found["with a residual"] += held > 0
         found["an account above the fund binds"] += min(bal[: above + 1]) < min(asked, bal[fund]) if above else 0
         found["a pot's own amount binds"] += any(c < sum(r.values()) for c, r in zip(caps, ranked))
+    return found
+
+
+def search_pots_by_rank(cases, seed, whole):
+    """LP1 under its proved condition: every account on a pot's path below the fund holds at least what the fund makes available before the pots run.
+    The pots sit anywhere below the fund, so they may share accounts or lie one above another, and `pots` must then grant what `by_rank` grants over the same groups."""
+    rng = random.Random(seed)
+    found = {"cases": 0, "refused": 0, "no tie rule": 0, "pots sharing an account": 0, "equal to by_rank": 0}
+    for _ in range(cases):
+        ranked = ranks_model.draw_ranks(rng)
+        above = rng.randint(0, 2)
+        fund = above
+        asked = sum(sum(r.values()) for r in ranked)
+        parent = [None] + list(range(above))
+        bal = [rng.randint(0, asked + 5) for _ in range(above + 1)]
+        least = min(bal)
+        below = []
+        for _ in range(rng.randint(len(ranked), len(ranked) + 4)):
+            parent.append(rng.choice([fund] + below))
+            below.append(len(parent) - 1)
+        pot_ids = rng.sample(below, len(ranked))
+        bal += [least + rng.randint(0, 5) for _ in below]
+        own = [set(chain(parent, a)) - set(chain(parent, fund)) for a in pot_ids]
+        found["cases"] += 1
+        found["pots sharing an account"] += any(own[i] & own[j] for i in range(len(own)) for j in range(i))
+        policy = draw_policy(rng, whole)
+        if policy[2] is None:
+            found["no tie rule"] += 1
+            continue
+        result = pots(policy, {k: 0 for r in ranked for k in r}, parent, fund, list(zip(pot_ids, ranked)), bal)
+        if result is None:
+            found["refused"] += 1
+            continue
+        v = {k: x for r in ranked for k, x in r.items()}
+        group = {k: i for i, r in enumerate(ranked) for k in r}
+        assert {k: x for g in result[0] for k, x in g.items()} == by_rank(group, policy[2], v, min(sum(v.values()), least)), "pots whose own amounts cannot bind are not by_rank"
+        found["equal to by_rank"] += 1
+    return found
+
+
+def search_nearest(cases, seed):
+    """Rounding to the nearest with the difference settled, in each way a wording can state it: a unit short given by the declared order or to the share
+    rounded down most, and a unit over taken by the declared order or from the share rounded up most. `to_nearest` under those preferences is compared
+    with the words written as a sort, which uses neither `units` nor `placed`."""
+    rng = random.Random(seed)
+    found = {"cases": 0, "a unit over": 0, "a unit short": 0, "the ways differ": 0}
+
+    def words(part, t, K, w, give, take, order):
+        base, floor, rem = part(t, K, w), floor_part(t, K, w), remainder(t, K, w)
+        out = dict(base)
+        diff = t - sum(base[k] for k in K)
+        if diff < 0:
+            up = sorted((k for k in K if floor[k] < base[k]), key=(lambda k: order[k]) if take == "order" else (lambda k: (rem[k], order[k])))
+            for k in up[:-diff]:
+                out[k] -= 1
+        elif diff > 0:
+            down = sorted((k for k in K if base[k] == floor[k] and rem[k] > 0), key=(lambda k: order[k]) if give == "order" else (lambda k: (-rem[k], order[k])))
+            for k in down[:diff]:
+                out[k] += 1
+        return out
+
+    for _ in range(cases):
+        K = [f"k{i}" for i in range(rng.randint(1, 6))]
+        w = {k: rng.randint(0, 12) for k in K}
+        if sum(w.values()) == 0:
+            continue
+        t = rng.randint(0, 60)
+        order = dict(zip(K, rng.sample(range(len(K)), len(K))))
+        rem = remainder(t, K, w)
+        prefs = {"order": (first_in(order), first_in(order)),
+                 "most": (then_by(lambda j, k: rem[k] < rem[j], first_in(order)), then_by(lambda j, k: rem[j] < rem[k], first_in(order)))}
+        for part in (half_up_part, half_even_part):
+            diff = t - sum(part(t, K, w).values())
+            seen = set()
+            for give in ("order", "most"):
+                for take in ("order", "most"):
+                    got = to_nearest(part, prefs[give][0], prefs[take][1])(t, K, w)
+                    assert got == words(part, t, K, w, give, take, order), "to_nearest is not the words of the rule"
+                    assert sum(got.values()) == t, "rounding to the nearest does not sum to the amount"
+                    seen.add(tuple(sorted(got.items())))
+            found["cases"] += 1
+            found["a unit over"] += diff < 0
+            found["a unit short"] += diff > 0
+            found["the ways differ"] += len(seen) > 1
     return found
 
 
@@ -706,6 +797,14 @@ def examples():
     assert settle_purposes((False, False, share, False), True, *args) == ("refused", "mixed")
     assert settle_purposes((True, False, share, False), False, *args) == ("refused", "exceeds")
     assert whole_each(["a", "b"], {"a": 5, "b": 4}, 7) == {"a": 5, "b": 0}
+    # LG-Q29: `credit` at a leaf that does not accept the kind, under a parent that does, leaves a cut, so `post` refuses such a credit
+    leafy = ([None, 0], [10, 10], [10, 10], lambda b, c: b == 0)
+    on_parent = lambda b: b == 0
+    _, cuts, bal = credit(leafy[0], leafy[2], on_parent, 1, 5, [5, 5])
+    assert cuts == {0: 0} and bal == [10, 5]
+    assert credit(leafy[0], leafy[2], on_parent, 1, 5, bal)[1] == {0: 5}
+    p, bal = post(leafy, ("draw", 1, 5), [10, 10])
+    assert post(leafy, ("restore", 1, "recovery", 5), bal) == (None, [5, 5])
     print("a loan of 90 and a letter of credit of 40, facility 100, sublimit 30:", {k: str(x) for k, x in k3.items()}, "balances after", [str(x) for x in after])
     print("the sketch's example: reading A", [reading_a(d) for d in (1, 2, 4)], "reading B where the account rations", [reading_b(d, True) for d in (1, 2, 4)],
           "where it refuses", [reading_b(d, True, refuser) for d in (1, 2, 4)], "and charged in full", [reading_b(d, False) for d in (1, 2, 4)])
@@ -722,6 +821,9 @@ def main():
     print("merge and its refusals, whole units:", search_merge(100_000 // scale, 26, True))
     print("pots, exact amounts:", search_pots(60_000 // scale, 27, False))
     print("pots, whole units:", search_pots(100_000 // scale, 28, True))
+    print("pots whose own amounts cannot bind, exact amounts:", search_pots_by_rank(100_000 // scale, 33, False))
+    print("pots whose own amounts cannot bind, whole units:", search_pots_by_rank(100_000 // scale, 34, True))
+    print("rounding to the nearest, each stated way:", search_nearest(100_000 // scale, 35))
     print("allocation across accounts, exact amounts:", search_spread(60_000 // scale, 29, False))
     print("allocation across accounts, whole units:", search_spread(100_000 // scale, 30, True))
     for family in ("exact", "priority", "units"):

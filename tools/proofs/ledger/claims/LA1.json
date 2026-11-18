@@ -1,7 +1,7 @@
 {
   "subject": "LA1",
   "statedAs": "Allocation.proportional_lawful",
-  "statementDigest": "sha256:bf7073f0a9a04d17c17d757d7343ed59666aee9ff74217b4258924bd772924cb",
+  "statementDigest": "sha256:4e2e217edb0380fc8529dc12a1c7da303f26a71b285782dbe788ee50c58b318c",
   "method": "Proof",
   "scope": "EveryFiniteKeySet",
   "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",

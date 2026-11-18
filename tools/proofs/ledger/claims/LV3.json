@@ -1,0 +1,13 @@
+{
+  "subject": "LV3",
+  "statedAs": "Pots.rationing_allocation_accounts_for_what_was_asked",
+  "statementDigest": "sha256:397400d8ee9bbb43303ab392319399009423cfa3133cb89856145c1452c02f2b",
+  "method": "Proof",
+  "scope": "EveryRationingRuleAndSequence",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

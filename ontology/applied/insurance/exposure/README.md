@@ -163,15 +163,15 @@ schedule versions, not one snapshot.
 ```turtle-spec
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.6.2> ;
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.7.0> ;
     rdfs:label "LATTICE asset exposure ontology"@en ;
     rdfs:comment "Facts about the world a risk sits in: exposure sets, locations, legal entities and control, assets, interests and valuations, with zones, attributes, dependencies, losses, requirements, cover and liability in further regions. No class here says what a contract insures, which is the contract module's." ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.21.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/party/0.21.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.10.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.21.2> .
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.22.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.22.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/quantification/0.22.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/party/0.22.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common/0.11.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/eligibility/0.22.0> .
 
 #################################################################
 #    Identity classes. Each versioned class below has
@@ -1576,14 +1576,14 @@ thousands.
 
 <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/vocab>
     rdf:type owl:Ontology ;
-    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.6.2> ;
-    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.6.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.21.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.21.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.10.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.9.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.6.2> ,
-                <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.1.2> .
+    owl:versionIRI <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure-vocab/0.7.0> ;
+    owl:imports <https://www.nebularis.org/neuro-semantic/lattice/insurance/exposure/0.7.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/vocabulary/0.22.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/foundation/0.22.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/common-vocab/0.11.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/insurance/peril-vocab/0.10.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/classification-vocab/0.7.0> ,
+                <https://www.nebularis.org/neuro-semantic/lattice/applied/asset-class-vocab/0.2.0> .
 
 #################################################################
 #    Reference schemes, each the unscoped fallback
@@ -5264,6 +5264,8 @@ revenue by territory, with the output of `effective_characteristics` for its cau
 
 ## 10. Release notes
 
+- **0.7.0**.
+  - no effect. Imports re-pinned to release 0.22.0, with no other change.
 - **0.6.0**.
   - may invalidate. The vocab document imports the asset class module's vocab document at 0.1.0, which binds `cls-voc:AssetClassContract` to the reference asset class edition, and `aeo:AssetShape` refuses an asset of a mobile class with an `aeo:locatedAt`, and one of a stationary class with an `aeo:presence`. A graph that loads the edition and states such an asset now fails.
   - no effect. The examples name asset classes from the edition, where they named value types.

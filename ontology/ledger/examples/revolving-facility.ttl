@@ -69,11 +69,20 @@ ex:fx-2027-12-31 a qnt:ConversionContext ;
 
 ex:q-commitment a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "20000000"^^xsd:decimal ; qnt:inUnit ex:GBP .
 
+# ==== The merge policies =======================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
 ex:facility a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-commitment ;
     ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Borrower ;
-    ldg:mergeRule ldg:Refuse ;
+    ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:conversionMethod ex:fx-2027-06-01 ;
     rdfs:comment "A 20,000,000 sterling revolving commitment, drawn in euros." .
 

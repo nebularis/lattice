@@ -1,0 +1,43 @@
+consumers: [c1, c2]
+events c1: [joined@1794936066750, halt@1794936067448]
+events c2: [joined@1794936074600, stopping@1794936094601]
+confirmed seqs: 1200, unknown (publisher saw an error): 0
+first receiver by partition: 0:c1 1:c1 2:c1 3:c1 4:c1 5:c1 6:c1 7:c1
+
+kill of c1 at t=1794936068800
+partition | previous owner rx | takeover by | takeover after (ms) | owner rx after | owner applies after | owner applies after takeover | last owner apply after takeover (ms)
+0 | yes | c2 | 5787 | 0 | 0 | 0 | 0
+1 | yes | c2 | 5804 | 0 | 0 | 0 | 0
+2 | yes | c2 | 5796 | 0 | 0 | 0 | 0
+3 | yes | c2 | 5761 | 0 | 0 | 0 | 0
+4 | yes | c2 | 5754 | 0 | 0 | 0 | 0
+5 | yes | c2 | 5780 | 0 | 0 | 0 | 0
+6 | yes | c2 | 5771 | 0 | 0 | 0 | 0
+7 | yes | c2 | 5747 | 0 | 0 | 0 | 0
+takeover after: min 5747 ms, max 5804 ms, partitions taken over 8
+applies by c1 after another consumer had begun receiving the same partition: 0
+
+per partition: applies, extra applies of a seq, older seq applied after a newer one, overlapping batches of different consumers, skipped, not yet applied
+0 | 150 | 0 | 0 | 0 (0 ms) | 0 | 0
+1 | 150 | 0 | 0 | 0 (0 ms) | 0 | 0
+2 | 150 | 0 | 0 | 0 (0 ms) | 0 | 0
+3 | 150 | 0 | 0 | 0 (0 ms) | 0 | 0
+4 | 150 | 0 | 0 | 0 (0 ms) | 0 | 0
+5 | 150 | 0 | 0 | 0 (0 ms) | 0 | 0
+6 | 150 | 0 | 0 | 0 (0 ms) | 0 | 0
+7 | 150 | 0 | 0 | 0 (0 ms) | 0 | 0
+total | extra applies 0 | older after newer 0 | overlapping batches of different consumers 0 (0 ms) | confirmed but skipped 0 | confirmed, not yet applied at the end 0
+
+resume of c2 after c1
+partition | last offset stored by first | first offset received by second | offsets between | seqs applied by both
+0 | 9 | 16 | 6 | 0
+1 | 9 | 10 | 0 | 0
+2 | 9 | 10 | 0 | 0
+3 | 9 | 16 | 6 | 0
+4 | 9 | 16 | 6 | 0
+5 | 9 | 16 | 6 | 0
+6 | 9 | 16 | 6 | 0
+7 | 9 | 16 | 6 | 0
+harness note harness at +0.0 s run p3-before-store point before-store dieAtBatch 3 rate 150 publish 8 s
+harness kill c1 at +12.2 s halt at batch 3 before-store
+harness note harness at +17.0 s c2 started

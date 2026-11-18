@@ -1,0 +1,27 @@
+consumers: [c1, c2]
+events c1: [joined@1794938267475]
+events c2: [joined@1794938274042]
+confirmed seqs: 15346, unknown (publisher saw an error): 1
+first receiver by partition: 0:c1 1:c2 2:c1 3:c2 4:c1 5:c2 6:c1 7:c2
+
+kill of rmq1 at t=1794938297469
+partition | previous owner rx | takeover by | takeover after (ms) | owner rx after | owner applies after | owner applies after takeover | last owner apply after takeover (ms)
+no partition was taken over
+applies by rmq1 after another consumer had begun receiving the same partition: 0
+
+per partition: applies, extra applies of a seq, older seq applied after a newer one, overlapping batches of different consumers, skipped, not yet applied
+0 | 613 | 12 | 10 | 0 (0 ms) | 0 | 1317
+1 | 653 | 0 | 0 | 0 (0 ms) | 0 | 1266
+2 | 273 | 0 | 0 | 0 (0 ms) | 0 | 1646
+3 | 591 | 0 | 0 | 0 (0 ms) | 0 | 1327
+4 | 273 | 0 | 0 | 0 (0 ms) | 0 | 1645
+5 | 355 | 0 | 0 | 0 (0 ms) | 0 | 1563
+6 | 613 | 0 | 0 | 0 (0 ms) | 0 | 1305
+7 | 273 | 0 | 0 | 0 (0 ms) | 0 | 1645
+total | extra applies 12 | older after newer 10 | overlapping batches of different consumers 0 (0 ms) | confirmed but skipped 0 | confirmed, not yet applied at the end 11714
+harness note harness at +0.0 s run p3-leader-kill-1 kill node 1 rate 150 batchms 100 storevia env
+harness note harness at +32.1 s before the fault c1 has seen 4 partitions and c2 4
+harness kill rmq1 at +32.1 s docker kill of the broker node
+harness note harness at +48.2 s leaders off the killed node after about 16 s (all elected: True)
+harness note harness at +98.7 s node 1 started again, listening: True
+harness note harness at +115.1 s publisher stopped

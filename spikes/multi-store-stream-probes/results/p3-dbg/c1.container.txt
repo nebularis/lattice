@@ -1,0 +1,48 @@
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[main] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Setting default consumer update listener for manual tracking strategy
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 0 from stream msa-i9-o-p3dbg-0 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 1 from stream msa-i9-o-p3dbg-1 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 2 from stream msa-i9-o-p3dbg-2 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 3 from stream msa-i9-o-p3dbg-3 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 4 from stream msa-i9-o-p3dbg-4 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 5 from stream msa-i9-o-p3dbg-5 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 6 from stream msa-i9-o-p3dbg-6 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-1] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer 7 from stream msa-i9-o-p3dbg-7 with name lattice.studio.writers received consumer update notification, active = true
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Calling consumer update listener
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Going from passive to active, looking up offset
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - No stored offset, using initial offset specification: OffsetSpecification{type=1, offset=-1}
+[rabbitmq-stream-consumer-connection-0] DEBUG com.rabbitmq.stream.impl.StreamConsumer - Consumer update listener returned OffsetSpecification{type=1, offset=-1}

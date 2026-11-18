@@ -64,42 +64,51 @@ ex:q-1000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "1000000"
 ex:q-2000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "2000000"^^xsd:decimal .
 ex:q-3000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "3000000"^^xsd:decimal .
 
+# ==== The merge policies =======================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
 # ==== The configuration: the tree, a limit beside it, and a purpose outside ===
 
 ex:annual-cap a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-20000000 ; ldg:unitOfAccount ex:money ;
-    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "Twice the aggregate: the programme's hard cap across the original cover and one reinstatement." .
 
 ex:aggregate a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-10000000 ; ldg:unitOfAccount ex:money ;
-    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:annual-cap ; ldg:creditCeiling ex:q-10000000 ;
     rdfs:comment "The programme's annual aggregate, reinstatable once." .
 
 ex:section-a a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-6000000 ; ldg:unitOfAccount ex:money ;
-    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:aggregate .
 
 ex:sublimit-a1 a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-1000000 ; ldg:unitOfAccount ex:money ;
-    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:section-a .
 
 ex:section-b a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-4000000 ; ldg:unitOfAccount ex:money ;
-    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:aggregate .
 
 ex:beneficiary-class-limit a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-2000000 ; ldg:unitOfAccount ex:money ;
-    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "A further limit for one class of beneficiary, in addition to the aggregate: no ldg:partOf edge." .
 
 ex:flood-aggregate a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-3000000 ; ldg:unitOfAccount ex:money ;
-    ldg:admitsOwnerKind ex:Programme ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:countsPurpose ex:flood ;
     rdfs:comment "Outside the tree. A draw naming the flood purpose debits this account too." .
 

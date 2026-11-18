@@ -1,0 +1,13 @@
+{
+  "subject": "LW1",
+  "statedAs": "Units.no_order_rations",
+  "statementDigest": "sha256:4b2de3df12930c62bf6c08ec721722cbce56b639f2f267de93024281b90259ae",
+  "method": "Proof",
+  "scope": "EveryFiniteKeySet",
+  "assumptionAudit": "gate.py scans every .thy file in this layer for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

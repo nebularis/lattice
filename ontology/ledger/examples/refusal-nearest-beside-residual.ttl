@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused: an account whose proportional merge rounds half-even
+# beside the largest-remainder residual, and which does not state how the
+# difference is settled. Rounding to the nearest can round the shares to more
+# than the amount and leave a unit to take back, which neither residual rule
+# defines, so the configuration is refused where the wording states no
+# treatment (LG-Q16, decided (c) by default). Refused by the shape requiring
+# rounding to the nearest beside a residual rule to state how the difference
+# is settled.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-nearest-beside-residual/> .
+
+ex:owner a fnd:PersistentIdentity .
+ex:OwnerKind a owl:Class .
+
+ex:units a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-refusal-nearest-beside-residual-units" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-refusal-nearest-beside-residual-units-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
+ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
+
+ex:q-100 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
+
+# ==== The merge policies =======================================================
+
+ex:shared-in-proportion a ldg:MergePolicy ;
+    fnd:hasIdentity ex:shared-in-proportion-identity ;
+    ldg:mergeRule ldg:Proportional ;
+    ldg:roundingMethod ldg:HalfEven ;
+    ldg:residualAllocation ldg:LargestRemainder .
+
+ex:shared-in-proportion-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
+ex:nearest-account a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:shared-in-proportion ;
+    rdfs:comment "Refused. Half-even beside the largest-remainder residual, with no statement of how the difference is settled." .

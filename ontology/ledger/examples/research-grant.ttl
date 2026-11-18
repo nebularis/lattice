@@ -45,22 +45,31 @@ ex:q-200000 a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "200000"^^x
 ex:q-120000 a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "120000"^^xsd:decimal .
 ex:q-80000  a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "80000"^^xsd:decimal .
 
+# ==== The merge policies =======================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
 # ==== The configuration: a budget with two sub-budgets ========================
 
 ex:grant-budget a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-200000 ; ldg:unitOfAccount ex:funds ;
-    ldg:admitsOwnerKind ex:Grantee ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:Grantee ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "The grant's overall budget." .
 
 ex:staff-budget a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-120000 ; ldg:unitOfAccount ex:funds ;
-    ldg:admitsOwnerKind ex:Grantee ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:Grantee ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:grant-budget ;
     rdfs:comment "The staff sub-budget, part of the grant." .
 
 ex:equipment-budget a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-80000 ; ldg:unitOfAccount ex:funds ;
-    ldg:admitsOwnerKind ex:Grantee ; ldg:mergeRule ldg:Refuse ;
+    ldg:admitsOwnerKind ex:Grantee ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:grant-budget ; ldg:creditCeiling ex:q-80000 ;
     rdfs:comment "The equipment sub-budget, part of the grant. Its credit ceiling equals its stated amount." .
 
