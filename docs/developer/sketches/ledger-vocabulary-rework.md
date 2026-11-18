@@ -189,7 +189,7 @@ All five change published meaning, so they are released together as one minor re
 - (b) No node. The owner's persistent identity names the profile and holds the revision. That puts a fact every write changes on a node of Foundation's, which other writers of that identity then contend for.
 - (c) No node and no revision in the ontology. The profile is bound in the deployment's configuration, and the revision is the store adapter's.
 
-*Leaning (a).* The revision is the one fact of a ledger that changes in place, and it is better on a node the ledger owns than on someone else's. Under (c) the agreement that a writer's records equal a replay in revision order could not be checked from the records.
+*Leaning (a).* LG-Q44 of the plan asks which unit is the ledger's aggregate, and if it is the owner's ledger this node is its root. The revision is the one fact of a ledger that changes in place, and it is better on a node the ledger owns than on someone else's. Under (c) the agreement that a writer's records equal a replay in revision order could not be checked from the records.
 
 **LG-Q38. Does a request have a record of its own, and is a refusal's request kept?** Today a merge record holds a `ldg:Grant` for each proposal granted, and a refused merge must hold none. So a merge refused for a tie records no rank, though the decision says the record shows what decided the order.
 
