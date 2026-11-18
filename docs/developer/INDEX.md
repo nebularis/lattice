@@ -49,7 +49,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
 | mtp-execution | unit |  | merged 2026-09-20 |  | [status](status/mtp-execution.md) |
-| multi-store-architecture | unit | MSA | built 2026-11-18 | MSA-I1 | [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md), 8 Validation Packs |
+| multi-store-architecture | unit | MSA | building 2026-11-18 | MSA-I1 | [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md), 8 Validation Packs |
 | multi-store-conformance | unit | MSC | merged 2026-10-29 |  | [plan](plans/multi-store-conformance.md), [status](status/multi-store-conformance.md), 5 Validation Packs |
 | normative-rule-substrate | multi-slice unit | NRS | blocked | NRS-2 | [plan](plans/normative-rule-substrate.md), [status](status/normative-rule-substrate.md) |
 | ontology-remediation | phase | OR | built 2026-10-28 | OR-0 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |
@@ -448,7 +448,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | MSA-I12 | `spikes/multi-store-emitted-topology`. One declaration emits both JSON copies byte for byte and states a binding the copies disagree on. Quanta differ from compose's. Validation Pack | multi-store-architecture | built 2026-11-17 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-F1 | the studio's stream writer stores only offsets it has applied, by stream and offset through the environment, so a stop skips no confirmed write (MSAI9-06). P3a rerun through the writer's cod | multi-store-architecture | built 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-F2 | a batch the store refuses for a reason that a retry cannot change is answered and the stream goes on, and only a store that cannot be reached is retried (MSAI11-05). A refused batch is tried | multi-store-architecture | built 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
-| MSA-F3 | a command id resent with a different body is refused, its digest compared with the one its claim holds (MSAI11-02) | multi-store-architecture | planned |  | docs/developer/status/multi-store-architecture.md#position |
+| MSA-F3 | a command id resent with a different body is refused, its digest compared with the one its claim holds (MSAI11-02) | multi-store-architecture | building 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-F4 | the queue topology states each queue's dead-letter binding once, and the Python worker and the Java service declare the same broker objects from it (MSAI12-01) | multi-store-architecture | planned |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-F5 | the event's logical key names one event, not one append, in the persistence contract (MSAI4-04) | multi-store-architecture | planned |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-F6 | a test that a command writing several aggregates, whose later guard fails, leaves nothing a reader acts on and is completed by a resend (MSAI11-01) | multi-store-architecture | planned |  | docs/developer/status/multi-store-architecture.md#position |
