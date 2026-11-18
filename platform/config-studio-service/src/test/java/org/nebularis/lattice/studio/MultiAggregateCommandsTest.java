@@ -229,11 +229,12 @@ class MultiAggregateCommandsTest {
     }
 
     /**
-     * {@code deleteDocument}: the description first, then the document's tombstone. The later operation, the
-     * tombstone, is guarded on the document's revision, which a save moved.
+     * {@code deleteDocument}: the description first, then the document's tombstone. The tombstone is guarded on the
+     * document's revision, which a save moved just before, so the writer tombstones the row again at the revision the
+     * save left, and the deletion wins over the save (MSAF6-01).
      */
     @Test
-    void deletingADocumentWhoseTombstoneGuardFailsReadsAsDeletedAndLeavesTheGraphAndAResendIsNotFound() {
+    void deletingADocumentWhoseTombstoneLosesARaceToASaveStillDeletesTheDocument() {
         RDFConnection real = RDFConnection.connect(DatasetFactory.createTxnMem());
         AtomicReference<Runnable> before = new AtomicReference<>();
         StudioStore store = interfered(real, before);
@@ -247,21 +248,21 @@ class MultiAggregateCommandsTest {
 
         Reply mine = writer.apply(delete);
 
-        assertNotEquals(200, mine.status(), mine.toString());
-        assertEquals(Reply.refused("the workspace changed while the command was applied, so send it again"), mine);
-        // The earlier operation applied: the description no longer lists the document, so a reader finds none.
+        assertEquals(Reply.ok(), mine);
+        assertTrue(store.graph(Graphs.receipts(WS)).contains(null, Cst.commandId, delete.id()), "the receipt names the command");
         Workspace seen = Fixture.OPS.workspace(store, WS);
         assertNotNull(seen);
-        assertFalse(seen.documents().containsKey(DOC), "the description was replaced first");
-        assertEquals(0L, seen.documentRevision(DOC));
-        // The later operation did not: the document is not tombstoned, and its graph, saved last by the other command, stays.
-        assertEquals(Optional.of(2L), Fixture.OPS.seq(store, Family.DOCUMENT, Graphs.document(WS, DOC)));
-        assertTrue(docGraph("two").isIsomorphicWith(store.graph(Graphs.documentGraph(WS, DOC))));
+        assertFalse(seen.documents().containsKey(DOC), "the description no longer lists the document");
+        // The document is tombstoned at the revision the save left, and its graph and patch log are gone.
+        assertEquals(Optional.empty(), Fixture.OPS.seq(store, Family.DOCUMENT, Graphs.document(WS, DOC)));
+        assertTrue(store.graph(Graphs.documentGraph(WS, DOC)).isEmpty());
+        for (long k = 1; k <= 3; k++) {
+            assertTrue(store.rawGraph(Fixture.OPS.revision(Family.DOCUMENT, Graphs.document(WS, DOC), k) + "/add").isEmpty(), "log " + k);
+        }
 
-        // The same command again is not completed: the description no longer lists the document.
-        assertEquals(Reply.notFound(), writer.apply(delete));
-        assertEquals(Optional.of(2L), Fixture.OPS.seq(store, Family.DOCUMENT, Graphs.document(WS, DOC)));
-        assertTrue(docGraph("two").isIsomorphicWith(store.graph(Graphs.documentGraph(WS, DOC))));
+        // The same command again is answered from its receipt.
+        assertEquals(Reply.ok(), writer.apply(delete));
+        assertEquals(Optional.empty(), Fixture.OPS.seq(store, Family.DOCUMENT, Graphs.document(WS, DOC)));
     }
 
     /**
@@ -307,11 +308,12 @@ class MultiAggregateCommandsTest {
     }
 
     /**
-     * {@code deleteWorkspace}: the description's tombstone first, then each part's. The later operation, a part's
-     * tombstone, is guarded on the part's revision, which a save moved.
+     * {@code deleteWorkspace}: the description's tombstone first, then each part's. A part's tombstone is guarded on the
+     * part's revision, which a save moved just before, so the writer tombstones the part again at the revision the save
+     * left (MSAF6-01).
      */
     @Test
-    void deletingAWorkspaceWhosePartTombstoneGuardFailsReadsAsGoneAndLeavesThePartAndAResendDoesNotRemoveIt() {
+    void deletingAWorkspaceWhosePartTombstoneLosesARaceToASaveStillRemovesThePart() {
         RDFConnection real = RDFConnection.connect(DatasetFactory.createTxnMem());
         AtomicReference<Runnable> before = new AtomicReference<>();
         StudioStore store = interfered(real, before);
@@ -324,20 +326,19 @@ class MultiAggregateCommandsTest {
 
         Reply mine = writer.apply(delete);
 
-        // The command is answered as done, since its receipt rides on the description's tombstone.
         assertEquals(Reply.ok(), mine);
-        // The earlier operations applied: the description and the baseline part are tombstoned, so a reader finds no workspace.
         assertNull(Fixture.OPS.workspace(store, WS));
         assertEquals(Optional.empty(), Fixture.OPS.seq(store, Family.DESCRIPTION, Graphs.workspace(WS)));
         assertEquals(Optional.empty(), Fixture.OPS.seq(store, Family.PART, Graphs.partRoot(WS, "baseline")));
         assertTrue(store.rawGraph(Fixture.OPS.graph(Family.PART, Graphs.partRoot(WS, "baseline"))).isEmpty());
-        // The later operation did not: the surface part, saved last by the other command, is neither tombstoned nor dropped.
-        assertEquals(Optional.of(2L), Fixture.OPS.seq(store, Family.PART, Graphs.partRoot(WS, "surface")));
-        assertTrue(surface("two").isIsomorphicWith(store.graph(Graphs.config(WS, "surface"))));
+        // The surface part, saved last by the other command, is tombstoned at the revision that save left, and dropped.
+        assertEquals(Optional.empty(), Fixture.OPS.seq(store, Family.PART, Graphs.partRoot(WS, "surface")));
+        assertTrue(store.graph(Graphs.config(WS, "surface")).isEmpty());
+        for (long k = 1; k <= 3; k++) {
+            assertTrue(store.rawGraph(Fixture.OPS.revision(Family.PART, Graphs.partRoot(WS, "surface"), k) + "/add").isEmpty(), "log " + k);
+        }
 
-        // The same command again is answered from its receipt, and does not remove the part.
         assertEquals(Reply.ok(), writer.apply(delete));
-        assertEquals(Optional.of(2L), Fixture.OPS.seq(store, Family.PART, Graphs.partRoot(WS, "surface")));
-        assertTrue(surface("two").isIsomorphicWith(store.graph(Graphs.config(WS, "surface"))));
+        assertEquals(Optional.empty(), Fixture.OPS.seq(store, Family.PART, Graphs.partRoot(WS, "surface")));
     }
 }

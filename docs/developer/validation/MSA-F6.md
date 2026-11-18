@@ -27,7 +27,7 @@
 
 | ID | Finding | Why no code changed |
 |---|---|---|
-| MSAF6-01 | A deletion whose later tombstone fails, because a concurrent save moved the aggregate's revision, leaves that aggregate's graph and live row with nothing that reaches it, and no resend removes it. This holds for `deleteDocument` and `deleteWorkspace` | decision 13 holds, since no reader acts on what is left. Completing the deletion needs a choice the decision record owns: a tombstone whose guard does not read the revision, a sweep of rows no description reaches, or the port's unit with one guard. Recorded for the maintainer, as the brief asks where a fix is not obvious |
+| MSAF6-01 | A deletion whose later tombstone fails, because a concurrent save moved the aggregate's revision, leaves that aggregate's graph and live row with nothing that reaches it, and no resend removes it. This holds for `deleteDocument` and `deleteWorkspace` | decision 13 holds, since no reader acts on what is left. Completing the deletion needs a choice the decision record owns: a tombstone whose guard does not read the revision, a sweep of rows no description reaches, or the port's unit with one guard. Recorded for the maintainer, as the brief asks where a fix is not obvious. The maintainer chose the first on 2026-11-18, built as [MSA-F7](MSA-F7.md), which turned F6-T4 and F6-T6 into its tests |
 | MSAF6-02 | The new document's save answers "the document was deleted, so its id cannot be used again" when its description replace lost a race, because the reply compares the description's revision of the document, 0, with the expected 0 | the message misleads and the resend succeeds, so it costs a confused user and nothing stored. A fix needs the reply to read the document's own row, and is left with the finding |
 
 ## Tests
@@ -39,9 +39,9 @@
 | F6-T1 | `createWhoseDescriptionGuardFailsLeavesItsBaselineUnderTheOtherDescriptionAndIsRefusedOnResend` | L4 | negative |
 | F6-T2 | `importingWhoseDescriptionGuardFailsLeavesItsPartsAndDocumentsUnderTheOtherDescriptionAndIsRefusedOnResend` | L4 | negative |
 | F6-T3 | `savingANewDocumentWhoseDescriptionGuardFailsLeavesAnOrphanDocumentGraphAndAResendCompletesIt` | L4 | negative |
-| F6-T4 | `deletingADocumentWhoseTombstoneGuardFailsReadsAsDeletedAndLeavesTheGraphAndAResendIsNotFound` | L4 | negative |
+| F6-T4 | `deletingADocumentWhoseTombstoneGuardFailsReadsAsDeletedAndLeavesTheGraphAndAResendIsNotFound`, since MSA-F7 `deletingADocumentWhoseTombstoneLosesARaceToASaveStillDeletesTheDocument` | L4 | negative |
 | F6-T5 | `publishingWhoseLineageGuardFailsLeavesAnUnnamedVersionGraphAndAResendCompletesIt` | L4 | negative |
-| F6-T6 | `deletingAWorkspaceWhosePartTombstoneGuardFailsReadsAsGoneAndLeavesThePartAndAResendDoesNotRemoveIt` | L4 | negative |
+| F6-T6 | `deletingAWorkspaceWhosePartTombstoneGuardFailsReadsAsGoneAndLeavesThePartAndAResendDoesNotRemoveIt`, since MSA-F7 `deletingAWorkspaceWhosePartTombstoneLosesARaceToASaveStillRemovesThePart` | L4 | negative |
 
 Each asserts the later guard failed and the earlier operation applied, so none passes by an interference that missed.
 
