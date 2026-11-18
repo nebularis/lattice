@@ -389,6 +389,8 @@ cst:Receipt a owl:Class ;
     rdfs:comment "One write a store writer applied: its command, cause, sender and times. A workspace's receipts are in urn:lattice:studio:ws:{ws}:receipts, a job's in urn:lattice:studio:job:{job}:receipts, deleted with the job, and a workspace's deletion in urn:lattice:studio:receipts. The principal is not recorded, since the studio authenticates no one." .
 cst:commandId a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
     rdfs:comment "The command's id, a lower-case UUID its sender chose. A command whose receipt exists is answered from it and not applied again." .
+cst:requestDigest a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
+    rdfs:comment "The SHA-256, in hex, of what the command asked for: its kind, the fields that address it and its graphs, with blank nodes read as one label. An id sent again with another digest is refused rather than answered from the receipt. A receipt from before 2026-11-18 has none, and any resend of its id is answered from it." .
 cst:command a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;
     rdfs:comment "The kind of write, the cause: create, save, import, delete-workspace, save-document, delete-document, submit-job, job-update, delete-job or set-access." .
 cst:sender a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain cst:Receipt ; rdfs:range xsd:string ;

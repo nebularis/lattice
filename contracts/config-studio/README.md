@@ -317,5 +317,5 @@ A batch the store refuses is retried whole.
 | `urn:lattice:studio:job:{job}:receipts` | the receipts of a job's submission and updates, deleted with the job |
 | `urn:lattice:studio:receipts` | the receipt of each workspace's deletion |
 
-A receipt, `urn:lattice:studio:receipt:{id}`, has `cst:commandId`, `cst:command` (the cause), `cst:sender`, `cst:workspace`, `cst:job` where there is one, `cst:requestedAt` where the command has a time, `cst:committedAt` (the transaction time), `cst:wrote` for each graph and `cst:receiptRevision` for a save or a creation. No principal is recorded, since the studio authenticates no one. An export holds no receipt.
+A receipt, `urn:lattice:studio:receipt:{id}`, has `cst:commandId`, `cst:command` (the cause), `cst:sender`, `cst:workspace`, `cst:job` where there is one, `cst:requestedAt` where the command has a time, `cst:committedAt` (the transaction time), `cst:wrote` for each graph, `cst:receiptRevision` for a save or a creation, and `cst:requestDigest`, the digest of what the command asked for. A command whose receipt exists is answered from it, and one whose id has a receipt with another digest is refused with a 400, since an id names one request. No principal is recorded, since the studio authenticates no one. An export holds no receipt.
 

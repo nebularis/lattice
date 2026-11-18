@@ -114,6 +114,7 @@ public final class Writer {
             }
         }
         Map<String, Long> done = store.receipts(ids);
+        Map<String, String> digests = done.isEmpty() ? Map.of() : store.receiptDigests(done.keySet());
         Batch b = new Batch();
         for (int i = 0; i < batch.size(); i++) {
             Command c = batch.get(i);
@@ -121,7 +122,10 @@ public final class Writer {
             if (refused != null) {
                 replies[i] = refused;
             } else if (done.containsKey(c.id())) {
-                replies[i] = Reply.ok(done.get(c.id()));
+                // A resend is answered from its receipt. An id the receipt holds for another request is refused (MSAI11-02).
+                String held = digests.get(c.id());
+                replies[i] = held == null || held.equals(Codec.digest(c)) ? Reply.ok(done.get(c.id()))
+                    : Reply.refused("the command id " + c.id() + " was applied before for another request, so this one is refused");
             } else {
                 replies[i] = b.plan(i, c);
             }
@@ -1024,6 +1028,7 @@ public final class Writer {
                 add(u, g, r, Cst.requestedAt.asNode(), NodeFactory.createLiteralDT(c.at().toString(), XSDDatatype.XSDdateTime));
             }
             add(u, g, r, Cst.committedAt.asNode(), NodeFactory.createLiteralDT(clock.instant().toString(), XSDDatatype.XSDdateTime));
+            add(u, g, r, Cst.requestDigest.asNode(), NodeFactory.createLiteralString(Codec.digest(c)));
             for (String w : wrote) {
                 add(u, g, r, Cst.wrote.asNode(), iri(w));
             }

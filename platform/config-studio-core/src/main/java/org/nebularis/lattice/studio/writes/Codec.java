@@ -54,6 +54,31 @@ public final class Codec {
         return out.toByteArray();
     }
 
+    /**
+     * The SHA-256, in hex, of what a command asks for: its kind, the fields that address and qualify it, and its graphs as
+     * sorted N-Quads with every blank node read as one label, so a resend that relabels them digests the same. Who sent it
+     * and when are not part of the request. The receipt holds it, and an id sent again with another digest is refused
+     * (MSAI11-02).
+     */
+    public static String digest(Command c) {
+        StringBuilder text = new StringBuilder(c.type().wire).append('\n');
+        for (Object field : new Object[] {c.workspace(), c.job(), c.part(), c.expect(), c.label(), c.sample()}) {
+            text.append(field == null ? "" : field).append('\n');
+        }
+        if (c.body() != null) {
+            new String(body(c), StandardCharsets.UTF_8).lines().map(line -> BLANK.matcher(line).replaceAll("_:b")).sorted()
+                .forEach(line -> text.append(line).append('\n'));
+        }
+        try {
+            return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                .digest(text.toString().getBytes(StandardCharsets.UTF_8)));
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("every Java platform has SHA-256", e);
+        }
+    }
+
+    private static final java.util.regex.Pattern BLANK = java.util.regex.Pattern.compile("_:[A-Za-z0-9_.\\-]+");
+
     /** The command, or null when the headers or the body are not a command's. */
     public static Command decode(Map<String, Object> headers, byte[] body) {
         if (headers == null) {

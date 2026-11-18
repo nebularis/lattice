@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** building 2026-11-18.
+**Status:** built 2026-11-18.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous, at the maintainer's request on 2026-11-17, committing on `spi/sql-backend` only and never pushing, with up to two sub-agents.
 
@@ -25,7 +25,7 @@
 | MSA-I12 | `spikes/multi-store-emitted-topology`. One declaration emits both JSON copies byte for byte and states a binding the copies disagree on. Quanta differ from compose's. [Validation Pack](../validation/MSA-I12.md) | built 2026-11-17 |  |
 | MSA-F1 | the studio's stream writer stores only offsets it has applied, by stream and offset through the environment, so a stop skips no confirmed write (MSAI9-06). P3a rerun through the writer's code skipped 0 against 36 on the old path. [Validation Pack](../validation/MSA-F1.md) | built 2026-11-18 |  |
 | MSA-F2 | a batch the store refuses for a reason that a retry cannot change is answered and the stream goes on, and only a store that cannot be reached is retried (MSAI11-05). A refused batch is tried command by command, so only the command at fault is answered 400. [Validation Pack](../validation/MSA-F2.md) | built 2026-11-18 |  |
-| MSA-F3 | a command id resent with a different body is refused, its digest compared with the one its claim holds (MSAI11-02) | building 2026-11-18 |  |
+| MSA-F3 | a command id resent with a different body is refused, its digest compared with the one its claim holds (MSAI11-02). The receipt holds the command's own digest, `cst:requestDigest`, since an operation's cannot be recomputed for a resend. [Validation Pack](../validation/MSA-F3.md) | built 2026-11-18 |  |
 | MSA-F4 | the queue topology states each queue's dead-letter binding once, and the Python worker and the Java service declare the same broker objects from it (MSAI12-01) | planned |  |
 | MSA-F5 | the event's logical key names one event, not one append, in the persistence contract (MSAI4-04) | planned |  |
 | MSA-F6 | a test that a command writing several aggregates, whose later guard fails, leaves nothing a reader acts on and is completed by a resend (MSAI11-01) | planned |  |
@@ -47,3 +47,4 @@
 - 2026-11-18: MSA-F2 marked building.
 - 2026-11-18: MSA-F2 built. Retried are a store that cannot be reached, a 5xx and a refusal of the writer's configuration. A request the store refuses as malformed, or a failure of the writer's own code, is answered as refused after the batch is tried command by command. The second half is a choice for the maintainer to confirm.
 - 2026-11-18: MSA-F3 marked building.
+- 2026-11-18: MSA-F3 built. The brief's digest, the operation's in its claim, depends on the state the writer read, so a resend of a save would never match. The receipt now holds the digest of the command, a new term `cst:requestDigest` in the studio's vocabulary, and an id resent with another digest is refused with a 400.
