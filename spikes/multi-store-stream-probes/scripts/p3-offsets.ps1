@@ -14,7 +14,7 @@ param(
     [int]$MessageMs = 3,
     [int]$ObserveS = 20,
     [int]$PauseMs = 0,
-    [ValidateSet('context', 'env')][string]$StoreVia = 'context',
+    [ValidateSet('context', 'env', 'writer')][string]$StoreVia = 'context',
     [switch]$DebugClient
 )
 $ErrorActionPreference = 'Stop'

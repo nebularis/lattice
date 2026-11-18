@@ -1,0 +1,8 @@
+{"t":1795000799874,"c":"stored-offset","e":"stored","s":0,"o":9}
+{"t":1795000799896,"c":"stored-offset","e":"stored","s":1,"o":9}
+{"t":1795000799928,"c":"stored-offset","e":"stored","s":2,"o":9}
+{"t":1795000799941,"c":"stored-offset","e":"stored","s":3,"o":9}
+{"t":1795000799956,"c":"stored-offset","e":"stored","s":4,"o":9}
+{"t":1795000799970,"c":"stored-offset","e":"stored","s":5,"o":10}
+{"t":1795000799982,"c":"stored-offset","e":"stored","s":6,"o":10}
+{"t":1795000799994,"c":"stored-offset","e":"stored","s":7,"o":9}

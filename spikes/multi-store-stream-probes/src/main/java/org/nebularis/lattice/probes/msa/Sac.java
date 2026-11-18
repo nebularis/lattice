@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
+import org.nebularis.lattice.studio.writer.StudioWriterBridge;
 
 /**
  * A copy of the studio's {@code StreamWriter} with the store replaced by a sleep and a log line. Same builder calls, same group
@@ -43,7 +44,10 @@ final class Sac {
         int dieAtBatch = a.num("die-at-batch", 0);
         String diePoint = a.str("die-point", "");
         long pauseBeforeHaltMs = a.lng("pause-before-halt-ms", 0);
-        boolean storeViaEnvironment = "env".equals(a.str("store-via", "context"));
+        String storeVia = a.str("store-via", "context");
+        boolean storeViaEnvironment = "env".equals(storeVia);
+        // The studio's own StreamWriter.apply replies, stores the offsets and marks the batch processed (MSA-F1).
+        boolean viaStudioWriter = "writer".equals(storeVia);
         BlockingQueue<Item> waiting = new LinkedBlockingQueue<>();
         AtomicLong received = new AtomicLong();
         AtomicLong applied = new AtomicLong();
@@ -100,6 +104,22 @@ final class Sac {
                         Runtime.getRuntime().halt(137);
                     }
                     long begin = System.currentTimeMillis();
+                    if (viaStudioWriter) {
+                        List<Item> taken = List.copyOf(batch);
+                        StudioWriterBridge.apply(taken.stream().map(Item::context).toList(), () -> {
+                            Thread.sleep(batchMs + perMessageMs * taken.size());
+                            for (Item item : taken) {
+                                Log.ev("ap", "s", item.partition(), "o", item.context().offset(), "q", item.seq(), "bt", begin);
+                            }
+                            applied.addAndGet(taken.size());
+                        }, environment);
+                        batches++;
+                        Map<String, Item> stored = new HashMap<>();
+                        taken.forEach(item -> stored.put(item.context().stream(), item));
+                        stored.values().forEach(item -> Log.ev("store", "s", item.partition(), "o", item.context().offset()));
+                        batch.clear();
+                        continue;
+                    }
                     Thread.sleep(batchMs + perMessageMs * batch.size());
                     batches++;
                     for (Item item : batch) {

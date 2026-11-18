@@ -1,0 +1,43 @@
+consumers: [c1, c2]
+events c1: [joined@1795000858739, halt@1795000859212]
+events c2: [joined@1795000865721, stopping@1795000885725]
+confirmed seqs: 1200, unknown (publisher saw an error): 0
+first receiver by partition: 0:c1 1:c1 2:c1 3:c1 4:c1 5:c1 6:c1 7:c1
+
+kill of c1 at t=1795000859212
+partition | previous owner rx | takeover by | takeover after (ms) | owner rx after | owner applies after | owner applies after takeover | last owner apply after takeover (ms)
+0 | yes | c2 | 6514 | 0 | 0 | 0 | 0
+1 | yes | c2 | 6506 | 0 | 0 | 0 | 0
+2 | yes | c2 | 6500 | 0 | 0 | 0 | 0
+3 | yes | c2 | 6490 | 0 | 0 | 0 | 0
+4 | yes | c2 | 6482 | 0 | 0 | 0 | 0
+5 | yes | c2 | 6465 | 0 | 0 | 0 | 0
+6 | yes | c2 | 6455 | 0 | 0 | 0 | 0
+7 | yes | c2 | 6449 | 0 | 0 | 0 | 0
+takeover after: min 6449 ms, max 6514 ms, partitions taken over 8
+applies by c1 after another consumer had begun receiving the same partition: 0
+
+per partition: applies, extra applies of a seq, older seq applied after a newer one, overlapping batches of different consumers, skipped, not yet applied
+0 | 150 | 0 | 0 | 0 (0 ms) | 0 | 0
+1 | 150 | 0 | 0 | 0 (0 ms) | 0 | 0
+2 | 144 | 0 | 0 | 0 (0 ms) | 6 | 0
+3 | 144 | 0 | 0 | 0 (0 ms) | 6 | 0
+4 | 144 | 0 | 0 | 0 (0 ms) | 6 | 0
+5 | 144 | 0 | 0 | 0 (0 ms) | 6 | 0
+6 | 144 | 0 | 0 | 0 (0 ms) | 6 | 0
+7 | 144 | 0 | 0 | 0 (0 ms) | 6 | 0
+total | extra applies 0 | older after newer 0 | overlapping batches of different consumers 0 (0 ms) | confirmed but skipped 36 | confirmed, not yet applied at the end 0
+
+resume of c2 after c1
+partition | last offset stored by first | first offset received by second | offsets between | seqs applied by both
+0 | 9 | 10 | 0 | 0
+1 | 9 | 10 | 0 | 0
+2 | 9 | 16 | 6 | 0
+3 | 9 | 16 | 6 | 0
+4 | 9 | 16 | 6 | 0
+5 | 9 | 16 | 6 | 0
+6 | 9 | 16 | 6 | 0
+7 | 9 | 16 | 6 | 0
+harness note harness at +0.0 s run p3-before-apply-context-2026-11-18 point before-apply dieAtBatch 3 rate 150 publish 8 s
+harness kill c1 at +11.2 s halt at batch 3 before-apply
+harness note harness at +16.8 s c2 started

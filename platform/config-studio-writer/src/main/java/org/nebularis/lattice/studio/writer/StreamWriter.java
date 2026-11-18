@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import org.nebularis.lattice.studio.jobs.Topology;
 import org.nebularis.lattice.studio.writes.Codec;
 import org.nebularis.lattice.studio.writes.Command;
@@ -30,8 +32,9 @@ import org.slf4j.LoggerFactory;
  * gives each partition to one live member and moves it when a member joins or leaves, so the partitions spread across
  * the instances that run. Messages are handed to one thread, which takes the first that waits and every other already
  * waiting, up to {@link #MAX_BATCH}, without waiting for more, and applies them in one request (TSD-44). It replies to
- * each, then stores each partition's offset, so a member that takes a partition over resumes after the last batch
- * applied. A write delivered again after a failover is answered from its receipt and not applied twice.
+ * each, then stores, for each partition the batch touched, the offset of the last message it applied, so a member that
+ * takes a partition over resumes after the last batch applied and skips nothing received but not yet applied. A write
+ * delivered again after a failover is answered from its receipt and not applied twice.
  */
 public final class StreamWriter implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(StreamWriter.class);
@@ -39,7 +42,17 @@ public final class StreamWriter implements AutoCloseable {
     static final int MAX_BATCH = 64;
     private static final Duration STORE_RETRY = Duration.ofSeconds(1);
 
-    private record Item(MessageHandler.Context context, Message message) {
+    record Item(MessageHandler.Context context, Message message) {
+    }
+
+    /** Where the offset of the last message applied on a partition is stored, under the group's reference. */
+    interface Offsets {
+        void store(String stream, long offset);
+    }
+
+    /** The offsets of the group {@link #GROUP}, stored by stream and offset through the environment. */
+    static Offsets offsets(Environment environment) {
+        return (stream, offset) -> environment.storeOffset(GROUP, stream, offset);
     }
 
     private final BlockingQueue<Item> waiting = new LinkedBlockingQueue<>();
@@ -47,6 +60,7 @@ public final class StreamWriter implements AutoCloseable {
     private final Thread thread;
 
     public StreamWriter(Environment environment, Channel replies, Writer writer) {
+        Offsets offsets = offsets(environment);
         this.consumer = environment.consumerBuilder()
             .superStream(Topology.WRITES)
             .singleActiveConsumer()
@@ -57,17 +71,17 @@ public final class StreamWriter implements AutoCloseable {
             .flow().strategy(ConsumerFlowStrategy.creditWhenHalfMessagesProcessed()).builder()
             .messageHandler((context, message) -> waiting.add(new Item(context, message)))
             .build();
-        this.thread = Thread.ofPlatform().name("store-writer").start(() -> run(replies, writer));
+        this.thread = Thread.ofPlatform().name("store-writer").start(() -> run(replies, writer, offsets));
         LOG.info("store writer joined {} on {}, {} partitions", GROUP, Topology.WRITES, Topology.PARTITIONS);
     }
 
-    private void run(Channel replies, Writer writer) {
+    private void run(Channel replies, Writer writer, Offsets offsets) {
         List<Item> batch = new ArrayList<>();
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 batch.add(waiting.take());
                 waiting.drainTo(batch, MAX_BATCH - 1);
-                apply(replies, writer, batch);
+                apply(batch, items -> writer.apply(decode(items)), (item, reply) -> reply(replies, item.message(), reply), offsets);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -75,15 +89,20 @@ public final class StreamWriter implements AutoCloseable {
         }
     }
 
-    private static void apply(Channel replies, Writer writer, List<Item> batch) throws InterruptedException {
+    private static List<Command> decode(List<Item> batch) {
         List<Command> commands = new ArrayList<>(batch.size());
         for (Item item : batch) {
             commands.add(Codec.decode(item.message().getApplicationProperties(), item.message().getBodyAsBinary()));
         }
+        return commands;
+    }
+
+    static void apply(List<Item> batch, Function<List<Item>, List<Reply>> writer, BiConsumer<Item, Reply> replies, Offsets offsets)
+        throws InterruptedException {
         List<Reply> answers;
         while (true) {
             try {
-                answers = writer.apply(commands);
+                answers = writer.apply(batch);
                 break;
             } catch (RuntimeException e) {
                 // The store is unreachable or refused the request, which ran as one transaction, so none of it applied.
@@ -92,19 +111,19 @@ public final class StreamWriter implements AutoCloseable {
                 Thread.sleep(STORE_RETRY.toMillis());
             }
         }
-        Map<String, Item> last = new HashMap<>();
+        Map<String, Long> last = new HashMap<>();
         for (int i = 0; i < batch.size(); i++) {
             Item item = batch.get(i);
             Reply reply = answers.get(i);
             if (reply.status() == 400) {
                 LOG.warn("refused a write on {} at offset {}: {}", item.context().stream(), item.context().offset(), reply.message());
             }
-            reply(replies, item.message(), reply);
-            last.put(item.context().stream(), item);
+            replies.accept(item, reply);
+            last.merge(item.context().stream(), item.context().offset(), Math::max);
         }
-        for (Item item : last.values()) {
-            item.context().storeOffset();
-        }
+        // Through the environment, by stream and offset. A super-stream context's storeOffset() also stores, for every
+        // other partition the consumer holds, the offset it last received, which may be waiting unapplied (MSAI9-06).
+        last.forEach(offsets::store);
         batch.forEach(item -> item.context().processed());
     }
 
