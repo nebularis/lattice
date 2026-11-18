@@ -27,7 +27,7 @@ So the gap is narrow. The compiled profile already says which resources each ope
 
 Three facts constrain the options.
 
-1. **The caller libraries read the contract.** `packages/persistence/python` and `packages/persistence/java` read `dal:ResourceAccess` and model `dal:ResourceKind` as a closed enumeration. A new term is ignored by them, but a new INDIVIDUAL of a closed class is a value they do not know.
+1. **`dal:ResourceKind` is a logical model, settled under formal methods.** Each kind is a logical resource with a logical key (`tools/persistence/src/persistence/contract.py`, `LOGICAL_KEYS`), and its SPARQL realisation is the graph role the builders name. Track H decided that the pinned head is a realisation of receipt retention and not a resource of its own (NQ1 and NQ2 of the track H plan, 2026-10-13), that a bucket month is never part of a key, and that a patch log's added and removed triples are one resource whose key holds a direction (FMH-2.6's Validation Pack). The kinds are closed by `sh:in` in `ResourceAccessShape` and by the compiler's `ResourceKind` enumeration. The caller libraries under `packages/persistence` do not read the kind, read on 2026-11-18.
 2. **A fact is recorded once** (the design standards). A second structure listing places beside the accesses would restate what the accesses say.
 3. **A graph name has a precedent form.** `dal:graphIriTemplate` already names a family's graphs by a string with `{id}` replaced by the root, percent-encoded.
 
@@ -91,7 +91,7 @@ The Borrower, a named-graph family, writes its aggregate with `dal:inGraphNamed 
 | `tools/persistence` | the contract's emission states each write's graph from the operation's IR, which it already builds, and the compile stage states the matched scopes it already computes |
 | fixtures | every `ontology/persistence/test/expected-profiles/*.expected.ttl` and `packages/persistence/python/tests/data/*.compiled.ttl` regenerated, since each compiled profile gains triples |
 | version | the persistence module's minor version and its shapes, by `mise run version:bump -- --layer-target persistence --increment minor --with-shapes`, at the merge. Release tags are the maintainer's |
-| caller libraries | no change. They read the contract and ignore terms they do not know |
+| caller libraries | no change. They do not read the accesses |
 | the studio | SVA-P1b, below |
 
 One more effect to name. Today the compiler emits one access for each resource, mode and key, so a patch log's two graphs are one access. Stating the graph makes them two, since they write two graphs. A reader that counted accesses would see more of them. No reader in the repository counts them, read on 2026-11-18.
@@ -110,9 +110,32 @@ One more effect to name. Today the compiler emits one access for each resource, 
 
 **SVA-Q18. What form does a graph that is named at run time take?** (a) A string template with a closed set of placeholders, `{root}`, `{newRev}` and `{month}`, as `dal:graphIriTemplate` already is. (b) A structured list of parts, each a constant, a parameter or the month. (c) A rendered phrase for people only. (b) is the more exact and needs an RDF list on every such access. (c) cannot be read by a tool. Leaning (a), with the placeholders defined once in the ontology.
 
-**SVA-Q19. Does `dal:ResourceKind` gain individuals?** The studio's places split some kinds further: a version from a data graph under append-versions, a patch log's added from its removed triples, a receipt's month bucket from the pinned graph. (a) No new kinds. A place is a kind and a graph, and the graph tells each of these apart. (b) New kinds for each. (b) breaks the caller libraries, which read the kind as a closed enumeration. Leaning (a). Whether a compiled operation ever writes the derived role (`GraphRole.DERIVED`), which has no kind today, is to be read in SVA-P1a, and if one does, a kind for it is the one addition, put to the maintainer then.
+**SVA-Q19. Does `dal:ResourceKind` gain individuals?** **Why it might.** The studio's canvas tells apart, as places of their own, some things one kind covers. Under append-versions the data graph and a new version are both `Aggregate`. A patch log's added and removed triples are both `PatchContent`. A receipt's month bucket and the pinned graph that keeps a retained head are both `Receipt`. And the materialised rows of a surface contract, the graph role `derived`, have no kind at all. SVA-P1's worker made these distinctions itself, from an operation's name, a variable's name and a graph role in the IR. If the compiled profile is to say everything the canvas draws, something in it has to make them.
 
-**SVA-Q20. How are the matching scopes stated?** (a) `dal:matchedScope` on the compiled profile, every scope that matched. (b) As (a), and on each resolved dimension the scope through which its winning profile applied. (b) answers which scope won each dimension, which nothing reads yet. Leaning (a).
+**What the kinds are for.** A kind is a logical resource with a logical key, and track H separated it from its SPARQL realisation on purpose: so a contract can be checked against a relational realisation as well as a SPARQL one (FMH-2.6's paper check), so the conformance and the formal models reason about a small fixed set, and so a change of realisation, a new bucket scheme or a moved graph, never changes the contract. The four distinctions above are each realisation or key. The pinned graph and the month bucket are where a receipt is kept, the direction is part of a patch's key, and a version is an aggregate written by an append-versions operation, which `dal:operationKind dal:AppendVersion` already says.
+
+**The derived role is not a persistence resource.** No builder of the persistence compiler writes it. It is written by the surface compiler's maintenance operations (`tools/surface/src/surface/maintenance.py`), which the studio's writer runs in a write's request (PM-2). So it is not in a compiled persistence profile today, and the surface canvas (SVA-S1) draws it from a surface contract.
+
+| | (a) No new kinds | (b) New kinds for each distinction | (c) No new kinds, and each write states its graph role |
+|---|---|---|---|
+| what is added | nothing beyond SVA-Q17's graph | `Version`, `PatchAdded`, `PatchRemoved`, `PinnedReceipt` and `DerivedRow`, each with a logical key | a closed class `dal:GraphRole` mirroring the IR's roles (`Data`, `Meta`, `Txn`, `Log`, `Pinned`, `Patch`, `Keys` and the rest) and `dal:inGraphRole` on a write access |
+| how the canvas tells the cases apart | the graph and the operation's kind: `{newRev}/add` from `{newRev}/del`, `urn:g:txlog/pinned` from `urn:g:txlog/{month}`, and an `AppendVersion` operation's aggregate as a version | by the kind | by the role, without reading the graph's text |
+| the logical model | unchanged | five realisation and key distinctions made kinds, which reverses NQ1 and NQ2 and the key of `PatchContent`, and puts a surface resource into persistence | unchanged. The role is stated beside the kind as the realisation it is |
+| what else changes | nothing | the shapes' `sh:in`, the compiler's enumeration and logical keys, the access sets, every expected profile, FMH-2.6's paper check and the formal models that enumerate the kinds | one class with its individuals and `sh:in`, one property |
+| what a reader gains over (a) | nothing a graph does not say, at much higher cost | kinds a person reads as labels | a label for each place that needs no parsing of a template, for example "receipt, retained head" for `Pinned` |
+| the design standard that weighs on it | | a classification that changes no answer the graph already gives | the same standard: the role changes no answer the graph does not give, unless a reader must tell places apart without reading graph names |
+
+Leaning (a). (b) reopens decisions track H settled for reasons that still hold, and pulls a surface resource into persistence, for labels. (c) is sound and cheap, and is worth adding only if a reader needs a place's role without reading its graph, which neither the canvas nor the simulator does, since both already have the graph.
+
+**SVA-Q20. How are the matching scopes stated?** (a) `dal:matchedScope` on the compiled profile, every scope that matched. (b) As (a), and on each resolved dimension, `dal:wonThrough`, the matched scope or scopes through which its winning profile applied. (b) costs one triple for each dimension a profile won, about 10 for a target. Leaning (a).
+
+What (a) leaves a reader without, the compiled profile alone in hand:
+
+- **Which scope a value came through.** A dimension names the profile that won it, and the scopes match the target, but the profile's `dal:appliesTo` is in the configuration. A reader cannot say "the receipt model is a patch log because `ex:FacilityClass` matched and `ex:FacilityReceiptProfile` applies through it" without the configuration beside it, and where a profile applies through several matched scopes it cannot say which. (b) answers it.
+- **Which scopes did not match, and why.** A profile an author expected to apply and that did not appears nowhere. Neither option answers it. It belongs with the compiler's diagnostics, if anyone asks for it.
+- **How the winner was chosen.** The resolution's precedence, by scope kind and `dal:priority`, is the compiler's, and a reader cannot reproduce it from either option. Both state the outcome, as the dimensions already do.
+
+None of these limits the canvas. The Profile lens draws the targets each winning profile shapes, and the Scope node lens the targets each scope matches, both from what (a) states. (b) would serve a view that explains a value, which no slice plans, and it can be added later without changing (a).
 
 **SVA-Q21. Does a key claim's access name its constraint?** (a) Yes, `dal:forConstraint` to the `dal:UniquenessConstraint`. (b) No, the `constraintId` binding is enough. (a) is a link a tool follows where the binding is a string to match. Leaning (a).
 
