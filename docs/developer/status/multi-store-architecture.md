@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** built 2026-11-18.
+**Status:** building 2026-11-18.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous on machine S, at the maintainer's request of 2026-11-17 and the brief of the same day, committing locally only and never pushing, with up to two sub-agents. The branch defers versioning, so Persistence's spec, changed by MSA-F5, is reported unbumped until the merge.
 
@@ -32,7 +32,7 @@
 | MSA-F6 | a test that a command writing several aggregates, whose later guard fails, leaves nothing a reader acts on and is completed by a resend (MSAI11-01). Six commands tested: nothing a reader acts on remains in each. A resend completes a publication and a new document's save, and does not complete a deletion whose later tombstone failed (MSAF6-01). [Validation Pack](../validation/MSA-F6.md) | built 2026-11-18 |  |
 | MSA-F7 | a deletion whose tombstone loses a race to a save of the same part or document still removes it, the tombstone planned again at the revision the save left (MSAF6-01). The receipt follows the description's step, and up to three more rounds tombstone a row still live. An addendum to ADR-A149 is drafted for the maintainer. [Validation Pack](../validation/MSA-F7.md) | built 2026-11-18 |  |
 | MSA-F8 | a failure of the stream writer's own code is answered as the writer's fault, a 500, and the service answers it 500 (MSA-F2). Still not retried, and a request the store refused keeps its 400. [Validation Pack](../validation/MSA-F8.md) | built 2026-11-18 |  |
-| MSA-F9 | a new document's save that loses the description's guard is answered as a change to send again, read from the document's own row, not as a deleted id (MSAF6-02) | planned |  |
+| MSA-F9 | a new document's save that loses the description's guard is answered as a change to send again, read from the document's own row, not as a deleted id (MSAF6-02) | building 2026-11-18 |  |
 
 **Next action:** MSA-F7, MSA-F8 and MSA-F9 in order, then MSA-I2 reworked on the ledger's unit as the maintainer decided it. MSA-I5a once ADR-A-FM2's addendum proposed 2026-11-18 is accepted, then MSA-I5 on it.
 
@@ -67,3 +67,4 @@
 - 2026-11-18: MSA-F7 built. A deletion's receipt follows the step that removes the description's mention, and a tombstone a save beat is planned again at the revision the save left, up to three rounds. The generated tombstone and its guard are unchanged. The addendum to ADR-A149 decision 13 it needs is drafted in its Validation Pack for the maintainer.
 - 2026-11-18: MSA-F8 marked building.
 - 2026-11-18: MSA-F8 built. `Reply.failed` answers a failure of the writer's own code with a 500, the stream writer tells it from a store's refusal by the status the store's exception carries, and the service passes a 500 through.
+- 2026-11-18: MSA-F9 marked building.
