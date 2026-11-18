@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** building 2026-11-18.
+**Status:** built 2026-11-18.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous, at the maintainer's request on 2026-11-17, committing on `spi/sql-backend` only and never pushing, with up to two sub-agents.
 
@@ -16,7 +16,7 @@
 | MSA-I3 | [the classification](../notes/multi-store/MSA-I3-dimensions-by-dialect.md). 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. [Validation Pack](../validation/MSA-I3.md) | built 2026-11-17 |  |
 | MSA-I4 | [four operations lowered](../notes/multi-store/MSA-I4-four-operations-lowered.md). No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. [Validation Pack](../validation/MSA-I4.md) | built 2026-11-17 |  |
 | MSA-I5 | the prover spike | planned | the shared types |
-| MSA-I6 | the protocol models | building 2026-11-18 |  |
+| MSA-I6 | `tools/models/multi-store-protocols`. TLA+ models A, X1 to X4, 28 configurations. Five catalogue rows keep their guarantee with a stated requirement, and the serialised writer never gives atomic visibility. Probes and trace validation not run. [Validation Pack](../validation/MSA-I6.md) | built 2026-11-18 |  |
 | MSA-I7 | the ledger benchmark with a PostgreSQL arm | planned | the ledger's LG-2 |
 | MSA-I8 | one ledger family in PostgreSQL behind the port | planned | MSA-I5, MSA-I6, MSA-I7, MSA-I10 |
 | MSA-I9 | `spikes/multi-store-stream-probes`. A single active consumer is no fence (a cut consumer applied 6 writes after takeover), no deduplication without named producers, and the client's `storeOffset()` stores unapplied offsets of other partitions, which skipped confirmed writes. [Validation Pack](../validation/MSA-I9.md) | built 2026-11-17 |  |
@@ -57,3 +57,4 @@
 - 2026-11-18: MSA-I2 marked building.
 - 2026-11-18: MSA-I6 marked building, with TLA+ and TLC as decided. Its models of the serialised writer rest on MSA-I9's probes, and MSA-I2 runs beside it, since X2's reads are its subject.
 - 2026-11-18: MSA-I2 built. The falsifier fires on the text of `ordered-draws.ttl` and is not shown common, and the leaning of §4.1 survives with a rule placing an identity's Behaviour state with its ledger. ADR-A131 states two units for the ledger, a question for the maintainer.
+- 2026-11-18: MSA-I6 built in part. FMH-5's model A and four new models, X1 to X4, checked with TLC. The falsifier does not fire for the five rows modelled. The saga row, FMH-5's models B to D, the isolation probes on PostgreSQL and Fuseki and the trace validation against Isabelle are not done, and FMH-5's row on Track H's board is unchanged.
