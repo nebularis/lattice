@@ -6,15 +6,24 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import com.rabbitmq.client.AlreadyClosedException;
+import com.rabbitmq.client.ShutdownSignalException;
 import com.rabbitmq.stream.Consumer;
 import com.rabbitmq.stream.MessageHandler;
+import com.rabbitmq.stream.StreamException;
 import java.net.ConnectException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.BooleanSupplier;
 import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.junit.jupiter.api.Test;
@@ -136,6 +145,135 @@ class StreamWriterTest {
         assertEquals(List.of(200, 500, 400), replies.stream().map(Reply::status).toList());
         assertTrue(replies.get(1).message().contains("a bug in the writer"), replies.get(1).message());
         assertEquals(Map.of("lattice.studio.writes-0", 3L), partitions.stored);
+    }
+
+    private static final String P0 = "lattice.studio.writes-0";
+
+    /**
+     * MSA-F10, MSAF2-01. A reply sent on a closed channel throws, and the writer's thread goes on: the partition's next write
+     * is applied by the same writer, and its offset is stored.
+     */
+    @Test
+    void aReplyThatCannotBeSentIsLoggedAndThePartitionsNextWriteIsApplied() {
+        Partitions partitions = new Partitions();
+        BlockingQueue<StreamWriter.Item> waiting = new LinkedBlockingQueue<>();
+        List<Long> applied = new CopyOnWriteArrayList<>();
+        List<Long> replied = new CopyOnWriteArrayList<>();
+        Map<String, Long> broker = new ConcurrentHashMap<>();
+        FakeConsumer consumer = new FakeConsumer();
+        StreamWriter writer = new StreamWriter(waiting, consumer, items -> {
+            items.forEach(i -> applied.add(i.context().offset()));
+            return items.stream().map(i -> Reply.ok(1)).toList();
+        }, (item, reply) -> {
+            replied.add(item.context().offset());
+            if (item.context().offset() == 1) {
+                throw new AlreadyClosedException(new ShutdownSignalException(false, false, null, null));
+            }
+        }, broker::put, Duration.ofMillis(10));
+        try {
+            waiting.add(partitions.received(P0, 1));
+            await(() -> replied.contains(1L), "the first write was not replied to");
+            waiting.add(partitions.received(P0, 2));
+            await(() -> applied.contains(2L), "the partition's next write was not applied after a reply could not be sent");
+            await(() -> Long.valueOf(2).equals(broker.get(P0)), "the next write's offset was not stored");
+            assertTrue(writer.threadAlive(), "the writer's thread ended");
+            assertEquals(Map.of(P0, 2L), writer.storedOffsets());
+            assertFalse(consumer.closed);
+        } finally {
+            writer.close();
+        }
+    }
+
+    /**
+     * MSA-F10, MSAF2-01. An offset that cannot be stored is logged and the writer goes on: the partition's next write is applied
+     * by the same writer, which stores the later offset.
+     */
+    @Test
+    void anOffsetThatCannotBeStoredIsLoggedAndThePartitionsNextWriteIsApplied() {
+        Partitions partitions = new Partitions();
+        BlockingQueue<StreamWriter.Item> waiting = new LinkedBlockingQueue<>();
+        List<Long> applied = new CopyOnWriteArrayList<>();
+        List<Long> attempted = new CopyOnWriteArrayList<>();
+        Map<String, Long> broker = new ConcurrentHashMap<>();
+        FakeConsumer consumer = new FakeConsumer();
+        StreamWriter writer = new StreamWriter(waiting, consumer, items -> {
+            items.forEach(i -> applied.add(i.context().offset()));
+            return items.stream().map(i -> Reply.ok(1)).toList();
+        }, (item, reply) -> { }, (stream, offset) -> {
+            attempted.add(offset);
+            if (offset == 1) {
+                throw new StreamException("the offset could not be stored");
+            }
+            broker.put(stream, offset);
+        }, Duration.ofMillis(10));
+        try {
+            waiting.add(partitions.received(P0, 1));
+            await(() -> attempted.contains(1L), "the first write's offset was not tried");
+            waiting.add(partitions.received(P0, 2));
+            await(() -> applied.contains(2L), "the partition's next write was not applied after an offset could not be stored");
+            await(() -> Long.valueOf(2).equals(broker.get(P0)), "the next write's offset was not stored");
+            assertTrue(writer.threadAlive(), "the writer's thread ended");
+            assertEquals(Map.of(P0, 2L), writer.storedOffsets());
+            assertFalse(consumer.closed);
+        } finally {
+            writer.close();
+        }
+    }
+
+    /**
+     * MSA-F10, MSAF2-01. Anything else that escapes the loop, here a writer that answers fewer replies than it was given,
+     * ends the thread and closes the consumer, so the group gives the partition to another member, which applies its next
+     * write. The writer's state shows its thread is not alive.
+     */
+    @Test
+    void aFailureThatEscapesTheLoopClosesTheConsumerSoTheGroupMovesThePartition() {
+        Partitions partitions = new Partitions();
+        BlockingQueue<StreamWriter.Item> waiting = new LinkedBlockingQueue<>();
+        FakeConsumer consumer = new FakeConsumer();
+        StreamWriter writer = new StreamWriter(waiting, consumer, items -> List.of(), (item, reply) -> { }, (stream, offset) -> { },
+            Duration.ofMillis(10));
+        try {
+            waiting.add(partitions.received(P0, 1));
+            await(() -> !writer.threadAlive(), "the writer's thread did not end");
+            assertTrue(consumer.closed, "the consumer was not closed, so the writer keeps its partitions with no thread applying");
+            assertFalse(writer.threadAlive());
+        } finally {
+            writer.close();
+        }
+    }
+
+    private static void await(BooleanSupplier condition, String message) {
+        long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();
+        while (!condition.getAsBoolean()) {
+            if (System.nanoTime() > deadline) {
+                fail(message);
+            }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                fail(message);
+            }
+        }
+    }
+
+    /** A member of the group: closing it leaves the group, which gives its partitions to another member. */
+    private static final class FakeConsumer implements Consumer {
+        volatile boolean closed;
+
+        @Override
+        public void store(long offset) {
+        }
+
+        @Override
+        public void close() {
+            closed = true;
+        }
+
+        @Override
+        public long storedOffset() {
+            return 0;
+        }
     }
 
     /** The offsets the broker holds, and what the consumer has received, shared by every context of one consumer. */
