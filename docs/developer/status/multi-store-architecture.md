@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** building 2026-11-19.
+**Status:** built 2026-11-19.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous on machine S, at the maintainer's request of 2026-11-19 and the two briefs of that day, on `spi/worktree-s`, committing locally only and never pushing, with up to two sub-agents. The branch defers versioning, so Persistence's spec, changed by MSA-F5, is reported unbumped until the merge.
 
@@ -24,7 +24,7 @@
 | MSA-I10 | two families in one mapping vocabulary | planned | MSA-I1, the ledger's LG-2 |
 | MSA-I11 | [the logical port](../notes/multi-store/MSA-I11-logical-port.md). Every generated studio write moves onto it as a unit, and the port needs five things the guide's lacks. Jobs and same-request promotion maintenance remain outside it. [Validation Pack](../validation/MSA-I11.md) | merged 2026-11-18, built 2026-11-17 |  |
 | MSA-I12 | `spikes/multi-store-emitted-topology`. One declaration emits both JSON copies byte for byte and states a binding the copies disagree on. Quanta differ from compose's. [Validation Pack](../validation/MSA-I12.md) | merged 2026-11-18, built 2026-11-17 |  |
-| MSA-I13 | a PostgreSQL test fixture, `tools/testing/postgres/`, that runs on Windows, macOS and a cloud session | building 2026-11-19 |  |
+| MSA-I13 | a PostgreSQL test fixture, `tools/testing/postgres/`, that runs on Windows, macOS and a cloud session. The server is the `postgresql-binaries` wheel at 16.15, installed through the mirror with no Docker, and a test is skipped with a reason where it is absent. Run on Windows only. [Validation Pack](../validation/MSA-I13.md) | built 2026-11-19 |  |
 | MSA-F1 | the studio's stream writer stores only offsets it has applied, by stream and offset through the environment, so a stop skips no confirmed write (MSAI9-06). P3a rerun through the writer's code skipped 0 against 36 on the old path. [Validation Pack](../validation/MSA-F1.md) | built 2026-11-18 |  |
 | MSA-F2 | a batch the store refuses for a reason that a retry cannot change is answered and the stream goes on, and only a store that cannot be reached is retried (MSAI11-05). A refused batch is tried command by command, so only the command at fault is answered 400. [Validation Pack](../validation/MSA-F2.md) | built 2026-11-18 |  |
 | MSA-F3 | a command id resent with a different body is refused, its digest compared with the one its claim holds (MSAI11-02). The receipt holds the command's own digest, `cst:requestDigest`, since an operation's cannot be recomputed for a resend. [Validation Pack](../validation/MSA-F3.md) | built 2026-11-18 |  |
@@ -85,3 +85,4 @@ C1 to C3 of MSA-I2 are decided. A pass is one request that moves a ledger's revi
 - 2026-11-19: `docs/placement-vehicles-structure` merged into `spi/multi-store-architecture`, which is from here a merging point. Rows joined by the furthest row, so the six investigations the squash of 2026-11-18 delivered read merged and MSA-I2, MSA-I6 and MSA-F1 to MSA-F9 read built. Machine S works on `spi/worktree-s`, cut from this merge. C1 to C3 are decided by ADR-A131's second addendum of that day, and MSA-I5a waits on nothing.
 - 2026-11-19: MSA-I13 planned, a PostgreSQL test fixture built first. The multi-store half of machine S's brief written, with two bundles, the Rocq formalisation left off machine S, and two models added to MSA-I6, the pass protocol in one ledger and a pass over two.
 - 2026-11-19: on machine S, per the multi-store half of the brief of 2026-11-19. MSA-I13 marked building.
+- 2026-11-19: MSA-I13 built. The fixture starts a PostgreSQL 16.15 server from the `postgresql-binaries` wheel, a test dependency named for the maintainer, gives each test a clean database and reports the version it ran on. Two tests pass on Windows and skip with a reason where the server is absent. macOS and a cloud session are not run, and the pack gives their commands.
