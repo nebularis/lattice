@@ -3,7 +3,7 @@
 # Computable contract substrate - Status
 
 **Unit ID:** `computable-contract-substrate`
-**Status:** verified 2026-10-29. 🔨 In progress. Gate A passed. Tranche B and C briefed (CCS-3, CCS-10)
+**Status:** merged 2026-11-02. 🔨 In progress. Gate A passed. Tranche B and C briefed (CCS-3, CCS-10)
 **Last updated:** 2026-10-27
 **Plan:** [computable-contract-substrate.md](../plans/computable-contract-substrate.md)
 **Sketches:** [computable-contract-substrate.md](../sketches/computable-contract-substrate.md),
@@ -21,9 +21,9 @@ Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: W
 
 | Slice | Deliverable | State | Blocked on | Tranche |
 |---|---|---|---|---|
-| CCS-0 | A-112, A-113, A-01 and ADR-A-C2 addenda | verified 2026-10-29 |  | A |
-| CCS-1 | A-104 | verified 2026-10-29 |  | A |
-| CCS-2 | A-106 | verified 2026-10-29 |  | A |
+| CCS-0 | A-112, A-113, A-01 and ADR-A-C2 addenda | merged 2026-11-02, verified 2026-10-29 |  | A |
+| CCS-1 | A-104 | merged 2026-11-02, verified 2026-10-29 |  | A |
+| CCS-2 | A-106 | merged 2026-11-02, verified 2026-10-29 |  | A |
 | CCS-3 | Wording spec, vocab and shapes | merged 2026-10-10, tagged |  | B |
 | CCS-4 | Wording tables, assembly, variable values | merged 2026-10-10, tagged |  | B |
 | CCS-5 | Wording amendments, law shapes, how-to | merged 2026-10-10, tagged |  | B |
@@ -75,6 +75,7 @@ Gate A passed on 2026-10-01. Tranches B and C are merged to `main` and tagged: W
 
 ## History
 
+- 2026-11-18: CCS-0 to CCS-2 read merged, on the day each reached `main`, after an audit found each delivered there with the maintainer's verdict on record.
 - 2026-09-29 to 30: D2 walkthrough, first Instrument redesign, tests against the PKG package policy,
   the IUA broker binding authority and the Lloyd's CBAA collateral, and cross-reference with Open
   CBAA's `wim`, `stm`, `agr` and `rsk` modules and design documents.

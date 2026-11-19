@@ -12,15 +12,15 @@
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05 |  |
-| VM-1 | the binding, `bootstrap:vyvid`, the comparison | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
-| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05, building 2026-11-05 |  |
-| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
-| VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
-| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
-| VM-6 | the moves, the page at the old path, TD-2 cleared | verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
-| VM-7 | cloud sessions: the pin at `v0.2.14`, the setup script and its pasted lines, the hook | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
-| VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
+| VM-0 | the sketch rewritten, the plan, this record, the INDEX.md region | merged 2026-11-06, verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05 |  |
+| VM-1 | the binding, `bootstrap:vyvid`, the comparison | merged 2026-11-06, verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05, building 2026-11-05, briefed 2026-11-05 |  |
+| VM-2 | the index tasks and hooks over `vyd`, AGENTS.md's index section, the addenda | merged 2026-11-06, verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-05, building 2026-11-05 |  |
+| VM-3 | the quanta and owners extractor, the tests against Вивід, the deletions | merged 2026-11-05, verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
+| VM-4 | the board tasks and the `work` check over `vyd`, the old tools removed | merged 2026-11-05, verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
+| VM-5 | the fifteen composed skills, the coverage proven, the citations and pointers | merged 2026-11-05, verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
+| VM-6 | the moves, the page at the old path, TD-2 cleared | merged 2026-11-05, verified 2026-11-05, built 2026-11-05, building 2026-11-05 |  |
+| VM-7 | cloud sessions: the pin at `v0.2.14`, the setup script and its pasted lines, the hook | merged 2026-11-06, verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
+| VM-8 | cloud setup within its limit: the index first, the rest if time allows, a hook finishes what was skipped | merged 2026-11-06, verified 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06, built 2026-11-06, building 2026-11-06 |  |
 | VM-9 | the quanta by Вивід's own kind, the pin at v0.2.23 | built 2026-11-08, building 2026-11-08 |  |
 | VM-10 | the getting-started guide names the local setup of Вивід | built 2026-11-09, building 2026-11-09 |  |
 | VM-11 | the pin at v0.2.27, and the documents follow it | built 2026-11-09, building 2026-11-09 |  |
@@ -52,6 +52,7 @@ match = { remote = "github.com/nebularis/lattice" }
 
 ## History
 
+- 2026-11-18: VM-0 to VM-8 read merged, on the day each reached `main`, after an audit found each delivered there with the maintainer's verdict on record. Rows of this unit that are on `main` with no verdict found were left as they are.
 - 2026-11-10: Вивід pinned at `v0.2.34`, at the maintainer's word. 0.2.30 to 0.2.32 add `--table plain|pretty|md|auto` and colour for tables, and 0.2.33 and 0.2.34 add backlinks from code to entries with `vyd check links`, `vyd refs` and `vyd expand`, `vyd mcp` and a GitHub Action.
 - 2026-11-09: Вивід pinned at `v0.2.29`, at the maintainer's word. 0.2.29 lets `vyd read` and `vyd node` print a quantum, such as `vyd read data/substrate`, and `vyd find --kind quantum` list quanta alone.
 - 2026-11-09: Вивід pinned at `v0.2.28`, at the maintainer's word. 0.2.28 treats a read that lost its review like an unreviewed domain, which this project does not use and a project that carries a read's skills meets at its next pin.

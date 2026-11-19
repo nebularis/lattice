@@ -121,6 +121,6 @@ Built on machine S, 2026-11-16, Isabelle2025-2 through its bundled Cygwin, commi
 
 ## Results
 
-**The maintainer's verdict** is written here when given. The row on the board moves to `verified` with it.
+**Verified by the maintainer on 2026-11-19.**
 
 **A third probe, picked by the agent at the maintainer's word on 2026-11-16, on machine R after the merge.** `available` in the extracted `Kernel.thy` edited by hand to `bal a`, the account's own balance and not the least along its path, with the README unchanged. `mise run check:formal-freshness` failed, exit 1, with `DRIFT` on `Kernel.thy` against the README's blocks, which is R0's claim that the kernel is extracted and never edited. `mise run check:proofs -- ledger` failed, exit 1, at `Draws.example_pots`, `Merge.no_purpose_is_settle` and `Pots.the_unit_left_is_withheld_along_the_path`. Restored from a copy, `git diff` empty, then 3 artefacts consistent, 72 rows `Proof passed`, `Assumption audit: clean` and `GATE: pass`.

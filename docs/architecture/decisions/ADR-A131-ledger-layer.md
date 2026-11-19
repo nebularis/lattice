@@ -467,6 +467,64 @@ The case of a unit short in the second addendum of 2026-11-16, members with a ba
 
 **Releases.** The rounding difference, the source of a unit over and their values add published terms, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
 
+## Addendum (2026-11-18): the owner's ledger is the unit that is consistent, and an account still owns its postings
+
+**Status of this addendum:** Accepted by the maintainer on 2026-11-18, who decided the rule the same day. It adds no evaluation semantics, so it carries no conformance cases.
+
+**Narrows decision 5.** It also says what the third addendum of 2026-11-16 left unsaid, that serialising an owner's ledger moved the unit decision 5 names.
+
+**Three things the word covered.** Decision 5 has an account and its postings form an aggregate. That said three things at once: who owns a posting, what a store holds together, and what a write must see unchanged. The first two stand. The third was never right for an account.
+
+**An account owns its postings.** A posting belongs to its account, and an account to its owner and to no occasion, so an account outlives a new version of what it belongs to. This is what decision 5 was written to say.
+
+**A period's unit is still the partition.** What a store holds together is named from an account's root and its close, as the second addendum of 2026-10-27 has it.
+
+**The owner's ledger is the unit that is consistent.** A draw reads the balance of every account on its path and may write a second account that counts its purpose, and an allocation writes several accounts in one pass. So the law that no account on a path falls below zero spans accounts. Two draws on two accounts under one parent can each fit and together overdraw it, and under a guard for each account neither writes what the other read, so nothing catches it. The unit a write must see unchanged is therefore every account of one owner. It is the unit one writer serialises, the unit whose revision that writer moves, and the unit a deployment places in one store. Decision 5 already gathers the accounts that interact under one owner, since an account drawn on by several instruments belongs to their ensemble, so the owner is a stable key where the accounts joined by a path or a purpose are not.
+
+**A ledger is a node.** It stands for one owner's ledger, names the profile the deployment gave it, and holds the revision. Each pass records the revision it moved the ledger to. A revision orders every posting of a ledger, where a recorded position orders only those of one account.
+
+**A balance as of a revision does not change.** A guard or a derivation outside the ledger reads a balance by naming the ledger's revision, and records that revision in its read set. What it read cannot change under it, so it need not be held in the ledger's store, and its judgement is defensible as of what it read. Placing an identity's other state beside the ledger it reads is a deployment's choice and no rule of this layer.
+
+**What would reopen the unit.** An owner whose independent accounts need more writes than one writer serves, shown by measurement. The unit would then be a ledger declared within an owner, with a check that no path, purpose or allocation crosses two of them.
+
+**Releases.** The ledger node, its revision and the revision a pass records add published terms, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
+
+## Addendum (2026-11-19): a checkpoint is written for an account that moved
+
+**Status of this addendum:** Accepted by the maintainer on 2026-11-19, who decided the rule the same day. It adds no evaluation semantics, so it carries no conformance cases.
+
+**Narrows the first addendum of 2026-11-16 and the second addendum of 2026-10-27.** Each has one sentence that reads as a checkpoint for every account at every close.
+
+**A checkpoint is written at a close for each account that moved since its last checkpoint.** An account has moved when a posting recorded since then changes its balance, or changes the debits or the accepted credits offered that its checkpoint holds beside the balance. A credit cut in full at an account leaves the balance where it was and still moves the account, since the amount offered is counted.
+
+**An account that did not move is read from its earlier checkpoint.** Nothing was recorded for it in between, so its latest checkpoint is still exactly true at every later close. A read as of a close takes, for each account, the checkpoint of the latest close at or before it that has one, and the stated amount with nothing drawn or offered where the account has none.
+
+**How the two sentences now read.** The first addendum of 2026-11-16 has the runtime keep "a checkpoint of every account's balance at each close". It keeps one at each close for each account that moved. The second addendum of 2026-10-27 says the set of checkpoints "stays the product of accounts and closes". The set is at most that product. Neither addendum's reasoning rests on the product, since a posting recorded later and effective earlier disturbs no checkpoint whichever accounts have one.
+
+**The cost.** A close writes a record only where something happened. For example, a ledger of 10,000 accounts of which 200 move in a period writes 200 checkpoints at its close, against 10,000. The read pays for it, looking for an account's latest checkpoint at or before a close in place of the one at that close.
+
+## Addendum (2026-11-19, second): a pass is written as one request on the revision it read, and is named from its ledger and its evaluation
+
+**Status of this addendum:** Accepted by the maintainer on 2026-11-19, who decided the rules the same day. It adds no evaluation semantics, so it carries no conformance cases. What it states is how a runtime writes a pass, as the third addendum of 2026-11-16 does for a posting, and how a pass is named.
+
+**Narrows the third addendum of 2026-11-16.** It has the writer move the revision "in the same request that writes the posting", on "the value it expects". The request is a pass's, and the value expected is the revision the pass was evaluated from.
+
+**A pass is one request.** Every record a pass writes, its postings, their cuts, its merge records and the pass itself, is written in one request. That request moves the ledger's revision once, by one, and the pass records the revision it moved the ledger to. No posting moves the revision alone, so no revision falls between two records of one pass, and no read by revision meets a part of a pass.
+
+**The request names the revision the pass was evaluated from.** The writer writes it only while the ledger is at that revision. Where the ledger has moved, the writer writes nothing, keeps no record of the attempt, and answers with the revision it found, and the evaluation is made again from a newer revision. This is not one of the layer's refusals, which are records that a pass writes. Where a pass is evaluated in the writer's own turn the two revisions are the same and the request is never turned away, as the third addendum says of its guard under one writer.
+
+**Why the revision read, and not the latest.** For example, an event draws one unit while a balance has one, and has a further consequence when the draw empties the balance. Two such evaluations each read a balance of 2 at one revision. Written on whatever revision is latest, both draw, the balance ends at 0, and neither records that it emptied the balance, which the second of them does in either order. Written on the revision read, the second request is turned away, its evaluation is made again at a balance of 1, and it records what that order gives.
+
+**A pass is named from its ledger and its evaluation.** Derive a pass's IRI from its ledger and a key that the caller gives for the evaluation that writes it. The layer gives the key no meaning. It asks only that the same evaluation, made again, gives the same key, so the key is never taken from a clock or from a counter read when the request is made. A pass written twice is then one node, and a runtime that stopped after its request finds whether the pass was written, and the revision it recorded.
+
+**An evaluation made again for a pass already written starts from the revision before the one the pass recorded.** That is the revision the pass was evaluated from, since its request moved the revision by one. Made again from the latest revision, it would read its own postings as another's. An evaluation that writes no record writes no pass, and is made again from whatever revision is then current.
+
+**The cost.** The request carries one revision, and no triple is added, since a pass already records one revision and its IRI is derived where it was minted. An evaluation is made once more for each request that reaches the writer between its read and its own request, and never where the evaluations of one ledger are made in its writer's turn. That cost under contention is not measured.
+
+**The evidence.** An exhaustive [model](../../../tools/models/ledger-pass-revision/README.md) of one evaluation with two draws and a change of state, against one other writer on the same accounts and one stop at any point, from twelve starting balances. Written on the revision read, every outcome was one that the evaluations give when made one after another, with a stop or without. Written on the latest revision, or with each posting a request of its own, some were not.
+
+**What this does not decide.** What the layer above records when its request is turned away or its evaluation is made again. The contract of the port that a request travels through. An evaluation that writes two ledgers, which makes a request to each and was not modelled. How a caller forms the key.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -503,3 +561,9 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 **The addendum of 2026-11-17.** The terms the layer's README proposed after LG-9 were walked through with the maintainer as LG-Q30 to LG-Q36 of the [Ledger plan](../../developer/plans/ledger.md). The maintainer decided for a policy node on 2026-11-17 (LG-Q32), for one policy resolved before the ledger (LG-Q35), and for a versioned policy in place of a content-addressed one first chosen that day, once that was seen to need a canonicalisation rule in the layer and a mark two other layers' checks would have to learn (LG-Q36, TD-127). LG-Q33 gave the two criteria and the two guards and found no need for a separate rule for a tie, and LG-Q34 deferred the kinds of split. Built as LG-24 ([its pack](../../developer/validation/LG-24.md)).
 
 **The second addendum of 2026-11-17.** LG-Q30 of the [Ledger plan](../../developer/plans/ledger.md), raised by a constraint that read a term the layer had not declared. The maintainer decided on 2026-11-17 to declare it and asked that where a unit short goes be driven by the wording, as a unit over is, so the reading by symmetry first proposed was dropped. Built as LG-23 ([its pack](../../developer/validation/LG-23.md)), which holds the model's search of the four pairs and the theorem that each settles exactly.
+
+**The addendum of 2026-11-18.** LG-Q44 of the [Ledger plan](../../developer/plans/ledger.md), raised by the read-set census of the multi-store architecture epic, MSA-I2, which met decision 5's unit and the third addendum's side by side. The maintainer decided for the owner's ledger on 2026-11-18, with the ledger node of LG-Q37 as its root. The epic's own proposal that an identity's other state be placed with its ledger was not taken, since a read by revision needs no such rule.
+
+**The addendum of 2026-11-19.** LG-Q43 of the [Ledger plan](../../developer/plans/ledger.md), raised by the [sketch of the vocabulary's rework](../../developer/sketches/ledger-vocabulary-rework.md), which found the layer's README and STD-331 on one side and the two sentences on the other. The maintainer decided on 2026-11-19 for the accounts that moved, which is what the benchmarks stored. The rule is stated here for an account's totals as well as its balance, where the README speaks of the balance alone, and LG-27 brings the README into line. The maintainer accepted the wording on 2026-11-19.
+
+**The second addendum of 2026-11-19.** LG-Q45 and LG-Q46 of the [Ledger plan](../../developer/plans/ledger.md). The read-set census of the multi-store architecture epic, MSA-I2, found three conditions in Behaviour's `ordered-draws.ttl` that no text stated, the first of which had the writer return a revision with each posting, where the addendum of 2026-11-18 has each pass record one. The maintainer decided on 2026-11-19 for one request for each pass, written on the revision it read, and for a pass named from its ledger and a key of its evaluation, which applies PAT-01 to the pass. Decided the same day, Behaviour states its half when it imports Ledger (LG-3), and the plan that builds the logical port states the port's. LG-27 writes the pass's name into the layer's README. The maintainer accepted the wording on 2026-11-19.
