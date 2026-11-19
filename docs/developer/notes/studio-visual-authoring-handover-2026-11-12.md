@@ -42,7 +42,7 @@ The work was paused by the maintainer on 2026-11-12, part way through its second
 - **SVA-Q3 is open.** The maintainer asked how many triples a request body holds, how large a step is and whether the limit comes from the MQTT frames. The sketch's section 8.2 answers. Only SVA-P3 waits on the maintainer confirming (a).
 - **ADR-A154 is Proposed.** Only the maintainer accepts it. Its decision 11 rests on SVA-Q3.
 - SVA-M2a will draft an addition to MORK for template libraries (SVA-Q14 (a)), which is a modelling change to design with the maintainer's review, examples first.
-- Backlog rows BL-20 to BL-24 were added for what the answers left for later.
+- Backlog rows BL-22 to BL-26 were added for what the answers left for later.
 
 ## What to do next, in order
 

@@ -197,7 +197,7 @@ The transforms worker already runs compiled artefacts over a sample, warm betwee
 
 A worker takes a queue from its configuration and a bounded number of requests at once. `POST …/transforms` stays through a deprecation, answered by the same worker, as the contract requires of a change that would break a client.
 
-**Which engine executes a simulation** is SVA-Q4. The facts: Fuseki runs Jena, the Java caller library exists and the writer already binds generated operations with it, the transforms worker is Java, and rdflib differs from Jena on corners the triple-store record lists, for example [TD-44](../technical-debt.md). The answer is Jena's in-memory dataset in the run worker, with every simulator display saying it shows the write as Jena evaluates it. Oxigraph as a second engine is BL-21.
+**Which engine executes a simulation** is SVA-Q4. The facts: Fuseki runs Jena, the Java caller library exists and the writer already binds generated operations with it, the transforms worker is Java, and rdflib differs from Jena on corners the triple-store record lists, for example [TD-44](../technical-debt.md). The answer is Jena's in-memory dataset in the run worker, with every simulator display saying it shows the write as Jena evaluates it. Oxigraph as a second engine is BL-26.
 
 ## 5. Baseline management
 
@@ -378,7 +378,7 @@ A library is a set of templates that other schemes instantiate. The model is SVA
 | RDF | SPARQL CONSTRUCT, by `mork_rdf` | yes |
 | XML | XSLT 3.0 | yes |
 | JSON | JOLT | yes |
-| JSON, XML, CSV, YAML | RML | none. Shown as waiting on BL-20 |
+| JSON, XML, CSV, YAML | RML | none. Shown as waiting on BL-25 |
 
 The run happens when the author presses Run, and never by itself (SVA-Q15). The counts on the canvas and the tree come from the last run and are marked as out of date once the scheme changes. TD-151 bears on the RML form, since today one RML file is written for schemes of two formats.
 
@@ -399,7 +399,7 @@ The sample stays in the browser's storage, as today. Storing it beside the works
 
 All of this is tooling over the substrate and MORK, with no applied content, so its commits carry `Placement: T0`. The template cards serve mappings of structured sources.
 
-Left out, each with where it lives: cost estimates at size (BL-10), generated test data and sizing (BL-11), stored samples (BL-08), an RML runtime (BL-20, added with this sketch), Oxigraph as a second simulation engine (BL-21), a catalog directory a deployment configures (BL-22), other layout libraries (BL-23), boundary edits on the persistence canvas (BL-24), other notifiers (BL-13), and the verification rig's views (`v-rig-studio`, which will use the same shell and canvas kit).
+Left out, each with where it lives: cost estimates at size (BL-10), generated test data and sizing (BL-11), stored samples (BL-08), an RML runtime (BL-25, added with this sketch), Oxigraph as a second simulation engine (BL-26), a catalog directory a deployment configures (BL-22), other layout libraries (BL-23), boundary edits on the persistence canvas (BL-24), other notifiers (BL-13), and the verification rig's views (`v-rig-studio`, which will use the same shell and canvas kit).
 
 ## 12. Questions
 
@@ -409,7 +409,7 @@ Left out, each with where it lives: cost estimates at size (BL-10), generated te
 
 **SVA-Q3. Where does a simulator's state live?** (a) In the tab, each step a function of the sample world and the edit. (b) In a worker's memory, with every step of a session routed to it. (c) In a scratch dataset on Fuseki. (b) needs affinity and loses the session with the worker. (c) adds writes and a second kind of data to the store. Leaning (a). **Answered 2026-11-12, (a).**
 
-**SVA-Q4. Which runtime and engine execute a simulation?** (a) The Java run worker, on Jena's in-memory dataset, with the Java caller library. (b) The Python worker on rdflib. (c) The Python worker on Oxigraph. (a) evaluates as the studio's own store does and reuses what the writer uses. (b) is where the compilers are, and differs from Jena on recorded corners. (c) adds an engine the worker does not ship. Leaning (a), each display saying which engine it shows. **Answered 2026-11-12, (a), with (c) kept as an option to add later, BL-21.**
+**SVA-Q4. Which runtime and engine execute a simulation?** (a) The Java run worker, on Jena's in-memory dataset, with the Java caller library. (b) The Python worker on rdflib. (c) The Python worker on Oxigraph. (a) evaluates as the studio's own store does and reuses what the writer uses. (b) is where the compilers are, and differs from Jena on recorded corners. (c) adds an engine the worker does not ship. Leaning (a), each display saying which engine it shows. **Answered 2026-11-12, (a), with (c) kept as an option to add later, BL-26.**
 
 **SVA-Q5. Where is an import resolved?** (a) In the browser, from dropped files and their catalog, then held imports, then LATTICE's staged documents, and never the web. (b) In the service, from a catalog directory a deployment configures. (c) By fetching the IRI. (b) suits a shared deployment with a house set of ontologies and can be added beside (a) later. (c) is refused by default for the reason in section 5.1. Leaning (a). **Answered 2026-11-12, (a) now, with (b) later, BL-22.**
 
