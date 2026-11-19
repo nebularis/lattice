@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** building 2026-11-19.
+**Status:** built 2026-11-19.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous on machine S, at the maintainer's request of 2026-11-19 and the two briefs of that day, on `spi/worktree-s`, committing locally only and never pushing, with up to two sub-agents. The branch defers versioning, so Persistence's spec, changed by MSA-F5, is reported unbumped until the merge.
 
@@ -36,7 +36,7 @@
 | MSA-F9 | a new document's save that loses the description's guard is answered as a change to send again, read from the document's own row, not as a deleted id (MSAF6-02). Its test found that a save under a deleted id was answered 200 and kept nothing (MSAF9-01), now refused before it is planned. [Validation Pack](../validation/MSA-F9.md) | built 2026-11-18 |  |
 | MSA-F10 | the stream writer's thread survives a reply or an offset that cannot be sent or stored, and a writer that cannot go on leaves its group, so no partition is held by a member that applies nothing (MSAF2-01) A reply or an offset that cannot be sent or stored is logged and the writer goes on, anything else closes the consumer and ends the thread, and `threadAlive()` and `storedOffsets()` read its state. [Validation Pack](../validation/MSA-F10.md) | built 2026-11-19 |  |
 | MSA-F11 | a deletion answered from its receipt still removes a row its tombstone lost, so a batch that fails after its update commits is completed by its retry (MSAF7-01) A resend answered from its receipt finds the rows its deletion retires from the receipt's written graphs and tombstones any still live, and `finish` reads them with the batched read. [Validation Pack](../validation/MSA-F11.md) | built 2026-11-19 |  |
-| MSA-F12 | a reply built from an exception carries a fixed message, and the exception's text goes to the log with the command's id (MSAF8-01) | building 2026-11-19 |  |
+| MSA-F12 | a reply built from an exception carries a fixed message, and the exception's text goes to the log with the command's id (MSAF8-01) A refused write and the writer's own failure are answered with a fixed message naming the command's id, the exception goes to the log, and a message that is not a command is answered 400. A part's save can carry a blank node to the digest, so MSA-F14 is built. [Validation Pack](../validation/MSA-F12.md) | built 2026-11-19 |  |
 | MSA-F13 | the Java topology refuses a queue whose `bindsTo` names no declared exchange, as the Python worker does | planned |  |
 | MSA-F14 | a command's digest separates two bodies that differ in how their blank nodes connect (TD-165). Built only where a studio command's body can hold a blank node | planned | MSA-F12's answer |
 
@@ -103,3 +103,4 @@ C1 to C3 of MSA-I2 are decided. A pass is one request that moves a ledger's revi
 - 2026-11-19: MSA-F11 marked building.
 - 2026-11-19: MSA-F11 built. Two tests, a deletion of a document and of a workspace whose step after the commit fails as an unreachable store does, failed before the fix and pass after. `check:config-studio` passes. The pack amends the draft addendum to ADR-A149 that MSA-F7's pack holds.
 - 2026-11-19: MSA-F12 marked building.
+- 2026-11-19: MSA-F12 built. Three tests failed before the fix and pass after, and `check:config-studio` passes. Its pack finds that a part's save, and five other commands, can carry a blank node to `Codec.digest`, so MSA-F14 is built. A question for the maintainer: a creation and a deletion of one workspace in one batch answer the creation 400.

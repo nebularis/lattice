@@ -84,6 +84,32 @@ class StudioApiTest {
         assertEquals("the writer failed on this write", new String(r.body(), java.nio.charset.StandardCharsets.UTF_8));
     }
 
+    /**
+     * For MSA-F14 (TD-165). A part saved through the API with a blank node, as the browser saves a part whose change names one,
+     * reaches the writer with the blank node in its body, and the receipt holds that body's digest. The writer names blank nodes
+     * with skolem IRIs only when it writes the part, after the digest.
+     */
+    @Test
+    void aPartSavedWithABlankNodeReachesTheCommandsDigestHoldingIt() {
+        f.createWorkspace("One");
+        List<Command> sent = new java.util.ArrayList<>();
+        StudioApi recording = new StudioApi(f.store, Fixture.OPS, c -> {
+            sent.add(c);
+            return f.writes.send(c);
+        }, f.bus, java.time.Clock.systemUTC(), () -> new java.util.UUID(0, 99), f.assets);
+        String part = Fixture.PREFIXES + "ex:cfg <" + LATTICE + "surface#part> [ a ex:Part ] .";
+        ApiResponse r = recording.handle(new ApiRequest("PUT", SURFACE, null, Map.of("content-type", "text/turtle", "if-match", "\"0\""),
+            part.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        assertEquals(204, r.status());
+        assertEquals(1, sent.size());
+        Command save = sent.get(0);
+        assertEquals(Command.Type.SAVE, save.type());
+        assertTrue(org.nebularis.lattice.studio.store.Skolem.hasBlank(save.body().getDefaultModel()), "the save's body holds a blank node");
+        Model receipts = f.store.graph(Graphs.receipts(WS));
+        assertEquals(org.nebularis.lattice.studio.writes.Codec.digest(save),
+            receipts.getResource(Graphs.receipt(save.id())).getProperty(Cst.requestDigest).getString(), "the receipt holds the digest of that body");
+    }
+
     @Test
     void missingOrBlankSlugGivesUntitledWorkspace() {
         f.createWorkspace("%20%20");

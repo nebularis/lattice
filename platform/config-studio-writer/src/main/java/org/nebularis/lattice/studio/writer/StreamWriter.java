@@ -23,6 +23,7 @@ import java.util.function.Function;
 import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.nebularis.lattice.studio.jobs.Topology;
+import org.nebularis.lattice.studio.store.Graphs;
 import org.nebularis.lattice.studio.writes.Codec;
 import org.nebularis.lattice.studio.writes.Command;
 import org.nebularis.lattice.studio.writes.Reply;
@@ -39,7 +40,9 @@ import org.slf4j.LoggerFactory;
  * takes a partition over resumes after the last batch applied and skips nothing received but not yet applied. A write
  * delivered again after a failover is answered from its receipt and not applied twice. A store that cannot be reached
  * holds the batch until it can, and a write the store refuses is answered as refused, so it never holds its partition. A write
- * the writer's own code fails on is answered as the writer's fault, a 500, and does not hold its partition either. A reply
+ * the writer's own code fails on is answered as the writer's fault, a 500, and does not hold its partition either. Either reply
+ * carries a fixed message naming the command's id, and the exception goes to the log under that id. A message that is not a
+ * command is the request's fault, and is answered as refused. A reply
  * that cannot be sent or an offset that cannot be stored is logged and the writer goes on. Anything else that ends the
  * thread closes the consumer, so the writer leaves its group and never holds a partition with no thread applying.
  */
@@ -83,7 +86,7 @@ public final class StreamWriter implements AutoCloseable {
             .flow().strategy(ConsumerFlowStrategy.creditWhenHalfMessagesProcessed()).builder()
             .messageHandler((context, message) -> waiting.add(new Item(context, message)))
             .build(),
-            items -> writer.apply(decode(items)), (item, reply) -> reply(replies, item.message(), reply), offsets(environment), STORE_RETRY);
+            decoding(writer::apply), (item, reply) -> reply(replies, item.message(), reply), offsets(environment), STORE_RETRY);
     }
 
     /** A writer whose consumer fills {@code waiting}, so a test drives the thread with fakes. */
@@ -133,12 +136,61 @@ public final class StreamWriter implements AutoCloseable {
         }
     }
 
-    private static List<Command> decode(List<Item> batch) {
-        List<Command> commands = new ArrayList<>(batch.size());
-        for (Item item : batch) {
-            commands.add(Codec.decode(item.message().getApplicationProperties(), item.message().getBodyAsBinary()));
-        }
-        return commands;
+    /**
+     * The writer function over a batch of messages. A message that is not a command, since its headers or its body are not a
+     * command's, is the request's fault, so it is answered as refused and the others of the batch are applied by {@code writer}.
+     */
+    static Function<List<Item>, List<Reply>> decoding(Function<List<Command>, List<Reply>> writer) {
+        return items -> {
+            Reply[] replies = new Reply[items.size()];
+            List<Command> commands = new ArrayList<>(items.size());
+            List<Integer> places = new ArrayList<>(items.size());
+            for (int i = 0; i < items.size(); i++) {
+                Item item = items.get(i);
+                Command c = null;
+                RuntimeException unread = null;
+                try {
+                    c = Codec.decode(item.message().getApplicationProperties(), item.message().getBodyAsBinary());
+                } catch (RuntimeException e) {
+                    // A body the stream client cannot give as bytes, for one (MSA-F12).
+                    unread = e;
+                }
+                if (c == null) {
+                    String id = commandId(item);
+                    LOG.warn("the message on {} at offset {}, command {}, is not a studio command, and is answered as refused", item.context().stream(),
+                        item.context().offset(), id, unread);
+                    replies[i] = Reply.refused(naming(NOT_A_COMMAND, id));
+                } else {
+                    commands.add(c);
+                    places.add(i);
+                }
+            }
+            if (!commands.isEmpty()) {
+                List<Reply> answered = writer.apply(commands);
+                for (int j = 0; j < places.size(); j++) {
+                    replies[places.get(j)] = answered.get(j);
+                }
+            }
+            return List.of(replies);
+        };
+    }
+
+    /** The fixed messages of the replies built from a failure, whose own text goes to the log alone (MSAF8-01). */
+    static final String REFUSED_BY_STORE = "the store refused this write, which was not applied";
+    static final String FAILED = "the writer failed on this write, which was not applied";
+    static final String NOT_A_COMMAND = "the message is not a studio command, so it was not applied";
+
+    /** {@code message}, naming the command where its message carries an id, which the client can quote to an operator. */
+    private static String naming(String message, String id) {
+        return id == null ? message : message + ". The writer's log holds the reason under command " + id;
+    }
+
+    /** The id a message's headers carry, or null where they carry none that is an id, so no other text is echoed or logged. */
+    private static String commandId(Item item) {
+        Map<String, Object> headers = item.message() == null ? null : item.message().getApplicationProperties();
+        Object id = headers == null ? null : headers.get("id");
+        String text = id instanceof byte[] b ? new String(b, java.nio.charset.StandardCharsets.UTF_8) : id == null ? null : id.toString();
+        return text != null && Graphs.isId(text) ? text : null;
     }
 
     static void apply(List<Item> batch, Function<List<Item>, List<Reply>> writer, BiConsumer<Item, Reply> replies, Offsets offsets)
@@ -181,6 +233,16 @@ public final class StreamWriter implements AutoCloseable {
     private static int status(Throwable t) {
         return t instanceof HttpException h ? h.getStatusCode()
             : t instanceof QueryExceptionHTTP q ? q.getStatusCode() : Integer.MIN_VALUE;
+    }
+
+    /** The body the store answered a refusal with, its reason, which the exception's message leaves out. */
+    private static String storeSaid(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof HttpException h && h.getResponse() != null) {
+                return h.getResponse();
+            }
+        }
+        return "";
     }
 
     static void apply(List<Item> batch, Function<List<Item>, List<Reply>> writer, BiConsumer<Item, Reply> replies, Offsets offsets,
@@ -238,21 +300,23 @@ public final class StreamWriter implements AutoCloseable {
                     }
                     return answers;
                 } else if (fromStore(e)) {
-                    LOG.error("the write on {} at offset {} was refused, and is answered as refused", batch.get(0).context().stream(),
-                        batch.get(0).context().offset(), e);
-                    return List.of(Reply.refused("the store refused the write: " + e.getMessage()));
+                    String id = commandId(batch.get(0));
+                    LOG.error("the write on {} at offset {}, command {}, was refused, and is answered as refused. The store said: {}",
+                        batch.get(0).context().stream(), batch.get(0).context().offset(), id, storeSaid(e), e);
+                    return List.of(Reply.refused(naming(REFUSED_BY_STORE, id)));
                 } else {
                     // The same input fails the same way, so retrying would hold the partition. It is the writer's fault (MSA-F8).
-                    LOG.error("the writer failed on the write on {} at offset {}, and answers it as its own fault", batch.get(0).context().stream(),
-                        batch.get(0).context().offset(), e);
-                    return List.of(Reply.failed("the writer failed on this write, which was not applied: " + e.getMessage()));
+                    String id = commandId(batch.get(0));
+                    LOG.error("the writer failed on the write on {} at offset {}, command {}, and answers it as its own fault", batch.get(0).context().stream(),
+                        batch.get(0).context().offset(), id, e);
+                    return List.of(Reply.failed(naming(FAILED, id)));
                 }
             }
         }
     }
 
     /** A write sent by the service carries a reply-to, and the worker's carry none. A lost reply costs only a wait. */
-    private static void reply(Channel replies, Message message, Reply reply) {
+    static void reply(Channel replies, Message message, Reply reply) {
         String replyTo = queue(message.getProperties() == null ? null : message.getProperties().getReplyTo());
         if (replyTo == null) {
             return;
