@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-19. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-19. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -50,7 +50,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P1a | the compiled profile states where a target's data lands | built 2026-11-19, building 2026-11-18 | SVA-P1 |
 | SVA-P1b | the studio reads the compiled profile for where data lands | built 2026-11-19, building 2026-11-19 | SVA-P1a |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
-| SVA-P3 | the persistence simulation executor | planned | SVA-R3 |
+| SVA-P3 | the persistence simulation executor | building 2026-11-19 | SVA-R3 |
 | SVA-P4 | the persistence simulator pane | planned | SVA-R4, SVA-P1, SVA-P3 |
 | SVA-P5 | an object generated from the boundary shape | planned | SVA-P4 |
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
@@ -181,3 +181,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-19: SVA-P1a built, [Validation Pack](../validation/SVA-P1a.md). Each write access of a compiled profile lands in a `dal:GraphPlace` with a role and a graph or template, a patch log's two graphs are two accesses that differ by direction, a key claim names its constraint, and the profile names the matched scopes and the scope each value won through. The persistence suite, its conformance across engines and the caller libraries pass. `mise run check` did not complete here, for want of Elixir.
 - 2026-11-19: SVA-P1b started.
 - 2026-11-19: SVA-P1b built, [Validation Pack](../validation/SVA-P1b.md). The canvas reads `compiled-profile.ttl` alone, deciding each place's kind from the role, resource, direction and operation the profile states, and `landing-places.json`, its schema and the worker's landing code are gone. The browser restates how a job names its artefacts, held by a test against the facility job (TD-170). One journey unrelated to the slice failed once in a full run and passed alone, recorded as TD-172.
+- 2026-11-19: the maintainer chose, for the clock the generated writes read (TD-171), that SVA-P3 pins the time Jena's `NOW()` returns to the step's stated time, probed first, and that every generated write taking its time as a parameter stays TD-171's fix, for the persistence unit. SVA-P3 started.
