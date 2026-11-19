@@ -34,7 +34,14 @@
 | MSA-F8 | a failure of the stream writer's own code is answered as the writer's fault, a 500, and the service answers it 500 (MSA-F2). Still not retried, and a request the store refused keeps its 400. [Validation Pack](../validation/MSA-F8.md) | built 2026-11-18 |  |
 | MSA-F9 | a new document's save that loses the description's guard is answered as a change to send again, read from the document's own row, not as a deleted id (MSAF6-02). Its test found that a save under a deleted id was answered 200 and kept nothing (MSAF9-01), now refused before it is planned. [Validation Pack](../validation/MSA-F9.md) | built 2026-11-18 |  |
 
-**Next action:** MSA-F7, MSA-F8 and MSA-F9 in order, then MSA-I2 reworked on the ledger's unit as the maintainer decided it. MSA-I5a once ADR-A-FM2's addendum proposed 2026-11-18 is accepted, then MSA-I5 on it.
+**Next action, for the maintainer to decide:**
+
+1. **The addendum to ADR-A149 decision 13**, drafted in [MSA-F7's Validation Pack](../validation/MSA-F7.md), that a deletion wins over a write of what it deletes, its tombstone planned again at the row's revision. To write where the decision records are kept, or to send back reworded.
+2. **C1 to C3 of MSA-I2**, which the ledger's unit rests on and no text states: the revision returned with each posting and named by a later guard, the writer's refusal read as the guard failing, and a pass completed by a replay from receipts keyed on it. Where each is stated, the ledger's runtime document, Behaviour's pass or the sketch's §4.1.
+3. **MSA-I2's candidate R6**, whether a derived trigger's read over a set of ledgers names the version of what chose the set, as `run-off.ttl`'s premium trigger would.
+4. **ADR-A-FM2's addendum proposed 2026-11-18**, whose acceptance starts MSA-I5a.
+
+Then MSA-I5a and MSA-I5 on it, MSA-I10, and the rest of MSA-I6 (FMH-5's models B to D, the probes on PostgreSQL and Fuseki, trace validation). MSA-I7, MSA-I8 and MSA-I10 also wait for the ledger's vocabulary rework, since they name its records.
 
 ## History
 
@@ -71,3 +78,4 @@
 - 2026-11-18: MSA-F9 built. The reply to a new document's save reads the document's own row. Its test found MSAF9-01: a save under a deleted document's id was answered 200, the create wrote nothing over the tombstone and the description listed an empty document. The writer now refuses it before planning, and `DocumentsTest`, which saved under a deleted id and was answered 204, asserts the 400.
 - 2026-11-18: MSA-I2 marked building again, to rework the census on the owner's ledger as the ledger's unit, as the maintainer decided it.
 - 2026-11-18: MSA-I2 built again. Each read is marked inside a ledger, pinned by revision once LG-27 lands, or changeable across a unit. The falsifier does not fire, and the placement rule is withdrawn. No firm guard is left that a read by revision does not cover, on three conditions found in `ordered-draws.ttl` (C1 to C3). `run-off.ttl`'s derived trigger is a candidate on a comment.
+- 2026-11-18: handed off. MSA-F7 to MSA-F9 and MSA-I2's rework built, `check:config-studio` passing. The next action lists four points for the maintainer. MSA-I5a is planned and not started, since ADR-A-FM2's addendum is proposed.

@@ -32,26 +32,26 @@ Built from the status records on 25 branches, the units' own state from this tre
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
 | [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | built 2026-11-02 | AIR-3.3 | 55 planned, 10 built, 5 merged |  |
-| [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-09-25 | AOR-1 | 18 built |  |
+| [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-09-25 · built 2026-11-02 on docs/placement-vehicles-structure | AOR-1 | 11 merged, 7 built | docs/placement-vehicles-structure |
 | [asset-class](plans/asset-class.md) | unit | built 2026-11-08 | ASC-1 | 3 built |  |
-| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 | CCS-0 | 18 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged, 3 verified | realign/config-authoring-studio |
+| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 · merged 2026-11-02 on docs/placement-vehicles-structure | CCS-0 | 21 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged | docs/placement-vehicles-structure, realign/config-authoring-studio |
 | [documentation-link-repair](plans/documentation-link-repair.md) | unit | planned |  | no board |  |
 | [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
 | [ensemble](plans/ensemble.md) | unit | briefed | ES-0 | 8 planned, 2 briefed |  |
 | [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
 | [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned |  |
 | [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-11-09 | FME-1.0 | 5 planned, 3 built, 1 merged, 1 dropped |  |
-| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 | FMH-2.12 | 21 built, 15 merged, 11 planned, 6 verified, 1 briefed |  |
+| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 · built 2026-11-02 on docs/placement-vehicles-structure | FMH-2.12 | 34 merged, 11 planned, 8 built, 1 briefed | docs/placement-vehicles-structure |
 | [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, realign/config-authoring-studio |
 | [git-hooks](plans/git-hooks.md) | unit | built 2026-11-18 | GH-0 | 7 built |  |
 | [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
-| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio | OD-0 | 10 verified, 7 built, 6 planned, 1 merged |  |
+| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio · built 2026-11-02 on docs/placement-vehicles-structure | OD-0 | 17 merged, 6 planned, 1 built | docs/placement-vehicles-structure |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
-| [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 verified, 1 building |  |
-| [ledger](plans/ledger.md) | unit | built 2026-11-17 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · verified 2026-11-16 on spi/sql-backend | LG-2 | 13 merged, 5 planned, 3 verified, 3 built, 1 blocked |  |
+| [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 merged, 1 building | docs/placement-vehicles-structure |
+| [ledger](plans/ledger.md) | unit | built 2026-11-17 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · merged 2026-11-18 on docs/placement-vehicles-structure · verified 2026-11-16 on spi/sql-backend | LG-2 | 19 merged, 9 planned, 1 blocked | docs/placement-vehicles-structure |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
-| [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-18 | MSA-I1 | 14 built, 4 planned | spi/multi-store-architecture |
+| [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-18 · merged 2026-11-18 on docs/placement-vehicles-structure | MSA-I1 | 11 built, 6 merged, 5 planned | docs/placement-vehicles-structure, spi/multi-store-architecture |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
 | [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | built 2026-11-03 |  | no board |  |
@@ -71,7 +71,7 @@ Built from the status records on 25 branches, the units' own state from this tre
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-12 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 | VM-0 | 9 verified, 4 built |  |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-12 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 | VM-0 | 9 merged, 4 built | docs/placement-vehicles-structure |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -149,41 +149,41 @@ gantt
     FME-1.2 rounding and residual theorem :done, fme12, 2026-10-07, 2026-10-08
     FME-1.4 harden the gate and the kernel :fme14, 2026-10-09, 2026-10-10
     section formal-methods-track-h
-    FMH-1.1 prefix antichain and overlap :fmh11, 2026-10-09, 2026-10-10
-    FMH-1.2 :fmh12, 2026-10-09, 2026-10-10
-    FMH-1.2a witness harness :fmh12a, 2026-10-09, 2026-10-10
-    FMH-1.2b witnesses for the refusals and :fmh12b, 2026-10-09, 2026-10-10
-    FMH-1.2c witnesses for the 13 remaining :fmh12c, 2026-10-09, 2026-10-10
+    FMH-1.1 prefix antichain and overlap :done, fmh11, 2026-10-09, 2026-11-02
+    FMH-1.2 :done, fmh12, 2026-10-09, 2026-11-02
+    FMH-1.2a witness harness :done, fmh12a, 2026-10-09, 2026-11-02
+    FMH-1.2b witnesses for the refusals and :done, fmh12b, 2026-10-09, 2026-11-02
+    FMH-1.2c witnesses for the 13 remaining :done, fmh12c, 2026-10-09, 2026-11-02
     FMH-1.2d refuse a multi-valued :done, fmh12d, 2026-10-10, 2026-10-11
     FMH-1.3 static template checks S-3 and :done, fmh13, 2026-10-10, 2026-10-11
     FMH-1.4a refuse a composite boundary :done, fmh14a, 2026-10-10, 2026-10-11
     FMH-1.4b the declaration implementation :done, fmh14b, 2026-10-10, 2026-10-11
     FMH-1.4c a declaration the compiler :done, fmh14c, 2026-10-10, 2026-10-11
     FMH-1.5 stable labels :done, fmh15, 2026-10-10, 2026-10-11
-    FMH-2.0 ADR-A123 :fmh20, 2026-10-10, 2026-10-11
-    FMH-2.1 the typed IR and its renderer :fmh21, 2026-10-12, 2026-10-13
+    FMH-2.0 ADR-A123 :done, fmh20, 2026-10-10, 2026-11-02
+    FMH-2.1 the typed IR and its renderer. :done, fmh21, 2026-10-10, 2026-11-02
     FMH-2.11a the Persistence README as a :fmh211a, 2026-10-21, 2026-10-22
     FMH-2.11b the narrative the pictures :fmh211b, 2026-10-21, 2026-10-22
     FMH-2.12 the rows replace :fmh212, 2026-11-01, 2026-11-02
-    FMH-2.2 equivalence harness :fmh22, 2026-10-12, 2026-10-13
-    FMH-2.3 named-graph row writers :fmh23, 2026-10-12, 2026-10-13
-    FMH-2.4a the composite ports :fmh24a, 2026-10-13, 2026-10-14
-    FMH-2.4b Oxigraph probes benchmark :fmh24b, 2026-10-13, 2026-10-14
-    FMH-2.5 key claims audits guard D :fmh25, 2026-10-23, 2026-10-24
-    FMH-2.6 expected compiled profiles :fmh26, 2026-10-13, 2026-10-14
-    FMH-2.6b event slots :fmh26b, 2026-10-14, 2026-10-15
+    FMH-2.2 equivalence harness :done, fmh22, 2026-10-12, 2026-11-02
+    FMH-2.3 named-graph row writers. One :done, fmh23, 2026-10-12, 2026-11-02
+    FMH-2.4a the composite ports. :done, fmh24a, 2026-10-12, 2026-11-02
+    FMH-2.4b Oxigraph probes :done, fmh24b, 2026-10-12, 2026-11-02
+    FMH-2.5 key claims audits guard D :done, fmh25, 2026-10-13, 2026-11-02
+    FMH-2.6 expected compiled profiles :done, fmh26, 2026-10-13, 2026-11-02
+    FMH-2.6b event slots :done, fmh26b, 2026-10-14, 2026-11-02
     FMH-2.6c write disciplines :fmh26c, 2026-10-20, 2026-10-21
     FMH-2.6d patch log for in-place :fmh26d, 2026-10-20, 2026-10-21
-    FMH-2.6e :fmh26e, 2026-10-23, 2026-10-24
-    FMH-2.6f :fmh26f, 2026-10-23, 2026-10-24
+    FMH-2.6e :done, fmh26e, 2026-10-23, 2026-11-02
+    FMH-2.6f :done, fmh26f, 2026-10-23, 2026-11-02
     FMH-2.6g :fmh26g, 2026-10-23, 2026-10-24
     FMH-2.8a :fmh28a, 2026-10-23, 2026-10-24
     FMH-2.8b :fmh28b, 2026-10-23, 2026-10-24
-    FMH-2.8c edges once faster members :fmh28c, 2026-10-20, 2026-10-21
+    FMH-2.8c edges once faster members :done, fmh28c, 2026-10-20, 2026-11-02
     FMH-2.9 Mustache retired D-12 a :fmh29, 2026-10-21, 2026-10-22
     FMH-HO0 correct the ownership note and :done, fmhho0, 2026-10-10, 2026-10-11
     FMH-HO1 composite replace payload to :done, fmhho1, 2026-10-10, 2026-10-11
-    FMH-HO2 draft ADR-A122 Proposed :fmhho2, 2026-10-10, 2026-10-11
+    FMH-HO2 draft ADR-A122 Proposed :done, fmhho2, 2026-10-10, 2026-11-02
     FMH-HO3 dal vocabulary 0.3.0 :done, fmhho3, 2026-10-10, 2026-10-11
     FMH-HO4 ownership tree and path :done, fmhho4, 2026-10-10, 2026-10-11
     FMH-HO5 switch the compiler to the :done, fmhho5, 2026-10-10, 2026-10-11
@@ -191,7 +191,7 @@ gantt
     FMH-HO7 composite create and tombstone :done, fmhho7, 2026-10-10, 2026-10-11
     FMH-HO8 injective graph naming within :done, fmhho8, 2026-10-10, 2026-10-11
     FMH-HO9 ownership documentation and :done, fmhho9, 2026-10-10, 2026-10-11
-    FMH-W65 :fmhw65, 2026-10-23, 2026-10-24
+    FMH-W65 :done, fmhw65, 2026-10-23, 2026-10-24
 ```
 
 ```mermaid
@@ -214,21 +214,21 @@ gantt
     AOR-1 :aor1, 2026-09-25, 2026-09-26
     AOR-10 AOR-11 :aor10, 2026-09-25, 2026-09-26
     AOR-11 AOR-11 :aor11, 2026-09-25, 2026-09-26
-    AOR-12 :aor12, 2026-09-25, 2026-09-26
-    AOR-13 :aor13, 2026-09-25, 2026-09-26
+    AOR-12 :done, aor12, 2026-09-25, 2026-11-02
+    AOR-13 :done, aor13, 2026-09-25, 2026-11-02
     AOR-14 to AOR-16 :aor14, 2026-09-25, 2026-09-26
     AOR-15 to AOR-16 :aor15, 2026-09-25, 2026-09-26
     AOR-16 to AOR-16 :aor16, 2026-09-25, 2026-09-26
     AOR-17 :aor17, 2026-09-25, 2026-09-26
-    AOR-2 to AOR-4 :aor2, 2026-09-25, 2026-09-26
-    AOR-3 to AOR-4 :aor3, 2026-09-25, 2026-09-26
-    AOR-3b :aor3b, 2026-09-25, 2026-09-26
-    AOR-4 to AOR-4 :aor4, 2026-09-25, 2026-09-26
-    AOR-5 to AOR-9 :aor5, 2026-09-25, 2026-09-26
-    AOR-6 to AOR-9 :aor6, 2026-09-25, 2026-09-26
-    AOR-7 to AOR-9 :aor7, 2026-09-25, 2026-09-26
-    AOR-8 to AOR-9 :aor8, 2026-09-25, 2026-09-26
-    AOR-9 to AOR-9 :aor9, 2026-09-25, 2026-09-26
+    AOR-2 to AOR-4 :done, aor2, 2026-09-25, 2026-11-02
+    AOR-3 to AOR-4 :done, aor3, 2026-09-25, 2026-11-02
+    AOR-3b :done, aor3b, 2026-09-25, 2026-11-02
+    AOR-4 to AOR-4 :done, aor4, 2026-09-25, 2026-11-02
+    AOR-5 to AOR-9 :done, aor5, 2026-09-25, 2026-11-02
+    AOR-6 to AOR-9 :done, aor6, 2026-09-25, 2026-11-02
+    AOR-7 to AOR-9 :done, aor7, 2026-09-25, 2026-11-02
+    AOR-8 to AOR-9 :done, aor8, 2026-09-25, 2026-11-02
+    AOR-9 to AOR-9 :done, aor9, 2026-09-25, 2026-11-02
 ```
 
 ```mermaid
@@ -238,13 +238,13 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section computable-contract-substrate
-    CCS-0 A-112 A-113 :ccs0, 2026-10-29, 2026-10-30
-    CCS-1 A-104 :ccs1, 2026-10-29, 2026-10-30
+    CCS-0 A-112 A-113 :done, ccs0, 2026-10-29, 2026-11-02
+    CCS-1 A-104 :done, ccs1, 2026-10-29, 2026-11-02
     CCS-10 Behaviour split and layer flip :done, ccs10, 2026-10-10, 2026-10-11
     CCS-10a import guard :done, ccs10a, 2026-10-29, 2026-10-30
     CCS-11 runtime records occasions :done, ccs11, 2026-10-10, 2026-10-11
     CCS-11a nested states history :done, ccs11a, 2026-10-10, 2026-10-11
-    CCS-2 A-106 :ccs2, 2026-10-29, 2026-10-30
+    CCS-2 A-106 :done, ccs2, 2026-10-29, 2026-11-02
     CCS-3 Wording spec vocab and shapes :done, ccs3, 2026-10-10, 2026-10-11
     CCS-4 Wording tables assembly :done, ccs4, 2026-10-10, 2026-10-11
     CCS-5 Wording amendments :done, ccs5, 2026-10-10, 2026-10-11
@@ -293,24 +293,24 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section improved-ontology-documentation
-    OD-0 ADRs the AGENTS.md rule :od0, 2026-10-17, 2026-10-18
-    OD-1 scanner and markers :od1, 2026-10-17, 2026-10-18
-    OD-2 sections 1 to 3 :od2, 2026-10-18, 2026-10-19
-    OD-3 section 6 to OWL :od3, 2026-10-18, 2026-10-19
-    OD-4 section 6 to SHACL :od4, 2026-10-18, 2026-10-19
-    OD-5 generated regions :od5, 2026-10-18, 2026-10-19
-    OD-6 Eligibility pilot :od6, 2026-10-20, 2026-10-21
-    OD-7 Vocabulary :od7, 2026-10-20, 2026-10-21
-    OD-DOC1 published decisions :oddoc1, 2026-10-19, 2026-10-20
+    OD-0 ADRs the AGENTS.md rule :done, od0, 2026-10-17, 2026-11-02
+    OD-1 scanner and markers :done, od1, 2026-10-17, 2026-11-02
+    OD-2 sections 1 to 3 :done, od2, 2026-10-18, 2026-11-02
+    OD-3 section 6 to OWL :done, od3, 2026-10-18, 2026-11-02
+    OD-4 section 6 to SHACL :done, od4, 2026-10-18, 2026-11-02
+    OD-5 generated regions :done, od5, 2026-10-18, 2026-11-02
+    OD-6 Eligibility pilot :done, od6, 2026-10-20, 2026-11-02
+    OD-7 Vocabulary :done, od7, 2026-10-20, 2026-11-02
+    OD-DOC1 published decisions :done, oddoc1, 2026-10-19, 2026-11-02
     OD-DOC2 site sections :done, oddoc2, 2026-10-20, 2026-10-21
     OD-DOC2b working documents out of :oddoc2b, 2026-10-20, 2026-10-21
-    OD-ELC1 composition operation :odelc1, 2026-10-19, 2026-10-20
-    OD-MC1 migration check labels :odmc1, 2026-10-20, 2026-10-21
-    OD-RC1 catalogue and reader :odrc1, 2026-10-17, 2026-10-18
-    OD-RC2 consumers use the reader :odrc2, 2026-10-18, 2026-10-19
-    OD-RC3 roots AGENTS.md table :odrc3, 2026-10-19, 2026-10-20
-    OD-REL1 first release 0.18.0 :odrel1, 2026-10-20, 2026-10-21
-    OD-VER1 one release for the substrate :odver1, 2026-10-20, 2026-10-21
+    OD-ELC1 composition operation :done, odelc1, 2026-10-19, 2026-11-02
+    OD-MC1 migration check labels :done, odmc1, 2026-10-20, 2026-11-02
+    OD-RC1 catalogue and reader :done, odrc1, 2026-10-17, 2026-11-02
+    OD-RC2 consumers use the reader :done, odrc2, 2026-10-18, 2026-11-02
+    OD-RC3 roots AGENTS.md table :done, odrc3, 2026-10-19, 2026-11-02
+    OD-REL1 first release 0.18.0 :done, odrel1, 2026-10-20, 2026-11-02
+    OD-VER1 one release for the substrate :done, odver1, 2026-10-20, 2026-10-21
 ```
 
 ```mermaid
@@ -320,7 +320,7 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section lattice-tutorial
-    TUT-0 the page its layout :tut0, 2026-10-14, 2026-10-15
+    TUT-0 the page its layout :done, tut0, 2026-10-14, 2026-11-06
     TUT-1 chapters 0 to 3 :tut1, 2026-10-15, 2026-10-16
     TUT-10 the guide modules 12 :tut10, 2026-11-06, 2026-11-07
     TUT-2 chapters 4 to 6 :tut2, 2026-10-15, 2026-10-16
@@ -350,15 +350,15 @@ gantt
     LG-17 LG-16 gaps closed :done, lg17, 2026-11-12, 2026-11-16
     LG-18 LG-17 follow-ups measured :done, lg18, 2026-11-12, 2026-11-16
     LG-19 the benchmark corpora refuse :done, lg19, 2026-11-13, 2026-11-16
-    LG-2 the runtime document :lg2, 2026-10-27, 2026-11-09
-    LG-20 the laws the target kernel :lg20, 2026-11-16, 2026-11-17
+    LG-2 the runtime document :done, lg2, 2026-10-27, 2026-11-09
+    LG-20 the laws the target kernel :done, lg20, 2026-11-16, 2026-11-18
     LG-21 the target kernel written :done, lg21, 2026-11-15, 2026-11-16
     LG-22 LG-19 follow-ups rows named :done, lg22, 2026-11-15, 2026-11-16
-    LG-23 the rounding difference :lg23, 2026-11-17, 2026-11-18
-    LG-24 the merge policy node :lg24, 2026-11-17, 2026-11-18
-    LG-7 the ledger laws mechanised in :lg7, 2026-11-08, 2026-11-09
+    LG-23 the rounding difference :done, lg23, 2026-11-17, 2026-11-18
+    LG-24 the merge policy node :done, lg24, 2026-11-17, 2026-11-18
+    LG-7 the ledger laws mechanised in :done, lg7, 2026-11-08, 2026-11-09
     LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-16
-    LG-9 the target kernel in the :lg9, 2026-11-16, 2026-11-17
+    LG-9 the target kernel in the :done, lg9, 2026-11-16, 2026-11-18
 ```
 
 ```mermaid
@@ -374,14 +374,17 @@ gantt
     MSA-F4 the queue topology states each :msaf4, 2026-11-18, 2026-11-19
     MSA-F5 the event logical key names :msaf5, 2026-11-18, 2026-11-19
     MSA-F6 a test that a command writing :msaf6, 2026-11-18, 2026-11-19
-    MSA-I1 spikes multi-store-shape-cens :msai1, 2026-11-17, 2026-11-18
-    MSA-I11 the logical :msai11, 2026-11-17, 2026-11-18
-    MSA-I12 spikes multi-store-emitted-to :msai12, 2026-11-17, 2026-11-18
+    MSA-F7 a deletion whose tombstone :msaf7, 2026-11-18, 2026-11-19
+    MSA-F8 a failure of the stream :msaf8, 2026-11-18, 2026-11-19
+    MSA-F9 a new document save that :msaf9, 2026-11-18, 2026-11-19
+    MSA-I1 spikes multi-store-shape-cens :done, msai1, 2026-11-17, 2026-11-18
+    MSA-I11 the logical :done, msai11, 2026-11-17, 2026-11-18
+    MSA-I12 spikes multi-store-emitted-to :done, msai12, 2026-11-17, 2026-11-18
     MSA-I2 the read-set :msai2, 2026-11-18, 2026-11-19
-    MSA-I3 the :msai3, 2026-11-17, 2026-11-18
-    MSA-I4 four operations :msai4, 2026-11-17, 2026-11-18
+    MSA-I3 the :done, msai3, 2026-11-17, 2026-11-18
+    MSA-I4 four operations :done, msai4, 2026-11-17, 2026-11-18
     MSA-I6 tools models multi-store-prot :msai6, 2026-11-18, 2026-11-19
-    MSA-I9 spikes multi-store-stream-pro :msai9, 2026-11-17, 2026-11-18
+    MSA-I9 spikes multi-store-stream-pro :done, msai9, 2026-11-17, 2026-11-18
 ```
 
 ```mermaid
@@ -518,18 +521,18 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section vyvid-migration
-    VM-0 the sketch rewritten :vm0, 2026-11-05, 2026-11-06
-    VM-1 the binding :vm1, 2026-11-05, 2026-11-06
+    VM-0 the sketch rewritten :done, vm0, 2026-11-05, 2026-11-06
+    VM-1 the binding :done, vm1, 2026-11-05, 2026-11-06
     VM-10 the getting-started guide :vm10, 2026-11-09, 2026-11-10
     VM-11 the pin at v0.2.27 :vm11, 2026-11-09, 2026-11-10
     VM-12 bootstrap erlang :vm12, 2026-11-12, 2026-11-13
-    VM-2 the index tasks and hooks over :vm2, 2026-11-05, 2026-11-06
-    VM-3 the quanta and owners :vm3, 2026-11-05, 2026-11-06
-    VM-4 the board tasks and the work :vm4, 2026-11-05, 2026-11-06
-    VM-5 the fifteen composed skills :vm5, 2026-11-05, 2026-11-06
-    VM-6 the moves :vm6, 2026-11-05, 2026-11-06
-    VM-7 cloud sessions the pin at :vm7, 2026-11-06, 2026-11-07
-    VM-8 cloud setup within its limit :vm8, 2026-11-06, 2026-11-07
+    VM-2 the index tasks and hooks over :done, vm2, 2026-11-05, 2026-11-06
+    VM-3 the quanta and owners :done, vm3, 2026-11-05, 2026-11-06
+    VM-4 the board tasks and the work :done, vm4, 2026-11-05, 2026-11-06
+    VM-5 the fifteen composed skills :done, vm5, 2026-11-05, 2026-11-06
+    VM-6 the moves :done, vm6, 2026-11-05, 2026-11-06
+    VM-7 cloud sessions the pin at :done, vm7, 2026-11-06, 2026-11-07
+    VM-8 cloud setup within its limit :done, vm8, 2026-11-06, 2026-11-07
     VM-9 the quanta by own :vm9, 2026-11-08, 2026-11-09
 ```
 
@@ -875,9 +878,9 @@ Nothing is built in this unit, and the record reads blocked. CCS took NRS-1, NRS
 
 **Documents.** [sketch](sketches/multi-store-architecture.md), [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md). D1 to D8 decided on 2026-11-12. The maintainer confirmed the unit's name, MSA-I1's threshold, TLA+ for MSA-I6 and MSA-I4's three choices on 2026-11-17.
 
-**Where it is.** Eight investigations are built and the six fixes to running code they found. MSA-I1 found no shape in the estate closed and bounded. MSA-I3 found a stable line between semantic and realisation selection once three dimensions split by value. MSA-I4 lowered four operations to a neutral IR and three dialects. MSA-I9 confirmed that a single active consumer is no fence. MSA-I11 wrote the logical port. MSA-I12 emitted the studio's topology from one declaration. On 2026-11-18, MSA-F1 to MSA-F6 fixed the studio writer's offset storing, its retry of a refused batch, a resent id with another body, the topology's dead-letter binding and the event's logical key, and tested ADR-A149 decision 13. MSA-I2 found one example where a pass's guards read a balance an earlier draw wrote, which the census expects to become common once Behaviour imports Ledger. MSA-I6 checked FMH-5's model A and four new TLA+ models with TLC, and five catalogue rows keep their guarantee with a stated requirement.
+**Where it is.** Eight investigations are built and the six fixes to running code they found. MSA-I1 found no shape in the estate closed and bounded. MSA-I3 found a stable line between semantic and realisation selection once three dimensions split by value. MSA-I4 lowered four operations to a neutral IR and three dialects. MSA-I9 confirmed that a single active consumer is no fence. MSA-I11 wrote the logical port. MSA-I12 emitted the studio's topology from one declaration. On 2026-11-18, MSA-F1 to MSA-F6 fixed the studio writer's offset storing, its retry of a refused batch, a resent id with another body, the topology's dead-letter binding and the event's logical key, and tested ADR-A149 decision 13. On the maintainer's answers of the same day, MSA-F7 made a deletion win over a save that beats its tombstone, MSA-F8 answered a failure of the writer's own code with a 500, and MSA-F9 made a new document's save read its own row, which also stopped a save under a deleted id being answered 200 with nothing kept. MSA-I2, reworked on the owner's ledger as the ledger's unit, finds no firm guard that a read by revision does not cover, on three conditions no text states yet. MSA-I6 checked FMH-5's model A and four new TLA+ models with TLC, and five catalogue rows keep their guarantee with a stated requirement.
 
-**What it waits on.** Six decisions the status record lists, the first a deletion that leaves an unreached graph when its later tombstone loses a race (MSAF6-01). MSA-I5 waits on the shared types of positions and amounts. MSA-I6's probes on PostgreSQL and Fuseki and its trace validation, MSA-I7, MSA-I8 and MSA-I10 are not started.
+**What it waits on.** Four points the status record lists, the first the addendum to ADR-A149 drafted in MSA-F7's Validation Pack. MSA-I5a, the shared proof session, waits on ADR-A-FM2's addendum proposed 2026-11-18, and MSA-I5 on it. MSA-I6's probes on PostgreSQL and Fuseki and its trace validation, MSA-I7, MSA-I8 and MSA-I10 are not started.
 
 ## 5. Smaller units
 
@@ -917,8 +920,8 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-18 | 58 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
-| `docs/placement-vehicles-structure` | 2026-11-17 | 29 | pushed | no mark |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-18 | 63 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
+| `docs/placement-vehicles-structure` | 2026-11-18 | 35 | pushed | AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-I1, MSA-I11, MSA-I12, MSA-I3, MSA-I4, MSA-I5a, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
@@ -984,7 +987,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 110 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 20 pending design decisions, 110 rows of [technical debt](technical-debt.md), and 41 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -1070,7 +1073,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 10. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
 11. **Start OD-DOC4, the layer interactions record**, once the ledger's design is settled (the scenarios note ruled through, LG-Q23 decided, as it was on 2026-11-13, machine S's brief written). One maintained architecture document on how the layers work together at design time and at runtime, with two events traced end to end, [briefed](plans/improved-ontology-documentation.md) with its inputs, and kept current by STD-326.
 12. **Settle the ledger's writer on LG-17's figures**, added 2026-11-12 ([pack](validation/LG-17.md)). Decide LG-Q23, which the measurements support as (a) with (d). Decide where single-writer is provided for Oxigraph on disk, which loses guarded writes by a design choice of Oxigraph 0.5.0 (TSD-73, TD-162), and file the [drafted report](notes/upstream-sparql-engine-reports.md#oxigraph-on-disk-store-loses-concurrent-updates), whose patch is built and tested on `v0.5.13` and on `main`. Decide whether the guard is one revision per owner or the ledger runs one writer, since retries lose throughput on every store measured. Read LG-18, which ran in a cloud session on 2026-11-12 and is built, awaiting verification ([pack](validation/LG-18.md), [handoff](notes/lg-18-cloud-run-handoff.md)). Its figures bear on the writer: one writer per ledger matches the best guarded writer on each store and, keeping its balances, is 29 to 55 times its rate, and on Oxigraph on disk it equals the replay where guarded writers lose writes. LG-Q26 was decided on 2026-11-13: a reading by effective day is a derivation a report declares, and none is the ledger's. LG-Q23 was decided the same day as (b) with (d), the cut record, a checkpoint carries the two flow totals (STD-331), and STD-278 is narrowed. The ledger's open questions were all decided by 2026-11-13, LG-Q12, LG-Q13, LG-Q17, LG-Q18 and LG-Q22 last. Every posting scenario was ruled by 2026-11-15. Ranks are tiers of an account's rule, and a rank is an account only where it has an amount of its own or money must be held (MEC-110). Machine S receives whatever can be handed over safely and needs no benchmark, since it runs none. Its [brief](notes/machine-s-brief-2026-11-13.md) for LG-9 and LG-20 was amended on 2026-11-15, LG-20 gaining three parts, and waits on LG-21, the target kernel written here first, as LG-Q27 was decided (b) on 2026-11-15. LG-19 ran in a cloud session and is built, awaiting verification ([brief](notes/cloud-brief-lg-19-2026-11-13.md), [pack](validation/LG-19.md), [handoff](notes/lg-19-cloud-run-handoff.md)). The corpora refuse a debit beyond availability, and its figures leave the ratios between folds and LG-Q23's costs standing, change the shortcut's fallbacks at 5% credits and the late readings' impossible counts, and are for the maintainer to read. LG-22, its follow-ups, ran in a cloud session and is built, awaiting verification ([brief](notes/cloud-brief-lg-22-2026-11-15.md), [pack](validation/LG-22.md), [handoff](notes/lg-22-cloud-run-handoff.md)). Request lists continue the preload, so one writer refuses none, rows name the share they hold, and a refused request costs its path reads. The probes found that rdflib's read follows the named graphs a period length makes, which bears on how long a period should be and is for the maintainer, and that the sum less the cuts costs 1.05 and 1.23 of the kind-filtered read from the start and from a checkpoint on Jena, so LG-19's 1.85 did not hold. LG-19's note that a write got cheaper does not hold either. The maintainer decided LG-22's four questions on 2026-11-16: the period length is not chosen for rdflib (TSD-75), the rows drawn at 5% are still measured, the benchmark READMEs state current results only, and the refusals of several writers are left as the joint draw they are. A reading B that follows the account's policy (STD-336) is still owed in the benchmark. The maintainer verified every built ledger slice on 2026-11-16, LG-8, LG-10, LG-13 to LG-19, LG-21 and LG-22, each with an adversarial probe recorded in the status record, and closed LG-8 as it stands. The maintainer accepted three addenda to ADR-A131 on 2026-11-16, and decided the writer: one writer for each owner's ledger with the guard kept, and kept balances a permitted cache (MEC-113), written up as a third addendum of that day, which the maintainer accepted with STD-335 on 2026-11-16. All of it was merged into `main` that day. Machine S's bundle then arrived, LG-9 and LG-20 built with all 51 laws proved, and was merged into `docs/placement-vehicles-structure` and built again there. It waits for the maintainer's verdict, for decisions on the terms the README proposes, and for a release at the merge into `main`. LG-Q29 was decided (b), a credit posted to an account that does not accept its kind is refused, in a fourth addendum of 2026-11-16, which the maintainer accepted that day. LG-21, the target kernel, is drafted for review ([sketch](sketches/ledger-target-kernel.md)). Its six questions were decided on 2026-11-15 (LG-Q28) and LG-21 is built. LG-9 and LG-20 are restated on it, and machine S's [brief](notes/machine-s-brief-2026-11-15.md) is one bundle, handed over by the maintainer on 2026-11-16 on the branch `fm/ledger-proofs-on-the-target-kernel`. The verification rig runs after the design work.
-13. **Review and merge the multi-store fixes, then answer what they raised**, updated 2026-11-18 ([status](status/multi-store-architecture.md)). MSA-F1 to MSA-F6, MSA-I2 and MSA-I6 are built on machine S. MSA-F1 is the one that could lose a confirmed write. Run `mise run check:config-studio`, `mise run check:workers` and `mise run check:persistence`, and before the merge `mise run test:config-studio-browser` and `mise run check:persistence-conformance`, which were not run. Decide the six points at the top of the status record's next action, the first a deletion that leaves an unreached graph (MSAF6-01), and bump Persistence at the merge for the event's logical key.
+13. **Review and merge the multi-store fixes, then answer what they raised**, updated 2026-11-18 ([status](status/multi-store-architecture.md)). MSA-F1 to MSA-F9, MSA-I2 and MSA-I6 are built on machine S. MSA-F1 is the one that could lose a confirmed write. Run `mise run check:config-studio`, `mise run check:workers` and `mise run check:persistence`, and before the merge `mise run test:config-studio-browser` and `mise run check:persistence-conformance`, which were not run. Decide the four points at the top of the status record's next action, the first the addendum to ADR-A149 drafted in MSA-F7's Validation Pack, and bump Persistence at the merge for the event's logical key.
 
 ## 11. Completed units
 
