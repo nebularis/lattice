@@ -14,7 +14,7 @@
 
 ldg:AccountDefinitionShape a sh:NodeShape ;
     sh:targetClass ldg:AccountDefinition ;
-    sh:property [ sh:path ldg:admitsOwnerKind ; sh:minCount 1 ], [ sh:path ldg:closingRecurrence ; sh:maxCount 1 ], [ sh:path ldg:conversionMethod ; sh:maxCount 1 ], [ sh:path ldg:creditCeiling ; sh:maxCount 1 ], [ sh:path ldg:keyDimension ; sh:maxCount 1 ], [ sh:path ldg:mergePolicy ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOf ; sh:maxCount 1 ], [ sh:path ldg:periodRecurrence ; sh:maxCount 1 ], [ sh:path ldg:resetRecurrence ; sh:maxCount 1 ], [ sh:path ldg:statedAmount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:unitOfAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path ldg:admitsOwnerKind ; sh:minCount 1 ], [ sh:path ldg:closingRecurrence ; sh:maxCount 1 ], [ sh:path ldg:creditCeiling ; sh:maxCount 1 ], [ sh:path ldg:keyDimension ; sh:maxCount 1 ], [ sh:path ldg:mergePolicy ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOf ; sh:maxCount 1 ], [ sh:path ldg:periodRecurrence ; sh:maxCount 1 ], [ sh:path ldg:resetRecurrence ; sh:maxCount 1 ], [ sh:path ldg:statedAmount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:unitOfAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
 
 ldg:AccountShape a sh:NodeShape ;
     sh:targetClass ldg:Account ;
@@ -46,4 +46,4 @@ ldg:PassShape a sh:NodeShape ;
 
 ldg:PostingShape a sh:NodeShape ;
     sh:targetClass ldg:Posting ;
-    sh:property [ sh:path ldg:amountAsDrawn ; sh:maxCount 1 ], [ sh:path ldg:amountValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:conversionUsed ; sh:maxCount 1 ], [ sh:path ldg:direction ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:effectivePosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:forPurpose ; sh:maxCount 1 ], [ sh:path ldg:inPass ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:microPosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:recordedPosition ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path ldg:amountValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:direction ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:effectivePosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:forPurpose ; sh:maxCount 1 ], [ sh:path ldg:inPass ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:microPosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:recordedPosition ; sh:minCount 1 ; sh:maxCount 1 ] .

@@ -75,19 +75,13 @@ ldg:Pass a owl:Class ;
 
 ldg:Posting a owl:Class ;
     rdfs:comment "One draw or credit on one account." ;
-    fnd:utility "Write one per draw, on the account drawn, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. Its read set is prov:wasDerivedFrom, which names the merge record and grant a merged draw came from." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:amountAsDrawn ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:amountValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:conversionUsed ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:direction ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:effectivePosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:forPurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:inPass ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:microPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:onAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:recordedPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:DerivedArtefact .
+    fnd:utility "Write one per draw, on the account drawn, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. Its read set is prov:wasDerivedFrom, which names the merge record and grant a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:amountValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:direction ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:effectivePosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:forPurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:inPass ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:microPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:onAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:recordedPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:DerivedArtefact .
 
 ldg:accountKey a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The key value of an account instance, where its definition states a key dimension." ;
     rdfs:domain ldg:Account ;
     rdfs:range [ a owl:Class ; owl:unionOf ( skos:Concept qnt:Value ) ] .
-
-ldg:amountAsDrawn a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "The amount as drawn, in another value space than the account's." ;
-    fnd:utility "State it with ldg:conversionUsed, both or neither." ;
-    rdfs:domain ldg:Posting ;
-    rdfs:range qnt:Quantity .
 
 ldg:amountValue a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "A posting's amount, in its account's unit of account." ;
@@ -113,11 +107,6 @@ ldg:closePosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The position of the close a checkpoint was written at, on the axis of pass positions." ;
     rdfs:domain ldg:Checkpoint ;
     rdfs:range xsd:integer .
-
-ldg:conversionUsed a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "The conversion a draw in another value space used, with its rate's source and date." ;
-    rdfs:domain ldg:Posting ;
-    rdfs:range qnt:ConversionContext .
 
 ldg:direction a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "Whether a posting debits or credits its account." ;

@@ -84,7 +84,7 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/runtime.ttl
 
 An `ldg:AccountDefinition` states an amount consumed and restored, in a unit of account that must be extensive, so disjoint parts add to the whole, and a draw along a path and an availability reading (the least remaining balance along it) both mean something. "Part of and not in addition to" is the parent edge, `ldg:partOf`, stated explicitly rather than inferred, so a sublimit sits inside a section inside an aggregate while a further limit for one class of beneficiary sits beside it, never drawn through it.
 
-A key dimension derives one account per key value, on the first draw that names it (a seat quota per site, a sublimit per borrower). A merge rule arbitrates several proposals at one position: in priority order, proportionally (with a rounding method and a residual allocation, since an exact share need not round to a whole unit of account), or by refusing the whole merge. A credit ceiling, defaulting to the stated amount, is how far a credit may restore a balance, which lets a reinstatement raise a layer's capacity above its first stated amount without inventing a second account for it. A purpose lets one draw debit a second account outside its path (a flood sub-aggregate, say), and a conversion method states how a draw in another value space is converted.
+A key dimension derives one account per key value, on the first draw that names it (a seat quota per site, a sublimit per borrower). A merge rule arbitrates several proposals at one position: in priority order, proportionally (with a rounding method and a residual allocation, since an exact share need not round to a whole unit of account), or by refusing the whole merge. A credit ceiling, defaulting to the stated amount, is how far a credit may restore a balance, which lets a reinstatement raise a layer's capacity above its first stated amount without inventing a second account for it. A purpose lets one draw debit a second account outside its path (a flood sub-aggregate, say). A draw arrives in its account's unit, and the ledger never converts one.
 
 The class diagram below is generated from section 6.
 
@@ -102,7 +102,6 @@ classDiagram
     class AccountDefinition {
         admitsOwnerKind, at least one
         closingRecurrence, at most one
-        conversionMethod, at most one
         creditCeiling, at most one
         keyDimension, at most one
         mergePolicy, exactly one
@@ -125,7 +124,6 @@ classDiagram
     }
     class Class
     class Concept
-    class ConversionContext
     class DerivedArtefact
     class Grant {
         forProposal, exactly one
@@ -158,9 +156,7 @@ classDiagram
     }
     class PersistentIdentity
     class Posting {
-        amountAsDrawn, at most one
         amountValue, exactly one
-        conversionUsed, at most one
         direction, exactly one
         effectivePosition, exactly one
         forPurpose, at most one
@@ -181,7 +177,6 @@ classDiagram
     AccountDefinition --> AccountDefinition : partOf
     AccountDefinition --> Class : admitsOwnerKind
     AccountDefinition --> Concept : countsPurpose
-    AccountDefinition --> ConversionContext : conversionMethod
     AccountDefinition --> MergePolicy : mergePolicy
     AccountDefinition --> Quantity : creditCeiling
     AccountDefinition --> Quantity : statedAmount
@@ -204,8 +199,6 @@ classDiagram
     MergeRecord --> Grant : grant
     Posting --> Concept : direction
     Posting --> Concept : forPurpose
-    Posting --> ConversionContext : conversionUsed
-    Posting --> Quantity : amountAsDrawn
     Versioned <|-- MergePolicy
     class DatatypeProperty_effectivePosition["Datatype Property - effectivePosition"]
     class ObjectProperty_inPass["Object Property - inPass"]
@@ -218,10 +211,11 @@ classDiagram
 
 ### 5.1 Design decisions
 
-- **Configuration and records, in two documents.** Ledger states its configuration: the tree, owner kinds, merge rules and their parameters, the period and closing recurrences, keys, purposes, credit ceiling and conversion ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). Its runtime document states the records: account instances, passes, postings, balance records, merge records with their grants, and checkpoints. Computing them is the evaluator's, and Ledger checks what was recorded against its laws (section 7.3).
+- **Configuration and records, in two documents.** Ledger states its configuration: the tree, owner kinds, merge rules and their parameters, the period and closing recurrences, keys, purposes and credit ceiling ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). Its runtime document states the records: account instances, passes, postings, balance records, merge records with their grants, and checkpoints. Computing them is the evaluator's, and Ledger checks what was recorded against its laws (section 7.3).
 - **An account instance is named.** An account is a node with a minted IRI, identified by its definition, its owner, its key and its period, which stay its natural key ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-10-27). A posting names that node rather than repeating the four values. An instance states the instance it is part of, so a fold over a subtree follows one edge.
 - **A period is an account, not a reset.** Where a definition states `ldg:periodRecurrence`, one account is derived per period, its period key the recurrence bin the effective position falls in, computed at write and never supplied by a draw. One recurrence holds along a path, and a keyed child's instance is part of its parent's under the same bin. Nothing resets, so `ldg:resetRecurrence` is deprecated.
 - **Two orderings.** A posting carries an effective position, where the fact sits in the arrangement and comparable across accounts, and a recorded position with a micro-position, where it sits in its own account's append-only sequence. The pass that wrote it carries the position at which it was recorded, on the effective axis, and a posting is never effective later than its pass. Balance records, closes and checkpoints are keyed on the recorded axis, so a reading as of an effective position folds the postings.
+- **A draw arrives in its account's unit.** The ledger never converts. A request in another value space is converted before it reaches the ledger, where the conversion is recorded with its rate, the rate's source and its date, and the draw is then made in the account's unit. A posting may cite that record by `prov:wasDerivedFrom`, as it cites a merge record, so the conversion stays traceable and the ledger states no term for it ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-09).
 - **Post at the drawn account only.** A draw writes one posting, on the account drawn, and an ancestor's balance is derived by a fold over its subtree. A purpose-counting account is outside the drawn account's subtree, so it keeps a posting of its own from the same draw. Where a purpose-counting account and the drawn account share an ancestor, that ancestor's fold would count the draw twice, and the rule that prevents it is open (section 13).
 - **An exact share is two integers.** A proportional grant keeps its exact share as a numerator and a denominator, not as one `owl:rational`, because no store LATTICE runs compares that literal by value (TSD-70), and the merge shapes compare and sum grants.
 - **The running balance waits.** A balance record states what remains and what is available after a pass, for each account the pass moved. A running balance on each posting is not stated, since with postings at the drawn account only, a posting's running balance is ambiguous for an ancestor.
@@ -244,7 +238,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** An amount consumed and restored, as the terms state it.
 
-**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion method only where the terms need them.
+**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against or a credit ceiling only where the terms need them.
 
 **Restrictions.**
 
@@ -258,7 +252,6 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 | `ldg:resetRecurrence` | max 1 |  |  |
 | `ldg:keyDimension` | max 1 |  |  |
 | `ldg:creditCeiling` | max 1 |  |  |
-| `ldg:conversionMethod` | max 1 |  |  |
 | `ldg:periodRecurrence` | max 1 |  |  |
 | `ldg:closingRecurrence` | max 1 |  |  |
 
@@ -321,7 +314,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Subclass of.** `fnd:DerivedArtefact`
 
-**Utility.** Write one per draw, on the account drawn, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. Its read set is `prov:wasDerivedFrom`, which names the merge record and grant a merged draw came from.
+**Utility.** Write one per draw, on the account drawn, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. Its read set is `prov:wasDerivedFrom`, which names the merge record and grant a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion.
 
 **Restrictions.**
 
@@ -335,8 +328,6 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 | `ldg:direction` | exactly 1 |  |  |
 | `ldg:amountValue` | exactly 1 |  |  |
 | `ldg:forPurpose` | max 1 |  |  |
-| `ldg:amountAsDrawn` | max 1 |  |  |
-| `ldg:conversionUsed` | max 1 |  |  |
 
 #### `ldg:BalanceRecord`
 
@@ -637,20 +628,6 @@ to twice it, without a second account).
 
 **Characteristics.** functional
 
-#### `ldg:conversionMethod`
-
-**Definition.** How a draw in another value space than the account's is converted.
-
-**Utility.** States the standing conversion arrangement for a draw made in a different value space from
-the account's own (a sterling commitment drawn in euros). The conversion context a specific draw used,
-which may differ by date, is recorded with that draw.
-
-**Domain.** `ldg:AccountDefinition`
-
-**Range.** `qnt:ConversionContext`
-
-**Characteristics.** functional
-
 <!-- start: {"output-file": "spec/ledger-runtime.ttl"} -->
 
 #### `ldg:ofDefinition`
@@ -746,28 +723,6 @@ which may differ by date, is recorded with that draw.
 **Domain.** `ldg:Posting`
 
 **Range.** `skos:Concept`
-
-**Characteristics.** functional
-
-#### `ldg:amountAsDrawn`
-
-**Definition.** The amount as drawn, in another value space than the account's.
-
-**Utility.** State it with `ldg:conversionUsed`, both or neither.
-
-**Domain.** `ldg:Posting`
-
-**Range.** `qnt:Quantity`
-
-**Characteristics.** functional
-
-#### `ldg:conversionUsed`
-
-**Definition.** The conversion a draw in another value space used, with its rate's source and date.
-
-**Domain.** `ldg:Posting`
-
-**Range.** `qnt:ConversionContext`
 
 **Characteristics.** functional
 
@@ -1084,20 +1039,17 @@ ldg:mergePolicy fnd:meaningBearing true .
 | Term | Kind | Summary |
 |---|---|---|
 | `ldg:Account` | Class | Disjoint with `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:accountKey` max 1, `ldg:forOwner` exactly 1, `ldg:ofDefinition` exactly 1, `ldg:partOfAccount` max 1, `ldg:periodKey` max 1. |
-| `ldg:AccountDefinition` | Class | Disjoint with `ldg:Account`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:admitsOwnerKind` min 1, `ldg:closingRecurrence` max 1, `ldg:conversionMethod` max 1, `ldg:creditCeiling` max 1, `ldg:keyDimension` max 1, `ldg:mergePolicy` exactly 1, `ldg:partOf` max 1, `ldg:periodRecurrence` max 1, `ldg:resetRecurrence` max 1, `ldg:statedAmount` exactly 1, `ldg:unitOfAccount` exactly 1. |
+| `ldg:AccountDefinition` | Class | Disjoint with `ldg:Account`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:admitsOwnerKind` min 1, `ldg:closingRecurrence` max 1, `ldg:creditCeiling` max 1, `ldg:keyDimension` max 1, `ldg:mergePolicy` exactly 1, `ldg:partOf` max 1, `ldg:periodRecurrence` max 1, `ldg:resetRecurrence` max 1, `ldg:statedAmount` exactly 1, `ldg:unitOfAccount` exactly 1. |
 | `ldg:BalanceRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:availableValue` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:remainingValue` exactly 1. |
 | `ldg:Checkpoint` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:balanceValue` exactly 1, `ldg:closePosition` exactly 1, `ldg:onAccount` exactly 1. |
 | `ldg:Grant` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:forProposal` exactly 1, `ldg:grantedValue` exactly 1, `ldg:proportionDenominator` max 1, `ldg:proportionNumerator` max 1, `ldg:requestedValue` exactly 1. |
 | `ldg:MergePolicy` | Class | Subclass of `fnd:Versioned`. Restrictions `ldg:allowsResiduals` max 1, `ldg:excessRecovery` max 1, `ldg:mergeRule` exactly 1, `ldg:rankCriterion` max 1, `ldg:requiresDistinctRanks` max 1, `ldg:requiresSamePurpose` max 1, `ldg:residualAllocation` max 1, `ldg:roundingDifference` max 1, `ldg:roundingMethod` max 1, `ldg:unitOrderCriterion` max 1. |
 | `ldg:MergeRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:availableBefore` max 1, `ldg:effectivePosition` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:refusalReason` max 1. |
 | `ldg:Pass` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Posting`. Restrictions `ldg:passPosition` exactly 1. |
-| `ldg:Posting` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`. Restrictions `ldg:amountAsDrawn` max 1, `ldg:amountValue` exactly 1, `ldg:conversionUsed` max 1, `ldg:direction` exactly 1, `ldg:effectivePosition` exactly 1, `ldg:forPurpose` max 1, `ldg:inPass` exactly 1, `ldg:microPosition` exactly 1, `ldg:onAccount` exactly 1, `ldg:recordedPosition` exactly 1. |
+| `ldg:Posting` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`. Restrictions `ldg:amountValue` exactly 1, `ldg:direction` exactly 1, `ldg:effectivePosition` exactly 1, `ldg:forPurpose` max 1, `ldg:inPass` exactly 1, `ldg:microPosition` exactly 1, `ldg:onAccount` exactly 1, `ldg:recordedPosition` exactly 1. |
 | `ldg:accountKey` | Object property | Domain `ldg:Account`. Range `skos:Concept` or `qnt:Value`. Functional. |
 | `ldg:admitsOwnerKind` | Object property | Domain `ldg:AccountDefinition`. Range `rdfs:Class`. |
-| `ldg:amountAsDrawn` | Object property | Domain `ldg:Posting`. Range `qnt:Quantity`. Functional. |
 | `ldg:closingRecurrence` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Recurrence`. Functional. |
-| `ldg:conversionMethod` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:ConversionContext`. Functional. |
-| `ldg:conversionUsed` | Object property | Domain `ldg:Posting`. Range `qnt:ConversionContext`. Functional. |
 | `ldg:countsPurpose` | Object property | Domain `ldg:AccountDefinition`. Range `skos:Concept`. |
 | `ldg:creditCeiling` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Quantity`. Functional. |
 | `ldg:direction` | Object property | Domain `ldg:Posting`. Range `skos:Concept`. Functional. |
@@ -1340,7 +1292,6 @@ ldg:KeyDimensionTypeShape a sh:NodeShape ;
 | `ldg:PostingNaturalKeyShape` | no two postings on one account share a recorded position and a micro-position | |
 | `ldg:RecordedOrderFollowsPassesShape` | an account's recorded order never runs against the order of the passes that wrote it | |
 | `ldg:NotForwardDatedShape` | no posting or merge is effective later than the pass that recorded it | |
-| `ldg:ConversionTogetherShape` | a posting states the amount as drawn and the conversion used both or neither | |
 
 The fold applies a ceiling once, to the total. That is exact where no credit was cut by a ceiling before a later debit in the same subtree, which every example meets, and a history where one was needs a running balance recorded on each posting to be checked, which section 13 leaves open.
 
@@ -1644,24 +1595,6 @@ ldg:NotForwardDatedShape a sh:NodeShape ;
                                 ?value a $this ; ldg:effectivePosition ?effective ; ldg:inPass ?pass .
                                 ?pass ldg:passPosition ?at .
                                 FILTER (?effective > ?at)
-                        }
-                """
-        ] .
-
-ldg:ConversionTogetherShape a sh:NodeShape ;
-        sh:targetNode ldg:Posting ;
-        sh:sparql [
-                sh:message "A posting must state the amount as drawn and the conversion used both or neither." ;
-                sh:select """
-                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-                        SELECT $this ?value WHERE {
-                                {
-                                        ?value ldg:amountAsDrawn ?drawn ; a $this .
-                                        FILTER NOT EXISTS { ?value ldg:conversionUsed ?conversion }
-                                } UNION {
-                                        ?value ldg:conversionUsed ?used ; a $this .
-                                        FILTER NOT EXISTS { ?value ldg:amountAsDrawn ?amount }
-                                }
                         }
                 """
         ] .
@@ -2135,6 +2068,8 @@ Ledger imports Foundation, for persistent identity, and Quantification, for valu
 
 Earlier versions are listed in the [ontology release register](../../docs/architecture/ontology-releases.md).
 
+- **Unreleased**.
+  - changes meaning. Conversion leaves the ledger ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-09). `ldg:conversionMethod` on an account definition, `ldg:amountAsDrawn` and `ldg:conversionUsed` on a posting, and `ldg:ConversionTogetherShape` are removed, and every draw is made in its account's unit. A document that states them names terms the ledger no longer declares, and no shape reads them. To move it, convert the amount before the ledger, record the conversion there with its rate, the rate's source and its date, post the converted amount, and cite the conversion record from the posting by `prov:wasDerivedFrom`.
 - **0.22.0**.
   - changes meaning. What an account declares for a merge moves to a merge policy ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-17). `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation` have the domain `ldg:MergePolicy`, a new versioned class, and an account definition names its policy with the new `ldg:mergePolicy`, exactly one. A definition that states the three properties itself no longer conforms. To move it, state them on a policy and name the policy from the definition. `ldg:ProportionalNeedsRoundingShape` and `ldg:NearestRoundingStatesTheDifferenceShape` now target the policy.
   - no effect. New on a merge policy, each at most one: `ldg:rankCriterion` and `ldg:unitOrderCriterion`, whose values are concepts of the new scheme `ldg:OrderCriteria` that an applied module fills, and the booleans `ldg:allowsResiduals`, `ldg:requiresDistinctRanks` and `ldg:requiresSamePurpose`.

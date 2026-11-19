@@ -45,8 +45,8 @@ dct:description a owl:AnnotationProperty .
 
 ldg:AccountDefinition a owl:Class ;
     rdfs:comment "An amount consumed and restored, as the terms state it." ;
-    fnd:utility "Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against, a credit ceiling or a conversion method only where the terms need them." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsOwnerKind ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:closingRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:conversionMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditCeiling ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:keyDimension ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergePolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:partOf ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:periodRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:resetRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:statedAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOfAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+    fnd:utility "Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against or a credit ceiling only where the terms need them." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsOwnerKind ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:closingRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditCeiling ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:keyDimension ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergePolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:partOf ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:periodRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:resetRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:statedAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOfAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 ldg:MergePolicy a owl:Class ;
     rdfs:comment "What a scope declares for requests that compete at one position." ;
@@ -70,12 +70,6 @@ ldg:closingRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
     fnd:utility "Sets the trade between storage and read cost per account: a heavily drawn aggregate closes often and a quiet one seldom. A close is keyed on the recorded axis, so it seals the postings recorded by then. Leave unset for an account whose history is folded whole." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:Recurrence .
-
-ldg:conversionMethod a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "How a draw in another value space than the account's is converted." ;
-    fnd:utility "States the standing conversion arrangement for a draw made in a different value space from the account's own (a sterling commitment drawn in euros). The conversion context a specific draw used, which may differ by date, is recorded with that draw." ;
-    rdfs:domain ldg:AccountDefinition ;
-    rdfs:range qnt:ConversionContext .
 
 ldg:countsPurpose a owl:ObjectProperty ;
     rdfs:comment "A purpose which, when a draw names it, also debits this account outside its path." ;

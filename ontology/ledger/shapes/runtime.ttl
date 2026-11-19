@@ -299,21 +299,3 @@ ldg:NotForwardDatedShape a sh:NodeShape ;
                         }
                 """
         ] .
-
-ldg:ConversionTogetherShape a sh:NodeShape ;
-        sh:targetNode ldg:Posting ;
-        sh:sparql [
-                sh:message "A posting must state the amount as drawn and the conversion used both or neither." ;
-                sh:select """
-                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-                        SELECT $this ?value WHERE {
-                                {
-                                        ?value ldg:amountAsDrawn ?drawn ; a $this .
-                                        FILTER NOT EXISTS { ?value ldg:conversionUsed ?conversion }
-                                } UNION {
-                                        ?value ldg:conversionUsed ?used ; a $this .
-                                        FILTER NOT EXISTS { ?value ldg:amountAsDrawn ?amount }
-                                }
-                        }
-                """
-        ] .

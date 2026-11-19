@@ -348,11 +348,6 @@ def _merge_not_cited(g: Graph) -> None:
     g.remove((ex["staff-spend-posting"], PROV.wasDerivedFrom, ex["staff-spend-merge"]))
 
 
-def _conversion_alone(g: Graph) -> None:
-    ex = _ex("revolving-facility")
-    g.remove((ex["draw-1-posting"], LDG.conversionUsed, None))
-
-
 def _period_key_missing(g: Graph) -> None:
     ex = _ex("licence-seats")
     g.remove((ex["account-seat-licence-london-2028"], LDG.periodKey, None))
@@ -407,7 +402,6 @@ MUTATIONS = {
     "a forward-dated posting (STD-294)": ("research-grant", _forward_dated, "NotForwardDatedShape"),
     "a recorded order against the passes": ("research-grant", _recorded_against_passes, "RecordedOrderFollowsPassesShape"),
     "a merged posting not citing its merge": ("research-grant", _merge_not_cited, "MergedPostingCitesMergeShape"),
-    "a conversion stated alone": ("revolving-facility", _conversion_alone, "ConversionTogetherShape"),
     "a periodic account with no period key": ("licence-seats", _period_key_missing, "PeriodKeyFromRecurrenceShape"),
     "an instance not part of its parent's": (
         "research-grant", _parent_instance_missing, "PartOfAccountFollowsDefinitionShape"),

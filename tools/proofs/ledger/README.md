@@ -118,7 +118,7 @@ Every hypothesis is in the theorem's statement, and nothing is assumed outside t
 - LG-20's laws not yet built: LW4, LH1, LH2, LM2, LJ2, LJ3, LP1, LP2, LP4, LPn, LB1n, LU1n, LU3, LE4 and LE5 (its pack says why).
 - The composition law, the uniqueness of a solution and the least fixpoint over the information order, which are ADR-A130 decision 5's and the formal-methods plan's E4b.
 - The runtime terms, postings and balance records as records with natural keys, which LG-2 writes against these theorems.
-- Conversion between value spaces (LG-Q8), and the derivation of one account per key value (LG-Q7).
+- Conversion between value spaces, which is not the ledger's, since every draw arrives in its account's unit (ADR-A131, its addendum of 2026-11-09), and the derivation of one account per key value (LG-Q7).
 - Code export. `path` evaluates through its one-step unfolding, which ends where the parent function has no cycle, so `value` and `code_simp` reach `settle`, `spread`, `pots` and `credit`, and no `export_code` is run.
 - Positions. The target kernel orders a merge by ranks and readings by effective day, and has no position type.
 - Any insurance structure, which is applied content.
