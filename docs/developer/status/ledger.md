@@ -4,7 +4,7 @@
 
 **Unit ID:** `ledger`
 **Status:** merged 2026-11-18. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
-**Last updated:** 2026-11-08
+**Last updated:** 2026-11-19
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md), [LG-23](../validation/LG-23.md)
 
@@ -147,7 +147,7 @@ Results sections. In short:
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |
 | LG-7 | the ledger laws mechanised in `tools/proofs/ledger/`, ahead of LG-2 | merged 2026-11-09, verified 2026-11-09, built 2026-11-08, building 2026-11-08 |  |
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | merged 2026-11-16, verified 2026-11-16, merged 2026-11-09, built 2026-11-09, building 2026-11-09 |  |
-| LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | merged 2026-11-18, built 2026-11-16, building 2026-11-16 |  |
+| LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | merged 2026-11-18, verified 2026-11-19, built 2026-11-16, building 2026-11-16 |  |
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-09, building 2026-11-09 |  |
 | LG-11 | conversion leaves the ledger, the conversion terms removed | planned |  |
 | LG-12 | which draws an account accepts, a shape for compatibility and representability | planned | LG-11 |
@@ -158,15 +158,18 @@ Results sections. In short:
 | LG-17 | LG-16's gaps closed: like-for-like read forms, a cut that copies its position, a ceiling above a stated amount, the sketch's tree in an engine, the cost of writing, concurrent writers on Oxigraph and Jena, late postings, and the native Jena caller | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-12, building 2026-11-12 |  |
 | LG-18 | LG-17's follow-ups measured: one writer per ledger against guarded writers, with balances kept by the writer and with batched commits, and the readings of a balance by effective day as known at a recording, their properties and their read cost | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-12, building 2026-11-12 |  |
 | LG-19 | the benchmark's corpora refuse a debit beyond availability, and LG-14 to LG-18 are run again on them | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-13, building 2026-11-13 | LG-18 |
-| LG-20 | the laws the target kernel gains, in seven groups by definition, restated 2026-11-15 in place of the third widening | merged 2026-11-18, built 2026-11-16, building 2026-11-16 |  |
+| LG-20 | the laws the target kernel gains, in seven groups by definition, restated 2026-11-15 in place of the third widening | merged 2026-11-18, verified 2026-11-19, built 2026-11-16, building 2026-11-16 |  |
 | LG-21 | the target kernel written first, each changed definition once in its decided form, tried on generated cases and reviewed, before any further proof | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-15, building 2026-11-15 |  |
 | LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figures at the top of the READMEs | merged 2026-11-16, verified 2026-11-16, built 2026-11-16, building 2026-11-15 | LG-19 |
-| LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | merged 2026-11-18, built 2026-11-17, building 2026-11-17 |  |
+| LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | merged 2026-11-18, verified 2026-11-19, built 2026-11-17, building 2026-11-17 |  |
 | LG-24 | the merge policy node, what an account declares for a merge moved to a policy the account definition refers to | merged 2026-11-18, verified 2026-11-17, built 2026-11-17, building 2026-11-17 |  |
-| LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed | planned | LG-11, LG-Q38, LG-Q39, LG-Q42 |
-| LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part | planned | LG-25, LG-Q38, LG-Q41 |
-| LG-27 | the ledger node, its profile and revision, and the checkpoint's two totals | planned | LG-25, LG-Q37, LG-Q43 |
-| LG-28 | the account definition as a versioned thing, with the scheme edition it pins | planned | LG-26, LG-27, LG-Q40 |
+| LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed | planned | LG-11 |
+| LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part | planned | LG-25 |
+| LG-27 | the ledger node, its profile and revision, and the checkpoint's two totals | planned | LG-25 |
+| LG-28 | the account definition as a versioned thing, with the scheme edition it pins | planned | LG-26, LG-27 |
+- 2026-11-19: **the maintainer verified LG-9, LG-20 and LG-23**, each already on `main`, on the packs and the probes recorded in them.
+- 2026-11-19: the maintainer answered LG-Q38 to LG-Q43, each as leaned. A request has a record of its own on every merge and `ldg:Grant` is retired, a cut joins to its posting for its position, the account definition is versioned in this rework, the residual account is named on the merge policy, the rework is LG-11 and then LG-25 to LG-28, and a checkpoint is written only for an account that moved. No question holds a slice of the rework now. ADR-A131 gains an addendum proposed that day for the checkpoint, which corrects one sentence each of two earlier addenda.
+- 2026-11-19: the plan's decided questions, LG-Q9 to LG-Q37 and LG-Q44 where they opened with "Decided", now open with "Answered" and the day, the form the index reads. It had listed each as open.
 - 2026-11-17: the maintainer decided LG-Q36 as (b), a merge policy is content-addressed, its IRI minted from its values. LG-24 marked building before any other edit.
 - 2026-11-17: the release prepared for the merge into `main`, at the maintainer's word. The substrate moves to 0.22.0, a minor release since the merge policy invalidates a definition that states its rule itself, and the nine modules that import it each take a minor bump with a release note that says only their imports moved. The vocab documents, the cross-module imports and the tests that pin a version moved by hand. The full sweep passes all 17 checks. Twenty tags are for the maintainer, after the branch is squashed into `main`.
 - 2026-11-17: the maintainer accepted ADR-A131's second addendum of 2026-11-17 and left LG-23's probes to the agent. The verdict is still the maintainer's. Probe A made the new constraint look for the wrong property and its refusal test failed. Probe B broke an order lemma's proof, and showed that the proof task printed `GATE: pass` after a failed build. `tools/proofs/check.py` now reports a failed gate for a layer whose session did not build. Restored, every proof session finishes and 106 rows pass.

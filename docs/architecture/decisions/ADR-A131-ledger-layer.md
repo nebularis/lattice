@@ -489,6 +489,20 @@ The case of a unit short in the second addendum of 2026-11-16, members with a ba
 
 **Releases.** The ledger node, its revision and the revision a pass records add published terms, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
 
+## Addendum (2026-11-19): a checkpoint is written for an account that moved
+
+**Status of this addendum:** Proposed. The maintainer decided the rule on 2026-11-19, and the wording is the maintainer's to accept. It adds no evaluation semantics, so it carries no conformance cases.
+
+**Narrows the first addendum of 2026-11-16 and the second addendum of 2026-10-27.** Each has one sentence that reads as a checkpoint for every account at every close.
+
+**A checkpoint is written at a close for each account that moved since its last checkpoint.** An account has moved when a posting recorded since then changes its balance, or changes the debits or the accepted credits offered that its checkpoint holds beside the balance. A credit cut in full at an account leaves the balance where it was and still moves the account, since the amount offered is counted.
+
+**An account that did not move is read from its earlier checkpoint.** Nothing was recorded for it in between, so its latest checkpoint is still exactly true at every later close. A read as of a close takes, for each account, the checkpoint of the latest close at or before it that has one, and the stated amount with nothing drawn or offered where the account has none.
+
+**How the two sentences now read.** The first addendum of 2026-11-16 has the runtime keep "a checkpoint of every account's balance at each close". It keeps one at each close for each account that moved. The second addendum of 2026-10-27 says the set of checkpoints "stays the product of accounts and closes". The set is at most that product. Neither addendum's reasoning rests on the product, since a posting recorded later and effective earlier disturbs no checkpoint whichever accounts have one.
+
+**The cost.** A close writes a record only where something happened. For example, a ledger of 10,000 accounts of which 200 move in a period writes 200 checkpoints at its close, against 10,000. The read pays for it, looking for an account's latest checkpoint at or before a close in place of the one at that close.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -527,3 +541,5 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 **The second addendum of 2026-11-17.** LG-Q30 of the [Ledger plan](../../developer/plans/ledger.md), raised by a constraint that read a term the layer had not declared. The maintainer decided on 2026-11-17 to declare it and asked that where a unit short goes be driven by the wording, as a unit over is, so the reading by symmetry first proposed was dropped. Built as LG-23 ([its pack](../../developer/validation/LG-23.md)), which holds the model's search of the four pairs and the theorem that each settles exactly.
 
 **The addendum of 2026-11-18.** LG-Q44 of the [Ledger plan](../../developer/plans/ledger.md), raised by the read-set census of the multi-store architecture epic, MSA-I2, which met decision 5's unit and the third addendum's side by side. The maintainer decided for the owner's ledger on 2026-11-18, with the ledger node of LG-Q37 as its root. The epic's own proposal that an identity's other state be placed with its ledger was not taken, since a read by revision needs no such rule.
+
+**The addendum of 2026-11-19.** LG-Q43 of the [Ledger plan](../../developer/plans/ledger.md), raised by the [sketch of the vocabulary's rework](../../developer/sketches/ledger-vocabulary-rework.md), which found the layer's README and STD-331 on one side and the two sentences on the other. The maintainer decided on 2026-11-19 for the accounts that moved, which is what the benchmarks stored. The rule is stated here for an account's totals as well as its balance, where the README speaks of the balance alone, and LG-27 brings the README into line.

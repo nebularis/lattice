@@ -2,7 +2,7 @@
 
 # The ledger's vocabulary and runtime records, reworked for the decided design
 
-**Unit:** `ledger`, prefix LG ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Status:** sketched 2026-11-18, for the maintainer's answers to LG-Q37 to LG-Q43. Nothing here is built. It is the brief the registers call "LG-2's rework", which had no slice of its own until now.
+**Unit:** `ledger`, prefix LG ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Status:** sketched 2026-11-18. The maintainer answered LG-Q37 on 2026-11-18 and LG-Q38 to LG-Q43 on 2026-11-19, each as leaned. Nothing here is built. It is the brief the registers call "LG-2's rework", which had no slice of its own until now.
 
 ## 1. Why
 
@@ -123,6 +123,7 @@ classDiagram
 - **A posting keeps one amount for the fold.** `ldg:amountValue` is the amount applied, for a debit and a credit alike, so a balance is read from one property. A credit also carries `ldg:offeredValue`, which only the reading of flows needs.
 - **The balance record goes**, and the running balance sits on the posting at the account drawn on.
 - **A cut is a node of its own**, since one credit can be cut at several ancestors (LG-Q39).
+- **A position is a natural number.** The two position properties are typed `xsd:integer` today, and LG-25 narrows them to `xsd:nonNegativeInteger`, as ADR-A-FM2's addendum of 2026-11-18 defines a position.
 - **A request replaces the grant** as the node a merge record holds (LG-Q38).
 
 ### 4.3 A credit that is cut, as the writer records it
@@ -189,7 +190,7 @@ All five change published meaning, so they are released together as one minor re
 - (b) No node. The owner's persistent identity names the profile and holds the revision. That puts a fact every write changes on a node of Foundation's, which other writers of that identity then contend for.
 - (c) No node and no revision in the ontology. The profile is bound in the deployment's configuration, and the revision is the store adapter's.
 
-*Leaning (a).* LG-Q44 of the plan asks which unit is the ledger's aggregate, and if it is the owner's ledger this node is its root. The revision is the one fact of a ledger that changes in place, and it is better on a node the ledger owns than on someone else's. Under (c) the agreement that a writer's records equal a replay in revision order could not be checked from the records.
+*Leaning (a).* LG-Q44 of the plan asks which unit is the ledger's aggregate, and if it is the owner's ledger this node is its root. The revision is the one fact of a ledger that changes in place, and it is better on a node the ledger owns than on someone else's. Under (c) the agreement that a writer's records equal a replay in revision order could not be checked from the records. **Answered 2026-11-18, (a), with LG-Q44 of the plan.**
 
 **LG-Q38. Does a request have a record of its own, and is a refusal's request kept?** Today a merge record holds a `ldg:Grant` for each proposal granted, and a refused merge must hold none. So a merge refused for a tie records no rank, though the decision says the record shows what decided the order.
 
@@ -197,39 +198,39 @@ All five change published meaning, so they are released together as one minor re
 - (b) One node for each request on every merge, `ldg:Request`, carrying what was asked, its rank, its place and its purpose, and what it was granted where the merge granted. `ldg:Grant` is retired. A refused merge holds its requests with no granted value. A credit refused alone is recorded the same way, as a record with one request and a reason.
 - (c) Two nodes, a request and a grant that names it. About two more triples for each granted request, for no query that (b) cannot answer.
 
-*Leaning (b).* A refusal is never a grant of nothing, so a refused request should not be typed as a grant, and a history that cannot show what was refused is hard to defend. It costs four to six triples for each refused request.
+*Leaning (b).* A refusal is never a grant of nothing, so a refused request should not be typed as a grant, and a history that cannot show what was refused is hard to defend. It costs four to six triples for each refused request. **Answered 2026-11-19, (b).**
 
 **LG-Q39. Does a cut copy its posting's position?**
 
 - (a) Joined. A cut names its posting and the ancestor and states its value, and a read by position joins it to the posting.
 - (b) Copied. The cut also states its posting's position, one more triple, so the read needs no join. It added 1.84% to the store at 20,000 postings, and its read has not been timed on the current corpora.
 
-*Leaning (a).* A copied position is a second record of one fact, and LG-17's probe showed it can drift unnoticed without a law of its own. The copy can be added later if a timing shows the join matters.
+*Leaning (a).* A copied position is a second record of one fact, and LG-17's probe showed it can drift unnoticed without a law of its own. The copy can be added later if a timing shows the join matters. **Answered 2026-11-19, (a).**
 
 **LG-Q40. Is the account definition versioned in this rework?** It is the last open instance of the rule that a versioned thing's meaning-bearing parts cannot change under it (TD-102). The pin of a scheme edition and of a merge policy's version both lean on it.
 
 - (a) Yes, as LG-28, last, once the other terms have settled. Every example's definitions gain an identity, and the edges to the stated amount, the ceiling, the parent and the policy are marked as bearing meaning. Foundation's check then reads those edges, and a quantity that is neither versioned nor minted under its definition is warned on, which the slice has to answer.
 - (b) Not now. The pins are stated as intended and TD-102 stays open.
 
-*Leaning (a).* The rework already breaks every example, so this is the cheapest moment, and LG-3 and LG-4 should build on a definition that will not change shape again.
+*Leaning (a).* The rework already breaks every example, so this is the cheapest moment, and LG-3 and LG-4 should build on a definition that will not change shape again. **Answered 2026-11-19, (a).**
 
 **LG-Q41. Where is the residual account named?**
 
 - (a) On the merge policy, beside the permission to leave a residual.
 - (b) On the account definition.
 
-*Leaning (a).* What happens to a residual is part of the treatment a scope states. A scope whose accounts need different residual accounts states different policies.
+*Leaning (a).* What happens to a residual is part of the treatment a scope states. A scope whose accounts need different residual accounts states different policies. **Answered 2026-11-19, (a).**
 
 **LG-Q42. Are the five slices and their order right, with LG-11 first?** Section 5 has them. The alternative is one large slice, which would exceed our own sizing rule and give one very large pack to verify.
 
-*Leaning: as drawn.*
+*Leaning: as drawn.* **Answered 2026-11-19, as drawn.**
 
 **LG-Q43. Which accounts does a checkpoint cover at a close?** Three texts differ. The README writes one for each account whose balance moved since its last checkpoint. ADR-A131's first addendum of 2026-11-16 speaks of a checkpoint of every account's balance at each close. STD-331 says an account that did not move is reached by carrying its earlier checkpoint forward.
 
 - (a) Only the accounts that moved, and an account that did not move is read from its last checkpoint.
 - (b) Every account at every close.
 
-*Leaning (a).* It is what the README and STD-331 say and what the benchmarks stored, and (b) writes a record for every quiet account at every close. The addendum's sentence would be corrected by a short addendum.
+*Leaning (a).* It is what the README and STD-331 say and what the benchmarks stored, and (b) writes a record for every quiet account at every close. The addendum's sentence would be corrected by a short addendum. **Answered 2026-11-19, (a).**
 
 ## 7. What this leaves out
 

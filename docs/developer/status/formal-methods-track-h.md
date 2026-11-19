@@ -97,53 +97,53 @@ Left for the maintainer:
 
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
-| FMH-2.12 | the rows replace, selected by capability, LR-Q1 to LR-Q4 | built 2026-11-01, awaiting the maintainer's review. [Validation Pack](../validation/FMH-2.12.md), [plan §4.20](../plans/formal-methods-track-h.md#420-h212-the-rows-replace-selected-by-capability-planned-2026-11-01) |  |
-| FMH-1.1 | prefix antichain and overlap check | merged 2026-11-02, verified 2026-10-09, [Validation Pack](../validation/FMH-1.1.md) |  |
-| FMH-1.2a | witness harness, audit witnesses, measured gap list | merged 2026-11-02, verified 2026-10-09, [Validation Pack](../validation/FMH-1.2.md) |  |
-| FMH-1.2b | witnesses for the refusals and warnings | merged 2026-11-02, verified 2026-10-09, [Validation Pack](../validation/FMH-1.2b.md) |  |
-| FMH-1.2c | witnesses for the 13 remaining shapes | merged 2026-11-02, verified 2026-10-09, [Validation Pack](../validation/FMH-1.2c.md) |  |
-| FMH-1.2d | refuse a multi-valued single-valued property, TD-25 | merged 2026-10-10, [Validation Pack](../validation/FMH-1.2d.md) |  |
-| FMH-1.3 | static template checks S-3 and S-4 | merged 2026-10-10, [Validation Pack](../validation/FMH-1.3.md) |  |
-| FMH-1.4a | refuse a composite boundary with several node properties, H-D4 | merged 2026-10-10, [Validation Pack](../validation/FMH-1.4a.md) |  |
-| FMH-1.4b | the declaration/implementation gap report | merged 2026-10-10, [Validation Pack](../validation/FMH-1.4b.md) |  |
-| FMH-1.4c | a declaration the compiler cannot honour is a warning or a refusal | merged 2026-10-10, [Validation Pack](../validation/FMH-1.4c.md) |  |
-| FMH-1.5 | stable labels | merged 2026-10-10, [Validation Pack](../validation/FMH-1.5.md) |  |
-| FMH-HO0 | correct the ownership note and its spike | merged 2026-10-10, [Validation Pack](../validation/FMH-HO0.md) |  |
-| FMH-HO1 | composite replace: payload to the default graph, linear sweep, TD-39, TD-36 | merged 2026-10-10, [Validation Pack](../validation/FMH-HO1.md) |  |
-| FMH-HO2 | draft ADR-A122, Proposed | merged 2026-11-02, built 2026-10-10, [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), accepted |  |
-| FMH-HO3 | `dal:` vocabulary 0.3.0: `dal:ownership`, reference data | merged 2026-10-10, [Validation Pack](../validation/FMH-HO3.md). Release tags created on `main` |  |
-| FMH-HO4 | ownership tree and path compiler, added beside the old walk | merged 2026-10-10, [Validation Pack](../validation/FMH-HO4.md) |  |
-| FMH-HO5 | switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40 | merged 2026-10-10, [Validation Pack](../validation/FMH-HO5.md) |  |
-| FMH-HO6 | ownership refusals and the roots-only warning | merged 2026-10-10, [Validation Pack](../validation/FMH-HO6.md) |  |
-| FMH-HO7 | composite create and tombstone delete, TD-04 | merged 2026-10-10, [Validation Pack](../validation/FMH-HO7.md) |  |
-| FMH-HO8 | injective graph naming within and across families, TD-38 | merged 2026-10-10, [Validation Pack](../validation/FMH-HO8.md) |  |
-| FMH-HO9 | ownership documentation and close-out | merged 2026-10-10, [Validation Pack](../validation/FMH-HO9.md) |  |
-| FMH-2.0 | ADR-A123 | merged 2026-11-02, built 2026-10-10, [Validation Pack](../validation/FMH-2.0.md). A123 accepted, ADR-A79 addendum applied | merged and signed off 2026-10-12 |
-| FMH-2.1 | the typed IR and its renderer. Five defects fixed. [Validation Pack](../validation/FMH-2.1.md). Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | merged 2026-11-02, verified 2026-10-10, built 2026-10-10 | merged and signed off 2026-10-12 |
-| FMH-2.2 | equivalence harness, `bootstrap-version-row` and `append-event` ported. Two review findings fixed. [Validation Pack](../validation/FMH-2.2.md). TD-34 closed for these operations | merged 2026-11-02, verified 2026-10-12, built 2026-10-12 | merged and signed off 2026-10-12 |
-| FMH-2 | typed IR | **briefed** 2026-10-10, split into FMH-2.0 to FMH-2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) |  |
-| FMH-2.3 | named-graph row writers. One review fix. [Validation Pack](../validation/FMH-2.3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged 2026-11-02, verified 2026-10-12, built 2026-10-12 | merged and signed off 2026-10-12 |
-| FMH-2.4a | the composite ports. [Validation Pack](../validation/FMH-2.4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | merged 2026-11-02, verified 2026-10-12, built 2026-10-12 | the maintainer's merge |
-| FMH-2.4b | Oxigraph, probes, benchmark. [Validation Pack](../validation/FMH-2.4b.md). Decision 1 decided (option D, built in FMH-2.5), and the corrected P1 test countersigned | merged 2026-11-02, verified 2026-10-13, built 2026-10-12 | the maintainer's merge |
-| FMH-2.5 | key claims, audits, guard D, the `SELECT` fragment. Autonomously, in six gates. [Validation Pack](../validation/FMH-2.5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13-built-2026-10-13). TD-34 closed. every decision taken | merged 2026-11-02, built 2026-10-13 | the maintainer's merge |
-| FMH-2.6 | expected compiled profiles, paper check | merged 2026-11-02, **built 2026-10-13 and approved by the maintainer 2026-10-13.** [Validation Pack](../validation/FMH-2.6.md). [Plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13-built-2026-10-13). Five of eight review questions answered (H-D24 to H-D28), three open ([write-up](../notes/track-h-h26-review-questions.md)). `mise run build:persistence-expected-profiles` and a check in `check:persistence` | the maintainer's merge. FMH-2.7 waits for RQ4 to RQ6 |
-| FMH-2.6b | event slots, patch-log half held, H-D33 | merged 2026-11-02, verified 2026-10-14, the event half, approved by the maintainer and complete. The patch-log half is held. Six expected profiles re-approved, `test_ho6_t14` countersigned. [Validation Pack](../validation/FMH-2.6b.md), [plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-). The patch-log half is held (H-D33) | the merge |
-| FMH-2.6c | write disciplines | **built 2026-10-20, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-2.6c.md), [plan §4.9](../plans/formal-methods-track-h.md#49-h26c-the-write-disciplines-planned-2026-10-20). `check:persistence` 2869 passed, 1 xfailed. `check:persistence-oxigraph` 225 passed | the review tranche below |
-| FMH-2.6d | patch log for in-place families | planned 2026-10-20, [plan §4.10](../plans/formal-methods-track-h.md#410-h26d-the-patch-log-for-in-place-families-the-link-between-versions-no-receipt-planned-2026-10-20-revised-the-same-day) | FMH-2.6c's review |
-| FMH-2.8c | edges once, faster `members`, record classes, member parts | merged 2026-11-02, verified 2026-10-20, with decisions, expected profiles and changed tests approved. [Validation Pack](../validation/FMH-2.8c.md), [plan §4.18](../plans/formal-methods-track-h.md#418-h28c-the-follow-ups-of-the-h26-and-h28-reviews-planned-). TD-68 closed, TD-67 narrowed | the merge |
-| FMH-2.9 | Mustache retired, D-12 (a), goldens keyed by operation | **built 2026-10-21, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-2.9.md), [plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20). No expected profile changed. D-42 to D-49 for ratification | the review |
-| FMH-2.11a | the Persistence README as a literate specification, graph for graph | **built 2026-10-21, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-2.11a.md), [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20). 137 reconciled differences, `check:persistence` 4258 passed, 1 xfailed, `check:persistence-oxigraph` 368 passed. TD-01 closed. D-50 to D-64 for ratification | the review |
-| FMH-2.11b | the narrative, the pictures, the gotchas | **built 2026-10-21, awaiting the maintainer's review.** [Validation Pack](../validation/FMH-2.11b.md), [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20). No graph changed, 49 diagrams render in two themes. D-65 and D-66 for ratification | the review, and D-59's split |
-| FMH-2.7 | vocabulary and emission | **planned** 2026-10-14, [plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14) | H2.7-Q1 to Q4, and FMH-2.6b's merge |
-| FMH-2.8 | typed payload, caller checks | **planned** 2026-10-14, [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14) | H2.8-Q1 to Q3, and FMH-2.7's merge |
-| FMH-3 | specification registry | planned, outlined in the plan | FMH-2 preferred first (smaller, more self-contained), not a hard blocker |
-| FMH-4 | exhaustive cross-axis validation, BDD/SMT | planned, outline only | FMH-3 |
-| FMH-5 | capability-record extension, TLA+/Quint toolchain spike, protocol models A-D | planned, outline only | FMH-2 (read/write sets from the IR). ADR-A-FM4 is accepted |
-| FMH-6 | Isabelle theories: Resolution, Positions, Encoding, Outcomes | planned, outline only | H1, FMH-5 for `Outcomes.thy` |
-| FMH-7 | protocol models E-J | planned, outline only | FMH-5, FMH-6 |
-| FMH-8 | protocol models K-N, grounding | planned, outline only | FMH-7 |
-| FMH-9 | detection-coverage closure, generated audits | planned, outline only | FMH-3, FMH-4 |
-| FMH-10 | runtime monitors | planned, outline only | FMH-9 |
+| FMH-2.12 | the rows replace, selected by capability, LR-Q1 to LR-Q4. Awaiting the maintainer's review. [Validation Pack](../validation/FMH-2.12.md), [plan §4.20](../plans/formal-methods-track-h.md#420-h212-the-rows-replace-selected-by-capability-planned-2026-11-01) | built 2026-11-01 |  |
+| FMH-1.1 | prefix antichain and overlap check. [Validation Pack](../validation/FMH-1.1.md) | merged 2026-11-02, verified 2026-10-09 |  |
+| FMH-1.2a | witness harness, audit witnesses, measured gap list. [Validation Pack](../validation/FMH-1.2.md) | merged 2026-11-02, verified 2026-10-09 |  |
+| FMH-1.2b | witnesses for the refusals and warnings. [Validation Pack](../validation/FMH-1.2b.md) | merged 2026-11-02, verified 2026-10-09 |  |
+| FMH-1.2c | witnesses for the 13 remaining shapes. [Validation Pack](../validation/FMH-1.2c.md) | merged 2026-11-02, verified 2026-10-09 |  |
+| FMH-1.2d | refuse a multi-valued single-valued property, TD-25. [Validation Pack](../validation/FMH-1.2d.md) | merged 2026-10-10 |  |
+| FMH-1.3 | static template checks S-3 and S-4. [Validation Pack](../validation/FMH-1.3.md) | merged 2026-10-10 |  |
+| FMH-1.4a | refuse a composite boundary with several node properties, H-D4. [Validation Pack](../validation/FMH-1.4a.md) | merged 2026-10-10 |  |
+| FMH-1.4b | the declaration/implementation gap report. [Validation Pack](../validation/FMH-1.4b.md) | merged 2026-10-10 |  |
+| FMH-1.4c | a declaration the compiler cannot honour is a warning or a refusal. [Validation Pack](../validation/FMH-1.4c.md) | merged 2026-10-10 |  |
+| FMH-1.5 | stable labels. [Validation Pack](../validation/FMH-1.5.md) | merged 2026-10-10 |  |
+| FMH-HO0 | correct the ownership note and its spike. [Validation Pack](../validation/FMH-HO0.md) | merged 2026-10-10 |  |
+| FMH-HO1 | composite replace: payload to the default graph, linear sweep, TD-39, TD-36. [Validation Pack](../validation/FMH-HO1.md) | merged 2026-10-10 |  |
+| FMH-HO2 | [ADR-A122](../../architecture/decisions/ADR-A122-aggregate-ownership.md), drafted as Proposed and since accepted | merged 2026-11-02, built 2026-10-10 |  |
+| FMH-HO3 | `dal:` vocabulary 0.3.0: `dal:ownership`, reference data. [Validation Pack](../validation/FMH-HO3.md). Release tags created on `main` | merged 2026-10-10 |  |
+| FMH-HO4 | ownership tree and path compiler, added beside the old walk. [Validation Pack](../validation/FMH-HO4.md) | merged 2026-10-10 |  |
+| FMH-HO5 | switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40. [Validation Pack](../validation/FMH-HO5.md) | merged 2026-10-10 |  |
+| FMH-HO6 | ownership refusals and the roots-only warning. [Validation Pack](../validation/FMH-HO6.md) | merged 2026-10-10 |  |
+| FMH-HO7 | composite create and tombstone delete, TD-04. [Validation Pack](../validation/FMH-HO7.md) | merged 2026-10-10 |  |
+| FMH-HO8 | injective graph naming within and across families, TD-38. [Validation Pack](../validation/FMH-HO8.md) | merged 2026-10-10 |  |
+| FMH-HO9 | ownership documentation and close-out. [Validation Pack](../validation/FMH-HO9.md) | merged 2026-10-10 |  |
+| FMH-2.0 | ADR-A123. [Validation Pack](../validation/FMH-2.0.md). A123 accepted, ADR-A79 addendum applied | merged 2026-11-02, built 2026-10-10 |  |
+| FMH-2.1 | the typed IR and its renderer. Five defects fixed. [Validation Pack](../validation/FMH-2.1.md). Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | merged 2026-11-02, verified 2026-10-10, built 2026-10-10 |  |
+| FMH-2.2 | equivalence harness, `bootstrap-version-row` and `append-event` ported. Two review findings fixed. [Validation Pack](../validation/FMH-2.2.md). TD-34 closed for these operations | merged 2026-11-02, verified 2026-10-12, built 2026-10-12 |  |
+| FMH-2 | typed IR. Split into FMH-2.0 to FMH-2.9 ([typed IR sketch §7](../sketches/formal-methods-track-h-typed-ir.md#7-slices)) | briefed 2026-10-10 |  |
+| FMH-2.3 | named-graph row writers. One review fix. [Validation Pack](../validation/FMH-2.3.md). [Plan §4.1](../plans/formal-methods-track-h.md#41-h23-the-named-graph-row-writers-planned-2026-10-12). Countersignature items signed 2026-10-12. TD-34 closed for its operations | merged 2026-11-02, verified 2026-10-12, built 2026-10-12 |  |
+| FMH-2.4a | the composite ports. [Validation Pack](../validation/FMH-2.4a.md). [Plan §4.2](../plans/formal-methods-track-h.md#42-h24-the-composite-family-and-what-each-store-does-planned-2026-10-12) | merged 2026-11-02, verified 2026-10-12, built 2026-10-12 |  |
+| FMH-2.4b | Oxigraph, probes, benchmark. [Validation Pack](../validation/FMH-2.4b.md). Decision 1 decided (option D, built in FMH-2.5), and the corrected P1 test countersigned | merged 2026-11-02, verified 2026-10-13, built 2026-10-12 |  |
+| FMH-2.5 | key claims, audits, guard D, the `SELECT` fragment. Autonomously, in six gates. [Validation Pack](../validation/FMH-2.5.md). [Plan §4.3](../plans/formal-methods-track-h.md#43-h25-key-claims-the-audits-and-the-self-calibrating-guard-planned-2026-10-13-built-2026-10-13). TD-34 closed. every decision taken | merged 2026-11-02, built 2026-10-13 |  |
+| FMH-2.6 | expected compiled profiles, paper check. [Validation Pack](../validation/FMH-2.6.md). [Plan §4.4](../plans/formal-methods-track-h.md#44-h26-the-expected-compiled-profile-examples-first-and-the-paper-check-planned-2026-10-13-built-2026-10-13). Five of eight review questions answered (H-D24 to H-D28), three open ([write-up](../notes/track-h-h26-review-questions.md)). `mise run build:persistence-expected-profiles` and a check in `check:persistence`. FMH-2.7 waits for RQ4 to RQ6. | merged 2026-11-02, verified 2026-10-13, built 2026-10-13 |  |
+| FMH-2.6b | event slots, patch-log half held, H-D33. The event half, approved by the maintainer and complete. The patch-log half is held. Six expected profiles re-approved, `test_ho6_t14` countersigned. [Validation Pack](../validation/FMH-2.6b.md), [plan §4.6](../plans/formal-methods-track-h.md#46-h26b-the-event-and-patch-content-slots-planned-) | merged 2026-11-02, verified 2026-10-14 |  |
+| FMH-2.6c | write disciplines. Awaiting the maintainer's review. [Validation Pack](../validation/FMH-2.6c.md), [plan §4.9](../plans/formal-methods-track-h.md#49-h26c-the-write-disciplines-planned-2026-10-20). `check:persistence` 2869 passed, 1 xfailed. `check:persistence-oxigraph` 225 passed | built 2026-10-20 | the review tranche below |
+| FMH-2.6d | patch log for in-place families. Planned 2026-10-20, [plan §4.10](../plans/formal-methods-track-h.md#410-h26d-the-patch-log-for-in-place-families-the-link-between-versions-no-receipt-planned-2026-10-20-revised-the-same-day) | planned | FMH-2.6c's review |
+| FMH-2.8c | edges once, faster `members`, record classes, member parts. Decisions, expected profiles and changed tests approved. [Validation Pack](../validation/FMH-2.8c.md), [plan §4.18](../plans/formal-methods-track-h.md#418-h28c-the-follow-ups-of-the-h26-and-h28-reviews-planned-). TD-68 closed, TD-67 narrowed | merged 2026-11-02, verified 2026-10-20 |  |
+| FMH-2.9 | Mustache retired, D-12 (a), goldens keyed by operation. Awaiting the maintainer's review. [Validation Pack](../validation/FMH-2.9.md), [plan §4.15](../plans/formal-methods-track-h.md#415-h29-mustache-retired-planned-2026-10-20). No expected profile changed. D-42 to D-49 for ratification | built 2026-10-21 | the review |
+| FMH-2.11a | the Persistence README as a literate specification, graph for graph. Awaiting the maintainer's review. [Validation Pack](../validation/FMH-2.11a.md), [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20). 137 reconciled differences, `check:persistence` 4258 passed, 1 xfailed, `check:persistence-oxigraph` 368 passed. TD-01 closed. D-50 to D-64 for ratification | built 2026-10-21 | the review |
+| FMH-2.11b | the narrative, the pictures, the gotchas. Awaiting the maintainer's review. [Validation Pack](../validation/FMH-2.11b.md), [plan §4.19](../plans/formal-methods-track-h.md#419-h211-the-persistence-readme-as-a-literate-specification-planned-2026-10-20). No graph changed, 49 diagrams render in two themes. D-65 and D-66 for ratification | built 2026-10-21 | the review, and D-59's split |
+| FMH-2.7 | vocabulary and emission. Planned 2026-10-14, [plan §4.7](../plans/formal-methods-track-h.md#47-h27-the-vocabulary-and-the-compilers-emission-planned-2026-10-14) | planned | H2.7-Q1 to Q4, and FMH-2.6b's merge |
+| FMH-2.8 | typed payload, caller checks. Planned 2026-10-14, [plan §4.8](../plans/formal-methods-track-h.md#48-h28-the-typed-payload-and-the-caller-side-checks-planned-2026-10-14) | planned | H2.8-Q1 to Q3, and FMH-2.7's merge |
+| FMH-3 | specification registry. Outlined in the plan | planned | FMH-2 preferred first (smaller, more self-contained), not a hard blocker |
+| FMH-4 | exhaustive cross-axis validation, BDD/SMT. Outline only | planned | FMH-3 |
+| FMH-5 | capability-record extension, TLA+/Quint toolchain spike, protocol models A-D. Outline only | planned | FMH-2 (read/write sets from the IR). ADR-A-FM4 is accepted |
+| FMH-6 | Isabelle theories: Resolution, Positions, Encoding, Outcomes. Outline only | planned | H1, FMH-5 for `Outcomes.thy` |
+| FMH-7 | protocol models E-J. Outline only | planned | FMH-5, FMH-6 |
+| FMH-8 | protocol models K-N, grounding. Outline only | planned | FMH-7 |
+| FMH-9 | detection-coverage closure, generated audits. Outline only | planned | FMH-3, FMH-4 |
+| FMH-10 | runtime monitors. Outline only | planned | FMH-9 |
 | FMH-1.2 |  | merged 2026-11-02, built 2026-10-09 |  |
 | FMH-2.6e |  | merged 2026-11-02, built 2026-10-23 |  |
 | FMH-2.6f |  | merged 2026-11-02, built 2026-10-23 |  |

@@ -275,53 +275,53 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | FME-3 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-4 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md#slices |
 | FME-5 | to FME-5 | formal-methods-track-e | planned | E1 | docs/developer/status/formal-methods-track-e.md#slices |
-| FMH-2.12 | the rows replace, selected by capability, LR-Q1 to LR-Q4 | formal-methods-track-h | built 2026-11-01 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.1 | prefix antichain and overlap check | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.2a | witness harness, audit witnesses, measured gap list | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.2b | witnesses for the refusals and warnings | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.2c | witnesses for the 13 remaining shapes | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.2d | refuse a multi-valued single-valued property, TD-25 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.3 | static template checks S-3 and S-4 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.4a | refuse a composite boundary with several node properties, H-D4 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.4b | the declaration/implementation gap report | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.4c | a declaration the compiler cannot honour is a warning or a refusal | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-1.5 | stable labels | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO0 | correct the ownership note and its spike | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO1 | composite replace: payload to the default graph, linear sweep, TD-39, TD-36 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO2 | draft ADR-A122, Proposed | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO3 | `dal:` vocabulary 0.3.0: `dal:ownership`, reference data | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO4 | ownership tree and path compiler, added beside the old walk | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO5 | switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO6 | ownership refusals and the roots-only warning | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO7 | composite create and tombstone delete, TD-04 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO8 | injective graph naming within and across families, TD-38 | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-HO9 | ownership documentation and close-out | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.0 | ADR-A123 | formal-methods-track-h | merged 2026-11-02 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.1 | the typed IR and its renderer. Five defects fixed. Validation Pack. Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | formal-methods-track-h | merged 2026-11-02 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.2 | equivalence harness, `bootstrap-version-row` and `append-event` ported. Two review findings fixed. Validation Pack. TD-34 closed for these operations | formal-methods-track-h | merged 2026-11-02 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2 | typed IR | formal-methods-track-h | briefed |  | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.3 | named-graph row writers. One review fix. Validation Pack. Plan §4.1. Countersignature items signed 2026-10-12. TD-34 closed for its operations | formal-methods-track-h | merged 2026-11-02 | merged and signed off 2026-10-12 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.4a | the composite ports. Validation Pack. Plan §4.2 | formal-methods-track-h | merged 2026-11-02 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.4b | Oxigraph, probes, benchmark. Validation Pack. Decision 1 decided (option D, built in FMH-2.5), and the corrected P1 test countersigned | formal-methods-track-h | merged 2026-11-02 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.5 | key claims, audits, guard D, the `SELECT` fragment. Autonomously, in six gates. Validation Pack. Plan §4.3. TD-34 closed. every decision taken | formal-methods-track-h | merged 2026-11-02 | the maintainer's merge | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.6 | expected compiled profiles, paper check | formal-methods-track-h | merged 2026-11-02 | the maintainer's merge. FMH-2.7 waits for RQ4 to RQ6 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.6b | event slots, patch-log half held, H-D33 | formal-methods-track-h | merged 2026-11-02 | the merge | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.6c | write disciplines | formal-methods-track-h | built 2026-10-20 | the review tranche below | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.6d | patch log for in-place families | formal-methods-track-h | planned 2026-10-20 | FMH-2.6c's review | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.8c | edges once, faster `members`, record classes, member parts | formal-methods-track-h | merged 2026-11-02 | the merge | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.9 | Mustache retired, D-12 (a), goldens keyed by operation | formal-methods-track-h | built 2026-10-21 | the review | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.11a | the Persistence README as a literate specification, graph for graph | formal-methods-track-h | built 2026-10-21 | the review | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.11b | the narrative, the pictures, the gotchas | formal-methods-track-h | built 2026-10-21 | the review, and D-59's split | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.7 | vocabulary and emission | formal-methods-track-h | planned | H2.7-Q1 to Q4, and FMH-2.6b's merge | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-2.8 | typed payload, caller checks | formal-methods-track-h | planned | H2.8-Q1 to Q3, and FMH-2.7's merge | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-3 | specification registry | formal-methods-track-h | planned | FMH-2 preferred first (smaller, more self-contained), not a hard blocker | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-4 | exhaustive cross-axis validation, BDD/SMT | formal-methods-track-h | planned | FMH-3 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-5 | capability-record extension, TLA+/Quint toolchain spike, protocol models A-D | formal-methods-track-h | planned | FMH-2 (read/write sets from the IR). ADR-A-FM4 is accepted | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-6 | Isabelle theories: Resolution, Positions, Encoding, Outcomes | formal-methods-track-h | planned | H1, FMH-5 for `Outcomes.thy` | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-7 | protocol models E-J | formal-methods-track-h | planned | FMH-5, FMH-6 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-8 | protocol models K-N, grounding | formal-methods-track-h | planned | FMH-7 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-9 | detection-coverage closure, generated audits | formal-methods-track-h | planned | FMH-3, FMH-4 | docs/developer/status/formal-methods-track-h.md#slices |
-| FMH-10 | runtime monitors | formal-methods-track-h | planned | FMH-9 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.12 | the rows replace, selected by capability, LR-Q1 to LR-Q4. Awaiting the maintainer's review. Validation Pack, plan §4.20 | formal-methods-track-h | built 2026-11-01 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.1 | prefix antichain and overlap check. Validation Pack | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.2a | witness harness, audit witnesses, measured gap list. Validation Pack | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.2b | witnesses for the refusals and warnings. Validation Pack | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.2c | witnesses for the 13 remaining shapes. Validation Pack | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.2d | refuse a multi-valued single-valued property, TD-25. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.3 | static template checks S-3 and S-4. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.4a | refuse a composite boundary with several node properties, H-D4. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.4b | the declaration/implementation gap report. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.4c | a declaration the compiler cannot honour is a warning or a refusal. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-1.5 | stable labels. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO0 | correct the ownership note and its spike. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO1 | composite replace: payload to the default graph, linear sweep, TD-39, TD-36. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO2 | ADR-A122, drafted as Proposed and since accepted | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO3 | `dal:` vocabulary 0.3.0: `dal:ownership`, reference data. Validation Pack. Release tags created on `main` | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO4 | ownership tree and path compiler, added beside the old walk. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO5 | switch the compiler to the tree, TD-03, TD-35, TD-37, TD-40. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO6 | ownership refusals and the roots-only warning. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO7 | composite create and tombstone delete, TD-04. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO8 | injective graph naming within and across families, TD-38. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-HO9 | ownership documentation and close-out. Validation Pack | formal-methods-track-h | merged 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.0 | ADR-A123. Validation Pack. A123 accepted, ADR-A79 addendum applied | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.1 | the typed IR and its renderer. Five defects fixed. Validation Pack. Its four decisions confirmed. Its suite ran at `1875 passed, 1 xfailed` (2026-10-12) | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.2 | equivalence harness, `bootstrap-version-row` and `append-event` ported. Two review findings fixed. Validation Pack. TD-34 closed for these operations | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2 | typed IR. Split into FMH-2.0 to FMH-2.9 (typed IR sketch §7) | formal-methods-track-h | briefed 2026-10-10 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.3 | named-graph row writers. One review fix. Validation Pack. Plan §4.1. Countersignature items signed 2026-10-12. TD-34 closed for its operations | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.4a | the composite ports. Validation Pack. Plan §4.2 | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.4b | Oxigraph, probes, benchmark. Validation Pack. Decision 1 decided (option D, built in FMH-2.5), and the corrected P1 test countersigned | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.5 | key claims, audits, guard D, the `SELECT` fragment. Autonomously, in six gates. Validation Pack. Plan §4.3. TD-34 closed. every decision taken | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6 | expected compiled profiles, paper check. Validation Pack. Plan §4.4. Five of eight review questions answered (H-D24 to H-D28), three open (write-up). `mise run build:persistence-expected-pro | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6b | event slots, patch-log half held, H-D33. The event half, approved by the maintainer and complete. The patch-log half is held. Six expected profiles re-approved, `test_ho6_t14` countersigned. | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6c | write disciplines. Awaiting the maintainer's review. Validation Pack, plan §4.9. `check:persistence` 2869 passed, 1 xfailed. `check:persistence-oxigraph` 225 passed | formal-methods-track-h | built 2026-10-20 | the review tranche below | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.6d | patch log for in-place families. Planned 2026-10-20, plan §4.10 | formal-methods-track-h | planned | FMH-2.6c's review | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.8c | edges once, faster `members`, record classes, member parts. Decisions, expected profiles and changed tests approved. Validation Pack, plan §4.18. TD-68 closed, TD-67 narrowed | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.9 | Mustache retired, D-12 (a), goldens keyed by operation. Awaiting the maintainer's review. Validation Pack, plan §4.15. No expected profile changed. D-42 to D-49 for ratification | formal-methods-track-h | built 2026-10-21 | the review | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.11a | the Persistence README as a literate specification, graph for graph. Awaiting the maintainer's review. Validation Pack, plan §4.19. 137 reconciled differences, `check:persistence` 4258 passe | formal-methods-track-h | built 2026-10-21 | the review | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.11b | the narrative, the pictures, the gotchas. Awaiting the maintainer's review. Validation Pack, plan §4.19. No graph changed, 49 diagrams render in two themes. D-65 and D-66 for ratification | formal-methods-track-h | built 2026-10-21 | the review, and D-59's split | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.7 | vocabulary and emission. Planned 2026-10-14, plan §4.7 | formal-methods-track-h | planned | H2.7-Q1 to Q4, and FMH-2.6b's merge | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-2.8 | typed payload, caller checks. Planned 2026-10-14, plan §4.8 | formal-methods-track-h | planned | H2.8-Q1 to Q3, and FMH-2.7's merge | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-3 | specification registry. Outlined in the plan | formal-methods-track-h | planned | FMH-2 preferred first (smaller, more self-contained), not a hard blocker | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-4 | exhaustive cross-axis validation, BDD/SMT. Outline only | formal-methods-track-h | planned | FMH-3 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-5 | capability-record extension, TLA+/Quint toolchain spike, protocol models A-D. Outline only | formal-methods-track-h | planned | FMH-2 (read/write sets from the IR). ADR-A-FM4 is accepted | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-6 | Isabelle theories: Resolution, Positions, Encoding, Outcomes. Outline only | formal-methods-track-h | planned | H1, FMH-5 for `Outcomes.thy` | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-7 | protocol models E-J. Outline only | formal-methods-track-h | planned | FMH-5, FMH-6 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-8 | protocol models K-N, grounding. Outline only | formal-methods-track-h | planned | FMH-7 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-9 | detection-coverage closure, generated audits. Outline only | formal-methods-track-h | planned | FMH-3, FMH-4 | docs/developer/status/formal-methods-track-h.md#slices |
+| FMH-10 | runtime monitors. Outline only | formal-methods-track-h | planned | FMH-9 | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-1.2 | FMH-1.2 | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.6e | FMH-2.6e | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
 | FMH-2.6f | FMH-2.6f | formal-methods-track-h | merged 2026-11-02 |  | docs/developer/status/formal-methods-track-h.md#slices |
@@ -434,10 +434,10 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figur | ledger | merged 2026-11-16 | LG-19 | docs/developer/status/ledger.md#board |
 | LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | ledger | merged 2026-11-18 |  | docs/developer/status/ledger.md#board |
 | LG-24 | the merge policy node, what an account declares for a merge moved to a policy the account definition refers to | ledger | merged 2026-11-18 |  | docs/developer/status/ledger.md#board |
-| LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed | ledger | planned | LG-11, LG-Q38, LG-Q39, LG-Q42 | docs/developer/status/ledger.md#board |
-| LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part | ledger | planned | LG-25, LG-Q38, LG-Q41 | docs/developer/status/ledger.md#board |
-| LG-27 | the ledger node, its profile and revision, and the checkpoint's two totals | ledger | planned | LG-25, LG-Q37, LG-Q43 | docs/developer/status/ledger.md#board |
-| LG-28 | the account definition as a versioned thing, with the scheme edition it pins | ledger | planned | LG-26, LG-27, LG-Q40 | docs/developer/status/ledger.md#board |
+| LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed | ledger | planned | LG-11 | docs/developer/status/ledger.md#board |
+| LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part | ledger | planned | LG-25 | docs/developer/status/ledger.md#board |
+| LG-27 | the ledger node, its profile and revision, and the checkpoint's two totals | ledger | planned | LG-25 | docs/developer/status/ledger.md#board |
+| LG-28 | the account definition as a versioned thing, with the scheme edition it pins | ledger | planned | LG-26, LG-27 | docs/developer/status/ledger.md#board |
 | MSA-I1 | `spikes/multi-store-shape-census`. 505 node shapes, none closed and bounded, so 0% of sample subjects against the proposed 80%. 134 fail only on closure and reach 43.4% of subjects. Validati | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I2 | the read-set census | multi-store-architecture | planned |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I3 | the classification. 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. Validation Pack | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
