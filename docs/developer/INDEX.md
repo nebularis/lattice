@@ -76,7 +76,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | spc-package-split | unit |  | merged 2026-09-20 |  | [status](status/spc-package-split.md) |
 | studio-publication | multi-slice unit in four phases | PB | built 2026-10-31 | PB-1 | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
 | studio-quality | multi-slice unit | SQ | built 2026-10-31 | SQ-1 | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
-| studio-visual-authoring | multi-slice unit | SVA | built 2026-11-19 | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md), 32 Validation Packs |
+| studio-visual-authoring | multi-slice unit | SVA | building 2026-11-19 | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md), 32 Validation Packs |
 | studio-worker-liveness | multi-slice unit | WL | built 2026-11-06 | WL-0 | [plan](plans/studio-worker-liveness.md), [status](status/studio-worker-liveness.md) |
 | surface-mork-unified-projection | unit |  | merged 2026-09-22 |  | [status](status/surface-mork-unified-projection.md) |
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
@@ -546,7 +546,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-P2 | edits on the persistence canvas | studio-visual-authoring | planned | SVA-P1 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P3 | the persistence simulation executor | studio-visual-authoring | built 2026-11-19 | SVA-R3 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P3a | the caller libraries' confirmation read | studio-visual-authoring | built 2026-11-19 | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-P4 | the persistence simulator pane | studio-visual-authoring | planned | SVA-R4, SVA-P1, SVA-P3a | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-P4 | the persistence simulator pane | studio-visual-authoring | building 2026-11-19 | SVA-R4, SVA-P1, SVA-P3a | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-P5 | an object generated from the boundary shape | studio-visual-authoring | planned | SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S1 | the surface canvas | studio-visual-authoring | planned | SVA-O2 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2 | the surface simulation executor | studio-visual-authoring | planned | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
