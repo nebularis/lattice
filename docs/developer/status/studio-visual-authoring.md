@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-19. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-19. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -51,7 +51,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P1b | the studio reads the compiled profile for where data lands | built 2026-11-19, building 2026-11-19 | SVA-P1a |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | built 2026-11-19, building 2026-11-19 | SVA-R3 |
-| SVA-P3a | the caller libraries' confirmation read | building 2026-11-19 | SVA-P3 |
+| SVA-P3a | the caller libraries' confirmation read | built 2026-11-19, building 2026-11-19 | SVA-P3 |
 | SVA-P4 | the persistence simulator pane | planned | SVA-R4, SVA-P1, SVA-P3a |
 | SVA-P5 | an object generated from the boundary shape | planned | SVA-P4 |
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
@@ -188,3 +188,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-19: the triple-stores domain's clone pulled with `vyd kb pull`, so the probe's finding is TSD-76, and LATTICE's page names it.
 - 2026-11-19: SVA-P3 built, [Validation Pack](../validation/SVA-P3.md). The run worker runs a persistence step over the sample world on Jena in memory, with each `NOW()` replaced by the step's time (TSD-76), and answers with the checks, the update as it ran, the delta by landing place and the outcome. The step's TriG is defined in the contract. The run worker's tests pass. The real-stack case is written and not run here, for want of Erlang. The outcome is classified in the worker, since the caller library has no confirmation read (TD-173).
 - 2026-11-19: the maintainer decided that the caller libraries own the confirmation read (TD-173), as slice SVA-P3a before SVA-P4, and that SVA-P4 follows it without a pause. SVA-P3a started.
+- 2026-11-19: SVA-P3a built, [Validation Pack](../validation/SVA-P3a.md). Both caller libraries give the confirmation read, specified once in the persistence contract with 42 shared vectors, and the simulator uses the Java one. The causes go beyond the patterns guide's four rows, each defined by a guard of a generated operation, and the maintainer weighs them at the pause after SVA-P4. TD-173 closed.

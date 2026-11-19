@@ -3972,5 +3972,2990 @@
     "UnexpectedFullList"
    ]
   }
+ ],
+ "confirmationChecks": [
+  {
+   "id": "cf-applied-replace",
+   "description": "A claim with the request's digest is applied.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#rev"
+     },
+     "o": {
+      "iri": "urn:rev:facility-1/5"
+     }
+    },
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#requestDigest"
+     },
+     "o": {
+      "literal": "1111111111111111111111111111111111111111111111111111111111111111"
+     }
+    },
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "5",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "applied",
+   "classification": "Applied",
+   "revision": "urn:rev:facility-1/5"
+  },
+  {
+   "id": "cf-the-claim-wins-over-every-guard",
+   "description": "A claim with the request's digest is applied, whatever the dataset and the row have become since, since an earlier attempt landed it.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#rev"
+     },
+     "o": {
+      "iri": "urn:rev:facility-1/5"
+     }
+    },
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#requestDigest"
+     },
+     "o": {
+      "literal": "1111111111111111111111111111111111111111111111111111111111111111"
+     }
+    },
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "9",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#deleted"
+     },
+     "o": {
+      "literal": "true",
+      "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+     }
+    }
+   ],
+   "outcome": "applied",
+   "classification": "Applied",
+   "revision": "urn:rev:facility-1/5"
+  },
+  {
+   "id": "cf-a-claim-for-a-create-is-applied",
+   "description": "A create's claim is read as a replace's is.",
+   "operation": {
+    "templateId": "create-if-absent-named-graph-dataset-guard",
+    "kind": "Create",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#rev"
+     },
+     "o": {
+      "iri": "urn:rev:facility-1/1"
+     }
+    },
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#requestDigest"
+     },
+     "o": {
+      "literal": "1111111111111111111111111111111111111111111111111111111111111111"
+     }
+    },
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "1",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "applied",
+   "classification": "Applied",
+   "revision": "urn:rev:facility-1/1"
+  },
+  {
+   "id": "cf-reused-key",
+   "description": "A claim with another digest means the transaction id was used for a different request. It is refused and never reported as success.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#rev"
+     },
+     "o": {
+      "iri": "urn:rev:facility-1/5"
+     }
+    },
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#requestDigest"
+     },
+     "o": {
+      "literal": "2222222222222222222222222222222222222222222222222222222222222222"
+     }
+    },
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "5",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "refused",
+   "classification": "IdempotencyKeyReuse",
+   "revision": "urn:rev:facility-1/5"
+  },
+  {
+   "id": "cf-a-claim-with-two-digests-is-not-this-request",
+   "description": "The digest must be the only one the claim holds.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#rev"
+     },
+     "o": {
+      "iri": "urn:rev:facility-1/5"
+     }
+    },
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#requestDigest"
+     },
+     "o": {
+      "literal": "1111111111111111111111111111111111111111111111111111111111111111"
+     }
+    },
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#requestDigest"
+     },
+     "o": {
+      "literal": "2222222222222222222222222222222222222222222222222222222222222222"
+     }
+    },
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "5",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "refused",
+   "classification": "IdempotencyKeyReuse",
+   "revision": "urn:rev:facility-1/5"
+  },
+  {
+   "id": "cf-a-claim-without-a-digest-is-not-this-request",
+   "description": "A claim that records no digest cannot be matched to the request.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#rev"
+     },
+     "o": {
+      "iri": "urn:rev:facility-1/5"
+     }
+    },
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "5",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "refused",
+   "classification": "IdempotencyKeyReuse",
+   "revision": "urn:rev:facility-1/5"
+  },
+  {
+   "id": "cf-a-claim-in-another-graph-is-not-read",
+   "description": "Only the transaction graph holds claims. A claim of the same id elsewhere is ignored.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:elsewhere",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#rev"
+     },
+     "o": {
+      "iri": "urn:rev:facility-1/5"
+     }
+    },
+    {
+     "graph": "urn:g:elsewhere",
+     "s": {
+      "iri": "urn:txn:t1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#requestDigest"
+     },
+     "o": {
+      "literal": "1111111111111111111111111111111111111111111111111111111111111111"
+     }
+    },
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  },
+  {
+   "id": "cf-the-claim-of-another-transaction-is-not-read",
+   "description": "A claim of another transaction id says nothing of this one.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:other"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#rev"
+     },
+     "o": {
+      "iri": "urn:rev:facility-1/5"
+     }
+    },
+    {
+     "graph": "urn:g:txn",
+     "s": {
+      "iri": "urn:txn:other"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#requestDigest"
+     },
+     "o": {
+      "literal": "1111111111111111111111111111111111111111111111111111111111111111"
+     }
+    },
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  },
+  {
+   "id": "cf-epoch-changed",
+   "description": "The dataset's epoch is not the request's, so the guard on it failed. The row's position is as expected, and the epoch is read first.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "EpochChanged",
+   "revision": null
+  },
+  {
+   "id": "cf-an-epoch-that-is-not-stated",
+   "description": "A dataset that states no epoch has no epoch the request can match.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "EpochChanged",
+   "revision": null
+  },
+  {
+   "id": "cf-epoch-wins-over-gone-and-position",
+   "description": "A write that failed on several guards is classified by the first of the order, the epoch.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "9",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#deleted"
+     },
+     "o": {
+      "literal": "true",
+      "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "EpochChanged",
+   "revision": null
+  },
+  {
+   "id": "cf-epoch-of-the-row-when-the-guard-is-the-row's",
+   "description": "A write whose template has no dataset guard guards on the version row's epoch, so the row's epoch is the one read.",
+   "operation": {
+    "templateId": "cas-replace-named-graph",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "2",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "EpochChanged",
+   "revision": null
+  },
+  {
+   "id": "cf-the-dataset-epoch-is-not-read-when-the-guard-is-the-row's",
+   "description": "Without the dataset guard the dataset's epoch is not a guard of the write, so a different one does not change the cause.",
+   "operation": {
+    "templateId": "cas-replace-named-graph",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "9",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "6",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "PreconditionFailed",
+   "revision": null
+  },
+  {
+   "id": "cf-a-create-without-the-dataset-guard-has-no-epoch-guard",
+   "description": "A create guards on the absence of the row and of the claim alone, so with both absent the write is not applied and nothing explains it.",
+   "operation": {
+    "templateId": "create-if-absent-named-graph",
+    "kind": "Create",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "9",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  },
+  {
+   "id": "cf-an-append-row-epoch",
+   "description": "An append without the dataset guard guards on the stream row's epoch.",
+   "operation": {
+    "templateId": "append-event",
+    "kind": "Append",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "stream": {
+     "iri": "urn:example:stream-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:stream-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "7",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:stream-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "2",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "EpochChanged",
+   "revision": null
+  },
+  {
+   "id": "cf-gone",
+   "description": "The version row is tombstoned, so the write found nothing to change. The tombstone moved the position as well, and Gone is read first.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "5",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#deleted"
+     },
+     "o": {
+      "literal": "true",
+      "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "Gone",
+   "revision": null
+  },
+  {
+   "id": "cf-a-tombstone-of-a-tombstoned-row",
+   "description": "A tombstone's own guard is the same, so it finds the row gone.",
+   "operation": {
+    "templateId": "tombstone-delete-named-graph-dataset-guard",
+    "kind": "Tombstone",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "5",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#deleted"
+     },
+     "o": {
+      "literal": "true",
+      "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "Gone",
+   "revision": null
+  },
+  {
+   "id": "cf-an-append-to-a-tombstoned-stream",
+   "description": "An append does not write to a stream whose row is tombstoned.",
+   "operation": {
+    "templateId": "append-event-dataset-guard",
+    "kind": "Append",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "stream": {
+     "iri": "urn:example:stream-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:stream-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "5",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:stream-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:stream-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#deleted"
+     },
+     "o": {
+      "literal": "true",
+      "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "Gone",
+   "revision": null
+  },
+  {
+   "id": "cf-a-deleted-mark-that-is-not-true",
+   "description": "Only a mark of true is a tombstone.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#deleted"
+     },
+     "o": {
+      "literal": "false",
+      "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  },
+  {
+   "id": "cf-precondition-failed",
+   "description": "The version row is at another position, so another writer moved it and the guard failed.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "6",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "PreconditionFailed",
+   "revision": null
+  },
+  {
+   "id": "cf-a-row-that-is-behind-the-expected-position",
+   "description": "A row at an earlier position fails the guard too.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "2",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "PreconditionFailed",
+   "revision": null
+  },
+  {
+   "id": "cf-no-version-row",
+   "description": "A replace of an aggregate with no version row fails the guard on its position.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "PreconditionFailed",
+   "revision": null
+  },
+  {
+   "id": "cf-a-delta-replace-that-lost-the-position",
+   "description": "A delta replace has the replace's guard.",
+   "operation": {
+    "templateId": "cas-replace-composite-property-delta-patch-log-dataset-guard",
+    "kind": "DeltaReplace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "dataGraph": "urn:g:facilities"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "5",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "PreconditionFailed",
+   "revision": null
+  },
+  {
+   "id": "cf-a-tombstone-that-lost-the-position",
+   "description": "A tombstone has the replace's guard.",
+   "operation": {
+    "templateId": "tombstone-delete-named-graph-dataset-guard",
+    "kind": "Tombstone",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "5",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "PreconditionFailed",
+   "revision": null
+  },
+  {
+   "id": "cf-an-append-version-that-lost-the-position",
+   "description": "An append of a version has the replace's guard on the identity's row.",
+   "operation": {
+    "templateId": "append-version-dataset-guard",
+    "kind": "AppendVersion",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "dataGraph": "urn:g:facilities"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "5",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "PreconditionFailed",
+   "revision": null
+  },
+  {
+   "id": "cf-an-append-to-a-stream-with-no-row",
+   "description": "An append has no expected position. Its guard is that the stream's row exists, which bootstrap-version-row creates.",
+   "operation": {
+    "templateId": "append-event-dataset-guard",
+    "kind": "Append",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "stream": {
+     "iri": "urn:example:stream-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "PreconditionFailed",
+   "revision": null
+  },
+  {
+   "id": "cf-an-append-to-a-stream-whatever-its-position",
+   "description": "An append applies at any position, so a row that exists and is not tombstoned leaves nothing to explain it.",
+   "operation": {
+    "templateId": "append-event-dataset-guard",
+    "kind": "Append",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "stream": {
+     "iri": "urn:example:stream-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:stream-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "12",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:stream-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  },
+  {
+   "id": "cf-already-exists-by-the-row",
+   "description": "A create over a version row that exists writes nothing.",
+   "operation": {
+    "templateId": "create-if-absent-named-graph-dataset-guard",
+    "kind": "Create",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "1",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "AlreadyExists",
+   "revision": null
+  },
+  {
+   "id": "cf-already-exists-over-a-tombstone",
+   "description": "A tombstoned row is a row, so a create over it writes nothing, and Gone is a cause of other kinds.",
+   "operation": {
+    "templateId": "create-if-absent-named-graph-dataset-guard",
+    "kind": "Create",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "2",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#deleted"
+     },
+     "o": {
+      "literal": "true",
+      "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "AlreadyExists",
+   "revision": null
+  },
+  {
+   "id": "cf-already-exists-by-data-with-no-row",
+   "description": "A composite create also guards on the root holding no triple in the data graph, so data with no version row is not created over.",
+   "operation": {
+    "templateId": "create-if-absent-composite-dataset-guard",
+    "kind": "Create",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "dataGraph": "urn:g:facilities"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:facilities",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "urn:example:margin"
+     },
+     "o": {
+      "literal": "9.0"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "AlreadyExists",
+   "revision": null
+  },
+  {
+   "id": "cf-data-in-another-graph-is-not-the-aggregate",
+   "description": "Only the data graph of the operation is read for a create.",
+   "operation": {
+    "templateId": "create-if-absent-composite-dataset-guard",
+    "kind": "Create",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "dataGraph": "urn:g:facilities"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:elsewhere",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "urn:example:margin"
+     },
+     "o": {
+      "literal": "9.0"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  },
+  {
+   "id": "cf-a-create-that-lost-the-epoch",
+   "description": "A create under the dataset guard checks the epoch first.",
+   "operation": {
+    "templateId": "create-if-absent-named-graph-dataset-guard",
+    "kind": "Create",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "1",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "EpochChanged",
+   "revision": null
+  },
+  {
+   "id": "cf-not-applied-when-every-guard-holds",
+   "description": "The transaction has no claim and every guard of the operation holds on what the store holds, as when the request was never sent, is still in flight, or was stopped by a parameter guard.",
+   "operation": {
+    "templateId": "cas-replace-named-graph-dataset-guard",
+    "kind": "Replace",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "expectedSeq": {
+     "int": 4
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq"
+     },
+     "o": {
+      "literal": "4",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    },
+    {
+     "graph": "urn:g:meta/3",
+     "s": {
+      "iri": "urn:example:facility-1"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  },
+  {
+   "id": "cf-a-create-that-nothing-explains",
+   "description": "A create with no row, no data and no claim.",
+   "operation": {
+    "templateId": "create-if-absent-named-graph-dataset-guard",
+    "kind": "Create",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3"
+    }
+   },
+   "values": {
+    "root": {
+     "iri": "urn:example:facility-1"
+    },
+    "epoch": {
+     "int": 3
+    },
+    "txnId": {
+     "iri": "urn:txn:t1"
+    },
+    "requestDigest": {
+     "string": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:dataset",
+     "s": {
+      "iri": "urn:g:dataset"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch"
+     },
+     "o": {
+      "literal": "3",
+      "datatype": "http://www.w3.org/2001/XMLSchema#long"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  },
+  {
+   "id": "cf-key-claim-applied",
+   "description": "The claim is held by the owner who wrote it.",
+   "operation": {
+    "templateId": "key-claim-write",
+    "kind": "KeyClaimWrite",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "keysGraph": "urn:g:keys"
+    }
+   },
+   "values": {
+    "claim": {
+     "iri": "urn:key:email:v1:AAAA"
+    },
+    "owner": {
+     "iri": "urn:person:p1"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:keys",
+     "s": {
+      "iri": "urn:key:email:v1:AAAA"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#claimedBy"
+     },
+     "o": {
+      "iri": "urn:person:p1"
+     }
+    }
+   ],
+   "outcome": "applied",
+   "classification": "Applied",
+   "revision": null
+  },
+  {
+   "id": "cf-key-claim-held-by-another",
+   "description": "The claim is held by another owner, so the guard on another owner failed.",
+   "operation": {
+    "templateId": "key-claim-write",
+    "kind": "KeyClaimWrite",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "keysGraph": "urn:g:keys"
+    }
+   },
+   "values": {
+    "claim": {
+     "iri": "urn:key:email:v1:AAAA"
+    },
+    "owner": {
+     "iri": "urn:person:p1"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:keys",
+     "s": {
+      "iri": "urn:key:email:v1:AAAA"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#claimedBy"
+     },
+     "o": {
+      "iri": "urn:person:p2"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "KeyClaimHeld",
+   "revision": null
+  },
+  {
+   "id": "cf-key-claim-held-by-both",
+   "description": "A claim with the owner and another is held by another.",
+   "operation": {
+    "templateId": "key-claim-write",
+    "kind": "KeyClaimWrite",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "keysGraph": "urn:g:keys"
+    }
+   },
+   "values": {
+    "claim": {
+     "iri": "urn:key:email:v1:AAAA"
+    },
+    "owner": {
+     "iri": "urn:person:p1"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:keys",
+     "s": {
+      "iri": "urn:key:email:v1:AAAA"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#claimedBy"
+     },
+     "o": {
+      "iri": "urn:person:p2"
+     }
+    },
+    {
+     "graph": "urn:g:keys",
+     "s": {
+      "iri": "urn:key:email:v1:AAAA"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#claimedBy"
+     },
+     "o": {
+      "iri": "urn:person:p1"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "KeyClaimHeld",
+   "revision": null
+  },
+  {
+   "id": "cf-key-claim-not-written",
+   "description": "A claim with no owner was not written, and no guard explains it.",
+   "operation": {
+    "templateId": "key-claim-write",
+    "kind": "KeyClaimWrite",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "keysGraph": "urn:g:keys"
+    }
+   },
+   "values": {
+    "claim": {
+     "iri": "urn:key:email:v1:AAAA"
+    },
+    "owner": {
+     "iri": "urn:person:p1"
+    }
+   },
+   "quads": [],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  },
+  {
+   "id": "cf-key-claim-in-another-graph-is-not-read",
+   "description": "Only the keys graph holds claims.",
+   "operation": {
+    "templateId": "key-claim-write",
+    "kind": "KeyClaimWrite",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "keysGraph": "urn:g:keys"
+    }
+   },
+   "values": {
+    "claim": {
+     "iri": "urn:key:email:v1:AAAA"
+    },
+    "owner": {
+     "iri": "urn:person:p1"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:elsewhere",
+     "s": {
+      "iri": "urn:key:email:v1:AAAA"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#claimedBy"
+     },
+     "o": {
+      "iri": "urn:person:p1"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  },
+  {
+   "id": "cf-dual-key-claim-applied",
+   "description": "Both claims are held by the owner.",
+   "operation": {
+    "templateId": "key-claim-write-dual",
+    "kind": "KeyClaimWriteDual",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "keysGraph": "urn:g:keys"
+    }
+   },
+   "values": {
+    "claimCurrent": {
+     "iri": "urn:key:email:v1:AAAA"
+    },
+    "claimNext": {
+     "iri": "urn:key:email:v2:BBBB"
+    },
+    "owner": {
+     "iri": "urn:person:p1"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:keys",
+     "s": {
+      "iri": "urn:key:email:v1:AAAA"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#claimedBy"
+     },
+     "o": {
+      "iri": "urn:person:p1"
+     }
+    },
+    {
+     "graph": "urn:g:keys",
+     "s": {
+      "iri": "urn:key:email:v2:BBBB"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#claimedBy"
+     },
+     "o": {
+      "iri": "urn:person:p1"
+     }
+    }
+   ],
+   "outcome": "applied",
+   "classification": "Applied",
+   "revision": null
+  },
+  {
+   "id": "cf-dual-key-claim-held-by-another",
+   "description": "Either claim held by another fails the write, which writes both or neither.",
+   "operation": {
+    "templateId": "key-claim-write-dual",
+    "kind": "KeyClaimWriteDual",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "keysGraph": "urn:g:keys"
+    }
+   },
+   "values": {
+    "claimCurrent": {
+     "iri": "urn:key:email:v1:AAAA"
+    },
+    "claimNext": {
+     "iri": "urn:key:email:v2:BBBB"
+    },
+    "owner": {
+     "iri": "urn:person:p1"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:keys",
+     "s": {
+      "iri": "urn:key:email:v2:BBBB"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#claimedBy"
+     },
+     "o": {
+      "iri": "urn:person:p2"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "KeyClaimHeld",
+   "revision": null
+  },
+  {
+   "id": "cf-dual-key-claim-half-written",
+   "description": "One claim held by the owner and the other with no owner is not applied, since the write is one request.",
+   "operation": {
+    "templateId": "key-claim-write-dual",
+    "kind": "KeyClaimWriteDual",
+    "bindings": {
+     "txnGraph": "urn:g:txn",
+     "datasetGraph": "urn:g:dataset",
+     "datasetNode": "urn:g:dataset",
+     "metaGraphPrefix": "urn:g:meta/3",
+     "keysGraph": "urn:g:keys"
+    }
+   },
+   "values": {
+    "claimCurrent": {
+     "iri": "urn:key:email:v1:AAAA"
+    },
+    "claimNext": {
+     "iri": "urn:key:email:v2:BBBB"
+    },
+    "owner": {
+     "iri": "urn:person:p1"
+    }
+   },
+   "quads": [
+    {
+     "graph": "urn:g:keys",
+     "s": {
+      "iri": "urn:key:email:v1:AAAA"
+     },
+     "p": {
+      "iri": "https://www.nebularis.org/neuro-semantic/lattice/persistence-store#claimedBy"
+     },
+     "o": {
+      "iri": "urn:person:p1"
+     }
+    }
+   ],
+   "outcome": "lostRace",
+   "classification": "NotApplied",
+   "revision": null
+  }
  ]
 }

@@ -23,11 +23,17 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.ARQ;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.query.QueryCancelledException;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -44,6 +50,8 @@ import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.vocabulary.RDF;
 import org.nebularis.lattice.persistence.CallerCheck;
+import org.nebularis.lattice.persistence.Confirmation;
+import org.nebularis.lattice.persistence.ConfirmationException;
 import org.nebularis.lattice.persistence.DigestException;
 import org.nebularis.lattice.persistence.Iri;
 import org.nebularis.lattice.persistence.Namespaces;
@@ -189,7 +197,7 @@ final class PersistenceStep {
         Set<Quad> removed = new HashSet<>(before);
         removed.removeAll(after);
         parts.add(new Part("delta", "application/json", delta(places, placeValues, added, removed)));
-        parts.add(new Part("outcome", "application/json", Txn.calculateRead(dataset, () -> confirm(dataset, contract, values, !added.isEmpty() || !removed.isEmpty()))));
+        parts.add(new Part("outcome", "application/json", confirmed(dataset, contract, values)));
         return parts;
     }
 
@@ -520,86 +528,46 @@ final class PersistenceStep {
 
     // ---- the outcome
 
-    private static String iriBinding(OperationContract contract, String name) {
-        return contract.binding(name).filter(t -> t.startsWith("<") && t.endsWith(">")).map(t -> t.substring(1, t.length() - 1)).orElse(null);
-    }
-
-    private static List<Node> objects(DatasetGraph ds, String graph, Node subject, String predicate) {
-        List<Node> out = new ArrayList<>();
-        ds.find(NodeFactory.createURI(graph), subject, NodeFactory.createURI(predicate), Node.ANY).forEachRemaining(q -> out.add(q.getObject()));
-        return out;
-    }
-
     /**
-     * What the caller's confirmation read says about the write, read as the persistence guide's table does (patterns guide section 15.2): the
-     * claim of the transaction on the transaction graph, with the digest it holds. The library has no function for this read, which is a
-     * caller's own, so it is the one place this class reads the store itself. A claim with the request's digest is applied. A claim with
-     * another is an id reused for a different request. With no claim, the dataset's epoch, then a tombstoned row, then the version row say
-     * why, and every such reason is a lost race.
+     * What the caller library's confirmation read says about the write (ADR-A132, STD-312). The step runs the library's read over the dataset after
+     * the update, as a caller runs it on the writer, and tells its classification as it gives it. The library names the guard each classification
+     * answers, and nothing here reads the store to classify. A step runs only a Create, Replace, DeltaReplace or Tombstone, and each records a
+     * transaction claim, so the read always applies.
      */
-    private static String confirm(DatasetGraph ds, OperationContract contract, Map<String, Object> values, boolean changed) {
-        JsonObject o = new JsonObject();
-        String txnGraph = iriBinding(contract, "txnGraph");
-        Object txn = values.get("txnId");
-        String digest = (String) values.get("requestDigest");
-        String outcome;
-        String classification;
-        String reason;
-        Node rev = null;
-        if (txnGraph == null || !(txn instanceof Iri txnId)) {
-            outcome = changed ? "applied" : "lostRace";
-            classification = "Unconfirmed";
-            reason = "The operation records no transaction claim, so the outcome is read from what changed.";
-        } else {
-            Node claimed = NodeFactory.createURI(txnId.value());
-            List<Node> revs = objects(ds, txnGraph, claimed, Namespaces.PAT + "rev");
-            List<Node> digests = objects(ds, txnGraph, claimed, Namespaces.PAT + "requestDigest");
-            if (!revs.isEmpty()) {
-                rev = revs.get(0);
-                boolean same = digests.size() == 1 && digests.get(0).isLiteral() && digests.get(0).getLiteralLexicalForm().equals(digest);
-                outcome = same ? "applied" : "refused";
-                classification = same ? "Applied" : "IdempotencyKeyReuse";
-                reason = same ? (changed ? "The claim of the transaction is on the transaction graph with this request's digest."
-                    : "The transaction's claim was already on the transaction graph with this request's digest, so an earlier attempt applied it and nothing changed.")
-                    : "The transaction id already claims a revision with the digest of a different request.";
-            } else {
-                outcome = "lostRace";
-                String datasetGraph = iriBinding(contract, "datasetGraph");
-                String datasetNode = iriBinding(contract, "datasetNode");
-                String meta = iriBinding(contract, "metaGraphPrefix");
-                Object root = values.get("root");
-                Object epoch = values.get("epoch");
-                List<Node> epochs = datasetGraph == null || datasetNode == null ? List.of()
-                    : objects(ds, datasetGraph, NodeFactory.createURI(datasetNode), Namespaces.PAT + "epoch");
-                Node rootNode = root instanceof Iri r ? NodeFactory.createURI(r.value()) : null;
-                List<Node> deleted = meta == null || rootNode == null ? List.of() : objects(ds, meta, rootNode, Namespaces.PAT + "deleted");
-                List<Node> seqs = meta == null || rootNode == null ? List.of() : objects(ds, meta, rootNode, Namespaces.PAT + "seq");
-                if (epoch != null && epochs.stream().noneMatch(e -> e.isLiteral() && e.getLiteralLexicalForm().equals(epoch.toString()))) {
-                    classification = "EpochChanged";
-                    reason = "The dataset's epoch is " + (epochs.isEmpty() ? "not stated" : epochs.get(0).getLiteralLexicalForm()) + ", not " + epoch + ", so the guard on it failed.";
-                } else if (!deleted.isEmpty()) {
-                    classification = "Gone";
-                    reason = "The aggregate's version row is tombstoned, so the write found nothing to change.";
-                } else if (values.containsKey("expectedSeq")) {
-                    classification = "PreconditionFailed";
-                    reason = seqs.isEmpty() ? "The aggregate has no version row, so the guard on position " + values.get("expectedSeq") + " failed."
-                        : "The version row is at position " + seqs.get(0).getLiteralLexicalForm() + ", not " + values.get("expectedSeq") + ", so another writer moved it and the guard failed.";
-                } else if (!seqs.isEmpty()) {
-                    classification = "AlreadyExists";
-                    reason = "The aggregate already has a version row at position " + seqs.get(0).getLiteralLexicalForm() + ", so the create wrote nothing.";
-                } else {
-                    classification = "NotApplied";
-                    reason = "The transaction has no claim and no guard of the operation can be read as the one that failed.";
-                }
-            }
+    private static String confirmed(DatasetGraph ds, OperationContract contract, Map<String, Object> values) throws Failed {
+        try {
+            return Txn.calculateRead(ds, () -> confirm(ds, contract, values));
+        } catch (ConfirmationException e) {
+            throw new Failed("The write cannot be confirmed. " + e.getMessage());
         }
-        o.put("outcome", outcome);
-        o.put("classification", classification);
-        o.put("reason", reason);
-        if (rev != null && rev.isURI()) {
-            o.put("revision", rev.getURI());
+    }
+
+    private static String confirm(DatasetGraph ds, OperationContract contract, Map<String, Object> values) {
+        Confirmation c = Confirmation.run(query -> select(ds, query), contract, values);
+        JsonObject o = new JsonObject();
+        o.put("outcome", c.outcome().value());
+        o.put("classification", c.classification().value());
+        o.put("reason", c.reason());
+        if (c.revision() != null) {
+            o.put("revision", c.revision());
         }
         o.put("engine", ENGINE);
         return JSON.toString(o);
+    }
+
+    /** The adopter's client of the library, over the step's dataset, which a step reads inside its own read transaction. */
+    private static List<Map<String, Object>> select(DatasetGraph ds, String query) {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        try (QueryExecution qe = QueryExecutionFactory.create(query, DatasetFactory.wrap(ds))) {
+            for (ResultSet rs = qe.execSelect(); rs.hasNext();) {
+                QuerySolution s = rs.next();
+                Map<String, Object> row = new HashMap<>();
+                row.put("fact", s.getLiteral("fact").getString());
+                RDFNode value = s.get("value");
+                row.put("value", value.isLiteral() ? value.asLiteral().getLexicalForm() : value.asResource().getURI());
+                rows.add(row);
+            }
+        }
+        return rows;
     }
 }

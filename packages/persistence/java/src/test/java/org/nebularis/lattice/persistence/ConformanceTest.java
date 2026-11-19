@@ -84,7 +84,7 @@ class ConformanceTest {
     }
 
     @Test void everyVectorSetIsPresent() {
-        for (String set : List.of("ntriples", "refusals", "digests", "payloadChecks", "eventChecks", "callerChecks", "auditOutcomes", "referenceChecks", "checkpointChecks")) {
+        for (String set : List.of("ntriples", "refusals", "digests", "payloadChecks", "eventChecks", "callerChecks", "auditOutcomes", "referenceChecks", "checkpointChecks", "confirmationChecks")) {
             assertTrue(!list(get(vectors(), set)).isEmpty(), set);
         }
     }

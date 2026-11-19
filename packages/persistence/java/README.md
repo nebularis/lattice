@@ -19,6 +19,7 @@ mvn -f packages/persistence/java/pom.xml install
 | `Bound` | `outsideBound` and `outsideEvents`, the subjects of a payload that are neither the root nor reached from it by owned edges, and the subjects of an append's triples that belong to no event of the batch |
 | `CallerCheck`, `CallerCheckException`, `Refusal` | `refusals` and `check`, the caller check. Every parameter present and of its kind, an `xsd:long` exactly, a caller-named graph equal to the naming rule, `logGraphs` non-empty IRIs, the payload and event bounds, the reference modes and the checkpoint list. Every reason is named, before anything is sent |
 | `Audit`, `AuditOutcome`, `AuditResult`, `SelectClient` | `Audit.outcome` (clean, failed or nothing examined), `Audit.run`, `Audit.examinedQuery`, and `SelectClient`, the one method of the adopter's client that the library asks for |
+| `Confirmation`, `Classification`, `Outcome`, `ConfirmationException` | `Confirmation.query`, the read that confirms a write, `Confirmation.classify`, which classifies it from the rows the read returned, and `Confirmation.run`, which does both through a `SelectClient`. The result is the outcome (`applied`, `refused` or `lostRace`), its classification (a lost race's cause), the revision the transaction claimed and a reason in words |
 
 The library makes no store call.
 
@@ -41,6 +42,21 @@ Before sending, `CallerCheck.check(replace, values)` throws `CallerCheckExceptio
 The values are keyed by the names of the operation's parameters and slots. A value is an `Iri`, a `Lit`, a `Payload`, a `Rows`, a `String`, an integral number, or an `Iterable` for a `RegistryList`. A slot is a `Payload`, or `Rows` for `eventRows`. A Jena literal node is read as a literal where a `Long` or a `Position` is declared. `Payload.ofJena` builds a payload from Jena triples and refuses a blank node.
 
 In the instantiated SPARQL a slot is the plain-text marker `{{{name}}}`. The caller replaces the marker with the text the contract's encoding asks for, by substitution and with no template engine. `Payload.slotText(operation, name, value)` returns it, `sparql()` for the triples of `dal:GroundNTriples` and `rows()` for the rows `(s p o)` of `dal:TripleRows`, and `Rows` as its own `sparql()`. The request digest is over the canonical N-Triples whichever the encoding. `Audit.run` does this for `logGraphs`. An unfilled marker is a syntax error, so a forgotten slot fails closed.
+
+### Confirming a write
+
+After a write, `Confirmation.run(client, operation, values)` reads the transaction claim and the facts the operation's guards test, on the writer, and classifies the write. The values are those the request was built from, with its `requestDigest`. A `204` does not say whether a guard matched, and this does.
+
+```java
+Confirmation c = Confirmation.run(client, replace, values);
+switch (c.outcome()) {
+    case APPLIED -> { /* on this attempt or an earlier one */ }
+    case REFUSED -> { /* the transaction id was used for a different request */ }
+    case LOST_RACE -> { /* c.classification() is the guard that failed, and c.reason() says what was found */ }
+}
+```
+
+[The confirmation](../../../contracts/persistence/README.md#the-confirmation) of the persistence contract specifies the read, each classification and the guard it answers.
 
 ## Differences from the Python library
 

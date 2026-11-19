@@ -101,6 +101,10 @@ Taken while building the library core, for the maintainer's review.
   `persistence.terms`), `Payload`, `Rows`, and the contract's data classes the library reads (`OperationKind`, `ParameterContract`,
   `PayloadContract`, `EdgeContract`, `DigestContract`). `persistence.terms` and `persistence.contract` re-export them.
 
+## Dated note, 2026-11-19: the libraries give the confirmation read
+
+The maintainer decided that the caller libraries own the read that confirms a write and classifies its outcome (STD-312), which the library had left to each caller. Both libraries give it, `confirm` in Python and `Confirmation.run` in Java, over the adopter's client and with no store call of their own. [The persistence contract](../../../contracts/persistence/README.md#the-confirmation) specifies the read once, with the outcome and the cause of each guard of a generated operation, and the vectors in `contracts/persistence/` fix it for both libraries and for an implementation written from the specification alone. The classification follows section 15.2 of the patterns guide and adds the causes the guide has no row for, `AlreadyExists` for a create's guard and `KeyClaimHeld` for a key-claim write's, and `NotApplied` for what no guard explains.
+
 ## Provenance
 
 **Unit:** [`formal-methods-track-h`](../../developer/plans/formal-methods-track-h.md) (plan)

@@ -14,6 +14,7 @@ Standard library and rdflib only. It never imports the compiler, and the compile
 | `lattice_persistence.bound` | `outside_bound` and `outside_events`, the subjects of a payload that are neither the root nor reached from it by owned edges, and the subjects of an append's triples that belong to no event of the batch |
 | `lattice_persistence.check` | `refusals` and `check_request`, the caller check. Every parameter present and of its kind, an `xsd:long` exactly, a caller-named graph equal to the naming rule, `logGraphs` non-empty IRIs, the payload and event bounds, the reference modes and the checkpoint list. Every reason is named, before anything is sent |
 | `lattice_persistence.audit` | `audit_outcome` (clean, failed or nothing examined), `run_audit`, `examined_query`, and `SparqlClient`, the one method of the adopter's client that the library asks for |
+| `lattice_persistence.confirm` | `confirm_query`, the read that confirms a write, `classify`, which classifies it from the rows the read returned, and `confirm`, which does both through a `SparqlClient`. The result is a `Confirmation`, the outcome (`applied`, `refused` or `lostRace`), its `Classification` (a lost race's cause), the revision the transaction claimed and a reason in words |
 
 ## Use
 
@@ -69,6 +70,18 @@ values = {..., "assertTriples": Payload.of(Triple(Iri.encode("urn:project:1"), I
 ```
 
 A version that is a checkpoint lists its members in `payloadTriples` and leaves both member slots empty, which still hash as two empty parts.
+
+### Confirming a write
+
+After a write, `confirm(client, replace, values)` reads the transaction claim and the facts the operation's guards test, on the writer, and classifies the write. The values are those the request was built from, with its `requestDigest`. A `204` does not say whether a guard matched, and this does.
+
+```python
+c = confirm(client, replace, values)
+if c.outcome is Outcome.LOST_RACE:
+    print(c.classification, c.reason)   # the guard that failed, and what was found
+```
+
+[The confirmation](../../../contracts/persistence/README.md#the-confirmation) of the persistence contract specifies the read, each classification and the guard it answers.
 
 ## Tests
 

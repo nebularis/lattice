@@ -17,6 +17,7 @@ The vectors it checks, per entry:
   - "auditOutcomes": clean, failed or nothing examined
   - "referenceChecks": an object on a pinned edge is a version and on an identity edge is not
   - "checkpointChecks": a checkpoint version lists every member
+  - "confirmationChecks": the outcome and the cause of a write, from the transaction claim and the facts the operation's guards test
 
 Usage: python3 verify-vectors.py [vectors.json] [--openssl PATH] [--emit]
 Exit status 0 when every check passes. --emit prints the computed expectations as JSON, for authoring a new vector.
@@ -266,6 +267,65 @@ def checkpoint_refusals(v: dict) -> list:
     return ["UnexpectedFullList"] if marked or listed else []
 
 
+# ---- the confirmation. Written here from the contract's section on it, and shares nothing with the libraries.
+
+CLAIMING_KINDS = {"Create", "Replace", "DeltaReplace", "Tombstone", "Append", "AppendVersion"}
+ROW_GUARDED_KINDS = CLAIMING_KINDS - {"Create"}
+
+
+def facts_of(v: dict, graph: str, subject: str, predicate: str) -> list:
+    """The objects of the triples `subject predicate ?o` in `graph`, as plain text (an IRI without brackets, a literal's lexical form)."""
+    return [t["o"].get("iri", t["o"].get("literal")) for t in v["quads"]
+            if t["graph"] == graph and t["s"]["iri"] == subject and t["p"]["iri"] == PAT + predicate]
+
+
+def as_int(text: str):
+    try:
+        return int(text)
+    except ValueError:
+        return None
+
+
+def confirmation(v: dict) -> tuple:
+    """(outcome, classification, revision) of a write. The first rule that holds decides."""
+    op, values, bindings = v["operation"], v["values"], v["operation"]["bindings"]
+    kind = op["kind"]
+    if kind in ("KeyClaimWrite", "KeyClaimWriteDual"):
+        owner = values["owner"]["iri"]
+        names = ("claimCurrent", "claimNext") if kind == "KeyClaimWriteDual" else ("claim",)
+        owners = [facts_of(v, bindings["keysGraph"], values[n]["iri"], "claimedBy") for n in names]
+        if any(o != owner for held in owners for o in held):
+            return "lostRace", "KeyClaimHeld", None
+        return ("applied", "Applied", None) if all(owner in held for held in owners) else ("lostRace", "NotApplied", None)
+    target = values["stream" if kind == "Append" else "root"]["iri"]
+    txn = values["txnId"]["iri"]
+    epoch = values["epoch"]["int"]
+    expected = values.get("expectedSeq", {}).get("int")
+    revs = sorted(facts_of(v, bindings["txnGraph"], txn, "rev"))
+    if revs:
+        same = facts_of(v, bindings["txnGraph"], txn, "requestDigest") == [values["requestDigest"]["string"]]
+        return ("applied", "Applied", revs[0]) if same else ("refused", "IdempotencyKeyReuse", revs[0])
+    meta = bindings["metaGraphPrefix"]
+    seqs = [n for n in map(as_int, facts_of(v, meta, target, "seq")) if n is not None]
+    if op["templateId"].endswith("-dataset-guard"):
+        if epoch not in map(as_int, facts_of(v, bindings["datasetGraph"], bindings["datasetNode"], "epoch")):
+            return "lostRace", "EpochChanged", None
+    elif kind in ROW_GUARDED_KINDS:
+        row_epochs = facts_of(v, meta, target, "epoch")
+        if row_epochs and epoch not in map(as_int, row_epochs):
+            return "lostRace", "EpochChanged", None
+    if kind in ROW_GUARDED_KINDS:
+        if any(x in ("true", "1") for x in facts_of(v, meta, target, "deleted")):
+            return "lostRace", "Gone", None
+        if (expected not in seqs) if expected is not None else (not seqs):
+            return "lostRace", "PreconditionFailed", None
+    if kind == "Create":
+        data = bindings.get("dataGraph")
+        if seqs or (data is not None and any(t["graph"] == data and t["s"]["iri"] == target for t in v["quads"])):
+            return "lostRace", "AlreadyExists", None
+    return "lostRace", "NotApplied", None
+
+
 class Openssl:
     def __init__(self, exe: str):
         self.exe = exe
@@ -315,6 +375,9 @@ def check(path: Path, ossl: Openssl, emit: bool) -> int:
         ok(reference_refusals(v) == v["refusals"], f"{v['id']}: {reference_refusals(v)}, expected {v['refusals']}")
     for v in doc["checkpointChecks"]:
         ok(checkpoint_refusals(v) == v["refusals"], f"{v['id']}: {checkpoint_refusals(v)}, expected {v['refusals']}")
+    for v in doc["confirmationChecks"]:
+        got = confirmation(v)
+        ok(got == (v["outcome"], v["classification"], v["revision"]), f"{v['id']}: {got}, expected {(v['outcome'], v['classification'], v['revision'])}")
     if emit:
         print(json.dumps(emitted, ensure_ascii=False, indent=1))
     for f in failures:

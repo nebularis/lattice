@@ -296,7 +296,7 @@ class PersistenceStepTest {
         orphan.graph(DATA, line(ROOT, EX + "margin", typed("9.0", "decimal")));
         PersistenceStep.Result noRow = ran(orphan.text());
         assertEquals("lostRace", outcome(noRow));
-        assertEquals("NotApplied", classification(noRow), "HO7-T4: data with no version row is not created over");
+        assertEquals("AlreadyExists", classification(noRow), "HO7-T4: data with no version row is not created over, which the composite create's guard on the root's triples refuses");
         assertEquals(Map.of(), changes(noRow));
 
         StepTrig reused = create();

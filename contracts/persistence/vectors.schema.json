@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.nebularis.org/lattice/persistence/vectors/1.0.0",
   "title": "LATTICE persistence conformance vectors",
-  "description": "Conformance vectors for the canonical N-Triples of a payload, the request digest, the payload check, the events of an append, the caller check, the audit outcome, reference modes and checkpoint versions. Normative definition: ADR-A123 (the digest contract and its addenda) and ADR-A132 decision 4. An implementation is conformant when it reproduces every canonical line and every digest, refuses every payload in the refusals, and gives each check the result the vector states.",
+  "description": "Conformance vectors for the canonical N-Triples of a payload, the request digest, the payload check, the events of an append, the caller check, the audit outcome, reference modes, checkpoint versions and the confirmation of a write. Normative definition: ADR-A123 (the digest contract and its addenda) and ADR-A132 decision 4. An implementation is conformant when it reproduces every canonical line and every digest, refuses every payload in the refusals, and gives each check the result the vector states, the confirmation of a write included.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,7 +16,8 @@
     "callerChecks",
     "auditOutcomes",
     "referenceChecks",
-    "checkpointChecks"
+    "checkpointChecks",
+    "confirmationChecks"
   ],
   "properties": {
     "vectorsFormat": {
@@ -635,6 +636,95 @@
           }
         }
       }
+    },
+    "confirmationChecks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "description",
+          "operation",
+          "values",
+          "quads",
+          "outcome",
+          "classification",
+          "revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "templateId",
+              "kind",
+              "bindings"
+            ],
+            "description": "The operation of the write as a compiled profile states it. A template id that ends in -dataset-guard guards on the dataset's epoch, and the bindings are the operation's compile-time graph IRIs, without angle brackets.",
+            "properties": {
+              "templateId": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "description": "The operation's kind as the compiled profile names it, for example Replace."
+              },
+              "bindings": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "txnGraph, datasetGraph, datasetNode, metaGraphPrefix, dataGraph and keysGraph, each as the operation has it."
+              }
+            }
+          },
+          "values": {
+            "type": "object",
+            "description": "The request's values by parameter name, as the caller check vectors give them: an IRI as {\"iri\"}, the epoch and the expected position as {\"int\"} and the request digest as {\"string\"}. The target is `root`, or `stream` for an append. A key-claim write has `claim` (or `claimCurrent` and `claimNext`) and `owner`."
+          },
+          "quads": {
+            "type": "array",
+            "description": "What the store holds. A fact is read only from the graph the operation's binding names.",
+            "items": {
+              "$ref": "#/$defs/quad"
+            }
+          },
+          "outcome": {
+            "enum": [
+              "applied",
+              "refused",
+              "lostRace"
+            ]
+          },
+          "classification": {
+            "enum": [
+              "Applied",
+              "IdempotencyKeyReuse",
+              "EpochChanged",
+              "Gone",
+              "PreconditionFailed",
+              "AlreadyExists",
+              "KeyClaimHeld",
+              "NotApplied"
+            ],
+            "description": "For a lost race this is its cause."
+          },
+          "revision": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The revision the transaction's claim names, or null where it names none."
+          }
+        }
+      }
     }
   },
   "$defs": {
@@ -767,6 +857,31 @@
             "ByIdentity",
             "Pinned"
           ]
+        }
+      }
+    },
+    "quad": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "graph",
+        "s",
+        "p",
+        "o"
+      ],
+      "description": "One triple of the dataset a confirmation reads, in the named graph it is in.",
+      "properties": {
+        "graph": {
+          "type": "string"
+        },
+        "s": {
+          "$ref": "#/$defs/term"
+        },
+        "p": {
+          "$ref": "#/$defs/term"
+        },
+        "o": {
+          "$ref": "#/$defs/term"
         }
       }
     }
