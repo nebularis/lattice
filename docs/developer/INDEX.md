@@ -49,7 +49,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
 | mtp-execution | unit |  | merged 2026-09-20 |  | [status](status/mtp-execution.md) |
-| multi-store-architecture | unit | MSA | building 2026-11-18 | MSA-I1 | [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md), 17 Validation Packs |
+| multi-store-architecture | unit | MSA | built 2026-11-18 | MSA-I1 | [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md), 17 Validation Packs |
 | multi-store-conformance | unit | MSC | merged 2026-10-29 |  | [plan](plans/multi-store-conformance.md), [status](status/multi-store-conformance.md), 5 Validation Packs |
 | normative-rule-substrate | multi-slice unit | NRS | blocked | NRS-2 | [plan](plans/normative-rule-substrate.md), [status](status/normative-rule-substrate.md) |
 | ontology-remediation | phase | OR | built 2026-10-28 | OR-0 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |
@@ -435,7 +435,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | ledger | built 2026-11-17 |  | docs/developer/status/ledger.md#board |
 | LG-24 | the merge policy node, what an account declares for a merge moved to a policy the account definition refers to | ledger | verified 2026-11-17 |  | docs/developer/status/ledger.md#board |
 | MSA-I1 | `spikes/multi-store-shape-census`. 505 node shapes, none closed and bounded, so 0% of sample subjects against the proposed 80%. 134 fail only on closure and reach 43.4% of subjects. Validati | multi-store-architecture | built 2026-11-17 |  | docs/developer/status/multi-store-architecture.md#position |
-| MSA-I2 | the read-set census. The falsifier fires on one example, a pass whose guards read a balance an earlier draw wrote, and becomes common once Behaviour imports Ledger. Every other cross-aggrega | multi-store-architecture | building 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
+| MSA-I2 | the read-set census, reworked on the owner's ledger. The falsifier does not fire: the ledger's reads across accounts are inside one ledger, and the one firm read from outside, a guard on a b | multi-store-architecture | built 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I3 | the classification. 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. Validation Pack | multi-store-architecture | built 2026-11-17 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I4 | four operations lowered. No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. Validation Pack | multi-store-architecture | built 2026-11-17 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I5 | the prover spike | multi-store-architecture | planned | MSA-I5a | docs/developer/status/multi-store-architecture.md#position |
