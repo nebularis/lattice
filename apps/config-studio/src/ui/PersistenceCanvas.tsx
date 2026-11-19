@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
-// The persistence canvas's exploded view (SVA-P1), read only. For the target, profile or scope node the author picks, it draws one
-// root with the closure of its boundary and every place its data lands when written. It draws `landing-places.json`, which the worker
-// reads from the compiled profile and the compiler's own code, from the latest finished persistence compilation of the workspace.
-// Nothing is drawn from the browser's own reading of the configuration, and the picture says when the persistence part or the baseline
-// has changed since the compilation it shows. Edits on the canvas are SVA-P2.
+// The persistence canvas's exploded view (SVA-P1, SVA-P1b), read only. For the target, profile or scope node the author picks, it draws one
+// root with the closure of its boundary and every place its data lands when written. It draws `compiled-profile.ttl`, the artefact the
+// latest finished persistence compilation of the workspace holds, which states the places itself. Nothing is drawn from the browser's own
+// reading of the configuration, and the picture says when the persistence part or the baseline has changed since the compilation it
+// shows. Edits on the canvas are SVA-P2.
 
 import { useEffect, useMemo, useState } from "react";
 import { Handle, MarkerType, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
@@ -11,7 +11,7 @@ import { Graph } from "@lattice/authoring-domain";
 import { api, awaitJob, jobId } from "../api";
 import { Canvas, RoutedEdge, type LayoutHints, type LayoutOptions, type RoutedEdgeData } from "../canvas/kit";
 import {
-  LANDING_PLACES, LENSES, choices, drawing, fingerprint, freshness, localName, parseLanding, readCompiled, targetLabel, writeCompiled,
+  COMPILED_PROFILE, LENSES, choices, drawing, fingerprint, freshness, localName, readCompiled, readLanding, targetLabel, writeCompiled,
   type CanvasNode, type Lens, type LandingPlaces, type LandingTarget, type Place,
 } from "../persistence/landing";
 import { finished, type Job } from "../rdf/report";
@@ -72,9 +72,10 @@ async function read(workspace: string): Promise<Load> {
   if (!row) return { state: "none" };
   const job = await awaitJob(jobId(row.iri));
   if (job.status !== "Succeeded" || !job.conforms) return { state: "refused", job };
-  const file = job.artefacts.find((a) => a.path === LANDING_PLACES);
+  const file = job.artefacts.find((a) => a.path === COMPILED_PROFILE);
   if (!file) return { state: "old", job };
-  return { state: "ready", job, doc: parseLanding(file.content) };
+  const reading = readLanding(file.content);
+  return reading.state === "ready" ? { state: "ready", job, doc: reading.doc } : { state: "old", job };
 }
 
 export function PersistenceCanvas() {

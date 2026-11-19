@@ -33,8 +33,8 @@ The author shares the page's width: the navigation, the mode's list column and t
 | `src/rdf/editors.ts` | the node kinds, how an editor groups its sections, node creation, and the reference check |
 | `src/rdf/baseline.ts`, `split.ts`, `path.ts`, `report.ts` | the baseline's terms, sorting an import into the six graphs, the read path, and reading a job graph |
 | `src/rdf/ontologyGraph.ts` | the graphs the ontology drawings show, derived from the baseline and never stored. Classes and object properties from domains and ranges and, on request, shapes, and the class hierarchy, each limited to the neighbourhood of a class |
-| `src/persistence/landing.ts` | the persistence canvas's pure part. It turns `landing-places.json`, which a persistence compile job gives, into the nodes and edges of each lens, and tells whether the picture is out of date by what this browser sent with the compilation |
-| `src/ui/PersistenceCanvas.tsx` | the exploded view of the Persistence view's Canvas option, read only. It draws the latest finished persistence compilation's landing places on the canvas kit, with an aggregate, a profile and a scope node lens, and offers Compile where there is none or it is out of date |
+| `src/persistence/landing.ts` | the persistence canvas's pure part. It reads `compiled-profile.ttl`, which a persistence compile job gives, into the targets, boundaries and places it states, turns them into the nodes and edges of each lens, and tells whether the picture is out of date by what this browser sent with the compilation |
+| `src/ui/PersistenceCanvas.tsx` | the exploded view of the Persistence view's Canvas option, read only. It draws the places the latest finished persistence compilation's compiled profile states on the canvas kit, with an aggregate, a profile and a scope node lens, and offers Compile where there is none or it is out of date |
 | `src/rdf/quantity.ts`, `eligibility.ts` | ranges with their bounds and quantities, and questions as tests |
 | `src/state.ts` | a workspace in the browser: saved and edited graphs, undo, live validation, saving and conflicts |
 | `src/api.ts` | the HTTP API |

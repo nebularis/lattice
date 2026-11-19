@@ -399,10 +399,10 @@ export class FakeService {
           sh:focusNode <https://example.org/lending#LoanApplicationStrongProfile> ;
           sh:resultPath <https://www.nebularis.org/neuro-semantic/lattice/persistence#erasureStrategy> ] .`
       : "";
-    // A compilation of the facility sample also gives what the worker's landing places say of it, the file its own test keeps equal to the worker's.
+    // A compilation of the facility sample also gives its compiled profile, the file the worker's own test keeps equal to what the compiler gives.
     const landing =
       job.kind === "compile" && !refused && job.body.includes("FacilityBoundaryProfile")
-        ? ` ; cst:artefact [ cst:path "landing-places.json" ; cst:mediaType "application/json" ; cst:group "profile" ; cst:content ${JSON.stringify(readFileSync(join(import.meta.dirname, "fixtures/landing-places-facility.json"), "utf-8"))} ]`
+        ? ` ; cst:artefact [ cst:path "compiled-profile.ttl" ; cst:mediaType "text/turtle" ; cst:group "profile" ; cst:content ${JSON.stringify(readFileSync(join(import.meta.dirname, "fixtures/compiled-profile-facility.ttl"), "utf-8"))} ]`
         : "";
     const artefact =
       job.kind === "compile" && !refused

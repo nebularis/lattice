@@ -2007,7 +2007,7 @@ test("the persistence view offers a canvas that says there is no compilation and
   // Seven places, each with its kind, its label and its graph or the rule that names it, and one edge from the root to each.
   const places = landingNode(canvas, "place");
   await expect(places).toHaveCount(7);
-  for (const text of ["urn:g:facilities", "urn:g:meta/6", "urn:g:txn", "urn:g:keys", "{newRev}/add", "{newRev}/del", "urn:g:txlog/{year and month of the write, as YYYY-MM}"]) {
+  for (const text of ["urn:g:facilities", "urn:g:meta/6", "urn:g:txn", "urn:g:keys", "{newRev}/add", "{newRev}/del", "urn:g:txlog/{month}"]) {
     await expect(places.filter({ hasText: text }).first()).toBeVisible();
   }
   await expect(canvas.locator(".react-flow__edge title").filter({ hasText: /^Patch log, the triples added, written to/ })).toHaveCount(1);

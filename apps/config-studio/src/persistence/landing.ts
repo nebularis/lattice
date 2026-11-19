@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MPL-2.0
-// The persistence canvas's pure part (SVA-P1). It turns `landing-places.json`, the artefact a persistence compile job gives, into the
-// nodes and edges each lens draws, and says whether the picture is out of date. Nothing here reads the configuration to find where a
-// target's data lands. That reading is the worker's (contracts/config-studio/landing-places.schema.json), and the browser draws what the
-// latest compilation says.
+// The persistence canvas's pure part (SVA-P1, SVA-P1b). It reads the `compiled-profile.ttl` artefact of a persistence compile job into
+// the targets, boundaries and places each lens draws, and says whether the picture is out of date. The compiled profile states where a
+// target's data lands, as `dal:GraphPlace` nodes that each write access reaches by `dal:landsIn`, so nothing here reads the
+// configuration, guesses from an IRI pattern or reads a template's SPARQL for it. The canvas draws what the latest compilation says.
+
+import { DAL, Graph, TYPE, TurtleError, type Term } from "@lattice/authoring-domain";
 
 export type PlaceKind =
   | "data-graph" | "version" | "events" | "version-row" | "receipt" | "transaction-claim" | "patch-log-add" | "patch-log-del"
-  | "key-claim" | "merge-record" | "key-quarantine" | "retention-mark" | "dataset-epoch" | "derived-rows";
+  | "key-claim" | "merge-record" | "key-quarantine" | "retention-mark" | "dataset-epoch";
 
 export type ReferenceMode = "ByIdentity" | "Pinned";
 
@@ -38,6 +40,7 @@ export interface Aggregate {
 export interface Place {
   kind: PlaceKind;
   label: string;
+  /** The graph, or the template that names it when an operation runs, as the compiled profile states it. */
   graph: string;
   from: string[];
   operations: string[];
@@ -66,23 +69,220 @@ export interface LandingPlaces {
   targets: LandingTarget[];
 }
 
-export const LANDING_PLACES = "landing-places.json";
+/** The artefact of a persistence compile job the canvas draws, in the group `profile`. */
+export const COMPILED_PROFILE = "compiled-profile.ttl";
 
-/** The document a compile job holds, read. A document that is not the one the worker writes is refused in plain words. */
-export function parseLanding(text: string): LandingPlaces {
-  let value: unknown;
-  try {
-    value = JSON.parse(text);
-  } catch {
-    throw new Error("The landing places are not JSON.");
-  }
-  const targets = (value as { targets?: unknown } | null)?.targets;
-  const ok = (t: unknown): t is LandingTarget => {
-    const x = t as Partial<LandingTarget> | null;
-    return !!x && typeof x.id === "string" && typeof x.class === "string" && Array.isArray(x.profiles) && Array.isArray(x.matchedScopes) && Array.isArray(x.places) && Array.isArray(x.operations) && !!x.aggregate && typeof x.aggregate.rootClass === "string" && Array.isArray(x.aggregate.owned) && Array.isArray(x.aggregate.references);
+/** What reading a compiled profile gives. `predates` is a profile with targets and no `dal:GraphPlace`, compiled before the profile stated where data lands. */
+export type Reading = { state: "ready"; doc: LandingPlaces } | { state: "predates" };
+
+/** The kinds of place, in the order the canvas lists them. */
+export const PLACE_KINDS: PlaceKind[] = [
+  "data-graph", "version", "events", "version-row", "receipt", "transaction-claim", "patch-log-add", "patch-log-del",
+  "key-claim", "merge-record", "key-quarantine", "retention-mark", "dataset-epoch",
+];
+
+const LABELS: Record<PlaceKind, string> = {
+  "data-graph": "Data graph, the aggregate's triples",
+  version: "The new version's triples",
+  events: "Events of the stream",
+  "version-row": "Version row, with the head and the sequence",
+  receipt: "Receipt of each write",
+  "transaction-claim": "Transaction claim, for a retry",
+  "patch-log-add": "Patch log, the triples added",
+  "patch-log-del": "Patch log, the triples removed",
+  "key-claim": "Key claim",
+  "merge-record": "Key merge record",
+  "key-quarantine": "Key quarantine",
+  "retention-mark": "Retention mark",
+  "dataset-epoch": "Dataset epoch",
+};
+
+/** The kind of a place the roles that need nothing else decide. A pinned graph is the SPARQL realisation of receipt retention, so it is a receipt as the log is. */
+const ROLE_KINDS: Record<string, PlaceKind> = {
+  MetaRole: "version-row", TxnRole: "transaction-claim", LogRole: "receipt", PinnedRole: "receipt", EventRole: "events",
+  QuarantineRole: "key-quarantine", RetentionRole: "retention-mark", DatasetRole: "dataset-epoch",
+};
+
+const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+const after = (iri: string) => iri.slice(iri.lastIndexOf("#") + 1);
+
+/** The name of a target in the job, its class's local name followed by its deployment's where it has one, as the worker's `instantiate_by_target` names it. */
+function groupOf(cls: string, deployment: string | null): string {
+  const local = (iri: string) => {
+    const trimmed = iri.replace(/[/#]+$/, "");
+    const hash = trimmed.slice(trimmed.lastIndexOf("#") + 1);
+    return hash.slice(hash.lastIndexOf("/") + 1);
   };
-  if (!Array.isArray(targets) || !targets.every(ok)) throw new Error("The landing places are not the document the worker writes. Compile again.");
-  return value as LandingPlaces;
+  return deployment === null ? local(cls) : `${local(cls)}.${local(deployment)}`;
+}
+
+/**
+ * The path of an operation's SPARQL among a compile job's artefacts. The compiled profile does not state it, since it is where the job
+ * writes the file, so the rule is restated here from `_compile_persistence` in workers/src/lattice_workers/config_studio_jobs.py, the
+ * group being `groupOf`'s name for the target and the file the operation's name with each `:` and `/` written as `_`, and `.rq`. The unit
+ * test holds it against every path the facility sample's job holds.
+ */
+export function artefactPath(group: string, operation: string): string {
+  return `${group}/${operation.replace(/[:/]/g, "_")}.rq`;
+}
+
+/** A compiled profile that cannot be drawn, with what to do about it in plain words. */
+export class LandingError extends Error {}
+
+export function readLanding(turtle: string): Reading {
+  let graph: Graph;
+  try {
+    graph = Graph.parse(turtle);
+  } catch (e) {
+    if (e instanceof TurtleError) throw new LandingError("The compiled profile is not Turtle the studio can read. Compile again.");
+    throw e;
+  }
+  return landingOf(graph);
+}
+
+/** The targets of a compiled profile, in an order that never depends on the order its triples came in. */
+export function landingOf(g: Graph): Reading {
+  const profiles = g.subjects(TYPE, DAL("CompiledProfile"));
+  if (profiles.length > 0 && g.subjects(TYPE, DAL("GraphPlace")).length === 0) return { state: "predates" };
+  const targets = profiles.map((node) => targetOf(g, node));
+  targets.sort((a, b) => compare(a.class, b.class) || compare(a.deployment ?? "", b.deployment ?? ""));
+  return { state: "ready", doc: { targets } };
+}
+
+const one = (g: Graph, s: Term, p: string): string | undefined => g.value(s, DAL(p));
+const many = (g: Graph, s: Term, p: string): Term[] => g.objects(s, DAL(p));
+const sortedSet = (items: Iterable<string>): string[] => [...new Set(items)].sort(compare);
+
+function targetOf(g: Graph, node: Term): LandingTarget {
+  const cls = one(g, node, "forTarget");
+  if (cls === undefined) throw new LandingError("A compiled profile names no target. Compile again.");
+  const deployment = one(g, node, "forDeployment") ?? null;
+  const id = groupOf(cls, deployment);
+  const dimensions = many(g, node, "resolvedDimension");
+  const profiles = sortedSet(dimensions.flatMap((d) => many(g, d, "wonBy").map((t) => t.value)));
+  const scopes = sortedSet(dimensions.flatMap((d) => many(g, d, "wonThrough").map((t) => t.value)));
+  const matchedScopes = sortedSet(many(g, node, "matchedScope").map((t) => t.value));
+  const strategy = dimensions.find((d) => one(g, d, "dimension") === "aggregateBoundary" && one(g, d, "resolvedValue") !== undefined);
+  const operations = many(g, node, "generatedOperation");
+  const places = new Map<string, PlaceDraft>();
+  const listed: TargetOperation[] = [];
+  for (const op of operations) {
+    const name = one(g, op, "forOperation");
+    if (name === undefined) continue;
+    const template = many(g, op, "usesTemplate")[0];
+    const templateId = (template && one(g, template, "templateId")) || "";
+    const kind = after(one(g, op, "operationKind") ?? "");
+    listed.push({ operation: name, templateId, kind, path: artefactPath(id, name) });
+    for (const access of many(g, op, "access")) land(g, access, name, templateId, kind, places);
+  }
+  return {
+    id, class: cls, deployment, profiles, scopes, matchedScopes,
+    aggregate: aggregateOf(g, node, cls, strategy ? after(one(g, strategy, "resolvedValue")!) : null, operations),
+    places: [...places.values()]
+      .sort((a, b) => PLACE_KINDS.indexOf(a.kind) - PLACE_KINDS.indexOf(b.kind) || compare(a.graph, b.graph) || compare(a.constraint, b.constraint))
+      .map((p) => ({ kind: p.kind, label: p.label, graph: p.graph, from: sortedSet(p.from), operations: sortedSet(p.operations) })),
+    operations: listed.sort((a, b) => compare(a.operation, b.operation)),
+  };
+}
+
+interface PlaceDraft extends Omit<Place, "from" | "operations"> {
+  constraint: string;
+  from: Set<string>;
+  operations: Set<string>;
+}
+
+/**
+ * The kind of place a write access lands in, from what the compiled profile states of it. The role of the place decides it where it
+ * can. The data graph is `version` where the operation's kind is `AppendVersion` and the aggregate's triples otherwise. A patch log's
+ * graph is the triples added or removed as the access's `dal:patchDirection` says. The keys graph holds a key claim or a merge record, as
+ * the access's `dal:resourceKind` says.
+ */
+function kindOf(role: string, resource: string, direction: string, operationKind: string): PlaceKind {
+  if (role === "DataRole") return operationKind === "AppendVersion" ? "version" : "data-graph";
+  if (role === "PatchRole") {
+    if (direction === "Added") return "patch-log-add";
+    if (direction === "Removed") return "patch-log-del";
+    throw new LandingError("A patch log write of the compiled profile states no direction. Compile again.");
+  }
+  if (role === "KeysRole") {
+    if (resource === "KeyClaim") return "key-claim";
+    if (resource === "MergeRecord") return "merge-record";
+    throw new LandingError("A write to the keys graph of the compiled profile is neither a key claim nor a merge record. Compile again.");
+  }
+  const kind = ROLE_KINDS[role];
+  if (!kind) throw new LandingError(`The compiled profile names a graph role the canvas does not know, ${role || "none"}. Compile again.`);
+  return kind;
+}
+
+/** Notes where a write access lands, and says nothing of a read, which lands nowhere. A key claim is a place for each constraint it serves. */
+function land(g: Graph, access: Term, operation: string, templateId: string, operationKind: string, places: Map<string, PlaceDraft>): void {
+  const place = many(g, access, "landsIn")[0];
+  if (!place) return;
+  const graph = one(g, place, "inGraph") ?? one(g, place, "inGraphNamed");
+  if (graph === undefined) return;
+  const kind = kindOf(after(one(g, place, "inGraphRole") ?? ""), after(one(g, access, "resourceKind") ?? ""), after(one(g, access, "patchDirection") ?? ""), operationKind);
+  const constraint = kind === "key-claim" || kind === "merge-record" ? one(g, access, "forConstraint") ?? "" : "";
+  const key = `${kind}|${graph}|${constraint}`;
+  let draft = places.get(key);
+  if (!draft) {
+    draft = { kind, label: LABELS[kind] + (constraint ? `, ${localName(constraint)}` : ""), graph, constraint, from: new Set(), operations: new Set() };
+    places.set(key, draft);
+  }
+  draft.from.add(templateId);
+  draft.operations.add(operation);
+}
+
+// --- the boundary, from the edges the compiled profile states ------------------------------------------------------------------
+
+interface Edge {
+  source: string;
+  property: string;
+  inverse: boolean;
+  ownership: string;
+  class: string | null;
+  shape: string | null;
+  mode: ReferenceMode;
+}
+
+function edgeOf(g: Graph, node: Term): Edge {
+  return {
+    source: one(g, node, "edgeSource") ?? "",
+    property: one(g, node, "edgePredicate") ?? "",
+    inverse: one(g, node, "edgeInverse") === "true",
+    ownership: after(one(g, node, "edgeOwnership") ?? ""),
+    class: one(g, node, "edgeTargetClass") ?? null,
+    shape: one(g, node, "edgeTargetShape") ?? null,
+    mode: after(one(g, node, "referenceMode") ?? "") === "Pinned" ? "Pinned" : "ByIdentity",
+  };
+}
+
+/** The aggregate as the profile's edges give it, each owned edge nested as its shape nests. The root's shape is the one the operations' payload contracts declare, or else the one source no edge leads to. */
+function aggregateOf(g: Graph, node: Term, rootClass: string, strategy: string | null, operations: Term[]): Aggregate {
+  const edges = many(g, node, "referenceEdge").map((e) => edgeOf(g, e)).sort(
+    (a, b) => compare(a.source, b.source) || compare(a.property, b.property) || Number(a.inverse) - Number(b.inverse) || compare(a.shape ?? "", b.shape ?? ""),
+  );
+  const declared = sortedSet(
+    operations.flatMap((op) => many(g, op, "payloadContract").flatMap((c) => many(g, c, "boundaryShape").map((s) => s.value))).filter((s) => s !== DAL("NoBoundaryShape")),
+  );
+  const targets = new Set(edges.flatMap((e) => (e.shape ? [e.shape] : [])));
+  const sources = sortedSet(edges.map((e) => e.source).filter((s) => !targets.has(s)));
+  const rootShape = declared[0] ?? sources[0] ?? null;
+
+  const reference = (e: Edge): ReferenceEdge => ({
+    property: e.property, inverse: e.inverse, class: e.class, ownership: e.ownership === "Vocabulary" ? "Vocabulary" : "Reference", mode: e.mode,
+  });
+  const level = (shape: string | null, path: Set<string | null>): { owned: OwnedEdge[]; references: ReferenceEdge[] } => {
+    const owned: OwnedEdge[] = [];
+    const references: ReferenceEdge[] = [];
+    for (const e of edges.filter((x) => x.source === shape)) {
+      if (e.ownership === "Owned") {
+        const inner = e.shape && !path.has(e.shape) && e.shape !== shape ? level(e.shape, new Set([...path, shape])) : { owned: [], references: [] };
+        owned.push({ property: e.property, inverse: e.inverse, class: e.class, shape: e.shape, owned: inner.owned, references: inner.references });
+      } else references.push(reference(e));
+    }
+    return { owned, references };
+  };
+  return { strategy, rootClass, rootShape, ...level(rootShape, new Set()) };
 }
 
 export type Lens = "aggregate" | "profile" | "scope";
@@ -103,8 +303,6 @@ export interface Choice {
   id: string;
   label: string;
 }
-
-const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 export function targetLabel(t: LandingTarget): string {
   return t.deployment ? `${localName(t.class)} in ${localName(t.deployment)}` : localName(t.class);
