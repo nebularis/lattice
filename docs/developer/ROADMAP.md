@@ -66,7 +66,7 @@ Built from the status records on 24 branches, the units' own state from this tre
 | rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 2 built, 1 planned |  |
 | [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | built 2026-10-31 | PB-1 | 17 built |  |
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
-| [studio-visual-authoring](plans/studio-visual-authoring.md) | multi-slice unit | built 2026-11-19 | SVA-R0 | 29 built, 16 planned | claude/modest-ramanujan-cgvs0p |
+| [studio-visual-authoring](plans/studio-visual-authoring.md) | multi-slice unit | built 2026-11-19 | SVA-R0 | 30 built, 15 planned | claude/modest-ramanujan-cgvs0p |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
@@ -160,7 +160,8 @@ gantt
     FMH-1.4b the declaration implementation :done, fmh14b, 2026-10-10, 2026-10-11
     FMH-1.4c a declaration the compiler :done, fmh14c, 2026-10-10, 2026-10-11
     FMH-1.5 stable labels :done, fmh15, 2026-10-10, 2026-10-11
-    FMH-2.0 ADR-A123 :done, fmh20, 2026-10-10, 2026-11-02
+    FMH-2 typed IR. Split into FMH-2.0 :fmh2, 2026-10-10, 2026-10-11
+    FMH-2.0 ADR-A123. Validation :done, fmh20, 2026-10-10, 2026-11-02
     FMH-2.1 the typed IR and its renderer. :done, fmh21, 2026-10-10, 2026-11-02
     FMH-2.11a the Persistence README as a :fmh211a, 2026-10-21, 2026-10-22
     FMH-2.11b the narrative the pictures :fmh211b, 2026-10-21, 2026-10-22
@@ -183,7 +184,7 @@ gantt
     FMH-2.9 Mustache retired D-12 a :fmh29, 2026-10-21, 2026-10-22
     FMH-HO0 correct the ownership note and :done, fmhho0, 2026-10-10, 2026-10-11
     FMH-HO1 composite replace payload to :done, fmhho1, 2026-10-10, 2026-10-11
-    FMH-HO2 draft ADR-A122 Proposed :done, fmhho2, 2026-10-10, 2026-11-02
+    FMH-HO2 ADR-A122 .. .. architecture :done, fmhho2, 2026-10-10, 2026-11-02
     FMH-HO3 dal vocabulary 0.3.0 :done, fmhho3, 2026-10-10, 2026-10-11
     FMH-HO4 ownership tree and path :done, fmhho4, 2026-10-10, 2026-10-11
     FMH-HO5 switch the compiler to the :done, fmhho5, 2026-10-10, 2026-10-11
@@ -351,14 +352,14 @@ gantt
     LG-18 LG-17 follow-ups measured :done, lg18, 2026-11-12, 2026-11-16
     LG-19 the benchmark corpora refuse :done, lg19, 2026-11-13, 2026-11-16
     LG-2 the runtime document :done, lg2, 2026-10-27, 2026-11-09
-    LG-20 the laws the target kernel :done, lg20, 2026-11-16, 2026-11-18
+    LG-20 the laws the target kernel :done, lg20, 2026-11-16, 2026-11-19
     LG-21 the target kernel written :done, lg21, 2026-11-15, 2026-11-16
     LG-22 LG-19 follow-ups rows named :done, lg22, 2026-11-15, 2026-11-16
-    LG-23 the rounding difference :done, lg23, 2026-11-17, 2026-11-18
+    LG-23 the rounding difference :done, lg23, 2026-11-17, 2026-11-19
     LG-24 the merge policy node :done, lg24, 2026-11-17, 2026-11-18
     LG-7 the ledger laws mechanised in :done, lg7, 2026-11-08, 2026-11-09
     LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-16
-    LG-9 the target kernel in the :done, lg9, 2026-11-16, 2026-11-18
+    LG-9 the target kernel in the :done, lg9, 2026-11-16, 2026-11-19
 ```
 
 ```mermaid
@@ -497,6 +498,7 @@ gantt
     SVA-O7 a new node clear of the :svao7, 2026-11-16, 2026-11-17
     SVA-P1 landing places in a compile :svap1, 2026-11-17, 2026-11-18
     SVA-P1a the compiled profile states :svap1a, 2026-11-18, 2026-11-19
+    SVA-P1b the studio reads the compiled :svap1b, 2026-11-19, 2026-11-20
     SVA-R0 probes of the broker for :svar0, 2026-11-12, 2026-11-13
     SVA-R1 the decision record :svar1, 2026-11-12, 2026-11-15
     SVA-R2 the service runs pending :svar2, 2026-11-16, 2026-11-17
@@ -924,13 +926,14 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 703 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-19 | 64 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
-| `docs/placement-vehicles-structure` | 2026-11-18 | 35 | pushed | AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-I1, MSA-I11, MSA-I12, MSA-I3, MSA-I4, MSA-I5a, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-19 | 67 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P2, SVA-P3, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
+| `docs/placement-vehicles-structure` | 2026-11-19 | 36 | pushed | AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-I1, MSA-I11, MSA-I12, MSA-I3, MSA-I4, MSA-I5a, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 684 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 191 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 816 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
+| `spi/multi-store-architecture` | 2026-11-19 | 27 | pushed | MSA-F1, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I2, MSA-I5a, MSA-I6 |
 | `spi/sql-backend` | 2026-11-17 | 3 | pushed | no mark |
 | `tutorial/guide` | 2026-10-16 | 571 | pushed | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `tutorial/studio-guide` | 2026-11-10 | 2 | pushed | no mark |
@@ -992,7 +995,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 115 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 116 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
