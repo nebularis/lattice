@@ -152,6 +152,9 @@ class ResolvedDimension:
     extra: dict[str, Any] = field(default_factory=dict)
     dropped_for_reasoning: list[str] = field(default_factory=list)
     won_by_requires_reasoning: bool = False
+    won_through: tuple[str, ...] = ()
+    """The matched scopes through which the winning profile applied, its ``dal:appliesTo`` intersected with the scopes that match the target.
+    Set by :func:`persistence.compiler.compile_targets`, and empty where the baseline default is the value."""
 
 
 @dataclass

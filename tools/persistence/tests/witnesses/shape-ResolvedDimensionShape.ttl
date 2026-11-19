@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: MPL-2.0
+# NB: This file has been produced using GenAI
+# A resolved dimension that won through a scope its compiled profile does not state as matched.
+# base: _base-contract.ttl
+@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ex:  <https://example.org/lending#> .
+
+ex:profile a dal:CompiledProfile ;
+    dal:forTarget ex:Thing ;
+    dal:matchedScope ex:ThingClass ;
+    dal:resolvedDimension ex:profile-dim-receiptModel .
+ex:profile-dim-receiptModel dal:dimension "receiptModel" ;
+    dal:wonBy ex:ThingReceiptProfile ;
+    dal:wonThrough ex:SomeOtherScope .

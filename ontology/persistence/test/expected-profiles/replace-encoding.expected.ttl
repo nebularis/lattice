@@ -13,15 +13,18 @@
 <https://example.org/lending/Draft/compiled/cas-replace#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-data-urn%3Ag%3Adraft%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Draft/compiled/cas-replace#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-data-urn%3Ag%3Adraft%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Draft/compiled/cas-replace#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Draft/compiled/cas-replace#access-4> a dal:ResourceAccess ;
@@ -32,6 +35,7 @@
 <https://example.org/lending/Draft/compiled/cas-replace#access-5> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/cas-replace#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Draft/compiled/cas-replace#access-6> a dal:ResourceAccess ;
@@ -42,11 +46,13 @@
 <https://example.org/lending/Draft/compiled/cas-replace#access-7> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-meta-urn%3Ag%3Ameta%2F32> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Draft/compiled/cas-replace#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-meta-urn%3Ag%3Ameta%2F32> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Draft/compiled/cas-replace#access-9> a dal:ResourceAccess ;
@@ -116,10 +122,12 @@
 <https://example.org/lending/Draft/compiled/create-if-absent#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/create-if-absent#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-data-urn%3Ag%3Adraft%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Draft/compiled/create-if-absent#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Draft/compiled/create-if-absent#access-3> a dal:ResourceAccess ;
@@ -130,6 +138,7 @@
 <https://example.org/lending/Draft/compiled/create-if-absent#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/create-if-absent#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Draft/compiled/create-if-absent#access-5> a dal:ResourceAccess ;
@@ -140,6 +149,7 @@
 <https://example.org/lending/Draft/compiled/create-if-absent#access-6> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/create-if-absent#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-meta-urn%3Ag%3Ameta%2F32> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Draft/compiled/create-if-absent#digest> a dal:DigestContract ;
@@ -239,6 +249,7 @@
 <https://example.org/lending/Draft/compiled/replace-whole#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-data-urn%3Ag%3Adraft%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Draft/compiled/replace-whole#access-10> a dal:ResourceAccess ;
@@ -249,6 +260,7 @@
 <https://example.org/lending/Draft/compiled/replace-whole#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-data-urn%3Ag%3Adraft%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Draft/compiled/replace-whole#access-3> a dal:ResourceAccess ;
@@ -258,6 +270,7 @@
 
 <https://example.org/lending/Draft/compiled/replace-whole#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Draft/compiled/replace-whole#access-5> a dal:ResourceAccess ;
@@ -268,6 +281,7 @@
 <https://example.org/lending/Draft/compiled/replace-whole#access-6> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/replace-whole#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Draft/compiled/replace-whole#access-7> a dal:ResourceAccess ;
@@ -278,11 +292,13 @@
 <https://example.org/lending/Draft/compiled/replace-whole#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-meta-urn%3Ag%3Ameta%2F32> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Draft/compiled/replace-whole#access-9> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-meta-urn%3Ag%3Ameta%2F32> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Draft/compiled/replace-whole#digest> a dal:DigestContract ;
@@ -355,6 +371,7 @@
 <https://example.org/lending/Draft/compiled/tombstone-delete#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-data-urn%3Ag%3Adraft%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Draft/compiled/tombstone-delete#access-2> a dal:ResourceAccess ;
@@ -364,6 +381,7 @@
 
 <https://example.org/lending/Draft/compiled/tombstone-delete#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Draft/compiled/tombstone-delete#access-4> a dal:ResourceAccess ;
@@ -374,6 +392,7 @@
 <https://example.org/lending/Draft/compiled/tombstone-delete#access-5> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/tombstone-delete#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Draft/compiled/tombstone-delete#access-6> a dal:ResourceAccess ;
@@ -384,11 +403,13 @@
 <https://example.org/lending/Draft/compiled/tombstone-delete#access-7> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-meta-urn%3Ag%3Ameta%2F32> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Draft/compiled/tombstone-delete#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Draft/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/lending/Draft/compiled/profile#place-meta-urn%3Ag%3Ameta%2F32> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Draft/compiled/tombstone-delete#access-9> a dal:ResourceAccess ;
@@ -470,6 +491,7 @@
 <https://example.org/lending/Snapshot/compiled/cas-replace#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-data-urn%3Ag%3Asnapshot%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Snapshot/compiled/cas-replace#access-10> a dal:ResourceAccess ;
@@ -480,6 +502,7 @@
 <https://example.org/lending/Snapshot/compiled/cas-replace#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-data-urn%3Ag%3Asnapshot%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Snapshot/compiled/cas-replace#access-3> a dal:ResourceAccess ;
@@ -489,6 +512,7 @@
 
 <https://example.org/lending/Snapshot/compiled/cas-replace#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Snapshot/compiled/cas-replace#access-5> a dal:ResourceAccess ;
@@ -499,6 +523,7 @@
 <https://example.org/lending/Snapshot/compiled/cas-replace#access-6> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/cas-replace#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Snapshot/compiled/cas-replace#access-7> a dal:ResourceAccess ;
@@ -509,11 +534,13 @@
 <https://example.org/lending/Snapshot/compiled/cas-replace#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-meta-urn%3Ag%3Ameta%2F9> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Snapshot/compiled/cas-replace#access-9> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-meta-urn%3Ag%3Ameta%2F9> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Snapshot/compiled/cas-replace#digest> a dal:DigestContract ;
@@ -572,10 +599,12 @@
 <https://example.org/lending/Snapshot/compiled/create-if-absent#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/create-if-absent#param-root> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-data-urn%3Ag%3Asnapshot%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Snapshot/compiled/create-if-absent#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Snapshot/compiled/create-if-absent#access-3> a dal:ResourceAccess ;
@@ -586,6 +615,7 @@
 <https://example.org/lending/Snapshot/compiled/create-if-absent#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/create-if-absent#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Snapshot/compiled/create-if-absent#access-5> a dal:ResourceAccess ;
@@ -596,6 +626,7 @@
 <https://example.org/lending/Snapshot/compiled/create-if-absent#access-6> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/create-if-absent#param-root> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-meta-urn%3Ag%3Ameta%2F9> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Snapshot/compiled/create-if-absent#digest> a dal:DigestContract ;
@@ -709,6 +740,7 @@
 <https://example.org/lending/Snapshot/compiled/tombstone-delete#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-data-urn%3Ag%3Asnapshot%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Snapshot/compiled/tombstone-delete#access-2> a dal:ResourceAccess ;
@@ -718,6 +750,7 @@
 
 <https://example.org/lending/Snapshot/compiled/tombstone-delete#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Snapshot/compiled/tombstone-delete#access-4> a dal:ResourceAccess ;
@@ -728,6 +761,7 @@
 <https://example.org/lending/Snapshot/compiled/tombstone-delete#access-5> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/tombstone-delete#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Snapshot/compiled/tombstone-delete#access-6> a dal:ResourceAccess ;
@@ -738,11 +772,13 @@
 <https://example.org/lending/Snapshot/compiled/tombstone-delete#access-7> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-meta-urn%3Ag%3Ameta%2F9> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Snapshot/compiled/tombstone-delete#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Snapshot/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/lending/Snapshot/compiled/profile#place-meta-urn%3Ag%3Ameta%2F9> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Snapshot/compiled/tombstone-delete#access-9> a dal:ResourceAccess ;
@@ -824,9 +860,16 @@
 <https://example.org/lending/Ticket/compiled/cas-replace#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-data-urn%3Ag%3Aticket%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Ticket/compiled/cas-replace#access-10> a dal:ResourceAccess ;
+    dal:accessMode dal:Insert ;
+    dal:keyedBy <https://example.org/lending/Ticket/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-meta-urn%3Ag%3Ameta%2F1> ;
+    dal:resourceKind dal:VersionRow .
+
+<https://example.org/lending/Ticket/compiled/cas-replace#access-11> a dal:ResourceAccess ;
     dal:accessMode dal:PointRead ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/cas-replace#param-root> ;
     dal:resourceKind dal:VersionRow .
@@ -834,39 +877,46 @@
 <https://example.org/lending/Ticket/compiled/cas-replace#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-data-urn%3Ag%3Aticket%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Ticket/compiled/cas-replace#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-patch-%7BnewRev%7D%2Fadd> ;
+    dal:patchDirection dal:Added ;
     dal:resourceKind dal:PatchContent .
 
 <https://example.org/lending/Ticket/compiled/cas-replace#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
-    dal:resourceKind dal:Receipt .
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-patch-%7BnewRev%7D%2Fdel> ;
+    dal:patchDirection dal:Removed ;
+    dal:resourceKind dal:PatchContent .
 
 <https://example.org/lending/Ticket/compiled/cas-replace#access-5> a dal:ResourceAccess ;
-    dal:accessMode dal:AbsenceRead ;
-    dal:keyedBy <https://example.org/lending/Ticket/compiled/cas-replace#param-txnId> ;
-    dal:resourceKind dal:TransactionClaim .
+    dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
+    dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Ticket/compiled/cas-replace#access-6> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
+    dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/cas-replace#param-txnId> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Ticket/compiled/cas-replace#access-7> a dal:ResourceAccess ;
+    dal:accessMode dal:Insert ;
+    dal:keyedBy <https://example.org/lending/Ticket/compiled/cas-replace#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
+    dal:resourceKind dal:TransactionClaim .
+
+<https://example.org/lending/Ticket/compiled/cas-replace#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/cas-replace#param-root> ;
     dal:resourceKind dal:VersionRow .
 
-<https://example.org/lending/Ticket/compiled/cas-replace#access-8> a dal:ResourceAccess ;
+<https://example.org/lending/Ticket/compiled/cas-replace#access-9> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/cas-replace#param-root> ;
-    dal:resourceKind dal:VersionRow .
-
-<https://example.org/lending/Ticket/compiled/cas-replace#access-9> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
-    dal:keyedBy <https://example.org/lending/Ticket/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-meta-urn%3Ag%3Ameta%2F1> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Ticket/compiled/cas-replace#digest> a dal:DigestContract ;
@@ -931,14 +981,18 @@
 <https://example.org/lending/Ticket/compiled/create-if-absent#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/create-if-absent#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-data-urn%3Ag%3Aticket%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Ticket/compiled/create-if-absent#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-patch-%7BnewRev%7D%2Fadd> ;
+    dal:patchDirection dal:Added ;
     dal:resourceKind dal:PatchContent .
 
 <https://example.org/lending/Ticket/compiled/create-if-absent#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Ticket/compiled/create-if-absent#access-4> a dal:ResourceAccess ;
@@ -949,6 +1003,7 @@
 <https://example.org/lending/Ticket/compiled/create-if-absent#access-5> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/create-if-absent#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Ticket/compiled/create-if-absent#access-6> a dal:ResourceAccess ;
@@ -959,6 +1014,7 @@
 <https://example.org/lending/Ticket/compiled/create-if-absent#access-7> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/create-if-absent#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-meta-urn%3Ag%3Ameta%2F1> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Ticket/compiled/create-if-absent#digest> a dal:DigestContract ;
@@ -1058,14 +1114,22 @@
 <https://example.org/lending/Ticket/compiled/replace-whole#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-data-urn%3Ag%3Aticket%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Ticket/compiled/replace-whole#access-10> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
+    dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-meta-urn%3Ag%3Ameta%2F1> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Ticket/compiled/replace-whole#access-11> a dal:ResourceAccess ;
+    dal:accessMode dal:Insert ;
+    dal:keyedBy <https://example.org/lending/Ticket/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-meta-urn%3Ag%3Ameta%2F1> ;
+    dal:resourceKind dal:VersionRow .
+
+<https://example.org/lending/Ticket/compiled/replace-whole#access-12> a dal:ResourceAccess ;
     dal:accessMode dal:PointRead ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/replace-whole#param-root> ;
     dal:resourceKind dal:VersionRow .
@@ -1073,6 +1137,7 @@
 <https://example.org/lending/Ticket/compiled/replace-whole#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-data-urn%3Ag%3Aticket%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Ticket/compiled/replace-whole#access-3> a dal:ResourceAccess ;
@@ -1082,29 +1147,34 @@
 
 <https://example.org/lending/Ticket/compiled/replace-whole#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-patch-%7BnewRev%7D%2Fadd> ;
+    dal:patchDirection dal:Added ;
     dal:resourceKind dal:PatchContent .
 
 <https://example.org/lending/Ticket/compiled/replace-whole#access-5> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
-    dal:resourceKind dal:Receipt .
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-patch-%7BnewRev%7D%2Fdel> ;
+    dal:patchDirection dal:Removed ;
+    dal:resourceKind dal:PatchContent .
 
 <https://example.org/lending/Ticket/compiled/replace-whole#access-6> a dal:ResourceAccess ;
-    dal:accessMode dal:AbsenceRead ;
-    dal:keyedBy <https://example.org/lending/Ticket/compiled/replace-whole#param-txnId> ;
-    dal:resourceKind dal:TransactionClaim .
+    dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
+    dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Ticket/compiled/replace-whole#access-7> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
+    dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/replace-whole#param-txnId> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Ticket/compiled/replace-whole#access-8> a dal:ResourceAccess ;
-    dal:accessMode dal:AbsenceRead ;
-    dal:keyedBy <https://example.org/lending/Ticket/compiled/replace-whole#param-root> ;
-    dal:resourceKind dal:VersionRow .
+    dal:accessMode dal:Insert ;
+    dal:keyedBy <https://example.org/lending/Ticket/compiled/replace-whole#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
+    dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Ticket/compiled/replace-whole#access-9> a dal:ResourceAccess ;
-    dal:accessMode dal:Delete ;
+    dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/replace-whole#param-root> ;
     dal:resourceKind dal:VersionRow .
 
@@ -1190,6 +1260,7 @@
 <https://example.org/lending/Ticket/compiled/tombstone-delete#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-data-urn%3Ag%3Aticket%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Ticket/compiled/tombstone-delete#access-10> a dal:ResourceAccess ;
@@ -1204,10 +1275,13 @@
 
 <https://example.org/lending/Ticket/compiled/tombstone-delete#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-patch-%7BnewRev%7D%2Fdel> ;
+    dal:patchDirection dal:Removed ;
     dal:resourceKind dal:PatchContent .
 
 <https://example.org/lending/Ticket/compiled/tombstone-delete#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/Ticket/compiled/tombstone-delete#access-5> a dal:ResourceAccess ;
@@ -1218,6 +1292,7 @@
 <https://example.org/lending/Ticket/compiled/tombstone-delete#access-6> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/tombstone-delete#param-txnId> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/Ticket/compiled/tombstone-delete#access-7> a dal:ResourceAccess ;
@@ -1228,11 +1303,13 @@
 <https://example.org/lending/Ticket/compiled/tombstone-delete#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-meta-urn%3Ag%3Ameta%2F1> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Ticket/compiled/tombstone-delete#access-9> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Ticket/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/lending/Ticket/compiled/profile#place-meta-urn%3Ag%3Ameta%2F1> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/Ticket/compiled/tombstone-delete#digest> a dal:DigestContract ;
@@ -1475,6 +1552,14 @@
     dal:parameterName "txnId" ;
     dal:required true .
 
+<https://example.org/lending/Snapshot/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:txlog/{month}" ;
+    dal:inGraphRole dal:LogRole .
+
+<https://example.org/lending/Snapshot/compiled/profile#place-txn-urn%3Ag%3Atxn> a dal:GraphPlace ;
+    dal:inGraph <urn:g:txn> ;
+    dal:inGraphRole dal:TxnRole .
+
 <https://example.org/lending/Snapshot/compiled/tombstone-delete#param-txnId> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "txnId" ;
@@ -1500,6 +1585,14 @@
     dal:parameterName "txnId" ;
     dal:required true .
 
+<https://example.org/lending/Ticket/compiled/profile#place-patch-%7BnewRev%7D%2Fadd> a dal:GraphPlace ;
+    dal:inGraphNamed "{newRev}/add" ;
+    dal:inGraphRole dal:PatchRole .
+
+<https://example.org/lending/Ticket/compiled/profile#place-patch-%7BnewRev%7D%2Fdel> a dal:GraphPlace ;
+    dal:inGraphNamed "{newRev}/del" ;
+    dal:inGraphRole dal:PatchRole .
+
 <https://example.org/lending/Ticket/compiled/replace-whole#param-payloadTriples> a dal:ParameterDeclaration ;
     dal:parameterKind dal:PayloadKind ;
     dal:parameterName "payloadTriples" ;
@@ -1515,10 +1608,38 @@
     dal:parameterName "txnId" ;
     dal:required true .
 
+<https://example.org/lending/Draft/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:txlog/{month}" ;
+    dal:inGraphRole dal:LogRole .
+
+<https://example.org/lending/Draft/compiled/profile#place-txn-urn%3Ag%3Atxn> a dal:GraphPlace ;
+    dal:inGraph <urn:g:txn> ;
+    dal:inGraphRole dal:TxnRole .
+
+<https://example.org/lending/Snapshot/compiled/profile#place-data-urn%3Ag%3Asnapshot%2F%7Broot%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:snapshot/{root}" ;
+    dal:inGraphRole dal:DataRole .
+
+<https://example.org/lending/Ticket/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:txlog/{month}" ;
+    dal:inGraphRole dal:LogRole .
+
+<https://example.org/lending/Ticket/compiled/profile#place-txn-urn%3Ag%3Atxn> a dal:GraphPlace ;
+    dal:inGraph <urn:g:txn> ;
+    dal:inGraphRole dal:TxnRole .
+
+<https://example.org/lending/Snapshot/compiled/profile#place-meta-urn%3Ag%3Ameta%2F9> a dal:GraphPlace ;
+    dal:inGraph <urn:g:meta/9> ;
+    dal:inGraphRole dal:MetaRole .
+
 <https://example.org/lending/Draft/compiled/create-if-absent#param-root> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "root" ;
     dal:required true .
+
+<https://example.org/lending/Draft/compiled/profile#place-data-urn%3Ag%3Adraft%2F%7Broot%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:draft/{root}" ;
+    dal:inGraphRole dal:DataRole .
 
 <https://example.org/lending/Snapshot/compiled/create-if-absent#param-root> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
@@ -1529,6 +1650,18 @@
     dal:parameterKind dal:IriKind ;
     dal:parameterName "root" ;
     dal:required true .
+
+<https://example.org/lending/Ticket/compiled/profile#place-data-urn%3Ag%3Aticket%2F%7Broot%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:ticket/{root}" ;
+    dal:inGraphRole dal:DataRole .
+
+<https://example.org/lending/Draft/compiled/profile#place-meta-urn%3Ag%3Ameta%2F32> a dal:GraphPlace ;
+    dal:inGraph <urn:g:meta/32> ;
+    dal:inGraphRole dal:MetaRole .
+
+<https://example.org/lending/Ticket/compiled/profile#place-meta-urn%3Ag%3Ameta%2F1> a dal:GraphPlace ;
+    dal:inGraph <urn:g:meta/1> ;
+    dal:inGraphRole dal:MetaRole .
 
 <https://example.org/lending/Draft/compiled/tombstone-delete#param-root> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
@@ -2095,10 +2228,12 @@
             dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "txn-multi-revision-audit" ] ] ;
+    dal:matchedScope <https://example.org/lending#SnapshotClass> ;
     dal:resolvedDimension [ dal:candidateCount 1 ;
             dal:dimension "aggregateBoundary" ;
             dal:resolvedValue dal:NamedGraphBoundary ;
-            dal:wonBy <https://example.org/lending#SnapshotProfile> ],
+            dal:wonBy <https://example.org/lending#SnapshotProfile> ;
+            dal:wonThrough <https://example.org/lending#SnapshotClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "asOfFloorSource" ],
         [ dal:candidateCount 0 ;
@@ -2107,7 +2242,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "concurrencyProfile" ;
             dal:resolvedValue dal:Optimistic ;
-            dal:wonBy <https://example.org/lending#SnapshotProfile> ],
+            dal:wonBy <https://example.org/lending#SnapshotProfile> ;
+            dal:wonThrough <https://example.org/lending#SnapshotClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "contiguityCheckMode" ;
             dal:resolvedValue dal:BlockingContiguityCheck ],
@@ -2146,11 +2282,13 @@
         [ dal:candidateCount 1 ;
             dal:dimension "metaTopology" ;
             dal:resolvedValue dal:SharedSharded ;
-            dal:wonBy <https://example.org/lending#SnapshotProfile> ],
+            dal:wonBy <https://example.org/lending#SnapshotProfile> ;
+            dal:wonThrough <https://example.org/lending#SnapshotClass> ],
         [ dal:candidateCount 1 ;
             dal:dimension "orderingGrain" ;
             dal:resolvedValue dal:CommitGrain ;
-            dal:wonBy <https://example.org/lending#SnapshotProfile> ],
+            dal:wonBy <https://example.org/lending#SnapshotProfile> ;
+            dal:wonThrough <https://example.org/lending#SnapshotClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "perSubjectScoped" ],
         [ dal:candidateCount 0 ;
@@ -2158,7 +2296,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "receiptModel" ;
             dal:resolvedValue dal:ReceiptOnly ;
-            dal:wonBy <https://example.org/lending#SnapshotProfile> ],
+            dal:wonBy <https://example.org/lending#SnapshotProfile> ;
+            dal:wonThrough <https://example.org/lending#SnapshotClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "recordsStateDigest" ;
             dal:resolvedLiteral false ],
@@ -2167,7 +2306,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "replaceEncoding" ;
             dal:resolvedValue dal:WholeState ;
-            dal:wonBy <https://example.org/lending#SnapshotProfile> ],
+            dal:wonBy <https://example.org/lending#SnapshotProfile> ;
+            dal:wonThrough <https://example.org/lending#SnapshotClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "replaceForm" ],
         [ dal:candidateCount 0 ;
@@ -2270,6 +2410,7 @@
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/lending/Ticket/compiled/cas-replace#access-1>,
                 <https://example.org/lending/Ticket/compiled/cas-replace#access-10>,
+                <https://example.org/lending/Ticket/compiled/cas-replace#access-11>,
                 <https://example.org/lending/Ticket/compiled/cas-replace#access-2>,
                 <https://example.org/lending/Ticket/compiled/cas-replace#access-3>,
                 <https://example.org/lending/Ticket/compiled/cas-replace#access-4>,
@@ -2434,6 +2575,7 @@
             dal:access <https://example.org/lending/Ticket/compiled/replace-whole#access-1>,
                 <https://example.org/lending/Ticket/compiled/replace-whole#access-10>,
                 <https://example.org/lending/Ticket/compiled/replace-whole#access-11>,
+                <https://example.org/lending/Ticket/compiled/replace-whole#access-12>,
                 <https://example.org/lending/Ticket/compiled/replace-whole#access-2>,
                 <https://example.org/lending/Ticket/compiled/replace-whole#access-3>,
                 <https://example.org/lending/Ticket/compiled/replace-whole#access-4>,
@@ -2788,10 +2930,12 @@
             dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "txn-multi-revision-audit" ] ] ;
+    dal:matchedScope <https://example.org/lending#TicketClass> ;
     dal:resolvedDimension [ dal:candidateCount 1 ;
             dal:dimension "aggregateBoundary" ;
             dal:resolvedValue dal:NamedGraphBoundary ;
-            dal:wonBy <https://example.org/lending#TicketProfile> ],
+            dal:wonBy <https://example.org/lending#TicketProfile> ;
+            dal:wonThrough <https://example.org/lending#TicketClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "asOfFloorSource" ],
         [ dal:candidateCount 0 ;
@@ -2800,7 +2944,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "concurrencyProfile" ;
             dal:resolvedValue dal:Optimistic ;
-            dal:wonBy <https://example.org/lending#TicketProfile> ],
+            dal:wonBy <https://example.org/lending#TicketProfile> ;
+            dal:wonThrough <https://example.org/lending#TicketClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "contiguityCheckMode" ;
             dal:resolvedValue dal:BlockingContiguityCheck ],
@@ -2839,11 +2984,13 @@
         [ dal:candidateCount 1 ;
             dal:dimension "metaTopology" ;
             dal:resolvedValue dal:SharedSharded ;
-            dal:wonBy <https://example.org/lending#TicketProfile> ],
+            dal:wonBy <https://example.org/lending#TicketProfile> ;
+            dal:wonThrough <https://example.org/lending#TicketClass> ],
         [ dal:candidateCount 1 ;
             dal:dimension "orderingGrain" ;
             dal:resolvedValue dal:CommitGrain ;
-            dal:wonBy <https://example.org/lending#TicketProfile> ],
+            dal:wonBy <https://example.org/lending#TicketProfile> ;
+            dal:wonThrough <https://example.org/lending#TicketClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "perSubjectScoped" ],
         [ dal:candidateCount 0 ;
@@ -2851,7 +2998,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "receiptModel" ;
             dal:resolvedValue dal:PatchLog ;
-            dal:wonBy <https://example.org/lending#TicketProfile> ],
+            dal:wonBy <https://example.org/lending#TicketProfile> ;
+            dal:wonThrough <https://example.org/lending#TicketClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "recordsStateDigest" ;
             dal:resolvedLiteral false ],
@@ -3473,10 +3621,12 @@
             dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "txn-multi-revision-audit" ] ] ;
+    dal:matchedScope <https://example.org/lending#DraftClass> ;
     dal:resolvedDimension [ dal:candidateCount 1 ;
             dal:dimension "aggregateBoundary" ;
             dal:resolvedValue dal:NamedGraphBoundary ;
-            dal:wonBy <https://example.org/lending#DraftProfile> ],
+            dal:wonBy <https://example.org/lending#DraftProfile> ;
+            dal:wonThrough <https://example.org/lending#DraftClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "asOfFloorSource" ],
         [ dal:candidateCount 0 ;
@@ -3485,7 +3635,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "concurrencyProfile" ;
             dal:resolvedValue dal:Optimistic ;
-            dal:wonBy <https://example.org/lending#DraftProfile> ],
+            dal:wonBy <https://example.org/lending#DraftProfile> ;
+            dal:wonThrough <https://example.org/lending#DraftClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "contiguityCheckMode" ;
             dal:resolvedValue dal:BlockingContiguityCheck ],
@@ -3524,11 +3675,13 @@
         [ dal:candidateCount 1 ;
             dal:dimension "metaTopology" ;
             dal:resolvedValue dal:SharedSharded ;
-            dal:wonBy <https://example.org/lending#DraftProfile> ],
+            dal:wonBy <https://example.org/lending#DraftProfile> ;
+            dal:wonThrough <https://example.org/lending#DraftClass> ],
         [ dal:candidateCount 1 ;
             dal:dimension "orderingGrain" ;
             dal:resolvedValue dal:CommitGrain ;
-            dal:wonBy <https://example.org/lending#DraftProfile> ],
+            dal:wonBy <https://example.org/lending#DraftProfile> ;
+            dal:wonThrough <https://example.org/lending#DraftClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "perSubjectScoped" ],
         [ dal:candidateCount 0 ;
@@ -3536,7 +3689,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "receiptModel" ;
             dal:resolvedValue dal:ReceiptOnly ;
-            dal:wonBy <https://example.org/lending#DraftProfile> ],
+            dal:wonBy <https://example.org/lending#DraftProfile> ;
+            dal:wonThrough <https://example.org/lending#DraftClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "recordsStateDigest" ;
             dal:resolvedLiteral false ],
@@ -3545,7 +3699,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "replaceEncoding" ;
             dal:resolvedValue dal:ChangedTriples ;
-            dal:wonBy <https://example.org/lending#DraftProfile> ],
+            dal:wonBy <https://example.org/lending#DraftProfile> ;
+            dal:wonThrough <https://example.org/lending#DraftClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "replaceForm" ],
         [ dal:candidateCount 0 ;

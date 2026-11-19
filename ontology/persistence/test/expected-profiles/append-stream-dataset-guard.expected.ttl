@@ -16,10 +16,12 @@
 
 <https://example.org/lending/DecisionStream/compiled/append#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/DecisionStream/compiled/profile#place-event-urn%3Ag%3Aevents%2Fdecisionstream%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Event .
 
 <https://example.org/lending/DecisionStream/compiled/append#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/DecisionStream/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/lending/DecisionStream/compiled/append#access-4> a dal:ResourceAccess ;
@@ -30,6 +32,7 @@
 <https://example.org/lending/DecisionStream/compiled/append#access-5> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/DecisionStream/compiled/append#param-txnId> ;
+    dal:landsIn <https://example.org/lending/DecisionStream/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/lending/DecisionStream/compiled/append#access-6> a dal:ResourceAccess ;
@@ -40,11 +43,13 @@
 <https://example.org/lending/DecisionStream/compiled/append#access-7> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/DecisionStream/compiled/append#param-stream> ;
+    dal:landsIn <https://example.org/lending/DecisionStream/compiled/profile#place-meta-urn%3Ag%3Ameta%2F42> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/DecisionStream/compiled/append#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/DecisionStream/compiled/append#param-stream> ;
+    dal:landsIn <https://example.org/lending/DecisionStream/compiled/profile#place-meta-urn%3Ag%3Ameta%2F42> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/DecisionStream/compiled/append#access-9> a dal:ResourceAccess ;
@@ -107,6 +112,7 @@
 <https://example.org/lending/DecisionStream/compiled/bootstrap-version-row#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/DecisionStream/compiled/bootstrap-version-row#param-target> ;
+    dal:landsIn <https://example.org/lending/DecisionStream/compiled/profile#place-meta-urn%3Ag%3Ameta%2F42> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/lending/DecisionStream/compiled/bootstrap-version-row#param-epoch> a dal:ParameterDeclaration ;
@@ -159,6 +165,18 @@
     dal:columnKind dal:IriColumn ;
     dal:columnName "target" ;
     dal:columnPosition 1 .
+
+<https://example.org/lending/DecisionStream/compiled/profile#place-event-urn%3Ag%3Aevents%2Fdecisionstream%2F%7Bmonth%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:events/decisionstream/{month}" ;
+    dal:inGraphRole dal:EventRole .
+
+<https://example.org/lending/DecisionStream/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:txlog/{month}" ;
+    dal:inGraphRole dal:LogRole .
+
+<https://example.org/lending/DecisionStream/compiled/profile#place-txn-urn%3Ag%3Atxn> a dal:GraphPlace ;
+    dal:inGraph <urn:g:txn> ;
+    dal:inGraphRole dal:TxnRole .
 
 <https://example.org/lending/DecisionStream/compiled/revision-multi-txn-audit#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
@@ -225,6 +243,10 @@
     dal:parameterKind dal:IriKind ;
     dal:parameterName "target" ;
     dal:required true .
+
+<https://example.org/lending/DecisionStream/compiled/profile#place-meta-urn%3Ag%3Ameta%2F42> a dal:GraphPlace ;
+    dal:inGraph <urn:g:meta/42> ;
+    dal:inGraphRole dal:MetaRole .
 
 <https://example.org/lending/DecisionStream/compiled/append#param-stream> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
@@ -654,10 +676,12 @@
             dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "txn-multi-revision-audit" ] ] ;
+    dal:matchedScope <https://example.org/lending#DecisionStreamScope> ;
     dal:resolvedDimension [ dal:candidateCount 1 ;
             dal:dimension "aggregateBoundary" ;
             dal:resolvedValue dal:NamedGraphBoundary ;
-            dal:wonBy <https://example.org/lending#DecisionStreamProfile> ],
+            dal:wonBy <https://example.org/lending#DecisionStreamProfile> ;
+            dal:wonThrough <https://example.org/lending#DecisionStreamScope> ],
         [ dal:candidateCount 0 ;
             dal:dimension "asOfFloorSource" ],
         [ dal:candidateCount 0 ;
@@ -666,7 +690,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "concurrencyProfile" ;
             dal:resolvedValue dal:AppendOnly ;
-            dal:wonBy <https://example.org/lending#DecisionStreamProfile> ],
+            dal:wonBy <https://example.org/lending#DecisionStreamProfile> ;
+            dal:wonThrough <https://example.org/lending#DecisionStreamScope> ],
         [ dal:candidateCount 0 ;
             dal:dimension "contiguityCheckMode" ;
             dal:resolvedValue dal:BlockingContiguityCheck ],
@@ -676,11 +701,13 @@
         [ dal:candidateCount 1 ;
             dal:dimension "epochAuthority" ;
             dal:resolvedValue dal:ExternalHighWaterMark ;
-            dal:wonBy <https://example.org/lending#DecisionStreamEpoch> ],
+            dal:wonBy <https://example.org/lending#DecisionStreamEpoch> ;
+            dal:wonThrough <https://example.org/lending#DecisionStreamScope> ],
         [ dal:candidateCount 1 ;
             dal:dimension "epochGuardScope" ;
             dal:resolvedValue dal:DatasetLevelGuard ;
-            dal:wonBy <https://example.org/lending#DecisionStreamEpoch> ],
+            dal:wonBy <https://example.org/lending#DecisionStreamEpoch> ;
+            dal:wonThrough <https://example.org/lending#DecisionStreamScope> ],
         [ dal:candidateCount 0 ;
             dal:dimension "erasurePrecedence" ],
         [ dal:candidateCount 0 ;
@@ -708,11 +735,13 @@
         [ dal:candidateCount 1 ;
             dal:dimension "metaTopology" ;
             dal:resolvedValue dal:SharedSharded ;
-            dal:wonBy <https://example.org/lending#DecisionStreamProfile> ],
+            dal:wonBy <https://example.org/lending#DecisionStreamProfile> ;
+            dal:wonThrough <https://example.org/lending#DecisionStreamScope> ],
         [ dal:candidateCount 1 ;
             dal:dimension "orderingGrain" ;
             dal:resolvedValue dal:EventGrain ;
-            dal:wonBy <https://example.org/lending#DecisionStreamProfile> ],
+            dal:wonBy <https://example.org/lending#DecisionStreamProfile> ;
+            dal:wonThrough <https://example.org/lending#DecisionStreamScope> ],
         [ dal:candidateCount 0 ;
             dal:dimension "perSubjectScoped" ],
         [ dal:candidateCount 0 ;
@@ -720,7 +749,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "receiptModel" ;
             dal:resolvedValue dal:PatchLog ;
-            dal:wonBy <https://example.org/lending#DecisionStreamProfile> ],
+            dal:wonBy <https://example.org/lending#DecisionStreamProfile> ;
+            dal:wonThrough <https://example.org/lending#DecisionStreamScope> ],
         [ dal:candidateCount 0 ;
             dal:dimension "recordsStateDigest" ;
             dal:resolvedLiteral false ],

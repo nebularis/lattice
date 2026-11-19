@@ -14,9 +14,16 @@
 <https://example.org/projects/Project/compiled/cas-replace#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-data-urn%3Ag%3Aprojects> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-10> a dal:ResourceAccess ;
+    dal:accessMode dal:Insert ;
+    dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-meta-urn%3Ag%3Ameta%2F38> ;
+    dal:resourceKind dal:VersionRow .
+
+<https://example.org/projects/Project/compiled/cas-replace#access-11> a dal:ResourceAccess ;
     dal:accessMode dal:PointRead ;
     dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
     dal:resourceKind dal:VersionRow .
@@ -24,39 +31,46 @@
 <https://example.org/projects/Project/compiled/cas-replace#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-data-urn%3Ag%3Aprojects> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-patch-%7BnewRev%7D%2Fadd> ;
+    dal:patchDirection dal:Added ;
     dal:resourceKind dal:PatchContent .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
-    dal:resourceKind dal:Receipt .
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-patch-%7BnewRev%7D%2Fdel> ;
+    dal:patchDirection dal:Removed ;
+    dal:resourceKind dal:PatchContent .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-5> a dal:ResourceAccess ;
-    dal:accessMode dal:AbsenceRead ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-txnId> ;
-    dal:resourceKind dal:TransactionClaim .
+    dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
+    dal:resourceKind dal:Receipt .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-6> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
+    dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-txnId> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/projects/Project/compiled/cas-replace#access-7> a dal:ResourceAccess ;
+    dal:accessMode dal:Insert ;
+    dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-txnId> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
+    dal:resourceKind dal:TransactionClaim .
+
+<https://example.org/projects/Project/compiled/cas-replace#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
     dal:resourceKind dal:VersionRow .
 
-<https://example.org/projects/Project/compiled/cas-replace#access-8> a dal:ResourceAccess ;
+<https://example.org/projects/Project/compiled/cas-replace#access-9> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
-    dal:resourceKind dal:VersionRow .
-
-<https://example.org/projects/Project/compiled/cas-replace#access-9> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-meta-urn%3Ag%3Ameta%2F38> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/projects/Project/compiled/cas-replace#digest> a dal:DigestContract ;
@@ -137,14 +151,18 @@
 <https://example.org/projects/Project/compiled/create-if-absent#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/projects/Project/compiled/create-if-absent#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-data-urn%3Ag%3Aprojects> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/projects/Project/compiled/create-if-absent#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-patch-%7BnewRev%7D%2Fadd> ;
+    dal:patchDirection dal:Added ;
     dal:resourceKind dal:PatchContent .
 
 <https://example.org/projects/Project/compiled/create-if-absent#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/projects/Project/compiled/create-if-absent#access-5> a dal:ResourceAccess ;
@@ -155,6 +173,7 @@
 <https://example.org/projects/Project/compiled/create-if-absent#access-6> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/projects/Project/compiled/create-if-absent#param-txnId> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/projects/Project/compiled/create-if-absent#access-7> a dal:ResourceAccess ;
@@ -165,6 +184,7 @@
 <https://example.org/projects/Project/compiled/create-if-absent#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/projects/Project/compiled/create-if-absent#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-meta-urn%3Ag%3Ameta%2F38> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/projects/Project/compiled/create-if-absent#digest> a dal:DigestContract ;
@@ -290,14 +310,22 @@
 <https://example.org/projects/Project/compiled/replace-whole#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-data-urn%3Ag%3Aprojects> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/projects/Project/compiled/replace-whole#access-10> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
+    dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-meta-urn%3Ag%3Ameta%2F38> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/projects/Project/compiled/replace-whole#access-11> a dal:ResourceAccess ;
+    dal:accessMode dal:Insert ;
+    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-meta-urn%3Ag%3Ameta%2F38> ;
+    dal:resourceKind dal:VersionRow .
+
+<https://example.org/projects/Project/compiled/replace-whole#access-12> a dal:ResourceAccess ;
     dal:accessMode dal:PointRead ;
     dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
     dal:resourceKind dal:VersionRow .
@@ -305,6 +333,7 @@
 <https://example.org/projects/Project/compiled/replace-whole#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-data-urn%3Ag%3Aprojects> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/projects/Project/compiled/replace-whole#access-3> a dal:ResourceAccess ;
@@ -314,29 +343,34 @@
 
 <https://example.org/projects/Project/compiled/replace-whole#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-patch-%7BnewRev%7D%2Fadd> ;
+    dal:patchDirection dal:Added ;
     dal:resourceKind dal:PatchContent .
 
 <https://example.org/projects/Project/compiled/replace-whole#access-5> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
-    dal:resourceKind dal:Receipt .
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-patch-%7BnewRev%7D%2Fdel> ;
+    dal:patchDirection dal:Removed ;
+    dal:resourceKind dal:PatchContent .
 
 <https://example.org/projects/Project/compiled/replace-whole#access-6> a dal:ResourceAccess ;
-    dal:accessMode dal:AbsenceRead ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-txnId> ;
-    dal:resourceKind dal:TransactionClaim .
+    dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
+    dal:resourceKind dal:Receipt .
 
 <https://example.org/projects/Project/compiled/replace-whole#access-7> a dal:ResourceAccess ;
-    dal:accessMode dal:Insert ;
+    dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-txnId> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/projects/Project/compiled/replace-whole#access-8> a dal:ResourceAccess ;
-    dal:accessMode dal:AbsenceRead ;
-    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
-    dal:resourceKind dal:VersionRow .
+    dal:accessMode dal:Insert ;
+    dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-txnId> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
+    dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/projects/Project/compiled/replace-whole#access-9> a dal:ResourceAccess ;
-    dal:accessMode dal:Delete ;
+    dal:accessMode dal:AbsenceRead ;
     dal:keyedBy <https://example.org/projects/Project/compiled/replace-whole#param-root> ;
     dal:resourceKind dal:VersionRow .
 
@@ -433,6 +467,7 @@
 <https://example.org/projects/Project/compiled/tombstone-delete#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/projects/Project/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-data-urn%3Ag%3Aprojects> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/projects/Project/compiled/tombstone-delete#access-10> a dal:ResourceAccess ;
@@ -447,10 +482,13 @@
 
 <https://example.org/projects/Project/compiled/tombstone-delete#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-patch-%7BnewRev%7D%2Fdel> ;
+    dal:patchDirection dal:Removed ;
     dal:resourceKind dal:PatchContent .
 
 <https://example.org/projects/Project/compiled/tombstone-delete#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> ;
     dal:resourceKind dal:Receipt .
 
 <https://example.org/projects/Project/compiled/tombstone-delete#access-5> a dal:ResourceAccess ;
@@ -461,6 +499,7 @@
 <https://example.org/projects/Project/compiled/tombstone-delete#access-6> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/projects/Project/compiled/tombstone-delete#param-txnId> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-txn-urn%3Ag%3Atxn> ;
     dal:resourceKind dal:TransactionClaim .
 
 <https://example.org/projects/Project/compiled/tombstone-delete#access-7> a dal:ResourceAccess ;
@@ -471,11 +510,13 @@
 <https://example.org/projects/Project/compiled/tombstone-delete#access-8> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/projects/Project/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-meta-urn%3Ag%3Ameta%2F38> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/projects/Project/compiled/tombstone-delete#access-9> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/projects/Project/compiled/tombstone-delete#param-root> ;
+    dal:landsIn <https://example.org/projects/Project/compiled/profile#place-meta-urn%3Ag%3Ameta%2F38> ;
     dal:resourceKind dal:VersionRow .
 
 <https://example.org/projects/Project/compiled/tombstone-delete#digest> a dal:DigestContract ;
@@ -622,6 +663,14 @@
     dal:parameterName "root" ;
     dal:required true .
 
+<https://example.org/projects/Project/compiled/profile#place-patch-%7BnewRev%7D%2Fadd> a dal:GraphPlace ;
+    dal:inGraphNamed "{newRev}/add" ;
+    dal:inGraphRole dal:PatchRole .
+
+<https://example.org/projects/Project/compiled/profile#place-patch-%7BnewRev%7D%2Fdel> a dal:GraphPlace ;
+    dal:inGraphNamed "{newRev}/del" ;
+    dal:inGraphRole dal:PatchRole .
+
 <https://example.org/projects/Project/compiled/replace-whole#param-payloadTriples> a dal:ParameterDeclaration ;
     dal:parameterKind dal:PayloadKind ;
     dal:parameterName "payloadTriples" ;
@@ -731,10 +780,26 @@
     dal:edgeTargetClass skos:Concept ;
     dal:referenceMode dal:ByIdentity .
 
+<https://example.org/projects/Project/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:txlog/{month}" ;
+    dal:inGraphRole dal:LogRole .
+
+<https://example.org/projects/Project/compiled/profile#place-txn-urn%3Ag%3Atxn> a dal:GraphPlace ;
+    dal:inGraph <urn:g:txn> ;
+    dal:inGraphRole dal:TxnRole .
+
+<https://example.org/projects/Project/compiled/profile#place-data-urn%3Ag%3Aprojects> a dal:GraphPlace ;
+    dal:inGraph <urn:g:projects> ;
+    dal:inGraphRole dal:DataRole .
+
 <https://example.org/projects/Project/compiled/create-if-absent#param-root> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "root" ;
     dal:required true .
+
+<https://example.org/projects/Project/compiled/profile#place-meta-urn%3Ag%3Ameta%2F38> a dal:GraphPlace ;
+    dal:inGraph <urn:g:meta/38> ;
+    dal:inGraphRole dal:MetaRole .
 
 <https://example.org/projects/Project/compiled/tombstone-delete#param-root> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
@@ -834,6 +899,7 @@
         [ a dal:GeneratedOperation ;
             dal:access <https://example.org/projects/Project/compiled/cas-replace#access-1>,
                 <https://example.org/projects/Project/compiled/cas-replace#access-10>,
+                <https://example.org/projects/Project/compiled/cas-replace#access-11>,
                 <https://example.org/projects/Project/compiled/cas-replace#access-2>,
                 <https://example.org/projects/Project/compiled/cas-replace#access-3>,
                 <https://example.org/projects/Project/compiled/cas-replace#access-4>,
@@ -992,6 +1058,7 @@
             dal:access <https://example.org/projects/Project/compiled/replace-whole#access-1>,
                 <https://example.org/projects/Project/compiled/replace-whole#access-10>,
                 <https://example.org/projects/Project/compiled/replace-whole#access-11>,
+                <https://example.org/projects/Project/compiled/replace-whole#access-12>,
                 <https://example.org/projects/Project/compiled/replace-whole#access-2>,
                 <https://example.org/projects/Project/compiled/replace-whole#access-3>,
                 <https://example.org/projects/Project/compiled/replace-whole#access-4>,
@@ -1333,6 +1400,7 @@
             dal:templateVersion 1 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "payload-check" ] ] ;
+    dal:matchedScope <https://example.org/projects#ProjectClass> ;
     dal:referenceEdge <https://example.org/projects/Project/compiled/profile#edge-00>,
         <https://example.org/projects/Project/compiled/profile#edge-01>,
         <https://example.org/projects/Project/compiled/profile#edge-02>,
@@ -1347,7 +1415,8 @@
     dal:resolvedDimension [ dal:candidateCount 1 ;
             dal:dimension "aggregateBoundary" ;
             dal:resolvedValue dal:CompositePropertyBoundary ;
-            dal:wonBy <https://example.org/projects#ProjectBoundaryProfile> ],
+            dal:wonBy <https://example.org/projects#ProjectBoundaryProfile> ;
+            dal:wonThrough <https://example.org/projects#ProjectClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "asOfFloorSource" ],
         [ dal:candidateCount 0 ;
@@ -1356,7 +1425,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "concurrencyProfile" ;
             dal:resolvedValue dal:Optimistic ;
-            dal:wonBy <https://example.org/projects#ProjectConcurrencyProfile> ],
+            dal:wonBy <https://example.org/projects#ProjectConcurrencyProfile> ;
+            dal:wonThrough <https://example.org/projects#ProjectClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "contiguityCheckMode" ;
             dal:resolvedValue dal:BlockingContiguityCheck ],
@@ -1405,7 +1475,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "receiptModel" ;
             dal:resolvedValue dal:PatchLog ;
-            dal:wonBy <https://example.org/projects#ProjectReceiptProfile> ],
+            dal:wonBy <https://example.org/projects#ProjectReceiptProfile> ;
+            dal:wonThrough <https://example.org/projects#ProjectClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "recordsStateDigest" ;
             dal:resolvedLiteral false ],

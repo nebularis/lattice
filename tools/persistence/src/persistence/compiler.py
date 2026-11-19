@@ -33,7 +33,7 @@ from .recipes import build_recipes, canonical_json
 from .resolver import resolve_dimension, resolve_identity, resolve_uniqueness
 
 RDF_JSON = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON")
-from .scopes import Target, discover_targets
+from .scopes import Target, all_scopes, discover_targets, matches
 
 
 @dataclass
@@ -53,6 +53,8 @@ class CompiledTarget:
     recipes: list[dict] = field(default_factory=list)
     # H2.8c: the record classes the family touches, which the profile states as dal:recordClass.
     record_classes: tuple = ()
+    # Every scope node the resolution found to match the target, whether or not a profile applied through it won (SVA-Q20).
+    matched_scopes: tuple[str, ...] = ()
 
 
 class CompileError(Exception):
@@ -99,6 +101,9 @@ def compile_targets(
             uniqueness = resolve_uniqueness(graph, target)
             identity = resolve_identity(graph, target, spec)
             resolved_by_target[target] = dimensions
+            matched = tuple(sorted(str(s.iri) for s in all_scopes(graph) if matches(graph, s, target)))
+            for resolved in (*dimensions.values(), *identity.values()):
+                resolved.won_through = _won_through(graph, resolved, matched)
 
             diagnostics = validator.check_cross_axis(graph, target, dimensions, uniqueness)
             diagnostics += validator.check_identity(graph, target, dimensions, identity, uniqueness)
@@ -129,6 +134,7 @@ def compile_targets(
                     diagnostics=diagnostics,
                     identity=identity,
                     recipes=recipes,
+                    matched_scopes=matched,
                     record_classes=validator.family_record_classes(graph, target, dimensions["aggregateBoundary"].extra.get("ownershipTree")),
                 )
             )
@@ -170,6 +176,14 @@ def compile_targets(
     return compiled
 
 
+def _won_through(graph: Graph, resolved: ResolvedDimension, matched: tuple[str, ...]) -> tuple[str, ...]:
+    """The matched scopes through which the profile that won ``resolved`` applied, which are the profile's ``dal:appliesTo`` among the
+    scopes that match the target. A value that came from the baseline default won through none."""
+    if resolved.won_by is None:
+        return ()
+    return tuple(sorted({str(s) for s in graph.objects(URIRef(resolved.won_by), DAL.appliesTo)} & set(matched)))
+
+
 def _local(value) -> str:
     return str(value).rsplit("#", 1)[-1] if value is not None else ""
 
@@ -209,11 +223,17 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget, guards: bool = T
             out.add((node, DAL.resolvedValue, value))
         if rd.won_by is not None:
             out.add((node, DAL.wonBy, URIRef(rd.won_by)))
+        for scope in rd.won_through:
+            out.add((node, DAL.wonThrough, URIRef(scope)))
         out.add((node, DAL.candidateCount, RdfLiteral(rd.candidate_count)))
         out.add((profile, DAL.resolvedDimension, node))
 
+    for scope in compiled.matched_scopes:
+        out.add((profile, DAL.matchedScope, URIRef(scope)))
+
     for constraint in compiled.uniqueness:
         out.add((profile, DAL.appliedUniquenessConstraint, URIRef(constraint["constraint"])))
+    constraints = {c["constraintId"]: URIRef(c["constraint"]) for c in compiled.uniqueness}
 
     # H2.6e: each edge of the boundary shape that leads to a node, with its ownership and its reference mode, in walk order. Stated once, here,
     # with an IRI, so that the payload contract of each operation points at it (H2.8c).
@@ -261,9 +281,10 @@ def emit_compiled_profile(out: Graph, compiled: CompiledTarget, guards: bool = T
         contract = contract_for(out, op_node, guards=guards, graph_names=graph_names, shape=URIRef(str(shape)) if shape is not None else None)
         if contract is None:
             raise KeyError(f"no builder and no hand declaration for the operation {op.operation} ({op.template_id})")
+        constraint_id = next((str(b.value).strip('"') for b in op.bindings if b.name == "constraintId"), None)
         emit_contract(
             out, op_node, compiled.target.cls, op.operation, contract, URIRef(str(shape)) if shape is not None else None,
-            compiled.target.deployment, tuple(edge_nodes),
+            compiled.target.deployment, tuple(edge_nodes), constraints.get(constraint_id),
         )
 
     req_node = BNode(f"{stem}-requirement")

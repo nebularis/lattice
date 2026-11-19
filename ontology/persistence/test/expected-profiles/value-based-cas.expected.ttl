@@ -13,11 +13,13 @@
 <https://example.org/lending/Order/compiled/cas-replace#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
     dal:keyedBy <https://example.org/lending/Order/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Order/compiled/profile#place-data-urn%3Ag%3Aorder-status> ;
     dal:resourceKind dal:PropertyValue .
 
 <https://example.org/lending/Order/compiled/cas-replace#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Order/compiled/cas-replace#param-root> ;
+    dal:landsIn <https://example.org/lending/Order/compiled/profile#place-data-urn%3Ag%3Aorder-status> ;
     dal:resourceKind dal:PropertyValue .
 
 <https://example.org/lending/Order/compiled/cas-replace#access-3> a dal:ResourceAccess ;
@@ -114,6 +116,10 @@
     dal:parameterName "logGraphs" ;
     dal:required true ;
     dal:sourcedFrom dal:RegistryGraph .
+
+<https://example.org/lending/Order/compiled/profile#place-data-urn%3Ag%3Aorder-status> a dal:GraphPlace ;
+    dal:inGraph <urn:g:order-status> ;
+    dal:inGraphRole dal:DataRole .
 
 <https://example.org/lending/Order/compiled/revision-multi-txn-audit#param-logGraphs> a dal:ParameterDeclaration ;
     dal:parameterKind dal:RegistryListKind ;
@@ -448,10 +454,12 @@
             dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "txn-multi-revision-audit" ] ] ;
+    dal:matchedScope <https://example.org/lending#OrderClass> ;
     dal:resolvedDimension [ dal:candidateCount 1 ;
             dal:dimension "aggregateBoundary" ;
             dal:resolvedValue dal:NoBoundary ;
-            dal:wonBy <https://example.org/lending#OrderStatusBoundaryProfile> ],
+            dal:wonBy <https://example.org/lending#OrderStatusBoundaryProfile> ;
+            dal:wonThrough <https://example.org/lending#OrderClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "asOfFloorSource" ],
         [ dal:candidateCount 0 ;
@@ -460,7 +468,8 @@
         [ dal:candidateCount 1 ;
             dal:dimension "concurrencyProfile" ;
             dal:resolvedValue dal:Optimistic ;
-            dal:wonBy <https://example.org/lending#OrderStatusConcurrencyProfile> ],
+            dal:wonBy <https://example.org/lending#OrderStatusConcurrencyProfile> ;
+            dal:wonThrough <https://example.org/lending#OrderClass> ],
         [ dal:candidateCount 0 ;
             dal:dimension "contiguityCheckMode" ;
             dal:resolvedValue dal:BlockingContiguityCheck ],

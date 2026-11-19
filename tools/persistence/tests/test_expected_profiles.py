@@ -22,6 +22,7 @@ from persistence import witness
 from persistence.builders import BUILDERS, build
 from persistence.contract import DATASET_GUARD_SUFFIX, HAND_DECLARED, AccessContract, DeclarationSource, contract_of
 from persistence.ir import SLOT_KINDS
+from persistence.landing import is_template_of_closed_set
 from persistence.namespaces import DAL
 
 from test_builders import _first
@@ -61,7 +62,10 @@ def test_h2_6_t2_no_declaration_holds_a_blank_node_or_sparql_text(parsed):
             assert not isinstance(o, BNode), (name, s, p)
             if ep.is_declaration(s):
                 assert isinstance(s, URIRef)
-            if isinstance(o, Literal):
+            if isinstance(o, Literal) and p == DAL.inGraphNamed:
+                # a place's template, which names only the placeholders of the closed set and holds no space, quote or angle bracket
+                assert is_template_of_closed_set(str(o)) and re.fullmatch(r"[^\s<>\"\\]+", str(o)), (name, s, p, str(o))
+            elif isinstance(o, Literal):
                 assert re.fullmatch(r"[A-Za-z0-9 ._-]*", str(o)), (name, s, p, str(o))  # a name, a number or a separator, never a query
             checked += 1
     assert checked > 1000

@@ -559,7 +559,110 @@ dal:ResourceAccessShape
                   sh:in ( dal:PointRead dal:AbsenceRead dal:ScanRead dal:WholeAggregateRead dal:Insert dal:Delete ) ;
                   sh:message "A resource access has exactly one dal:accessMode, an individual of dal:AccessMode." ] ;
     sh:property [ sh:path dal:keyedBy ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
-                  sh:message "dal:keyedBy names a parameter declaration by its IRI." ] .
+                  sh:message "dal:keyedBy names a parameter declaration by its IRI." ] ;
+    sh:property [ sh:path dal:landsIn ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:GraphPlace ;
+                  sh:message "An access lands in at most one place, a dal:GraphPlace named by its IRI." ] ;
+    sh:property [ sh:path dal:patchDirection ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:in ( dal:Added dal:Removed ) ;
+                  sh:message "dal:patchDirection is dal:Added or dal:Removed, once." ] ;
+    sh:property [ sh:path dal:forConstraint ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:message "dal:forConstraint names one uniqueness constraint by its IRI." ] ;
+    # Both queries start from $this and test the one fact about it with FILTER EXISTS (R1).
+    sh:sparql [
+        sh:message "A write access, whose mode is dal:Insert or dal:Delete, lands in exactly one place, and this one lands in none." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:accessMode ?mode .
+              FILTER (?mode IN (dal:Insert, dal:Delete))
+              FILTER NOT EXISTS { $this dal:landsIn ?place }
+            }""" ] ;
+    sh:sparql [
+        sh:message "A read access lands in no place, and this one has a dal:landsIn." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:accessMode ?mode .
+              FILTER (?mode NOT IN (dal:Insert, dal:Delete))
+              FILTER EXISTS { $this dal:landsIn ?place }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:patchDirection is stated only on an access to dal:PatchContent, and this access is to another resource." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:patchDirection ?direction ; dal:resourceKind ?kind .
+              FILTER (?kind != dal:PatchContent)
+            }""" ] ;
+    sh:sparql [
+        sh:message "A write access to dal:PatchContent states its dal:patchDirection, since the direction is part of the resource's key, and this one states none." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:resourceKind dal:PatchContent ; dal:accessMode ?mode .
+              FILTER (?mode IN (dal:Insert, dal:Delete))
+              FILTER NOT EXISTS { $this dal:patchDirection ?direction }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:forConstraint is stated only on an access to dal:KeyClaim, and this access is to another resource." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:forConstraint ?constraint ; dal:resourceKind ?kind .
+              FILTER (?kind != dal:KeyClaim)
+            }""" ] .
+
+# A place is one role and exactly one of a fixed graph and a template, and a template names only the placeholders of the closed set.
+dal:GraphPlaceShape
+    a sh:NodeShape ;
+    sh:targetClass dal:GraphPlace ;
+    sh:property [ sh:path dal:inGraphRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:DataRole dal:MetaRole dal:TxnRole dal:LogRole dal:EventRole dal:KeysRole dal:QuarantineRole
+                          dal:RetentionRole dal:PinnedRole dal:DatasetRole dal:PatchRole ) ;
+                  sh:message "A place has exactly one dal:inGraphRole, an individual of dal:GraphRole." ] ;
+    sh:property [ sh:path dal:inGraph ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:message "A place has at most one dal:inGraph, an IRI." ] ;
+    sh:property [ sh:path dal:inGraphNamed ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A place has at most one dal:inGraphNamed, a string." ] ;
+    sh:sparql [
+        sh:message "A place states exactly one of dal:inGraph and dal:inGraphNamed, and this one states both." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:inGraph ?graph .
+              FILTER EXISTS { $this dal:inGraphNamed ?template }
+            }""" ] ;
+    sh:sparql [
+        sh:message "A place states exactly one of dal:inGraph and dal:inGraphNamed, and this one states neither." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this a dal:GraphPlace .
+              FILTER NOT EXISTS { $this dal:inGraph ?graph }
+              FILTER NOT EXISTS { $this dal:inGraphNamed ?template }
+            }""" ] ;
+    sh:sparql [
+        sh:message "A template names only the placeholders {root}, {newRev} and {month}, and this one holds another brace." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this ?template WHERE {
+              $this dal:inGraphNamed ?template .
+              BIND (REPLACE(REPLACE(REPLACE(STR(?template), "[{]root[}]", ""), "[{]newRev[}]", ""), "[{]month[}]", "") AS ?rest)
+              FILTER (CONTAINS(?rest, "{") || CONTAINS(?rest, "}"))
+            }""" ] .
+
+# The scopes through which a value won are scopes the profile states as matched. A resolved dimension is a node the compiler does not
+# type, so the shape selects it by the one property it checks.
+dal:ResolvedDimensionShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf dal:wonThrough ;
+    sh:sparql [
+        sh:message "dal:wonThrough names a scope the same compiled profile states with dal:matchedScope, and this one does not." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this ?scope WHERE {
+              $this dal:wonThrough ?scope .
+              FILTER NOT EXISTS { ?profile dal:resolvedDimension $this . ?profile dal:matchedScope ?scope }
+            }""" ] .
 
 dal:ResultColumnShape
     a sh:NodeShape ;
@@ -622,7 +725,7 @@ dal:DigestPartShape
 # the property constraints of the shapes above.
 dal:ContractDeclarationIsIriShape
     a sh:NodeShape ;
-    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart ;
+    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart , dal:GraphPlace ;
     sh:nodeKind sh:IRI ;
     sh:message "A declaration of the contract of a generated operation is an IRI minted from the target, the operation and the part, and never a blank node." .
 
@@ -631,7 +734,7 @@ dal:ContractDeclarationIsIriShape
 # ownedPath binding and a caller-named graph's rule is dal:GraphNameOfRoot, which refers to dal:graphIriTemplate.
 dal:ContractHoldsNoSparqlTextShape
     a sh:NodeShape ;
-    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart ;
+    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart , dal:GraphPlace ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
     sh:property [ sh:path dal:parameterName ; sh:pattern "^[A-Za-z_][A-Za-z0-9_]*$" ] ;
@@ -643,6 +746,12 @@ dal:ContractHoldsNoSparqlTextShape
     sh:property [ sh:path dal:resourceKind ] ;
     sh:property [ sh:path dal:accessMode ] ;
     sh:property [ sh:path dal:keyedBy ] ;
+    sh:property [ sh:path dal:landsIn ] ;
+    sh:property [ sh:path dal:patchDirection ] ;
+    sh:property [ sh:path dal:forConstraint ] ;
+    sh:property [ sh:path dal:inGraphRole ] ;
+    sh:property [ sh:path dal:inGraph ] ;
+    sh:property [ sh:path dal:inGraphNamed ; sh:pattern "^[^\\s<>\"\\\\]*$" ] ;
     sh:property [ sh:path dal:columnName ; sh:pattern "^[A-Za-z_][A-Za-z0-9_]*$" ] ;
     sh:property [ sh:path dal:columnPosition ] ;
     sh:property [ sh:path dal:columnKind ] ;

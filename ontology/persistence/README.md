@@ -604,6 +604,7 @@ classDiagram
     }
     class ParameterDeclaration
     class PayloadContract
+    class ProfileScope
     class ReferenceEdge {
         edgeInverse (xsd:boolean)
         edgePredicate
@@ -630,6 +631,7 @@ classDiagram
     CompiledProfile --> Diagnostic : diagnostic
     CompiledProfile --> GeneratedOperation : generatedOperation
     CompiledProfile --> MintingRecipe : mintingRecipe
+    CompiledProfile --> ProfileScope : matchedScope
     CompiledProfile --> ResolvedDimension : resolvedDimension
     CompiledProfile --> UniquenessConstraint : appliedUniquenessConstraint
     GeneratedOperation --> AuditOutcome : reportsOutcome
@@ -647,12 +649,13 @@ classDiagram
     GeneratedOperation --> Template : usesTemplate
     MintingRecipe --> ResourceRole : forRole
     ReferenceEdge --> OwnershipKind : edgeOwnership
+    ResolvedDimension --> ProfileScope : wonThrough
     class ObjectProperty_referenceEdge["Object Property - referenceEdge"]
 ```
 
 <!-- end -->
 
-<!-- start: {"generated": "class-diagram", "part": "The operation contract, parameters and resources", "classes": ["dal:ParameterDeclaration", "dal:ParameterKind", "dal:Rule", "dal:Source", "dal:ResourceAccess", "dal:AccessMode", "dal:ResourceKind", "dal:GraphNaming", "dal:OperationKind"], "enumerations": "table"} -->
+<!-- start: {"generated": "class-diagram", "part": "The operation contract, parameters and resources", "classes": ["dal:ParameterDeclaration", "dal:ParameterKind", "dal:Rule", "dal:Source", "dal:ResourceAccess", "dal:AccessMode", "dal:ResourceKind", "dal:GraphPlace", "dal:GraphRole", "dal:PatchDirection", "dal:GraphNaming", "dal:OperationKind"], "enumerations": "table"} -->
 
 **The operation contract, parameters and resources**
 
@@ -672,6 +675,24 @@ classDiagram
         <<enumeration>>
         CallerNamed
         QueryNamed
+    }
+    class GraphPlace {
+        inGraph
+        inGraphNamed (xsd:string)
+    }
+    class GraphRole {
+        <<enumeration>>
+        DataRole
+        DatasetRole
+        EventRole
+        KeysRole
+        LogRole
+        MetaRole
+        PatchRole
+        PinnedRole
+        QuarantineRole
+        RetentionRole
+        TxnRole
     }
     class OperationKind {
         <<enumeration>>
@@ -713,6 +734,11 @@ classDiagram
         RowsKind
         StringKind
     }
+    class PatchDirection {
+        <<enumeration>>
+        Added
+        Removed
+    }
     class ResourceAccess
     class ResourceKind {
         <<enumeration>>
@@ -739,13 +765,18 @@ classDiagram
         NoSource
         RegistryGraph
     }
+    class UniquenessConstraint
+    GraphPlace --> GraphRole : inGraphRole
     ParameterDeclaration --> ParameterDeclaration : mustEqualFor
     ParameterDeclaration --> ParameterKind : parameterKind
     ParameterDeclaration --> Rule : mustEqual
     ParameterDeclaration --> Source : sourcedFrom
     ResourceAccess --> AccessMode : accessMode
+    ResourceAccess --> GraphPlace : landsIn
     ResourceAccess --> ParameterDeclaration : keyedBy
+    ResourceAccess --> PatchDirection : patchDirection
     ResourceAccess --> ResourceKind : resourceKind
+    ResourceAccess --> UniquenessConstraint : forConstraint
 ```
 
 <!-- end -->
@@ -2178,7 +2209,7 @@ isolation should be, and only the tests say what it is.
 | Resolve | one value per dimension per target, each with the profile that won and how many candidates there were (`dal:ResolvedDimension`) | `ProfileAmbiguityError` |
 | Validate | diagnostics: refusals and warnings (§5.10) | `CrossAxisViolation`, `BoundaryConflict`, `MissingBoundaryShapeError` |
 | Select | one named builder per generated operation | none: a lookup table |
-| Emit | `dal:GeneratedOperation`s with reified `dal:ParameterBinding`s and the contract of each (§5.8.1), minting recipes, the capability requirement | an encoder rejection |
+| Emit | `dal:GeneratedOperation`s with reified `dal:ParameterBinding`s and the contract of each (§5.8.1), the places the writes land (§5.8.2), the scopes that matched and the one each value won through, minting recipes, the capability requirement | an encoder rejection, or a written graph that is neither a fixed IRI nor a template of the closed placeholders |
 
 The compiled profile names builders and parameters. It never embeds SPARQL text, so it is the same
 whatever store will run it. `instantiate` finds each builder by its `dal:templateId`, the operation's id with
@@ -2202,7 +2233,7 @@ for example `<…/compiled/LoanApplication/cas-replace#param-root>`, so two comp
 | `dal:operationKind` | an individual of the closed `dal:OperationKind`, for example `dal:Create`, `dal:Replace`, `dal:Audit`, `dal:MembersRead`, and `dal:PayloadCheck`, which returns the subjects of a payload outside the aggregate |
 | `dal:templateVersion` | the builder's version, bumped by any change to the text it renders |
 | `dal:parameter` | each parameter's name, kind (`dal:ParameterKind`) and whether it is required. A caller-named graph's rule is `dal:GraphNameOfRoot`, which refers to `dal:graphIriTemplate`, and a registry list says it is sourced from the family's `dal:registryGraph` |
-| `dal:access` | each logical resource the operation touches (`dal:ResourceKind`, such as `dal:VersionRow` or `dal:Receipt`), the mode (`dal:PointRead`, `dal:AbsenceRead`, `dal:ScanRead`, `dal:WholeAggregateRead`, `dal:Insert`, `dal:Delete`) and the parameter that keys it |
+| `dal:access` | each logical resource the operation touches (`dal:ResourceKind`, such as `dal:VersionRow` or `dal:Receipt`), the mode (`dal:PointRead`, `dal:AbsenceRead`, `dal:ScanRead`, `dal:WholeAggregateRead`, `dal:Insert`, `dal:Delete`), the parameter that keys it, and for a write the place where it lands (`dal:landsIn`, §5.8.2). An access to `dal:PatchContent` states its `dal:patchDirection`, and a key claim's access the `dal:UniquenessConstraint` it serves (`dal:forConstraint`) |
 | `dal:resultColumn` | each column of an audit or of the members query, with its kind and a separator |
 | `dal:payloadContract` | the payload slot, its root (the new version, for an append of versions), its encoding (`dal:GroundNTriples`, or `dal:TripleRows` for every payload slot of a rows replace), the boundary shape or `dal:NoBoundaryShape`, and the edges of the shape, each with the shape it leads to (`dal:edgeTargetShape`), so that a caller can walk the owned edges |
 | `dal:reportsOutcome`, `dal:examinedParameter` | on an audit, the outcomes it can report (`dal:Clean`, `dal:Failed`, `dal:NothingExamined`) and the parameter that lists the graphs it reads |
@@ -2212,6 +2243,23 @@ for example `<…/compiled/LoanApplication/cas-replace#param-root>`, so two comp
 
 The kinds, modes and resources are individuals of `spec/persistence.ttl`, each with its logical key and realisation. Shapes
 in `shapes/constraints.ttl` check a compiled profile (§7.2), and the files of `test/expected-profiles/` are their positive fixtures.
+
+#### 5.8.2 Where the writes land, and the scopes that matched
+
+A `dal:ResourceAccess` states a logical resource and keeps only logical facts, so a relational realisation and a model checker read it unchanged. Its realisation in SPARQL is stated beside it, on a `dal:GraphPlace`, which is one graph or one family of graphs named when an operation runs. A place states exactly one `dal:inGraphRole`, an individual of the closed `dal:GraphRole`, and exactly one of the following.
+
+| Property | Holds |
+|---|---|
+| `dal:inGraph` | an IRI, where the graph is fixed, for example `urn:g:keys` |
+| `dal:inGraphNamed` | a string template, where the graph is named when the operation runs, for example `urn:g:txlog/{month}` |
+
+A template names only the placeholders `{root}`, `{newRev}` and `{month}`. `{root}` is the operation's root parameter, percent-encoded as `ENCODE_FOR_URI` encodes it, as `{id}` is in `dal:graphIriTemplate`. `{newRev}` is the operation's new revision parameter as it is, and `{month}` is the month of the transaction time as `YYYY-MM`. A graph that is neither a fixed IRI nor a template of these makes the compile refuse, naming the operation and the graph.
+
+Each access that inserts or deletes has exactly one `dal:landsIn`, and a read access has none. A compiled profile states each distinct place once, and every access that lands there points at the same node. The IRI of a place is minted as the profile's other declarations are, from the target, the deployment where there is one, the role and the graph or template percent-encoded, for example `<…/Facility/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D>`, so two compiles give the same IRIs. A reader finds every pinned graph by comparing `dal:PinnedRole`, and never by matching a template's text.
+
+A patch log's graph of added triples and its graph of removed triples both have the role `dal:PatchRole`. The direction is the constant part of the logical key of `dal:PatchContent`, so the two are two accesses, told apart by `dal:patchDirection`.
+
+The compiled profile also states each scope node the compiler's resolution found to match the target, `dal:matchedScope`, whether or not a profile applied through it won. Each `dal:resolvedDimension` states `dal:wonThrough`, the matched scope or scopes through which its winning profile applied, so a reader can tell which scope a value came through without the configuration. A value that came from the baseline default has none. Which scopes did not match, and how the precedence chose the winner, are not stated, since the compiler's diagnostics answer them from the configuration.
 
 **Which operations a target gets** follows from its dimensions:
 
@@ -3728,7 +3776,8 @@ IRIs is not one RDF term.
 #### `dal:ResourceAccess`
 
 **Definition.** One logical resource an operation touches, with the mode of the access and the parameter that keys it.
-Its IRI is minted from the target, the operation and the position of the access.
+Its IRI is minted from the target, the operation and the position of the access. An access that inserts or deletes also
+states the place where it lands.
 
 #### `dal:AccessMode`
 
@@ -3742,6 +3791,28 @@ write skew turns on it.
 **Definition.** A logical resource an operation reads or writes, with its logical key and its realisation in SPARQL.
 
 **Equivalent to.** { dal:Aggregate, dal:DatasetEpoch, dal:Event, dal:KeyClaim, dal:KeyQuarantine, dal:MergeRecord, dal:PatchContent, dal:PropertyValue, dal:Receipt, dal:RetentionMark, dal:TransactionClaim, dal:VersionRow }
+
+#### `dal:GraphPlace`
+
+**Definition.** One graph, or one family of graphs named when an operation runs, in which the data of a compiled target
+lands. It states one role and exactly one of a fixed graph and a naming template. A compiled profile states each distinct
+place once, with an IRI minted from the target, the role and the graph or template, and every write access that lands
+there points at it.
+
+#### `dal:GraphRole`
+
+**Definition.** The part of the store a graph belongs to, closed. Its individuals mirror the graph roles of the typed
+operation IR, and a reader finds, for example, every pinned graph by comparing one individual and never by matching a
+template's text.
+
+**Equivalent to.** { dal:DataRole, dal:MetaRole, dal:TxnRole, dal:LogRole, dal:EventRole, dal:KeysRole, dal:QuarantineRole, dal:RetentionRole, dal:PinnedRole, dal:DatasetRole, dal:PatchRole }
+
+#### `dal:PatchDirection`
+
+**Definition.** Whether the triples of a patch log's graph were added or removed by the write, closed. The direction is the
+constant part of the logical key of `dal:PatchContent`.
+
+**Equivalent to.** { dal:Added, dal:Removed }
 
 #### `dal:OperationKind`
 
@@ -3825,8 +3896,8 @@ operation. The algorithm and the encoding are fixed here, and the caller library
 
 #### `dal:ResolvedDimension`
 
-**Definition.** Provenance for one dimension's winning value at one target: which scope won, and how many candidates
-existed.
+**Definition.** Provenance for one dimension's winning value at one target: which profile won, the scope or scopes it
+applied through, and how many candidates existed.
 
 #### `dal:MintingRecipe`
 
@@ -4428,6 +4499,48 @@ Absent for a computed or minted subject, such as a receipt, and for a scan.
 
 **Range.** `dal:ParameterDeclaration`
 
+#### `dal:landsIn`
+
+**Definition.** The place where an access that inserts or deletes lands, exactly one. A read access has none. Every access
+that lands in the same place points at the same node.
+
+**Domain.** `dal:ResourceAccess`
+
+**Range.** `dal:GraphPlace`
+
+#### `dal:patchDirection`
+
+**Definition.** Whether the access is to the triples a patch log's write added or removed. Stated only on an access to
+`dal:PatchContent`, where the direction is the constant part of the logical key.
+
+**Domain.** `dal:ResourceAccess`
+
+**Range.** `dal:PatchDirection`
+
+#### `dal:forConstraint`
+
+**Definition.** The uniqueness constraint a key claim access serves, which a tool follows where the operation's
+`constraintId` binding is a string to match.
+
+**Domain.** `dal:ResourceAccess`
+
+**Range.** `dal:UniquenessConstraint`
+
+#### `dal:inGraphRole`
+
+**Definition.** The part of the store a place's graph belongs to, exactly one.
+
+**Domain.** `dal:GraphPlace`
+
+**Range.** `dal:GraphRole`
+
+#### `dal:inGraph`
+
+**Definition.** The IRI of a place's graph, where the graph is fixed, for example the keys graph or a family's data graph.
+A place states this or `dal:inGraphNamed`, never both.
+
+**Domain.** `dal:GraphPlace`
+
 #### `dal:reportsOutcome`
 
 **Definition.** An outcome an audit can report. Every audit declares all three.
@@ -4556,6 +4669,25 @@ position-derived occurrences.
 **Definition.** The profile whose value won the resolution of a dimension.
 
 **Domain.** `dal:ResolvedDimension`
+
+#### `dal:wonThrough`
+
+**Definition.** A matched scope through which the winning profile of a dimension applied, that is the profile's
+`dal:appliesTo` among the scopes the compiled profile states as matched. A value that came from the baseline default has
+none. A scope that matched but won nothing, and how the precedence chose, are not stated.
+
+**Domain.** `dal:ResolvedDimension`
+
+**Range.** `dal:ProfileScope`
+
+#### `dal:matchedScope`
+
+**Definition.** A scope node the compiler's resolution found to match the target, whether or not a profile applied through
+it won.
+
+**Domain.** `dal:CompiledProfile`
+
+**Range.** `dal:ProfileScope`
 
 #### `dal:diagnostic`
 
@@ -4935,6 +5067,18 @@ itself is never treated as a specificity ladder.
 subclass membership.
 
 **Range.** `xsd:boolean`
+
+#### `dal:inGraphNamed`
+
+**Definition.** The template that names a place's graphs, where the graph is named when the operation runs, for example
+"urn:g:txlog/{month}". Its placeholders are a closed set, each defined once. `{root}` is the operation's root parameter,
+percent-encoded as SPARQL's ENCODE_FOR_URI encodes it, as `{id}` is in `dal:graphIriTemplate`. `{newRev}` is the operation's
+new revision parameter as it is. `{month}` is the month of the transaction time, as YYYY-MM. A place states this or
+`dal:inGraph`, never both.
+
+**Domain.** `dal:GraphPlace`
+
+**Range.** `xsd:string`
 
 #### `dal:graphIriTemplate`
 
@@ -5911,6 +6055,29 @@ The individuals of `dal:ResourceKind`, the kinds of logical resource. Each also 
 | `dal:TransactionClaim` | `dal:ResourceKind` | The claim recorded for a transaction id, in the transaction graph. |
 | `dal:VersionRow` | `dal:ResourceKind` | The version row of a root or stream, in its meta graph. |
 
+The individuals of `dal:GraphRole`, the parts of the store a graph belongs to. They mirror the graph roles of the typed operation IR, apart from the one the surface compiler uses for its materialised rows, which a persistence compile never writes. The names end in `Role`, since `dal:Event`, `dal:Pinned` and `dal:Quarantine` name other terms.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:DataRole` | `dal:GraphRole` | The aggregate's data graph, or the graph of one root. |
+| `dal:MetaRole` | `dal:GraphRole` | The meta graph that holds the version rows. |
+| `dal:TxnRole` | `dal:GraphRole` | The transaction graph that holds the claim of each transaction id. |
+| `dal:LogRole` | `dal:GraphRole` | The monthly log graph that holds the receipts. |
+| `dal:EventRole` | `dal:GraphRole` | The monthly event graph of a stream. |
+| `dal:KeysRole` | `dal:GraphRole` | The keys graph that holds key claims and merge records. |
+| `dal:QuarantineRole` | `dal:GraphRole` | The graph that holds the owners recorded against a duplicated claim. |
+| `dal:RetentionRole` | `dal:GraphRole` | The graph that holds a target's retention low-water mark. |
+| `dal:PinnedRole` | `dal:GraphRole` | The pinned graph, which realises the retention of a receipt. |
+| `dal:DatasetRole` | `dal:GraphRole` | The dataset graph that holds the dataset's epoch. |
+| `dal:PatchRole` | `dal:GraphRole` | A graph of a patch log, named from the receipt, which holds the triples a write added or the triples it removed. |
+
+The individuals of `dal:PatchDirection`, the two directions of a patch log.
+
+| Individual | Type | Definition |
+|---|---|---|
+| `dal:Added` | `dal:PatchDirection` | The triples a write added, in the patch graph named newRev followed by /add. |
+| `dal:Removed` | `dal:PatchDirection` | The triples a write removed, in the patch graph named newRev followed by /del. |
+
 The Unicode normalisation pipelines. Each also carries a `dal:unicodeVersion`, stated in 6.6.
 
 | Individual | Type | Definition |
@@ -5956,6 +6123,10 @@ The members of each enumeration of 6.1 are distinct individuals, so a reasoner c
 **All different.** dal:PointRead, dal:AbsenceRead, dal:ScanRead, dal:WholeAggregateRead, dal:Insert, dal:Delete
 
 **All different.** dal:Aggregate, dal:DatasetEpoch, dal:Event, dal:KeyClaim, dal:KeyQuarantine, dal:MergeRecord, dal:PatchContent, dal:PropertyValue, dal:Receipt, dal:RetentionMark, dal:TransactionClaim, dal:VersionRow
+
+**All different.** dal:DataRole, dal:MetaRole, dal:TxnRole, dal:LogRole, dal:EventRole, dal:KeysRole, dal:QuarantineRole, dal:RetentionRole, dal:PinnedRole, dal:DatasetRole, dal:PatchRole
+
+**All different.** dal:Added, dal:Removed
 
 **All different.** dal:Quarantine, dal:Create, dal:Bootstrap, dal:Replace, dal:DeltaReplace, dal:Tombstone, dal:Append, dal:AppendVersion, dal:UnconditionalWrite, dal:ValueGuardedReplace, dal:KeyClaimWrite, dal:KeyClaimWriteDual, dal:KeyClaimRetire, dal:MergeRewrite, dal:Audit, dal:MembersRead, dal:PayloadCheck, dal:StateDigestRecord, dal:StateDigestRead
 
@@ -6088,6 +6259,8 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:GlobalReadStrategy` | Class | Equivalent to {`dal:WatermarkedRead`, `dal:LagWindowRead`, `dal:DenseFeedRead`, `dal:NoGlobalRead`}. |
 | `dal:GraphNaming` | Class | Equivalent to {`dal:QueryNamed`, `dal:CallerNamed`}. |
 | `dal:GraphPatternScope` | Class | Subclass of `dal:ProfileScope`. |
+| `dal:GraphPlace` | Class |  |
+| `dal:GraphRole` | Class | Equivalent to {`dal:DataRole`, `dal:MetaRole`, `dal:TxnRole`, `dal:LogRole`, `dal:EventRole`, `dal:KeysRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:PinnedRole`, `dal:DatasetRole`, `dal:PatchRole`}. |
 | `dal:GuardStatus` | Class | Equivalent to {`dal:Guarded`, `dal:GuardsOff`, `dal:NoRequiredParameter`, `dal:NotGenerated`}. |
 | `dal:IdentityProfile` | Class |  |
 | `dal:IdentityStrategy` | Class | Equivalent to {`dal:AdoptedIdentity`, `dal:NaturalKeyIdentity`, `dal:DerivedHashIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`, `dal:ExternalRegistryIdentity`, `dal:ContentAddressedIdentity`}. |
@@ -6104,6 +6277,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:ParameterBinding` | Class |  |
 | `dal:ParameterDeclaration` | Class |  |
 | `dal:ParameterKind` | Class | Equivalent to {`dal:IriKind`, `dal:LongKind`, `dal:StringKind`, `dal:LangStringKind`, `dal:PositionKind`, `dal:DigestKind`, `dal:IriOrLiteralKind`, `dal:LiteralKind`, `dal:PayloadKind`, `dal:RowsKind`, `dal:RegistryListKind`}. |
+| `dal:PatchDirection` | Class | Equivalent to {`dal:Added`, `dal:Removed`}. |
 | `dal:PayloadContract` | Class |  |
 | `dal:PayloadEncoding` | Class | Equivalent to {`dal:GroundNTriples`, `dal:TripleRows`}. |
 | `dal:PersistenceKeyed` | Class | Subclass of `fnd:NaturallyKeyed`. |
@@ -6174,6 +6348,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:eventIdentityStrategy` | Object property | Domain `dal:IdentityProfile`. Range `dal:EventIdentityStrategy`. |
 | `dal:examinedParameter` | Object property | Domain `dal:GeneratedOperation`. Range `dal:ParameterDeclaration`. |
 | `dal:firstWrite` | Object property | Domain `dal:AggregateBoundaryProfile`. Range `dal:FirstWriteMode`. |
+| `dal:forConstraint` | Object property | Domain `dal:ResourceAccess`. Range `dal:UniquenessConstraint`. |
 | `dal:forDeployment` | Object property | Domain `dal:CompiledProfile`. |
 | `dal:forRole` | Object property | Domain `dal:MintingRecipe`. Range `dal:ResourceRole`. |
 | `dal:forTarget` | Object property | Domain `dal:CompiledProfile`. |
@@ -6183,9 +6358,13 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:guardStatus` | Object property | Domain `dal:GeneratedOperation`. Range `dal:GuardStatus`. |
 | `dal:hasParameterBinding` | Object property | Domain `dal:GeneratedOperation`. Range `dal:ParameterBinding`. |
 | `dal:identityStrategy` | Object property | Domain `dal:IdentityProfile`. Range `dal:IdentityStrategy`. |
+| `dal:inGraph` | Object property | Domain `dal:GraphPlace`. |
+| `dal:inGraphRole` | Object property | Domain `dal:GraphPlace`. Range `dal:GraphRole`. |
 | `dal:keyConstraint` | Object property | Domain `dal:IdentityProfile`. Range `dal:UniquenessConstraint`. |
 | `dal:keyProperty` | Object property | Domain `dal:UniquenessConstraint`. |
 | `dal:keyedBy` | Object property | Domain `dal:ResourceAccess`. Range `dal:ParameterDeclaration`. |
+| `dal:landsIn` | Object property | Domain `dal:ResourceAccess`. Range `dal:GraphPlace`. |
+| `dal:matchedScope` | Object property | Domain `dal:CompiledProfile`. Range `dal:ProfileScope`. |
 | `dal:membershipEncoding` | Object property | Domain `dal:WriteDisciplineProfile`. Range `dal:MembershipEncoding`. |
 | `dal:mergeRelation` | Object property | Domain `dal:UniquenessConstraint`. |
 | `dal:metaTopology` | Object property | Domain `dal:MetaTopologyProfile`. Range `dal:MetaTopology`. |
@@ -6204,6 +6383,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:parameterKind` | Object property | Domain `dal:ParameterDeclaration`. Range `dal:ParameterKind`. |
 | `dal:partRole` | Object property | Domain `dal:DigestPart`. Range `dal:DigestPartRole`. |
 | `dal:partSource` | Object property | Domain `dal:DigestPart`. |
+| `dal:patchDirection` | Object property | Domain `dal:ResourceAccess`. Range `dal:PatchDirection`. |
 | `dal:payloadContract` | Object property | Domain `dal:GeneratedOperation`. Range `dal:PayloadContract`. |
 | `dal:payloadEncoding` | Object property | Domain `dal:PayloadContract`. Range `dal:PayloadEncoding`. |
 | `dal:payloadParameter` | Object property | Domain `dal:PayloadContract`. Range `dal:ParameterDeclaration`. |
@@ -6241,6 +6421,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:usesTemplate` | Object property | Domain `dal:GeneratedOperation`. Range `dal:Template`. |
 | `dal:valueGuardProperty` | Object property | Domain `dal:ConcurrencyProfile`. |
 | `dal:wonBy` | Object property | Domain `dal:ResolvedDimension`. |
+| `dal:wonThrough` | Object property | Domain `dal:ResolvedDimension`. Range `dal:ProfileScope`. |
 | `dal:writeDiscipline` | Object property | Domain `dal:WriteDisciplineProfile`. Range `dal:WriteDiscipline`. |
 | `dal:acceptedIriPattern` | Datatype property | Domain `dal:IdentityProfile`. Range `xsd:string`. |
 | `dal:acknowledgedSharedClassOverride` | Datatype property | Range `xsd:boolean`. |
@@ -6273,6 +6454,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:forOperation` | Datatype property | Domain `dal:GeneratedOperation`. Range `xsd:string`. |
 | `dal:graphIriTemplate` | Datatype property | Domain `dal:AggregateBoundaryProfile`. Range `xsd:string`. |
 | `dal:graphPrefix` | Datatype property | Domain `dal:GraphPatternScope`. Range `xsd:string`. |
+| `dal:inGraphNamed` | Datatype property | Domain `dal:GraphPlace`. Range `xsd:string`. |
 | `dal:includeSubclasses` | Datatype property | Domain `dal:ClassScope`. Range `xsd:boolean`. |
 | `dal:iriPrefix` | Datatype property | Domain `dal:NamespaceScope`. Range `xsd:string`. |
 | `dal:keyShards` | Datatype property | Domain `dal:MetaTopologyProfile`. Range `xsd:long`. |
@@ -6315,6 +6497,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:AbsentRow` | Individual | Type `dal:FirstWriteMode`. Different from `dal:PreCreatedRow`. |
 | `dal:Accepting` | Individual | Type `dal:SchemeState`. Different from `dal:Dual`, `dal:Retired`, `dal:Retiring`. |
 | `dal:AddPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:DelPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
+| `dal:Added` | Individual | Type `dal:PatchDirection`. Different from `dal:Removed`. |
 | `dal:AdoptedIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
 | `dal:Advisory` | Individual | Type `dal:UniquenessEnforcementLevel`. Different from `dal:Strong`, `dal:Transactional`. |
 | `dal:AdvisoryContiguityCheck` | Individual | Type `dal:ContiguityCheckMode`. Different from `dal:BlockingContiguityCheck`. |
@@ -6346,8 +6529,10 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:Create` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:CryptoShred` | Individual | Type `dal:ErasureStrategy`. Different from `dal:NoErasure`, `dal:PerSubjectGraphDrop`. |
 | `dal:CustomRulesValidation` | Individual | Type `dal:CommitValidationLevel`. Different from `dal:NoCommitValidation`, `dal:ShaclCoreValidation`, `dal:ShaclSparqlValidation`. |
+| `dal:DataRole` | Individual | Type `dal:GraphRole`. Different from `dal:DatasetRole`, `dal:EventRole`, `dal:KeysRole`, `dal:LogRole`, `dal:MetaRole`, `dal:PatchRole`, `dal:PinnedRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:TxnRole`. |
 | `dal:DatasetEpoch` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:DatasetLevelGuard` | Individual | Type `dal:EpochGuardScope`. Different from `dal:RowLevelGuardOnly`. |
+| `dal:DatasetRole` | Individual | Type `dal:GraphRole`. Different from `dal:DataRole`, `dal:EventRole`, `dal:KeysRole`, `dal:LogRole`, `dal:MetaRole`, `dal:PatchRole`, `dal:PinnedRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:TxnRole`. |
 | `dal:DelPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
 | `dal:Delete` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Insert`, `dal:PointRead`, `dal:ScanRead`, `dal:WholeAggregateRead`. |
 | `dal:DeltaMembership` | Individual | Type `dal:MembershipEncoding`. Different from `dal:FullMembership`. |
@@ -6364,6 +6549,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:EventGrain` | Individual | Type `dal:OrderingGrain`. Different from `dal:CommitGrain`. |
 | `dal:EventOccurrenceRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`, `dal:LineageRole`. |
 | `dal:EventPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
+| `dal:EventRole` | Individual | Type `dal:GraphRole`. Different from `dal:DataRole`, `dal:DatasetRole`, `dal:KeysRole`, `dal:LogRole`, `dal:MetaRole`, `dal:PatchRole`, `dal:PinnedRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:TxnRole`. |
 | `dal:ExcludeHeaderSubgraph` | Individual | Type `dal:SelfReferenceRule`. Different from `dal:PlaceholderSubstitution`, `dal:SelfReferenceDisallowed`. |
 | `dal:ExpectedSeqPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:EventPart`, `dal:OperationKindPart`, `dal:PayloadPart`, `dal:TargetPart`. |
 | `dal:ExternalEventIdStrategy` | Individual | Type `dal:EventIdentityStrategy`. Different from `dal:PositionDerivedEvent`, `dal:RandomOccurrenceEvent`. |
@@ -6392,17 +6578,20 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:KeyClaimWrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:KeyClaimWriteDual` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:KeyQuarantine` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:KeysRole` | Individual | Type `dal:GraphRole`. Different from `dal:DataRole`, `dal:DatasetRole`, `dal:EventRole`, `dal:LogRole`, `dal:MetaRole`, `dal:PatchRole`, `dal:PinnedRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:TxnRole`. |
 | `dal:LagWindowRead` | Individual | Type `dal:GlobalReadStrategy`. Different from `dal:DenseFeedRead`, `dal:NoGlobalRead`, `dal:WatermarkedRead`. |
 | `dal:LangStringKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:LineageRole` | Individual | Type `dal:ResourceRole`. Different from `dal:AggregateRootRole`, `dal:ComponentRole`, `dal:ContentRevisionRole`, `dal:EntityRole`, `dal:EventOccurrenceRole`, `dal:GraphLocatorRole`, `dal:KeyClaimRole`. |
 | `dal:Linearizable` | Individual | Type `dal:ConcurrencyLevel`. Different from `dal:BestEffort`, `dal:NoConcurrencyGuarantee`. |
 | `dal:LiteralKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:LockingConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:AppendOnly`, `dal:Optimistic`, `dal:ProvidedConcurrency`. |
+| `dal:LogRole` | Individual | Type `dal:GraphRole`. Different from `dal:DataRole`, `dal:DatasetRole`, `dal:EventRole`, `dal:KeysRole`, `dal:MetaRole`, `dal:PatchRole`, `dal:PinnedRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:TxnRole`. |
 | `dal:LongKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:MembersRead` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:Merge` | Individual | Type `dal:ViolationPolicy`. Different from `dal:Quarantine`, `dal:Reject`. |
 | `dal:MergeRecord` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:MergeRewrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:MetaRole` | Individual | Type `dal:GraphRole`. Different from `dal:DataRole`, `dal:DatasetRole`, `dal:EventRole`, `dal:KeysRole`, `dal:LogRole`, `dal:PatchRole`, `dal:PinnedRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:TxnRole`. |
 | `dal:MonotonicityWins` | Individual | Type `dal:ErasurePrecedence`. Different from `dal:ErasureWins`. |
 | `dal:NamedGraphBoundary` | Individual | Type `dal:AggregateBoundaryStrategy`. Different from `dal:CompositePropertyBoundary`, `dal:NoBoundary`. |
 | `dal:NaturalKeyIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`. |
@@ -6426,6 +6615,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:PartitionedWriter` | Individual | Type `dal:DeadlockPolicy`. Different from `dal:EngineDetectAndRetry`, `dal:SortedAcquisition`. |
 | `dal:PatchContent` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:TransactionClaim`, `dal:VersionRow`. |
 | `dal:PatchLog` | Individual | Type `dal:ReceiptModel`. Different from `dal:NoReceipt`, `dal:ReceiptOnly`, `dal:SnapshotPerRevision`. |
+| `dal:PatchRole` | Individual | Type `dal:GraphRole`. Different from `dal:DataRole`, `dal:DatasetRole`, `dal:EventRole`, `dal:KeysRole`, `dal:LogRole`, `dal:MetaRole`, `dal:PinnedRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:TxnRole`. |
 | `dal:PayloadCheck` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:PayloadKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PositionKind`, `dal:RegistryListKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:PayloadPart` | Individual | Type `dal:DigestPartRole`. Different from `dal:AddPart`, `dal:DelPart`, `dal:EventPart`, `dal:ExpectedSeqPart`, `dal:OperationKindPart`, `dal:TargetPart`. |
@@ -6433,6 +6623,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:PerSubjectGraphDrop` | Individual | Type `dal:ErasureStrategy`. Different from `dal:CryptoShred`, `dal:NoErasure`. |
 | `dal:PersonalData` | Individual | Type `dal:PrivacyClass`. Different from `dal:InternalData`, `dal:PublicData`. |
 | `dal:Pinned` | Individual | Type `dal:ReferenceMode`. Different from `dal:ByIdentity`. |
+| `dal:PinnedRole` | Individual | Type `dal:GraphRole`. Different from `dal:DataRole`, `dal:DatasetRole`, `dal:EventRole`, `dal:KeysRole`, `dal:LogRole`, `dal:MetaRole`, `dal:PatchRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:TxnRole`. |
 | `dal:PlaceholderSubstitution` | Individual | Type `dal:SelfReferenceRule`. Different from `dal:ExcludeHeaderSubgraph`, `dal:SelfReferenceDisallowed`. |
 | `dal:PointRead` | Individual | Type `dal:AccessMode`. Different from `dal:AbsenceRead`, `dal:Delete`, `dal:Insert`, `dal:ScanRead`, `dal:WholeAggregateRead`. |
 | `dal:PositionColumn` | Individual | Type `dal:ColumnKind`. Different from `dal:ConcatenationColumn`, `dal:CountColumn`, `dal:IriColumn`, `dal:StringColumn`, `dal:TermColumn`. |
@@ -6444,6 +6635,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:ProvidedConcurrency` | Individual | Type `dal:ConcurrencyStrategy`. Different from `dal:AppendOnly`, `dal:LockingConcurrency`, `dal:Optimistic`. |
 | `dal:PublicData` | Individual | Type `dal:PrivacyClass`. Different from `dal:InternalData`, `dal:PersonalData`. |
 | `dal:Quarantine` | Individual | Type `dal:OperationKind`, `dal:ViolationPolicy`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:Merge`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Reject`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
+| `dal:QuarantineRole` | Individual | Type `dal:GraphRole`. Different from `dal:DataRole`, `dal:DatasetRole`, `dal:EventRole`, `dal:KeysRole`, `dal:LogRole`, `dal:MetaRole`, `dal:PatchRole`, `dal:PinnedRole`, `dal:RetentionRole`, `dal:TxnRole`. |
 | `dal:QueryNamed` | Individual | Type `dal:GraphNaming`. Different from `dal:CallerNamed`. |
 | `dal:RandomOccurrenceEvent` | Individual | Type `dal:EventIdentityStrategy`. Different from `dal:ExternalEventIdStrategy`, `dal:PositionDerivedEvent`. |
 | `dal:RandomSurrogateIdentity` | Individual | Type `dal:IdentityStrategy`. Different from `dal:AdoptedIdentity`, `dal:ContentAddressedIdentity`, `dal:DerivedHashIdentity`, `dal:ExternalRegistryIdentity`, `dal:NaturalKeyIdentity`, `dal:SurrogateClaimedIdentity`. |
@@ -6454,9 +6646,11 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:RegistryListKind` | Individual | Type `dal:ParameterKind`. Different from `dal:DigestKind`, `dal:IriKind`, `dal:IriOrLiteralKind`, `dal:LangStringKind`, `dal:LiteralKind`, `dal:LongKind`, `dal:PayloadKind`, `dal:PositionKind`, `dal:RowsKind`, `dal:StringKind`. |
 | `dal:RegistryTokenDerivation` | Individual | Type `dal:OccurrenceNamespaceDerivation`. Different from `dal:HashedTargetDerivation`. |
 | `dal:Reject` | Individual | Type `dal:ViolationPolicy`. Different from `dal:Merge`, `dal:Quarantine`. |
+| `dal:Removed` | Individual | Type `dal:PatchDirection`. Different from `dal:Added`. |
 | `dal:Replace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`, `dal:ValueGuardedReplace`. |
 | `dal:RestoreControlledEpoch` | Individual | Type `dal:EpochAuthority`. Different from `dal:ExternalHighWaterMark`, `dal:StoreLocalEpoch`, `dal:WriterStartRefusal`. |
 | `dal:RetentionMark` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:TransactionClaim`, `dal:VersionRow`. |
+| `dal:RetentionRole` | Individual | Type `dal:GraphRole`. Different from `dal:DataRole`, `dal:DatasetRole`, `dal:EventRole`, `dal:KeysRole`, `dal:LogRole`, `dal:MetaRole`, `dal:PatchRole`, `dal:PinnedRole`, `dal:QuarantineRole`, `dal:TxnRole`. |
 | `dal:Retired` | Individual | Type `dal:SchemeState`. Different from `dal:Accepting`, `dal:Dual`, `dal:Retiring`. |
 | `dal:Retiring` | Individual | Type `dal:SchemeState`. Different from `dal:Accepting`, `dal:Dual`, `dal:Retired`. |
 | `dal:RowLevelGuardOnly` | Individual | Type `dal:EpochGuardScope`. Different from `dal:DatasetLevelGuard`. |
@@ -6486,6 +6680,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:TransactionClaim` | Individual | Type `dal:ResourceKind`. Different from `dal:Aggregate`, `dal:DatasetEpoch`, `dal:Event`, `dal:KeyClaim`, `dal:KeyQuarantine`, `dal:MergeRecord`, `dal:PatchContent`, `dal:PropertyValue`, `dal:Receipt`, `dal:RetentionMark`, `dal:VersionRow`. |
 | `dal:Transactional` | Individual | Type `dal:UniquenessEnforcementLevel`. Different from `dal:Advisory`, `dal:Strong`. |
 | `dal:TripleRows` | Individual | Type `dal:PayloadEncoding`. |
+| `dal:TxnRole` | Individual | Type `dal:GraphRole`. Different from `dal:DataRole`, `dal:DatasetRole`, `dal:EventRole`, `dal:KeysRole`, `dal:LogRole`, `dal:MetaRole`, `dal:PatchRole`, `dal:PinnedRole`, `dal:QuarantineRole`, `dal:RetentionRole`. |
 | `dal:UnconditionalWrite` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:ValueGuardedReplace`. |
 | `dal:UuidV4Surrogate` | Individual | Type `dal:SurrogateKind`. Different from `dal:CallerSuppliedSurrogate`. |
 | `dal:ValueGuardedReplace` | Individual | Type `dal:OperationKind`. Different from `dal:Append`, `dal:AppendVersion`, `dal:Audit`, `dal:Bootstrap`, `dal:Create`, `dal:DeltaReplace`, `dal:KeyClaimRetire`, `dal:KeyClaimWrite`, `dal:KeyClaimWriteDual`, `dal:MembersRead`, `dal:MergeRewrite`, `dal:PayloadCheck`, `dal:Quarantine`, `dal:Replace`, `dal:StateDigestRead`, `dal:StateDigestRecord`, `dal:Tombstone`, `dal:UnconditionalWrite`. |
@@ -7083,7 +7278,110 @@ dal:ResourceAccessShape
                   sh:in ( dal:PointRead dal:AbsenceRead dal:ScanRead dal:WholeAggregateRead dal:Insert dal:Delete ) ;
                   sh:message "A resource access has exactly one dal:accessMode, an individual of dal:AccessMode." ] ;
     sh:property [ sh:path dal:keyedBy ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
-                  sh:message "dal:keyedBy names a parameter declaration by its IRI." ] .
+                  sh:message "dal:keyedBy names a parameter declaration by its IRI." ] ;
+    sh:property [ sh:path dal:landsIn ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:GraphPlace ;
+                  sh:message "An access lands in at most one place, a dal:GraphPlace named by its IRI." ] ;
+    sh:property [ sh:path dal:patchDirection ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:in ( dal:Added dal:Removed ) ;
+                  sh:message "dal:patchDirection is dal:Added or dal:Removed, once." ] ;
+    sh:property [ sh:path dal:forConstraint ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:message "dal:forConstraint names one uniqueness constraint by its IRI." ] ;
+    # Both queries start from $this and test the one fact about it with FILTER EXISTS (R1).
+    sh:sparql [
+        sh:message "A write access, whose mode is dal:Insert or dal:Delete, lands in exactly one place, and this one lands in none." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:accessMode ?mode .
+              FILTER (?mode IN (dal:Insert, dal:Delete))
+              FILTER NOT EXISTS { $this dal:landsIn ?place }
+            }""" ] ;
+    sh:sparql [
+        sh:message "A read access lands in no place, and this one has a dal:landsIn." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:accessMode ?mode .
+              FILTER (?mode NOT IN (dal:Insert, dal:Delete))
+              FILTER EXISTS { $this dal:landsIn ?place }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:patchDirection is stated only on an access to dal:PatchContent, and this access is to another resource." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:patchDirection ?direction ; dal:resourceKind ?kind .
+              FILTER (?kind != dal:PatchContent)
+            }""" ] ;
+    sh:sparql [
+        sh:message "A write access to dal:PatchContent states its dal:patchDirection, since the direction is part of the resource's key, and this one states none." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:resourceKind dal:PatchContent ; dal:accessMode ?mode .
+              FILTER (?mode IN (dal:Insert, dal:Delete))
+              FILTER NOT EXISTS { $this dal:patchDirection ?direction }
+            }""" ] ;
+    sh:sparql [
+        sh:message "dal:forConstraint is stated only on an access to dal:KeyClaim, and this access is to another resource." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:forConstraint ?constraint ; dal:resourceKind ?kind .
+              FILTER (?kind != dal:KeyClaim)
+            }""" ] .
+
+# A place is one role and exactly one of a fixed graph and a template, and a template names only the placeholders of the closed set.
+dal:GraphPlaceShape
+    a sh:NodeShape ;
+    sh:targetClass dal:GraphPlace ;
+    sh:property [ sh:path dal:inGraphRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:in ( dal:DataRole dal:MetaRole dal:TxnRole dal:LogRole dal:EventRole dal:KeysRole dal:QuarantineRole
+                          dal:RetentionRole dal:PinnedRole dal:DatasetRole dal:PatchRole ) ;
+                  sh:message "A place has exactly one dal:inGraphRole, an individual of dal:GraphRole." ] ;
+    sh:property [ sh:path dal:inGraph ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+                  sh:message "A place has at most one dal:inGraph, an IRI." ] ;
+    sh:property [ sh:path dal:inGraphNamed ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A place has at most one dal:inGraphNamed, a string." ] ;
+    sh:sparql [
+        sh:message "A place states exactly one of dal:inGraph and dal:inGraphNamed, and this one states both." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this dal:inGraph ?graph .
+              FILTER EXISTS { $this dal:inGraphNamed ?template }
+            }""" ] ;
+    sh:sparql [
+        sh:message "A place states exactly one of dal:inGraph and dal:inGraphNamed, and this one states neither." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this WHERE {
+              $this a dal:GraphPlace .
+              FILTER NOT EXISTS { $this dal:inGraph ?graph }
+              FILTER NOT EXISTS { $this dal:inGraphNamed ?template }
+            }""" ] ;
+    sh:sparql [
+        sh:message "A template names only the placeholders {root}, {newRev} and {month}, and this one holds another brace." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this ?template WHERE {
+              $this dal:inGraphNamed ?template .
+              BIND (REPLACE(REPLACE(REPLACE(STR(?template), "[{]root[}]", ""), "[{]newRev[}]", ""), "[{]month[}]", "") AS ?rest)
+              FILTER (CONTAINS(?rest, "{") || CONTAINS(?rest, "}"))
+            }""" ] .
+
+# The scopes through which a value won are scopes the profile states as matched. A resolved dimension is a node the compiler does not
+# type, so the shape selects it by the one property it checks.
+dal:ResolvedDimensionShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf dal:wonThrough ;
+    sh:sparql [
+        sh:message "dal:wonThrough names a scope the same compiled profile states with dal:matchedScope, and this one does not." ;
+        sh:select """
+            PREFIX dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#>
+            SELECT $this ?scope WHERE {
+              $this dal:wonThrough ?scope .
+              FILTER NOT EXISTS { ?profile dal:resolvedDimension $this . ?profile dal:matchedScope ?scope }
+            }""" ] .
 
 dal:ResultColumnShape
     a sh:NodeShape ;
@@ -7146,7 +7444,7 @@ dal:DigestPartShape
 # the property constraints of the shapes above.
 dal:ContractDeclarationIsIriShape
     a sh:NodeShape ;
-    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart ;
+    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart , dal:GraphPlace ;
     sh:nodeKind sh:IRI ;
     sh:message "A declaration of the contract of a generated operation is an IRI minted from the target, the operation and the part, and never a blank node." .
 
@@ -7155,7 +7453,7 @@ dal:ContractDeclarationIsIriShape
 # ownedPath binding and a caller-named graph's rule is dal:GraphNameOfRoot, which refers to dal:graphIriTemplate.
 dal:ContractHoldsNoSparqlTextShape
     a sh:NodeShape ;
-    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart ;
+    sh:targetClass dal:ParameterDeclaration , dal:ResourceAccess , dal:ResultColumn , dal:PayloadContract , dal:DigestContract , dal:DigestPart , dal:GraphPlace ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
     sh:property [ sh:path dal:parameterName ; sh:pattern "^[A-Za-z_][A-Za-z0-9_]*$" ] ;
@@ -7167,6 +7465,12 @@ dal:ContractHoldsNoSparqlTextShape
     sh:property [ sh:path dal:resourceKind ] ;
     sh:property [ sh:path dal:accessMode ] ;
     sh:property [ sh:path dal:keyedBy ] ;
+    sh:property [ sh:path dal:landsIn ] ;
+    sh:property [ sh:path dal:patchDirection ] ;
+    sh:property [ sh:path dal:forConstraint ] ;
+    sh:property [ sh:path dal:inGraphRole ] ;
+    sh:property [ sh:path dal:inGraph ] ;
+    sh:property [ sh:path dal:inGraphNamed ; sh:pattern "^[^\\s<>\"\\\\]*$" ] ;
     sh:property [ sh:path dal:columnName ; sh:pattern "^[A-Za-z_][A-Za-z0-9_]*$" ] ;
     sh:property [ sh:path dal:columnPosition ] ;
     sh:property [ sh:path dal:columnKind ] ;
@@ -7803,6 +8107,8 @@ version, so that Persistence can enforce Foundation's natural keys (§5.11).
 
 ## 12. Release Notes
 
+- **Unreleased**.
+  - no effect. A compiled profile states where each write lands. New: `dal:GraphPlace`, `dal:GraphRole` with its eleven individuals (`dal:DataRole`, `dal:MetaRole`, `dal:TxnRole`, `dal:LogRole`, `dal:EventRole`, `dal:KeysRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:PinnedRole`, `dal:DatasetRole` and `dal:PatchRole`), `dal:landsIn`, `dal:inGraphRole`, `dal:inGraph` and `dal:inGraphNamed`. Each access that inserts or deletes gains one `dal:landsIn`, and a read access has none. A patch log's added and removed triples are now two accesses to `dal:PatchContent`, told apart by the new `dal:patchDirection`, `dal:Added` or `dal:Removed`, which the new `dal:PatchDirection` closes. A key claim's access gains `dal:forConstraint`. The compiled profile gains `dal:matchedScope`, and each resolved dimension gains `dal:wonThrough`. `ResourceAccessShape` and the new `GraphPlaceShape` and `ResolvedDimensionShape` hold the compiled profile to them. A reader that counted a profile's accesses sees one more for each patch log a profile writes, and no reader in the repository counts them.
 - **0.22.0**.
   - State digest and bulk load. New: `dal:recordsStateDigest`, `dal:StateDigestRecord`, `dal:StateDigestRead` and `pat:stateDigest`. A family under `dal:ChangedTriples` also generates `replace-whole` (no effect).
   - The rows replace. New: `dal:ReplaceForm`, `dal:TemplateReplace`, `dal:RowsReplace`, `dal:replaceForm` on `dal:ConcurrencyProfile`, `dal:providesSnapshotUpdateSemantics` on `dal:CapabilitySpec`, and `dal:TripleRows` as a `dal:PayloadEncoding`. A configuration that declares none of them compiles to the same operations as before, and every compiled profile gains the resolved `replaceForm` dimension (no effect).

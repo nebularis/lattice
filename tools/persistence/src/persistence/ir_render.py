@@ -573,14 +573,14 @@ class _Checker:
                 row_vars = frozenset(p.name for p in (el.subject, el.predicate, el.object) if isinstance(p, Var))
                 if not deleting and len(row_vars) == 3 and row_vars in self.payload_rows.values():
                     # the triple of a payload's row variables writes the payload, as a payload slot does (H2.12)
-                    target.add(Access(block.graph.role.value, _term_text(block.graph.term), "{payload}", "*", False, mode))
+                    target.add(Access(block.graph.role.value, term_text(block.graph.term), "{payload}", "*", False, mode))
                 else:
                     target.add(self._access(block.graph, el, mode))
             elif isinstance(el, PayloadSlot):
                 # a slot in a DELETE template removes the caller's triples, which the delta replace does (persistence-delta-replace DR1)
                 self._slot(el.param, Kind.PAYLOAD)
                 mode = AccessMode.DELETE.value if deleting else AccessMode.INSERT.value
-                target.add(Access(block.graph.role.value, _term_text(block.graph.term), "{payload}", "*", False, mode))
+                target.add(Access(block.graph.role.value, term_text(block.graph.term), "{payload}", "*", False, mode))
             else:
                 raise IrError("UnsupportedInTemplate", f"{self.op.id}: a template holds triples and a payload slot only, got {el!r}")
 
@@ -704,7 +704,7 @@ class _Checker:
             for operand in (expr.left, expr.right):
                 _, compare = self._operand_policy(operand)
                 if isinstance(operand, (Var, ParamRef)) and compare is Compare.VALUE:
-                    raise IrError("WrongGuard", f"{self.op.id}: sameTerm on a position declared value-compared ({_term_text(operand)})")
+                    raise IrError("WrongGuard", f"{self.op.id}: sameTerm on a position declared value-compared ({term_text(operand)})")
             names = self._expr(expr.left, guard=guard, aggregate_ok=aggregate_ok) | self._expr(expr.right, guard=guard, aggregate_ok=aggregate_ok)
             self._clock_check(expr, guard)
             return names
@@ -717,7 +717,7 @@ class _Checker:
                     if compare is Compare.TERM and kind is not Kind.IRI:
                         raise IrError(
                             "WrongGuard",
-                            f"{self.op.id}: a value comparison on a term-matched position ({_term_text(operand)}). "
+                            f"{self.op.id}: a value comparison on a term-matched position ({term_text(operand)}). "
                             "Declare it Compare.VALUE, or compare with a TermGuard",
                         )
             names = self._expr(expr.left, guard=guard, aggregate_ok=aggregate_ok) | self._expr(expr.right, guard=guard, aggregate_ok=aggregate_ok)
@@ -849,10 +849,10 @@ class _Checker:
 
     def _access(self, graph: Graph, t: Triple, mode: str) -> Access:
         closure = isinstance(t.predicate, Path)
-        return Access(graph.role.value, _term_text(graph.term), _term_text(t.subject), _term_text(t.predicate), closure, mode)
+        return Access(graph.role.value, term_text(graph.term), term_text(t.subject), term_text(t.predicate), closure, mode)
 
 
-def _term_text(term) -> str:
+def term_text(term) -> str:
     if isinstance(term, Var):
         return f"?{term.name}"
     if isinstance(term, ParamRef):
@@ -1135,4 +1135,4 @@ def _template_lines(out: _Out, keyword: str, blocks: Iterable[GraphBlock]) -> li
     return [f"{keyword} {{", *("  " + ln for ln in lines), "}"]
 
 
-__all__ = ["RULES", "FUNCTIONS", "AGGREGATES", "Access", "AccessSets", "check", "access_sets", "render", "slot_marker", "fill_slots"]
+__all__ = ["RULES", "FUNCTIONS", "AGGREGATES", "Access", "AccessSets", "check", "access_sets", "render", "slot_marker", "fill_slots", "term_text"]

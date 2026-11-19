@@ -29,7 +29,8 @@ from lattice_persistence.contract import (  # the data classes moved to the call
 )
 
 from .ir import AccessMode, Group, GraphBlock, Kind, NotExists, Operation, Optional_, PayloadRows, Projected, SLOT_KINDS, Union_, Var
-from .ir_render import Access, access_sets
+from .ir_render import Access, term_text, access_sets
+from .landing import PATCH_DIRECTIONS, Place, write_places
 from .namespaces import PAT
 
 
@@ -218,9 +219,15 @@ class DeclarationSource(Enum):
 
 @dataclass(frozen=True, order=True)
 class AccessContract:
+    """One logical resource an operation reads or writes, with the mode and key of the access. A write access also states the
+    ``place`` where it lands, and a patch log's the ``direction`` of its graph, ``Added`` or ``Removed``, the constant part of its
+    logical key (:data:`LOGICAL_KEYS`). A read access has neither."""
+
     resource: str
     mode: str
     keyed_by: Optional[str] = None
+    place: Optional[Place] = None
+    direction: Optional[str] = None
 
 
 @dataclass(frozen=True, order=True)
@@ -270,6 +277,11 @@ operation that had none, the value-based compare-and-set of a ``dal:NoBoundary``
 builder cannot express the operation, and the vocabulary keeps ``dal:HandDeclared`` for it."""
 
 
+def _access_order(a: AccessContract) -> tuple:
+    """A total order over accesses, which an absent key, place or direction would otherwise leave to a comparison of ``None`` with a value."""
+    return (a.resource, a.mode, a.keyed_by or "", a.place or Place("", graph="-"), a.direction or "")
+
+
 def _keyed_by(access: Access, resource: ResourceKind, params: dict) -> Optional[str]:
     """The parameter whose value is the key of the resource, when the pattern is about one given subject. A computed or minted
     subject (a receipt, an event) and a scan have none."""
@@ -312,12 +324,17 @@ def contract_of(operation: Operation, shape: Optional[str] = None) -> OperationC
     stem = stem_of(operation.id)
     params = {p.name: p for p in operation.params}
     sets = access_sets(operation)
+    places = write_places(operation, term_text)
     accesses = set()
     for access in sets.reads | sets.writes:
         resource = resource_of(access.role, access.predicate)
         if stem == "cas-replace-value-guard" and resource is ResourceKind.AGGREGATE:
             resource = ResourceKind.PROPERTY_VALUE  # a family with no boundary has no aggregate. Its data graph holds one value per (root, property)
-        accesses.add(AccessContract(resource.value, access.mode, _keyed_by(access, resource, params)))
+        written = access in sets.writes
+        direction = PATCH_DIRECTIONS[access.graph.lstrip("?$")] if written and resource is ResourceKind.PATCH_CONTENT else None
+        accesses.add(AccessContract(
+            resource.value, access.mode, _keyed_by(access, resource, params), places[(access.role, access.graph)] if written else None, direction,
+        ))
     graph_texts = {a.graph for a in sets.reads | sets.writes}
     naming = (
         GraphNaming.CALLER_NAMED if "$g" in graph_texts
@@ -347,7 +364,7 @@ def contract_of(operation: Operation, shape: Optional[str] = None) -> OperationC
     payload = PayloadContract(payload_name, root_name, (), shape, (), encoding) if payload_name else None
     digest = None
     if "requestDigest" in params:
-        target = next((a.keyed_by for a in sorted(accesses) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)
+        target = next((a.keyed_by for a in sorted(accesses, key=_access_order) if a.resource == ResourceKind.VERSION_ROW.value and a.keyed_by), None)
         # A delta replace digests the change alone, its add and del parts, and has no payload part (DR-Q3).
         digest = DigestContract(
             target, "expectedSeq" if "expectedSeq" in params else None, None if kind is OperationKind.DELTA_REPLACE else payload_name, event,
@@ -356,7 +373,7 @@ def contract_of(operation: Operation, shape: Optional[str] = None) -> OperationC
         )
     return OperationContract(
         id=operation.id, kind=kind, version=BUILDER_VERSIONS[stem], guard_status=status, graph_naming=naming,
-        parameters=parameters, accesses=tuple(sorted(accesses)), results=_result_columns(operation), payload=payload, digest=digest,
+        parameters=parameters, accesses=tuple(sorted(accesses, key=_access_order)), results=_result_columns(operation), payload=payload, digest=digest,
         examines=next((p.name for p in operation.params if p.kind is Kind.REGISTRY_LIST), None) if kind is OperationKind.AUDIT else None,
     )
 

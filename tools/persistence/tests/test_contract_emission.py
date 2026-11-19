@@ -100,6 +100,8 @@ ENUMERATIONS = {
     "WriteDiscipline": {"InPlace", "AppendVersions", "AppendRecords"},
     "MembershipEncoding": {"FullMembership", "DeltaMembership"},
     "AuditOutcome": {"Clean", "Failed", "NothingExamined"},
+    "GraphRole": {"DataRole", "MetaRole", "TxnRole", "LogRole", "EventRole", "KeysRole", "QuarantineRole", "RetentionRole", "PinnedRole", "DatasetRole", "PatchRole"},
+    "PatchDirection": {"Added", "Removed"},
     "ReceiptModel": {"ReceiptOnly", "PatchLog", "SnapshotPerRevision", "NoReceipt"},
 }
 
@@ -122,7 +124,8 @@ CLOSED_BY = {
     ("OperationContractShape", "graphNaming"): "GraphNaming", ("OperationContractShape", "declarationSource"): "DeclarationSource",
     ("ParameterDeclarationShape", "parameterKind"): "ParameterKind", ("ParameterDeclarationShape", "mustEqual"): "Rule",
     ("ParameterDeclarationShape", "sourcedFrom"): "Source", ("ResourceAccessShape", "resourceKind"): "ResourceKind",
-    ("ResourceAccessShape", "accessMode"): "AccessMode", ("ResultColumnShape", "columnKind"): "ColumnKind",
+    ("ResourceAccessShape", "accessMode"): "AccessMode", ("GraphPlaceShape", "inGraphRole"): "GraphRole",
+    ("ResourceAccessShape", "patchDirection"): "PatchDirection", ("ResultColumnShape", "columnKind"): "ColumnKind",
     ("PayloadContractShape", "payloadEncoding"): "PayloadEncoding", ("DigestPartShape", "partRole"): "DigestPartRole",
     ("ReceiptProfileShape", "receiptModel"): "ReceiptModel", ("WriteDisciplineProfileShape", "writeDiscipline"): "WriteDiscipline",
     ("ConcurrencyProfileEnumerationsShape", "replaceForm"): "ReplaceForm",
@@ -155,6 +158,8 @@ CONTRACT_TERMS = [
     "referenceMode", "ReferenceMode", "ReceiptModel",
     # H2.8b
     "edgeTargetShape", "AuditOutcome", "reportsOutcome", "examinedParameter",
+    # the places the writes land, and the scopes a value won through
+    "GraphPlace", "landsIn", "inGraphRole", "inGraph", "inGraphNamed", "patchDirection", "forConstraint", "matchedScope", "wonThrough",
 ]
 
 

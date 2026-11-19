@@ -58,6 +58,7 @@
 
 <https://example.org/lending/Member/compiled/key-claim-duplicate-audit-member-handle-unique#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
+    dal:forConstraint <https://example.org/lending#MemberHandleUnique> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Member/compiled/key-claim-duplicate-audit-member-handle-unique#result-claim> a dal:ResultColumn ;
@@ -78,16 +79,21 @@
 
 <https://example.org/lending/Member/compiled/key-claim-retire-member-handle-unique#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
+    dal:forConstraint <https://example.org/lending#MemberHandleUnique> ;
     dal:keyedBy <https://example.org/lending/Member/compiled/key-claim-retire-member-handle-unique#param-claim> ;
+    dal:landsIn <https://example.org/lending/Member/compiled/profile#place-keys-urn%3Ag%3Akeys> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Member/compiled/key-claim-retire-member-handle-unique#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:forConstraint <https://example.org/lending#MemberHandleUnique> ;
     dal:keyedBy <https://example.org/lending/Member/compiled/key-claim-retire-member-handle-unique#param-claim> ;
+    dal:landsIn <https://example.org/lending/Member/compiled/profile#place-keys-urn%3Ag%3Akeys> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Member/compiled/key-claim-retire-member-handle-unique#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:PointRead ;
+    dal:forConstraint <https://example.org/lending#MemberHandleUnique> ;
     dal:keyedBy <https://example.org/lending/Member/compiled/key-claim-retire-member-handle-unique#param-claim> ;
     dal:resourceKind dal:KeyClaim .
 
@@ -103,28 +109,38 @@
 
 <https://example.org/lending/Member/compiled/key-claim-write-member-handle-unique#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:AbsenceRead ;
+    dal:forConstraint <https://example.org/lending#MemberHandleUnique> ;
     dal:keyedBy <https://example.org/lending/Member/compiled/key-claim-write-member-handle-unique#param-claimCurrent> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Member/compiled/key-claim-write-member-handle-unique#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:AbsenceRead ;
+    dal:forConstraint <https://example.org/lending#MemberHandleUnique> ;
     dal:keyedBy <https://example.org/lending/Member/compiled/key-claim-write-member-handle-unique#param-claimNext> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Member/compiled/key-claim-write-member-handle-unique#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:forConstraint <https://example.org/lending#MemberHandleUnique> ;
     dal:keyedBy <https://example.org/lending/Member/compiled/key-claim-write-member-handle-unique#param-claimCurrent> ;
+    dal:landsIn <https://example.org/lending/Member/compiled/profile#place-keys-urn%3Ag%3Akeys> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Member/compiled/key-claim-write-member-handle-unique#access-4> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:forConstraint <https://example.org/lending#MemberHandleUnique> ;
     dal:keyedBy <https://example.org/lending/Member/compiled/key-claim-write-member-handle-unique#param-claimNext> ;
+    dal:landsIn <https://example.org/lending/Member/compiled/profile#place-keys-urn%3Ag%3Akeys> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Member/compiled/key-claim-write-member-handle-unique#param-owner> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "owner" ;
     dal:required true .
+
+<https://example.org/lending/Member/compiled/profile#place-data-urn%3Ag%3Amember%2F%7Broot%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:member/{root}" ;
+    dal:inGraphRole dal:DataRole .
 
 <https://example.org/lending/Member/compiled/revision-multi-txn-audit#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
@@ -157,6 +173,7 @@
 <https://example.org/lending/Member/compiled/unconditional-write#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Member/compiled/unconditional-write#param-root> ;
+    dal:landsIn <https://example.org/lending/Member/compiled/profile#place-data-urn%3Ag%3Amember%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Member/compiled/unconditional-write#payload> a dal:PayloadContract ;
@@ -207,6 +224,10 @@
     dal:parameterKind dal:IriKind ;
     dal:parameterName "claim" ;
     dal:required true .
+
+<https://example.org/lending/Member/compiled/profile#place-keys-urn%3Ag%3Akeys> a dal:GraphPlace ;
+    dal:inGraph <urn:g:keys> ;
+    dal:inGraphRole dal:KeysRole .
 
 [] a dal:CompiledProfile ;
     dal:appliedUniquenessConstraint <https://example.org/lending#MemberHandleUnique> ;
@@ -771,6 +792,7 @@
             dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "txn-multi-revision-audit" ] ] ;
+    dal:matchedScope <https://example.org/lending#MemberClass> ;
     dal:resolvedDimension [ dal:candidateCount 0 ;
             dal:dimension "aggregateBoundary" ;
             dal:resolvedValue dal:NamedGraphBoundary ],

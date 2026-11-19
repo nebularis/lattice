@@ -17,6 +17,7 @@ operation. This module writes it into the profile, under two rules (design revie
 from __future__ import annotations
 
 import re
+from urllib.parse import quote
 
 from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.namespace import XSD
@@ -24,6 +25,7 @@ from rdflib.namespace import XSD
 from .builders import BUILDERS, build
 from .contract import HAND_DECLARED, OperationContract, OperationKind, contract_of
 from .instantiate import operation_context
+from .landing import Place
 from .namespaces import DAL
 
 
@@ -52,6 +54,30 @@ def mint_edge(target: URIRef, index: int, deployment: URIRef | None = None) -> U
     return mint(target, PROFILE_PART, f"edge-{index:02d}", deployment)
 
 
+def mint_place(target: URIRef, place: Place, deployment: URIRef | None = None) -> URIRef:
+    """The IRI of the ``dal:GraphPlace`` of ``place`` in the profile of ``target``, from its role and its graph or template, percent-encoded. A
+    profile states each distinct place once, and every access that lands there points at it. The compiled profile itself is a blank node,
+    so a place is minted as the profile's other declarations are."""
+    return mint(target, PROFILE_PART, f"place-{place.role}-{quote(place.text, safe='')}", deployment)
+
+
+GRAPH_ROLES = {
+    "data": "DataRole", "meta": "MetaRole", "txn": "TxnRole", "log": "LogRole", "event": "EventRole", "keys": "KeysRole",
+    "quarantine": "QuarantineRole", "retention": "RetentionRole", "pinned": "PinnedRole", "dataset": "DatasetRole", "patch": "PatchRole",
+}
+"""The ``dal:GraphRole`` individual of each `persistence.ir.GraphRole` value. The IR's ``derived`` role is the surface compiler's and has none."""
+
+
+def emit_place(g: Graph, node: URIRef, place: Place) -> None:
+    """The role of ``place`` and its graph or template, on ``node``."""
+    g.add((node, RDF.type, DAL.GraphPlace))
+    g.add((node, DAL.inGraphRole, DAL[GRAPH_ROLES[place.role]]))
+    if place.graph:
+        g.add((node, DAL.inGraph, URIRef(place.graph)))
+    else:
+        g.add((node, DAL.inGraphNamed, Literal(place.named)))
+
+
 def is_declaration(node) -> bool:
     return isinstance(node, URIRef) and "/compiled/" in str(node)
 
@@ -75,10 +101,11 @@ def contract_for(compiled: Graph, node, *, guards: bool, graph_names: str, shape
 
 def emit_contract(
     g: Graph, node, target_iri: URIRef, name: str, c: OperationContract, shape: URIRef | None, deployment: URIRef | None = None,
-    edges: tuple = (),
+    edges: tuple = (), constraint: URIRef | None = None,
 ) -> None:
     """Add the contract ``c`` of the generated operation ``node`` to ``g``. ``edges`` are the profile's ``dal:ReferenceEdge`` nodes
-    (:func:`mint_edge`), which a payload contract points at."""
+    (:func:`mint_edge`), which a payload contract points at. ``constraint`` is the ``dal:UniquenessConstraint`` the operation serves, which
+    each of its key claim accesses names."""
 
     def m(part: str) -> URIRef:
         return mint(target_iri, name, part, deployment)
@@ -109,6 +136,14 @@ def emit_contract(
         g.add((an, DAL.accessMode, DAL[a.mode]))
         if a.keyed_by:
             g.add((an, DAL.keyedBy, m(f"param-{a.keyed_by}")))
+        if a.place is not None:
+            place_node = mint_place(target_iri, a.place, deployment)
+            emit_place(g, place_node, a.place)
+            g.add((an, DAL.landsIn, place_node))
+        if a.direction is not None:
+            g.add((an, DAL.patchDirection, DAL[a.direction]))
+        if constraint is not None and a.resource == "KeyClaim":
+            g.add((an, DAL.forConstraint, constraint))
     for i, col in enumerate(c.results, 1):
         cn = m(f"result-{col.name}")
         g.add((node, DAL.resultColumn, cn))
@@ -167,4 +202,4 @@ def add_edge_facts(out: Graph, node, edge) -> None:
     out.add((node, DAL.referenceMode, DAL[edge.reference_mode]))
 
 
-__all__ = ["PROFILE_PART", "mint", "mint_edge", "is_declaration", "kind_name", "column_name", "contract_for", "emit_contract", "add_edge_facts"]
+__all__ = ["PROFILE_PART", "GRAPH_ROLES", "mint", "mint_edge", "mint_place", "emit_place", "is_declaration", "kind_name", "column_name", "contract_for", "emit_contract", "add_edge_facts"]

@@ -58,6 +58,7 @@
 
 <https://example.org/lending/Customer/compiled/key-claim-merge-rewrite-customer-email-unique#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
+    dal:forConstraint <https://example.org/lending#CustomerEmailUnique> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Customer/compiled/key-claim-merge-rewrite-customer-email-unique#access-2> a dal:ResourceAccess ;
@@ -66,20 +67,26 @@
 
 <https://example.org/lending/Customer/compiled/key-claim-merge-rewrite-customer-email-unique#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:landsIn <https://example.org/lending/Customer/compiled/profile#place-keys-urn%3Ag%3Akeys> ;
     dal:resourceKind dal:MergeRecord .
 
 <https://example.org/lending/Customer/compiled/key-claim-retire-customer-email-unique#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Delete ;
+    dal:forConstraint <https://example.org/lending#CustomerEmailUnique> ;
     dal:keyedBy <https://example.org/lending/Customer/compiled/key-claim-retire-customer-email-unique#param-claim> ;
+    dal:landsIn <https://example.org/lending/Customer/compiled/profile#place-keys-urn%3Ag%3Akeys> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Customer/compiled/key-claim-retire-customer-email-unique#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:forConstraint <https://example.org/lending#CustomerEmailUnique> ;
     dal:keyedBy <https://example.org/lending/Customer/compiled/key-claim-retire-customer-email-unique#param-claim> ;
+    dal:landsIn <https://example.org/lending/Customer/compiled/profile#place-keys-urn%3Ag%3Akeys> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Customer/compiled/key-claim-retire-customer-email-unique#access-3> a dal:ResourceAccess ;
     dal:accessMode dal:PointRead ;
+    dal:forConstraint <https://example.org/lending#CustomerEmailUnique> ;
     dal:keyedBy <https://example.org/lending/Customer/compiled/key-claim-retire-customer-email-unique#param-claim> ;
     dal:resourceKind dal:KeyClaim .
 
@@ -95,18 +102,25 @@
 
 <https://example.org/lending/Customer/compiled/key-claim-write-customer-email-unique#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:AbsenceRead ;
+    dal:forConstraint <https://example.org/lending#CustomerEmailUnique> ;
     dal:keyedBy <https://example.org/lending/Customer/compiled/key-claim-write-customer-email-unique#param-claim> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Customer/compiled/key-claim-write-customer-email-unique#access-2> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
+    dal:forConstraint <https://example.org/lending#CustomerEmailUnique> ;
     dal:keyedBy <https://example.org/lending/Customer/compiled/key-claim-write-customer-email-unique#param-claim> ;
+    dal:landsIn <https://example.org/lending/Customer/compiled/profile#place-keys-urn%3Ag%3Akeys> ;
     dal:resourceKind dal:KeyClaim .
 
 <https://example.org/lending/Customer/compiled/key-claim-write-customer-email-unique#param-owner> a dal:ParameterDeclaration ;
     dal:parameterKind dal:IriKind ;
     dal:parameterName "owner" ;
     dal:required true .
+
+<https://example.org/lending/Customer/compiled/profile#place-data-urn%3Ag%3Acustomer%2F%7Broot%7D> a dal:GraphPlace ;
+    dal:inGraphNamed "urn:g:customer/{root}" ;
+    dal:inGraphRole dal:DataRole .
 
 <https://example.org/lending/Customer/compiled/revision-multi-txn-audit#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:ScanRead ;
@@ -139,6 +153,7 @@
 <https://example.org/lending/Customer/compiled/unconditional-write#access-1> a dal:ResourceAccess ;
     dal:accessMode dal:Insert ;
     dal:keyedBy <https://example.org/lending/Customer/compiled/unconditional-write#param-root> ;
+    dal:landsIn <https://example.org/lending/Customer/compiled/profile#place-data-urn%3Ag%3Acustomer%2F%7Broot%7D> ;
     dal:resourceKind dal:Aggregate .
 
 <https://example.org/lending/Customer/compiled/unconditional-write#payload> a dal:PayloadContract ;
@@ -184,6 +199,10 @@
     dal:parameterKind dal:IriKind ;
     dal:parameterName "claim" ;
     dal:required true .
+
+<https://example.org/lending/Customer/compiled/profile#place-keys-urn%3Ag%3Akeys> a dal:GraphPlace ;
+    dal:inGraph <urn:g:keys> ;
+    dal:inGraphRole dal:KeysRole .
 
 [] a dal:CompiledProfile ;
     dal:appliedUniquenessConstraint <https://example.org/lending#CustomerEmailUnique> ;
@@ -745,6 +764,7 @@
             dal:templateVersion 2 ;
             dal:usesTemplate [ a dal:Template ;
                     dal:templateId "txn-multi-revision-audit" ] ] ;
+    dal:matchedScope <https://example.org/lending#CustomerClass> ;
     dal:resolvedDimension [ dal:candidateCount 0 ;
             dal:dimension "aggregateBoundary" ;
             dal:resolvedValue dal:NamedGraphBoundary ],

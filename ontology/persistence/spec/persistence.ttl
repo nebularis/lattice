@@ -32,6 +32,9 @@ dal:AccessMode a owl:Class ;
 dal:AddPart a dal:DigestPartRole ;
     rdfs:comment "What a write adds. Under a patch log, the triples of the aggregate the write adds ({{{assertTriples}}}). Under dal:DeltaMembership, the members the new version adds, as the triples newVersion pat:addsMember m ({{{addedMembers}}}). For example <urn:quote:1/v5> pat:addsMember <urn:quote:1/line7>." .
 
+dal:Added a dal:PatchDirection ;
+    rdfs:comment "The triples a write added, in the patch graph named newRev followed by /add." .
+
 dal:AdoptedIdentity a dal:IdentityStrategy ;
     rdfs:comment "The identifier's authority is external; LATTICE never re-mints it (§5.1)." .
 
@@ -185,11 +188,17 @@ dal:CustomRulesValidation a dal:CommitValidationLevel ;
 dal:DataAccessProfile a owl:Class ;
     rdfs:comment "Convenience individual declaring several dimensions at one scope. Never the model of record: the compiler decomposes it into six per-dimension assertions before resolution runs." .
 
+dal:DataRole a dal:GraphRole ;
+    rdfs:comment "The aggregate's data graph, or the graph of one root." .
+
 dal:DatasetEpoch a dal:ResourceKind ;
     rdfs:comment "The dataset's epoch, in the dataset graph." .
 
 dal:DatasetLevelGuard a dal:EpochGuardScope ;
     rdfs:comment "Every write, including create paths, compares the dataset node's current epoch. The version row's own pat:epoch is read and rewritten to the current epoch on the row's next write, and pat:seq continues, so rows are rebased lazily after a bump instead of being guarded on (guide §10.1). Required for restore-safety to hold at all." .
+
+dal:DatasetRole a dal:GraphRole ;
+    rdfs:comment "The dataset graph that holds the dataset's epoch." .
 
 dal:DatasetTierModel a owl:Class ;
     rdfs:comment "How a total order across streams is derived, for a family that declares one, one of a closed set of named models." ;
@@ -302,6 +311,9 @@ dal:EventOccurrenceRole a dal:ResourceRole ;
 dal:EventPart a dal:DigestPartRole ;
     rdfs:comment "The events of an append, its rows slot and its triples slot, in place of the payload." .
 
+dal:EventRole a dal:GraphRole ;
+    rdfs:comment "The monthly event graph of a stream." .
+
 dal:ExcludeHeaderSubgraph a dal:SelfReferenceRule ;
     rdfs:comment "A declared header subgraph is excluded from content identity." .
 
@@ -350,6 +362,13 @@ dal:GraphNaming a owl:Class ;
 dal:GraphPatternScope a owl:Class ;
     rdfs:comment "Matches graphs whose IRI starts with dal:graphPrefix. No reasoning." ;
     rdfs:subClassOf dal:ProfileScope .
+
+dal:GraphPlace a owl:Class ;
+    rdfs:comment "One graph, or one family of graphs named when an operation runs, in which the data of a compiled target lands. It states one role and exactly one of a fixed graph and a naming template. A compiled profile states each distinct place once, with an IRI minted from the target, the role and the graph or template, and every write access that lands there points at it." .
+
+dal:GraphRole a owl:Class ;
+    rdfs:comment "The part of the store a graph belongs to, closed. Its individuals mirror the graph roles of the typed operation IR, and a reader finds, for example, every pinned graph by comparing one individual and never by matching a template's text." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:DataRole dal:MetaRole dal:TxnRole dal:LogRole dal:EventRole dal:KeysRole dal:QuarantineRole dal:RetentionRole dal:PinnedRole dal:DatasetRole dal:PatchRole ) ] .
 
 dal:GroundNTriples a dal:PayloadEncoding ;
     rdfs:comment "Ground N-Triples, with no blank node and no variable, as the caller's slot text. A blank node is skolemized before it is sent." .
@@ -416,6 +435,9 @@ dal:KeyClaimWriteDual a dal:OperationKind ;
 dal:KeyQuarantine a dal:ResourceKind ;
     rdfs:comment "An owner recorded against a duplicated claim, in the quarantine graph." .
 
+dal:KeysRole a dal:GraphRole ;
+    rdfs:comment "The keys graph that holds key claims and merge records." .
+
 dal:LagWindowRead a dal:GlobalReadStrategy ;
     rdfs:comment "Read only below now minus a declared lag window of at least the server-enforced maximum transaction duration (measured from HLC stamp to commit) plus maximum clock skew plus replica lag plus margin, with a late-arrival audit over a trailing window (guide §21.3)." .
 
@@ -433,6 +455,9 @@ dal:LiteralKind a dal:ParameterKind ;
 
 dal:LockingConcurrency a dal:ConcurrencyStrategy ;
     rdfs:comment "MARKER ONLY. Declares this target needs external serialisation (guide §16.1-§16.2). The compiler emits an unconditional write and the marker itself, for non-SPARQL tooling (an IaC compiler, a future routing layer) to act on. Never realised as a SPARQL guard." .
+
+dal:LogRole a dal:GraphRole ;
+    rdfs:comment "The monthly log graph that holds the receipts." .
 
 dal:LongKind a dal:ParameterKind ;
     rdfs:comment "An xsd:long." .
@@ -452,6 +477,9 @@ dal:MergeRecord a dal:ResourceKind ;
 
 dal:MergeRewrite a dal:OperationKind ;
     rdfs:comment "Rewrites the claims of a merged owner onto the canonical one." .
+
+dal:MetaRole a dal:GraphRole ;
+    rdfs:comment "The meta graph that holds the version rows." .
 
 dal:MetaTopology a owl:Class ;
     rdfs:comment "How version rows are spread over meta graphs, one of a closed set of named topologies." ;
@@ -562,8 +590,15 @@ dal:PartitionedWriter a dal:DeadlockPolicy ;
 dal:PatchContent a dal:ResourceKind ;
     rdfs:comment "The triples a write added or removed, in a graph named from its receipt, newRev followed by /add or /del, one per direction." .
 
+dal:PatchDirection a owl:Class ;
+    rdfs:comment "Whether the triples of a patch log's graph were added or removed by the write, closed. The direction is the constant part of the logical key of dal:PatchContent." ;
+    owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:Added dal:Removed ) ] .
+
 dal:PatchLog a dal:ReceiptModel ;
     rdfs:comment "asserts/retracts delta graphs alongside each receipt, written in the same update as the write. A create's add graph holds its payload, a replace's add and del graphs hold the delta the caller computed, and a tombstone's del graph holds what the sweep removed. The graphs are named from the receipt. Enables replay and CDC, and an as-of read backward from the current state. Honoured for the in-place writes of dal:NamedGraphBoundary and dal:CompositePropertyBoundary families." .
+
+dal:PatchRole a dal:GraphRole ;
+    rdfs:comment "A graph of a patch log, named from the receipt, which holds the triples a write added or the triples it removed." .
 
 dal:PayloadCheck a dal:OperationKind ;
     rdfs:comment "Returns the subjects of a payload that are neither the root nor reached from it by the family's owned edges, as a query a caller in any language gets from instantiate (ADR-A123 decision 6). The caller runs it over a local graph holding its payload and never over the store. Generated for a family that names a dal:boundaryShape." .
@@ -592,6 +627,9 @@ dal:PersonalData a dal:PrivacyClass ;
 
 dal:Pinned a dal:ReferenceMode ;
     rdfs:comment "The edge names one version of the target. For a record that is evidence of exactly what it saw. Refused when the edge's target class is not a subclass of fnd:Versioned (by IRI, with no import), since there is then no version to name." .
+
+dal:PinnedRole a dal:GraphRole ;
+    rdfs:comment "The pinned graph, which realises the retention of a receipt." .
 
 dal:PlaceholderSubstitution a dal:SelfReferenceRule ;
     rdfs:comment "Exact self references are replaced with a fixed placeholder before canonicalization." .
@@ -635,6 +673,9 @@ dal:PublicData a dal:PrivacyClass ;
 
 dal:Quarantine a dal:OperationKind, dal:ViolationPolicy ;
     rdfs:comment "The kind of the operation that records the owners of a duplicated claim in the quarantine graph, and the dal:onViolation that selects it." .
+
+dal:QuarantineRole a dal:GraphRole ;
+    rdfs:comment "The graph that holds the owners recorded against a duplicated claim." .
 
 dal:QueryNamed a dal:GraphNaming ;
     rdfs:comment "The query computes the graph from $root by the rule of the family's dal:graphIriTemplate (ADR-A122 decision 8)." .
@@ -683,6 +724,9 @@ dal:RegistryTokenDerivation a dal:OccurrenceNamespaceDerivation ;
 dal:Reject a dal:ViolationPolicy ;
     rdfs:comment "The baseline dal:onViolation. The duplicate audit reports every key claimed by more than one owner, and nothing is rewritten." .
 
+dal:Removed a dal:PatchDirection ;
+    rdfs:comment "The triples a write removed, in the patch graph named newRev followed by /del." .
+
 dal:Replace a dal:OperationKind ;
     rdfs:comment "Replaces an aggregate if the version row is at the expected seq." .
 
@@ -695,10 +739,10 @@ dal:ReplaceForm a owl:Class ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:TemplateReplace dal:RowsReplace ) ] .
 
 dal:ResolvedDimension a owl:Class ;
-    rdfs:comment "Provenance for one dimension's winning value at one target: which scope won, and how many candidates existed." .
+    rdfs:comment "Provenance for one dimension's winning value at one target: which profile won, the scope or scopes it applied through, and how many candidates existed." .
 
 dal:ResourceAccess a owl:Class ;
-    rdfs:comment "One logical resource an operation touches, with the mode of the access and the parameter that keys it. Its IRI is minted from the target, the operation and the position of the access." .
+    rdfs:comment "One logical resource an operation touches, with the mode of the access and the parameter that keys it. Its IRI is minted from the target, the operation and the position of the access. An access that inserts or deletes also states the place where it lands." .
 
 dal:ResourceKind a owl:Class ;
     rdfs:comment "A logical resource an operation reads or writes, with its logical key and its realisation in SPARQL." ;
@@ -720,6 +764,9 @@ dal:RetentionMark a dal:ResourceKind ;
 dal:RetentionMode a owl:Class ;
     rdfs:comment "How receipt buckets may be pruned, one of a closed set of named modes." ;
     owl:equivalentClass [ a owl:Class ; owl:oneOf ( dal:PrefixOnlyRetention dal:BucketAnyRetention ) ] .
+
+dal:RetentionRole a dal:GraphRole ;
+    rdfs:comment "The graph that holds a target's retention low-water mark." .
 
 dal:Retired a dal:SchemeState ;
     rdfs:comment "Claims under this version are tombstoned, or deleted under an erasure policy." .
@@ -834,6 +881,9 @@ dal:Transactional a dal:UniquenessEnforcementLevel ;
 
 dal:TripleRows a dal:PayloadEncoding ;
     rdfs:comment "One row (s p o) per triple of the payload, for a VALUES block, with the same ground terms as the N-Triples form and no full stop. Every Payload slot of the operation takes this form. The request digest is over the N-Triples lines whichever encoding the slot takes." .
+
+dal:TxnRole a dal:GraphRole ;
+    rdfs:comment "The transaction graph that holds the claim of each transaction id." .
 
 dal:UnconditionalWrite a dal:OperationKind ;
     rdfs:comment "Writes into a named graph with no guard on a version row." .
@@ -1205,6 +1255,11 @@ dal:firstWrite a owl:ObjectProperty ;
     rdfs:domain dal:AggregateBoundaryProfile ;
     rdfs:range dal:FirstWriteMode .
 
+dal:forConstraint a owl:ObjectProperty ;
+    rdfs:comment "The uniqueness constraint a key claim access serves, which a tool follows where the operation's constraintId binding is a string to match." ;
+    rdfs:domain dal:ResourceAccess ;
+    rdfs:range dal:UniquenessConstraint .
+
 dal:forDeployment a owl:ObjectProperty ;
     rdfs:comment "The dal:GraphPatternScope this compiled profile was resolved for, when the target class has more than one disjoint graph-pattern deployment (for example lending and credit both deploying beh:Behaviour, each into its own graph family, each getting its own compiled profile). Absent for the unscoped/fallback deployment and for targets with no graph-pattern deployment at all." ;
     rdfs:domain dal:CompiledProfile .
@@ -1263,6 +1318,20 @@ dal:identityStrategy a owl:ObjectProperty ;
     rdfs:domain dal:IdentityProfile ;
     rdfs:range dal:IdentityStrategy .
 
+dal:inGraph a owl:ObjectProperty ;
+    rdfs:comment "The IRI of a place's graph, where the graph is fixed, for example the keys graph or a family's data graph. A place states this or dal:inGraphNamed, never both." ;
+    rdfs:domain dal:GraphPlace .
+
+dal:inGraphNamed a owl:DatatypeProperty ;
+    rdfs:comment "The template that names a place's graphs, where the graph is named when the operation runs, for example \"urn:g:txlog/{month}\". Its placeholders are a closed set, each defined once. {root} is the operation's root parameter, percent-encoded as SPARQL's ENCODE_FOR_URI encodes it, as {id} is in dal:graphIriTemplate. {newRev} is the operation's new revision parameter as it is. {month} is the month of the transaction time, as YYYY-MM. A place states this or dal:inGraph, never both." ;
+    rdfs:domain dal:GraphPlace ;
+    rdfs:range xsd:string .
+
+dal:inGraphRole a owl:ObjectProperty ;
+    rdfs:comment "The part of the store a place's graph belongs to, exactly one." ;
+    rdfs:domain dal:GraphPlace ;
+    rdfs:range dal:GraphRole .
+
 dal:includeSubclasses a owl:DatatypeProperty ;
     rdfs:comment "Whether a class scope also matches the asserted subclasses of its target class." ;
     rdfs:domain dal:ClassScope ;
@@ -1297,6 +1366,11 @@ dal:lagWindowMillis a owl:DatatypeProperty ;
     rdfs:domain dal:OrderingProfile ;
     rdfs:range xsd:long .
 
+dal:landsIn a owl:ObjectProperty ;
+    rdfs:comment "The place where an access that inserts or deletes lands, exactly one. A read access has none. Every access that lands in the same place points at the same node." ;
+    rdfs:domain dal:ResourceAccess ;
+    rdfs:range dal:GraphPlace .
+
 dal:logShards a owl:DatatypeProperty ;
     rdfs:comment "Shard count applied within each retention time bucket for the receipt log graph, so bucket rotation and shard isolation are both preserved." ;
     rdfs:domain dal:MetaTopologyProfile ;
@@ -1306,6 +1380,11 @@ dal:logicalKey a owl:DatatypeProperty ;
     rdfs:comment "The parts of the resource's logical key, comma separated. A bucket month is a realisation and never part of a key." ;
     rdfs:domain dal:ResourceKind ;
     rdfs:range xsd:string .
+
+dal:matchedScope a owl:ObjectProperty ;
+    rdfs:comment "A scope node the compiler's resolution found to match the target, whether or not a profile applied through it won." ;
+    rdfs:domain dal:CompiledProfile ;
+    rdfs:range dal:ProfileScope .
 
 dal:membershipEncoding a owl:ObjectProperty ;
     rdfs:comment "How a family that appends versions states each version's members. Absent means dal:FullMembership. compile refuses dal:DeltaMembership for a family that does not declare dal:AppendVersions (DeltaMembershipNeedsAppendVersions) and any other value (MembershipEncodingUnknown)." ;
@@ -1440,6 +1519,11 @@ dal:partRole a owl:ObjectProperty ;
 dal:partSource a owl:ObjectProperty ;
     rdfs:comment "A parameter declaration that fills the part, or dal:NoSource for a part that takes none." ;
     rdfs:domain dal:DigestPart .
+
+dal:patchDirection a owl:ObjectProperty ;
+    rdfs:comment "Whether the access is to the triples a patch log's write added or removed. Stated only on an access to dal:PatchContent, where the direction is the constant part of the logical key." ;
+    rdfs:domain dal:ResourceAccess ;
+    rdfs:range dal:PatchDirection .
 
 dal:payloadContract a owl:ObjectProperty ;
     rdfs:comment "What the operation takes as the aggregate's triples. Absent for an operation with no payload." ;
@@ -1720,6 +1804,11 @@ dal:wonBy a owl:ObjectProperty ;
     rdfs:comment "The profile whose value won the resolution of a dimension." ;
     rdfs:domain dal:ResolvedDimension .
 
+dal:wonThrough a owl:ObjectProperty ;
+    rdfs:comment "A matched scope through which the winning profile of a dimension applied, that is the profile's dal:appliesTo among the scopes the compiled profile states as matched. A value that came from the baseline default has none. A scope that matched but won nothing, and how the precedence chose, are not stated." ;
+    rdfs:domain dal:ResolvedDimension ;
+    rdfs:range dal:ProfileScope .
+
 dal:writeDiscipline a owl:ObjectProperty ;
     rdfs:comment "How the family writes. Absent means dal:InPlace. compile warns VersionedClassWrittenInPlace when a target class is a subclass of fnd:Versioned (by IRI, with no import) and the discipline is dal:InPlace." ;
     rdfs:domain dal:WriteDisciplineProfile ;
@@ -1730,6 +1819,8 @@ dct:creator a owl:AnnotationProperty .
 dct:description a owl:AnnotationProperty .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:Accepting dal:Dual dal:Retiring dal:Retired ) ] .
+
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:Added dal:Removed ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:AdoptedIdentity dal:NaturalKeyIdentity dal:DerivedHashIdentity dal:RandomSurrogateIdentity dal:SurrogateClaimedIdentity dal:ExternalRegistryIdentity dal:ContentAddressedIdentity ) ] .
 
@@ -1748,6 +1839,8 @@ dct:description a owl:AnnotationProperty .
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:Clean dal:Failed dal:NothingExamined ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:CommitGrain dal:EventGrain ) ] .
+
+[ a owl:AllDifferent ; owl:distinctMembers ( dal:DataRole dal:MetaRole dal:TxnRole dal:LogRole dal:EventRole dal:KeysRole dal:QuarantineRole dal:RetentionRole dal:PinnedRole dal:DatasetRole dal:PatchRole ) ] .
 
 [ a owl:AllDifferent ; owl:distinctMembers ( dal:DatasetLevelGuard dal:RowLevelGuardOnly ) ] .
 
