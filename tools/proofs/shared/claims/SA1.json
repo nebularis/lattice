@@ -1,0 +1,13 @@
+{
+  "subject": "SA1",
+  "statedAs": "Amounts.adding_amounts_is_a_commutative_monoid",
+  "statementDigest": "sha256:7e46e4eb30896f4cffbcf690eca2a8c26acbcfb80a7b945de8774ef5677bc97f",
+  "method": "Proof",
+  "scope": "EveryCommutativeMonoid",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

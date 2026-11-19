@@ -12,6 +12,7 @@ The laws of [ADR-A131](../../../docs/architecture/decisions/ADR-A131-ledger-laye
 | `Rounding.thy` | whole minor units: floor division and what it leaves short, the units a declared order places, to the first in order and largest remainder under rationing, both lawful, each part within one unit of its exact share, the refinement to exact amounts across accounts | yes |
 | `claims/*.json` | one claim record per law, in `../claim-schema.json`'s shape | written with the theorems |
 | `Predicates.thy`, `Ranks.thy`, `Units.thy`, `Merge.thy`, `Pots.thy`, `Credits.thy`, `Readings.thy` | LG-20's laws, one theory per group of definitions, in the plan's order, each with its examples first | yes |
+| `Agreement.thy` | the lemma `amounts_agree`, that the kernel's amount is the [shared session's](../shared/README.md) amount. It imports `LatticeShared.Amounts`, which the `ROOT` names in a `sessions` clause, and the session still parents on the prelude. The statement type-checks only while both name the same type, so a drift fails the build at that lemma. It defines nothing, so it moves no claim's digest, and it has no claim record | yes |
 
 ## What is proved
 

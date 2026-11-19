@@ -1,0 +1,13 @@
+{
+  "subject": "SA4",
+  "statedAs": "Amounts.adding_keeps_the_order, within_is_a_difference_of_at_least_zero",
+  "statementDigest": "sha256:c36c3e57d4bc723e6adbf25cf7ea5e1f59413c796115c4dfa310a183d7920721",
+  "method": "Proof",
+  "scope": "EveryOrderedGroup",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

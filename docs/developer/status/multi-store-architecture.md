@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** building 2026-11-19.
+**Status:** built 2026-11-19.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous on machine S, at the maintainer's request of 2026-11-19 and the two briefs of that day, on `spi/worktree-s`, committing locally only and never pushing, with up to two sub-agents. The branch defers versioning, so Persistence's spec, changed by MSA-F5, is reported unbumped until the merge.
 
@@ -15,7 +15,7 @@
 | MSA-I2 | [the read-set census](../notes/multi-store/MSA-I2-read-set-census.md), reworked on the owner's ledger. The falsifier does not fire: the ledger's reads across accounts are inside one ledger, and the one firm read from outside, a guard on a balance, is pinned by revision once LG-27 lands, on three conditions no text states yet. One candidate on a comment, a derived trigger's read over a set of policies. [Validation Pack](../validation/MSA-I2.md) | built 2026-11-18 |  |
 | MSA-I3 | [the classification](../notes/multi-store/MSA-I3-dimensions-by-dialect.md). 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. [Validation Pack](../validation/MSA-I3.md) | merged 2026-11-18, built 2026-11-17 |  |
 | MSA-I4 | [four operations lowered](../notes/multi-store/MSA-I4-four-operations-lowered.md). No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. [Validation Pack](../validation/MSA-I4.md) | merged 2026-11-18, built 2026-11-17 |  |
-| MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount defined once | building 2026-11-19 |  |
+| MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount defined once. `LatticeShared`, ten claims gated, and the ledger's `Agreement.amounts_agree` fails the build when the two amounts drift. [Validation Pack](../validation/MSA-I5a.md) | built 2026-11-19 |  |
 | MSA-I5 | the prover spike | planned | MSA-I5a |
 | MSA-I6 | `tools/models/multi-store-protocols`. TLA+ models A, X1 to X4, 28 configurations. Five catalogue rows keep their guarantee with a stated requirement, and the serialised writer never gives atomic visibility. Probes and trace validation not run. [Validation Pack](../validation/MSA-I6.md) | built 2026-11-18 |  |
 | MSA-I7 | the ledger benchmark with a PostgreSQL arm | planned | the ledger's LG-2 |
@@ -87,3 +87,4 @@ C1 to C3 of MSA-I2 are decided. A pass is one request that moves a ledger's revi
 - 2026-11-19: on machine S, per the multi-store half of the brief of 2026-11-19. MSA-I13 marked building.
 - 2026-11-19: MSA-I13 built. The fixture starts a PostgreSQL 16.15 server from the `postgresql-binaries` wheel, a test dependency named for the maintainer, gives each test a clean database and reports the version it ran on. Two tests pass on Windows and skip with a reason where the server is absent. macOS and a cloud session are not run, and the pack gives their commands.
 - 2026-11-19: MSA-I5a marked building. ADR-A-FM2's addendum of 2026-11-18 was accepted that day, so it waits on nothing.
+- 2026-11-19: MSA-I5a built. `LatticeShared` parents on `LatticeBase` and holds a position, a natural number, and an amount, a function from keys to numbers, with ten small laws gated as claims. The ledger's session gains `Agreement.thy`, whose lemma that the kernel's amount is the shared one failed the build when the shared definition was changed. No kernel and no claim digest moved, and `check:proofs` passes for all four sessions.
