@@ -3,7 +3,8 @@
 # SHACL-SPARQL constraints for ldg:AccountDefinition: the tree has no cycle,
 # units of account match and are extensive, a merge rule states what it needs,
 # a residual account stands beside the permission to leave a residual,
-# a credit ceiling is not below the stated amount, and a key dimension is typed.
+# a credit ceiling is not below the stated amount, a key dimension is typed,
+# and a closing recurrence is a ledger profile's.
 # Each targets the class as one node and reads every definition in one query,
 # so a validator runs each once rather than once per definition.
 
@@ -150,6 +151,19 @@ ldg:KeyDimensionTypeShape a sh:NodeShape ;
 				?value ldg:keyDimension ?dim .
 				FILTER NOT EXISTS { ?dim a skos:ConceptScheme }
 				FILTER NOT EXISTS { ?dim a qnt:ValueSpace }
+			}
+		"""
+	] .
+
+ldg:ClosingRecurrenceOnProfileShape a sh:NodeShape ;
+	sh:targetNode ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "An account definition must not state a closing recurrence, which a ledger profile holds." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:closingRecurrence ?recurrence .
 			}
 		"""
 	] .

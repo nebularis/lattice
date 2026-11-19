@@ -14,7 +14,9 @@
 #
 # The credit is refused, no posting is written, and both balances stay at 5. It
 # is recorded as a merge record on the child with the credit as its one
-# request, no granted value, and the reason ldg:KindNotAccepted.
+# request, no granted value, and the reason ldg:KindNotAccepted. The refusal is
+# a record its pass writes, so that pass moves the holder's ledger as the
+# first did, to revision 2.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -25,6 +27,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/refusal-credit-kind/> .
+@prefix pass: <https://example.org/lattice/ledger/refusal-credit-kind/ledger-holder/pass/> .
 
 # ==== The owner, the kinds of credit and the value space =====================
 
@@ -55,6 +58,14 @@ ex:refused-when-exceeded a ldg:MergePolicy ;
 ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 
+# ==== The ledger profile =======================================================
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
 # ==== The configuration: a parent and a child ================================
 
 ex:parent a ldg:AccountDefinition ;
@@ -77,12 +88,12 @@ ex:debit-1-request a ldg:Request ;
     ldg:requestedValue "5"^^xsd:decimal ; ldg:grantedValue "5"^^xsd:decimal .
 ex:debit-1-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-child ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:debit-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:availableBefore "10"^^xsd:decimal ;
     ldg:request ex:debit-1-request .
 ex:debit-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-child ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:debit-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "5"^^xsd:decimal ;
     ldg:runningBalance "5"^^xsd:decimal ;
@@ -95,18 +106,21 @@ ex:credit-2-request a ldg:Request ;
     ldg:forProposal ex:credit-2-proposal ; ldg:requestedValue "5"^^xsd:decimal .
 ex:credit-2-refusal a ldg:MergeRecord ;
     ldg:onAccount ex:account-child ;
-    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:credit-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
     ldg:request ex:credit-2-request ;
     ldg:refusalReason ldg:KindNotAccepted ;
     rdfs:comment "The child does not accept a recovery. Nothing is posted, and the child and the parent stay at 5." .
 
-# ==== The account instances and the passes ===================================
+# ==== The ledger, the account instances and the passes ========================
 
+ex:ledger-holder a ldg:Ledger ;
+    ldg:forOwner ex:holder ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "2"^^xsd:nonNegativeInteger .
 ex:account-parent a ldg:Account ;
     ldg:ofDefinition ex:parent ; ldg:forOwner ex:holder .
 ex:account-child a ldg:Account ;
     ldg:ofDefinition ex:child ; ldg:forOwner ex:holder ;
     ldg:partOfAccount ex:account-parent .
 ex:holder a ex:Holder .
-ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
-ex:pass-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer .
+pass:debit-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:credit-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .

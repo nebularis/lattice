@@ -3,8 +3,10 @@
 # SHACL-SPARQL constraints over Ledger's records: a running balance is a sum
 # less its cuts, a credit is applied within its room and cut where an ancestor
 # had less, a merge records every request and shares within availability,
+# a checkpoint states its totals and is written for an account that moved,
 # account instances keep their
-# natural keys and periods, and no record is effective after its pass. Each shape
+# natural keys and periods, a ledger's passes move its revision in order,
+# and no record is effective after its pass. Each shape
 # targets the class it checks and reads all its instances in one query, so a
 # dataset's records are checked in one evaluation per law rather than one per
 # record. A result's focus node is the class and its value the record. A sum
@@ -203,6 +205,62 @@ ldg:CheckpointFoldShape a sh:NodeShape ;
                                         } GROUP BY $this ?value ?balance ?stated
                                 }
                                 FILTER (?balance != ?stated + ?moved)
+                        }
+                """
+        ] .
+
+ldg:CheckpointTotalsShape a sh:NodeShape ;
+        sh:targetNode ldg:Checkpoint ;
+        sh:sparql [
+                sh:message "A checkpoint's debits must be the debits in its account's subtree, and its credits offered the amounts offered of the credits the account accepts there, by passes at or before its close." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        SELECT $this ?value ?debits ?offered (SUM(?drawn) AS ?drawnTotal) (SUM(?credited) AS ?offeredTotal) WHERE {
+                                                ?value a $this ; ldg:onAccount ?account ; ldg:closePosition ?close ;
+                                                        ldg:debitsTotal ?debits ; ldg:creditsOfferedTotal ?offered .
+                                                ?account ldg:ofDefinition ?definition .
+                                                OPTIONAL {
+                                                        ?posting ldg:onAccount/ldg:partOfAccount* ?account .
+                                                        OPTIONAL { ?posting ldg:inPass/ldg:passPosition ?postedAt ; ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?posting ldg:offeredValue ?offeredValue }
+                                                }
+                                                BIND (COALESCE(IF(?postedAt <= ?close && ?direction = ldg:Debit, ?amount, 0), 0) AS ?drawn)
+                                                BIND (COALESCE(IF(?postedAt <= ?close && ?direction = ldg:Credit
+                                                        && (NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                                || EXISTS { ?posting ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }),
+                                                        ?offeredValue, 0), 0) AS ?credited)
+                                        } GROUP BY $this ?value ?debits ?offered
+                                }
+                                FILTER (?debits != ?drawnTotal || ?offered != ?offeredTotal)
+                        }
+                """
+        ] .
+
+ldg:CheckpointOnlyWhereMovedShape a sh:NodeShape ;
+        sh:targetNode ldg:Checkpoint ;
+        sh:sparql [
+                sh:message "A checkpoint must be written only for an account that moved: its balance or one of its totals must differ from its account's previous checkpoint, or from the stated amount with nothing drawn or offered where the account has none." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        SELECT $this ?value ?account ?balance ?debits ?offered (MAX(?earlierClose) AS ?lastClose) WHERE {
+                                                ?value a $this ; ldg:onAccount ?account ; ldg:closePosition ?close ;
+                                                        ldg:balanceValue ?balance ; ldg:debitsTotal ?debits ; ldg:creditsOfferedTotal ?offered .
+                                                OPTIONAL { ?earlier ldg:onAccount ?account ; ldg:closePosition ?earlierClose . FILTER (?earlierClose < ?close) }
+                                        } GROUP BY $this ?value ?account ?balance ?debits ?offered
+                                }
+                                ?account ldg:ofDefinition/ldg:statedAmount/qnt:numericValue ?stated .
+                                OPTIONAL {
+                                        ?previous ldg:onAccount ?account ; ldg:closePosition ?previousClose ; ldg:balanceValue ?previousBalance ;
+                                                ldg:debitsTotal ?previousDebits ; ldg:creditsOfferedTotal ?previousOffered .
+                                        FILTER (?previousClose = ?lastClose)
+                                }
+                                FILTER (?balance = COALESCE(?previousBalance, ?stated) && ?debits = COALESCE(?previousDebits, 0)
+                                        && ?offered = COALESCE(?previousOffered, 0))
                         }
                 """
         ] .
@@ -490,6 +548,88 @@ ldg:NotForwardDatedShape a sh:NodeShape ;
                                 ?value a $this ; ldg:effectivePosition ?effective ; ldg:inPass ?pass .
                                 ?pass ldg:passPosition ?at .
                                 FILTER (?effective > ?at)
+                        }
+                """
+        ] .
+
+ldg:OneLedgerPerOwnerShape a sh:NodeShape ;
+        sh:targetNode ldg:Ledger ;
+        sh:sparql [
+                sh:message "No two ledgers may share an owner." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:forOwner ?owner .
+                                FILTER EXISTS { ?other ldg:forOwner ?owner ; a $this . FILTER (?other != ?value) }
+                        }
+                """
+        ] .
+
+ldg:PassWritesOneLedgerShape a sh:NodeShape ;
+        sh:targetNode ldg:Pass ;
+        sh:sparql [
+                sh:message "A pass must write at least one record, every record on an account of one owner, and that owner must have a ledger." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        SELECT $this ?value (COUNT(DISTINCT ?owner) AS ?owners) (SAMPLE(?owner) AS ?anOwner) WHERE {
+                                                ?value a $this .
+                                                OPTIONAL { ?record ldg:inPass ?value . ?record ldg:onAccount ?account . ?account ldg:forOwner ?owner }
+                                        } GROUP BY $this ?value
+                                }
+                                FILTER (?owners != 1 || NOT EXISTS { ?ledger ldg:forOwner ?anOwner ; a ldg:Ledger })
+                        }
+                """
+        ] .
+
+ldg:PassRevisionsInOrderShape a sh:NodeShape ;
+        sh:targetNode ldg:Pass ;
+        sh:sparql [
+                sh:message "No two passes of one ledger may record one revision, a pass at a later position must record a greater one, and each revision above the least a ledger's passes record must follow one a pass of it recorded." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        SELECT $this ?value (SUM(?clash) AS ?clashes) (SUM(?below) AS ?lower) (SUM(?justBelow) AS ?previous) WHERE {
+                                                {
+                                                        SELECT $this ?value ?owner ?at ?revision WHERE {
+                                                                ?value a $this ; ldg:passPosition ?at ; ldg:passRevision ?revision .
+                                                                ?record ldg:inPass ?value . ?record ldg:onAccount ?account . ?account ldg:forOwner ?owner .
+                                                        } GROUP BY $this ?value ?owner ?at ?revision
+                                                }
+                                                {
+                                                        SELECT DISTINCT ?other ?owner ?otherAt ?otherRevision WHERE {
+                                                                ?other ldg:passPosition ?otherAt ; ldg:passRevision ?otherRevision .
+                                                                ?otherRecord ldg:inPass ?other . ?otherRecord ldg:onAccount ?otherAccount .
+                                                                ?otherAccount ldg:forOwner ?owner .
+                                                        }
+                                                }
+                                                BIND (IF(?other != ?value && (?otherRevision = ?revision || (?otherAt < ?at && ?otherRevision > ?revision)), 1, 0) AS ?clash)
+                                                BIND (IF(?otherRevision < ?revision, 1, 0) AS ?below)
+                                                BIND (IF(?otherRevision = ?revision - 1, 1, 0) AS ?justBelow)
+                                        } GROUP BY $this ?value
+                                }
+                                FILTER (?clashes > 0 || (?lower > 0 && ?previous = 0))
+                        }
+                """
+        ] .
+
+ldg:LedgerAtItsLatestPassShape a sh:NodeShape ;
+        sh:targetNode ldg:Ledger ;
+        sh:sparql [
+                sh:message "A ledger's revision must be the greatest revision its passes record." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        SELECT $this ?value ?revision (MAX(?passRevision) AS ?latest) WHERE {
+                                                ?value a $this ; ldg:forOwner ?owner ; ldg:revision ?revision .
+                                                ?account ldg:forOwner ?owner ; a ldg:Account .
+                                                ?record ldg:onAccount ?account ; ldg:inPass/ldg:passRevision ?passRevision .
+                                        } GROUP BY $this ?value ?revision
+                                }
+                                FILTER (?revision != ?latest)
                         }
                 """
         ] .

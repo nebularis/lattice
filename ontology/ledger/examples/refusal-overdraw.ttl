@@ -5,7 +5,8 @@
 # rule is Refuse, not Proportional or InPriorityOrder. The whole merge is refused:
 # a merge record keeps both requests, grants neither, and states its reason,
 # ldg:ExceedsAvailable, and no posting is written. Both proposals stay
-# Undetermined.
+# Undetermined. The refused merge is a record its pass writes, so the pass
+# moves the owner's ledger to revision 1.
 #
 # | Account      | Available | Proposal 1 | Proposal 2 | Outcome                        |
 # |--------------|----------:|-----------:|-----------:|---------------------------------|
@@ -19,6 +20,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/refusal-overdraw/> .
+@prefix pass: <https://example.org/lattice/ledger/refusal-overdraw/ledger-owner/pass/> .
 
 ex:owner a fnd:PersistentIdentity .
 ex:OwnerKind a owl:Class .
@@ -47,6 +49,12 @@ ex:tight-account a ldg:AccountDefinition ;
     ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "100 units, refusing whole where proposals together overdraw it." .
 
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
 ex:proposal-1 rdfs:comment "Requests 60." .
 ex:proposal-2 rdfs:comment "Requests 70." .
 
@@ -59,15 +67,18 @@ ex:request-2 a ldg:Request ;
     ldg:forProposal ex:proposal-2 ; ldg:requestedValue "70"^^xsd:decimal .
 ex:merge-1 a ldg:MergeRecord ;
     ldg:onAccount ex:account-tight-account ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:draws-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:availableBefore "100"^^xsd:decimal ;
     ldg:request ex:request-1 , ex:request-2 ;
     ldg:refusalReason ldg:ExceedsAvailable ;
     rdfs:comment "60 + 70 = 130 exceeds the 100 available. Neither request is granted. No posting follows." .
 
-# ==== The account instances and the passes ===================================
+# ==== The ledger, the account instances and the passes ========================
 
+ex:ledger-owner a ldg:Ledger ;
+    ldg:forOwner ex:owner ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "1"^^xsd:nonNegativeInteger .
 ex:account-tight-account a ldg:Account ;
     ldg:ofDefinition ex:tight-account ; ldg:forOwner ex:owner .
 ex:owner a ex:OwnerKind .
-ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
+pass:draws-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .

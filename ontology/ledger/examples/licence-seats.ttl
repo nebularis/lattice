@@ -21,7 +21,10 @@
 # account gets its own one-request merge record. Each posting records the running
 # balance of its account. Which bin a position falls in
 # is the evaluator's to compute from the recurrence, and here positions 1 and
-# 2 are stated to fall in 2027 and 2028.
+# 2 are stated to fall in 2027 and 2028. The customer's accounts, of every site
+# and year, are one ledger, which names the profile the deployment gave it.
+# Each pass is named from the ledger and a key for its evaluation, and moved
+# the ledger by one, to revision 2.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -32,6 +35,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/licence-seats/> .
+@prefix pass: <https://example.org/lattice/ledger/licence-seats/ledger-customer/pass/> .
 
 # ==== The owner and the key dimension ========================================
 
@@ -80,6 +84,14 @@ ex:seat-licence a ldg:AccountDefinition ;
     ldg:keyDimension ex:sites ;
     rdfs:comment "500 seats a year, one account derived per site and licence year." .
 
+# ==== The ledger profile =======================================================
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
 # ==== Position 1, in 2027: the two sites draw independently =================
 
 ex:london-draw-proposal rdfs:comment "London's draw of 120 seats." .
@@ -88,11 +100,11 @@ ex:london-draw-request a ldg:Request ;
     ldg:requestedValue "120"^^xsd:decimal ; ldg:grantedValue "120"^^xsd:decimal .
 ex:london-draw-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-seat-licence-london-2027 ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:draws-2027 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:request ex:london-draw-request .
 ex:london-draw-posting a ldg:Posting ;
     ldg:onAccount ex:account-seat-licence-london-2027 ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:draws-2027 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "120"^^xsd:decimal ;
     ldg:runningBalance "380"^^xsd:decimal ;
@@ -104,11 +116,11 @@ ex:porto-draw-request a ldg:Request ;
     ldg:requestedValue "80"^^xsd:decimal ; ldg:grantedValue "80"^^xsd:decimal .
 ex:porto-draw-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-seat-licence-porto-2027 ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:draws-2027 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:request ex:porto-draw-request .
 ex:porto-draw-posting a ldg:Posting ;
     ldg:onAccount ex:account-seat-licence-porto-2027 ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:draws-2027 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "80"^^xsd:decimal ;
     ldg:runningBalance "420"^^xsd:decimal ;
@@ -122,18 +134,21 @@ ex:london-2028-draw-request a ldg:Request ;
     ldg:requestedValue "50"^^xsd:decimal ; ldg:grantedValue "50"^^xsd:decimal .
 ex:london-2028-draw-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-seat-licence-london-2028 ;
-    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:london-2028-draw ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
     ldg:request ex:london-2028-draw-request .
 ex:london-2028-draw-posting a ldg:Posting ;
     ldg:onAccount ex:account-seat-licence-london-2028 ;
-    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:london-2028-draw ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "50"^^xsd:decimal ;
     ldg:runningBalance "450"^^xsd:decimal ;
     prov:wasDerivedFrom ex:london-2028-draw-merge , ex:london-2028-draw-request .
 
-# ==== The account instances and the passes ===================================
+# ==== The ledger, the account instances and the passes ========================
 
+ex:ledger-customer a ldg:Ledger ;
+    ldg:forOwner ex:customer ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "2"^^xsd:nonNegativeInteger .
 ex:account-seat-licence-london-2027 a ldg:Account ;
     ldg:ofDefinition ex:seat-licence ; ldg:forOwner ex:customer ;
     ldg:accountKey ex:london ; ldg:periodKey ex:year-2027 .
@@ -144,5 +159,5 @@ ex:account-seat-licence-london-2028 a ldg:Account ;
     ldg:ofDefinition ex:seat-licence ; ldg:forOwner ex:customer ;
     ldg:accountKey ex:london ; ldg:periodKey ex:year-2028 .
 ex:customer a ex:Licensee .
-ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
-ex:pass-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer .
+pass:draws-2027 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:london-2028-draw a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .

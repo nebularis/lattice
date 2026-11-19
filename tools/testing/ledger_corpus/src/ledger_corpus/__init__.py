@@ -48,7 +48,8 @@ def account_tree(definitions: int = 10_000, sections: int = 99) -> Graph:
 def one_pass(leaves: int = 5_000) -> Graph:
     """One pass over a root, `leaves - 1` sections and `leaves` leaves, each leaf its own definition and account. Each leaf takes
     one debit of 1 in the pass, whose posting records the leaf's running balance, and the root and every section have a checkpoint
-    at the pass's close, `leaves` in all, whose balances are what the postings give."""
+    at the pass's close, `leaves` in all, whose balances and debits are what the postings give. The owner's ledger is at the
+    revision the pass moved it to."""
     sections = leaves - 1
     lines = [f"@prefix ldg: <{LDG}> .", f"@prefix qnt: <{QNT}> .", f"@prefix fnd: <{FND}> .", f"@prefix xsd: <{XSD}> .",
              "@prefix ex: <https://example.org/lattice/ledger/runtime-scale/> .",
@@ -60,14 +61,19 @@ def one_pass(leaves: int = 5_000) -> Graph:
              "ex:big a qnt:Quantity ; qnt:onSpace ex:space ; qnt:numericValue \"10000\"^^xsd:decimal .",
              "ex:small a qnt:Quantity ; qnt:onSpace ex:space ; qnt:numericValue \"10\"^^xsd:decimal .",
              "ex:Owner a <http://www.w3.org/2002/07/owl#Class> . ex:owner a ex:Owner .",
-             "ex:pass a ldg:Pass ; ldg:passPosition \"1\"^^xsd:integer .",
+             "ex:profile a ldg:LedgerProfile ; fnd:hasIdentity ex:profile-identity .",
+             "ex:profile-identity a fnd:PersistentIdentity .",
+             "ex:ledger a ldg:Ledger ; ldg:forOwner ex:owner ; ldg:ledgerProfile ex:profile ; "
+             "ldg:revision \"1\"^^xsd:nonNegativeInteger .",
+             "ex:pass a ldg:Pass ; ldg:passPosition \"1\"^^xsd:integer ; ldg:passRevision \"1\"^^xsd:nonNegativeInteger .",
              "ex:refused-when-exceeded a ldg:MergePolicy ; fnd:hasIdentity ex:refused-when-exceeded-identity ; ldg:mergeRule ldg:Refuse .",
              "ex:refused-when-exceeded-identity a fnd:PersistentIdentity ; <http://www.w3.org/2000/01/rdf-schema#comment> \"The merge policy these terms state.\" .",
              "ex:root a ldg:AccountDefinition ; ldg:statedAmount ex:big ; ldg:unitOfAccount ex:space ; "
              "ldg:admitsOwnerKind ex:Owner ; ldg:mergePolicy ex:refused-when-exceeded .",
              "ex:account-root a ldg:Account ; ldg:ofDefinition ex:root ; ldg:forOwner ex:owner .",
              f"ex:checkpoint-root a ldg:Checkpoint ; ldg:onAccount ex:account-root ; ldg:closePosition \"1\"^^xsd:integer ; "
-             f"ldg:balanceValue \"{10_000 - leaves}\"^^xsd:decimal ."]
+             f"ldg:balanceValue \"{10_000 - leaves}\"^^xsd:decimal ; ldg:debitsTotal \"{leaves}\"^^xsd:decimal ; "
+             f"ldg:creditsOfferedTotal \"0\"^^xsd:decimal ."]
     drawn: dict[int, int] = {}
     for i in range(leaves):
         drawn[i % sections] = drawn.get(i % sections, 0) + 1
@@ -77,7 +83,8 @@ def one_pass(leaves: int = 5_000) -> Graph:
                   f"ex:account-section{s} a ldg:Account ; ldg:ofDefinition ex:section{s} ; ldg:forOwner ex:owner ; "
                   f"ldg:partOfAccount ex:account-root .",
                   f"ex:checkpoint-section{s} a ldg:Checkpoint ; ldg:onAccount ex:account-section{s} ; "
-                  f"ldg:closePosition \"1\"^^xsd:integer ; ldg:balanceValue \"{10 - drawn[s]}\"^^xsd:decimal ."]
+                  f"ldg:closePosition \"1\"^^xsd:integer ; ldg:balanceValue \"{10 - drawn[s]}\"^^xsd:decimal ; "
+                  f"ldg:debitsTotal \"{drawn[s]}\"^^xsd:decimal ; ldg:creditsOfferedTotal \"0\"^^xsd:decimal ."]
     for i in range(leaves):
         lines += [f"ex:leaf{i} a ldg:AccountDefinition ; ldg:statedAmount ex:small ; ldg:unitOfAccount ex:space ; "
                   f"ldg:admitsOwnerKind ex:Owner ; ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:section{i % sections} .",

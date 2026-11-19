@@ -19,7 +19,10 @@
 # it back to 80,000 is applied, never beyond. The return is a credit of the
 # example's own kind, unspent funds, and neither account names its kinds, so
 # both accept it. The grant had room for the 50,000, so nothing is cut. Each
-# posting records the running balance of its own account.
+# posting records the running balance of its own account. The institution's
+# ledger names the profile the deployment gave it, and each of the three
+# passes, named from the ledger and a key for its evaluation, moved it by one,
+# to revision 3.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -30,6 +33,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/research-grant/> .
+@prefix pass: <https://example.org/lattice/ledger/research-grant/ledger-institution/pass/> .
 
 # ==== The owner, the kind of credit and the value space =======================
 
@@ -60,6 +64,14 @@ ex:refused-when-exceeded a ldg:MergePolicy ;
 ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 
+# ==== The ledger profile =======================================================
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
 # ==== The configuration: a budget with two sub-budgets ========================
 
 ex:grant-budget a ldg:AccountDefinition ;
@@ -87,11 +99,11 @@ ex:staff-spend-request a ldg:Request ;
     ldg:requestedValue "90000"^^xsd:decimal ; ldg:grantedValue "90000"^^xsd:decimal .
 ex:staff-spend-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-staff-budget ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:staff-spend ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:request ex:staff-spend-request .
 ex:staff-spend-posting a ldg:Posting ;
     ldg:onAccount ex:account-staff-budget ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:staff-spend ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "90000"^^xsd:decimal ;
     ldg:runningBalance "30000"^^xsd:decimal ;
@@ -105,11 +117,11 @@ ex:equipment-spend-request a ldg:Request ;
     ldg:requestedValue "50000"^^xsd:decimal ; ldg:grantedValue "50000"^^xsd:decimal .
 ex:equipment-spend-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-equipment-budget ;
-    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:equipment-spend ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
     ldg:request ex:equipment-spend-request .
 ex:equipment-spend-posting a ldg:Posting ;
     ldg:onAccount ex:account-equipment-budget ;
-    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:equipment-spend ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "50000"^^xsd:decimal ;
     ldg:runningBalance "30000"^^xsd:decimal ;
@@ -119,15 +131,18 @@ ex:equipment-spend-posting a ldg:Posting ;
 
 ex:equipment-return-posting a ldg:Posting ;
     ldg:onAccount ex:account-equipment-budget ;
-    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:equipment-return ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Credit ; ldg:creditKind ex:unspent-funds ;
     ldg:offeredValue "55000"^^xsd:decimal ; ldg:amountValue "50000"^^xsd:decimal ;
     ldg:runningBalance "80000"^^xsd:decimal ;
     rdfs:comment "55,000 returned as unspent, applied only at the 50,000 that reaches the ceiling (80,000)." .
 
-# ==== The account instances and the passes ===================================
+# ==== The ledger, the account instances and the passes ========================
 
+ex:ledger-institution a ldg:Ledger ;
+    ldg:forOwner ex:institution ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "3"^^xsd:nonNegativeInteger .
 ex:account-equipment-budget a ldg:Account ;
     ldg:ofDefinition ex:equipment-budget ; ldg:forOwner ex:institution ;
     ldg:partOfAccount ex:account-grant-budget .
@@ -137,6 +152,6 @@ ex:account-staff-budget a ldg:Account ;
     ldg:ofDefinition ex:staff-budget ; ldg:forOwner ex:institution ;
     ldg:partOfAccount ex:account-grant-budget .
 ex:institution a ex:Grantee .
-ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
-ex:pass-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer .
-ex:pass-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:integer .
+pass:staff-spend a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:equipment-spend a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
+pass:equipment-return a ldg:Pass ; ldg:passPosition "3"^^xsd:integer ; ldg:passRevision "3"^^xsd:nonNegativeInteger .

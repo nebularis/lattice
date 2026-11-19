@@ -50,13 +50,18 @@ ldg:Account a owl:Class ;
 
 ldg:Checkpoint a owl:Class ;
     rdfs:comment "An account's balance at a close, along the recorded axis." ;
-    fnd:utility "Write one at each close of ldg:closingRecurrence for each account whose balance moved since its last checkpoint. It counts the postings of passes recorded by the close, whatever their effective positions, so a posting recorded later and effective earlier never disturbs it. Derive its IRI from the account and the close position." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:balanceValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:closePosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:onAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:DerivedArtefact .
+    fnd:utility "Write one at each close of the closing recurrence of the ledger's profile, for each account that moved since its last checkpoint. An account moved when a posting recorded since then changes its balance, its debits or the credits it accepts at the amount offered, so a credit cut in full at it still moves it. An account that did not move is read from its last checkpoint, or from its stated amount with nothing drawn or offered where it has none. A checkpoint counts the postings of passes recorded by the close, whatever their effective positions, so a posting recorded later and effective earlier never disturbs it. Beside the balance, state the debits and the credits offered that the account accepts, over the same postings. Derive its IRI from the account and the close position." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:balanceValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:closePosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditsOfferedTotal ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:debitsTotal ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:onAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:DerivedArtefact .
 
 ldg:Cut a owl:Class ;
     rdfs:comment "How much less an ancestor took of a credit than was applied at the account it was posted to." ;
     fnd:utility "Write one for each ancestor that accepts the credit's kind and had less room than the amount applied, with the room it lacked as its value. It is part of its credit's record, never a posting in the ancestor's book, and it states no position, since a read by position joins it to its posting." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:cutAt ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:cutOf ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:cutValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+ldg:Ledger a owl:Class ;
+    rdfs:comment "The accounts of one owner, as the unit one writer at a time writes and a write sees unchanged." ;
+    fnd:utility "Mint one for each owner, the first time a pass writes one of its accounts, and derive its IRI from the owner's, so every writer of that owner reaches one node. Name the profile the deployment gave it, and state its revision. The revision is the one fact of a ledger that changes in place. Its writer moves it by one with each pass, in the request that writes the pass, and only while the ledger is at the revision the pass was evaluated from. An account reaches its ledger through its owner, so no account names it." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:forOwner ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:ledgerProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:revision ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 ldg:MergeRecord a owl:Class ;
     rdfs:comment "The merge of the requests at one account and one effective position, or a credit refused alone." ;
@@ -65,8 +70,8 @@ ldg:MergeRecord a owl:Class ;
 
 ldg:Pass a owl:Class ;
     rdfs:comment "One evaluation's write of records, recorded at one position." ;
-    fnd:utility "What an evaluation records about itself beyond its postings. Every posting, merge record and checkpoint names the pass that wrote it. A pass's position is on the effective axis, so the records it writes are effective no later than it, and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:passPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+    fnd:utility "What an evaluation records about itself beyond its postings. Every posting and merge record names the pass that wrote it. Derive its IRI from its ledger's and a key the caller gives for the evaluation that writes it. The layer gives the key no meaning, and the same evaluation made again gives the same key, so it is never taken from a clock or from a counter read when the request is made, and the same evaluation written twice is one node. A pass writes the records of one ledger, the ledger of the owner of the accounts its records are on, and writes at least one record. State the revision it moved that ledger to, which is one more than the revision it was evaluated from. A pass's position is on the effective axis, so the records it writes are effective no later than it, and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:passPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:passRevision ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 ldg:Posting a owl:Class ;
     rdfs:comment "One draw or credit on one account." ;
@@ -110,6 +115,12 @@ ldg:creditKind a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:domain ldg:Posting ;
     rdfs:range skos:Concept .
 
+ldg:creditsOfferedTotal a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The credits an account accepts, at the amount offered, recorded by a checkpoint's close." ;
+    fnd:utility "The sum of the amounts offered of the credits in the account's subtree whose kind it accepts, by passes at or before the close. A credit cut in full at the account counts here and leaves the balance where it was." ;
+    rdfs:domain ldg:Checkpoint ;
+    rdfs:range xsd:decimal .
+
 ldg:cutAt a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The ancestor at which a credit was cut." ;
     fnd:utility "An ancestor of the account the credit was posted to, which accepts its kind." ;
@@ -127,6 +138,12 @@ ldg:cutValue a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain ldg:Cut ;
     rdfs:range xsd:decimal .
 
+ldg:debitsTotal a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The debits recorded by a checkpoint's close, in its account's subtree." ;
+    fnd:utility "The sum of the amounts of the debits in the account's subtree, by passes at or before the close. Nothing is effective after it is recorded, so a reading of what was drawn by an effective day starts from the checkpoint at the last close before the day." ;
+    rdfs:domain ldg:Checkpoint ;
+    rdfs:range xsd:decimal .
+
 ldg:direction a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "Whether a posting debits or credits its account." ;
     rdfs:domain ldg:Posting ;
@@ -139,9 +156,9 @@ ldg:effectivePosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:range xsd:nonNegativeInteger .
 
 ldg:forOwner a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "The owner of an account instance." ;
-    fnd:utility "Any persistent identity whose kind the definition admits, so the account outlives a new version of what owns it." ;
-    rdfs:domain ldg:Account ;
+    rdfs:comment "The owner of an account instance or of a ledger." ;
+    fnd:utility "Any persistent identity whose kind the definition admits, so the account outlives a new version of what owns it. An owner has at most one ledger, and every account it owns is in it." ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( ldg:Account ldg:Ledger ) ] ;
     rdfs:range fnd:PersistentIdentity .
 
 ldg:forProposal a owl:FunctionalProperty, owl:ObjectProperty ;
@@ -164,6 +181,13 @@ ldg:inPass a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The pass that wrote a record." ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( ldg:Posting ldg:MergeRecord ) ] ;
     rdfs:range ldg:Pass .
+
+ldg:ledgerProfile a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The ledger profile that governs a ledger." ;
+    fnd:utility "Name the version of the profile the deployment gave the ledger. The edge bears meaning, since the profile says whether a credit ceiling above a stated amount is admitted, so a later version of the profile reaches a ledger only where the ledger names it." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
+    rdfs:domain ldg:Ledger ;
+    rdfs:range ldg:LedgerProfile .
 
 ldg:microPosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The order of postings that share a recorded position on one account, and of the postings of one pass across accounts." ;
@@ -197,6 +221,12 @@ ldg:passPosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The position at which a pass was recorded, on the effective axis." ;
     rdfs:domain ldg:Pass ;
     rdfs:range xsd:integer .
+
+ldg:passRevision a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The revision a pass moved its ledger to." ;
+    fnd:utility "One more than the revision the pass was evaluated from, so the passes of one ledger record revisions one apart, in the order of their positions. It is the pass's receipt. A replay finds the pass by its IRI and evaluates it again from the revision before this one." ;
+    rdfs:domain ldg:Pass ;
+    rdfs:range xsd:nonNegativeInteger .
 
 ldg:periodKey a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The period of an account instance, where its definition states a period recurrence." ;
@@ -250,6 +280,12 @@ ldg:residualValue a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain ldg:MergeRecord ;
     rdfs:range xsd:decimal .
 
+ldg:revision a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "The revision of a ledger, which its writer moves by one with each pass." ;
+    fnd:utility "Changes only when a pass is written, so it is the revision the ledger's latest pass recorded. A guard or a derivation outside the ledger reads a balance as of a revision, which never changes, and records that revision in its read set." ;
+    rdfs:domain ldg:Ledger ;
+    rdfs:range xsd:nonNegativeInteger .
+
 ldg:runningBalance a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The balance of a posting's account after the posting, its subtree included." ;
     fnd:utility "Written by the account's writer, which holds the balances along the path. It is the account's stated amount, less the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it, over the postings up to this one in recorded order." ;
@@ -262,4 +298,4 @@ ldg:unitOrderPlace a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain ldg:Request ;
     rdfs:range xsd:nonNegativeInteger .
 
-[ a owl:AllDisjointClasses ; owl:members ( ldg:AccountDefinition ldg:Account ldg:Pass ldg:Posting ldg:Cut ldg:MergeRecord ldg:Request ldg:Checkpoint ) ] .
+[ a owl:AllDisjointClasses ; owl:members ( ldg:AccountDefinition ldg:Ledger ldg:Account ldg:Pass ldg:Posting ldg:Cut ldg:MergeRecord ldg:Request ldg:Checkpoint ) ] .

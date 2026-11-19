@@ -5,7 +5,8 @@
 # child are each stated at 10, and each ceiling is its stated amount. Both are
 # restored by recoveries: the parent names the kind, and the child names none,
 # so it accepts every kind. A debit of 5 at the child, a credit of 4 at the
-# parent, then a credit of 4 at the child.
+# parent, then a credit of 4 at the child. A last credit of 1 at the child is
+# cut in full at the parent.
 #
 # | Position | Event                     | Child                          | Parent                                         |
 # |----------|---------------------------|--------------------------------|------------------------------------------------|
@@ -13,10 +14,25 @@
 # | 1        | debit of 5 at the child   | -5 -> 5                        | -5 -> 5                                        |
 # | 2        | credit of 4 at the parent | --                             | room 5, applied 4 -> 9                         |
 # | 3        | credit of 4 at the child  | room 5, offered 4, applied 4 -> 9 | room 1, takes 1, a cut of 3 -> 10           |
+# | 4        | credit of 1 at the child  | room 1, offered 1, applied 1 -> 10 | room 0, takes 0, a cut of 1 -> 10           |
 #
 # Each posting records the running balance of its own account. The parent's
 # balance is 10, less 5, plus 4 and 4, less 3, which is 10. With no cut the
 # sum would be 13, above the parent's ceiling.
+#
+# The owner's ledger closes after positions 3 and 4, and both accounts moved
+# each time, so each has a checkpoint at both closes. Beside its balance a
+# checkpoint holds the debits and the credits offered that its account
+# accepts. The parent's balance is 10 at both closes, and it still moved,
+# since the credit cut in full at it raised its credits offered from 8 to 9.
+#
+# | Close | Child: balance, debits, offered | Parent: balance, debits, offered |
+# |-------|---------------------------------|----------------------------------|
+# | 3     | 9, 5, 4                         | 10, 5, 8                         |
+# | 4     | 10, 5, 5                        | 10, 5, 9                         |
+#
+# Each pass is named from the ledger and a key for its evaluation, and records
+# the revision it moved the ledger to, 1 to 4, so the ledger is at 4.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -27,6 +43,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/credit-cut-at-parent/> .
+@prefix pass: <https://example.org/lattice/ledger/credit-cut-at-parent/ledger-holder/pass/> .
 
 # ==== The owner, the kind of credit and the value space =======================
 
@@ -56,6 +73,18 @@ ex:refused-when-exceeded a ldg:MergePolicy ;
 ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 
+# ==== The ledger profile =======================================================
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity ;
+    ldg:closingRecurrence ex:closes .
+
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
+ex:closes a qnt:Recurrence ;
+    rdfs:comment "The ledger closes after positions 3 and 4, as this example states." .
+
 # ==== The configuration: a parent and a child ================================
 
 ex:parent a ldg:AccountDefinition ;
@@ -78,11 +107,11 @@ ex:debit-1-request a ldg:Request ;
     ldg:requestedValue "5"^^xsd:decimal ; ldg:grantedValue "5"^^xsd:decimal .
 ex:debit-1-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-child ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:debit-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:request ex:debit-1-request .
 ex:debit-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-child ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:debit-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "5"^^xsd:decimal ;
     ldg:runningBalance "5"^^xsd:decimal ;
@@ -92,7 +121,7 @@ ex:debit-1-posting a ldg:Posting ;
 
 ex:credit-2-posting a ldg:Posting ;
     ldg:onAccount ex:account-parent ;
-    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:credit-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Credit ; ldg:creditKind ex:recovery ;
     ldg:offeredValue "4"^^xsd:decimal ; ldg:amountValue "4"^^xsd:decimal ;
@@ -103,7 +132,7 @@ ex:credit-2-posting a ldg:Posting ;
 
 ex:credit-3-posting a ldg:Posting ;
     ldg:onAccount ex:account-child ;
-    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:credit-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Credit ; ldg:creditKind ex:recovery ;
     ldg:offeredValue "4"^^xsd:decimal ; ldg:amountValue "4"^^xsd:decimal ;
@@ -114,14 +143,53 @@ ex:credit-3-cut-parent a ldg:Cut ;
     ldg:cutValue "3"^^xsd:decimal ;
     rdfs:comment "The parent held 9 and had room for 1, so it took 1 of the 4 applied." .
 
-# ==== The account instances and the passes ===================================
+# ==== Position 4: a credit of 1 at the child, cut in full at the parent =======
 
+ex:credit-4-posting a ldg:Posting ;
+    ldg:onAccount ex:account-child ;
+    ldg:inPass pass:credit-4 ; ldg:effectivePosition "4"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:creditKind ex:recovery ;
+    ldg:offeredValue "1"^^xsd:decimal ; ldg:amountValue "1"^^xsd:decimal ;
+    ldg:runningBalance "10"^^xsd:decimal ;
+    rdfs:comment "The child holds 9 and has room for 1, so all 1 is applied." .
+ex:credit-4-cut-parent a ldg:Cut ;
+    ldg:cutOf ex:credit-4-posting ; ldg:cutAt ex:account-parent ;
+    ldg:cutValue "1"^^xsd:decimal ;
+    rdfs:comment "The parent held 10 and had no room, so it took none of the 1 applied." .
+
+# ==== The checkpoints at the closes after positions 3 and 4 ===================
+
+ex:checkpoint-child-3 a ldg:Checkpoint ;
+    ldg:onAccount ex:account-child ; ldg:closePosition "3"^^xsd:integer ;
+    ldg:balanceValue "9"^^xsd:decimal ;
+    ldg:debitsTotal "5"^^xsd:decimal ; ldg:creditsOfferedTotal "4"^^xsd:decimal .
+ex:checkpoint-parent-3 a ldg:Checkpoint ;
+    ldg:onAccount ex:account-parent ; ldg:closePosition "3"^^xsd:integer ;
+    ldg:balanceValue "10"^^xsd:decimal ;
+    ldg:debitsTotal "5"^^xsd:decimal ; ldg:creditsOfferedTotal "8"^^xsd:decimal .
+ex:checkpoint-child-4 a ldg:Checkpoint ;
+    ldg:onAccount ex:account-child ; ldg:closePosition "4"^^xsd:integer ;
+    ldg:balanceValue "10"^^xsd:decimal ;
+    ldg:debitsTotal "5"^^xsd:decimal ; ldg:creditsOfferedTotal "5"^^xsd:decimal .
+ex:checkpoint-parent-4 a ldg:Checkpoint ;
+    ldg:onAccount ex:account-parent ; ldg:closePosition "4"^^xsd:integer ;
+    ldg:balanceValue "10"^^xsd:decimal ;
+    ldg:debitsTotal "5"^^xsd:decimal ; ldg:creditsOfferedTotal "9"^^xsd:decimal ;
+    rdfs:comment "The balance is as at the close after position 3, and the account moved, since a credit cut in full at it was offered." .
+
+# ==== The ledger, the account instances and the passes ========================
+
+ex:ledger-holder a ldg:Ledger ;
+    ldg:forOwner ex:holder ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "4"^^xsd:nonNegativeInteger .
 ex:account-parent a ldg:Account ;
     ldg:ofDefinition ex:parent ; ldg:forOwner ex:holder .
 ex:account-child a ldg:Account ;
     ldg:ofDefinition ex:child ; ldg:forOwner ex:holder ;
     ldg:partOfAccount ex:account-parent .
 ex:holder a ex:Holder .
-ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
-ex:pass-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer .
-ex:pass-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:integer .
+pass:debit-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:credit-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
+pass:credit-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:integer ; ldg:passRevision "3"^^xsd:nonNegativeInteger .
+pass:credit-4 a ldg:Pass ; ldg:passPosition "4"^^xsd:integer ; ldg:passRevision "4"^^xsd:nonNegativeInteger .

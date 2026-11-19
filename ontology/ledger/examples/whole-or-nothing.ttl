@@ -15,7 +15,9 @@
 #
 # The granted values, 5 and 0, and the residual of 2 sum to the 7 shared. The
 # merge records both requests, the second with a granted value of 0, since the
-# merge granted. Only the first request is posted.
+# merge granted. Only the first request is posted. The issuer's ledger names
+# the profile the deployment gave it, and the one pass, named from the ledger
+# and a key for its evaluation, moved it to revision 1.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -26,6 +28,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/whole-or-nothing/> .
+@prefix pass: <https://example.org/lattice/ledger/whole-or-nothing/ledger-issuer/pass/> .
 
 # ==== The owner, the order and the value space ================================
 
@@ -77,6 +80,14 @@ ex:unallocated a ldg:AccountDefinition ;
     ldg:admitsOwnerKind ex:Issuer ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "What no block took, held for a later offer under its own policy." .
 
+# ==== The ledger profile =======================================================
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
 # ==== Position 1: two requests, one merge record, one posting ================
 
 ex:proposal-1 rdfs:comment "An application for a block of 5, made first." .
@@ -91,7 +102,7 @@ ex:request-2 a ldg:Request ;
 
 ex:merge-1 a ldg:MergeRecord ;
     ldg:onAccount ex:account-pool ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:blocks-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:availableBefore "7"^^xsd:decimal ;
     ldg:request ex:request-1 , ex:request-2 ;
     ldg:residualValue "2"^^xsd:decimal ;
@@ -99,15 +110,18 @@ ex:merge-1 a ldg:MergeRecord ;
 
 ex:posting-1 a ldg:Posting ;
     ldg:onAccount ex:account-pool ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:blocks-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "5"^^xsd:decimal ;
     ldg:runningBalance "2"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:request-1 .
 
-# ==== The account instances and the passes ===================================
+# ==== The ledger, the account instances and the passes ========================
 
+ex:ledger-issuer a ldg:Ledger ;
+    ldg:forOwner ex:issuer ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "1"^^xsd:nonNegativeInteger .
 ex:account-pool a ldg:Account ;
     ldg:ofDefinition ex:pool ; ldg:forOwner ex:issuer .
 ex:issuer a ex:Issuer .
-ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
+pass:blocks-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .

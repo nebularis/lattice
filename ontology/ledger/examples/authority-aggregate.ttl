@@ -24,6 +24,9 @@
 # and never by their identifiers (TD-161). The policy names that order as its
 # unit order criterion, and each request records its place in it. The merge
 # records all three requests, each with what it asked and what it was granted.
+# The authority's ledger names the profile the deployment gave it, and the one
+# pass, named from the ledger and a key for its evaluation, moved it to
+# revision 1.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -34,6 +37,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/authority-aggregate/> .
+@prefix pass: <https://example.org/lattice/ledger/authority-aggregate/ledger-authority/pass/> .
 
 # ==== The owner and the value space ===========================================
 
@@ -73,6 +77,14 @@ ex:delegated-aggregate a ldg:AccountDefinition ;
     ldg:admitsOwnerKind ex:Authority ; ldg:mergePolicy ex:shared-in-proportion ;
     rdfs:comment "100 units of delegated capacity, shared proportionally when oversubscribed." .
 
+# ==== The ledger profile =======================================================
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
 # ==== One position, three proposals, one merge record, three postings ========
 
 ex:proposal-1 rdfs:comment "The first proposal, 40 units." .
@@ -94,35 +106,38 @@ ex:request-3 a ldg:Request ;
 
 ex:merge-1 a ldg:MergeRecord ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:availableBefore "100"^^xsd:decimal ;
     ldg:request ex:request-1 , ex:request-2 , ex:request-3 .
 
 ex:posting-1 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "34"^^xsd:decimal ;
     ldg:runningBalance "66"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:request-1 .
 ex:posting-2 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
     ldg:runningBalance "33"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:request-2 .
 ex:posting-3 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
     ldg:runningBalance "0"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:request-3 .
 
-# ==== The account instances and the passes ===================================
+# ==== The ledger, the account instances and the passes ========================
 
+ex:ledger-authority a ldg:Ledger ;
+    ldg:forOwner ex:authority ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "1"^^xsd:nonNegativeInteger .
 ex:account-delegated-aggregate a ldg:Account ;
     ldg:ofDefinition ex:delegated-aggregate ; ldg:forOwner ex:authority .
 ex:authority a ex:Authority .
-ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
+pass:claims-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .

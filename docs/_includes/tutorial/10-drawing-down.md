@@ -47,7 +47,7 @@ Postings are ordered by whole numbers, **positions**, not by a clock, since cloc
 ```turtle
 ex:draw-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:inPass pass:draw-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
     ldg:runningBalance "9995000"^^xsd:decimal ;

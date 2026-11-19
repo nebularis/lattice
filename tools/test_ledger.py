@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
-"""Ledger LG-1, LG-2, LG-25 and LG-26: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
-and LG-2 "in detail" tables and the Validation Packs of LG-25 and LG-26. Validates LG-0's examples, configuration and runtime records, against
+"""Ledger LG-1, LG-2, LG-25, LG-26 and LG-27: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
+and LG-2 "in detail" tables and the Validation Packs of LG-25, LG-26 and LG-27. Validates LG-0's examples, configuration and runtime records, against
 the structural shapes, the SHACL-SPARQL constraints and the runtime laws, checks the import guard holds, the spec names no term
 of Party, Eligibility, Wording, Instrument or Behaviour, the cycle shape finishes on a generated tree, each runtime law refuses a
 record that breaks it, and the runtime shapes finish on a generated pass, both small here and at the plan's sizes in
@@ -22,7 +22,7 @@ import pytest
 from ledger_corpus import account_tree, one_pass
 from pyshacl import validate
 from rdflib import RDF, XSD, BNode, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import PROV, SH, SKOS
+from rdflib.namespace import OWL, PROV, RDFS, SH, SKOS
 
 ROOT = Path(__file__).resolve().parents[1]
 ONTOLOGY = ROOT / "ontology"
@@ -30,6 +30,7 @@ LEDGER = ONTOLOGY / "ledger"
 LATTICE = "https://www.nebularis.org/neuro-semantic/lattice/"
 LDG = Namespace(LATTICE + "ledger#")
 QNT = Namespace(LATTICE + "quantification#")
+FND = Namespace(LATTICE + "foundation#")
 
 sys.path.insert(0, str(ROOT / "tools"))
 import literate_extract  # noqa: E402
@@ -491,14 +492,94 @@ def _purposes_differ_where_one_required(g: Graph) -> None:
 
 
 def _checkpoint(balance: str, name: str = "research-grant", account: str = "account-grant-budget",
-                close: int = 3) -> Callable[[Graph], None]:
+                close: int = 3, debits: str = "140000", offered: str = "55000") -> Callable[[Graph], None]:
+    """A checkpoint at `close`, by default the grant's after the return: 90,000 and 50,000 drawn, 55,000 offered, and 110,000 held."""
     def mutate(g: Graph) -> None:
         ex = _ex(name)
         checkpoint = ex[f"checkpoint-{close}"]
         for p, o in [(RDF.type, LDG.Checkpoint), (LDG.onAccount, ex[account]),
-                     (LDG.closePosition, _integer(close)), (LDG.balanceValue, _decimal(balance))]:
+                     (LDG.closePosition, _integer(close)), (LDG.balanceValue, _decimal(balance)),
+                     (LDG.debitsTotal, _decimal(debits)), (LDG.creditsOfferedTotal, _decimal(offered))]:
             g.add((checkpoint, p, o))
     return mutate
+
+
+def _set(name: str, subject: str, prop: URIRef, value: Literal) -> Callable[[Graph], None]:
+    def mutate(g: Graph) -> None:
+        g.set((_ex(name)[subject], prop, value))
+    return mutate
+
+
+def _pass(name: str, key: str) -> URIRef:
+    """A pass of an example, named from the example's one ledger and the key of its evaluation."""
+    ledger = next(_example(name).subjects(RDF.type, LDG.Ledger))
+    return URIRef(f"{ledger}/pass/{key}")
+
+
+def _pass_revision(name: str, key: str, revision: int) -> Callable[[Graph], None]:
+    def mutate(g: Graph) -> None:
+        g.set((_pass(name, key), LDG.passRevision, _position(revision)))
+    return mutate
+
+
+def _ledger_revision(name: str, owner: str, revision: int) -> Callable[[Graph], None]:
+    def mutate(g: Graph) -> None:
+        g.set((_ex(name)[f"ledger-{owner}"], LDG.revision, _position(revision)))
+    return mutate
+
+
+def _both(*mutations: Callable[[Graph], None]) -> Callable[[Graph], None]:
+    def mutate(g: Graph) -> None:
+        for m in mutations:
+            m(g)
+    return mutate
+
+
+def _not_moved_since_the_last_close(g: Graph) -> None:
+    """A checkpoint of the parent at a close after position 5, where nothing was recorded, equal to the one after position 4."""
+    _checkpoint("10", "credit-cut-at-parent", "account-parent", 5, "5", "9")(g)
+
+
+def _never_moved(g: Graph) -> None:
+    """A checkpoint of the equipment budget after position 1, before anything was recorded on it: its stated amount, with nothing
+    drawn or offered."""
+    _checkpoint("80000", account="account-equipment-budget", close=1, debits="0", offered="0")(g)
+
+
+def _second_ledger_for_one_owner(g: Graph) -> None:
+    ex = _ex("credit-cut-at-parent")
+    twin = ex["ledger-holder-twin"]
+    for p, o in [(RDF.type, LDG.Ledger), (LDG.forOwner, ex.holder), (LDG.ledgerProfile, ex["ledger-profile"]),
+                 (LDG.revision, _position(4))]:
+        g.add((twin, p, o))
+
+
+def _pass_on_two_owners(g: Graph) -> None:
+    """The equipment spend's merge on the grant of a second grantee, whose own ledger is at that pass's revision."""
+    ex = _ex("research-grant")
+    for s, p, o in [(ex.other, RDF.type, ex.Grantee), (ex["account-grant-budget-other"], RDF.type, LDG.Account),
+                    (ex["account-grant-budget-other"], LDG.ofDefinition, ex["grant-budget"]),
+                    (ex["account-grant-budget-other"], LDG.forOwner, ex.other),
+                    (ex["ledger-other"], RDF.type, LDG.Ledger), (ex["ledger-other"], LDG.forOwner, ex.other),
+                    (ex["ledger-other"], LDG.ledgerProfile, ex["ledger-profile"]),
+                    (ex["ledger-other"], LDG.revision, _position(2))]:
+        g.add((s, p, o))
+    g.set((ex["equipment-spend-merge"], LDG.onAccount, ex["account-grant-budget-other"]))
+
+
+def _owner_without_a_ledger(g: Graph) -> None:
+    g.remove((_ex("research-grant")["ledger-institution"], None, None))
+
+
+def _pass_without_a_record(g: Graph) -> None:
+    idle = _pass("research-grant", "idle")
+    for p, o in [(RDF.type, LDG.Pass), (LDG.passPosition, _integer(4)), (LDG.passRevision, _position(4))]:
+        g.add((idle, p, o))
+
+
+def _closing_recurrence_on_a_definition(g: Graph) -> None:
+    ex = _ex("credit-cut-at-parent")
+    g.add((ex.child, LDG.closingRecurrence, ex.closes))
 
 
 MUTATIONS = {
@@ -547,7 +628,37 @@ MUTATIONS = {
         "whole-or-nothing", _residual_account_without_permission, "ResidualAccountNeedsResidualsShape"),
     "a checkpoint one minor unit off": ("research-grant", _checkpoint("110001"), "CheckpointFoldShape"),
     "a checkpoint that leaves out the cut": (
-        "credit-cut-at-parent", _checkpoint("13", "credit-cut-at-parent", "account-parent"), "CheckpointFoldShape"),
+        "credit-cut-at-parent", _set("credit-cut-at-parent", "checkpoint-parent-3", LDG.balanceValue, _decimal("13")),
+        "CheckpointFoldShape"),
+    "a checkpoint's debits one unit off": (
+        "credit-cut-at-parent", _set("credit-cut-at-parent", "checkpoint-parent-3", LDG.debitsTotal, _decimal("6")),
+        "CheckpointTotalsShape"),
+    "a checkpoint's credits offered counted at the amount applied less the cut": (
+        "credit-cut-at-parent", _set("credit-cut-at-parent", "checkpoint-parent-3", LDG.creditsOfferedTotal, _decimal("5")),
+        "CheckpointTotalsShape"),
+    "a checkpoint's credits offered counting a kind the account does not accept": (
+        "insurance-aggregate", _checkpoint("10000000", "insurance-aggregate", "account-annual-cap", 4, "10300000", "10300000"),
+        "CheckpointTotalsShape"),
+    "a checkpoint for an account that did not move since its last": (
+        "credit-cut-at-parent", _not_moved_since_the_last_close, "CheckpointOnlyWhereMovedShape"),
+    "a checkpoint for an account that never moved": ("research-grant", _never_moved, "CheckpointOnlyWhereMovedShape"),
+    "two ledgers for one owner": ("credit-cut-at-parent", _second_ledger_for_one_owner, "OneLedgerPerOwnerShape"),
+    "a pass on the accounts of two owners": ("research-grant", _pass_on_two_owners, "PassWritesOneLedgerShape"),
+    "a pass whose owner has no ledger": ("research-grant", _owner_without_a_ledger, "PassWritesOneLedgerShape"),
+    "a pass that writes no record": ("research-grant", _pass_without_a_record, "PassWritesOneLedgerShape"),
+    "two passes of one ledger at one revision": (
+        "research-grant", _both(_pass_revision("research-grant", "equipment-return", 2),
+                                _ledger_revision("research-grant", "institution", 2)), "PassRevisionsInOrderShape"),
+    "revisions against the order of the passes": (
+        "research-grant", _both(_pass_revision("research-grant", "staff-spend", 2),
+                                _pass_revision("research-grant", "equipment-spend", 1)), "PassRevisionsInOrderShape"),
+    "a revision skipped": (
+        "research-grant", _both(_pass_revision("research-grant", "equipment-return", 4),
+                                _ledger_revision("research-grant", "institution", 4)), "PassRevisionsInOrderShape"),
+    "a ledger behind its latest pass": (
+        "research-grant", _ledger_revision("research-grant", "institution", 2), "LedgerAtItsLatestPassShape"),
+    "a closing recurrence on an account definition": (
+        "credit-cut-at-parent", _closing_recurrence_on_a_definition, "ClosingRecurrenceOnProfileShape"),
 }
 
 
@@ -564,14 +675,86 @@ def test_runtime_law_refuses_a_record_that_breaks_it(case: str) -> None:
 
 @pytest.mark.parametrize("name,mutate", [
     ("research-grant", _checkpoint("110000")),
-    ("credit-cut-at-parent", _checkpoint("10", "credit-cut-at-parent", "account-parent")),
-], ids=["the grant after the return", "the parent less its cut"])
+    ("insurance-aggregate", _checkpoint("10000000", "insurance-aggregate", "account-annual-cap", 4, "10300000", "300000")),
+], ids=["the grant after the return", "the annual cap, which a reinstatement does not restore"])
 def test_a_checkpoint_at_the_sum_conforms(name: str, mutate: Callable[[Graph], None]) -> None:
     g = MODEL + _example(name)
     mutate(g)
     conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
     assert conforms, _violating_shapes(report)
     _agree(g, report)
+
+
+def test_a_credit_cut_in_full_moves_the_account() -> None:
+    """ADR-A131's addendum of 2026-11-19: the parent's balance is 10 at the closes after positions 3 and 4, and it still has a
+    checkpoint at both, since the credit cut in full at it raised its credits offered. The example conforms (LG27-01)."""
+    g = _example("credit-cut-at-parent")
+    ex = _ex("credit-cut-at-parent")
+    totals = [(g.value(c, LDG.balanceValue), g.value(c, LDG.debitsTotal), g.value(c, LDG.creditsOfferedTotal))
+              for c in (ex["checkpoint-parent-3"], ex["checkpoint-parent-4"])]
+    assert totals == [(_decimal("10"), _decimal("5"), _decimal("8")), (_decimal("10"), _decimal("5"), _decimal("9"))]
+    assert [(g.value(c, LDG.cutAt), g.value(c, LDG.cutValue)) for c in g.subjects(LDG.cutOf, ex["credit-4-posting"])] == [
+        (ex["account-parent"], _decimal("1"))]
+
+
+RECORDED = [*ACCEPTED, "refusal-overdraw", "refusal-credit-kind"]
+
+
+@pytest.mark.parametrize("name", RECORDED)
+def test_each_pass_is_named_from_its_ledger_and_moves_it_once(name: str) -> None:
+    """Each example with records has one ledger for its one owner, under a profile. Each pass's IRI is the ledger's, then
+    `/pass/` and the key of its evaluation (LG-Q46), and the passes in the order of their positions record 1, 2 and so on, the
+    ledger at the last (LG-Q37, LG-Q45)."""
+    g = _example(name)
+    ledgers = list(g.subjects(RDF.type, LDG.Ledger))
+    assert len(ledgers) == 1
+    ledger = ledgers[0]
+    assert (g.value(ledger, LDG.ledgerProfile), RDF.type, LDG.LedgerProfile) in g
+    passes = sorted(g.subjects(RDF.type, LDG.Pass), key=lambda p: int(g.value(p, LDG.passPosition)))
+    assert passes and all(str(p).startswith(f"{ledger}/pass/") for p in passes)
+    assert [int(g.value(p, LDG.passRevision)) for p in passes] == list(range(1, len(passes) + 1))
+    assert int(g.value(ledger, LDG.revision)) == len(passes)
+
+
+def test_the_closing_recurrence_is_the_profiles() -> None:
+    """`ldg:closingRecurrence` is on the ledger profile and no account definition restricts it (LG-Q24, MEC-105). A ledger names
+    its profile by an edge that bears meaning (LG-Q37)."""
+    assert MODEL.value(LDG.closingRecurrence, RDFS.domain) == LDG.LedgerProfile
+    restricted = {MODEL.value(r, OWL.onProperty) for r in MODEL.objects(LDG.AccountDefinition, RDFS.subClassOf)}
+    assert LDG.closingRecurrence not in restricted
+    assert MODEL.value(LDG.ledgerProfile, FND.meaningBearing) == Literal(True)
+    assert (LDG.LedgerProfile, RDFS.subClassOf, FND.Versioned) in MODEL
+
+
+# A ledger, a pass and a checkpoint missing what they must state, each refused by a generated structural shape.
+MISSING = {
+    "a ledger with no profile": ("research-grant", "ledger-institution", LDG.ledgerProfile),
+    "a ledger with no revision": ("research-grant", "ledger-institution", LDG.revision),
+    "a checkpoint with no debits": ("credit-cut-at-parent", "checkpoint-child-3", LDG.debitsTotal),
+    "a checkpoint with no credits offered": ("credit-cut-at-parent", "checkpoint-child-3", LDG.creditsOfferedTotal),
+}
+
+
+@pytest.mark.parametrize("case", MISSING)
+def test_a_record_missing_what_it_must_state_is_refused(case: str) -> None:
+    name, subject, prop = MISSING[case]
+    g = MODEL + _example(name)
+    g.remove((_ex(name)[subject], prop, None))
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert not conforms
+    paths = {str(report.value(r, SH.resultPath)) for r in report.subjects(SH.resultSeverity, SH.Violation)
+             if report.value(r, SH.sourceConstraintComponent) == SH.MinCountConstraintComponent}
+    assert paths == {str(prop)}
+
+
+def test_a_pass_with_no_revision_is_refused() -> None:
+    g = MODEL + _example("research-grant")
+    g.remove((_pass("research-grant", "staff-spend"), LDG.passRevision, None))
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert not conforms
+    paths = {str(report.value(r, SH.resultPath)) for r in report.subjects(SH.resultSeverity, SH.Violation)
+             if report.value(r, SH.sourceConstraintComponent) == SH.MinCountConstraintComponent}
+    assert paths == {str(LDG.passRevision)}
 
 
 def test_the_cut_example_records_the_addendum_case() -> None:

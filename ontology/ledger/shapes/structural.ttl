@@ -14,7 +14,7 @@
 
 ldg:AccountDefinitionShape a sh:NodeShape ;
     sh:targetClass ldg:AccountDefinition ;
-    sh:property [ sh:path ldg:admitsOwnerKind ; sh:minCount 1 ], [ sh:path ldg:closingRecurrence ; sh:maxCount 1 ], [ sh:path ldg:creditCeiling ; sh:maxCount 1 ], [ sh:path ldg:keyDimension ; sh:maxCount 1 ], [ sh:path ldg:mergePolicy ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOf ; sh:maxCount 1 ], [ sh:path ldg:periodRecurrence ; sh:maxCount 1 ], [ sh:path ldg:resetRecurrence ; sh:maxCount 1 ], [ sh:path ldg:statedAmount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:unitOfAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path ldg:admitsOwnerKind ; sh:minCount 1 ], [ sh:path ldg:creditCeiling ; sh:maxCount 1 ], [ sh:path ldg:keyDimension ; sh:maxCount 1 ], [ sh:path ldg:mergePolicy ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOf ; sh:maxCount 1 ], [ sh:path ldg:periodRecurrence ; sh:maxCount 1 ], [ sh:path ldg:resetRecurrence ; sh:maxCount 1 ], [ sh:path ldg:statedAmount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:unitOfAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
 
 ldg:AccountShape a sh:NodeShape ;
     sh:targetClass ldg:Account ;
@@ -22,11 +22,19 @@ ldg:AccountShape a sh:NodeShape ;
 
 ldg:CheckpointShape a sh:NodeShape ;
     sh:targetClass ldg:Checkpoint ;
-    sh:property [ sh:path ldg:balanceValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:closePosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path ldg:balanceValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:closePosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:creditsOfferedTotal ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:debitsTotal ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
 
 ldg:CutShape a sh:NodeShape ;
     sh:targetClass ldg:Cut ;
     sh:property [ sh:path ldg:cutAt ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:cutOf ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:cutValue ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+ldg:LedgerProfileShape a sh:NodeShape ;
+    sh:targetClass ldg:LedgerProfile ;
+    sh:property [ sh:path ldg:admitsCeilingAboveStated ; sh:maxCount 1 ], [ sh:path ldg:closingRecurrence ; sh:maxCount 1 ] .
+
+ldg:LedgerShape a sh:NodeShape ;
+    sh:targetClass ldg:Ledger ;
+    sh:property [ sh:path ldg:forOwner ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:ledgerProfile ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:revision ; sh:minCount 1 ; sh:maxCount 1 ] .
 
 ldg:MergePolicyShape a sh:NodeShape ;
     sh:targetClass ldg:MergePolicy ;
@@ -38,7 +46,7 @@ ldg:MergeRecordShape a sh:NodeShape ;
 
 ldg:PassShape a sh:NodeShape ;
     sh:targetClass ldg:Pass ;
-    sh:property [ sh:path ldg:passPosition ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path ldg:passPosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:passRevision ; sh:minCount 1 ; sh:maxCount 1 ] .
 
 ldg:PostingShape a sh:NodeShape ;
     sh:targetClass ldg:Posting ;

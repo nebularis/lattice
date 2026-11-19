@@ -46,12 +46,23 @@ dct:description a owl:AnnotationProperty .
 ldg:AccountDefinition a owl:Class ;
     rdfs:comment "An amount consumed and restored, as the terms state it." ;
     fnd:utility "Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against, the kinds of credit that restore it or a credit ceiling only where the terms need them." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsOwnerKind ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:closingRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditCeiling ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:keyDimension ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergePolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:partOf ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:periodRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:resetRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:statedAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOfAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsOwnerKind ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditCeiling ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:keyDimension ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergePolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:partOf ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:periodRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:resetRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:statedAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOfAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+ldg:LedgerProfile a owl:Class ;
+    rdfs:comment "The rules a deployment sets for every ledger it runs." ;
+    fnd:utility "Author one for each set of rules a deployment states, and name it from every ledger it governs. It says whether a credit ceiling above a stated amount is admitted, and holds the settings that tune cost and change no meaning, the closing recurrence among them. A profile is versioned. A change of its rules is a new version, and a ledger names the version that governs it." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsCeilingAboveStated ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:closingRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
 
 ldg:MergePolicy a owl:Class ;
     rdfs:comment "What a scope declares for requests that compete at one position." ;
     fnd:utility "State one for each scope that says how competing requests are treated, a contract, a document it cites or a deployment, and name it from every account definition it governs. It carries the merge rule always, a rounding method and a residual allocation where the rule shares in proportion, and the criteria, the permission, the residual account and the guards only where the terms state them. A policy is versioned. A change of treatment is a new version, and an account definition names the version that governs it, so what a past balance was settled under does not change. Where several accounts take part in one merge, the policy of the account the requests are made at governs." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:allowsResiduals ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:excessRecovery ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rankCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresDistinctRanks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresSamePurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAccount ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingDifference ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
+
+ldg:admitsCeilingAboveStated a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "Whether the ledgers a profile governs admit a credit ceiling above an account's stated amount." ;
+    fnd:utility "State true where the deployment runs terms that need a ceiling above a stated amount, such as a reinstatement that raises a layer's capacity above its first stated amount. Unstated or false, such a ceiling is not admitted." ;
+    rdfs:domain ldg:LedgerProfile ;
+    rdfs:range xsd:boolean .
 
 ldg:admitsOwnerKind a owl:ObjectProperty ;
     rdfs:comment "The kinds of owner this account admits." ;
@@ -66,9 +77,9 @@ ldg:allowsResiduals a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:range xsd:boolean .
 
 ldg:closingRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "The recurrence at whose boundaries the account's book closes and a checkpoint is written." ;
-    fnd:utility "Sets the trade between storage and read cost per account: a heavily drawn aggregate closes often and a quiet one seldom. A close is keyed on the recorded axis, so it seals the postings recorded by then. Leave unset for an account whose history is folded whole." ;
-    rdfs:domain ldg:AccountDefinition ;
+    rdfs:comment "The recurrence at whose boundaries the books of a ledger's accounts close and checkpoints are written." ;
+    fnd:utility "Sets the trade between storage and read cost for the ledgers a profile governs: a ledger read often closes often and a quiet one seldom. A close is keyed on the recorded axis, so it seals the postings recorded by then, and it writes a checkpoint only for an account that moved. It changes no balance and no reading. Leave unset for a ledger whose history is folded whole." ;
+    rdfs:domain ldg:LedgerProfile ;
     rdfs:range qnt:Recurrence .
 
 ldg:countsPurpose a owl:ObjectProperty ;
