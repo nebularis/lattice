@@ -86,7 +86,7 @@ The answers to the status record's next action of 2026-11-18, and the maintainer
 
 ## Fixes to running code
 
-The investigations found five defects in code that runs and one design point to test. Each is a slice of its own, built in this order, with a test that fails before the fix and passes after it. The order puts first the one that can lose a confirmed write.
+The investigations found five defects in code that runs and one design point to test, and later answers and a review added six more slices. Each is a slice of its own, built in this order, with a test that fails before the fix and passes after it. The order puts first the one that can lose a confirmed write.
 
 | Slice | Fix | Finding |
 |---|---|---|
@@ -99,7 +99,28 @@ The investigations found five defects in code that runs and one design point to 
 | MSA-F7 | a deletion whose tombstone loses a race to a save of the same part or document still removes it, the tombstone planned again at the revision the save left | MSAF6-01 |
 | MSA-F8 | a failure of the stream writer's own code is answered as the writer's fault, a 500, and the service answers it 500 | MSA-F2 |
 | MSA-F9 | a new document's save that loses the description's guard is answered as a change to send again, read from the document's own row, not as a deleted id | MSAF6-02 |
+| MSA-F10 | the stream writer's thread survives a reply or an offset that cannot be sent or stored, and a writer that cannot go on leaves its group, so no partition is held by a member that applies nothing | MSAF2-01 |
+| MSA-F11 | a deletion answered from its receipt still removes a row its tombstone lost, so a batch that fails after its update commits is completed by its retry | MSAF7-01 |
+| MSA-F12 | a reply built from an exception carries a fixed message, and the exception's text goes to the log with the command's id | MSAF8-01 |
+| MSA-F13 | the Java topology refuses a queue whose `bindsTo` names no declared exchange, as the Python worker does | the review of MSA-F4 |
+| MSA-F14 | a command's digest separates two bodies that differ in how their blank nodes connect, each blank node labelled by a hash of its own quads. Built only where a studio command's body can hold a blank node | TD-165 |
 
 MSAI11-01 is by design under [ADR-A149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md) decision 13, which orders a command's operations so that a guard failing part way leaves nothing a reader acts on. MSA-F6 tests that claim for every command that writes several aggregates. A unit on the port is all or nothing, so moving a studio command onto the port gives its operations one guard, which is the next plan's.
 
 MSA-F7 to MSA-F9 come from the maintainer's answers of 2026-11-18, and are built in that order, each with a test that fails before it.
+
+MSA-F10 to MSA-F14 come from the review of MSA-F1 to MSA-F9 on 2026-11-19, made by reading, with no test or model run, and the maintainer's answers to it of the same day. They are built in that order, each with a test that fails before it. The review's findings are these.
+
+- **MSAF2-01, the writer's thread can end and keep its partitions.** `StreamWriter.run` catches only an interruption. A reply sent on a closed channel throws a runtime exception, which `reply` does not catch, and storing an offset can throw too. Either ends the thread while the consumer stays a member of its group, so its partitions are held and nothing applies them, and nothing watches the thread. The defect is older than the fixes. It defeats what MSA-F2 and MSA-F8 give, a write that never holds its partition, and the fairness model X1 assumes of a live writer. MSA-F10.
+- **MSAF7-01, the second tombstone is not replayed.** `Writer.finish` runs only for a command planned in the batch in hand. Where the batch's update commits and a later step fails on a store that cannot be reached, the retry answers the deletion from its receipt and `finish` does not run again, so the row MSAF6-01 described stays live. MSA-F11.
+- **MSAF8-01, an exception's text reaches a client.** The replies for a refused write and for the writer's own failure carry the exception's message, and `StudioApi` returns a reply's message as the response body. A store's refusal or a failure in our code can name an endpoint, a query or a class. MSA-F12.
+- **MSAI6-01, model X1 does not hold the studio's guard.** X1's stores refuse a command unless the partition's version row is one below the command's position. The studio keeps a receipt for each command id and a revision for each aggregate, and no row for a partition. The one configuration without the guard also drops the receipts. A configuration with receipts and no partition row is missing, and it is the one a store without such a row gets. It joins MSA-I6's remaining rows.
+
+The maintainer answered the review's smaller points on 2026-11-19.
+
+- **A message that cannot be decoded is answered 400,** in MSA-F12.
+- **The digest.** The limit is recorded as TD-165, and MSA-F14 narrows it where bodies hold blank nodes. Full canonicalisation is not taken.
+- **A broker's stale binding** goes to a unit of its own for administering running components, [component-administration](component-administration.md), planned and built later.
+- **The Java topology's `bindsTo` check** is MSA-F13.
+- **The models' README on X2's audit** is settled by a run. MSA-I6 adds an invariant that a flagged decision's evidence is stale, which we expect TLC to violate, and both sentences are rewritten from what it prints.
+- **Wider instances** are run in MSA-I6, sized to the machine that runs them. The models have to run on macOS and in a Linux cloud session with far less memory than machine S, so the runner reads the memory it has and skips with a reason what does not fit, as the [brief of 2026-11-19](../notes/machine-s-brief-2026-11-19-multi-store.md)'s section 4.4 states.
