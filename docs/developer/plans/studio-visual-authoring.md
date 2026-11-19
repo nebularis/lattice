@@ -97,7 +97,8 @@ A slice's documents change in the slice. Estimates are in tokens.
 | SVA-P1b | the studio reads the compiled profile for where data lands: the worker's landing code and `landing-places.json` gone, the canvas reading `compiled-profile.ttl` | `workers`, `contracts/config-studio`, `apps/config-studio` | the canvas draws the facility sample as SVA-P1 does, from the compiled profile alone | SVA-P1a | 120k |
 | SVA-P2 | edits on the canvas, the set fixed against the `dal:` shapes in the slice's brief | `apps/config-studio` | each gesture makes the triples its form field makes, and one undo removes them | SVA-P1 | 200k |
 | SVA-P3 | the simulation executor in the run worker: the sample world loaded, the request checked and bound with the caller library, the update run, the delta by landing place, the outcome | `platform/config-studio-transforms`, `packages/persistence/java` | create, replace, delete and a stale replace on the facility sample give the deltas the persistence conformance suite expects, the same on a repeat and under permuted input | SVA-R3 | 300k |
-| SVA-P4 | the simulator pane: the sample world, the object form, an uploaded object, the operations, as another writer, step back, and the four displays | `apps/config-studio` | the journey creates a facility, changes it, loses a race as another writer and steps back, with the canvas lighting each landing place | SVA-R4, SVA-P1, SVA-P3 | 260k |
+| SVA-P3a | the caller libraries' confirmation read: after a write, the read that classifies its outcome as applied, refused or a lost race with its cause, specified once with shared vectors, in the Python and Java caller libraries, and used by the studio's simulator in place of its own (TD-173) | `packages/persistence`, `contracts/persistence`, `platform/config-studio-transforms` | both libraries classify every vector alike, the simulator's outcome comes from the Java library, and `PersistenceStep.confirm` is gone | SVA-P3 | 200k |
+| SVA-P4 | the simulator pane: the sample world, the object form, an uploaded object, the operations, as another writer, step back, and the four displays | `apps/config-studio` | the journey creates a facility, changes it, loses a race as another writer and steps back, with the canvas lighting each landing place | SVA-R4, SVA-P1, SVA-P3a | 260k |
 | SVA-P5 | an object generated from the aggregate's boundary shape, one of each owned node the shape requires, with values of each property's datatype | `apps/config-studio` | a generated facility passes its boundary shape and is created in the simulator | SVA-P4 | 120k |
 
 ### Phase S, surface
@@ -158,7 +159,8 @@ flowchart LR
     P1a --> P1b["SVA-P1b"]
     P1b --> P3
     R3 --> P3["SVA-P3"]
-    P3 --> P4["SVA-P4"]
+    P3 --> P3a["SVA-P3a"]
+    P3a --> P4["SVA-P4"]
     P1 --> P4
     R4 --> P4
     P3 --> S2["SVA-S2"]
