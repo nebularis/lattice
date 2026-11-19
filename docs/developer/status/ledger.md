@@ -12,7 +12,7 @@
 
 ## Is this unit complete?
 
-**No.** LG-0 (examples first) and LG-1 (the configuration document) are built, verified and committed. LG-8 (the proofs widened on HOL-Library) is built on machine S and committed locally on `fm/prelude-and-ledger-proofs`, waiting for the maintainer's verification, without LM1, which waits on LG-Q11. LG-7 (the laws mechanised) and LG-2 (the runtime document) are built on machine S and committed locally, waiting for the maintainer's verification. LG-5 (benchmark) is part built, ahead of the LG-4 it depends on. LG-3 (Behaviour's migration) and LG-4 (allocation) are not briefed.
+**No.** LG-0 to LG-2, LG-7 to LG-10 and LG-13 to LG-24 are merged. LG-11, LG-12 and LG-25 to LG-28, the vocabulary rework, were briefed on 2026-11-19 and are being built on machine S from [the brief of 2026-11-19](../notes/machine-s-brief-2026-11-19.md). LG-3 (Behaviour's migration) and LG-4 (allocation) are planned and not briefed, and follow the rework. LG-5 (the benchmark) is part built and blocked on LG-4, and LG-6 is planned behind LG-5.
 
 ## Current state
 
@@ -35,8 +35,8 @@ Since then the work has been design rather than build, and it has answered the w
 | | What | Owner |
 |---|---|---|
 | PDD-15 | **decided (a), 2026-10-28.** A periodic amount becomes one account per period, keyed by the recurrence bin the effective position falls in, with no reset credit. Three rules came with it: the period key is derived at write and never supplied by a draw, one period recurrence holds along a path with a keyed child part of its parent's instance under the same bin key, and a draw whose effective position cannot be binned is Undetermined. LG-2 built the first two, with `ldg:periodRecurrence` beside a deprecated `ldg:resetRecurrence` rather than a rename | LG-3, and the evaluator for the third |
-| the to-first-in-order rule | raised by LG-8. `ldg:ToFirstInOrder` can give a residual unit to a key of weight zero, past its bound, so it is lawful over whole units only on positive weights. Whether a shape refuses a zero-weight key under it, or largest remainder is the only residual rule for a proportional merge, is open | the maintainer, then LG-4 |
-| LG-Q9, LG-Q10 | raised by LG-2 in the plan. Which balance a posting's running balance states under post-once (LF-Q17 is answered (b) and not yet built), and how a pool that caps an aggregate's reinstatements is built now that a credit rolls up | the maintainer |
+| the to-first-in-order rule | **closed.** Raised by LG-8 as LG-Q15 and answered 2026-11-09. The keys in a split are the ones the stated meaning names, never what a rule filters, so a key of zero weight that the wording names is a key and takes the odd unit where the declared order puts it first. LG-10 corrected the published definition and is merged | closed |
+| LG-Q9, LG-Q10 | **both answered.** LG-Q9, answered 2026-11-09, decided (a), a running balance on the posting at the drawn account. LG-Q10, answered 2026-11-10, decided as proposed, a credit carries its kind from a bound scheme and each account declares the kinds that restore it, all by default | closed |
 | the restatement read's partition | PDD-15's claim that an old period's later books hold only stragglers holds where the partition root is the keyed instance, which the benchmark does not yet partition by. The next measurement, not a blocker | benchmark |
 | MS-Q4 | **answered (a)**, with no persistence addendum owed. A scratch dataset is a dataset, so the restore is an ordinary whole-dataset one of a small dataset and `dal:EpochProfile` needs no change | closed |
 | MS-Q11 and LF-Q21 | **both answered**, and they never competed. Evaluation before commitment is a lifecycle boundary LATTICE does not implement, and a droppable graph governs evaluation against committed record | closed |
@@ -49,7 +49,7 @@ Since then the work has been design rather than build, and it has answered the w
 | WPG-Q2 | **open, leaning (a).** Where the declared ceiling lives: on `ldg:AccountDefinition` as a per-account availability bound, on the draw term, or in Quantification beside LF-Q22(a)'s maximum magnitude per value space. The bound is a property of the account, and LF-Q22's is about a value space, so the two are different things that happen to be upper bounds | the maintainer, then LG-4 |
 | the `owl:rational` probe | **done by LG-2**, TSD-70. rdflib, Oxigraph and Jena keep the literal and none compares it by value, so a proportion is two integers. ES-5 can rely on the finding | closed |
 
-**Next action:** the maintainer's verification of LG-7 and LG-2 from their packs, and LG-Q9 and LG-Q10. Then LG-3, Behaviour's migration. The README's narrative and exemplar expansion is requested and not started, and no longer waits on LG-2. **Then, as soon as the design is settled:** the documentation unit's OD-DOC4, the layer interactions record, whose brief holds the inputs this unit's design discussions produced.
+**Next action:** the vocabulary rework on machine S, in the order LG-11, LG-25, LG-26, LG-27, LG-28, then LG-12, reviewed here as its bundles return. Beside it, a design brief for LG-3, Behaviour's migration, is written while the rework builds, and WPG-Q2, where the declared ceiling lives, is put to the maintainer. Then LG-3 and LG-4. The README's narrative and exemplar expansion is requested and not started, and follows the rework, since the rework rewrites the README. **Then, as soon as the design is settled:** the documentation unit's OD-DOC4, the layer interactions record, whose brief holds the inputs this unit's design discussions produced.
 
 ## 2026-11-16, LG-20 built
 

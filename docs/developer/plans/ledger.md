@@ -472,9 +472,9 @@ to the release's number.
 | Capacity | the withdrawn execution profile (P7-Q4) leaves no second model of a consumed amount |
 | Improved ontology documentation | **OD-DOC4, the layer interactions record, is picked up as soon as this unit's design is settled**, which is when the scenarios note is ruled through, LG-Q23 is decided and machine S's brief is written. Its brief keeps the list of inputs, and STD-326 adds to it until then |
 
-## Questions LG-Q1 to LG-Q25
+## Questions
 
-LG-Q9 and LG-Q10 were raised on 2026-11-08 by LG-2's build and are open. LG-Q11 to LG-Q13 were raised the same day at the verification of LG-7 and LG-2, from the [sketch on balances under post-once](../sketches/ledger-balances-under-post-once.md) §5, and are open. LG-Q14 was raised the same day, when `HOL-Library` built on machine R under a memory limit, and decided (d) the same day. LG-Q11 was decided on 2026-11-09. LG-Q17 was raised the same day, at that decision. LG-Q15 and LG-Q16 were raised on 2026-11-09 from LG-8's first finding, in the [sketch on the residual to the first in order](../sketches/ledger-residual-to-first-in-order.md), and are open. LG-Q24 and LG-Q25 were raised on 2026-11-12, when the maintainer decided LG-Q21 as a derivation through Surface and ruled scenario E2.
+LG-Q9 and LG-Q10 were raised on 2026-11-08 by LG-2's build. LG-Q11 to LG-Q13 were raised the same day at the verification of LG-7 and LG-2, from the [sketch on balances under post-once](../sketches/ledger-balances-under-post-once.md) §5. Each is answered in the table below. LG-Q14 was raised the same day, when `HOL-Library` built on machine R under a memory limit, and decided (d) the same day. LG-Q11 was decided on 2026-11-09. LG-Q17 was raised the same day, at that decision. LG-Q15 and LG-Q16 were raised on 2026-11-09 from LG-8's first finding, in the [sketch on the residual to the first in order](../sketches/ledger-residual-to-first-in-order.md), and answered that day. LG-Q24 and LG-Q25 were raised on 2026-11-12, when the maintainer decided LG-Q21 as a derivation through Surface and ruled scenario E2.
 
 | ID | Question | Options | Leaning |
 |---|---|---|---|
