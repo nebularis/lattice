@@ -44,6 +44,7 @@ Each slice is the sketch's investigation of the same identifier, with the falsif
 | MSA-I10 | paper | `docs/developer/notes/multi-store/` | MSA-I1, LG-2 |
 | MSA-I11 | paper | `docs/developer/notes/multi-store/` | MSA-I4 |
 | MSA-I12 | proof of concept | `spikes/multi-store-emitted-topology/` | none |
+| MSA-I13 | test support | `tools/testing/postgres/` | none |
 
 ## Decided by the maintainer, 2026-11-17
 
@@ -73,6 +74,15 @@ The answers to the status record's next action of 2026-11-18, and the maintainer
 - **MSA-Q21, the number type.** It stays generic over an ordered ring. A model that only stores an amount treats it as a value of any type.
 
 - **MSA-Q20, what a position is.** Confirmed by the maintainer on 2026-11-18, in the same addendum to ADR-A-FM2. A natural number on a named axis, compared only within its axis. On a sequence the writer assigns the next number, with no gap, inside the write the axis serialises, and 0 means nothing is written yet. On an effective axis the arrangement assigns it, and it may skip or be shared. The [brief of 2026-11-18](../notes/machine-s-brief-2026-11-18.md) says what a relational store has to respect for it to hold.
+
+## Decided by the maintainer, 2026-11-19
+
+- **C1 to C3 of MSA-I2.** A pass is evaluated from one revision of a ledger and written as one request, which moves the revision once and is refused when the ledger has moved (LG-Q45 and LG-Q46 of the [ledger plan](ledger.md), ADR-A131's second addendum of 2026-11-19). Behaviour states its half when it imports Ledger, and the plan that builds the logical port states the port's half (PDD-22).
+- **The port's half, a finding of MSA-I11 for that plan.** A write on the port names the revision it expects. It returns the revision it produced or, where it is turned away, the revision it found. MSA-I8 builds to this.
+- **A pass over two ledgers is not decided.** Each ledger takes a request of its own. MSA-I6 models it with the saga row.
+- **MSA-I13, a PostgreSQL test fixture,** is added and built first, since the isolation probes of MSA-I6, MSA-I7 and MSA-I8 stand on it. It runs on Windows, macOS and a cloud session.
+- **MSA-I5 is built in Isabelle on machine S.** The Rocq formalisation of the sketch's §4.14 stays in the plan and is built off machine S on Rocq 9.3.0, the version the earlier spike's claim records name, once `exec` and its laws exist.
+- **Branches.** `spi/multi-store-architecture` is a merging point. Machine S works on `spi/worktree-s`, by the [brief of 2026-11-19](../notes/machine-s-brief-2026-11-19-multi-store.md) and its [ledger half](../notes/machine-s-brief-2026-11-19.md).
 
 ## Fixes to running code
 
