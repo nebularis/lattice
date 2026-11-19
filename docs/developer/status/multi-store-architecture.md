@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** built 2026-11-18.
+**Status:** building 2026-11-18.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous on machine S, at the maintainer's request of 2026-11-17 and the brief of the same day, committing locally only and never pushing, with up to two sub-agents. The branch defers versioning, so Persistence's spec, changed by MSA-F5, is reported unbumped until the merge.
 
@@ -12,7 +12,7 @@
 | Slice | Deliverable | State | Blocked on |
 |---|---|---|---|
 | MSA-I1 | `spikes/multi-store-shape-census`. 505 node shapes, none closed and bounded, so 0% of sample subjects against the proposed 80%. 134 fail only on closure and reach 43.4% of subjects. [Validation Pack](../validation/MSA-I1.md) | built 2026-11-17 |  |
-| MSA-I2 | [the read-set census](../notes/multi-store/MSA-I2-read-set-census.md). The falsifier fires on one example, a pass whose guards read a balance an earlier draw wrote, and becomes common once Behaviour imports Ledger. Every other cross-aggregate read is pinned. [Validation Pack](../validation/MSA-I2.md) | built 2026-11-18 |  |
+| MSA-I2 | [the read-set census](../notes/multi-store/MSA-I2-read-set-census.md). The falsifier fires on one example, a pass whose guards read a balance an earlier draw wrote, and becomes common once Behaviour imports Ledger. Every other cross-aggregate read is pinned. [Validation Pack](../validation/MSA-I2.md) | building 2026-11-18 |  |
 | MSA-I3 | [the classification](../notes/multi-store/MSA-I3-dimensions-by-dialect.md). 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. [Validation Pack](../validation/MSA-I3.md) | built 2026-11-17 |  |
 | MSA-I4 | [four operations lowered](../notes/multi-store/MSA-I4-four-operations-lowered.md). No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. [Validation Pack](../validation/MSA-I4.md) | built 2026-11-17 |  |
 | MSA-I5 | the prover spike | planned | MSA-I5a |
@@ -69,3 +69,4 @@
 - 2026-11-18: MSA-F8 built. `Reply.failed` answers a failure of the writer's own code with a 500, the stream writer tells it from a store's refusal by the status the store's exception carries, and the service passes a 500 through.
 - 2026-11-18: MSA-F9 marked building.
 - 2026-11-18: MSA-F9 built. The reply to a new document's save reads the document's own row. Its test found MSAF9-01: a save under a deleted document's id was answered 200, the create wrote nothing over the tombstone and the description listed an empty document. The writer now refuses it before planning, and `DocumentsTest`, which saved under a deleted id and was answered 204, asserts the 400.
+- 2026-11-18: MSA-I2 marked building again, to rework the census on the owner's ledger as the ledger's unit, as the maintainer decided it.
