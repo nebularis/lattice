@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** merged 2026-11-18. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** building 2026-11-19. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-19
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md), [LG-23](../validation/LG-23.md)
@@ -149,7 +149,7 @@ Results sections. In short:
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | merged 2026-11-16, verified 2026-11-16, merged 2026-11-09, built 2026-11-09, building 2026-11-09 |  |
 | LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | merged 2026-11-18, verified 2026-11-19, built 2026-11-16, building 2026-11-16 |  |
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-09, building 2026-11-09 |  |
-| LG-11 | conversion leaves the ledger, the conversion terms removed | briefed 2026-11-19 |  |
+| LG-11 | conversion leaves the ledger, the conversion terms removed | building 2026-11-19, briefed 2026-11-19 |  |
 | LG-12 | which draws an account accepts, a shape for compatibility and representability | briefed 2026-11-19 | LG-11 |
 | LG-13 | the insurance example's cap named for what it is, annual-cap | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-10, building 2026-11-10 |  |
 | LG-14 | a benchmark of the credit kinds' read cost on every backend | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-11, building 2026-11-11 |  |
@@ -167,6 +167,7 @@ Results sections. In short:
 | LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part | briefed 2026-11-19 | LG-25 |
 | LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation | briefed 2026-11-19 | LG-25 |
 | LG-28 | the account definition as a versioned thing, with the scheme edition it pins | briefed 2026-11-19 | LG-26, LG-27 |
+- 2026-11-19: on machine S, per the brief of 2026-11-19, on `spi/worktree-s`, committing locally only. LG-11 marked building.
 - 2026-11-19: the maintainer decided PDD-22 and answered LG-Q46 as (a). The writer's half of the rule of a pass is ADR-A131's second addendum of 2026-11-19, drafted as Proposed and accepted by the maintainer the same day, which has a pass written as one request on the revision it was evaluated from and named from its ledger and a key of its evaluation. Behaviour's half waits for LG-3 and the port's for the plan that builds it. LG-27 gains the pass's name, and the brief of 2026-11-19 says so.
 - 2026-11-19: **the maintainer accepted the wording of ADR-A131's addendum of 2026-11-19**, a checkpoint for an account that moved, which LG-27 builds to. The model behind LG-Q45 is kept as [`tools/models/ledger-pass-revision/`](../../../tools/models/ledger-pass-revision/README.md), and its run fails when a count changes.
 - 2026-11-19: the maintainer answered LG-Q45 as (a), raised that day by conditions C1 to C3 of the multi-store epic's read-set census. A pass moves a ledger's revision once, and its write is refused when the ledger has moved from the revision the pass read. LG-27 is unchanged by it. Where the rule is stated is PDD-22, and the census's candidate R6 is PDD-23. The rework is briefed for machine S in the [brief of 2026-11-19](../notes/machine-s-brief-2026-11-19.md), LG-11, LG-25 to LG-28 and then LG-12, and this session reviews it and writes nothing under `ontology/ledger/` meanwhile.
