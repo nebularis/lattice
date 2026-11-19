@@ -1,0 +1,8 @@
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
+
+SELECT ?rev (COUNT(DISTINCT ?t) AS ?n)
+WHERE {
+  GRAPH <urn:g:txn> { ?t pat:rev ?rev }
+}
+GROUP BY ?rev
+HAVING (COUNT(DISTINCT ?t) > 1)

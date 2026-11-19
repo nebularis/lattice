@@ -1,0 +1,12 @@
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
+
+DELETE {
+  GRAPH <urn:g:keys> { $claim pat:claimedBy $owner }
+}
+INSERT {
+  GRAPH <urn:g:keys> { $claim pat:retiredBy $owner ; pat:retiredAt $now }
+}
+WHERE {
+  { FILTER(ISIRI($claim) && ISIRI($owner) && ISLITERAL($now) && LANG($now) = "") }
+  GRAPH <urn:g:keys> { $claim pat:claimedBy $owner }
+}

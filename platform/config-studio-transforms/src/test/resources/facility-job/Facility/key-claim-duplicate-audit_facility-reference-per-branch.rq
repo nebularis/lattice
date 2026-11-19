@@ -1,0 +1,10 @@
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
+
+SELECT ?claim (COUNT(?owner) AS ?n) (GROUP_CONCAT(STR(?owner); separator=" ") AS ?owners)
+WHERE {
+  GRAPH <urn:g:keys> {
+    ?claim a pat:KeyClaim ; pat:constraint "facility-reference-per-branch" ; pat:claimedBy ?owner
+  }
+}
+GROUP BY ?claim
+HAVING (COUNT(?owner) > 1)

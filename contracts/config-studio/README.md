@@ -203,7 +203,7 @@ A run executes the artefacts of a finished compile job over an input that is not
 | `kind` | `target` | Body | Queue | Deadline, default and maximum |
 |---|---|---|---|---|
 | `sample` | `mapping` | a sample source, `Content-Type` `text/turtle`, `application/n-triples`, `application/xml`, `text/xml` or `application/json`. A run of a compiled mapping over it | `lattice.studio.runs` | 120 seconds |
-| `simulate` | `persistence` or `surface` | `application/trig`, holding the sample world and the step. What it holds is defined by the slices that build each simulator, and this contract says only that it is TriG. One step of a simulator | `lattice.studio.runs.interactive` | 15 seconds |
+| `simulate` | `persistence` or `surface` | `application/trig`, holding the sample world and the step. For `persistence` it is defined in [A persistence step](#a-persistence-step). What a `surface` step holds is defined by the slice that builds that simulator, and this contract says only that it is TriG. One step of a simulator | `lattice.studio.runs.interactive` | 15 seconds |
 
 ### The request
 
@@ -277,9 +277,44 @@ The run worker publishes each frame to the topic exchange `lattice.studio.events
 |---|---|---|
 | `report` | an `sh:ValidationReport` as Turtle, the findings as every job gives them | this contract |
 | `artefact` | what a mapping wrote, as a mapping dry run's artefact is, with `group` the mapping and `step` the stratum | this contract |
-| `check`, `request`, `delta`, `outcome` | the four parts of a simulator step | the slices that build the simulators |
+| `check`, `request`, `delta`, `outcome` | the four parts of a simulator step | [A persistence step](#a-persistence-step) for `persistence`, and the slice that builds the surface simulator for `surface` |
 
 A run sends at most 128 frames. A result that would need more ends the run with a failed last frame whose `message` says the result is too large and to narrow what is run. A run that cannot start, for example one whose compile job it cannot read or whose input it cannot parse, is one frame, `seq` 0, `last` `true` and `failed`. [`samples/run-frames.example.json`](samples/run-frames.example.json) is a complete `sample` run, a report part, one artefact part split across two frames and a succeeded last frame, [`samples/run-frames-failed.example.json`](samples/run-frames-failed.example.json) is a run that could not start, and [`samples/run-frames-deadline.example.json`](samples/run-frames-deadline.example.json) is a run that lost frame 2 and ended with the service's failed frame at the deadline, so the array has a gap.
+
+### A persistence step
+
+The body of a `simulate` run of target `persistence` is TriG. Every graph is the sample world, the default graph included, except the reserved graphs, which are the graph `<urn:lattice:studio:step>` and every graph whose IRI starts with `urn:lattice:studio:step/`. The world is parsed into a dataset made for the step and shared with no other step, and the step is a function of the compile job and the body alone ([ADR-A154](../../docs/architecture/decisions/ADR-A154-runs-in-the-configuration-studio.md) decisions 1 and 11). A blank node keeps the label the TriG gives it. [`samples/facility-step-create.trig`](samples/facility-step-create.trig) and [`samples/facility-step-replace.trig`](samples/facility-step-replace.trig) are complete steps over the facility sample.
+
+The graph `<urn:lattice:studio:step>` holds one `cst:SimulationStepRequest`, with the terms below. The terms are declared in [`studio-vocabulary.ttl`](studio-vocabulary.ttl). The class is named with `cst:forClass` and not `cst:target`, which names a part of the configuration.
+
+| Term | Holds |
+|---|---|
+| `cst:forClass` | the target class of the compiled profile, as `dal:forTarget` states it. Once, as an IRI |
+| `cst:forDeployment` | optional, the profile's `dal:forDeployment`. It is needed only where the class has a profile for more than one deployment |
+| `cst:operation` | the operation by the name the compiled profile gives it, `dal:forOperation`, for example `create-if-absent`, `cas-replace` or `tombstone-delete`. A step runs an operation of kind Create, Replace, DeltaReplace or Tombstone |
+| `cst:transactionTime` | an `xsd:dateTime` with a time zone. It is the time the step runs at, as below |
+| `cst:parameter` | one for each parameter of the operation, a node with `cst:parameterName` and `cst:parameterValue`, both strings. The value is read by the kind the profile declares for the parameter, an IRI as an IRI and a position or an epoch as a whole number. A parameter is given once. `requestDigest` is never given, since the caller library computes it |
+
+The payload of the operation is in the graph `<urn:lattice:studio:step/payload>`, which holds the parameter the operation's payload contract names, such as `payloadTriples` for a create and `assertTriples` for a delta replace. Any other payload parameter of the operation is in `<urn:lattice:studio:step/payload/{name}>`, such as `<urn:lattice:studio:step/payload/retractTriples>`. A payload graph that is not one the operation reads is a malformed part, and a payload the step leaves out is empty. A payload holds no blank node.
+
+**The time.** Jena ARQ 6.2.0 reads the clock again for each operation of a request and overwrites a time set in advance, so a time cannot be handed to the engine. The worker parses the bound update and replaces every `NOW()` in its expression tree, in every operation and wherever an expression appears, with `cst:transactionTime` as an `xsd:dateTime` constant, by Jena's own expression and update transforms and never by editing the text. The `request` part shows the update as it ran. A log graph named from `NOW()` is named from the stated time, and `{month}` of a landing place is the first seven characters of its lexical form.
+
+**The run.** The worker reads the compile job as the service checked it, a finished compilation of the `persistence` part, then its `compiled-profile.ttl` and the operation's SPARQL, at `{class}/{operation}.rq` or `{class}.{deployment}/{operation}.rq` with `:` and `/` of the operation's name written `_`. It binds the step with the Java caller library ([ADR-A132](../../docs/architecture/decisions/ADR-A132-persistence-caller-library.md)), which checks the parameters and the payload and computes the request digest. A request the check refuses is not sent, and the step ends there. Otherwise the worker runs the update over the world's quads in a dataset of its own, stops it at the run's deadline, and tells the change. Frames, parts and lists are in a canonical order, so the same step gives the same frames on a repeat and when the quads of the world are given in another order.
+
+A step with a missing or malformed part, a job that is not a finished persistence compilation, or an operation the profile does not have is one failed frame whose `message` says which part and why. A refusal by the caller check is not a failure of the step. It is a result, shown as below.
+
+A step's parts are `check`, `request`, `delta` and `outcome`, each with a media type, in that order. A step the check refuses has `check` and `outcome` only. Each JSON part is pretty-printed, with its keys in the order shown.
+
+| `role` | `mediaType` | Holds |
+|---|---|---|
+| `check` | `application/json` | `operation`, `template`, `kind`, and `checks`, a list of `{name, verdict, reasons}` for `callerCheck` and `payloadCheck`. `verdict` is `passed`, `refused` or `notRun`, and each reason is `{code, where, reason}` in the caller library's order. The payload check is `notRun` for a delta replace, whose bound is checked over the state it leaves, and for an operation with no payload. A `note` says why |
+| `request` | `application/sparql-update` | the operation's SPARQL with its parameters bound and its slots filled, as it ran, after a comment line that says each `NOW()` was replaced with the stated time |
+| `delta` | `application/json` | `places`, one `{place, role, graphs}` for each landing place of the compiled profile a changed graph lands in, by the place's IRI and role, and `unplaced`. A graph is `{graph, added, removed}`, its quads as N-Triples lines in the order of their UTF-8 bytes. A graph the default graph is has `graph` null |
+| `outcome` | `application/json` | `outcome`, `classification`, `reason`, `revision` when the transaction claimed one, and `engine`, the engine that evaluated the update, which a refused step leaves out since nothing was evaluated |
+
+**Landing places.** A changed graph is assigned to a place exactly. A place with `dal:inGraph` is the graph it names. A place with `dal:inGraphNamed` is a template of the closed placeholders `{root}`, `{newRev}` and `{month}`, rendered with the step's own values, `{root}` percent-encoded as `ENCODE_FOR_URI` does, `{newRev}` as given and `{month}` from the stated time, and compared for equality. Nothing is matched by a pattern or a prefix. A graph that two places render is listed under both, and a graph that no place matches is listed under `unplaced` and never dropped, since it says the SPARQL wrote where the profile does not say it lands. The places are those that the accesses of the profile's operations land in, by `dal:landsIn`.
+
+**Outcome.** The caller's confirmation read is not a function of the library, so the worker reads what the persistence guide's table ([section 15.2](../../docs/architecture/rdf-sparql-patterns-guide.md#152-the-receipt-then-the-txn-claim)) names, on the dataset after the update. A claim of the transaction with the request's digest is `applied`, `classification` `Applied`. A claim with another digest is `refused`, `IdempotencyKeyReuse`. With no claim, the outcome is `lostRace` and the classification says why, `EpochChanged`, `Gone`, `PreconditionFailed` for a position that is not the row's, `AlreadyExists` for a create over an existing row, and else `NotApplied`. A request the caller check refused is `refused`, `RefusedByCallerCheck`.
 
 ### Delivery to the tab
 

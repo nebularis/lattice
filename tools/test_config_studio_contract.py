@@ -164,3 +164,64 @@ def test_the_contract_states_the_limits_the_schema_holds() -> None:
     assert "run-frame.schema.json" in readme
     for text in ("49,152", "128 frames", "lattice.studio.runs.interactive", "lattice.studio.runs"):
         assert text in readme, text
+
+
+# --- the persistence step (SVA-P3) -------------------------------------------------------------------------
+
+STEP_GRAPH = "urn:lattice:studio:step"
+STEP_SAMPLES = ["facility-step-create.trig", "facility-step-replace.trig"]
+STEP_TERMS = ["SimulationStepRequest", "forClass", "forDeployment", "operation", "transactionTime", "parameter", "StepParameter", "parameterName", "parameterValue"]
+
+
+def step_sample(name: str):
+    from rdflib import Dataset
+
+    dataset = Dataset()
+    dataset.parse(CONTRACT / "samples" / name, format="trig")
+    return dataset
+
+
+def test_the_vocabulary_declares_the_terms_of_a_persistence_step_and_each_has_a_comment() -> None:
+    g = Graph().parse(CONTRACT / "studio-vocabulary.ttl")
+    for term in STEP_TERMS:
+        assert (CST[term], RDF.type, None) in g, term
+        assert g.value(CST[term], RDFS.comment) is not None, term
+    assert (CST.SimulationStepRequest, RDF.type, OWL.Class) in g
+    assert (CST.forClass, RDFS.domain, CST.SimulationStepRequest) in g
+    assert (CST.transactionTime, RDFS.range, None) in g
+    assert (CST.forClass, RDF.type, OWL.ObjectProperty) in g, "the class is named by an IRI"
+    assert (CST.forClass, RDF.type, OWL.FunctionalProperty) in g
+    assert (CST.target, RDFS.range, CST.Target) in g, "cst:target keeps naming a part, so a step does not reuse it"
+
+
+@pytest.mark.parametrize("name", STEP_SAMPLES)
+def test_a_step_sample_holds_one_step_with_declared_terms_and_a_payload_graph_the_contract_names(name: str) -> None:
+    from rdflib import URIRef
+    from rdflib.namespace import XSD
+
+    dataset = step_sample(name)
+    vocabulary = Graph().parse(CONTRACT / "studio-vocabulary.ttl")
+    graphs = {str(g.identifier): g for g in dataset.graphs()}
+    step = graphs[STEP_GRAPH]
+    requests = list(step.subjects(RDF.type, CST.SimulationStepRequest))
+    assert requests == [URIRef(STEP_GRAPH)]
+    request = requests[0]
+    for term in ("forClass", "operation", "transactionTime"):
+        assert len(list(step.objects(request, CST[term]))) == 1, term
+    assert next(step.objects(request, CST.transactionTime)).datatype == XSD.dateTime
+    assert next(step.objects(request, CST.transactionTime)).toPython().tzinfo is not None, "rdflib writes Z as +00:00 (TSD-63), and the time has a zone"
+    names = [str(step.value(p, CST.parameterName)) for p in step.objects(request, CST.parameter)]
+    assert len(names) == len(set(names)) and "requestDigest" not in names
+    for predicate in {p for _, p, _ in step if str(p).startswith(str(CST))}:
+        assert (predicate, RDF.type, None) in vocabulary, predicate
+    reserved = [g for g in graphs if g.startswith(STEP_GRAPH + "/")]
+    assert reserved and all(g == STEP_GRAPH + "/payload" or g.startswith(STEP_GRAPH + "/payload/") for g in reserved), reserved
+    assert len(graphs[STEP_GRAPH + "/payload"]) > 0
+
+
+def test_the_contract_defines_the_persistence_step_and_its_four_parts() -> None:
+    readme = (CONTRACT / "README.md").read_text(encoding="utf-8")
+    assert "### A persistence step" in readme
+    for text in ("urn:lattice:studio:step/payload", "cst:transactionTime", "NOW()", "`check`", "`request`", "`delta`", "`outcome`", "unplaced", "ENCODE_FOR_URI",
+                 "lostRace", "facility-step-create.trig", "facility-step-replace.trig"):
+        assert text in readme, text

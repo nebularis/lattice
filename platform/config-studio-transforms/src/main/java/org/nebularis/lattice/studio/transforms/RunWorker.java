@@ -38,10 +38,16 @@ import org.slf4j.LoggerFactory;
  * returns, which frees the handler and the queue's slot at the deadline and costs the thread and its memory until then. A run's
  * input is bounded to 5 MiB and the stylesheets and chains are the compiler's, which keeps the time an abandoned execution can use short
  * in practice, and it is a limit of the engines rather than of this worker.
+ *
+ * <p>A persistence step is Jena's, whose update timeout does stop the evaluation, so it is given the time left and a second beyond it. The
+ * worker stops the step at the deadline first and publishes nothing more, and Jena's stop frees the execution thread soon after. Each step has
+ * a dataset of its own, and the handler's thread holds until its step ends or the deadline passes, so a slow step holds one of the queue's
+ * threads and a fast one is served by another, and when every thread is held a step waits in the broker for a thread or for its deadline.
  */
 final class RunWorker implements Function<Message, Outcome>, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(RunWorker.class);
     static final int MAX_INPUT_BYTES = 5 * 1024 * 1024;
+    private static final long STEP_GRACE_MILLIS = 1_000;
     private static final Pattern RUN_IRI = Pattern.compile("urn:lattice:studio:run:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private static final Map<String, Set<String>> TARGETS = Map.of("sample", Set.of("mapping"), "simulate", Set.of("persistence", "surface"));
     private static final Set<String> RDF_SAMPLES = Set.of("text/turtle", "application/n-triples");
@@ -84,31 +90,39 @@ final class RunWorker implements Function<Message, Outcome>, AutoCloseable {
             // The service sends the failed frame of a run that passed its deadline.
             return Outcome.ACK;
         }
-        if (request.kind().equals("simulate")) {
-            return publish(request.run(), RunFrames.failed(request.run(), "Simulators run in a later slice (SVA-P3), so this run was not started."));
+        boolean step = request.kind().equals("simulate");
+        if (step && !request.target().equals("persistence")) {
+            return publish(request.run(), RunFrames.failed(request.run(), "The surface simulator runs in a later slice (SVA-S2), so this run was not started."));
         }
         String type = message.contentType() == null ? "" : message.contentType().split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
-        if (RDF_SAMPLES.contains(type)) {
+        if (!step && RDF_SAMPLES.contains(type)) {
             return publish(request.run(), RunFrames.failed(request.run(), "RDF samples run in a later slice (SVA-M3a), so this run was not started."));
         }
-        if (message.body().length > MAX_INPUT_BYTES) {
-            return publish(request.run(), RunFrames.failed(request.run(), "The sample is over 5 MiB, so this run was not started."));
+        if (step && !type.equals("application/trig")) {
+            return publish(request.run(), RunFrames.failed(request.run(), "A step is sent as application/trig, so this run was not started."));
         }
-        String sample = new String(message.body(), StandardCharsets.UTF_8);
-        Future<TransformRun.Result> execution = executions.submit(() -> {
+        if (message.body().length > MAX_INPUT_BYTES) {
+            return publish(request.run(), RunFrames.failed(request.run(), (step ? "The step" : "The sample") + " is over 5 MiB, so this run was not started."));
+        }
+        String input = new String(message.body(), StandardCharsets.UTF_8);
+        long budget = Duration.between(clock.instant(), request.deadline()).toMillis();
+        Future<List<JsonObject>> execution = executions.submit(() -> {
             Model job;
             try {
                 job = jobs.apply(request.job());
             } catch (RuntimeException e) {
                 LOG.warn("the compile job of a run could not be read", e);
-                return new TransformRun.Result("The compile job could not be read, so this run was not started.", List.of());
+                return RunFrames.failed(request.run(), "The compile job could not be read, so this run was not started.");
             }
-            return TransformRun.execute(job, request.job(), message.contentType(), sample);
+            if (step) {
+                // Jena is given a little longer than the worker, so it is the worker that stops a step at the deadline and says nothing more.
+                return RunFrames.ofStep(request.run(), PersistenceStep.execute(job, request.job(), input, budget + STEP_GRACE_MILLIS));
+            }
+            return RunFrames.of(request.run(), TransformRun.execute(job, request.job(), message.contentType(), input));
         });
-        long millis = Duration.between(clock.instant(), request.deadline()).toMillis();
-        TransformRun.Result result;
+        List<JsonObject> frames;
         try {
-            result = execution.get(Math.max(millis, 0), TimeUnit.MILLISECONDS);
+            frames = execution.get(Math.max(budget, 0), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             execution.cancel(true);
             LOG.warn("a run passed its deadline and was stopped");
@@ -121,7 +135,7 @@ final class RunWorker implements Function<Message, Outcome>, AutoCloseable {
             Thread.currentThread().interrupt();
             return Outcome.REQUEUE;
         }
-        return publish(request.run(), RunFrames.of(request.run(), result));
+        return publish(request.run(), frames);
     }
 
     /** Checks the headers as the service did. Throws a reason that names a header, never its value. */

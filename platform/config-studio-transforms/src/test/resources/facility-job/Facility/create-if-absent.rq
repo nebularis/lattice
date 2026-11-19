@@ -1,0 +1,27 @@
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+INSERT {
+  GRAPH <urn:g:facilities> { {{{payloadTriples}}} }
+  GRAPH ?addGraph { {{{payloadTriples}}} }
+  GRAPH <urn:g:meta/6> {
+    $root a pat:VersionRow ; pat:epoch $epoch ; pat:seq "1"^^xsd:long ; pat:head $newRev
+  }
+  GRAPH <urn:g:txn> { $txnId pat:rev $newRev ; pat:requestDigest $requestDigest }
+  GRAPH ?logGraph {
+    $newRev a pat:Revision ; pat:target $root ; pat:epoch $epoch ; pat:seq "1"^^xsd:long ; pat:txn ?txnKey ; pat:recordedAt ?now ; pat:asserts ?addGraph
+  }
+}
+WHERE {
+  {
+    FILTER(ISIRI($root) && DATATYPE($epoch) = DATATYPE("0"^^xsd:long) && ISIRI($newRev) && ISIRI($txnId) && DATATYPE($requestDigest) = xsd:string)
+  }
+  BIND(IRI(CONCAT(STR(<urn:g:txlog/>), SUBSTR(STR(NOW()), 1, 7))) AS ?logGraph)
+  BIND(IRI(CONCAT(STR($newRev), "/add")) AS ?addGraph)
+  GRAPH <urn:g:dataset> { <urn:g:dataset> pat:epoch $epoch }
+  FILTER NOT EXISTS { GRAPH <urn:g:meta/6> { $root pat:seq ?any } }
+  FILTER NOT EXISTS { GRAPH <urn:g:facilities> { $root ?anyP ?anyO } }
+  FILTER NOT EXISTS { GRAPH <urn:g:txn> { $txnId pat:rev ?any } }
+  BIND(STR($txnId) AS ?txnKey)
+  BIND(NOW() AS ?now)
+}

@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The input of a simulate run of target persistence, for the facility sample (SVA-P3): one step that changes the margin of facility-1, which
+# is at position 2 in the sample world. The facility's persistence configuration keeps a patch log, so its replace is a delta. The payload
+# graph <urn:lattice:studio:step/payload> holds the triples asserted and <urn:lattice:studio:step/payload/retractTriples> the triples
+# retracted. Sending the step with expectedSeq 1 instead shows the guard refusing a write made from an earlier position. Every IRI is a
+# placeholder under example.org.
+
+@prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:g:dataset> {
+    <urn:g:dataset> pat:epoch "1"^^xsd:long .
+}
+
+<urn:g:meta/6> {
+    ex:facility-1 pat:epoch "1"^^xsd:long ; pat:seq "2"^^xsd:long ; pat:head <urn:rev:facility-1/2> .
+}
+
+<urn:g:facilities> {
+    ex:facility-1 a ex:Facility ;
+        ex:facilityReference "FAC-2026-001" ;
+        ex:arrangedBy ex:branch-london ;
+        ex:borrower ex:acme-foods ;
+        ex:lender ex:lender-north , ex:lender-south ;
+        ex:commitment 120000000.0 ;
+        ex:margin 3.25 ;
+        ex:hasDrawdown ex:drawdown-1 .
+    ex:drawdown-1 a ex:Drawdown ;
+        ex:drawnUnder ex:facility-1 ;
+        ex:drawnAmount 40000000.0 ;
+        ex:drawdownDate "2026-03-15"^^xsd:date .
+}
+
+<urn:lattice:studio:step> {
+    <urn:lattice:studio:step> a cst:SimulationStepRequest ;
+        cst:forClass ex:Facility ;
+        cst:operation "cas-replace" ;
+        cst:transactionTime "2026-04-02T09:30:00Z"^^xsd:dateTime ;
+        cst:parameter [ cst:parameterName "root" ; cst:parameterValue "https://example.org/lending#facility-1" ] ,
+            [ cst:parameterName "epoch" ; cst:parameterValue "1" ] ,
+            [ cst:parameterName "expectedSeq" ; cst:parameterValue "2" ] ,
+            [ cst:parameterName "nextSeq" ; cst:parameterValue "3" ] ,
+            [ cst:parameterName "newRev" ; cst:parameterValue "urn:rev:facility-1/3" ] ,
+            [ cst:parameterName "txnId" ; cst:parameterValue "urn:txn:facility-1-margin" ] .
+}
+
+<urn:lattice:studio:step/payload> {
+    ex:facility-1 ex:margin 3.5 .
+}
+
+<urn:lattice:studio:step/payload/retractTriples> {
+    ex:facility-1 ex:margin 3.25 .
+}

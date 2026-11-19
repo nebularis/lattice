@@ -1,0 +1,16 @@
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
+
+INSERT {
+  GRAPH <urn:g:keys> {
+    $claim a pat:KeyClaim ; pat:constraint "facility-reference-per-branch" ; pat:claimedBy $owner
+  }
+}
+WHERE {
+  { FILTER(ISIRI($claim) && ISIRI($owner)) }
+  FILTER NOT EXISTS {
+    GRAPH <urn:g:keys> {
+      $claim pat:claimedBy ?other .
+      FILTER(?other != $owner)
+    }
+  }
+}

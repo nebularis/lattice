@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-19. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-19. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-P1b for the maintainer, who says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** paused after SVA-P3 for the maintainer, who decides whether the caller libraries own the confirmation read (TD-173) and says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -50,7 +50,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P1a | the compiled profile states where a target's data lands | built 2026-11-19, building 2026-11-18 | SVA-P1 |
 | SVA-P1b | the studio reads the compiled profile for where data lands | built 2026-11-19, building 2026-11-19 | SVA-P1a |
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
-| SVA-P3 | the persistence simulation executor | building 2026-11-19 | SVA-R3 |
+| SVA-P3 | the persistence simulation executor | built 2026-11-19, building 2026-11-19 | SVA-R3 |
 | SVA-P4 | the persistence simulator pane | planned | SVA-R4, SVA-P1, SVA-P3 |
 | SVA-P5 | an object generated from the boundary shape | planned | SVA-P4 |
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
@@ -185,3 +185,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-19, SVA-P3: the probe found that Jena 6.2.0 cannot be made to return a stated time for `NOW()` in an update. It sets the time again for each operation of a request and overwrites a time set in the execution's or the dataset's context. The executor was not built, and the choice of how to state a step's time went to the maintainer. The probe is kept as a test that fails if a later Jena honours a stated time, and the finding is drafted for the triple-stores domain.
 - 2026-11-19: the maintainer chose, for SVA-P3, that the executor replaces each `NOW()` in the parsed update with the step's stated time and shows the update as it ran, with TD-171's parameter kept as the fix. The probe's finding is recorded in the triple-stores domain, pushed to its main branch with the maintainer's go-ahead, and LATTICE's page names it once the index's clone of the domain holds it.
 - 2026-11-19: the triple-stores domain's clone pulled with `vyd kb pull`, so the probe's finding is TSD-76, and LATTICE's page names it.
+- 2026-11-19: SVA-P3 built, [Validation Pack](../validation/SVA-P3.md). The run worker runs a persistence step over the sample world on Jena in memory, with each `NOW()` replaced by the step's time (TSD-76), and answers with the checks, the update as it ran, the delta by landing place and the outcome. The step's TriG is defined in the contract. The run worker's tests pass. The real-stack case is written and not run here, for want of Erlang. The outcome is classified in the worker, since the caller library has no confirmation read (TD-173).

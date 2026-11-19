@@ -18,6 +18,7 @@ import math
 import time
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pika
@@ -72,6 +73,19 @@ def compiled(studio):
     assert submitted.status == 202, submitted.text
     job = client.job_id(submitted)
     assert "Succeeded" in client.wait_job(job, timeout=120).text
+    return ws, job
+
+
+@pytest.fixture(scope="module")
+def persistence_compiled(studio):
+    """A workspace from the facility sample and the id of a finished compile job of its persistence part, whose operations a simulated step runs."""
+    client = studio.client()
+    ws = client.workspace_id(client.create_workspace("steps", sample="facility"))
+    part = client.read_part(ws, "persistence")
+    submitted = client.submit_job(ws, "compile", "persistence", part.text)
+    assert submitted.status == 202, submitted.text
+    job = client.job_id(submitted)
+    assert "Succeeded" in client.wait_job(job, timeout=180).text
     return ws, job
 
 
@@ -375,3 +389,23 @@ def test_r5_t9_a_tab_holds_at_most_four_runs(alone, compiled) -> None:
     sixth = submit(alone, compiled, tab, deadline=later)
     assert sixth.status == 202, f"{sixth.status} {sixth.text[:200]}"
     assert len(set(runs)) == 4
+
+
+def test_r5_t10_a_persistence_step_runs_on_the_interactive_queue_and_gives_its_four_parts(alone, persistence_compiled) -> None:
+    """R5-T10 (SVA-P3). A `simulate` run of target `persistence` over the facility sample's create step is answered on the interactive queue with the check, the request, the
+    delta and the outcome of the step, in that order, ending succeeded, and the same step sent again gives the same frames but for the run's IRI."""
+    step = (Path(__file__).resolve().parents[2] / "contracts" / "config-studio" / "samples" / "facility-step-create.trig").read_text(encoding="utf-8")
+    start_worker(alone)
+    ws, job = persistence_compiled
+    frames = []
+    for tab in ("stepone", "steptwo"):
+        reply = alone.client().submit_run(ws, job, tab, step, "application/trig", kind="simulate", target="persistence", wait=True)
+        assert reply.status == 200, f"{reply.status} {reply.text[:300]}"
+        frames.append(json.loads(reply.text))
+    first = frames[0]
+    assert seqs(first) == list(range(len(first)))
+    assert first[-1]["last"] is True and first[-1]["status"] == "succeeded", first[-1]
+    assert [f["part"]["role"] for f in first if "part" in f] == ["check", "request", "delta", "outcome"]
+    outcome = json.loads("".join(f.get("text", "") for f in first[[i for i, f in enumerate(first) if f.get("part", {}).get("role") == "outcome"][0]:-1]))
+    assert outcome["outcome"] == "applied", outcome
+    assert without_run(frames[0]) == without_run(frames[1])

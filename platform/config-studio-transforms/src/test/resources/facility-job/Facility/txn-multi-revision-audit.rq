@@ -1,0 +1,9 @@
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
+
+SELECT ?t (COUNT(DISTINCT ?rev) AS ?n)
+WHERE {
+  VALUES ?log { <urn:g:txlog/pinned> {{{logGraphs}}} }
+  GRAPH ?log { ?rev a pat:Revision ; pat:txn ?t }
+}
+GROUP BY ?t
+HAVING (COUNT(DISTINCT ?rev) > 1)

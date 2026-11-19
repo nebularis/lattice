@@ -1,0 +1,10 @@
+SELECT DISTINCT ?s
+WHERE {
+  { FILTER(ISIRI($root)) }
+  GRAPH <urn:g:payload> {
+    ?s ?p ?o .
+    FILTER NOT EXISTS {
+      GRAPH <urn:g:payload> { $root (<https://example.org/lending#hasDrawdown>)? ?s }
+    }
+  }
+}

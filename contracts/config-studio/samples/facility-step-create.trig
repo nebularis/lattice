@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The input of a simulate run of target persistence, for the facility sample (SVA-P3): one step that creates facility-1 in an empty dataset.
+# The default graph and every named graph but the two reserved ones are the sample world, here the dataset's epoch alone. The graph
+# <urn:lattice:studio:step> holds the step and <urn:lattice:studio:step/payload> the payload of the create. The transaction time is the last
+# seconds of March, so the log graph of the step is the 2026-03 graph whatever day the step is run on. Every IRI is a placeholder under example.org.
+
+@prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:g:dataset> {
+    <urn:g:dataset> pat:epoch "1"^^xsd:long .
+}
+
+<urn:lattice:studio:step> {
+    <urn:lattice:studio:step> a cst:SimulationStepRequest ;
+        cst:forClass ex:Facility ;
+        cst:operation "create-if-absent" ;
+        cst:transactionTime "2026-03-31T23:59:58Z"^^xsd:dateTime ;
+        cst:parameter [ cst:parameterName "root" ; cst:parameterValue "https://example.org/lending#facility-1" ] ,
+            [ cst:parameterName "epoch" ; cst:parameterValue "1" ] ,
+            [ cst:parameterName "newRev" ; cst:parameterValue "urn:rev:facility-1/1" ] ,
+            [ cst:parameterName "txnId" ; cst:parameterValue "urn:txn:facility-1-create" ] .
+}
+
+<urn:lattice:studio:step/payload> {
+    ex:facility-1 a ex:Facility ;
+        ex:facilityReference "FAC-2026-001" ;
+        ex:arrangedBy ex:branch-london ;
+        ex:borrower ex:acme-foods ;
+        ex:lender ex:lender-north , ex:lender-south ;
+        ex:commitment 120000000.0 ;
+        ex:margin 3.25 ;
+        ex:hasDrawdown ex:drawdown-1 .
+    ex:drawdown-1 a ex:Drawdown ;
+        ex:drawnUnder ex:facility-1 ;
+        ex:drawnAmount 40000000.0 ;
+        ex:drawdownDate "2026-03-15"^^xsd:date .
+}

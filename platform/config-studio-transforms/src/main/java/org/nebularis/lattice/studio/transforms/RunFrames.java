@@ -50,6 +50,31 @@ final class RunFrames {
         return frames;
     }
 
+    /**
+     * The frames of a {@code simulate} step's result, or the one failed frame of a step that could not be run or is too large. The parts keep the
+     * order they are given in, which is the step's own, and each is cut into frames as a {@code sample} run's is.
+     */
+    static List<JsonObject> ofStep(String run, PersistenceStep.Result result) {
+        if (result.failure() != null) {
+            return failed(run, result.failure());
+        }
+        List<JsonObject> frames = new ArrayList<>();
+        int index = 0;
+        for (PersistenceStep.Part p : result.parts()) {
+            index = part(frames, run, index, p.role(), p.mediaType(), null, null, p.text());
+            if (frames.size() >= MAX_FRAMES) {
+                break;
+            }
+        }
+        if (frames.size() + 1 > MAX_FRAMES) {
+            return failed(run, "the result is too large for one run, so narrow what is run");
+        }
+        JsonObject last = frame(run, frames.size(), true);
+        last.put("status", "succeeded");
+        frames.add(last);
+        return frames;
+    }
+
     /** Adds the frames of one part and returns the index of the next. */
     private static int part(List<JsonObject> frames, String run, int index, String role, String mediaType, String group, String path, String text) {
         List<String> pieces = cut(text);

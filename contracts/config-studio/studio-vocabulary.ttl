@@ -318,6 +318,26 @@ cst:SimulationStep a cst:JobKind ; rdfs:comment "One step of a simulator over a 
 cst:deadline a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Run ; rdfs:range xsd:dateTime ;
     rdfs:comment "The absolute time by which the run must have ended. After it the broker drops a request no worker took, a worker stops the execution, and the accepting service instance ends the run with a failed frame." .
 
+# A step of the persistence simulator, held in the graph <urn:lattice:studio:step> of a simulate run's input (SVA-P3).
+cst:SimulationStepRequest a owl:Class ;
+    rdfs:comment "One step of the persistence simulator, the request a simulate run of target persistence carries beside its sample world. It names the compiled profile's class, the operation and the transaction time, and states each parameter of the operation." .
+cst:forClass a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:SimulationStepRequest ;
+    rdfs:comment "The target class of the compiled profile the step runs an operation of, as dal:forTarget states it. Not cst:target, which names a part of the configuration." .
+cst:forDeployment a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:SimulationStepRequest ;
+    rdfs:comment "The deployment of the compiled profile, as dal:forDeployment states it, where the class has more than one. Left out where the profile has none." .
+cst:operation a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:SimulationStepRequest ; rdfs:range xsd:string ;
+    rdfs:comment "The operation to run, by the name the compiled profile gives it, as dal:forOperation does, for example cas-replace." .
+cst:transactionTime a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:SimulationStepRequest ; rdfs:range xsd:dateTime ;
+    rdfs:comment "The time the step runs at, with a time zone. Each NOW() of the operation is replaced with it, and the month of a log graph is its month. The step never reads a clock (PRI-56)." .
+cst:parameter a owl:ObjectProperty ; rdfs:domain cst:SimulationStepRequest ; rdfs:range cst:StepParameter ;
+    rdfs:comment "A parameter of the operation, other than a payload and the request digest, which the caller library computes." .
+cst:StepParameter a owl:Class ;
+    rdfs:comment "The value of one parameter of a simulation step's operation." .
+cst:parameterName a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:StepParameter ; rdfs:range xsd:string ;
+    rdfs:comment "The name of a parameter the operation declares, for example root or expectedSeq." .
+cst:parameterValue a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:StepParameter ; rdfs:range xsd:string ;
+    rdfs:comment "The parameter's value as text, read by the kind the profile declares for it. An IRI as the IRI, a position or an epoch as a whole number, a string as it is." .
+
 cst:Artefact a owl:Class ;
     rdfs:comment "A file a compilation produced, kept as text so the author can read it." .
 cst:path a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Artefact ; rdfs:range xsd:string ;

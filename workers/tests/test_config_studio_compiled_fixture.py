@@ -57,3 +57,19 @@ def test_the_browser_fixture_is_the_facility_sample_as_the_compiler_gives_it(fac
         PATHS.write_text(paths, encoding="utf-8", newline="\n")
     assert PROFILE.read_text(encoding="utf-8") == profile
     assert PATHS.read_text(encoding="utf-8") == paths
+
+
+RUN_WORKER_FIXTURES = ROOT / "platform" / "config-studio-transforms" / "src" / "test" / "resources" / "facility-job"
+
+
+def test_the_run_workers_fixture_holds_the_facility_operations_as_the_compiler_gives_them(facility):
+    """The simulator's tests (SVA-P3) run the facility's generated SPARQL, which the browser fixture above does not keep. They read these files
+    beside the compiled profile of that fixture. Written with `LATTICE_WRITE_COMPILED_FIXTURE=1`, and without it they must equal the job."""
+    wanted = {path: text for path, (_, text, group) in facility.items() if group == "Facility"}
+    if WRITE:
+        for path, text in wanted.items():
+            target = RUN_WORKER_FIXTURES / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(text, encoding="utf-8", newline="\n")
+    kept = {p.relative_to(RUN_WORKER_FIXTURES).as_posix(): p.read_text(encoding="utf-8") for p in RUN_WORKER_FIXTURES.rglob("*.rq")}
+    assert kept == wanted

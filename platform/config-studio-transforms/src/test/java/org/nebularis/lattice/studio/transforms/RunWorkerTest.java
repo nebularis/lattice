@@ -11,6 +11,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -273,21 +274,156 @@ class RunWorkerTest {
     }
 
     @Test
-    void anRdfSampleAndASimulationEachGiveTheirOneFailedFrame() throws Exception {
+    void anRdfSampleAndASurfaceSimulationEachGiveTheirOneFailedFrame() throws Exception {
         QueueWorker samples = queue("sample", 2, jobs());
         samples.deliver(sample(6, Examples.RUN, "text/turtle", "<urn:a> <urn:b> <urn:c> ."));
         samples.deliver(sample(7, RUN_2, "application/n-triples; charset=utf-8", "<urn:a> <urn:b> <urn:c> ."));
         QueueWorker steps = queue("simulate", 2, jobs());
         String run3 = "urn:lattice:studio:run:bbbbbbbb-5a47-4d0e-9b1a-6c7d8e9f0a1b";
-        steps.deliver(message(8, false, headers(run3, "simulate", "persistence", NOW.plusSeconds(15)), "application/trig", ""));
+        steps.deliver(message(8, false, headers(run3, "simulate", "surface", NOW.plusSeconds(15)), "application/trig", ""));
         for (long t = 6; t <= 8; t++) {
             awaitSettled(t);
         }
         assertOneFailedFrame(sink.of(Examples.RUN), "SVA-M3a");
         assertOneFailedFrame(sink.of(RUN_2), "SVA-M3a");
-        assertOneFailedFrame(sink.of(run3), "SVA-P3");
-        assertEquals(0, jobReads.get(), "neither is run");
+        assertOneFailedFrame(sink.of(run3), "SVA-S2");
+        assertEquals(0, jobReads.get(), "none is run");
         assertEquals(3, sink.log.stream().filter(e -> e.startsWith("ack:")).count());
+    }
+
+    private static Message step(long tag, String run, String trig) {
+        return message(tag, false, headers(run, "simulate", "persistence", NOW.plusSeconds(15)), "application/trig", trig);
+    }
+
+    private Function<String, Model> facilityJobs() {
+        return job -> {
+            jobReads.incrementAndGet();
+            try {
+                return FacilityJob.job();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        };
+    }
+
+    private static List<String> roles(List<JsonObject> frames) {
+        return frames.stream().filter(f -> f.hasKey("part")).map(f -> f.get("part").getAsObject().get("role").getAsString().value()).toList();
+    }
+
+    @Test
+    void aPersistenceStepPublishesItsFourPartsAsFramesAndIsAcknowledgedAfterThem() throws Exception {
+        String create = Files.readString(FacilityJob.SAMPLES.resolve("facility-step-create.trig"));
+        queue("simulate", 2, facilityJobs()).deliver(step(60, Examples.RUN, create));
+        awaitSettled(60);
+        assertEquals(List.of("publish:" + Examples.RUN, "ack:60"), sink.log);
+        List<JsonObject> frames = sink.of(Examples.RUN);
+        assertEquals(List.of("check", "request", "delta", "outcome"), roles(frames));
+        assertEquals("succeeded", frames.get(frames.size() - 1).get("status").getAsString().value());
+        for (int k = 0; k < frames.size(); k++) {
+            assertEquals(k, frames.get(k).get("seq").getAsNumber().value().intValue());
+        }
+        String outcome = frames.stream().filter(f -> f.hasKey("text")).map(f -> f.get("text").getAsString().value()).reduce("", String::concat);
+        assertTrue(outcome.contains("\"outcome\" : \"applied\""), "the last part is the outcome");
+        assertEquals(1, jobReads.get());
+        // The frames are those of the same step run twice, with the run IRI the only difference.
+        queue("simulate", 2, facilityJobs()).deliver(step(61, RUN_2, create));
+        awaitSettled(61);
+        assertEquals(sink.frames.get(Examples.RUN), sink.frames.get(RUN_2).stream().map(f -> f.replace(RUN_2, Examples.RUN)).toList());
+    }
+
+    @Test
+    void aStepThatCannotBeRunIsOneFailedFrameAndAStepSentWithAnotherMediaTypeOrOver5MiBIsNotStarted() throws Exception {
+        QueueWorker q = queue("simulate", 2, facilityJobs());
+        q.deliver(step(62, Examples.RUN, ""));
+        q.deliver(message(63, false, headers(RUN_2, "simulate", "persistence", NOW.plusSeconds(15)), "text/turtle", "<urn:a> <urn:b> <urn:c> ."));
+        String run3 = "urn:lattice:studio:run:bbbbbbbb-5a47-4d0e-9b1a-6c7d8e9f0a1b";
+        q.deliver(step(64, run3, "# " + "x".repeat(RunWorker.MAX_INPUT_BYTES)));
+        String run4 = "urn:lattice:studio:run:cccccccc-5a47-4d0e-9b1a-6c7d8e9f0a1b";
+        q.deliver(step(65, run4, "GRAPH <urn:g> { oops"));
+        for (long t = 62; t <= 65; t++) {
+            awaitSettled(t);
+        }
+        assertOneFailedFrame(sink.of(Examples.RUN), "The step is empty");
+        assertOneFailedFrame(sink.of(RUN_2), "application/trig");
+        assertOneFailedFrame(sink.of(run3), "The step is over 5 MiB");
+        assertOneFailedFrame(sink.of(run4), "not valid TriG");
+    }
+
+    @Test
+    void aRedeliveredStepIsFailedAndNotRunAndAStepWhoseJobIsNotAPersistenceCompilationIsFailed() throws Exception {
+        queue("simulate", 2, facilityJobs()).deliver(message(66, true, headers(Examples.RUN, "simulate", "persistence", NOW.plusSeconds(15)), "application/trig",
+            Files.readString(FacilityJob.SAMPLES.resolve("facility-step-create.trig"))));
+        awaitSettled(66);
+        assertOneFailedFrame(sink.of(Examples.RUN), "worker stopped");
+        assertEquals(0, jobReads.get());
+        queue("simulate", 2, jobs()).deliver(step(67, RUN_2, Files.readString(FacilityJob.SAMPLES.resolve("facility-step-create.trig"))));
+        awaitSettled(67);
+        assertOneFailedFrame(sink.of(RUN_2), "not a finished compilation of the persistence part");
+    }
+
+    @Test
+    void aSlowStepNeverHoldsAFastOneWhileAThreadIsFreeAndOnlyDelaysItWhenEveryThreadIsHeld() throws Exception {
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch slowIsIn = new CountDownLatch(1);
+        AtomicInteger calls = new AtomicInteger();
+        Function<String, Model> firstIsSlow = job -> {
+            if (calls.getAndIncrement() == 0) {
+                slowIsIn.countDown();
+                try {
+                    release.await();
+                } catch (InterruptedException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+            try {
+                return FacilityJob.job();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        };
+        String create = Files.readString(FacilityJob.SAMPLES.resolve("facility-step-create.trig"));
+        // Two threads on the queue, as the default is: the second step is answered while the first is held.
+        QueueWorker two = queue("simulate", 2, firstIsSlow);
+        two.deliver(step(70, Examples.RUN, create));
+        assertTrue(slowIsIn.await(5, TimeUnit.SECONDS));
+        two.deliver(step(71, RUN_2, create));
+        awaitSettled(71);
+        assertFalse(sink.log.contains("ack:70"), "the slow step is still held");
+        release.countDown();
+        awaitSettled(70);
+        assertEquals(sink.frames.get(Examples.RUN), sink.frames.get(RUN_2).stream().map(f -> f.replace(RUN_2, Examples.RUN)).toList());
+
+        // One thread: the second step waits behind the first, since nothing is shared and nothing runs beside it, and is answered once it ends.
+        CountDownLatch release1 = new CountDownLatch(1);
+        CountDownLatch slowIsIn1 = new CountDownLatch(1);
+        AtomicInteger calls1 = new AtomicInteger();
+        Function<String, Model> again = job -> {
+            if (calls1.getAndIncrement() == 0) {
+                slowIsIn1.countDown();
+                try {
+                    release1.await();
+                } catch (InterruptedException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+            try {
+                return FacilityJob.job();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        };
+        String run3 = "urn:lattice:studio:run:bbbbbbbb-5a47-4d0e-9b1a-6c7d8e9f0a1b";
+        String run4 = "urn:lattice:studio:run:cccccccc-5a47-4d0e-9b1a-6c7d8e9f0a1b";
+        QueueWorker one = queue("simulate", 1, again);
+        one.deliver(step(72, run3, create));
+        assertTrue(slowIsIn1.await(5, TimeUnit.SECONDS));
+        one.deliver(step(73, run4, create));
+        Thread.sleep(300);
+        assertFalse(sink.log.contains("ack:73"), "the one thread is held by the slow step");
+        release1.countDown();
+        awaitSettled(72);
+        awaitSettled(73);
+        assertTrue(sink.log.indexOf("ack:72") < sink.log.indexOf("ack:73"));
     }
 
     @Test

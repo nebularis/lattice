@@ -1,0 +1,16 @@
+PREFIX pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?target ?S ?L (COUNT(DISTINCT ?seq) AS ?n)
+WHERE {
+  GRAPH <urn:g:meta/6> { ?target a pat:VersionRow ; pat:seq ?S }
+  OPTIONAL { GRAPH <urn:g:retention> { ?target pat:retentionLowWaterMark ?lwm } }
+  BIND(COALESCE(?lwm, "1"^^xsd:long) AS ?L)
+  OPTIONAL {
+    VALUES ?log { <urn:g:txlog/pinned> {{{logGraphs}}} }
+    GRAPH ?log { ?r a pat:Revision ; pat:target ?target ; pat:seq ?seq }
+    FILTER(?seq >= ?L && ?seq <= ?S)
+  }
+}
+GROUP BY ?target ?S ?L
+HAVING (COUNT(DISTINCT ?seq) != ((?S - ?L) + 1))
