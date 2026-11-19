@@ -18,7 +18,7 @@
 #
 # Porto's 2028 account has no record, since nothing has drawn on it. A draw
 # proposes and merges even with nothing to arbitrate (decision 6), so each
-# account gets its own one-grant merge record. Each posting records the running
+# account gets its own one-request merge record. Each posting records the running
 # balance of its account. Which bin a position falls in
 # is the evaluator's to compute from the recurrence, and here positions 1 and
 # 2 are stated to fall in 2027 and 2028.
@@ -83,54 +83,54 @@ ex:seat-licence a ldg:AccountDefinition ;
 # ==== Position 1, in 2027: the two sites draw independently =================
 
 ex:london-draw-proposal rdfs:comment "London's draw of 120 seats." .
-ex:london-draw-grant a ldg:Grant ;
+ex:london-draw-request a ldg:Request ;
     ldg:forProposal ex:london-draw-proposal ;
     ldg:requestedValue "120"^^xsd:decimal ; ldg:grantedValue "120"^^xsd:decimal .
 ex:london-draw-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-seat-licence-london-2027 ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:grant ex:london-draw-grant .
+    ldg:request ex:london-draw-request .
 ex:london-draw-posting a ldg:Posting ;
     ldg:onAccount ex:account-seat-licence-london-2027 ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "120"^^xsd:decimal ;
     ldg:runningBalance "380"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:london-draw-merge , ex:london-draw-grant .
+    prov:wasDerivedFrom ex:london-draw-merge , ex:london-draw-request .
 
 ex:porto-draw-proposal rdfs:comment "Porto's draw of 80 seats." .
-ex:porto-draw-grant a ldg:Grant ;
+ex:porto-draw-request a ldg:Request ;
     ldg:forProposal ex:porto-draw-proposal ;
     ldg:requestedValue "80"^^xsd:decimal ; ldg:grantedValue "80"^^xsd:decimal .
 ex:porto-draw-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-seat-licence-porto-2027 ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:grant ex:porto-draw-grant .
+    ldg:request ex:porto-draw-request .
 ex:porto-draw-posting a ldg:Posting ;
     ldg:onAccount ex:account-seat-licence-porto-2027 ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "80"^^xsd:decimal ;
     ldg:runningBalance "420"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:porto-draw-merge , ex:porto-draw-grant .
+    prov:wasDerivedFrom ex:porto-draw-merge , ex:porto-draw-request .
 
 # ==== Position 2, in 2028: London's first draw of the new year ===============
 
 ex:london-2028-draw-proposal rdfs:comment "London's draw of 50 seats in the 2028 licence year." .
-ex:london-2028-draw-grant a ldg:Grant ;
+ex:london-2028-draw-request a ldg:Request ;
     ldg:forProposal ex:london-2028-draw-proposal ;
     ldg:requestedValue "50"^^xsd:decimal ; ldg:grantedValue "50"^^xsd:decimal .
 ex:london-2028-draw-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-seat-licence-london-2028 ;
     ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
-    ldg:grant ex:london-2028-draw-grant .
+    ldg:request ex:london-2028-draw-request .
 ex:london-2028-draw-posting a ldg:Posting ;
     ldg:onAccount ex:account-seat-licence-london-2028 ;
     ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "50"^^xsd:decimal ;
     ldg:runningBalance "450"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:london-2028-draw-merge , ex:london-2028-draw-grant .
+    prov:wasDerivedFrom ex:london-2028-draw-merge , ex:london-2028-draw-request .
 
 # ==== The account instances and the passes ===================================
 

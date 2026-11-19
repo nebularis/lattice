@@ -73,20 +73,20 @@ ex:child a ldg:AccountDefinition ;
 # ==== Position 1: a debit of 5 at the child ===================================
 
 ex:debit-1-proposal rdfs:comment "A draw of 5 on the child." .
-ex:debit-1-grant a ldg:Grant ;
+ex:debit-1-request a ldg:Request ;
     ldg:forProposal ex:debit-1-proposal ;
     ldg:requestedValue "5"^^xsd:decimal ; ldg:grantedValue "5"^^xsd:decimal .
 ex:debit-1-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-child ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:grant ex:debit-1-grant .
+    ldg:request ex:debit-1-request .
 ex:debit-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-child ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "5"^^xsd:decimal ;
     ldg:runningBalance "5"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:debit-1-merge , ex:debit-1-grant .
+    prov:wasDerivedFrom ex:debit-1-merge , ex:debit-1-request .
 
 # ==== Position 2: a credit of 4 at the parent =================================
 

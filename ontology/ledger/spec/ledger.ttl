@@ -50,8 +50,8 @@ ldg:AccountDefinition a owl:Class ;
 
 ldg:MergePolicy a owl:Class ;
     rdfs:comment "What a scope declares for requests that compete at one position." ;
-    fnd:utility "State one for each scope that says how competing requests are treated, a contract, a document it cites or a deployment, and name it from every account definition it governs. It carries the merge rule always, a rounding method and a residual allocation where the rule shares in proportion, and the criteria, the permission and the guards only where the terms state them. A policy is versioned. A change of treatment is a new version, and an account definition names the version that governs it, so what a past balance was settled under does not change. Where several accounts take part in one merge, the policy of the account the requests are made at governs." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:allowsResiduals ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:excessRecovery ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rankCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresDistinctRanks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresSamePurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingDifference ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
+    fnd:utility "State one for each scope that says how competing requests are treated, a contract, a document it cites or a deployment, and name it from every account definition it governs. It carries the merge rule always, a rounding method and a residual allocation where the rule shares in proportion, and the criteria, the permission, the residual account and the guards only where the terms state them. A policy is versioned. A change of treatment is a new version, and an account definition names the version that governs it, so what a past balance was settled under does not change. Where several accounts take part in one merge, the policy of the account the requests are made at governs." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:allowsResiduals ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:excessRecovery ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergeRule ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rankCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresDistinctRanks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requiresSamePurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAccount ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualAllocation ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingDifference ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:roundingMethod ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderCriterion ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
 
 ldg:admitsOwnerKind a owl:ObjectProperty ;
     rdfs:comment "The kinds of owner this account admits." ;
@@ -103,7 +103,7 @@ ldg:mergePolicy a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:mergeRule a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "What happens when several draws at one position together exceed availability." ;
-    fnd:utility "Selects the arbitration rule of this policy: ldg:InPriorityOrder, ldg:Proportional (also state ldg:roundingMethod and ldg:residualAllocation), or ldg:Refuse (the whole merge is refused, with no grant, where proposals together overdraw the account)." ;
+    fnd:utility "Selects the arbitration rule of this policy: ldg:InPriorityOrder, ldg:Proportional (also state ldg:roundingMethod and ldg:residualAllocation), ldg:WholeOrNothing (each request granted whole or not at all, which leaves a residual only where the policy allows residuals), or ldg:Refuse (the whole merge is refused, with no request granted, where proposals together overdraw the account)." ;
     rdfs:domain ldg:MergePolicy ;
     rdfs:range skos:Concept .
 
@@ -142,6 +142,12 @@ ldg:resetRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
     fnd:utility "Use ldg:periodRecurrence. A reset credit restoring the account lets a draw effective in the old period but recorded after the reset be tested against the new period's amount, so a periodic amount is one account per period instead. Removed with Behaviour's allowance terms." ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:Recurrence .
+
+ldg:residualAccount a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The account that takes what a merge under this policy leaves." ;
+    fnd:utility "State it only beside ldg:allowsResiduals true, and only where the terms say where a residual goes. Its value is an account definition, and the owner's instance of it takes the residual. That account's own policy says what becomes of it. Leave it unset where a residual is only stated on the merge record." ;
+    rdfs:domain ldg:MergePolicy ;
+    rdfs:range ldg:AccountDefinition .
 
 ldg:residualAllocation a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "How the rounding residual is allocated so a proportional merge's grants still sum to availability." ;

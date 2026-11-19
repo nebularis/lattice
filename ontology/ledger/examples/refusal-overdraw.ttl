@@ -3,12 +3,13 @@
 # Premise. Refused, under ldg:Refuse (ADR-A131 decision 6). Two proposals at
 # one position together exceed an account's availability, and its merge policy's
 # rule is Refuse, not Proportional or InPriorityOrder. The whole merge is refused:
-# a merge record carries the reason, neither proposal is granted, and no
-# posting is written. Both proposals stay Undetermined.
+# a merge record keeps both requests, grants neither, and states its reason,
+# ldg:ExceedsAvailable, and no posting is written. Both proposals stay
+# Undetermined.
 #
 # | Account      | Available | Proposal 1 | Proposal 2 | Outcome                        |
 # |--------------|----------:|-----------:|-----------:|---------------------------------|
-# | tight-account |       100 |         60 |         70 | refused, no grant, no posting |
+# | tight-account |       100 |         60 |         70 | refused, both requests kept with no granted value, no posting |
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -46,20 +47,23 @@ ex:tight-account a ldg:AccountDefinition ;
     ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "100 units, refusing whole where proposals together overdraw it." .
 
-ex:overdrawn a skos:Concept ;
-    skos:prefLabel "requested more than the account's availability" .
-
 ex:proposal-1 rdfs:comment "Requests 60." .
 ex:proposal-2 rdfs:comment "Requests 70." .
 
-# No ldg:Grant exists for either proposal: under ldg:Refuse, a merge that
-# cannot grant every proposal in full grants none of them.
+# Under ldg:Refuse, a merge that cannot grant every request in full grants none
+# of them. It keeps both requests, so the record shows what was refused, and
+# neither states a granted value, since a refusal is never a grant of nothing.
+ex:request-1 a ldg:Request ;
+    ldg:forProposal ex:proposal-1 ; ldg:requestedValue "60"^^xsd:decimal .
+ex:request-2 a ldg:Request ;
+    ldg:forProposal ex:proposal-2 ; ldg:requestedValue "70"^^xsd:decimal .
 ex:merge-1 a ldg:MergeRecord ;
     ldg:onAccount ex:account-tight-account ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:availableBefore "100"^^xsd:decimal ;
-    ldg:refusalReason ex:overdrawn ;
-    rdfs:comment "60 + 70 = 130 exceeds the 100 available. No grant. No posting follows." .
+    ldg:request ex:request-1 , ex:request-2 ;
+    ldg:refusalReason ldg:ExceedsAvailable ;
+    rdfs:comment "60 + 70 = 130 exceeds the 100 available. Neither request is granted. No posting follows." .
 
 # ==== The account instances and the passes ===================================
 

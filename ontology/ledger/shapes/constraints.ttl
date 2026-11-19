@@ -2,6 +2,7 @@
 
 # SHACL-SPARQL constraints for ldg:AccountDefinition: the tree has no cycle,
 # units of account match and are extensive, a merge rule states what it needs,
+# a residual account stands beside the permission to leave a residual,
 # a credit ceiling is not below the stated amount, and a key dimension is typed.
 # Each targets the class as one node and reads every definition in one query,
 # so a validator runs each once rather than once per definition.
@@ -100,6 +101,20 @@ ldg:SettledToNearestStatesTheExcessShape a sh:NodeShape ;
 				?value a $this .
 				?value ldg:roundingDifference ldg:SettledToNearest .
 				FILTER NOT EXISTS { ?value ldg:excessRecovery ?from }
+			}
+		"""
+	] .
+
+ldg:ResidualAccountNeedsResidualsShape a sh:NodeShape ;
+	sh:targetNode ldg:MergePolicy ;
+	sh:sparql [
+		sh:message "A merge policy may name a residual account only where it allows residuals." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:residualAccount ?account .
+				FILTER NOT EXISTS { ?value ldg:allowsResiduals true }
 			}
 		"""
 	] .

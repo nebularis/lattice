@@ -2,7 +2,8 @@
 
 # SHACL-SPARQL constraints over Ledger's records: a running balance is a sum
 # less its cuts, a credit is applied within its room and cut where an ancestor
-# had less, a merge stays within availability, account instances keep their
+# had less, a merge records every request and shares within availability,
+# account instances keep their
 # natural keys and periods, and no record is effective after its pass. Each shape
 # targets the class it checks and reads all its instances in one query, so a
 # dataset's records are checked in one evaluation per law rather than one per
@@ -209,39 +210,53 @@ ldg:CheckpointFoldShape a sh:NodeShape ;
 ldg:MergeWithinAvailabilityShape a sh:NodeShape ;
         sh:targetNode ldg:MergeRecord ;
         sh:sparql [
-                sh:message "A merge's grants must sum to no more than the availability it was given, and under a proportional rule whose requests exceed it, to exactly that availability." ;
+                sh:message "A merge that granted must give its requests and its residual together the amount it shared, the lesser of what they asked and the availability it was given." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
                                 {
-                                        SELECT $this ?value ?available (SUM(?granted) AS ?grantedTotal) (SUM(?requested) AS ?requestedTotal) WHERE {
-                                                ?value a $this ; ldg:availableBefore ?available ; ldg:grant ?grant .
-                                                ?grant ldg:grantedValue ?granted ; ldg:requestedValue ?requested .
+                                        SELECT $this ?value ?available (SUM(COALESCE(?granted, 0)) AS ?grantedTotal) (SUM(?requested) AS ?requestedTotal) WHERE {
+                                                ?value a $this ; ldg:availableBefore ?available ; ldg:request ?request .
+                                                ?request ldg:requestedValue ?requested .
+                                                OPTIONAL { ?request ldg:grantedValue ?granted }
                                         } GROUP BY $this ?value ?available
                                 }
-                                ?value ldg:onAccount ?account .
-                                ?account ldg:ofDefinition ?definition .
-                                ?definition ldg:mergePolicy ?policy .
-                                ?policy ldg:mergeRule ?rule .
-                                FILTER (?grantedTotal > ?available
-                                        || (?rule = ldg:Proportional && ?requestedTotal > ?available && ?grantedTotal != ?available))
+                                FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                OPTIONAL { ?value ldg:residualValue ?residual }
+                                BIND (IF(?available < 0, 0, ?available) AS ?room)
+                                FILTER (?grantedTotal + COALESCE(?residual, 0) != IF(?requestedTotal < ?room, ?requestedTotal, ?room))
                         }
                 """
         ] .
 
-ldg:GrantWithinRequestShape a sh:NodeShape ;
-        sh:targetNode ldg:Grant ;
+ldg:GrantedWithinRequestShape a sh:NodeShape ;
+        sh:targetNode ldg:Request ;
         sh:sparql [
-                sh:message "A grant must not be above its request, and an exact share states its numerator and a positive denominator together." ;
+                sh:message "A request must not be granted more than it asked or less than zero, and an exact share states its numerator and a positive denominator together." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
-                                ?value a $this ; ldg:grantedValue ?granted ; ldg:requestedValue ?requested .
+                                ?value a $this ; ldg:requestedValue ?requested .
+                                OPTIONAL { ?value ldg:grantedValue ?granted }
                                 OPTIONAL { ?value ldg:proportionNumerator ?numerator }
                                 OPTIONAL { ?value ldg:proportionDenominator ?denominator }
-                                FILTER (?granted > ?requested || ?granted < 0
+                                FILTER (COALESCE(?granted > ?requested || ?granted < 0, false)
                                         || BOUND(?numerator) != BOUND(?denominator)
                                         || (BOUND(?denominator) && ?denominator <= 0))
+                        }
+                """
+        ] .
+
+ldg:GrantedMergeShape a sh:NodeShape ;
+        sh:targetNode ldg:MergeRecord ;
+        sh:sparql [
+                sh:message "A merge that states no reason must give every request a granted value." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:request ?request .
+                                FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                FILTER NOT EXISTS { ?request ldg:grantedValue ?granted }
                         }
                 """
         ] .
@@ -249,13 +264,89 @@ ldg:GrantWithinRequestShape a sh:NodeShape ;
 ldg:RefusedMergeShape a sh:NodeShape ;
         sh:targetNode ldg:MergeRecord ;
         sh:sparql [
-                sh:message "A refused merge must hold no grant, and no posting may cite it." ;
+                sh:message "A refused merge must state a reason of ldg:RefusalReasons, grant no request and state no residual, and no posting may cite it." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX prov: <http://www.w3.org/ns/prov#>
+                        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                         SELECT $this ?value WHERE {
                                 ?value a $this ; ldg:refusalReason ?reason .
-                                FILTER (EXISTS { ?value ldg:grant ?grant } || EXISTS { ?posting prov:wasDerivedFrom ?value })
+                                FILTER (NOT EXISTS { ?reason skos:inScheme ldg:RefusalReasons }
+                                        || EXISTS { ?value ldg:request ?request . ?request ldg:grantedValue ?granted }
+                                        || EXISTS { ?value ldg:residualValue ?residual }
+                                        || EXISTS { ?posting prov:wasDerivedFrom ?value })
+                        }
+                """
+        ] .
+
+ldg:ResidualPermittedShape a sh:NodeShape ;
+        sh:targetNode ldg:MergeRecord ;
+        sh:sparql [
+                sh:message "A merge's residual must not be below zero, and may be above zero only where its policy allows residuals." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:residualValue ?residual ; ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                FILTER (?residual < 0 || (?residual > 0 && NOT EXISTS { ?policy ldg:allowsResiduals true }))
+                        }
+                """
+        ] .
+
+ldg:RanksAsDeclaredShape a sh:NodeShape ;
+        sh:targetNode ldg:Request ;
+        sh:sparql [
+                sh:message "A request must state a rank exactly where its merge's policy states a rank criterion, and a place exactly where it states a unit order criterion." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this .
+                                ?merge ldg:request ?value ; ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                FILTER (EXISTS { ?policy ldg:rankCriterion ?rankCriterion } != EXISTS { ?value ldg:rank ?rank }
+                                        || EXISTS { ?policy ldg:unitOrderCriterion ?unitCriterion } != EXISTS { ?value ldg:unitOrderPlace ?place })
+                        }
+                """
+        ] .
+
+ldg:MergeGuardsShape a sh:NodeShape ;
+        sh:targetNode ldg:MergeRecord ;
+        sh:sparql [
+                sh:message "A merge that granted must hold no two requests of one rank where its policy requires distinct ranks and the requests exceed the availability, and must hold requests that agree on purpose where its policy requires that." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        {
+                                                SELECT $this ?value ?available (SUM(?requested) AS ?requestedTotal) WHERE {
+                                                        ?value a $this ; ldg:availableBefore ?available ; ldg:request ?request .
+                                                        ?request ldg:requestedValue ?requested .
+                                                } GROUP BY $this ?value ?available
+                                        }
+                                        FILTER (?requestedTotal > ?available)
+                                        FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                        ?value ldg:onAccount ?account .
+                                        ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                        ?policy ldg:requiresDistinctRanks true .
+                                        FILTER EXISTS {
+                                                ?value ldg:request ?one , ?other .
+                                                OPTIONAL { ?one ldg:rank ?oneRank }
+                                                OPTIONAL { ?other ldg:rank ?otherRank }
+                                                FILTER (?one != ?other && COALESCE(?oneRank = ?otherRank, true))
+                                        }
+                                } UNION {
+                                        ?value a $this ; ldg:onAccount ?account .
+                                        ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                        ?policy ldg:requiresSamePurpose true .
+                                        FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                        FILTER EXISTS {
+                                                ?value ldg:request ?one , ?other .
+                                                OPTIONAL { ?one ldg:forPurpose ?onePurpose }
+                                                OPTIONAL { ?other ldg:forPurpose ?otherPurpose }
+                                                FILTER (?one != ?other
+                                                        && COALESCE(?onePurpose != ?otherPurpose, BOUND(?onePurpose) != BOUND(?otherPurpose)))
+                                        }
+                                }
                         }
                 """
         ] .
@@ -263,15 +354,16 @@ ldg:RefusedMergeShape a sh:NodeShape ;
 ldg:MergedPostingCitesMergeShape a sh:NodeShape ;
         sh:targetNode ldg:Posting ;
         sh:sparql [
-                sh:message "A posting from a grant must cite the grant's merge record and post the amount granted." ;
+                sh:message "A posting from a request must cite the request's merge record and post the value the request was granted." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX prov: <http://www.w3.org/ns/prov#>
                         SELECT $this ?value WHERE {
-                                ?grant a ldg:Grant ; ldg:grantedValue ?granted .
-                                ?value prov:wasDerivedFrom ?grant ; a $this ; ldg:amountValue ?amount .
-                                ?merge ldg:grant ?grant .
-                                FILTER (NOT EXISTS { ?value prov:wasDerivedFrom ?merge } || ?amount != ?granted)
+                                ?request a ldg:Request .
+                                ?value prov:wasDerivedFrom ?request ; a $this ; ldg:amountValue ?amount .
+                                ?merge ldg:request ?request .
+                                OPTIONAL { ?request ldg:grantedValue ?granted }
+                                FILTER (NOT EXISTS { ?value prov:wasDerivedFrom ?merge } || COALESCE(?amount != ?granted, true))
                         }
                 """
         ] .

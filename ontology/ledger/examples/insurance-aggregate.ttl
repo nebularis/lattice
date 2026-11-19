@@ -123,35 +123,35 @@ ex:flood-aggregate a ldg:AccountDefinition ;
 # ==== Position 1: a flood loss on the sublimit, and the flood purpose =========
 
 ex:loss-1-proposal rdfs:comment "A flood loss of 700,000, paid from the sublimit." .
-ex:loss-1-grant a ldg:Grant ;
+ex:loss-1-request a ldg:Request ;
     ldg:forProposal ex:loss-1-proposal ;
     ldg:requestedValue "700000"^^xsd:decimal ; ldg:grantedValue "700000"^^xsd:decimal .
 ex:loss-1-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-sublimit-a1 ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:grant ex:loss-1-grant .
+    ldg:request ex:loss-1-request .
 ex:loss-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-sublimit-a1 ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "700000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
     ldg:runningBalance "300000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:loss-1-merge , ex:loss-1-grant .
+    prov:wasDerivedFrom ex:loss-1-merge , ex:loss-1-request .
 
-ex:loss-1-flood-grant a ldg:Grant ;
+ex:loss-1-flood-request a ldg:Request ;
     ldg:forProposal ex:loss-1-proposal ;
     ldg:requestedValue "700000"^^xsd:decimal ; ldg:grantedValue "700000"^^xsd:decimal .
 ex:loss-1-flood-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-flood-aggregate ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:grant ex:loss-1-flood-grant .
+    ldg:request ex:loss-1-flood-request .
 ex:loss-1-flood-posting a ldg:Posting ;
     ldg:onAccount ex:account-flood-aggregate ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "700000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
     ldg:runningBalance "2300000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:loss-1-flood-merge , ex:loss-1-flood-grant .
+    prov:wasDerivedFrom ex:loss-1-flood-merge , ex:loss-1-flood-request .
 
 # ==== Position 2: a recovery, credited on the same path and purpose ==========
 
@@ -176,20 +176,20 @@ ex:recovery-2-flood-posting a ldg:Posting ;
 # ==== Position 3: a liability loss paid straight from the aggregate ==========
 
 ex:loss-3-proposal rdfs:comment "A liability loss of 9,600,000, not scoped to a section." .
-ex:loss-3-grant a ldg:Grant ;
+ex:loss-3-request a ldg:Request ;
     ldg:forProposal ex:loss-3-proposal ;
     ldg:requestedValue "9600000"^^xsd:decimal ; ldg:grantedValue "9600000"^^xsd:decimal .
 ex:loss-3-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-aggregate ;
     ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
-    ldg:grant ex:loss-3-grant .
+    ldg:request ex:loss-3-request .
 ex:loss-3-posting a ldg:Posting ;
     ldg:onAccount ex:account-aggregate ;
     ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "9600000"^^xsd:decimal ;
     ldg:runningBalance "0"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:loss-3-merge , ex:loss-3-grant .
+    prov:wasDerivedFrom ex:loss-3-merge , ex:loss-3-request .
 
 # ==== Position 4: the aggregate is reinstated, and the annual cap is not =====
 

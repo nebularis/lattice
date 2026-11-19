@@ -115,20 +115,20 @@ ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
 # ==== Position 1: a drawing, asked for in euros and made in sterling ==========
 
 ex:draw-1-proposal rdfs:comment "A drawing of GBP 10,005,000, asked for as EUR 11,500,000." .
-ex:draw-1-grant a ldg:Grant ;
+ex:draw-1-request a ldg:Request ;
     ldg:forProposal ex:draw-1-proposal ;
     ldg:requestedValue "10005000"^^xsd:decimal ; ldg:grantedValue "10005000"^^xsd:decimal .
 ex:draw-1-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-facility ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:grant ex:draw-1-grant .
+    ldg:request ex:draw-1-request .
 ex:draw-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
     ldg:runningBalance "9995000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-grant , ex:draw-1-conversion .
+    prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-request , ex:draw-1-conversion .
 
 # ==== Position 2: a repayment, made in euros and credited in sterling =========
 
@@ -145,20 +145,20 @@ ex:repayment-posting a ldg:Posting ;
 
 ex:revaluation-proposal
     rdfs:comment "A mark to market of the euros still outstanding, not a fresh drawing." .
-ex:revaluation-grant a ldg:Grant ;
+ex:revaluation-request a ldg:Request ;
     ldg:forProposal ex:revaluation-proposal ;
     ldg:requestedValue "245000"^^xsd:decimal ; ldg:grantedValue "245000"^^xsd:decimal .
 ex:revaluation-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-facility ;
     ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
-    ldg:grant ex:revaluation-grant .
+    ldg:request ex:revaluation-request .
 ex:revaluation-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
     ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "245000"^^xsd:decimal ;
     ldg:runningBalance "14150000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:revaluation-merge , ex:revaluation-grant , ex:revaluation-conversion .
+    prov:wasDerivedFrom ex:revaluation-merge , ex:revaluation-request , ex:revaluation-conversion .
 
 # ==== The account instances and the passes ===================================
 

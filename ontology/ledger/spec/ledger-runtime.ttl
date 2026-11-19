@@ -58,15 +58,10 @@ ldg:Cut a owl:Class ;
     fnd:utility "Write one for each ancestor that accepts the credit's kind and had less room than the amount applied, with the room it lacked as its value. It is part of its credit's record, never a posting in the ancestor's book, and it states no position, since a read by position joins it to its posting." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:cutAt ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:cutOf ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:cutValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
-ldg:Grant a owl:Class ;
-    rdfs:comment "One proposal's request and what the merge granted it." ;
-    fnd:utility "Part of its merge record, never a record of its own. A proportional merge's exact share is two whole numbers, a numerator and a denominator, since no store measured compares an owl:rational by value (section 9)." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:forProposal ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:grantedValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:proportionDenominator ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:proportionNumerator ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requestedValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
-
 ldg:MergeRecord a owl:Class ;
-    rdfs:comment "The merge of the proposals at one account and one effective position." ;
-    fnd:utility "Write one where proposals at one position draw on one account, holding one grant per proposal granted. Under ldg:Refuse an overdrawing merge holds no grant and states its reason. State the availability the merge was given, so its grants can be checked against it." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:availableBefore ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:effectivePosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:inPass ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:onAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:refusalReason ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:DerivedArtefact .
+    rdfs:comment "The merge of the requests at one account and one effective position, or a credit refused alone." ;
+    fnd:utility "Write one where requests at one position draw on one account, holding one request for each, whether the merge granted or refused. A merge that granted states no reason, and states the residual where its rule left one. A refused merge states one reason, grants no request and states no residual, and no posting cites it. Write one also for a credit refused because its account does not accept its kind, holding the credit as its one request, with that reason. State the availability the merge was given, so its granted values can be checked against it." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:availableBefore ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:effectivePosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:inPass ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:onAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:refusalReason ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:request ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:residualValue ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], fnd:DerivedArtefact .
 
 ldg:Pass a owl:Class ;
     rdfs:comment "One evaluation's write of records, recorded at one position." ;
@@ -75,8 +70,13 @@ ldg:Pass a owl:Class ;
 
 ldg:Posting a owl:Class ;
     rdfs:comment "One draw or credit on one account." ;
-    fnd:utility "Write one per draw or credit, on the account named, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. State the running balance of the account posted to, after the posting. A credit states its kind, where it has one, and the amount offered beside the amount applied, and a cut for each ancestor that had less room. Its read set is prov:wasDerivedFrom, which names the merge record and grant a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion." ;
+    fnd:utility "Write one per draw or credit, on the account named, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. State the running balance of the account posted to, after the posting. A credit states its kind, where it has one, and the amount offered beside the amount applied, and a cut for each ancestor that had less room. Its read set is prov:wasDerivedFrom, which names the merge record and the request a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:amountValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditKind ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:direction ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:effectivePosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:forPurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:inPass ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:microPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:offeredValue ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:onAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:recordedPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:runningBalance ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:DerivedArtefact .
+
+ldg:Request a owl:Class ;
+    rdfs:comment "One request on a merge: what one evaluation asked of an account at one position, and what it was granted where the merge granted." ;
+    fnd:utility "Part of its merge record, never a record of its own. Write one for every request on every merge, granted or refused. State its rank where the policy states a rank criterion, its place among requests of one rank where the policy states a unit order criterion, and its purpose where it names one. State a granted value on every request of a merge that granted, zero included, and on no request of a merge that was refused. A share granted in proportion is two whole numbers, a numerator and a denominator, since no store measured compares an owl:rational by value (section 9)." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:forProposal ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:forPurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:grantedValue ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:proportionDenominator ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:proportionNumerator ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:rank ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:requestedValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOrderPlace ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
 
 ldg:accountKey a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The key value of an account instance, where its definition states a key dimension." ;
@@ -145,23 +145,19 @@ ldg:forOwner a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:range fnd:PersistentIdentity .
 
 ldg:forProposal a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "The evaluation that proposed a grant's draw." ;
+    rdfs:comment "The evaluation that made a request." ;
     fnd:utility "Deliberately has no range: the layer above names its evaluations." ;
-    rdfs:domain ldg:Grant .
+    rdfs:domain ldg:Request .
 
 ldg:forPurpose a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "The purpose a draw names." ;
-    rdfs:domain ldg:Posting ;
+    rdfs:comment "The purpose a draw or a request names." ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( ldg:Posting ldg:Request ) ] ;
     rdfs:range skos:Concept .
 
-ldg:grant a owl:ObjectProperty ;
-    rdfs:comment "A grant a merge record holds." ;
-    rdfs:domain ldg:MergeRecord ;
-    rdfs:range ldg:Grant .
-
 ldg:grantedValue a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:comment "What the merge granted a proposal, in the account's unit, after rounding and residual." ;
-    rdfs:domain ldg:Grant ;
+    rdfs:comment "What the merge granted a request, in the account's unit, after rounding and residual." ;
+    fnd:utility "State it on every request of a merge that granted, zero included, and on no request of a merge that was refused." ;
+    rdfs:domain ldg:Request ;
     rdfs:range xsd:decimal .
 
 ldg:inPass a owl:FunctionalProperty, owl:ObjectProperty ;
@@ -209,15 +205,21 @@ ldg:periodKey a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:range qnt:RecurrenceBin .
 
 ldg:proportionDenominator a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:comment "The denominator of a proportional grant's exact share, positive." ;
-    rdfs:domain ldg:Grant ;
+    rdfs:comment "The denominator of the exact share of a request granted in proportion, positive." ;
+    rdfs:domain ldg:Request ;
     rdfs:range xsd:integer .
 
 ldg:proportionNumerator a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:comment "The numerator of a proportional grant's exact share." ;
+    rdfs:comment "The numerator of the exact share of a request granted in proportion." ;
     fnd:utility "State it with ldg:proportionDenominator. The share is kept exact because other evaluations cite it, and the posting is rounded." ;
-    rdfs:domain ldg:Grant ;
+    rdfs:domain ldg:Request ;
     rdfs:range xsd:integer .
+
+ldg:rank a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "A request's rank, derived from the criterion its policy states." ;
+    fnd:utility "A lower rank is served first, and requests of one rank are a tie. State it exactly where the policy of the account the request is made at states ldg:rankCriterion." ;
+    rdfs:domain ldg:Request ;
+    rdfs:range xsd:nonNegativeInteger .
 
 ldg:recordedPosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "Where a posting sits in its own account's append-only sequence." ;
@@ -226,13 +228,26 @@ ldg:recordedPosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:range xsd:nonNegativeInteger .
 
 ldg:refusalReason a owl:FunctionalProperty, owl:ObjectProperty ;
-    rdfs:comment "Why a merge under ldg:Refuse granted nothing." ;
+    rdfs:comment "Why a merge, or a credit refused alone, granted nothing." ;
+    fnd:utility "A concept of ldg:RefusalReasons. State one on a refused merge, and none on a merge that granted." ;
     rdfs:domain ldg:MergeRecord ;
     rdfs:range skos:Concept .
 
+ldg:request a owl:ObjectProperty ;
+    rdfs:comment "A request a merge record holds." ;
+    fnd:utility "One for every request on the merge, granted or refused." ;
+    rdfs:domain ldg:MergeRecord ;
+    rdfs:range ldg:Request .
+
 ldg:requestedValue a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:comment "What a proposal requested, in the account's unit." ;
-    rdfs:domain ldg:Grant ;
+    rdfs:comment "What a request asked, in the account's unit." ;
+    rdfs:domain ldg:Request ;
+    rdfs:range xsd:decimal .
+
+ldg:residualValue a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "What a merge left unplaced of the amount it shared, in the account's unit." ;
+    fnd:utility "State it where the rule left part of the amount unplaced, which a policy permits only where it allows residuals. The granted values and the residual sum to the amount shared, the lesser of what the requests asked and the availability the merge was given. A refused merge states none." ;
+    rdfs:domain ldg:MergeRecord ;
     rdfs:range xsd:decimal .
 
 ldg:runningBalance a owl:DatatypeProperty, owl:FunctionalProperty ;
@@ -241,4 +256,10 @@ ldg:runningBalance a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain ldg:Posting ;
     rdfs:range xsd:decimal .
 
-[ a owl:AllDisjointClasses ; owl:members ( ldg:AccountDefinition ldg:Account ldg:Pass ldg:Posting ldg:Cut ldg:MergeRecord ldg:Grant ldg:Checkpoint ) ] .
+ldg:unitOrderPlace a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:comment "A request's place among requests of one rank, derived from the policy's unit order criterion." ;
+    fnd:utility "Orders requests of one rank where a single unit is placed or taken back, a lower place first. State it exactly where the policy of the account the request is made at states ldg:unitOrderCriterion." ;
+    rdfs:domain ldg:Request ;
+    rdfs:range xsd:nonNegativeInteger .
+
+[ a owl:AllDisjointClasses ; owl:members ( ldg:AccountDefinition ldg:Account ldg:Pass ldg:Posting ldg:Cut ldg:MergeRecord ldg:Request ldg:Checkpoint ) ] .

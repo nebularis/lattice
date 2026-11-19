@@ -84,9 +84,11 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl", "shapes/runtime.ttl
 
 An `ldg:AccountDefinition` states an amount consumed and restored, in a unit of account that must be extensive, so disjoint parts add to the whole, and a draw along a path and an availability reading (the least remaining balance along it) both mean something. "Part of and not in addition to" is the parent edge, `ldg:partOf`, stated explicitly rather than inferred, so a sublimit sits inside a section inside an aggregate while a further limit for one class of beneficiary sits beside it, never drawn through it.
 
-A key dimension derives one account per key value, on the first draw that names it (a seat quota per site, a sublimit per borrower). A merge rule arbitrates several proposals at one position: in priority order, proportionally (with a rounding method and a residual allocation, since an exact share need not round to a whole unit of account), or by refusing the whole merge. A credit ceiling, defaulting to the stated amount, is how far a credit may restore a balance, which lets a reinstatement raise a layer's capacity above its first stated amount without inventing a second account for it. A purpose lets one draw debit a second account outside its path (a flood sub-aggregate, say). A draw arrives in its account's unit, and the ledger never converts one.
+A key dimension derives one account per key value, on the first draw that names it (a seat quota per site, a sublimit per borrower). A merge rule arbitrates several proposals at one position: in priority order, proportionally (with a rounding method and a residual allocation, since an exact share need not round to a whole unit of account), whole or not at all for requests of no use in part, or by refusing the whole merge. A credit ceiling, defaulting to the stated amount, is how far a credit may restore a balance, which lets a reinstatement raise a layer's capacity above its first stated amount without inventing a second account for it. A purpose lets one draw debit a second account outside its path (a flood sub-aggregate, say). A draw arrives in its account's unit, and the ledger never converts one.
 
 A credit carries a kind, a concept of `ldg:CreditKinds`, which an applied module fills, such as a recovery, a reinstatement or a repayment. An account definition names the kinds that restore it with `ldg:restoredBy`, and accepts every kind where it names none. A credit is posted to an account that accepts its kind, and is applied there up to the account's room below its ceiling. Each ancestor that accepts the kind takes the least of the amount applied and its own room, and where it takes less, the difference is a `ldg:Cut` at that ancestor. So an account's balance is its stated amount, less the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it. Each posting records that balance for the account it is on, as `ldg:runningBalance`, and a credit records the amount offered beside the amount applied.
+
+A merge records every request it decides, as an `ldg:Request` that carries what was asked, its rank and its place where the policy orders requests, its purpose, and what it was granted where the merge granted. A refused merge keeps its requests with no granted value and states one reason, a concept of `ldg:RefusalReasons`. A credit refused because its account does not accept its kind is recorded the same way, with one request. A rule may leave part of the amount unplaced where the policy allows residuals, and the merge record then states the residual, which goes to the account the policy names, if it names one.
 
 The class diagram below is generated from section 6.
 
@@ -126,13 +128,6 @@ classDiagram
         cutValue, exactly one
     }
     class DerivedArtefact
-    class Grant {
-        forProposal, exactly one
-        grantedValue, exactly one
-        proportionDenominator, at most one
-        proportionNumerator, at most one
-        requestedValue, exactly one
-    }
     class MergePolicy {
         allowsResiduals, at most one
         excessRecovery, at most one
@@ -140,6 +135,7 @@ classDiagram
         rankCriterion, at most one
         requiresDistinctRanks, at most one
         requiresSamePurpose, at most one
+        residualAccount, at most one
         residualAllocation, at most one
         roundingDifference, at most one
         roundingMethod, at most one
@@ -151,6 +147,8 @@ classDiagram
         inPass, exactly one
         onAccount, exactly one
         refusalReason, at most one
+        request, at least one
+        residualValue, at most one
     }
     class Pass {
         passPosition, exactly one
@@ -172,6 +170,16 @@ classDiagram
     class Quantity
     class Recurrence
     class RecurrenceBin
+    class Request {
+        forProposal, exactly one
+        forPurpose, at most one
+        grantedValue, at most one
+        proportionDenominator, at most one
+        proportionNumerator, at most one
+        rank, at most one
+        requestedValue, exactly one
+        unitOrderPlace, at most one
+    }
     class ValueSpace
     class Versioned
     Account --> Account : partOfAccount
@@ -194,6 +202,7 @@ classDiagram
     DerivedArtefact <|-- Checkpoint
     DerivedArtefact <|-- MergeRecord
     DerivedArtefact <|-- Posting
+    MergePolicy --> AccountDefinition : residualAccount
     MergePolicy --> Concept : excessRecovery
     MergePolicy --> Concept : mergeRule
     MergePolicy --> Concept : rankCriterion
@@ -202,12 +211,12 @@ classDiagram
     MergePolicy --> Concept : roundingMethod
     MergePolicy --> Concept : unitOrderCriterion
     MergeRecord --> Concept : refusalReason
-    MergeRecord --> Grant : grant
+    MergeRecord --> Request : request
     Posting --> Concept : creditKind
     Posting --> Concept : direction
-    Posting --> Concept : forPurpose
     Versioned <|-- MergePolicy
     class DatatypeProperty_effectivePosition["Datatype Property - effectivePosition"]
+    class ObjectProperty_forPurpose["Object Property - forPurpose"]
     class ObjectProperty_inPass["Object Property - inPass"]
     class ObjectProperty_onAccount["Object Property - onAccount"]
 ```
@@ -218,23 +227,27 @@ classDiagram
 
 ### 5.1 Design decisions
 
-- **Configuration and records, in two documents.** Ledger states its configuration: the tree, owner kinds, merge rules and their parameters, the period and closing recurrences, keys, purposes, the kinds of credit that restore an account and credit ceiling ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). Its runtime document states the records: account instances, passes, postings with their running balances, cuts, merge records with their grants, and checkpoints. Computing them is the evaluator's, and Ledger checks what was recorded against its laws (section 7.3).
+- **Configuration and records, in two documents.** Ledger states its configuration: the tree, owner kinds, merge rules and their parameters, the period and closing recurrences, keys, purposes, the kinds of credit that restore an account and credit ceiling ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). Its runtime document states the records: account instances, passes, postings with their running balances, cuts, merge records with their requests, and checkpoints. Computing them is the evaluator's, and Ledger checks what was recorded against its laws (section 7.3).
 - **An account instance is named.** An account is a node with a minted IRI, identified by its definition, its owner, its key and its period, which stay its natural key ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-10-27). A posting names that node rather than repeating the four values. An instance states the instance it is part of, so a fold over a subtree follows one edge.
 - **A period is an account, not a reset.** Where a definition states `ldg:periodRecurrence`, one account is derived per period, its period key the recurrence bin the effective position falls in, computed at write and never supplied by a draw. One recurrence holds along a path, and a keyed child's instance is part of its parent's under the same bin. Nothing resets, so `ldg:resetRecurrence` is deprecated.
 - **Two orderings.** A posting carries an effective position, where the fact sits in the arrangement and comparable across accounts, and a recorded position with a micro-position, where it sits in its own account's append-only sequence. The pass that wrote it carries the position at which it was recorded, on the effective axis, and a posting is never effective later than its pass. Running balances, closes and checkpoints follow the recorded axis, so a reading as of an effective position folds the postings. A position is a natural number on its axis, so the effective and the recorded position are typed `xsd:nonNegativeInteger`, as the shared formal statement of positions that this layer's proofs and the multi-store model use defines one.
 - **A draw arrives in its account's unit.** The ledger never converts. A request in another value space is converted before it reaches the ledger, where the conversion is recorded with its rate, the rate's source and its date, and the draw is then made in the account's unit. A posting may cite that record by `prov:wasDerivedFrom`, as it cites a merge record, so the conversion stays traceable and the ledger states no term for it ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-09).
 - **Post at the drawn account only.** A draw writes one posting, on the account drawn, and an ancestor's balance is derived by a fold over its subtree. A purpose-counting account is outside the drawn account's subtree, so it keeps a posting of its own from the same draw. Where a purpose-counting account and the drawn account share an ancestor, that ancestor's fold would count the draw twice, and the rule that prevents it is open (section 13).
-- **An exact share is two integers.** A proportional grant keeps its exact share as a numerator and a denominator, not as one `owl:rational`, because no store LATTICE runs compares that literal by value (TSD-70), and the merge shapes compare and sum grants.
+- **An exact share is two integers.** A request granted in proportion keeps its exact share as a numerator and a denominator, not as one `owl:rational`, because no store LATTICE runs compares that literal by value (TSD-70), and the merge shapes compare and sum granted values.
 - **The running balance sits on the posting.** A posting records the balance of the account it is on after it, that account's subtree included, so the hot path reads one value. No record holds a balance for each account and pass, and a state the decision path does not read is answered from the history when it is asked for ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-11-16). The order is the recorded one. On its own account a posting follows those recorded before it, and on an account below it those of an earlier pass, or of its own pass at a lower or equal micro-position.
 - **A credit has a kind, and an account names the kinds that restore it.** The kind is a concept of `ldg:CreditKinds`, which Ledger declares with no member and an applied module fills, since what restores an amount belongs to a domain. An account accepts every kind unless it names some with `ldg:restoredBy`, and an ancestor counts a credit only where it accepts its kind. A credit posted to an account that does not accept its kind is refused, and so is a credit with no kind on a path where an account names its kinds ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first and fourth addenda of 2026-11-16).
 - **A balance is a sum less its cuts.** A credit is applied at the account it is posted to, up to that account's room below its ceiling, and records the amount offered beside the amount applied. `ldg:amountValue` is the amount applied for a credit, as it is the amount drawn for a debit, so a balance is read from one property. Each ancestor that accepts the kind takes the least of the amount applied and its own room, and where it takes less, the writer records the difference as a cut at that ancestor. An account's balance is then its stated amount, less the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it, which equals the balance stepped posting by posting, so no read needs an ordered scan to honour a ceiling ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-11-16).
 - **A cut is a node of its own, and states no position.** One credit can be cut at several ancestors, so a cut is a `ldg:Cut` that names its posting, the ancestor and its value. A read by position joins the cut to its posting, so a position is recorded once and cannot drift from a copy.
 - **A merge policy is a node of its own, and it is versioned.** What a scope declares for competing requests is stated once, on a `ldg:MergePolicy`, and each account definition it governs names a version of it. A contract, a document it cites and a deployment can each state one, and which governs a definition is resolved when the definition is written, so the ledger reads exactly one ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-17).
 - **A rounding difference is settled as the wording says, each direction stated apart.** Shares rounded to the nearest can sum to more than the amount or to less. A policy says whether the rounding is only for show or the difference is settled, and where it is settled, the residual allocation says where a unit short goes and the excess recovery says where a unit over is taken from. Neither is inferred from the other, and silence is refused ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its second addendum of 2026-11-17).
+- **A merge records every request, and a refusal keeps them.** Each request on a merge is an `ldg:Request`, part of its merge record, which names the evaluation that made it and carries what it asked, its rank, its place among requests of one rank and its purpose. A request on a merge that granted carries what it was granted, and a request on a refused merge carries no granted value, since a refusal is never a grant of nothing. So a history shows what was refused and what decided the order. A credit refused because its account does not accept its kind is recorded the same way, as a merge record with one request and a reason, and no posting is written ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its third addendum of 2026-11-19).
+- **A rank and a place are derived from the policy's criteria.** A request states its rank where its policy states `ldg:rankCriterion`, and its place among requests of one rank where the policy states `ldg:unitOrderCriterion`, each a natural number derived from that criterion. A lower rank is served first, and requests of one rank are a tie. A request states neither where its policy states no criterion, since an order is declared and never taken from identifiers ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its second addenda of 2026-11-09 and 2026-11-16).
+- **A residual is stated on the merge, and the policy names its account.** A rule may grant parts that sum to less than the amount shared, each within its request, where the policy allows residuals, and the merge record states what is left as `ldg:residualValue`, so the granted values and the residual sum to the amount shared. Requests of no use in part are such a rule, `ldg:WholeOrNothing`. The policy may name the account definition that takes a residual with `ldg:residualAccount`, since what becomes of a residual is part of the treatment a scope states, and it names one only beside the permission ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its second addendum of 2026-11-16 and its third addendum of 2026-11-19).
+- **A refusal states one of seven reasons.** The reasons are the concepts of `ldg:RefusalReasons`, each named for the condition that held: six refuse a merge, and the seventh refuses a credit posted to an account that does not accept its kind ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its second and fourth addenda of 2026-11-16).
 - **`ldg:AccountDefinition` is a plain class.** It is part of the terms that state it and changes only with them, as Behaviour's allowance definition is, so it needs no superclass from Foundation.
   `ldg:AccountDefinition` is a plain `owl:Class` until then. See Open Issues.
 - **Every concept scheme is declared now**, including `ldg:PostingDirections`, which only the runtime terms use. A concept scheme is a freestanding declaration, independent of which class first points at it.
-- **Eight constraints** (no cycle, matching units, extensive additivity, a proportional rule's rounding and residual, a stated rounding difference, a stated source for a unit over, a credit ceiling at or above the stated amount, a key dimension's type) are SHACL-SPARQL, in section 7. Cardinalities are generated structural shapes from section 6's Restrictions table. The runtime laws are SHACL-SPARQL too, in section 7.3, each citing the theorem of section 10 it checks on one dataset.
+- **Nine constraints** (no cycle, matching units, extensive additivity, a proportional rule's rounding and residual, a stated rounding difference, a stated source for a unit over, a residual account only beside the permission to leave a residual, a credit ceiling at or above the stated amount, a key dimension's type) are SHACL-SPARQL, in section 7. Cardinalities are generated structural shapes from section 6's Restrictions table. The runtime laws are SHACL-SPARQL too, in section 7.3, each citing the theorem of section 10 it checks on one dataset.
 
 ### 5.2 Worked reading
 
@@ -269,7 +282,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** What a scope declares for requests that compete at one position.
 
-**Utility.** State one for each scope that says how competing requests are treated, a contract, a document it cites or a deployment, and name it from every account definition it governs. It carries the merge rule always, a rounding method and a residual allocation where the rule shares in proportion, and the criteria, the permission and the guards only where the terms state them. A policy is versioned. A change of treatment is a new version, and an account definition names the version that governs it, so what a past balance was settled under does not change. Where several accounts take part in one merge, the policy of the account the requests are made at governs.
+**Utility.** State one for each scope that says how competing requests are treated, a contract, a document it cites or a deployment, and name it from every account definition it governs. It carries the merge rule always, a rounding method and a residual allocation where the rule shares in proportion, and the criteria, the permission, the residual account and the guards only where the terms state them. A policy is versioned. A change of treatment is a new version, and an account definition names the version that governs it, so what a past balance was settled under does not change. Where several accounts take part in one merge, the policy of the account the requests are made at governs.
 
 **Subclass of.** `fnd:Versioned`
 
@@ -285,6 +298,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 | `ldg:rankCriterion` | max 1 |  |  |
 | `ldg:unitOrderCriterion` | max 1 |  |  |
 | `ldg:allowsResiduals` | max 1 |  |  |
+| `ldg:residualAccount` | max 1 |  |  |
 | `ldg:requiresDistinctRanks` | max 1 |  |  |
 | `ldg:requiresSamePurpose` | max 1 |  |  |
 
@@ -324,7 +338,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Subclass of.** `fnd:DerivedArtefact`
 
-**Utility.** Write one per draw or credit, on the account named, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. State the running balance of the account posted to, after the posting. A credit states its kind, where it has one, and the amount offered beside the amount applied, and a cut for each ancestor that had less room. Its read set is `prov:wasDerivedFrom`, which names the merge record and grant a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion.
+**Utility.** Write one per draw or credit, on the account named, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. State the running balance of the account posted to, after the posting. A credit states its kind, where it has one, and the amount offered beside the amount applied, and a cut for each ancestor that had less room. Its read set is `prov:wasDerivedFrom`, which names the merge record and the request a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion.
 
 **Restrictions.**
 
@@ -358,11 +372,11 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 #### `ldg:MergeRecord`
 
-**Definition.** The merge of the proposals at one account and one effective position.
+**Definition.** The merge of the requests at one account and one effective position, or a credit refused alone.
 
 **Subclass of.** `fnd:DerivedArtefact`
 
-**Utility.** Write one where proposals at one position draw on one account, holding one grant per proposal granted. Under `ldg:Refuse` an overdrawing merge holds no grant and states its reason. State the availability the merge was given, so its grants can be checked against it.
+**Utility.** Write one where requests at one position draw on one account, holding one request for each, whether the merge granted or refused. A merge that granted states no reason, and states the residual where its rule left one. A refused merge states one reason, grants no request and states no residual, and no posting cites it. Write one also for a credit refused because its account does not accept its kind, holding the credit as its one request, with that reason. State the availability the merge was given, so its granted values can be checked against it.
 
 **Restrictions.**
 
@@ -371,14 +385,16 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 | `ldg:onAccount` | exactly 1 |  |  |
 | `ldg:inPass` | exactly 1 |  |  |
 | `ldg:effectivePosition` | exactly 1 |  |  |
+| `ldg:request` | min 1 |  |  |
 | `ldg:availableBefore` | max 1 |  |  |
+| `ldg:residualValue` | max 1 |  |  |
 | `ldg:refusalReason` | max 1 |  |  |
 
-#### `ldg:Grant`
+#### `ldg:Request`
 
-**Definition.** One proposal's request and what the merge granted it.
+**Definition.** One request on a merge: what one evaluation asked of an account at one position, and what it was granted where the merge granted.
 
-**Utility.** Part of its merge record, never a record of its own. A proportional merge's exact share is two whole numbers, a numerator and a denominator, since no store measured compares an `owl:rational` by value (section 9).
+**Utility.** Part of its merge record, never a record of its own. Write one for every request on every merge, granted or refused. State its rank where the policy states a rank criterion, its place among requests of one rank where the policy states a unit order criterion, and its purpose where it names one. State a granted value on every request of a merge that granted, zero included, and on no request of a merge that was refused. A share granted in proportion is two whole numbers, a numerator and a denominator, since no store measured compares an `owl:rational` by value (section 9).
 
 **Restrictions.**
 
@@ -386,7 +402,10 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 |---|---|---|---|
 | `ldg:forProposal` | exactly 1 |  |  |
 | `ldg:requestedValue` | exactly 1 |  |  |
-| `ldg:grantedValue` | exactly 1 |  |  |
+| `ldg:grantedValue` | max 1 |  |  |
+| `ldg:rank` | max 1 |  |  |
+| `ldg:unitOrderPlace` | max 1 |  |  |
+| `ldg:forPurpose` | max 1 |  |  |
 | `ldg:proportionNumerator` | max 1 |  |  |
 | `ldg:proportionDenominator` | max 1 |  |  |
 
@@ -480,7 +499,7 @@ allow.
 
 **Definition.** What happens when several draws at one position together exceed availability.
 
-**Utility.** Selects the arbitration rule of this policy: `ldg:InPriorityOrder`, `ldg:Proportional` (also state `ldg:roundingMethod` and `ldg:residualAllocation`), or `ldg:Refuse` (the whole merge is refused, with no grant, where proposals together overdraw the account).
+**Utility.** Selects the arbitration rule of this policy: `ldg:InPriorityOrder`, `ldg:Proportional` (also state `ldg:roundingMethod` and `ldg:residualAllocation`), `ldg:WholeOrNothing` (each request granted whole or not at all, which leaves a residual only where the policy allows residuals), or `ldg:Refuse` (the whole merge is refused, with no request granted, where proposals together overdraw the account).
 
 **Domain.** `ldg:MergePolicy`
 
@@ -557,6 +576,18 @@ allow.
 **Domain.** `ldg:MergePolicy`
 
 **Range.** `skos:Concept`
+
+**Characteristics.** functional
+
+#### `ldg:residualAccount`
+
+**Definition.** The account that takes what a merge under this policy leaves.
+
+**Utility.** State it only beside `ldg:allowsResiduals` true, and only where the terms say where a residual goes. Its value is an account definition, and the owner's instance of it takes the residual. That account's own policy says what becomes of it. Leave it unset where a residual is only stated on the merge record.
+
+**Domain.** `ldg:MergePolicy`
+
+**Range.** `ldg:AccountDefinition`
 
 **Characteristics.** functional
 
@@ -738,9 +769,9 @@ to twice it, without a second account).
 
 #### `ldg:forPurpose`
 
-**Definition.** The purpose a draw names.
+**Definition.** The purpose a draw or a request names.
 
-**Domain.** `ldg:Posting`
+**Domain.** `ldg:Posting or ldg:Request`
 
 **Range.** `skos:Concept`
 
@@ -780,27 +811,31 @@ to twice it, without a second account).
 
 **Characteristics.** functional
 
-#### `ldg:grant`
+#### `ldg:request`
 
-**Definition.** A grant a merge record holds.
+**Definition.** A request a merge record holds.
+
+**Utility.** One for every request on the merge, granted or refused.
 
 **Domain.** `ldg:MergeRecord`
 
-**Range.** `ldg:Grant`
+**Range.** `ldg:Request`
 
 #### `ldg:forProposal`
 
-**Definition.** The evaluation that proposed a grant's draw.
+**Definition.** The evaluation that made a request.
 
 **Utility.** Deliberately has no range: the layer above names its evaluations.
 
-**Domain.** `ldg:Grant`
+**Domain.** `ldg:Request`
 
 **Characteristics.** functional
 
 #### `ldg:refusalReason`
 
-**Definition.** Why a merge under `ldg:Refuse` granted nothing.
+**Definition.** Why a merge, or a credit refused alone, granted nothing.
+
+**Utility.** A concept of `ldg:RefusalReasons`. State one on a refused merge, and none on a merge that granted.
 
 **Domain.** `ldg:MergeRecord`
 
@@ -812,7 +847,7 @@ to twice it, without a second account).
 
 ### 6.3 Datatype Properties
 
-The configuration declares three, a permission and two guards of a merge policy. In the runtime document a posting's effective and recorded positions are natural numbers, its other positions whole numbers, and its amounts decimals in the account's unit of account.
+The configuration declares three, a permission and two guards of a merge policy. In the runtime document a posting's effective and recorded positions and a request's rank and place are natural numbers, a posting's other positions whole numbers, and amounts decimals in the account's unit of account.
 
 #### `ldg:allowsResiduals`
 
@@ -956,11 +991,23 @@ The configuration declares three, a permission and two guards of a merge policy.
 
 **Characteristics.** functional
 
+#### `ldg:residualValue`
+
+**Definition.** What a merge left unplaced of the amount it shared, in the account's unit.
+
+**Utility.** State it where the rule left part of the amount unplaced, which a policy permits only where it allows residuals. The granted values and the residual sum to the amount shared, the lesser of what the requests asked and the availability the merge was given. A refused merge states none.
+
+**Domain.** `ldg:MergeRecord`
+
+**Range.** `xsd:decimal`
+
+**Characteristics.** functional
+
 #### `ldg:requestedValue`
 
-**Definition.** What a proposal requested, in the account's unit.
+**Definition.** What a request asked, in the account's unit.
 
-**Domain.** `ldg:Grant`
+**Domain.** `ldg:Request`
 
 **Range.** `xsd:decimal`
 
@@ -968,21 +1015,47 @@ The configuration declares three, a permission and two guards of a merge policy.
 
 #### `ldg:grantedValue`
 
-**Definition.** What the merge granted a proposal, in the account's unit, after rounding and residual.
+**Definition.** What the merge granted a request, in the account's unit, after rounding and residual.
 
-**Domain.** `ldg:Grant`
+**Utility.** State it on every request of a merge that granted, zero included, and on no request of a merge that was refused.
+
+**Domain.** `ldg:Request`
 
 **Range.** `xsd:decimal`
 
 **Characteristics.** functional
 
+#### `ldg:rank`
+
+**Definition.** A request's rank, derived from the criterion its policy states.
+
+**Utility.** A lower rank is served first, and requests of one rank are a tie. State it exactly where the policy of the account the request is made at states `ldg:rankCriterion`.
+
+**Domain.** `ldg:Request`
+
+**Range.** `xsd:nonNegativeInteger`
+
+**Characteristics.** functional
+
+#### `ldg:unitOrderPlace`
+
+**Definition.** A request's place among requests of one rank, derived from the policy's unit order criterion.
+
+**Utility.** Orders requests of one rank where a single unit is placed or taken back, a lower place first. State it exactly where the policy of the account the request is made at states `ldg:unitOrderCriterion`.
+
+**Domain.** `ldg:Request`
+
+**Range.** `xsd:nonNegativeInteger`
+
+**Characteristics.** functional
+
 #### `ldg:proportionNumerator`
 
-**Definition.** The numerator of a proportional grant's exact share.
+**Definition.** The numerator of the exact share of a request granted in proportion.
 
 **Utility.** State it with `ldg:proportionDenominator`. The share is kept exact because other evaluations cite it, and the posting is rounded.
 
-**Domain.** `ldg:Grant`
+**Domain.** `ldg:Request`
 
 **Range.** `xsd:integer`
 
@@ -990,9 +1063,9 @@ The configuration declares three, a permission and two guards of a merge policy.
 
 #### `ldg:proportionDenominator`
 
-**Definition.** The denominator of a proportional grant's exact share, positive.
+**Definition.** The denominator of the exact share of a request granted in proportion, positive.
 
-**Domain.** `ldg:Grant`
+**Domain.** `ldg:Request`
 
 **Range.** `xsd:integer`
 
@@ -1022,7 +1095,7 @@ The configuration declares three, a permission and two guards of a merge policy.
 
 ### 6.4 Individuals
 
-The merge rules, posting directions, rounding methods, residual allocations, rounding differences and excess recoveries are each a `skos:Concept` in a scheme of its own. `ldg:PostingDirections` is used only by the runtime terms. `ldg:OrderCriteria` is declared with no member, since what requests are ordered by belongs to a domain, and an applied module adds its concepts to it. `ldg:CreditKinds` is declared with no member for the same reason, since what restores an amount, a recovery, a reinstatement or a repayment, belongs to a domain.
+The merge rules, posting directions, rounding methods, residual allocations, rounding differences, excess recoveries and refusal reasons are each a `skos:Concept` in a scheme of its own. `ldg:PostingDirections` and `ldg:RefusalReasons` are used only by the runtime terms, and each refusal reason states its scheme, since a refusal's reason is checked to be one of them. `ldg:OrderCriteria` is declared with no member, since what requests are ordered by belongs to a domain, and an applied module adds its concepts to it. `ldg:CreditKinds` is declared with no member for the same reason, since what restores an amount, a recovery, a reinstatement or a repayment, belongs to a domain.
 
 **Concept schemes.**
 
@@ -1036,6 +1109,7 @@ The merge rules, posting directions, rounding methods, residual allocations, rou
 | `ldg:ExcessRecoveries` | `skos:ConceptScheme` | Where a unit over is taken from. |
 | `ldg:OrderCriteria` | `skos:ConceptScheme` | What requests are ordered by, for their rank and for the placing of single units. |
 | `ldg:CreditKinds` | `skos:ConceptScheme` | The kinds of credit, which an account names to say what restores it. |
+| `ldg:RefusalReasons` | `skos:ConceptScheme` | Why a merge, or a credit refused alone, granted nothing. |
 
 **`ldg:MergeRules`.**
 
@@ -1043,7 +1117,8 @@ The merge rules, posting directions, rounding methods, residual allocations, rou
 |---|---|---|
 | `ldg:InPriorityOrder` | `skos:Concept` | Draws are granted in the priority order the merge policy declares until availability is exhausted. The order is the policy's declaration, never the order of the proposals' identifiers. |
 | `ldg:Proportional` | `skos:Concept` | Draws are granted in proportion to the amounts requested, rounded and allocated per the policy's `ldg:roundingMethod` and `ldg:residualAllocation`. |
-| `ldg:Refuse` | `skos:Concept` | Where proposals together exceed availability, the whole merge is refused: no grant, a reason recorded, no posting. |
+| `ldg:WholeOrNothing` | `skos:Concept` | Each request is of no use in part. In the order the merge policy declares, each is granted whole where it fits what is left and nothing otherwise, and what no request fitted is the residual. |
+| `ldg:Refuse` | `skos:Concept` | Where proposals together exceed availability, the whole merge is refused: no request is granted, a reason is recorded, and no posting is written. |
 
 **`ldg:PostingDirections`.**
 
@@ -1081,13 +1156,25 @@ The merge rules, posting directions, rounding methods, residual allocations, rou
 | `ldg:FromFirstInOrder` | `skos:Concept` | A unit over is taken, one at a time, from the first shares rounded up in the order the merge policy declares. |
 | `ldg:FromMostRoundedUp` | `skos:Concept` | A unit over is taken, one at a time, from the shares rounded up by the most, ties taken in the order the merge policy declares. |
 
+**`ldg:RefusalReasons`.**
+
+| Individual | Type | Definition | `skos:inScheme` |
+|---|---|---|---|
+| `ldg:ExceedsAvailable` | `skos:Concept` | The requests exceed what is available, and the policy refuses that. | `ldg:RefusalReasons` |
+| `ldg:RanksNotDistinct` | `skos:Concept` | The requests exceed what is available, the policy requires distinct ranks, and two requests share a rank. | `ldg:RefusalReasons` |
+| `ldg:TieWithoutRule` | `skos:Concept` | A tie arises among requests of one rank, and the policy declares no rule for one. | `ldg:RefusalReasons` |
+| `ldg:ResidualNotPermitted` | `skos:Concept` | The rule would leave part of the amount unplaced, and the policy does not allow residuals. | `ldg:RefusalReasons` |
+| `ldg:MixedPurposes` | `skos:Concept` | The requests do not agree on purpose, and the policy requires that they do. | `ldg:RefusalReasons` |
+| `ldg:CrossingLimits` | `skos:Concept` | Two sets of requests, each limited by the accounts its requests reach, overlap with neither inside the other. | `ldg:RefusalReasons` |
+| `ldg:KindNotAccepted` | `skos:Concept` | A credit is posted to an account that does not accept its kind. | `ldg:RefusalReasons` |
+
 ### 6.5 Disjointness and Keys
 
 The runtime document's classes are pairwise disjoint, and disjoint from the account definition.
 
 <!-- start: {"output-file": "spec/ledger-runtime.ttl"} -->
 
-**All disjoint.** `ldg:AccountDefinition`, `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Grant`, `ldg:Checkpoint`
+**All disjoint.** `ldg:AccountDefinition`, `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Request`, `ldg:Checkpoint`
 
 <!-- end -->
 
@@ -1111,15 +1198,15 @@ ldg:mergePolicy fnd:meaningBearing true .
 
 | Term | Kind | Summary |
 |---|---|---|
-| `ldg:Account` | Class | Disjoint with `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:accountKey` max 1, `ldg:forOwner` exactly 1, `ldg:ofDefinition` exactly 1, `ldg:partOfAccount` max 1, `ldg:periodKey` max 1. |
-| `ldg:AccountDefinition` | Class | Disjoint with `ldg:Account`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:admitsOwnerKind` min 1, `ldg:closingRecurrence` max 1, `ldg:creditCeiling` max 1, `ldg:keyDimension` max 1, `ldg:mergePolicy` exactly 1, `ldg:partOf` max 1, `ldg:periodRecurrence` max 1, `ldg:resetRecurrence` max 1, `ldg:statedAmount` exactly 1, `ldg:unitOfAccount` exactly 1. |
-| `ldg:Checkpoint` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Cut`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:balanceValue` exactly 1, `ldg:closePosition` exactly 1, `ldg:onAccount` exactly 1. |
-| `ldg:Cut` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:cutAt` exactly 1, `ldg:cutOf` exactly 1, `ldg:cutValue` exactly 1. |
-| `ldg:Grant` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:forProposal` exactly 1, `ldg:grantedValue` exactly 1, `ldg:proportionDenominator` max 1, `ldg:proportionNumerator` max 1, `ldg:requestedValue` exactly 1. |
-| `ldg:MergePolicy` | Class | Subclass of `fnd:Versioned`. Restrictions `ldg:allowsResiduals` max 1, `ldg:excessRecovery` max 1, `ldg:mergeRule` exactly 1, `ldg:rankCriterion` max 1, `ldg:requiresDistinctRanks` max 1, `ldg:requiresSamePurpose` max 1, `ldg:residualAllocation` max 1, `ldg:roundingDifference` max 1, `ldg:roundingMethod` max 1, `ldg:unitOrderCriterion` max 1. |
-| `ldg:MergeRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Grant`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:availableBefore` max 1, `ldg:effectivePosition` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:refusalReason` max 1. |
-| `ldg:Pass` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Posting`. Restrictions `ldg:passPosition` exactly 1. |
-| `ldg:Posting` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`. Restrictions `ldg:amountValue` exactly 1, `ldg:creditKind` max 1, `ldg:direction` exactly 1, `ldg:effectivePosition` exactly 1, `ldg:forPurpose` max 1, `ldg:inPass` exactly 1, `ldg:microPosition` exactly 1, `ldg:offeredValue` max 1, `ldg:onAccount` exactly 1, `ldg:recordedPosition` exactly 1, `ldg:runningBalance` exactly 1. |
+| `ldg:Account` | Class | Disjoint with `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:accountKey` max 1, `ldg:forOwner` exactly 1, `ldg:ofDefinition` exactly 1, `ldg:partOfAccount` max 1, `ldg:periodKey` max 1. |
+| `ldg:AccountDefinition` | Class | Disjoint with `ldg:Account`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:admitsOwnerKind` min 1, `ldg:closingRecurrence` max 1, `ldg:creditCeiling` max 1, `ldg:keyDimension` max 1, `ldg:mergePolicy` exactly 1, `ldg:partOf` max 1, `ldg:periodRecurrence` max 1, `ldg:resetRecurrence` max 1, `ldg:statedAmount` exactly 1, `ldg:unitOfAccount` exactly 1. |
+| `ldg:Checkpoint` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:balanceValue` exactly 1, `ldg:closePosition` exactly 1, `ldg:onAccount` exactly 1. |
+| `ldg:Cut` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:cutAt` exactly 1, `ldg:cutOf` exactly 1, `ldg:cutValue` exactly 1. |
+| `ldg:MergePolicy` | Class | Subclass of `fnd:Versioned`. Restrictions `ldg:allowsResiduals` max 1, `ldg:excessRecovery` max 1, `ldg:mergeRule` exactly 1, `ldg:rankCriterion` max 1, `ldg:requiresDistinctRanks` max 1, `ldg:requiresSamePurpose` max 1, `ldg:residualAccount` max 1, `ldg:residualAllocation` max 1, `ldg:roundingDifference` max 1, `ldg:roundingMethod` max 1, `ldg:unitOrderCriterion` max 1. |
+| `ldg:MergeRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:availableBefore` max 1, `ldg:effectivePosition` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:refusalReason` max 1, `ldg:request` min 1, `ldg:residualValue` max 1. |
+| `ldg:Pass` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:passPosition` exactly 1. |
+| `ldg:Posting` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Request`. Restrictions `ldg:amountValue` exactly 1, `ldg:creditKind` max 1, `ldg:direction` exactly 1, `ldg:effectivePosition` exactly 1, `ldg:forPurpose` max 1, `ldg:inPass` exactly 1, `ldg:microPosition` exactly 1, `ldg:offeredValue` max 1, `ldg:onAccount` exactly 1, `ldg:recordedPosition` exactly 1, `ldg:runningBalance` exactly 1. |
+| `ldg:Request` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:forProposal` exactly 1, `ldg:forPurpose` max 1, `ldg:grantedValue` max 1, `ldg:proportionDenominator` max 1, `ldg:proportionNumerator` max 1, `ldg:rank` max 1, `ldg:requestedValue` exactly 1, `ldg:unitOrderPlace` max 1. |
 | `ldg:accountKey` | Object property | Domain `ldg:Account`. Range `skos:Concept` or `qnt:Value`. Functional. |
 | `ldg:admitsOwnerKind` | Object property | Domain `ldg:AccountDefinition`. Range `rdfs:Class`. |
 | `ldg:closingRecurrence` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Recurrence`. Functional. |
@@ -1131,9 +1218,8 @@ ldg:mergePolicy fnd:meaningBearing true .
 | `ldg:direction` | Object property | Domain `ldg:Posting`. Range `skos:Concept`. Functional. |
 | `ldg:excessRecovery` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:forOwner` | Object property | Domain `ldg:Account`. Range `fnd:PersistentIdentity`. Functional. |
-| `ldg:forProposal` | Object property | Domain `ldg:Grant`. Functional. |
-| `ldg:forPurpose` | Object property | Domain `ldg:Posting`. Range `skos:Concept`. Functional. |
-| `ldg:grant` | Object property | Domain `ldg:MergeRecord`. Range `ldg:Grant`. |
+| `ldg:forProposal` | Object property | Domain `ldg:Request`. Functional. |
+| `ldg:forPurpose` | Object property | Domain `ldg:Posting` or `ldg:Request`. Range `skos:Concept`. Functional. |
 | `ldg:inPass` | Object property | Domain `ldg:Posting` or `ldg:MergeRecord`. Range `ldg:Pass`. Functional. |
 | `ldg:keyDimension` | Object property | Domain `ldg:AccountDefinition`. Range `skos:ConceptScheme` or `qnt:ValueSpace`. Functional. |
 | `ldg:mergePolicy` | Object property | Domain `ldg:AccountDefinition`. Range `ldg:MergePolicy`. Functional. |
@@ -1146,7 +1232,9 @@ ldg:mergePolicy fnd:meaningBearing true .
 | `ldg:periodRecurrence` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Recurrence`. Functional. |
 | `ldg:rankCriterion` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:refusalReason` | Object property | Domain `ldg:MergeRecord`. Range `skos:Concept`. Functional. |
+| `ldg:request` | Object property | Domain `ldg:MergeRecord`. Range `ldg:Request`. |
 | `ldg:resetRecurrence` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Recurrence`. Functional. |
+| `ldg:residualAccount` | Object property | Domain `ldg:MergePolicy`. Range `ldg:AccountDefinition`. Functional. |
 | `ldg:residualAllocation` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:restoredBy` | Object property | Domain `ldg:AccountDefinition`. Range `skos:Concept`. |
 | `ldg:roundingDifference` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
@@ -1161,39 +1249,51 @@ ldg:mergePolicy fnd:meaningBearing true .
 | `ldg:closePosition` | Datatype property | Domain `ldg:Checkpoint`. Range `xsd:integer`. Functional. |
 | `ldg:cutValue` | Datatype property | Domain `ldg:Cut`. Range `xsd:decimal`. Functional. |
 | `ldg:effectivePosition` | Datatype property | Domain `ldg:Posting` or `ldg:MergeRecord`. Range `xsd:nonNegativeInteger`. Functional. |
-| `ldg:grantedValue` | Datatype property | Domain `ldg:Grant`. Range `xsd:decimal`. Functional. |
+| `ldg:grantedValue` | Datatype property | Domain `ldg:Request`. Range `xsd:decimal`. Functional. |
 | `ldg:microPosition` | Datatype property | Domain `ldg:Posting`. Range `xsd:integer`. Functional. |
 | `ldg:offeredValue` | Datatype property | Domain `ldg:Posting`. Range `xsd:decimal`. Functional. |
 | `ldg:passPosition` | Datatype property | Domain `ldg:Pass`. Range `xsd:integer`. Functional. |
-| `ldg:proportionDenominator` | Datatype property | Domain `ldg:Grant`. Range `xsd:integer`. Functional. |
-| `ldg:proportionNumerator` | Datatype property | Domain `ldg:Grant`. Range `xsd:integer`. Functional. |
+| `ldg:proportionDenominator` | Datatype property | Domain `ldg:Request`. Range `xsd:integer`. Functional. |
+| `ldg:proportionNumerator` | Datatype property | Domain `ldg:Request`. Range `xsd:integer`. Functional. |
+| `ldg:rank` | Datatype property | Domain `ldg:Request`. Range `xsd:nonNegativeInteger`. Functional. |
 | `ldg:recordedPosition` | Datatype property | Domain `ldg:Posting`. Range `xsd:nonNegativeInteger`. Functional. |
-| `ldg:requestedValue` | Datatype property | Domain `ldg:Grant`. Range `xsd:decimal`. Functional. |
+| `ldg:requestedValue` | Datatype property | Domain `ldg:Request`. Range `xsd:decimal`. Functional. |
 | `ldg:requiresDistinctRanks` | Datatype property | Domain `ldg:MergePolicy`. Range `xsd:boolean`. Functional. |
 | `ldg:requiresSamePurpose` | Datatype property | Domain `ldg:MergePolicy`. Range `xsd:boolean`. Functional. |
+| `ldg:residualValue` | Datatype property | Domain `ldg:MergeRecord`. Range `xsd:decimal`. Functional. |
 | `ldg:runningBalance` | Datatype property | Domain `ldg:Posting`. Range `xsd:decimal`. Functional. |
+| `ldg:unitOrderPlace` | Datatype property | Domain `ldg:Request`. Range `xsd:nonNegativeInteger`. Functional. |
 | `ldg:Credit` | Individual | Type `skos:Concept`. |
 | `ldg:CreditKinds` | Individual | Type `skos:ConceptScheme`. |
+| `ldg:CrossingLimits` | Individual | Type `skos:Concept`. |
 | `ldg:Debit` | Individual | Type `skos:Concept`. |
+| `ldg:ExceedsAvailable` | Individual | Type `skos:Concept`. |
 | `ldg:ExcessRecoveries` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:FromFirstInOrder` | Individual | Type `skos:Concept`. |
 | `ldg:FromMostRoundedUp` | Individual | Type `skos:Concept`. |
 | `ldg:HalfEven` | Individual | Type `skos:Concept`. |
 | `ldg:HalfUp` | Individual | Type `skos:Concept`. |
 | `ldg:InPriorityOrder` | Individual | Type `skos:Concept`. |
+| `ldg:KindNotAccepted` | Individual | Type `skos:Concept`. |
 | `ldg:LargestRemainder` | Individual | Type `skos:Concept`. |
 | `ldg:MergeRules` | Individual | Type `skos:ConceptScheme`. |
+| `ldg:MixedPurposes` | Individual | Type `skos:Concept`. |
 | `ldg:OrderCriteria` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:PostingDirections` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:Proportional` | Individual | Type `skos:Concept`. |
+| `ldg:RanksNotDistinct` | Individual | Type `skos:Concept`. |
+| `ldg:RefusalReasons` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:Refuse` | Individual | Type `skos:Concept`. |
 | `ldg:ResidualAllocations` | Individual | Type `skos:ConceptScheme`. |
+| `ldg:ResidualNotPermitted` | Individual | Type `skos:Concept`. |
 | `ldg:RoundingDifferences` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:RoundingMethods` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:SettledToNearest` | Individual | Type `skos:Concept`. |
 | `ldg:ShownOnly` | Individual | Type `skos:Concept`. |
+| `ldg:TieWithoutRule` | Individual | Type `skos:Concept`. |
 | `ldg:ToFirstInOrder` | Individual | Type `skos:Concept`. |
 | `ldg:TowardZero` | Individual | Type `skos:Concept`. |
+| `ldg:WholeOrNothing` | Individual | Type `skos:Concept`. |
 
 <!-- end -->
 
@@ -1205,12 +1305,13 @@ ldg:mergePolicy fnd:meaningBearing true .
 
 ### 7.2 Constraints
 
-`shapes/constraints.ttl` holds eight SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, rounding half-even or half-up beside a residual allocation only where the policy states how the difference is settled, a policy that settles to the nearest stating where a unit over is taken from, a credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space. Rounding to the nearest can round the shares to more than the amount, which no residual rule takes back, so it is refused beside a residual rule unless the policy says how the difference is settled, with `ldg:roundingDifference`. Each targets its class as one node, `ldg:AccountDefinition` or `ldg:MergePolicy`, and reads every instance in one query, as the runtime laws of section 7.3 do, so a validator that runs a constraint once per focus node runs each once rather than once per instance. A violation's `sh:value` names the definition or the policy.
+`shapes/constraints.ttl` holds nine SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, rounding half-even or half-up beside a residual allocation only where the policy states how the difference is settled, a policy that settles to the nearest stating where a unit over is taken from, a residual account named only by a policy that allows residuals, a credit ceiling not below the stated amount, and a key dimension that is a concept scheme or a value space. Rounding to the nearest can round the shares to more than the amount, which no residual rule takes back, so it is refused beside a residual rule unless the policy says how the difference is settled, with `ldg:roundingDifference`. Each targets its class as one node, `ldg:AccountDefinition` or `ldg:MergePolicy`, and reads every instance in one query, as the runtime laws of section 7.3 do, so a validator that runs a constraint once per focus node runs each once rather than once per instance. A violation's `sh:value` names the definition or the policy.
 
 <!-- hidden: {"output-file": "shapes/constraints.ttl"}
 ```turtle-shapes
 # SHACL-SPARQL constraints for ldg:AccountDefinition: the tree has no cycle,
 # units of account match and are extensive, a merge rule states what it needs,
+# a residual account stands beside the permission to leave a residual,
 # a credit ceiling is not below the stated amount, and a key dimension is typed.
 # Each targets the class as one node and reads every definition in one query,
 # so a validator runs each once rather than once per definition.
@@ -1313,6 +1414,20 @@ ldg:SettledToNearestStatesTheExcessShape a sh:NodeShape ;
 		"""
 	] .
 
+ldg:ResidualAccountNeedsResidualsShape a sh:NodeShape ;
+	sh:targetNode ldg:MergePolicy ;
+	sh:sparql [
+		sh:message "A merge policy may name a residual account only where it allows residuals." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:residualAccount ?account .
+				FILTER NOT EXISTS { ?value ldg:allowsResiduals true }
+			}
+		"""
+	] .
+
 ldg:CreditCeilingNotBelowStatedShape a sh:NodeShape ;
 	sh:targetNode ldg:AccountDefinition ;
 	sh:sparql [
@@ -1363,10 +1478,14 @@ ldg:KeyDimensionTypeShape a sh:NodeShape ;
 | `ldg:CutWithinTheCreditShape` | a cut is of a credit, at an ancestor of its account that accepts its kind, positive and at most the amount applied, and a credit has at most one cut at an account | LU2 |
 | `ldg:CutFillsTheAncestorShape` | an ancestor that accepts a credit is not above its ceiling after it, and is at its ceiling where a cut is recorded at it | LD3, LU1n |
 | `ldg:CheckpointFoldShape` | a checkpoint's balance is the same sum less the cuts, over the passes recorded by its close | LU1 |
-| `ldg:MergeWithinAvailabilityShape` | a merge's grants sum to no more than the availability it was given, and under a proportional rule whose requests exceed it, to exactly that availability | LC3, LA1 |
-| `ldg:GrantWithinRequestShape` | no grant is above its request, and an exact share states its numerator and a positive denominator together | LA1, LA2 |
-| `ldg:RefusedMergeShape` | a refused merge holds no grant and no posting cites it | LD1 |
-| `ldg:MergedPostingCitesMergeShape` | a posting from a grant cites the grant's merge record and posts what was granted | LO1 |
+| `ldg:MergeWithinAvailabilityShape` | a merge that granted gives its requests and its residual together the amount it shared, the lesser of what they asked and the availability it was given | LC3, LM2 |
+| `ldg:GrantedWithinRequestShape` | no request is granted more than it asked or less than zero, and an exact share states its numerator and a positive denominator together | LA1, LA2 |
+| `ldg:GrantedMergeShape` | a merge that states no reason gives every request a granted value | LM1 |
+| `ldg:RefusedMergeShape` | a refused merge states a reason of `ldg:RefusalReasons`, grants no request, states no residual, and no posting cites it | LM1, LJ4 |
+| `ldg:ResidualPermittedShape` | a residual is not below zero, and is above zero only where the merge's policy allows residuals | LM3 |
+| `ldg:RanksAsDeclaredShape` | a request states a rank exactly where its merge's policy states a rank criterion, and a place exactly where it states a unit order criterion | |
+| `ldg:MergeGuardsShape` | a merge that granted holds no two requests of one rank where its policy requires distinct ranks and the requests exceed the availability, and holds requests that agree on purpose where its policy requires that | LM1, LJ4 |
+| `ldg:MergedPostingCitesMergeShape` | a posting from a request cites the request's merge record and posts what the request was granted | LO1 |
 | `ldg:OwnerKindAdmittedShape` | an account's owner is of a kind its definition admits | |
 | `ldg:AccountNaturalKeyShape` | no two account instances share a definition, owner, key and period | |
 | `ldg:PeriodKeyFromRecurrenceShape` | an account has a period key exactly where its definition states a period recurrence, a bin of that recurrence | |
@@ -1383,7 +1502,8 @@ Each shape targets the class it checks as a node and reads every instance in one
 ```turtle-shapes
 # SHACL-SPARQL constraints over Ledger's records: a running balance is a sum
 # less its cuts, a credit is applied within its room and cut where an ancestor
-# had less, a merge stays within availability, account instances keep their
+# had less, a merge records every request and shares within availability,
+# account instances keep their
 # natural keys and periods, and no record is effective after its pass. Each shape
 # targets the class it checks and reads all its instances in one query, so a
 # dataset's records are checked in one evaluation per law rather than one per
@@ -1590,39 +1710,53 @@ ldg:CheckpointFoldShape a sh:NodeShape ;
 ldg:MergeWithinAvailabilityShape a sh:NodeShape ;
         sh:targetNode ldg:MergeRecord ;
         sh:sparql [
-                sh:message "A merge's grants must sum to no more than the availability it was given, and under a proportional rule whose requests exceed it, to exactly that availability." ;
+                sh:message "A merge that granted must give its requests and its residual together the amount it shared, the lesser of what they asked and the availability it was given." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
                                 {
-                                        SELECT $this ?value ?available (SUM(?granted) AS ?grantedTotal) (SUM(?requested) AS ?requestedTotal) WHERE {
-                                                ?value a $this ; ldg:availableBefore ?available ; ldg:grant ?grant .
-                                                ?grant ldg:grantedValue ?granted ; ldg:requestedValue ?requested .
+                                        SELECT $this ?value ?available (SUM(COALESCE(?granted, 0)) AS ?grantedTotal) (SUM(?requested) AS ?requestedTotal) WHERE {
+                                                ?value a $this ; ldg:availableBefore ?available ; ldg:request ?request .
+                                                ?request ldg:requestedValue ?requested .
+                                                OPTIONAL { ?request ldg:grantedValue ?granted }
                                         } GROUP BY $this ?value ?available
                                 }
-                                ?value ldg:onAccount ?account .
-                                ?account ldg:ofDefinition ?definition .
-                                ?definition ldg:mergePolicy ?policy .
-                                ?policy ldg:mergeRule ?rule .
-                                FILTER (?grantedTotal > ?available
-                                        || (?rule = ldg:Proportional && ?requestedTotal > ?available && ?grantedTotal != ?available))
+                                FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                OPTIONAL { ?value ldg:residualValue ?residual }
+                                BIND (IF(?available < 0, 0, ?available) AS ?room)
+                                FILTER (?grantedTotal + COALESCE(?residual, 0) != IF(?requestedTotal < ?room, ?requestedTotal, ?room))
                         }
                 """
         ] .
 
-ldg:GrantWithinRequestShape a sh:NodeShape ;
-        sh:targetNode ldg:Grant ;
+ldg:GrantedWithinRequestShape a sh:NodeShape ;
+        sh:targetNode ldg:Request ;
         sh:sparql [
-                sh:message "A grant must not be above its request, and an exact share states its numerator and a positive denominator together." ;
+                sh:message "A request must not be granted more than it asked or less than zero, and an exact share states its numerator and a positive denominator together." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
-                                ?value a $this ; ldg:grantedValue ?granted ; ldg:requestedValue ?requested .
+                                ?value a $this ; ldg:requestedValue ?requested .
+                                OPTIONAL { ?value ldg:grantedValue ?granted }
                                 OPTIONAL { ?value ldg:proportionNumerator ?numerator }
                                 OPTIONAL { ?value ldg:proportionDenominator ?denominator }
-                                FILTER (?granted > ?requested || ?granted < 0
+                                FILTER (COALESCE(?granted > ?requested || ?granted < 0, false)
                                         || BOUND(?numerator) != BOUND(?denominator)
                                         || (BOUND(?denominator) && ?denominator <= 0))
+                        }
+                """
+        ] .
+
+ldg:GrantedMergeShape a sh:NodeShape ;
+        sh:targetNode ldg:MergeRecord ;
+        sh:sparql [
+                sh:message "A merge that states no reason must give every request a granted value." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:request ?request .
+                                FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                FILTER NOT EXISTS { ?request ldg:grantedValue ?granted }
                         }
                 """
         ] .
@@ -1630,13 +1764,89 @@ ldg:GrantWithinRequestShape a sh:NodeShape ;
 ldg:RefusedMergeShape a sh:NodeShape ;
         sh:targetNode ldg:MergeRecord ;
         sh:sparql [
-                sh:message "A refused merge must hold no grant, and no posting may cite it." ;
+                sh:message "A refused merge must state a reason of ldg:RefusalReasons, grant no request and state no residual, and no posting may cite it." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX prov: <http://www.w3.org/ns/prov#>
+                        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                         SELECT $this ?value WHERE {
                                 ?value a $this ; ldg:refusalReason ?reason .
-                                FILTER (EXISTS { ?value ldg:grant ?grant } || EXISTS { ?posting prov:wasDerivedFrom ?value })
+                                FILTER (NOT EXISTS { ?reason skos:inScheme ldg:RefusalReasons }
+                                        || EXISTS { ?value ldg:request ?request . ?request ldg:grantedValue ?granted }
+                                        || EXISTS { ?value ldg:residualValue ?residual }
+                                        || EXISTS { ?posting prov:wasDerivedFrom ?value })
+                        }
+                """
+        ] .
+
+ldg:ResidualPermittedShape a sh:NodeShape ;
+        sh:targetNode ldg:MergeRecord ;
+        sh:sparql [
+                sh:message "A merge's residual must not be below zero, and may be above zero only where its policy allows residuals." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:residualValue ?residual ; ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                FILTER (?residual < 0 || (?residual > 0 && NOT EXISTS { ?policy ldg:allowsResiduals true }))
+                        }
+                """
+        ] .
+
+ldg:RanksAsDeclaredShape a sh:NodeShape ;
+        sh:targetNode ldg:Request ;
+        sh:sparql [
+                sh:message "A request must state a rank exactly where its merge's policy states a rank criterion, and a place exactly where it states a unit order criterion." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this .
+                                ?merge ldg:request ?value ; ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                FILTER (EXISTS { ?policy ldg:rankCriterion ?rankCriterion } != EXISTS { ?value ldg:rank ?rank }
+                                        || EXISTS { ?policy ldg:unitOrderCriterion ?unitCriterion } != EXISTS { ?value ldg:unitOrderPlace ?place })
+                        }
+                """
+        ] .
+
+ldg:MergeGuardsShape a sh:NodeShape ;
+        sh:targetNode ldg:MergeRecord ;
+        sh:sparql [
+                sh:message "A merge that granted must hold no two requests of one rank where its policy requires distinct ranks and the requests exceed the availability, and must hold requests that agree on purpose where its policy requires that." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        {
+                                                SELECT $this ?value ?available (SUM(?requested) AS ?requestedTotal) WHERE {
+                                                        ?value a $this ; ldg:availableBefore ?available ; ldg:request ?request .
+                                                        ?request ldg:requestedValue ?requested .
+                                                } GROUP BY $this ?value ?available
+                                        }
+                                        FILTER (?requestedTotal > ?available)
+                                        FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                        ?value ldg:onAccount ?account .
+                                        ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                        ?policy ldg:requiresDistinctRanks true .
+                                        FILTER EXISTS {
+                                                ?value ldg:request ?one , ?other .
+                                                OPTIONAL { ?one ldg:rank ?oneRank }
+                                                OPTIONAL { ?other ldg:rank ?otherRank }
+                                                FILTER (?one != ?other && COALESCE(?oneRank = ?otherRank, true))
+                                        }
+                                } UNION {
+                                        ?value a $this ; ldg:onAccount ?account .
+                                        ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                        ?policy ldg:requiresSamePurpose true .
+                                        FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                        FILTER EXISTS {
+                                                ?value ldg:request ?one , ?other .
+                                                OPTIONAL { ?one ldg:forPurpose ?onePurpose }
+                                                OPTIONAL { ?other ldg:forPurpose ?otherPurpose }
+                                                FILTER (?one != ?other
+                                                        && COALESCE(?onePurpose != ?otherPurpose, BOUND(?onePurpose) != BOUND(?otherPurpose)))
+                                        }
+                                }
                         }
                 """
         ] .
@@ -1644,15 +1854,16 @@ ldg:RefusedMergeShape a sh:NodeShape ;
 ldg:MergedPostingCitesMergeShape a sh:NodeShape ;
         sh:targetNode ldg:Posting ;
         sh:sparql [
-                sh:message "A posting from a grant must cite the grant's merge record and post the amount granted." ;
+                sh:message "A posting from a request must cite the request's merge record and post the value the request was granted." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX prov: <http://www.w3.org/ns/prov#>
                         SELECT $this ?value WHERE {
-                                ?grant a ldg:Grant ; ldg:grantedValue ?granted .
-                                ?value prov:wasDerivedFrom ?grant ; a $this ; ldg:amountValue ?amount .
-                                ?merge ldg:grant ?grant .
-                                FILTER (NOT EXISTS { ?value prov:wasDerivedFrom ?merge } || ?amount != ?granted)
+                                ?request a ldg:Request .
+                                ?value prov:wasDerivedFrom ?request ; a $this ; ldg:amountValue ?amount .
+                                ?merge ldg:request ?request .
+                                OPTIONAL { ?request ldg:grantedValue ?granted }
+                                FILTER (NOT EXISTS { ?value prov:wasDerivedFrom ?merge } || COALESCE(?amount != ?granted, true))
                         }
                 """
         ] .
@@ -1787,9 +1998,9 @@ ldg:NotForwardDatedShape a sh:NodeShape ;
 
 ## 8. Examples
 
-The examples in [`examples/`](examples/) are six accepted arrangements (licensing, lending, grants, delegated authority, insurance, and a credit cut at a parent) a policy that rounds to the nearest and settles the difference, and nine refusals (cycle, unit mismatch, overdraw under `ldg:Refuse`, an unrounded proportional rule, an intensive unit of account, rounding to the nearest beside a residual allocation with no difference stated, a difference settled with no excess recovery stated, an account definition that names no merge policy, a merge policy with no merge rule), validated against the structural shapes and the constraints of section 7. §5.2 walks through one of them.
+The examples in [`examples/`](examples/) are seven accepted arrangements (licensing, lending, grants, delegated authority, insurance, a credit cut at a parent, and requests of no use in part) a policy that rounds to the nearest and settles the difference, and ten refusals (cycle, unit mismatch, overdraw under `ldg:Refuse`, a credit posted to an account that does not accept its kind, an unrounded proportional rule, an intensive unit of account, rounding to the nearest beside a residual allocation with no difference stated, a difference settled with no excess recovery stated, an account definition that names no merge policy, a merge policy with no merge rule), validated against the structural shapes and the constraints of section 7. §5.2 walks through one of them.
 
-The accepted examples and the refusal under `ldg:Refuse` carry their records too: the account instances, the passes, and the postings with their running balances, cuts and merge records each position writes, which the runtime laws of section 7.3 check. Each example with a credit gives it a kind of its own, a member of `ldg:CreditKinds` in the example's namespace. The licensing example keeps one account per site and licence year, with no reset credit. The example of a credit cut at a parent is the case of a cut at an ancestor: a parent and a child each stated at 10, a debit of 5 at the child, a credit of 4 at the parent, then a credit of 4 at the child, which is applied at 4 and cut by 3 at the parent, whose balance is then 10. With no cut the sum would be 13, above the parent's ceiling.
+The accepted examples and the two refusals that are recorded, the overdraw and the credit, carry their records too: the account instances, the passes, and the postings with their running balances, cuts and merge records with their requests each position writes, which the runtime laws of section 7.3 check. Each example with a credit gives it a kind of its own, a member of `ldg:CreditKinds` in the example's namespace. The licensing example keeps one account per site and licence year, with no reset credit. The example of a credit cut at a parent is the case of a cut at an ancestor: a parent and a child each stated at 10, a debit of 5 at the child, a credit of 4 at the parent, then a credit of 4 at the child, which is applied at 4 and cut by 3 at the parent, whose balance is then 10. With no cut the sum would be 13, above the parent's ceiling. The example of requests of no use in part has requests of 5 and 4, ranked in that order, share 7 each whole or not at all: the first is granted 5 and the second 0, and the merge states a residual of 2, which its policy allows and sends to a residual account. The refused overdraw keeps both its requests with no granted value and states `ldg:ExceedsAvailable`. The refused credit is a merge record with one request and `ldg:KindNotAccepted`, and no posting.
 
 ## 9. Canonicalisation
 
@@ -1861,7 +2072,7 @@ definition proportional :: "'k set \<Rightarrow> ('k, 'n::linordered_field) rule
   "proportional K v x = (\<lambda>k. if k \<notin> K \<or> total K v = 0 then 0 else x * v k / total K v)"
 ```
 
-**Ranks.** An order reaches a rule as a rank on each request, derived from the criterion its account declares, and a lower rank is served first. No rule reads anything else of a key. `ahead` is what the requests of a lower rank ask, and `beside` is the requests of the same rank. Under `by_rank` the ranks are served in order. A rank whose requests fit what is left is granted whole, the first that does not fit shares what is left by the rule the account declares for a tie, and what that rule cannot place reaches no later rank. With a rank injective on the keys it is priority, `ldg:InPriorityOrder`. `tie_arises` says where the rank that does not fit holds more than one request. `whole_each` serves requests that are of no use in part, such as blocks. In the declared order, given as a list, each request is granted whole where it fits what is left and nothing otherwise, and what no request fitted is the residual.
+**Ranks.** An order reaches a rule as a rank on each request, derived from the criterion its account declares, and a lower rank is served first. No rule reads anything else of a key. `ahead` is what the requests of a lower rank ask, and `beside` is the requests of the same rank. Under `by_rank` the ranks are served in order. A rank whose requests fit what is left is granted whole, the first that does not fit shares what is left by the rule the account declares for a tie, and what that rule cannot place reaches no later rank. With a rank injective on the keys it is priority, `ldg:InPriorityOrder`. `tie_arises` says where the rank that does not fit holds more than one request. `whole_each` is `ldg:WholeOrNothing`, for requests that are of no use in part, such as blocks. In the declared order, given as a list, each request is granted whole where it fits what is left and nothing otherwise, and what no request fitted is the residual.
 
 ```isabelle-spec
 definition ahead :: "'k set \<Rightarrow> ('k \<Rightarrow> nat) \<Rightarrow> ('k, 'n::linordered_idom) amounts \<Rightarrow> 'k \<Rightarrow> 'n" where
@@ -2021,6 +2232,8 @@ definition draw ::
 
 **A merge at one position.** Draws proposed at one position are merged from the requests taken together, which `requested` sums by key and whose keys `proposers` collects. What an account declares for a merge is its `policy`. It says whether requests beyond what is available are refused whole, whether the rank is checked to be injective before any rule runs, the rule for requests of one rank if any, whether a residual may be left, which is off by default, and whether requests of different purposes are refused together. A merge's `outcome` is the grants with the residual, or a refusal with its `reason`. `Exceeds` refuses requests beyond what is available, `Unranked` a rank that is not injective where one is declared, `Tied` a tie where no rule for one is declared, `Undecided` a residual where none may be left, `Mixed` requests of different purposes where they are refused together, and `Crossing` requests whose sets of accounts cross. Requests that fit are granted as asked, whatever the policy. `settle` merges at an account by what is available on its path and charges the path what was granted, and on a refusal changes nothing.
 
+The runtime document records a merge on an `ldg:MergeRecord`. Each proposer's request is an `ldg:Request` with its `ldg:requestedValue`, and with its `ldg:rank` where the policy states a rank criterion. On `Granted g r` each request states `g` at its key as its `ldg:grantedValue`, and the record states `r` as its `ldg:residualValue` where `r` is not zero. On `Refused why` no request states a granted value, and the record states `why` as its `ldg:refusalReason`: `Exceeds` is `ldg:ExceedsAvailable`, `Unranked` is `ldg:RanksNotDistinct`, `Tied` is `ldg:TieWithoutRule`, `Undecided` is `ldg:ResidualNotPermitted`, `Mixed` is `ldg:MixedPurposes`, and `Crossing` is `ldg:CrossingLimits`. The seventh reason, `ldg:KindNotAccepted`, is a credit that `post` refuses, as the paragraph on credits below says.
+
 ```isabelle-spec
 definition requested :: "('k \<times> 'n::linordered_idom) list \<Rightarrow> ('k, 'n) amounts" where
   "requested ps = (\<lambda>k. sum_list (map snd (filter (\<lambda>q. fst q = k) ps)))"
@@ -2151,7 +2364,7 @@ definition attributed ::
 
 **Credits, and what a posting records.** A `credit` is applied at the account it is posted to, up to that account's room under its ceiling. Each ancestor that accepts its kind takes the least of the amount applied and its own room, and where it takes less the difference is a cut at that ancestor. A `book` states each account's parent, its stated amount, its ceiling, the kinds of credit it accepts and whether it refuses a debit that no longer fits. A `request` is a draw or a restoration, and a posting keeps what was offered, what was applied and the cuts. `post` applies one request and `run` a list of them in turn. A credit posted to an account that does not accept its kind is refused, so nothing is posted and no balance moves, while `credit` itself stays total. `moved` is what one posting moves an account by, read from what the posting records, and `summed` is a balance as a sum, the stated amount less the debits, plus the credits applied, less the cuts.
 
-The runtime document records the same things. `Restored a c x applied cuts` is a posting whose `ldg:direction` is `ldg:Credit`, with `c` its `ldg:creditKind`, `x` its `ldg:offeredValue`, `applied` its `ldg:amountValue`, and a `ldg:Cut` at each account `b` where `cuts b` is positive. `restores` is what `ldg:restoredBy` states, every kind where an account states none, and a posting's `ldg:runningBalance` is `summed` over the postings up to it, at the account it is on.
+The runtime document records the same things. `Restored a c x applied cuts` is a posting whose `ldg:direction` is `ldg:Credit`, with `c` its `ldg:creditKind`, `x` its `ldg:offeredValue`, `applied` its `ldg:amountValue`, and a `ldg:Cut` at each account `b` where `cuts b` is positive. `restores` is what `ldg:restoredBy` states, every kind where an account states none, and a posting's `ldg:runningBalance` is `summed` over the postings up to it, at the account it is on. A credit that `post` refuses is a `ldg:MergeRecord` on the account it was posted to, with the credit as its one `ldg:Request` and `ldg:KindNotAccepted` as its reason, and no posting.
 
 ```isabelle-spec
 definition credit ::
@@ -2262,6 +2475,10 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   - changes meaning. A credit's `ldg:amountValue` is the amount applied at the account it is posted to, and an ancestor counts a credit only where it accepts its kind, less any cut recorded at it. `ldg:Credit`'s definition says so. `ldg:CheckpointFoldShape` sums the same way and applies no ceiling, and `ldg:CreditCeilingShape` reads a posting's running balance.
   - may invalidate. `ldg:CreditAmountsShape`, `ldg:CreditKindAcceptedShape`, `ldg:CutWithinTheCreditShape` and `ldg:CutFillsTheAncestorShape` are new. A credit with no amount offered, or posted to an account that does not accept its kind, is refused, and so is a cut that is not within its credit or leaves its ancestor below its ceiling.
   - changes meaning. `ldg:effectivePosition` and `ldg:recordedPosition` have the range `xsd:nonNegativeInteger`, since a position is a natural number. A document that states a negative position states one outside the range.
+  - changes meaning. A merge records every request, and a refusal keeps them ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its third addendum of 2026-11-19). `ldg:Grant` and `ldg:grant` are removed. A merge record holds an `ldg:Request` for every request with the new `ldg:request`, at least one, and `ldg:forProposal`, `ldg:requestedValue`, `ldg:grantedValue`, `ldg:proportionNumerator` and `ldg:proportionDenominator` have the domain `ldg:Request`. `ldg:grantedValue` is at most one, stated on every request of a merge that granted and on none of a merge that was refused. `ldg:MergeRecord`'s definition also covers a credit refused alone, and `ldg:refusalReason`'s says why a merge or such a credit granted nothing. To move a document, type each grant as a request and hold it with `ldg:request`, and give each refused merge a request for every proposal, with no granted value.
+  - no effect. New terms for merges ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its second and fourth addenda of 2026-11-16 and its third addendum of 2026-11-19): `ldg:rank` and `ldg:unitOrderPlace` on a request, each at most one, `ldg:residualValue` on a merge record and `ldg:residualAccount` on a merge policy, each at most one, `ldg:WholeOrNothing` in `ldg:MergeRules`, and the scheme `ldg:RefusalReasons` with `ldg:ExceedsAvailable`, `ldg:RanksNotDistinct`, `ldg:TieWithoutRule`, `ldg:ResidualNotPermitted`, `ldg:MixedPurposes`, `ldg:CrossingLimits` and `ldg:KindNotAccepted`.
+  - changes meaning. `ldg:forPurpose` has the domain `ldg:Posting` or `ldg:Request`, so a request states the purpose it names. `ldg:Refuse`'s definition says no request is granted.
+  - may invalidate. `ldg:MergeWithinAvailabilityShape` holds every merge that granted, whatever its rule, to granted values and a residual that sum to the lesser of what its requests asked and its availability. `ldg:RefusedMergeShape` refuses a refused merge whose reason is not a concept of `ldg:RefusalReasons`, or that grants a request or states a residual. `ldg:GrantWithinRequestShape` is now `ldg:GrantedWithinRequestShape`, on a request. `ldg:GrantedMergeShape`, `ldg:ResidualPermittedShape`, `ldg:RanksAsDeclaredShape` and `ldg:MergeGuardsShape` are new, and so is the constraint `ldg:ResidualAccountNeedsResidualsShape`, which refuses a residual account on a policy that does not allow residuals. A merge record with no request, a merge that granted with a request that states no granted value, a residual above zero where residuals are not allowed, and a rank stated where no rank criterion is, or missing where one is, no longer conform.
 - **0.22.0**.
   - changes meaning. What an account declares for a merge moves to a merge policy ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-17). `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation` have the domain `ldg:MergePolicy`, a new versioned class, and an account definition names its policy with the new `ldg:mergePolicy`, exactly one. A definition that states the three properties itself no longer conforms. To move it, state them on a policy and name the policy from the definition. `ldg:ProportionalNeedsRoundingShape` and `ldg:NearestRoundingStatesTheDifferenceShape` now target the policy.
   - no effect. New on a merge policy, each at most one: `ldg:rankCriterion` and `ldg:unitOrderCriterion`, whose values are concepts of the new scheme `ldg:OrderCriteria` that an applied module fills, and the booleans `ldg:allowsResiduals`, `ldg:requiresDistinctRanks` and `ldg:requiresSamePurpose`.
@@ -2285,9 +2502,7 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   runtime terms (postings, balance records, merge records, grants) are not yet released.
 
 ## 13. Open Issues
-
-- **A purpose under a shared ancestor.** A draw naming a purpose writes a posting at the purpose-counting account too, and an ancestor of both would fold the draw twice. No example has such an ancestor, and the rule that prevents the double count is not yet decided.
-- **Persistence's record families** for postings, cuts and merge records, append-only, are not yet declared. The storage shape they take is not yet measured.
+ersistence's record families** for postings, cuts and merge records, append-only, are not yet declared. The storage shape they take is not yet measured.
 - **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects and threshold regimes drawing on and reading them.
 - **A term proposed for review.** The definitions of section 10 name one thing the README has no term for yet, proposed here and not yet declared.
   - The reasons a merge is refused, a concept scheme `ldg:RefusalReasons`, the range of `ldg:refusalReason`, with `ldg:Exceeds`, `ldg:Unranked`, `ldg:Tied`, `ldg:Undecided`, `ldg:Mixed` and `ldg:Crossing`, each as `reason` defines it in section 10.

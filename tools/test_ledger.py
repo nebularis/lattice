@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
-"""Ledger LG-1, LG-2 and LG-25: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
-and LG-2 "in detail" tables and LG-25's Validation Pack. Validates LG-0's examples, configuration and runtime records, against
+"""Ledger LG-1, LG-2, LG-25 and LG-26: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
+and LG-2 "in detail" tables and the Validation Packs of LG-25 and LG-26. Validates LG-0's examples, configuration and runtime records, against
 the structural shapes, the SHACL-SPARQL constraints and the runtime laws, checks the import guard holds, the spec names no term
 of Party, Eligibility, Wording, Instrument or Behaviour, the cycle shape finishes on a generated tree, each runtime law refuses a
 record that breaks it, and the runtime shapes finish on a generated pass, both small here and at the plan's sizes in
@@ -22,7 +22,7 @@ import pytest
 from ledger_corpus import account_tree, one_pass
 from pyshacl import validate
 from rdflib import RDF, XSD, BNode, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import PROV, SH
+from rdflib.namespace import PROV, SH, SKOS
 
 ROOT = Path(__file__).resolve().parents[1]
 ONTOLOGY = ROOT / "ontology"
@@ -66,7 +66,7 @@ def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> No
 
 
 ACCEPTED = ["licence-seats", "revolving-facility", "research-grant", "authority-aggregate", "insurance-aggregate",
-            "credit-cut-at-parent"]
+            "credit-cut-at-parent", "whole-or-nothing"]
 REFUSALS = {
     "refusal-cycle": "NoCycleThroughPartOfShape",
     "refusal-unit": "ChildUnitMatchesParentShape",
@@ -357,7 +357,7 @@ def _cut_where_there_was_room(g: Graph) -> None:
 
 def _proportional_one_short(g: Graph) -> None:
     ex = _ex("authority-aggregate")
-    g.set((ex["grant-1"], LDG.grantedValue, _decimal("33")))
+    g.set((ex["request-1"], LDG.grantedValue, _decimal("33")))
     g.set((ex["posting-1"], LDG.amountValue, _decimal("33")))
 
 
@@ -405,18 +405,89 @@ def _account_key_shared(g: Graph) -> None:
         g.add((twin, p, o))
 
 
-def _refused_with_grant(g: Graph) -> None:
+def _refused_with_a_granted_value(g: Graph) -> None:
     ex = _ex("refusal-overdraw")
-    grant = ex["grant-1"]
-    for p, o in [(RDF.type, LDG.Grant), (LDG.forProposal, ex["proposal-1"]),
-                 (LDG.requestedValue, _decimal("60")), (LDG.grantedValue, _decimal("60"))]:
-        g.add((grant, p, o))
-    g.add((ex["merge-1"], LDG.grant, grant))
+    g.add((ex["request-1"], LDG.grantedValue, _decimal("60")))
 
 
-def _grant_above_request(g: Graph) -> None:
+def _refused_with_a_residual(g: Graph) -> None:
+    ex = _ex("refusal-overdraw")
+    g.add((ex["merge-1"], LDG.residualValue, _decimal("100")))
+
+
+def _refused_for_a_reason_of_no_scheme(g: Graph) -> None:
+    """The reason the example stated before the scheme was declared, a concept of its own namespace."""
+    ex = _ex("refusal-overdraw")
+    g.set((ex["merge-1"], LDG.refusalReason, ex.overdrawn))
+    g.add((ex.overdrawn, RDF.type, SKOS.Concept))
+
+
+def _refused_credit_granted(g: Graph) -> None:
+    ex = _ex("refusal-credit-kind")
+    g.add((ex["credit-2-request"], LDG.grantedValue, _decimal("5")))
+
+
+def _granted_above_request(g: Graph) -> None:
     ex = _ex("research-grant")
-    g.set((ex["staff-spend-grant"], LDG.requestedValue, _decimal("80000")))
+    g.set((ex["staff-spend-request"], LDG.requestedValue, _decimal("80000")))
+
+
+def _granted_merge_with_a_request_ungranted(g: Graph) -> None:
+    """The request of 4 with no granted value, on a merge that granted and states no reason."""
+    ex = _ex("whole-or-nothing")
+    g.remove((ex["request-2"], LDG.grantedValue, None))
+
+
+def _posting_from_an_ungranted_request(g: Graph) -> None:
+    ex = _ex("whole-or-nothing")
+    g.remove((ex["request-1"], LDG.grantedValue, None))
+
+
+def _residual_short(g: Graph) -> None:
+    """A residual of 1, so 5, 0 and 1 sum to 6 of the 7 shared."""
+    ex = _ex("whole-or-nothing")
+    g.set((ex["merge-1"], LDG.residualValue, _decimal("1")))
+
+
+def _residual_not_allowed(g: Graph) -> None:
+    """The policy no longer allows residuals and names no residual account, and the merge still states 2 left."""
+    ex = _ex("whole-or-nothing")
+    g.remove((ex["blocks-whole"], LDG.allowsResiduals, None))
+    g.remove((ex["blocks-whole"], LDG.residualAccount, None))
+
+
+def _residual_account_without_permission(g: Graph) -> None:
+    ex = _ex("whole-or-nothing")
+    g.set((ex["blocks-whole"], LDG.allowsResiduals, Literal(False)))
+
+
+def _rank_missing(g: Graph) -> None:
+    ex = _ex("whole-or-nothing")
+    g.remove((ex["request-2"], LDG.rank, None))
+
+
+def _rank_with_no_criterion(g: Graph) -> None:
+    ex = _ex("research-grant")
+    g.add((ex["staff-spend-request"], LDG.rank, _position(1)))
+
+
+def _place_missing(g: Graph) -> None:
+    ex = _ex("authority-aggregate")
+    g.remove((ex["request-3"], LDG.unitOrderPlace, None))
+
+
+def _ranks_shared_where_distinct_required(g: Graph) -> None:
+    """Both requests at rank 1 under a policy that requires distinct ranks, and the merge still granted."""
+    ex = _ex("whole-or-nothing")
+    g.add((ex["blocks-whole"], LDG.requiresDistinctRanks, Literal(True)))
+    g.set((ex["request-2"], LDG.rank, _position(1)))
+
+
+def _purposes_differ_where_one_required(g: Graph) -> None:
+    """One request names a purpose and the other none, under a policy that requires them to agree, and the merge granted."""
+    ex = _ex("whole-or-nothing")
+    g.add((ex["blocks-whole"], LDG.requiresSamePurpose, Literal(True)))
+    g.add((ex["request-1"], LDG.forPurpose, ex["working-capital"]))
 
 
 def _checkpoint(balance: str, name: str = "research-grant", account: str = "account-grant-budget",
@@ -454,8 +525,26 @@ MUTATIONS = {
     "an instance not part of its parent's": (
         "research-grant", _parent_instance_missing, "PartOfAccountFollowsDefinitionShape"),
     "two accounts with one natural key": ("research-grant", _account_key_shared, "AccountNaturalKeyShape"),
-    "a refused merge holding a grant": ("refusal-overdraw", _refused_with_grant, "RefusedMergeShape"),
-    "a grant above its request": ("research-grant", _grant_above_request, "GrantWithinRequestShape"),
+    "a refused merge granting a request": ("refusal-overdraw", _refused_with_a_granted_value, "RefusedMergeShape"),
+    "a refused merge stating a residual": ("refusal-overdraw", _refused_with_a_residual, "RefusedMergeShape"),
+    "a refusal whose reason is of no scheme": ("refusal-overdraw", _refused_for_a_reason_of_no_scheme, "RefusedMergeShape"),
+    "a refused credit granted": ("refusal-credit-kind", _refused_credit_granted, "RefusedMergeShape"),
+    "a request granted above what it asked": ("research-grant", _granted_above_request, "GrantedWithinRequestShape"),
+    "a granted merge with a request ungranted": (
+        "whole-or-nothing", _granted_merge_with_a_request_ungranted, "GrantedMergeShape"),
+    "a posting from a request with no granted value": (
+        "whole-or-nothing", _posting_from_an_ungranted_request, "MergedPostingCitesMergeShape"),
+    "a residual that leaves the sum short": ("whole-or-nothing", _residual_short, "MergeWithinAvailabilityShape"),
+    "a residual where none is allowed": ("whole-or-nothing", _residual_not_allowed, "ResidualPermittedShape"),
+    "a rank missing where the policy states a criterion": ("whole-or-nothing", _rank_missing, "RanksAsDeclaredShape"),
+    "a rank where the policy states no criterion": ("research-grant", _rank_with_no_criterion, "RanksAsDeclaredShape"),
+    "a place missing where the policy orders units": ("authority-aggregate", _place_missing, "RanksAsDeclaredShape"),
+    "a shared rank granted where distinct ranks are required": (
+        "whole-or-nothing", _ranks_shared_where_distinct_required, "MergeGuardsShape"),
+    "purposes that differ granted where one is required": (
+        "whole-or-nothing", _purposes_differ_where_one_required, "MergeGuardsShape"),
+    "a residual account on a policy that allows no residual": (
+        "whole-or-nothing", _residual_account_without_permission, "ResidualAccountNeedsResidualsShape"),
     "a checkpoint one minor unit off": ("research-grant", _checkpoint("110001"), "CheckpointFoldShape"),
     "a checkpoint that leaves out the cut": (
         "credit-cut-at-parent", _checkpoint("13", "credit-cut-at-parent", "account-parent"), "CheckpointFoldShape"),
@@ -497,7 +586,7 @@ def test_the_cut_example_records_the_addendum_case() -> None:
         (ex["account-parent"], _decimal("3"))]
 
 
-# ---- LG2-07: the refusal under ldg:Refuse conforms, with no posting and a reason
+# ---- LG2-07: the refusal under ldg:Refuse conforms, with no posting and a reason, and keeps its requests
 
 def test_refused_merge_conforms_with_no_posting_and_a_reason() -> None:
     g = MODEL + _example("refusal-overdraw")
@@ -506,8 +595,87 @@ def test_refused_merge_conforms_with_no_posting_and_a_reason() -> None:
     _agree(g, report)
     ex = _ex("refusal-overdraw")
     assert list(g.subjects(RDF.type, LDG.Posting)) == []
-    assert g.value(ex["merge-1"], LDG.refusalReason) == ex.overdrawn
-    assert g.value(ex["merge-1"], LDG.grant) is None
+    assert g.value(ex["merge-1"], LDG.refusalReason) == LDG.ExceedsAvailable
+    requests = set(g.objects(ex["merge-1"], LDG.request))
+    assert requests == {ex["request-1"], ex["request-2"]}
+    assert {g.value(r, LDG.requestedValue) for r in requests} == {_decimal("60"), _decimal("70")}
+    assert [g.value(r, LDG.grantedValue) for r in requests] == [None, None]
+
+
+# ---- LG-26: requests, the residual and its account, the reasons for a refusal, requests of no use in part
+
+def test_a_credit_refused_alone_is_a_record_with_one_request_and_a_reason() -> None:
+    """The conformance case of a credit its account does not accept (ADR-A131, its fourth addendum of 2026-11-16): refused, no
+    posting, and recorded as a merge record on the child with the credit as its one request and `ldg:KindNotAccepted`."""
+    g = MODEL + _example("refusal-credit-kind")
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert conforms, _violating_shapes(report)
+    _agree(g, report)
+    ex = _ex("refusal-credit-kind")
+    assert list(g.subjects(LDG.direction, LDG.Credit)) == []
+    refusal = ex["credit-2-refusal"]
+    assert g.value(refusal, LDG.refusalReason) == LDG.KindNotAccepted
+    assert list(g.objects(refusal, LDG.request)) == [ex["credit-2-request"]]
+    assert g.value(ex["credit-2-request"], LDG.grantedValue) is None
+
+
+def test_requests_of_no_use_in_part_record_the_addendum_case() -> None:
+    """The conformance case of requests of no use in part (ADR-A131, its second addendum of 2026-11-16): 5 and 4, in that order,
+    share 7 each whole or not at all, so 5 and 0 are granted and 2 is left, under a policy that allows a residual."""
+    g = _example("whole-or-nothing")
+    ex = _ex("whole-or-nothing")
+    assert g.value(ex["blocks-whole"], LDG.mergeRule) == LDG.WholeOrNothing
+    granted = {g.value(r, LDG.rank): g.value(r, LDG.grantedValue) for r in g.objects(ex["merge-1"], LDG.request)}
+    assert granted == {_position(1): _decimal("5"), _position(2): _decimal("0")}
+    assert g.value(ex["merge-1"], LDG.residualValue) == _decimal("2")
+    assert g.value(ex["blocks-whole"], LDG.residualAccount) == ex.unallocated
+
+
+def _guards_met(g: Graph) -> None:
+    """Both guards stated, with distinct ranks and one purpose on both requests."""
+    ex = _ex("whole-or-nothing")
+    g.add((ex["blocks-whole"], LDG.requiresDistinctRanks, Literal(True)))
+    g.add((ex["blocks-whole"], LDG.requiresSamePurpose, Literal(True)))
+    for request in (ex["request-1"], ex["request-2"]):
+        g.add((request, LDG.forPurpose, ex["working-capital"]))
+
+
+def _shared_rank_that_fits(g: Graph) -> None:
+    """Requests of 5 and 2 that share a rank and fit the 7, so they are granted as asked whatever the policy requires."""
+    ex = _ex("whole-or-nothing")
+    g.add((ex["blocks-whole"], LDG.requiresDistinctRanks, Literal(True)))
+    g.set((ex["request-2"], LDG.rank, _position(1)))
+    g.set((ex["request-2"], LDG.requestedValue, _decimal("2")))
+    g.set((ex["request-2"], LDG.grantedValue, _decimal("2")))
+    g.remove((ex["merge-1"], LDG.residualValue, None))
+
+
+@pytest.mark.parametrize("mutate", [_guards_met, _shared_rank_that_fits], ids=["both guards met", "a shared rank that fits"])
+def test_a_merge_the_guards_admit_conforms(mutate: Callable[[Graph], None]) -> None:
+    g = MODEL + _example("whole-or-nothing")
+    mutate(g)
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert conforms, _violating_shapes(report)
+    _agree(g, report)
+
+
+def test_a_merge_record_holds_at_least_one_request() -> None:
+    g = MODEL + _example("refusal-overdraw")
+    g.remove((_ex("refusal-overdraw")["merge-1"], LDG.request, None))
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert not conforms
+    paths = {str(report.value(r, SH.resultPath)) for r in report.subjects(SH.resultSeverity, SH.Violation)
+             if report.value(r, SH.sourceConstraintComponent) == SH.MinCountConstraintComponent}
+    assert paths == {str(LDG.request)}
+
+
+def test_the_grant_is_retired_and_the_seven_reasons_are_one_scheme() -> None:
+    """No `ldg:Grant` or `ldg:grant` is declared (LG-Q38), and `ldg:RefusalReasons` holds seven reasons (LG-Q31)."""
+    assert (LDG.Grant, None, None) not in MODEL and (LDG.grant, None, None) not in MODEL
+    reasons = set(MODEL.subjects(SKOS.inScheme, LDG.RefusalReasons))
+    assert reasons == {LDG.ExceedsAvailable, LDG.RanksNotDistinct, LDG.TieWithoutRule, LDG.ResidualNotPermitted,
+                       LDG.MixedPurposes, LDG.CrossingLimits, LDG.KindNotAccepted}
+    assert all((reason, RDF.type, SKOS.Concept) in MODEL for reason in reasons)
 
 
 # ---- LG2-10: a generated pass, 200 leaves here and 5,000 postings with 5,000 checkpoints in the benchmark

@@ -49,8 +49,16 @@ ldg:Credit a skos:Concept ;
 ldg:CreditKinds a skos:ConceptScheme ;
     rdfs:comment "The kinds of credit, which an account names to say what restores it." .
 
+ldg:CrossingLimits a skos:Concept ;
+    rdfs:comment "Two sets of requests, each limited by the accounts its requests reach, overlap with neither inside the other." ;
+    skos:inScheme ldg:RefusalReasons .
+
 ldg:Debit a skos:Concept ;
     rdfs:comment "A draw, reducing the balance." .
+
+ldg:ExceedsAvailable a skos:Concept ;
+    rdfs:comment "The requests exceed what is available, and the policy refuses that." ;
+    skos:inScheme ldg:RefusalReasons .
 
 ldg:ExcessRecoveries a skos:ConceptScheme ;
     rdfs:comment "Where a unit over is taken from." .
@@ -70,11 +78,19 @@ ldg:HalfUp a skos:Concept ;
 ldg:InPriorityOrder a skos:Concept ;
     rdfs:comment "Draws are granted in the priority order the merge policy declares until availability is exhausted. The order is the policy's declaration, never the order of the proposals' identifiers." .
 
+ldg:KindNotAccepted a skos:Concept ;
+    rdfs:comment "A credit is posted to an account that does not accept its kind." ;
+    skos:inScheme ldg:RefusalReasons .
+
 ldg:LargestRemainder a skos:Concept ;
     rdfs:comment "The residual is allocated one unit at a time to the proposals with the largest rounding remainders, ties taken in the order the merge policy declares, never in the order of the proposals' identifiers. With no order declared, the units that equal remainders do not decide are left." .
 
 ldg:MergeRules a skos:ConceptScheme ;
     rdfs:comment "What happens when several draws at one position together exceed availability." .
+
+ldg:MixedPurposes a skos:Concept ;
+    rdfs:comment "The requests do not agree on purpose, and the policy requires that they do." ;
+    skos:inScheme ldg:RefusalReasons .
 
 ldg:OrderCriteria a skos:ConceptScheme ;
     rdfs:comment "What requests are ordered by, for their rank and for the placing of single units." .
@@ -85,11 +101,22 @@ ldg:PostingDirections a skos:ConceptScheme ;
 ldg:Proportional a skos:Concept ;
     rdfs:comment "Draws are granted in proportion to the amounts requested, rounded and allocated per the policy's ldg:roundingMethod and ldg:residualAllocation." .
 
+ldg:RanksNotDistinct a skos:Concept ;
+    rdfs:comment "The requests exceed what is available, the policy requires distinct ranks, and two requests share a rank." ;
+    skos:inScheme ldg:RefusalReasons .
+
+ldg:RefusalReasons a skos:ConceptScheme ;
+    rdfs:comment "Why a merge, or a credit refused alone, granted nothing." .
+
 ldg:Refuse a skos:Concept ;
-    rdfs:comment "Where proposals together exceed availability, the whole merge is refused: no grant, a reason recorded, no posting." .
+    rdfs:comment "Where proposals together exceed availability, the whole merge is refused: no request is granted, a reason is recorded, and no posting is written." .
 
 ldg:ResidualAllocations a skos:ConceptScheme ;
     rdfs:comment "How a proportional merge's rounding residual is allocated." .
+
+ldg:ResidualNotPermitted a skos:Concept ;
+    rdfs:comment "The rule would leave part of the amount unplaced, and the policy does not allow residuals." ;
+    skos:inScheme ldg:RefusalReasons .
 
 ldg:RoundingDifferences a skos:ConceptScheme ;
     rdfs:comment "How the difference left by rounding shares to the nearest is settled." .
@@ -103,8 +130,15 @@ ldg:SettledToNearest a skos:Concept ;
 ldg:ShownOnly a skos:Concept ;
     rdfs:comment "The rounding method governs only how a share is shown. The split is the shares rounded down, with the units short allocated as the residual allocation says." .
 
+ldg:TieWithoutRule a skos:Concept ;
+    rdfs:comment "A tie arises among requests of one rank, and the policy declares no rule for one." ;
+    skos:inScheme ldg:RefusalReasons .
+
 ldg:ToFirstInOrder a skos:Concept ;
     rdfs:comment "The residual is allocated one unit at a time to the first proposals in the order the merge policy declares, never in the order of their identifiers." .
 
 ldg:TowardZero a skos:Concept ;
     rdfs:comment "Truncates toward zero." .
+
+ldg:WholeOrNothing a skos:Concept ;
+    rdfs:comment "Each request is of no use in part. In the order the merge policy declares, each is granted whole where it fits what is left and nothing otherwise, and what no request fitted is the residual." .

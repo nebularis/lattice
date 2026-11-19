@@ -51,10 +51,10 @@ ex:draw-1-posting a ldg:Posting ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
     ldg:runningBalance "9995000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-grant , ex:draw-1-conversion .
+    prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-request , ex:draw-1-conversion .
 ```
 
-The posting keeps the sterling amount it counts. The euros asked for and the rate used are in the conversion record, which the posting cites beside its merge record and grant. Its running balance is what remains on the account after it, and the ledger checks it against the sum of the postings, so it can never disagree with them. The repayment at position 2 is a credit, and it records its kind, a repayment, and the amount offered beside the amount applied, since a credit never restores an account above its ceiling. The example's three positions:
+The posting keeps the sterling amount it counts. The euros asked for and the rate used are in the conversion record, which the posting cites beside its merge record and the request it was granted on. Its running balance is what remains on the account after it, and the ledger checks it against the sum of the postings, so it can never disagree with them. The repayment at position 2 is a credit, and it records its kind, a repayment, and the amount offered beside the amount applied, since a credit never restores an account above its ceiling. The example's three positions:
 
 | Position | Event | Euros | Rate | Sterling posted | Balance after |
 |---|---|---|---|---|---|

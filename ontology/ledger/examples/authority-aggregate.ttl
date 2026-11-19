@@ -21,12 +21,15 @@
 # one unit short (99 of 100). The largest-remainder residual allocates the
 # missing unit, and the three remainders are tied, so it goes to the first
 # proposal in the order the account declares, here the order they were made,
-# and never by their identifiers (TD-161).
+# and never by their identifiers (TD-161). The policy names that order as its
+# unit order criterion, and each request records its place in it. The merge
+# records all three requests, each with what it asked and what it was granted.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
@@ -47,13 +50,20 @@ ex:capacity-difference a qnt:OperationCapability ; qnt:operationKind qnt:Differe
 
 ex:q-100 a qnt:Quantity ; qnt:onSpace ex:capacity ; qnt:numericValue "100"^^xsd:decimal .
 
+# ==== The order the terms name =================================================
+
+ex:order-made a skos:Concept ;
+    skos:inScheme ldg:OrderCriteria ;
+    skos:prefLabel "the order in which proposals were made" .
+
 # ==== The merge policies =======================================================
 
 ex:shared-in-proportion a ldg:MergePolicy ;
     fnd:hasIdentity ex:shared-in-proportion-identity ;
     ldg:mergeRule ldg:Proportional ;
     ldg:roundingMethod ldg:TowardZero ;
-    ldg:residualAllocation ldg:LargestRemainder .
+    ldg:residualAllocation ldg:LargestRemainder ;
+    ldg:unitOrderCriterion ex:order-made .
 
 ex:shared-in-proportion-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
@@ -69,16 +79,16 @@ ex:proposal-1 rdfs:comment "The first proposal, 40 units." .
 ex:proposal-2 rdfs:comment "The second proposal, 40 units." .
 ex:proposal-3 rdfs:comment "The third proposal, 40 units." .
 
-ex:grant-1 a ldg:Grant ;
-    ldg:forProposal ex:proposal-1 ;
+ex:request-1 a ldg:Request ;
+    ldg:forProposal ex:proposal-1 ; ldg:unitOrderPlace "1"^^xsd:nonNegativeInteger ;
     ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "34"^^xsd:decimal ;
     ldg:proportionNumerator "1"^^xsd:integer ; ldg:proportionDenominator "3"^^xsd:integer .
-ex:grant-2 a ldg:Grant ;
-    ldg:forProposal ex:proposal-2 ;
+ex:request-2 a ldg:Request ;
+    ldg:forProposal ex:proposal-2 ; ldg:unitOrderPlace "2"^^xsd:nonNegativeInteger ;
     ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "33"^^xsd:decimal ;
     ldg:proportionNumerator "1"^^xsd:integer ; ldg:proportionDenominator "3"^^xsd:integer .
-ex:grant-3 a ldg:Grant ;
-    ldg:forProposal ex:proposal-3 ;
+ex:request-3 a ldg:Request ;
+    ldg:forProposal ex:proposal-3 ; ldg:unitOrderPlace "3"^^xsd:nonNegativeInteger ;
     ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "33"^^xsd:decimal ;
     ldg:proportionNumerator "1"^^xsd:integer ; ldg:proportionDenominator "3"^^xsd:integer .
 
@@ -86,7 +96,7 @@ ex:merge-1 a ldg:MergeRecord ;
     ldg:onAccount ex:account-delegated-aggregate ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:availableBefore "100"^^xsd:decimal ;
-    ldg:grant ex:grant-1 , ex:grant-2 , ex:grant-3 .
+    ldg:request ex:request-1 , ex:request-2 , ex:request-3 .
 
 ex:posting-1 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
@@ -94,21 +104,21 @@ ex:posting-1 a ldg:Posting ;
     ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "34"^^xsd:decimal ;
     ldg:runningBalance "66"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:merge-1 , ex:grant-1 .
+    prov:wasDerivedFrom ex:merge-1 , ex:request-1 .
 ex:posting-2 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
     ldg:runningBalance "33"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:merge-1 , ex:grant-2 .
+    prov:wasDerivedFrom ex:merge-1 , ex:request-2 .
 ex:posting-3 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
     ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
     ldg:runningBalance "0"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:merge-1 , ex:grant-3 .
+    prov:wasDerivedFrom ex:merge-1 , ex:request-3 .
 
 # ==== The account instances and the passes ===================================
 
