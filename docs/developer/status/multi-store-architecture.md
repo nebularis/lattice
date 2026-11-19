@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** built 2026-11-19.
+**Status:** building 2026-11-19.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous on machine S, at the maintainer's request of 2026-11-19 and the two briefs of that day, on `spi/worktree-s`, committing locally only and never pushing, with up to two sub-agents. The branch defers versioning, so Persistence's spec, changed by MSA-F5, is reported unbumped until the merge.
 
@@ -34,7 +34,7 @@
 | MSA-F7 | a deletion whose tombstone loses a race to a save of the same part or document still removes it, the tombstone planned again at the revision the save left (MSAF6-01). The receipt follows the description's step, and up to three more rounds tombstone a row still live. An addendum to ADR-A149 is drafted for the maintainer. [Validation Pack](../validation/MSA-F7.md) | built 2026-11-18 |  |
 | MSA-F8 | a failure of the stream writer's own code is answered as the writer's fault, a 500, and the service answers it 500 (MSA-F2). Still not retried, and a request the store refused keeps its 400. [Validation Pack](../validation/MSA-F8.md) | built 2026-11-18 |  |
 | MSA-F9 | a new document's save that loses the description's guard is answered as a change to send again, read from the document's own row, not as a deleted id (MSAF6-02). Its test found that a save under a deleted id was answered 200 and kept nothing (MSAF9-01), now refused before it is planned. [Validation Pack](../validation/MSA-F9.md) | built 2026-11-18 |  |
-| MSA-F10 | the stream writer's thread survives a reply or an offset that cannot be sent or stored, and a writer that cannot go on leaves its group, so no partition is held by a member that applies nothing (MSAF2-01) | planned |  |
+| MSA-F10 | the stream writer's thread survives a reply or an offset that cannot be sent or stored, and a writer that cannot go on leaves its group, so no partition is held by a member that applies nothing (MSAF2-01) | building 2026-11-19 |  |
 | MSA-F11 | a deletion answered from its receipt still removes a row its tombstone lost, so a batch that fails after its update commits is completed by its retry (MSAF7-01) | planned |  |
 | MSA-F12 | a reply built from an exception carries a fixed message, and the exception's text goes to the log with the command's id (MSAF8-01) | planned |  |
 | MSA-F13 | the Java topology refuses a queue whose `bindsTo` names no declared exchange, as the Python worker does | planned |  |
@@ -98,3 +98,4 @@ C1 to C3 of MSA-I2 are decided. A pass is one request that moves a ledger's revi
 - 2026-11-19: MSA-I5a marked building. ADR-A-FM2's addendum of 2026-11-18 was accepted that day, so it waits on nothing.
 - 2026-11-19: MSA-I5a built. `LatticeShared` parents on `LatticeBase` and holds a position, a natural number, and an amount, a function from keys to numbers, with ten small laws gated as claims. The ledger's session gains `Agreement.thy`, whose lemma that the kernel's amount is the shared one failed the build when the shared definition was changed. No kernel and no claim digest moved, and `check:proofs` passes for all four sessions.
 - 2026-11-19: `spi/multi-store-architecture` merged into `spi/worktree-s` at a pause on machine S, with LG-27 committed and no slice building in either lane, as the merge note of that day asks. The history joined by keeping both sides, the review's lines first. MSA-I13 and MSA-I5a keep their built rows, and MSA-F10 to MSA-F14 arrive planned.
+- 2026-11-19: MSA-F10 marked building, the first of the review's fixes, as the merge note of 2026-11-19 orders.
