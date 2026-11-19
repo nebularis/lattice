@@ -27,29 +27,29 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 24 branches, the units' own state from this tree, the newest board day 2026-11-19.
+Built from the status records on 25 branches, the units' own state from this tree, the newest board day 2026-11-19.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
 | [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | built 2026-11-02 | AIR-3.3 | 55 planned, 10 built, 5 merged |  |
-| [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-09-25 · built 2026-11-02 on docs/placement-vehicles-structure | AOR-1 | 11 merged, 7 built | docs/placement-vehicles-structure |
+| [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-09-25 · built 2026-11-02 on docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s | AOR-1 | 11 merged, 7 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
 | [asset-class](plans/asset-class.md) | unit | built 2026-11-08 | ASC-1 | 3 built |  |
-| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 · merged 2026-11-02 on docs/placement-vehicles-structure | CCS-0 | 21 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged | docs/placement-vehicles-structure, realign/config-authoring-studio |
+| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | verified 2026-10-29 · merged 2026-11-02 on docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s | CCS-0 | 21 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged | docs/placement-vehicles-structure, realign/config-authoring-studio, spi/multi-store-architecture, spi/worktree-s |
 | [documentation-link-repair](plans/documentation-link-repair.md) | unit | planned |  | no board |  |
 | [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
 | [ensemble](plans/ensemble.md) | unit | briefed | ES-0 | 8 planned, 2 briefed |  |
 | [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
 | [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned |  |
 | [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-11-09 | FME-1.0 | 5 planned, 3 built, 1 merged, 1 dropped |  |
-| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 · built 2026-11-02 on docs/placement-vehicles-structure | FMH-2.12 | 34 merged, 11 planned, 8 built, 1 briefed | docs/placement-vehicles-structure |
+| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-01 · built 2026-11-02 on docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s | FMH-2.12 | 34 merged, 11 planned, 8 built, 1 briefed | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
 | [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, realign/config-authoring-studio |
-| [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 · built 2026-11-18 on docs/placement-vehicles-structure, spi/multi-store-architecture | GH-0 | 7 built |  |
+| [git-hooks](plans/git-hooks.md) | unit | built 2026-11-03 · built 2026-11-18 on docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s | GH-0 | 7 built |  |
 | [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
-| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio · built 2026-11-02 on docs/placement-vehicles-structure | OD-0 | 17 merged, 6 planned, 1 built | docs/placement-vehicles-structure |
+| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-10-20 · verified 2026-10-17 on realign/config-authoring-studio · built 2026-11-02 on docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s | OD-0 | 17 merged, 6 planned, 1 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
-| [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 merged, 1 building | docs/placement-vehicles-structure |
-| [ledger](plans/ledger.md) | unit | built 2026-11-09 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · merged 2026-11-18 on docs/placement-vehicles-structure · verified 2026-11-16 on spi/sql-backend · built 2026-11-12 on docs/placement-vehicles-structure-h0e5v9 · built 2026-11-13 on ledger/lg-19-cloud-run · built 2026-11-16 on fm/ledger-proofs-on-the-target-kernel, ledger/lg-22-cloud-run · built 2026-11-17 on spi/multi-store-architecture | LG-2 | 19 merged, 6 briefed, 3 planned, 1 blocked | docs/placement-vehicles-structure |
+| [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 merged, 1 building | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
+| [ledger](plans/ledger.md) | unit | built 2026-11-09 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · merged 2026-11-18 on docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s · verified 2026-11-16 on spi/sql-backend · built 2026-11-12 on docs/placement-vehicles-structure-h0e5v9 · built 2026-11-13 on ledger/lg-19-cloud-run · built 2026-11-16 on fm/ledger-proofs-on-the-target-kernel, ledger/lg-22-cloud-run | LG-2 | 19 merged, 6 briefed, 3 planned, 1 blocked | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -66,12 +66,12 @@ Built from the status records on 24 branches, the units' own state from this tre
 | rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 2 built, 1 planned |  |
 | [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | built 2026-10-31 | PB-1 | 17 built |  |
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
-| [studio-visual-authoring](plans/studio-visual-authoring.md) | multi-slice unit | built 2026-11-19 | SVA-R0 | 33 built, 13 planned | claude/modest-ramanujan-cgvs0p |
+| [studio-visual-authoring](plans/studio-visual-authoring.md) | multi-slice unit | built 2026-11-19 | SVA-R0 | 34 built, 15 planned | claude/modest-ramanujan-cgvs0p |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-09 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 · built 2026-11-12 on docs/placement-vehicles-structure, fm/ledger-proofs-on-the-target-kernel, spi/multi-store-architecture, spi/sql-backend | VM-0 | 9 merged, 4 built | docs/placement-vehicles-structure |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-09 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 · built 2026-11-12 on docs/placement-vehicles-structure, fm/ledger-proofs-on-the-target-kernel, spi/multi-store-architecture, spi/sql-backend, spi/worktree-s | VM-0 | 9 merged, 4 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -508,6 +508,7 @@ gantt
     SVA-P3 the persistence simulation :svap3, 2026-11-19, 2026-11-20
     SVA-P3a the caller libraries :svap3a, 2026-11-19, 2026-11-20
     SVA-P4 the persistence simulator pane :svap4, 2026-11-19, 2026-11-20
+    SVA-P5 an object generated from the :svap5, 2026-11-19, 2026-11-20
     SVA-R0 probes of the broker for :svar0, 2026-11-12, 2026-11-13
     SVA-R1 the decision record :svar1, 2026-11-12, 2026-11-15
     SVA-R2 the service runs pending :svar2, 2026-11-16, 2026-11-17
@@ -935,15 +936,16 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 703 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-19 | 78 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P2, SVA-P3, SVA-P3a, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-19 | 83 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P2, SVA-P3, SVA-P3a, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1, SVA-X1, SVA-X2, SVA-X3 |
 | `docs/placement-vehicles-structure` | 2026-11-19 | 40 | pushed | AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-I1, MSA-I11, MSA-I12, MSA-I3, MSA-I4, MSA-I5a, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 684 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 191 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 816 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
-| `spi/multi-store-architecture` | 2026-11-19 | 27 | pushed | MSA-F1, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I2, MSA-I5a, MSA-I6 |
+| `spi/multi-store-architecture` | 2026-11-19 | 70 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `spi/sql-backend` | 2026-11-17 | 3 | pushed | no mark |
+| `spi/worktree-s` | 2026-11-19 | 69 | pushed | AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-F1, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `tutorial/guide` | 2026-10-16 | 571 | pushed | board not on the grammar, 146 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `tutorial/studio-guide` | 2026-11-10 | 2 | pushed | no mark |
 | `vyvid-migration` | 2026-11-05 | 39 | pushed | no mark |
