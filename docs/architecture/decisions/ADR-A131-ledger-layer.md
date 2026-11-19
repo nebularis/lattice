@@ -491,7 +491,7 @@ The case of a unit short in the second addendum of 2026-11-16, members with a ba
 
 ## Addendum (2026-11-19): a checkpoint is written for an account that moved
 
-**Status of this addendum:** Proposed. The maintainer decided the rule on 2026-11-19, and the wording is the maintainer's to accept. It adds no evaluation semantics, so it carries no conformance cases.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-19, who decided the rule the same day. It adds no evaluation semantics, so it carries no conformance cases.
 
 **Narrows the first addendum of 2026-11-16 and the second addendum of 2026-10-27.** Each has one sentence that reads as a checkpoint for every account at every close.
 
@@ -542,4 +542,4 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 
 **The addendum of 2026-11-18.** LG-Q44 of the [Ledger plan](../../developer/plans/ledger.md), raised by the read-set census of the multi-store architecture epic, MSA-I2, which met decision 5's unit and the third addendum's side by side. The maintainer decided for the owner's ledger on 2026-11-18, with the ledger node of LG-Q37 as its root. The epic's own proposal that an identity's other state be placed with its ledger was not taken, since a read by revision needs no such rule.
 
-**The addendum of 2026-11-19.** LG-Q43 of the [Ledger plan](../../developer/plans/ledger.md), raised by the [sketch of the vocabulary's rework](../../developer/sketches/ledger-vocabulary-rework.md), which found the layer's README and STD-331 on one side and the two sentences on the other. The maintainer decided on 2026-11-19 for the accounts that moved, which is what the benchmarks stored. The rule is stated here for an account's totals as well as its balance, where the README speaks of the balance alone, and LG-27 brings the README into line.
+**The addendum of 2026-11-19.** LG-Q43 of the [Ledger plan](../../developer/plans/ledger.md), raised by the [sketch of the vocabulary's rework](../../developer/sketches/ledger-vocabulary-rework.md), which found the layer's README and STD-331 on one side and the two sentences on the other. The maintainer decided on 2026-11-19 for the accounts that moved, which is what the benchmarks stored. The rule is stated here for an account's totals as well as its balance, where the README speaks of the balance alone, and LG-27 brings the README into line. The maintainer accepted the wording on 2026-11-19.

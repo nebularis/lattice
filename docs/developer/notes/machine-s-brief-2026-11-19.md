@@ -30,7 +30,7 @@ Each is recorded in the [ledger plan](../plans/ledger.md)'s questions, and the [
 
 **A position is a natural number.** LG-25 narrows the two position properties from `xsd:integer` to `xsd:nonNegativeInteger`.
 
-**The checkpoint's addendum is Proposed.** [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)'s addendum of 2026-11-19 defines "moved" for LG-27. An account moved when a posting recorded since its last checkpoint changes its balance, or the debits or the accepted credits offered that the checkpoint holds. Its wording waits on the maintainer. Build LG-27 to it, and say in the pack that it was Proposed when you built.
+**The checkpoint's addendum is accepted.** [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)'s addendum of 2026-11-19 defines "moved" for LG-27. An account moved when a posting recorded since its last checkpoint changes its balance, or the debits or the accepted credits offered that the checkpoint holds. That is wider than the README's "whose balance moved", and LG-27 brings the README into line.
 
 ## 4. Once a pass, which answers C1 to C3 of your census
 
@@ -46,7 +46,7 @@ Your census found three conditions in `ordered-draws.ttl` that no text stated. C
 | C2, the writer's refusal is the guard failing | the writer refuses the whole pass. No transition of it is recorded, and it is evaluated again from the newer revision |
 | C3, a replay from receipts for each posting | one fact for each pass. The revision the pass records is its receipt, and a replay finds the pass's write and evaluates from the revision before it |
 
-**The evidence.** An exhaustive model of the example's three transitions, against a credit or a second activation on the same accounts and one crash at any point, from twelve starting states. Once a pass with the refusal gave only outcomes that the passes run one after another give. Without the refusal it did not. With each posting a write of its own, it did not in 7 of 12 states in any variant tried, since a posting returns a revision that includes whatever landed before it. The model is a scratch on the maintainer's laptop, and MSA-I6 is asked to check it in TLA+.
+**The evidence.** An exhaustive model of the example's three transitions, against a credit or a second activation on the same accounts and one crash at any point, from twelve starting states. Once a pass with the refusal gave only outcomes that the passes run one after another give. Without the refusal it did not. With each posting a write of its own, it did not in 7 of 12 states in any variant tried, since a posting returns a revision that includes whatever landed before it. The model is [`tools/models/ledger-pass-revision/`](../../../tools/models/ledger-pass-revision/README.md), and MSA-I6 is asked to check it again in TLA+.
 
 **Two gaps in C1 to C3 as you stated them,** which matter where a pass writes two ledgers and each ledger takes a write of its own.
 
