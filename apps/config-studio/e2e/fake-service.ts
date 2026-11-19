@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Page, Route } from "@playwright/test";
 import { DataFactory, Parser, Store, Writer } from "n3";
+import { FIXTURE as JOURNEY_FIXTURE } from "./journey";
 
 const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../.build/config-studio");
 const CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
@@ -261,6 +262,18 @@ const RUN_SAMPLE_TYPES = ["text/turtle", "application/n-triples", "application/x
 const RUN_MAX_SECONDS: Record<string, number> = { sample: 120, simulate: 15 };
 const RUN_MAX_BYTES = 5 * 1024 * 1024;
 
+/**
+ * The frames of a `simulate` run, which the fake cannot compute since it runs no Jena. It answers a persistence step whose body is one of the journey's,
+ * with the frames the run worker gave for that body, which fixtures/simulator-facility-journey.json holds and the worker's own test keeps current
+ * (SimulatorJourneyTest). Any other step is one failed frame that says so, so a request that differs from the journey's is never answered with a result.
+ */
+function simulatorFrames(run: string, target: string, body: string): RunFrame[] {
+  const recorded = (JSON.parse(readFileSync(join(import.meta.dirname, JOURNEY_FIXTURE), "utf-8")) as { steps: { body: string; frames: RunFrame[] }[] }).steps;
+  const step = target === "persistence" ? recorded.find((s) => s.body === body) : undefined;
+  if (!step) return [{ run, seq: 0, last: true, status: "failed", message: "The fake service has frames only for the steps of the simulator journey in fixtures/simulator-facility-journey.json, and this step is not one of them." }];
+  return step.frames.map((f) => ({ ...f, run }));
+}
+
 /** A frame of a run, as `run-frame.schema.json` states it. */
 interface RunFrame {
   run: string;
@@ -414,7 +427,7 @@ export class FakeService {
   /**
    * `POST /api/workspaces/{ws}/runs` as the contract states it (ADR-A154), the parameters checked in the contract's order. Without `wait`
    * it answers `202` with the `cst:Run` and delivers nothing, since the fake offers no events. With `wait=true` it answers the frames. Only a
-   * `sample` run over the mapping part has a canned result. A `simulate` run answers one failed frame, since no simulator is built yet.
+   * `sample` run over the mapping part has a canned result, and a `simulate` run of the persistence part is answered from the simulator journey's fixture.
    */
   private async run(route: Route, url: URL, ws: string, turtle: (body: string, status?: number, headers?: Record<string, string>) => Promise<void>): Promise<void> {
     const request = route.request();
@@ -455,7 +468,7 @@ export class FakeService {
         cst:compileJob <urn:lattice:studio:job:${jobId}> ; cst:deadline "${new Date(ends).toISOString().replace(/\.\d+Z$/, "Z")}"^^xsd:dateTime .\n`;
       return turtle(PREFIX + description, 202);
     }
-    const frames: RunFrame[] = this.runFailure !== undefined ? [{ run, seq: 0, last: true, status: "failed", message: this.runFailure }] : kind === "sample" ? sampleRunFrames(run, this.runArtefact) : [{ run, seq: 0, last: true, status: "failed", message: "The fake service runs no simulator." }];
+    const frames: RunFrame[] = this.runFailure !== undefined ? [{ run, seq: 0, last: true, status: "failed", message: this.runFailure }] : kind === "sample" ? sampleRunFrames(run, this.runArtefact) : simulatorFrames(run, target, body);
     return route.fulfill({ status: 200, body: JSON.stringify(frames), headers: { "Content-Type": "application/json" } });
   }
 

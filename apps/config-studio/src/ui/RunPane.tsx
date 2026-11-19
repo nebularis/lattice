@@ -83,11 +83,11 @@ function statusText(state: RunState): string {
   }
 }
 
-export function RunPane({ title, controls, state, onRunAgain }: { title: string; controls: ReactNode; state: RunState; onRunAgain?: () => void }) {
+export function RunPane({ title, controls, state, onRunAgain, display, className }: { title: string; controls: ReactNode; state: RunState; onRunAgain?: () => void; display?: (parts: RunPart[]) => ReactNode; className?: string }) {
   const parts = "parts" in state ? state.parts : [];
   const busy = state.phase === "running" || state.phase === "queued";
   return (
-    <section className="run-pane" aria-label={title}>
+    <section className={`run-pane${className ? ` ${className}` : ""}`} aria-label={title}>
       <div className="run-controls" role="group" aria-label={`${title} controls`}>
         {controls}
       </div>
@@ -103,13 +103,17 @@ export function RunPane({ title, controls, state, onRunAgain }: { title: string;
             </div>
           )}
         </div>
-        <div className="run-parts" role="list" aria-label={`${title} parts`}>
-          {parts.map((p) => (
-            <div role="listitem" key={p.index}>
-              <PartBlock part={p} />
-            </div>
-          ))}
-        </div>
+        {display ? (
+          display(parts)
+        ) : (
+          <div className="run-parts" role="list" aria-label={`${title} parts`}>
+            {parts.map((p) => (
+              <div role="listitem" key={p.index}>
+                <PartBlock part={p} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

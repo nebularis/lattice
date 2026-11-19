@@ -586,3 +586,37 @@ table.axiom-rows.nested th { position: static; }
 .landing-rule { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); font-size: 12px; overflow-wrap: anywhere; }
 .landing-ops ul, .landing-list { margin: 4px 0 8px; padding-left: 18px; }
 .landing-path { overflow-wrap: anywhere; }
+
+/* The persistence simulator in the dock (SVA-P4). Its controls hold a form, so the column is wider than the sample pane's, and it stacks above the displays where the dock is narrow. */
+.run-pane.simulator { grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.run-pane.simulator .run-controls { width: 100%; }
+@container (max-width: 559px) {
+  .run-pane.simulator { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; overflow: auto; align-content: start; }
+  .run-pane.simulator .run-display { overflow: visible; }
+  .run-pane.simulator .run-controls { flex-direction: column; align-items: stretch; border-right: 0; border-bottom: 1px solid var(--border); overflow: visible; }
+}
+.sim-field { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.sim-field textarea, .sim-field input, .sim-field select { width: 100%; box-sizing: border-box; resize: vertical; font-size: 12px; }
+.sim-world, .sim-op, .sim-object { display: flex; flex-direction: column; gap: 6px; width: 100%; align-items: flex-start; }
+.sim-form, .sim-turtle { display: flex; flex-direction: column; gap: 6px; width: 100%; align-items: flex-start; }
+.sim-owned { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.sim-member { width: 100%; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
+.sim-steps { margin: 0; padding-left: 18px; }
+.sim-list { margin: 0; padding: 0 10px; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.sim-checks, .sim-delta, .sim-outcome { padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sim-none { padding: 6px 10px; margin: 0; }
+.sim-reason { overflow-wrap: anywhere; }
+.sim-place { border: 1px solid var(--persist); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sim-place.unplaced { border-color: var(--warn); }
+.sim-graph { overflow-wrap: anywhere; color: var(--text-2); }
+.sim-lines { max-height: 160px; font-size: 11px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); }
+.sim-lines.added { border-left: 3px solid var(--ok); }
+.sim-lines.removed { border-left: 3px solid var(--bad); }
+.sim-facts { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 0; }
+.sim-facts dd { margin: 0; overflow-wrap: anywhere; }
+.sim-raw summary { cursor: pointer; }
+.chip.verdict.passed, .chip.outcome.applied { border-color: var(--ok); }
+.chip.verdict.refused, .chip.outcome.refused { border-color: var(--bad); }
+.chip.outcome.lostRace { border-color: var(--warn); }
+.landing-node.place.lit { border-color: var(--ok); box-shadow: 0 0 0 3px var(--ok-2, var(--ok)); background: var(--surface); }
+.landing-lit { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--ok); }

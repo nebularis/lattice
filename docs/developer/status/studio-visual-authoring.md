@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-19. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-19. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-P3 for the maintainer, who decides whether the caller libraries own the confirmation read (TD-173) and says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** paused after SVA-P4 for the maintainer, who weighs the confirmation read's causes beyond the patterns guide's four rows (SVA-P3a) and SVA-P4's choices, and says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -52,7 +52,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | built 2026-11-19, building 2026-11-19 | SVA-R3 |
 | SVA-P3a | the caller libraries' confirmation read | built 2026-11-19, building 2026-11-19 | SVA-P3 |
-| SVA-P4 | the persistence simulator pane | building 2026-11-19 | SVA-R4, SVA-P1, SVA-P3a |
+| SVA-P4 | the persistence simulator pane | built 2026-11-19, building 2026-11-19 | SVA-R4, SVA-P1, SVA-P3a |
 | SVA-P5 | an object generated from the boundary shape | planned | SVA-P4 |
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
 | SVA-S2 | the surface simulation executor | planned | SVA-P3 |
@@ -190,3 +190,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-19: the maintainer decided that the caller libraries own the confirmation read (TD-173), as slice SVA-P3a before SVA-P4, and that SVA-P4 follows it without a pause. SVA-P3a started.
 - 2026-11-19: SVA-P3a built, [Validation Pack](../validation/SVA-P3a.md). Both caller libraries give the confirmation read, specified once in the persistence contract with 42 shared vectors, and the simulator uses the Java one. The causes go beyond the patterns guide's four rows, each defined by a guard of a generated operation, and the maintainer weighs them at the pause after SVA-P4. TD-173 closed.
 - 2026-11-19: SVA-P4 started.
+- 2026-11-19: SVA-P4 built, [Validation Pack](../validation/SVA-P4.md). The simulator pane runs persistence steps over a sample world the tab holds, with an object from a form or Turtle, as another writer, step back, the four displays and the canvas lighting each place a step wrote. Its journey replays frames the real run worker gave, kept current by a test on each side. All 69 journeys pass.

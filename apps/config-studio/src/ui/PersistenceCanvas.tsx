@@ -9,12 +9,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Handle, MarkerType, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
 import { Graph } from "@lattice/authoring-domain";
 import { api, awaitJob, jobId } from "../api";
+import { useSim } from "../persistence/simulatorStore";
+import { isLit } from "../persistence/simulator";
+import { read, noteCompiled, useCompilationEpoch, type Load } from "../persistence/compilation";
 import { Canvas, RoutedEdge, type LayoutHints, type LayoutOptions, type RoutedEdgeData } from "../canvas/kit";
 import {
-  COMPILED_PROFILE, LENSES, choices, drawing, fingerprint, freshness, localName, readCompiled, readLanding, targetLabel, writeCompiled,
+  LENSES, choices, drawing, fingerprint, freshness, localName, readCompiled, targetLabel, writeCompiled,
   type CanvasNode, type Lens, type LandingPlaces, type LandingTarget, type Place,
 } from "../persistence/landing";
-import { finished, type Job } from "../rdf/report";
 import { PARTS } from "../state";
 import { Spinner, ago } from "./kit";
 import { useStudio } from "./Workspace";
@@ -23,7 +25,7 @@ import { useStudio } from "./Workspace";
 const LAYOUT: LayoutOptions = { direction: "LR", columnGap: 160, rowGap: 14 };
 const EDGE_TYPES = { link: RoutedEdge };
 
-type BoxData = { node: CanvasNode; selected: boolean };
+type BoxData = { node: CanvasNode; selected: boolean; lit: boolean };
 
 const KIND_WORDS: Record<string, string> = {
   root: "Root", owned: "Owned", reference: "Referenced", target: "Target", place: "",
@@ -32,9 +34,13 @@ const KIND_WORDS: Record<string, string> = {
 function Box({ data }: NodeProps<Node<BoxData>>) {
   const n = data.node;
   return (
-    <div className={`canvas-node landing-node ${n.kind}${data.selected ? " selected" : ""}`} title={n.kind === "place" ? `${n.label}, written to ${n.sub}` : `${n.label}, ${n.sub}`}>
+    <div
+      className={`canvas-node landing-node ${n.kind}${data.selected ? " selected" : ""}${data.lit ? " lit" : ""}`}
+      data-lit={n.kind === "place" ? String(data.lit) : undefined}
+      title={n.kind === "place" ? `${n.label}, written to ${n.sub}${data.lit ? ". The last step of the simulator wrote it." : ""}` : `${n.label}, ${n.sub}`}
+    >
       <Handle type="target" position={Position.Left} />
-      <div className="landing-kind">{n.kind === "place" ? n.place!.kind : KIND_WORDS[n.kind]}</div>
+      <div className="landing-kind">{n.kind === "place" ? n.place!.kind : KIND_WORDS[n.kind]}{data.lit && <span className="landing-lit"> · written by the last step</span>}</div>
       <strong className="landing-label">{n.label}</strong>
       <div className={n.kind === "place" ? "landing-graph" : "small muted landing-sub"}>{n.sub}</div>
       <Handle type="source" position={Position.Right} />
@@ -52,32 +58,6 @@ const SIZES: Record<CanvasNode["kind"], { width: number; height: number }> = {
   place: { width: 260, height: 88 },
 };
 
-type Load =
-  | { state: "loading" }
-  | { state: "none" }
-  | { state: "refused"; job: Job }
-  | { state: "old"; job: Job }
-  | { state: "ready"; job: Job; doc: LandingPlaces }
-  | { state: "error"; message: string };
-
-/** The latest finished persistence compilation of the workspace, newest first by when it was submitted. */
-function latest(jobs: Job[]): Job | undefined {
-  return jobs
-    .filter((j) => j.kind === "Compile" && j.target === "Persistence" && finished(j))
-    .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? "") || b.iri.localeCompare(a.iri))[0];
-}
-
-async function read(workspace: string): Promise<Load> {
-  const row = latest(await api.compileJobs(workspace));
-  if (!row) return { state: "none" };
-  const job = await awaitJob(jobId(row.iri));
-  if (job.status !== "Succeeded" || !job.conforms) return { state: "refused", job };
-  const file = job.artefacts.find((a) => a.path === COMPILED_PROFILE);
-  if (!file) return { state: "old", job };
-  const reading = readLanding(file.content);
-  return reading.state === "ready" ? { state: "ready", job, doc: reading.doc } : { state: "old", job };
-}
-
 export function PersistenceCanvas() {
   const studio = useStudio();
   const { id, model } = studio;
@@ -86,6 +66,8 @@ export function PersistenceCanvas() {
   const [selected, setSelected] = useState<string>();
   const [load, setLoad] = useState<Load>({ state: "loading" });
   const [reload, setReload] = useState(0);
+  const compiledElsewhere = useCompilationEpoch();
+  const lit = useSim(id).lit;
   const [compiling, setCompiling] = useState(false);
   const [problem, setProblem] = useState<string>();
 
@@ -98,7 +80,7 @@ export function PersistenceCanvas() {
     return () => {
       live = false;
     };
-  }, [id, reload]);
+  }, [id, reload, compiledElsewhere]);
 
   // What the persistence part and the baseline hold now, to compare with what the compilation was sent.
   const persistence = model.state.configs.persistence?.current;
@@ -115,6 +97,7 @@ export function PersistenceCanvas() {
       writeCompiled(id, `urn:lattice:studio:job:${job}`, now);
       await awaitJob(job);
       setReload((n) => n + 1);
+      noteCompiled();
     } catch (e) {
       setProblem(e instanceof Error ? e.message : String(e));
     } finally {
@@ -128,8 +111,8 @@ export function PersistenceCanvas() {
   const drawn = useMemo(() => (doc && choice !== undefined ? drawing(doc, lens, choice) : undefined), [doc, lens, choice]);
 
   const nodes = useMemo<Node[]>(
-    () => (drawn?.nodes ?? []).map((n) => ({ id: n.id, type: "box", position: { x: 0, y: 0 }, data: { node: n, selected: n.id === selected } satisfies BoxData })),
-    [drawn, selected],
+    () => (drawn?.nodes ?? []).map((n) => ({ id: n.id, type: "box", position: { x: 0, y: 0 }, data: { node: n, selected: n.id === selected, lit: n.kind === "place" && n.place !== undefined && isLit(n.place, lit) } satisfies BoxData })),
+    [drawn, selected, lit],
   );
   const edges = useMemo<Edge[]>(
     () =>

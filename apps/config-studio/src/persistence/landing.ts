@@ -42,8 +42,21 @@ export interface Place {
   label: string;
   /** The graph, or the template that names it when an operation runs, as the compiled profile states it. */
   graph: string;
+  /** Whether `graph` is a template of the closed placeholders `{root}`, `{newRev}` and `{month}` (`dal:inGraphNamed`), and not a graph (`dal:inGraph`). */
+  named: boolean;
+  /** The local name of the place's `dal:inGraphRole`, for example `DataRole`. */
+  role: string;
+  /** The IRIs of the `dal:GraphPlace` nodes the compiled profile gives this place, sorted. A simulator step's delta names a place by its IRI. */
+  iris: string[];
   from: string[];
   operations: string[];
+}
+
+/** A parameter an operation declares, `dal:ParameterDeclaration`, with the local name of its `dal:parameterKind` such as `IriKind` or `PayloadKind`. */
+export interface OperationParameter {
+  name: string;
+  kind: string;
+  required: boolean;
 }
 
 export interface TargetOperation {
@@ -51,6 +64,11 @@ export interface TargetOperation {
   templateId: string;
   kind: string;
   path: string;
+  parameters: OperationParameter[];
+  /** The name of the parameter that holds the payload the operation's payload contract names, or null where it has none. */
+  payload: string | null;
+  /** The values the compiled profile binds, such as `datasetGraph`, by name, as it writes them (an IRI in angle brackets, a whole number as digits). */
+  bindings: Record<string, string>;
 }
 
 export interface LandingTarget {
@@ -172,7 +190,7 @@ function targetOf(g: Graph, node: Term): LandingTarget {
     const template = many(g, op, "usesTemplate")[0];
     const templateId = (template && one(g, template, "templateId")) || "";
     const kind = after(one(g, op, "operationKind") ?? "");
-    listed.push({ operation: name, templateId, kind, path: artefactPath(id, name) });
+    listed.push({ operation: name, templateId, kind, path: artefactPath(id, name), ...contractOf(g, op) });
     for (const access of many(g, op, "access")) land(g, access, name, templateId, kind, places);
   }
   return {
@@ -180,15 +198,34 @@ function targetOf(g: Graph, node: Term): LandingTarget {
     aggregate: aggregateOf(g, node, cls, strategy ? after(one(g, strategy, "resolvedValue")!) : null, operations),
     places: [...places.values()]
       .sort((a, b) => PLACE_KINDS.indexOf(a.kind) - PLACE_KINDS.indexOf(b.kind) || compare(a.graph, b.graph) || compare(a.constraint, b.constraint))
-      .map((p) => ({ kind: p.kind, label: p.label, graph: p.graph, from: sortedSet(p.from), operations: sortedSet(p.operations) })),
+      .map((p) => ({ kind: p.kind, label: p.label, graph: p.graph, named: p.named, role: p.role, iris: sortedSet(p.iris), from: sortedSet(p.from), operations: sortedSet(p.operations) })),
     operations: listed.sort((a, b) => compare(a.operation, b.operation)),
   };
 }
 
-interface PlaceDraft extends Omit<Place, "from" | "operations"> {
+interface PlaceDraft extends Omit<Place, "from" | "operations" | "iris"> {
   constraint: string;
+  iris: Set<string>;
   from: Set<string>;
   operations: Set<string>;
+}
+
+/** What a step of the simulator needs of an operation: its declared parameters, which one holds the payload, and the values the profile binds. */
+function contractOf(g: Graph, op: Term): Pick<TargetOperation, "parameters" | "payload" | "bindings"> {
+  const parameters = many(g, op, "parameter")
+    .map((p) => ({ name: one(g, p, "parameterName") ?? "", kind: after(one(g, p, "parameterKind") ?? ""), required: one(g, p, "required") === "true" }))
+    .filter((p) => p.name !== "")
+    .sort((a, b) => compare(a.name, b.name));
+  const contract = many(g, op, "payloadContract")[0];
+  const payloadParameter = contract ? many(g, contract, "payloadParameter")[0] : undefined;
+  const bound: [string, string][] = [];
+  for (const b of many(g, op, "hasParameterBinding")) {
+    const name = one(g, b, "paramName");
+    const value = one(g, b, "paramValue");
+    if (name !== undefined && value !== undefined) bound.push([name, value]);
+  }
+  const bindings = Object.fromEntries(bound.sort((a, b) => compare(a[0], b[0]) || compare(a[1], b[1])));
+  return { parameters, payload: payloadParameter ? one(g, payloadParameter, "parameterName") ?? null : null, bindings };
 }
 
 /**
@@ -225,9 +262,13 @@ function land(g: Graph, access: Term, operation: string, templateId: string, ope
   const key = `${kind}|${graph}|${constraint}`;
   let draft = places.get(key);
   if (!draft) {
-    draft = { kind, label: LABELS[kind] + (constraint ? `, ${localName(constraint)}` : ""), graph, constraint, from: new Set(), operations: new Set() };
+    draft = {
+      kind, label: LABELS[kind] + (constraint ? `, ${localName(constraint)}` : ""), graph, named: one(g, place, "inGraph") === undefined,
+      role: after(one(g, place, "inGraphRole") ?? ""), constraint, iris: new Set(), from: new Set(), operations: new Set(),
+    };
     places.set(key, draft);
   }
+  if (place.termType === "NamedNode") draft.iris.add(place.value);
   draft.from.add(templateId);
   draft.operations.add(operation);
 }
@@ -406,8 +447,10 @@ export function drawing(doc: LandingPlaces, lens: Lens, choice: string): Drawing
     for (const p of t.places) {
       const id = placeId(p);
       const node = places.get(id);
-      if (node) node.targets!.push(t.id);
-      else places.set(id, { id, kind: "place", label: p.label, sub: p.graph, rank: 1, place: p, targets: [t.id] });
+      if (node) {
+        node.targets!.push(t.id);
+        node.place = { ...node.place!, iris: sortedSet([...node.place!.iris, ...p.iris]) };
+      } else places.set(id, { id, kind: "place", label: p.label, sub: p.graph, rank: 1, place: p, targets: [t.id] });
       out.edges.push({ id: `e:${from}->${id}`, source: from, target: id, kind: "lands", title: `${p.label}, written to ${p.graph}`, dashed: false });
     }
   }

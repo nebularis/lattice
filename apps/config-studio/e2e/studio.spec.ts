@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
 // The author's journey through the studio, against the fake service in fake-service.ts.
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { FakeService, STAGED_FIRST, STAGED_SECOND } from "./fake-service";
+import { EX, FACILITY, FIXTURE, ROOT, STEPS, type Recorded } from "./journey";
 
 const PROFILE = "https://example.org/lending#LoanApplicationStrongProfile";
 
@@ -2117,4 +2120,137 @@ test("the canvas keeps where the author moved a node, for the workspace and the 
   await page.mouse.up();
   const stored = await page.evaluate((key) => localStorage.getItem(key), `lattice-studio:persistence-canvas:${ws}:aggregate:Facility`);
   expect(Object.keys(JSON.parse(stored!))).toContain("root:Facility");
+});
+
+// --- the persistence simulator (SVA-P4) ---------------------------------------------------------------------------------------------------
+
+test("the simulator creates a facility, changes it, loses a race as another writer and steps back, and the canvas lights each landing place a step wrote", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilityPersistenceCanvas(page, fake);
+  const journey = JSON.parse(readFileSync(join(import.meta.dirname, FIXTURE), "utf-8")) as Recorded;
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await canvas.getByRole("combobox", { name: "Target" }).selectOption({ label: "Facility" });
+  await expect(landingNode(canvas, "place")).toHaveCount(7);
+  // Nothing is lit, and nothing runs, until the author presses Run.
+  const lit = canvas.locator('.landing-node.place[data-lit="true"]');
+  await expect(lit).toHaveCount(0);
+
+  await page.getByRole("tab", { name: "Simulator" }).click();
+  const pane = page.getByRole("region", { name: "Simulator", exact: true });
+  await expect(pane.getByRole("combobox", { name: "Simulator target" })).toBeVisible();
+  await pane.getByRole("combobox", { name: "Simulator target" }).selectOption({ label: "Facility" });
+  const steps = pane.getByLabel("Steps in the sample world");
+  const size = pane.getByLabel("Size of the sample world");
+  await expect(steps).toHaveText("0 steps");
+  await expect(size).toContainText("1 quad,");
+  await expect(size).toContainText("of the 5.00 MiB request limit");
+  await expect(pane.getByRole("button", { name: "Step back" })).toBeDisabled();
+  expect(fake.runs.filter((r) => r.kind === "simulate")).toEqual([]);
+
+  // The object is a form derived from the facility's boundary shape. The create is the only write the world can take, since the facility does not exist.
+  await expect(pane.getByRole("group", { name: "Write" }).getByRole("button", { name: "Create" })).toHaveAttribute("aria-pressed", "true");
+  await expect(pane.getByRole("group", { name: "Write" }).getByRole("button", { name: "Append" })).toBeDisabled();
+  await expect(pane.getByRole("checkbox", { name: "As another writer" })).toBeDisabled();
+  await expect(pane.getByRole("textbox", { name: "Root" })).toHaveValue(ROOT);
+  await pane.getByRole("textbox", { name: "facility reference" }).fill(FACILITY.facilityReference);
+  await pane.getByRole("textbox", { name: "commitment" }).fill(FACILITY.commitment);
+  await pane.getByRole("textbox", { name: "margin", exact: true }).fill(STEPS[0].margin);
+  await pane.getByRole("textbox", { name: "arranged by" }).fill(FACILITY.arrangedBy);
+  await pane.getByRole("textbox", { name: "borrower" }).fill(FACILITY.borrower);
+  await pane.getByRole("textbox", { name: "lender" }).fill(FACILITY.lender.join("\n"));
+  await pane.getByRole("button", { name: "Add a drawdown" }).click();
+  await pane.getByRole("textbox", { name: "drawn amount" }).fill(FACILITY.drawdown.amount);
+  await pane.getByRole("textbox", { name: "drawdown date" }).fill(FACILITY.drawdown.date);
+  expect(fake.runs.filter((r) => r.kind === "simulate")).toEqual([]);
+
+  // Step 1, a create.
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  const outcome = pane.getByRole("region", { name: "The outcome" });
+  await expect(outcome.locator(".chip.outcome")).toHaveText("Applied");
+  await expect(outcome.locator("dd").filter({ hasText: "urn:rev:facility-1/1" })).toBeVisible();
+  await expect(outcome.locator("dd").filter({ hasText: "Apache Jena ARQ" })).toBeVisible();
+  await expect(pane.getByRole("region", { name: "The checks" }).getByText("payloadCheck")).toBeVisible();
+  await expect(pane.getByRole("region", { name: "The request" })).toContainText("NOW()");
+  const delta = pane.getByRole("region", { name: "The delta" });
+  await expect(delta.getByRole("region", { name: /^Landing place Data graph/ })).toContainText("urn:g:facilities");
+  await expect(delta.getByRole("region", { name: /^Landing place Patch log, the triples added/ })).toContainText("urn:rev:facility-1/1/add");
+  await expect(delta.getByRole("region", { name: /^Landing place Patch log, the triples removed/ })).toHaveCount(0);
+  await expect(steps).toHaveText("1 step");
+  const created = await size.textContent();
+  // The canvas lights the five places the create wrote, and not the keys or the removed patch log.
+  await expect(lit).toHaveCount(5);
+  await expect(landingNode(canvas, "place").filter({ hasText: "{newRev}/add" })).toHaveAttribute("data-lit", "true");
+  await expect(landingNode(canvas, "place").filter({ hasText: "{newRev}/del" })).toHaveAttribute("data-lit", "false");
+  await expect(landingNode(canvas, "place").filter({ hasText: "urn:g:keys" })).toHaveAttribute("data-lit", "false");
+
+  // Step 2, a replace that changes the margin. The facility is in the sample world now, so the form still holds it.
+  await pane.getByRole("group", { name: "Write" }).getByRole("button", { name: "Replace" }).click();
+  await expect(pane.getByRole("combobox", { name: "Operation by name" })).toHaveValue("cas-replace");
+  await expect(pane.getByRole("checkbox", { name: "As another writer" })).toBeEnabled();
+  await pane.getByRole("textbox", { name: "margin", exact: true }).fill(STEPS[1].margin);
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(steps).toHaveText("2 steps");
+  await expect(outcome.locator("dd").filter({ hasText: "urn:rev:facility-1/2" })).toBeVisible();
+  await expect(delta.getByRole("region", { name: /^Landing place Patch log, the triples removed/ })).toBeVisible();
+  await expect(delta.getByRole("region", { name: /^Landing place Data graph/ }).locator("pre.removed")).toContainText(`- <${ROOT}> <${EX}margin> "3.25"`);
+  await expect(lit).toHaveCount(6);
+  await expect(landingNode(canvas, "place").filter({ hasText: "{newRev}/del" })).toHaveAttribute("data-lit", "true");
+  const replaced = await size.textContent();
+  expect(replaced).not.toBe(created);
+
+  // Step 3, the same change as another writer, from the position before the world's. The guard refuses it, and the world stays where it was.
+  await pane.getByRole("textbox", { name: "margin", exact: true }).fill(STEPS[2].margin);
+  await pane.getByRole("checkbox", { name: "As another writer" }).check();
+  await expect(pane.getByText("The step is sent from position 1, one before the sample world's, so the guard refuses it.")).toBeVisible();
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(outcome.locator(".chip.outcome")).toHaveText("Lost race");
+  await expect(outcome.locator(".sim-outcome strong")).toHaveText("PreconditionFailed");
+  await expect(outcome.locator("p.small")).toContainText("The version row is at position 2, not 1");
+  await expect(steps).toHaveText("2 steps");
+  await expect(size).toHaveText(replaced!);
+  await expect(lit).toHaveCount(0);
+  await expect(delta).toContainText("The step changed no graph.");
+
+  // The requests were the journey's, and each ran once, since nothing runs until Run is pressed.
+  const sent = fake.runs.filter((r) => r.kind === "simulate");
+  expect(sent.map((r) => [r.target, r.mediaType, r.wait])).toEqual([["persistence", "application/trig", true], ["persistence", "application/trig", true], ["persistence", "application/trig", true]]);
+  expect(sent.map((r) => r.body)).toEqual(journey.steps.map((s) => s.body));
+
+  // Step back removes the change, and the world is the one the create left.
+  await pane.getByRole("button", { name: "Step back" }).click();
+  await expect(steps).toHaveText("1 step");
+  await expect(size).toHaveText(created!);
+  await expect(lit).toHaveCount(0);
+  await expect(pane.getByRole("list", { name: "Steps taken" }).getByRole("listitem")).toHaveText(["create-if-absent on facility-1 to urn:rev:facility-1/1"]);
+  await pane.getByRole("button", { name: "Step back" }).click();
+  await expect(steps).toHaveText("0 steps");
+  await expect(size).toContainText("1 quad,");
+  await expect(pane.getByRole("button", { name: "Step back" })).toBeDisabled();
+});
+
+test("the simulator keeps its sample world while the author looks at another view, and an object can be given as Turtle", async ({ page }) => {
+  const fake = new FakeService();
+  const { ws, canvas } = await facilityPersistenceCanvas(page, fake);
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await page.getByRole("tab", { name: "Simulator" }).click();
+  const pane = page.getByRole("region", { name: "Simulator", exact: true });
+  await pane.getByRole("combobox", { name: "Simulator target" }).selectOption({ label: "Facility" });
+  await pane.getByRole("group", { name: "Object source" }).getByRole("button", { name: "Turtle" }).click();
+  // A blank node is refused before anything is sent, since a payload holds none.
+  await pane.getByRole("textbox", { name: "Object as Turtle" }).fill(`@prefix ex: <${EX}> . ex:facility-1 a ex:Facility ; ex:lender [ ex:legalName "x" ] .`);
+  await expect(pane.getByRole("alert")).toContainText("blank node");
+  await expect(pane.getByRole("button", { name: "Run", exact: true })).toBeDisabled();
+  await pane.getByRole("textbox", { name: "Object as Turtle" }).fill(`@prefix ex: <${EX}> . ex:facility-1 a ex:Facility ; ex:margin 3.25 .`);
+  await expect(pane.getByRole("alert")).toHaveCount(0);
+  await expect(pane.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
+  await expect(pane.getByLabel("Size of the step")).toContainText("The step is");
+  // A step that is not one the fake has frames for is one failed run, and moves no world.
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(pane.getByRole("status", { name: "Simulator status" })).toContainText("Failed");
+  await expect(pane.getByLabel("Steps in the sample world")).toHaveText("0 steps");
+  expect(fake.runs.filter((r) => r.kind === "simulate")).toHaveLength(1);
+  await page.goto(`/#/w/${ws}/overview`);
+  await page.goto(`/#/w/${ws}/persistence`);
+  await page.getByRole("tab", { name: "Simulator" }).click();
+  await expect(page.getByRole("region", { name: "Simulator", exact: true }).getByLabel("Steps in the sample world")).toHaveText("0 steps");
 });

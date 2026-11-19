@@ -49,6 +49,7 @@ import { ConfigView } from "./ConfigView";
 import { CollapseButton, Code, ColumnsContext, Diff, Modal, ResizeHandle, SeverityIcon, Spinner, go, href, useStoredColumn, useWindowWidth } from "./kit";
 import { DOCK, LIST, NAV_WIDTH, RAIL, columnKey, dockDefaultCollapsed, dockDefaultWidth, maxWidth, resolveWidth } from "./columns";
 import { RunSourceContext, SamplePane, type RunSource } from "./RunPane";
+import { SimulatorPane } from "./SimulatorPane";
 import { Overview } from "./Overview";
 
 export interface Studio {
@@ -107,8 +108,8 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
   const [navState, updateNav] = useStoredColumn(columnKey("nav"));
   const [dockState, updateDock] = useStoredColumn(columnKey("dock"));
   const [listWidth, setListWidth] = useState(0);
-  // The dock holds the inspector and, in mapping mode, the Sample pane, which runs what the mapping view keeps (SVA-R4).
-  const [dock, setDock] = useState<"inspector" | "sample">("inspector");
+  // The dock holds the inspector, in mapping mode the Sample pane, which runs what the mapping view keeps (SVA-R4), and in the persistence view the Simulator (SVA-P4).
+  const [dock, setDock] = useState<"inspector" | "sample" | "simulator">("inspector");
   const [runSource, setRunSource] = useState<RunSource>();
   const [problemsOpen, setProblemsOpen] = useState(true);
   const [palette, setPalette] = useState(false);
@@ -118,7 +119,9 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
   const dockCollapsed = dockState.collapsed ?? dockDefaultCollapsed(windowWidth);
   // the default does not follow what is collapsed, so collapsing a column gives its room to the middle and never to the dock
   const dockOthers = navWidth + listWidth;
-  const dockOpenWidth = resolveWidth(dockState.width, { min: DOCK.min, default: dockDefaultWidth(windowWidth, NAV_WIDTH + LIST.default, mode === "mapping") }, windowWidth, dockOthers);
+  const simulating = view === "persistence";
+  const dockShows = mode === "mapping" ? (dock === "sample" ? "sample" : "inspector") : simulating ? (dock === "simulator" ? "simulator" : "inspector") : "inspector";
+  const dockOpenWidth = resolveWidth(dockState.width, { min: DOCK.min, default: dockDefaultWidth(windowWidth, NAV_WIDTH + LIST.default, mode === "mapping" || simulating) }, windowWidth, dockOthers);
   const dockWidth = dockCollapsed ? RAIL : dockOpenWidth;
   const columns = useMemo(() => ({ view, navWidth, dockWidth, reportList: setListWidth }), [view, navWidth, dockWidth]);
 
@@ -303,21 +306,33 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           <div className={dockCollapsed ? "rail" : "col-head"}>
             <CollapseButton column="dock" noun="dock" collapsed={dockCollapsed} onToggle={() => updateDock({ collapsed: !dockCollapsed })} />
           </div>
-          {!dockCollapsed && mode === "mapping" && (
+          {!dockCollapsed && (mode === "mapping" || simulating) && (
             <div className="tabs" role="tablist" aria-label="Dock">
-              <button role="tab" aria-selected={dock === "inspector"} onClick={() => setDock("inspector")}>
+              <button role="tab" aria-selected={dockShows === "inspector"} onClick={() => setDock("inspector")}>
                 Inspector
               </button>
-              <button role="tab" aria-selected={dock === "sample"} onClick={() => setDock("sample")}>
-                Sample
-              </button>
+              {mode === "mapping" ? (
+                <button role="tab" aria-selected={dockShows === "sample"} onClick={() => setDock("sample")}>
+                  Sample
+                </button>
+              ) : (
+                <button role="tab" aria-selected={dockShows === "simulator"} onClick={() => setDock("simulator")}>
+                  Simulator
+                </button>
+              )}
             </div>
           )}
-          {!dockCollapsed && (mode !== "mapping" || dock === "inspector") && <Inspector part={activePart} node={editing ? node : undefined} />}
+          {!dockCollapsed && dockShows === "inspector" && <Inspector part={activePart} node={editing ? node : undefined} />}
           {/* kept mounted while the Inspector shows or the dock is collapsed, so a run in flight and its result stay */}
           {mode === "mapping" && (
-            <div className="dock-sample" hidden={dockCollapsed || dock !== "sample"}>
+            <div className="dock-sample" hidden={dockCollapsed || dockShows !== "sample"}>
               <SamplePane />
+            </div>
+          )}
+          {/* kept mounted while the persistence view shows, for the same reason */}
+          {simulating && (
+            <div className="dock-sample" hidden={dockCollapsed || dockShows !== "simulator"}>
+              <SimulatorPane />
             </div>
           )}
           {!dockCollapsed && (
