@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-19. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-19. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -68,7 +68,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-M3b | the sample pane | planned | SVA-R4, SVA-M3a |
 | SVA-M4 | the output explorer | built 2026-11-17, building 2026-11-17 | SVA-O1, SVA-R4 |
 | SVA-H1 | the stack's secrets in one guarded folder, settings printed redacted, and a guard on reading them | built 2026-11-15, building 2026-11-15 |  |
-| SVA-X1 | register rows renumbered past the other branches | planned |  |
+| SVA-X1 | register rows renumbered past the other branches | building 2026-11-19 |  |
 | SVA-X2 | user-facing text under main's standard on naming decisions | built 2026-11-19, building 2026-11-19 |  |
 | SVA-X3 | the run queues on the contract-driven topology | planned | MSA-F4 on `main` |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | planned |  |
@@ -204,3 +204,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-19: SVA-P1c built, [Validation Pack](../validation/SVA-P1c.md). `dal:LandingPlace` is the range of `dal:landsIn` and the class the access's shape requires, with `dal:GraphPlace` its subclass, and no compiled profile changed. The facility sample's shape states its three plain-value minimums, and the simulator's generated facility carries them. The maintainer pre-approved SVA-X2, SVA-X1 and SVA-M3a in that order, with a pause after.
 - 2026-11-19: SVA-X2 started.
 - 2026-11-19: SVA-X2 built. Seven lines this unit added to the studio contract's, the app's and the run worker's READMEs cited a decision in their text. Each now states the constraint alone, and the contract's README gains a Design decisions section linking ADR-A154 and ADR-A132. `main`'s writing check judges the rule only in `ontology/*` READMEs, so it reported nothing before or after. Forced onto every README it flagged six of the seven before and none after. Checked: identifiers, this branch's writing rules on the three files, 0 failures. Left: working-document identifiers this unit added to the contract and app READMEs (SVA-M4, SVA-Q7, BL-22), which the repository's rule on working documents names only for layer READMEs, generated documents, the site and published ADRs.
+- 2026-11-19: SVA-X1 started.
