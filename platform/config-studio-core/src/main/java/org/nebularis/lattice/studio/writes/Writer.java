@@ -258,6 +258,11 @@ public final class Writer {
             return seqs.computeIfAbsent(root, r -> ops.seq(store, f, r).orElse(0L));
         }
 
+        /** Whether {@code root} is tombstoned in the store, or by a deletion earlier in this batch. */
+        boolean deleted(Family f, String root) {
+            return retired.values().stream().flatMap(List::stream).anyMatch(r -> r.root().equals(root)) || ops.tombstoned(store, f, root);
+        }
+
         /** The operations of one command in order, each in a transaction of its own (PB-D10), and its receipt after them. */
         final class Steps {
             final Command c;
@@ -643,6 +648,12 @@ public final class Writer {
             }
             long next = c.expect() + 1;
             Workspace.Document held = ws.documents().get(doc);
+            String root = Graphs.document(ws.id(), doc);
+            // A deleted document's row stays tombstoned, and a create over it writes nothing, so its id is refused before the
+            // description could list a document with no graph (MSA-F9).
+            if (held == null && c.expect() == 0 && deleted(Family.DOCUMENT, root)) {
+                return Reply.refused("the document was deleted, so its id cannot be used again");
+            }
             boolean described = held != null && held.title().equals(c.label()) && held.template().equals(c.sample());
             if (described && c.expect() != 0 && unchanged(Family.DOCUMENT, Graphs.document(ws.id(), doc), graph)) {
                 return Reply.ok(c.expect());
@@ -662,9 +673,13 @@ public final class Writer {
                 if (now == null) {
                     return Reply.notFound();
                 }
-                // A deleted document's row stays tombstoned, so its id cannot be created again.
-                return now.documentRevision(doc) == c.expect() ? Reply.refused("the document was deleted, so its id cannot be used again")
-                    : Reply.stale(now.documentRevision(doc));
+                if (now.documentRevision(doc) != c.expect()) {
+                    return Reply.stale(now.documentRevision(doc));
+                }
+                // The document's own row says which it was: tombstoned, the id was deleted meanwhile, and otherwise another
+                // command moved the description the save was guarded on, and a resend completes it (MSAF6-02).
+                return ops.tombstoned(store, Family.DOCUMENT, root) ? Reply.refused("the document was deleted, so its id cannot be used again")
+                    : changed(id);
             });
         }
 

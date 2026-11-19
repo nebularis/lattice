@@ -175,6 +175,18 @@ public final class StudioStore implements AutoCloseable {
         return out.stream().findFirst();
     }
 
+    /** Whether {@code root} has a version row in {@code metaGraph} that is tombstoned, which no create can bring back. */
+    public boolean tombstoned(String metaGraph, String root) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(VERSION_ROW_QUERY);
+        query.setIri("meta", metaGraph);
+        query.setIri("root", root);
+        boolean[] out = {false};
+        connection.querySelect(query.asQuery(), row -> {
+            out[0] |= row.contains("deleted") && "true".equals(row.getLiteral("deleted").getLexicalForm());
+        });
+        return out[0];
+    }
+
     /**
      * The {@code pat:seq} of each live row among {@code roots}, by root, each root read in the meta graph it is keyed to, in one query.
      * Its cost is one lookup a root, however many rows the meta graphs hold.

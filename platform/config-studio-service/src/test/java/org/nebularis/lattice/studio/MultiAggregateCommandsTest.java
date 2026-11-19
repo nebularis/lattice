@@ -207,7 +207,8 @@ class MultiAggregateCommandsTest {
         Reply mine = writer.apply(save);
 
         assertNotEquals(200, mine.status(), mine.toString());
-        assertEquals(Reply.refused("the document was deleted, so its id cannot be used again"), mine);
+        // MSA-F9, MSAF6-02: the document's own row is live, so the id is not a deleted one, and the save is sent again.
+        assertEquals(Reply.refused("the workspace changed while the command was applied, so send it again"), mine);
         assertNotEquals(descriptionBefore, Fixture.OPS.seq(store, Family.DESCRIPTION, Graphs.workspace(WS)).orElseThrow(),
             "the other command did move the description the save was guarded on");
         // The earlier operation applied: the document graph and its row are there.
@@ -226,6 +227,23 @@ class MultiAggregateCommandsTest {
         assertEquals("Licence", done.documents().get(DOC).title());
         assertTrue(docGraph("one").isIsomorphicWith(store.graph(Graphs.documentGraph(WS, DOC))));
         assertEquals(Optional.of(1L), Fixture.OPS.seq(store, Family.DOCUMENT, Graphs.document(WS, DOC)));
+    }
+
+    /** MSA-F9. A deleted document's row stays tombstoned, so a save of a new document under its id is refused as a deleted id. */
+    @Test
+    void savingANewDocumentUnderADeletedDocumentsIdIsRefusedAsADeletedId() {
+        RDFConnection real = RDFConnection.connect(DatasetFactory.createTxnMem());
+        StudioStore store = Fixture.textual(real);
+        Writer writer = writer(store);
+        created(writer);
+        assertEquals(Reply.ok(1), writer.apply(Command.saveDocument(WS, DOC, 0, AT, "Licence", "software-licence", docGraph("one"))));
+        assertEquals(Reply.ok(), writer.apply(Command.deleteDocument(WS, DOC)));
+
+        Reply again = writer.apply(Command.saveDocument(WS, DOC, 0, AT, "Licence", "software-licence", docGraph("two")));
+
+        assertEquals(Reply.refused("the document was deleted, so its id cannot be used again"), again);
+        assertFalse(Fixture.OPS.workspace(store, WS).documents().containsKey(DOC));
+        assertTrue(store.graph(Graphs.documentGraph(WS, DOC)).isEmpty());
     }
 
     /**
