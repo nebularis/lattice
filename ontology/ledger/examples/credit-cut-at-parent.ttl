@@ -1,0 +1,127 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A credit cut at a parent, the conformance case of a cut at an
+# ancestor (ADR-A131, its first addendum of 2026-11-16). A parent and its
+# child are each stated at 10, and each ceiling is its stated amount. Both are
+# restored by recoveries: the parent names the kind, and the child names none,
+# so it accepts every kind. A debit of 5 at the child, a credit of 4 at the
+# parent, then a credit of 4 at the child.
+#
+# | Position | Event                     | Child                          | Parent                                         |
+# |----------|---------------------------|--------------------------------|------------------------------------------------|
+# | start    |                           | 10                             | 10                                             |
+# | 1        | debit of 5 at the child   | -5 -> 5                        | -5 -> 5                                        |
+# | 2        | credit of 4 at the parent | --                             | room 5, applied 4 -> 9                         |
+# | 3        | credit of 4 at the child  | room 5, offered 4, applied 4 -> 9 | room 1, takes 1, a cut of 3 -> 10           |
+#
+# Each posting records the running balance of its own account. The parent's
+# balance is 10, less 5, plus 4 and 4, less 3, which is 10. With no cut the
+# sum would be 13, above the parent's ceiling.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/credit-cut-at-parent/> .
+
+# ==== The owner, the kind of credit and the value space =======================
+
+ex:holder a fnd:PersistentIdentity ; rdfs:comment "The owner of both accounts." .
+ex:Holder a owl:Class ; rdfs:comment "The kind of owner these accounts admit." .
+
+ex:recovery a skos:Concept ; skos:inScheme ldg:CreditKinds ;
+    skos:prefLabel "recovery" ;
+    rdfs:comment "An amount recovered after it was paid, which restores what it was drawn from." .
+
+ex:units a qnt:ValueSpace ;
+    qnt:spaceKey "ledger-credit-cut-at-parent-units" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-credit-cut-at-parent-units-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
+ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
+
+ex:q-10 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "10"^^xsd:decimal .
+
+# ==== The merge policy =========================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
+# ==== The configuration: a parent and a child ================================
+
+ex:parent a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-10 ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
+    ldg:restoredBy ex:recovery ;
+    rdfs:comment "Stated at 10, its ceiling the stated amount, restored by recoveries." .
+
+ex:child a ldg:AccountDefinition ;
+    ldg:statedAmount ex:q-10 ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
+    ldg:partOf ex:parent ;
+    rdfs:comment "Stated at 10, part of the parent. It names no kind, so every kind restores it." .
+
+# ==== Position 1: a debit of 5 at the child ===================================
+
+ex:debit-1-proposal rdfs:comment "A draw of 5 on the child." .
+ex:debit-1-grant a ldg:Grant ;
+    ldg:forProposal ex:debit-1-proposal ;
+    ldg:requestedValue "5"^^xsd:decimal ; ldg:grantedValue "5"^^xsd:decimal .
+ex:debit-1-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:account-child ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:grant ex:debit-1-grant .
+ex:debit-1-posting a ldg:Posting ;
+    ldg:onAccount ex:account-child ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "5"^^xsd:decimal ;
+    ldg:runningBalance "5"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:debit-1-merge , ex:debit-1-grant .
+
+# ==== Position 2: a credit of 4 at the parent =================================
+
+ex:credit-2-posting a ldg:Posting ;
+    ldg:onAccount ex:account-parent ;
+    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:creditKind ex:recovery ;
+    ldg:offeredValue "4"^^xsd:decimal ; ldg:amountValue "4"^^xsd:decimal ;
+    ldg:runningBalance "9"^^xsd:decimal ;
+    rdfs:comment "The parent holds 5 and has room for 5, so all 4 is applied." .
+
+# ==== Position 3: a credit of 4 at the child, cut by 3 at the parent ==========
+
+ex:credit-3-posting a ldg:Posting ;
+    ldg:onAccount ex:account-child ;
+    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:creditKind ex:recovery ;
+    ldg:offeredValue "4"^^xsd:decimal ; ldg:amountValue "4"^^xsd:decimal ;
+    ldg:runningBalance "9"^^xsd:decimal ;
+    rdfs:comment "The child holds 5 and has room for 5, so all 4 is applied." .
+ex:credit-3-cut-parent a ldg:Cut ;
+    ldg:cutOf ex:credit-3-posting ; ldg:cutAt ex:account-parent ;
+    ldg:cutValue "3"^^xsd:decimal ;
+    rdfs:comment "The parent held 9 and had room for 1, so it took 1 of the 4 applied." .
+
+# ==== The account instances and the passes ===================================
+
+ex:account-parent a ldg:Account ;
+    ldg:ofDefinition ex:parent ; ldg:forOwner ex:holder .
+ex:account-child a ldg:Account ;
+    ldg:ofDefinition ex:child ; ldg:forOwner ex:holder ;
+    ldg:partOfAccount ex:account-parent .
+ex:holder a ex:Holder .
+ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
+ex:pass-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer .
+ex:pass-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:integer .

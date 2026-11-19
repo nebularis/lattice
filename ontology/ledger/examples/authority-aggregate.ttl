@@ -84,34 +84,31 @@ ex:grant-3 a ldg:Grant ;
 
 ex:merge-1 a ldg:MergeRecord ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:availableBefore "100"^^xsd:decimal ;
     ldg:grant ex:grant-1 , ex:grant-2 , ex:grant-3 .
 
 ex:posting-1 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "34"^^xsd:decimal ;
+    ldg:runningBalance "66"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:grant-1 .
 ex:posting-2 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "2"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
+    ldg:runningBalance "33"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:grant-2 .
 ex:posting-3 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "3"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
+    ldg:runningBalance "0"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:grant-3 .
-
-ex:balance-1 a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ;
-    ldg:remainingValue "0"^^xsd:decimal ; ldg:availableValue "0"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:merge-1 , ex:posting-1 , ex:posting-2 , ex:posting-3 .
 
 # ==== The account instances and the passes ===================================
 

@@ -1,37 +1,175 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# SHACL-SPARQL constraints over Ledger's records: balances fold their
-# postings, a merge stays within availability, account instances keep their
+# SHACL-SPARQL constraints over Ledger's records: a running balance is a sum
+# less its cuts, a credit is applied within its room and cut where an ancestor
+# had less, a merge stays within availability, account instances keep their
 # natural keys and periods, and no record is effective after its pass. Each shape
 # targets the class it checks and reads all its instances in one query, so a
 # dataset's records are checked in one evaluation per law rather than one per
-# record. A result's focus node is the class and its value the record.
+# record. A result's focus node is the class and its value the record. A sum
+# adds zero for a row that is not a counted posting, so no term of it errors.
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 
-ldg:BalanceFoldShape a sh:NodeShape ;
-        sh:targetNode ldg:BalanceRecord ;
+ldg:RunningBalanceShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
         sh:sparql [
-                sh:message "A balance record's remaining value must be its stated amount less the debits plus the credits posted in its account's subtree by passes at or before its own, capped at the credit ceiling." ;
+                sh:message "A posting's running balance must be its account's stated amount, less the debits, plus the credits the account accepts at the amount applied, less the cuts at it, over the postings in its subtree up to the posting in recorded order." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
                         SELECT $this ?value WHERE {
                                 {
-                                        SELECT $this ?value ?remaining ?stated ?ceiling (SUM(?signed) AS ?moved) WHERE {
-                                                ?value a $this ; ldg:onAccount ?account ; ldg:inPass/ldg:passPosition ?at ; ldg:remainingValue ?remaining .
-                                                ?account ldg:ofDefinition/ldg:statedAmount/qnt:numericValue ?stated .
-                                                OPTIONAL { ?account ldg:ofDefinition/ldg:creditCeiling/qnt:numericValue ?statedCeiling }
+                                        SELECT $this ?value ?balance ?stated (SUM(?signed) AS ?moved) WHERE {
+                                                ?value a $this ; ldg:onAccount ?account ; ldg:runningBalance ?balance ;
+                                                        ldg:inPass/ldg:passPosition ?at ; ldg:recordedPosition ?recorded ; ldg:microPosition ?micro .
+                                                ?account ldg:ofDefinition ?definition .
+                                                ?definition ldg:statedAmount/qnt:numericValue ?stated .
                                                 OPTIONAL {
-                                                        ?posting ldg:onAccount/ldg:partOfAccount* ?account .
-                                                        OPTIONAL { ?posting ldg:inPass/ldg:passPosition ?postedAt ; ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        ?earlier ldg:onAccount/ldg:partOfAccount* ?account .
+                                                        OPTIONAL { ?earlier ldg:onAccount ?on ; ldg:inPass/ldg:passPosition ?earlierAt ;
+                                                                ldg:recordedPosition ?earlierRecorded ; ldg:microPosition ?earlierMicro ;
+                                                                ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?cut ldg:cutOf ?earlier ; ldg:cutAt ?account ; ldg:cutValue ?cutValue }
+                                                }
+                                                BIND (COALESCE(IF(
+                                                        IF(?on = ?account,
+                                                                ?earlierRecorded < ?recorded || (?earlierRecorded = ?recorded && ?earlierMicro <= ?micro),
+                                                                ?earlierAt < ?at || (?earlierAt = ?at && ?earlierMicro <= ?micro)),
+                                                        IF(?direction = ldg:Credit,
+                                                                IF(NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                                        || EXISTS { ?earlier ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }, ?amount, 0)
+                                                                        - COALESCE(?cutValue, 0),
+                                                                -?amount),
+                                                        0), 0) AS ?signed)
+                                        } GROUP BY $this ?value ?balance ?stated
+                                }
+                                FILTER (?balance != ?stated + ?moved)
+                        }
+                """
+        ] .
+
+ldg:CreditCeilingShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "A running balance must not be above the account's credit ceiling, or its stated amount where no ceiling is stated." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:onAccount ?account ; ldg:runningBalance ?balance .
+                                ?account ldg:ofDefinition ?definition .
+                                ?definition ldg:statedAmount ?statedQuantity .
+                                ?statedQuantity qnt:numericValue ?stated .
+                                OPTIONAL { ?definition ldg:creditCeiling ?ceilingQuantity . ?ceilingQuantity qnt:numericValue ?ceiling }
+                                FILTER (?balance > COALESCE(?ceiling, ?stated))
+                        }
+                """
+        ] .
+
+ldg:CreditAmountsShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "A credit must state the amount offered and apply from zero to that amount, and where it applies less, its account must be at its ceiling after it. A debit states no amount offered and no kind." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        ?value a $this ; ldg:direction ldg:Credit ; ldg:amountValue ?applied ;
+                                                ldg:onAccount ?account ; ldg:runningBalance ?balance .
+                                        ?account ldg:ofDefinition ?definition .
+                                        ?definition ldg:statedAmount/qnt:numericValue ?stated .
+                                        OPTIONAL { ?definition ldg:creditCeiling/qnt:numericValue ?ceiling }
+                                        OPTIONAL { ?value ldg:offeredValue ?offered }
+                                        FILTER (!BOUND(?offered) || ?applied < 0 || ?applied > ?offered
+                                                || (?applied < ?offered && ?balance != COALESCE(?ceiling, ?stated)))
+                                } UNION {
+                                        ?value a $this ; ldg:direction ldg:Debit .
+                                        FILTER (EXISTS { ?value ldg:offeredValue ?offered } || EXISTS { ?value ldg:creditKind ?kind })
+                                }
+                        }
+                """
+        ] .
+
+ldg:CreditKindAcceptedShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "A credit must be posted to an account that accepts its kind, and a credit with no kind must not be posted on a path where an account names its kinds." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:direction ldg:Credit ; ldg:onAccount ?account .
+                                ?account ldg:ofDefinition ?definition .
+                                FILTER (
+                                        (EXISTS { ?definition ldg:restoredBy ?any }
+                                                && NOT EXISTS { ?value ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind })
+                                        || (NOT EXISTS { ?value ldg:creditKind ?stated }
+                                                && EXISTS { ?account ldg:partOfAccount*/ldg:ofDefinition/ldg:restoredBy ?named })
+                                )
+                        }
+                """
+        ] .
+
+ldg:CutWithinTheCreditShape a sh:NodeShape ;
+        sh:targetNode ldg:Cut ;
+        sh:sparql [
+                sh:message "A cut must be of a credit, at an ancestor of its account that accepts its kind, positive and at most the amount applied, and a credit has at most one cut at an account." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:cutOf ?posting ; ldg:cutAt ?ancestor ; ldg:cutValue ?cut .
+                                OPTIONAL { ?posting ldg:direction ?direction ; ldg:amountValue ?applied ; ldg:onAccount ?account }
+                                FILTER (!BOUND(?direction) || ?direction != ldg:Credit || ?cut <= 0 || ?cut > ?applied
+                                        || NOT EXISTS { ?account ldg:partOfAccount+ ?ancestor }
+                                        || (EXISTS { ?ancestor ldg:ofDefinition/ldg:restoredBy ?any }
+                                                && NOT EXISTS { ?posting ldg:creditKind ?kind . ?ancestor ldg:ofDefinition/ldg:restoredBy ?kind })
+                                        || EXISTS { ?other ldg:cutOf ?posting ; ldg:cutAt ?ancestor . FILTER (?other != ?value) })
+                        }
+                """
+        ] .
+
+ldg:CutFillsTheAncestorShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "An ancestor that accepts a credit must not be above its ceiling after it, and must be at its ceiling where a cut is recorded at it." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        SELECT $this ?value ?ancestor ?stated ?ceiling ?cutHere (SUM(?signed) AS ?moved) WHERE {
+                                                ?value a $this ; ldg:direction ldg:Credit ; ldg:onAccount ?account ;
+                                                        ldg:inPass/ldg:passPosition ?at ; ldg:recordedPosition ?recorded ; ldg:microPosition ?micro .
+                                                ?account ldg:partOfAccount+ ?ancestor .
+                                                ?ancestor ldg:ofDefinition ?definition .
+                                                ?definition ldg:statedAmount/qnt:numericValue ?stated .
+                                                FILTER (NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                        || EXISTS { ?value ldg:creditKind ?creditKind . ?definition ldg:restoredBy ?creditKind })
+                                                OPTIONAL { ?definition ldg:creditCeiling/qnt:numericValue ?statedCeiling }
+                                                OPTIONAL {
+                                                        ?earlier ldg:onAccount/ldg:partOfAccount* ?ancestor .
+                                                        OPTIONAL { ?earlier ldg:onAccount ?on ; ldg:inPass/ldg:passPosition ?earlierAt ;
+                                                                ldg:recordedPosition ?earlierRecorded ; ldg:microPosition ?earlierMicro ;
+                                                                ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?cut ldg:cutOf ?earlier ; ldg:cutAt ?ancestor ; ldg:cutValue ?cutValue }
                                                 }
                                                 BIND (COALESCE(?statedCeiling, ?stated) AS ?ceiling)
-                                                BIND (IF(BOUND(?posting) && ?postedAt <= ?at, IF(?direction = ldg:Credit, ?amount, -?amount), 0) AS ?signed)
-                                        } GROUP BY $this ?value ?remaining ?stated ?ceiling
+                                                BIND (EXISTS { ?here ldg:cutOf ?value ; ldg:cutAt ?ancestor } AS ?cutHere)
+                                                BIND (COALESCE(IF(
+                                                        IF(?on = ?account,
+                                                                ?earlierRecorded < ?recorded || (?earlierRecorded = ?recorded && ?earlierMicro <= ?micro),
+                                                                ?earlierAt < ?at || (?earlierAt = ?at && ?earlierMicro <= ?micro)),
+                                                        IF(?direction = ldg:Credit,
+                                                                IF(NOT EXISTS { ?definition ldg:restoredBy ?all }
+                                                                        || EXISTS { ?earlier ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }, ?amount, 0)
+                                                                        - COALESCE(?cutValue, 0),
+                                                                -?amount),
+                                                        0), 0) AS ?signed)
+                                        } GROUP BY $this ?value ?ancestor ?stated ?ceiling ?cutHere
                                 }
-                                FILTER (?remaining != IF(?stated + ?moved > ?ceiling, ?ceiling, ?stated + ?moved))
+                                FILTER (?stated + ?moved > ?ceiling || (?cutHere && ?stated + ?moved != ?ceiling))
                         }
                 """
         ] .
@@ -39,67 +177,31 @@ ldg:BalanceFoldShape a sh:NodeShape ;
 ldg:CheckpointFoldShape a sh:NodeShape ;
         sh:targetNode ldg:Checkpoint ;
         sh:sparql [
-                sh:message "A checkpoint's balance must be its stated amount less the debits plus the credits posted in its account's subtree by passes at or before its close, capped at the credit ceiling." ;
+                sh:message "A checkpoint's balance must be its stated amount, less the debits, plus the credits the account accepts at the amount applied, less the cuts at it, over the postings in its subtree by passes at or before its close." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
                         SELECT $this ?value WHERE {
                                 {
-                                        SELECT $this ?value ?balance ?stated ?ceiling (SUM(?signed) AS ?moved) WHERE {
-                                                ?value a $this ; ldg:onAccount ?account ; ldg:closePosition ?at ; ldg:balanceValue ?balance .
-                                                ?account ldg:ofDefinition/ldg:statedAmount/qnt:numericValue ?stated .
-                                                OPTIONAL { ?account ldg:ofDefinition/ldg:creditCeiling/qnt:numericValue ?statedCeiling }
+                                        SELECT $this ?value ?balance ?stated (SUM(?signed) AS ?moved) WHERE {
+                                                ?value a $this ; ldg:onAccount ?account ; ldg:closePosition ?close ; ldg:balanceValue ?balance .
+                                                ?account ldg:ofDefinition ?definition .
+                                                ?definition ldg:statedAmount/qnt:numericValue ?stated .
                                                 OPTIONAL {
                                                         ?posting ldg:onAccount/ldg:partOfAccount* ?account .
                                                         OPTIONAL { ?posting ldg:inPass/ldg:passPosition ?postedAt ; ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?cut ldg:cutOf ?posting ; ldg:cutAt ?account ; ldg:cutValue ?cutValue }
                                                 }
-                                                BIND (COALESCE(?statedCeiling, ?stated) AS ?ceiling)
-                                                BIND (IF(BOUND(?posting) && ?postedAt <= ?at, IF(?direction = ldg:Credit, ?amount, -?amount), 0) AS ?signed)
-                                        } GROUP BY $this ?value ?balance ?stated ?ceiling
+                                                BIND (COALESCE(IF(?postedAt <= ?close,
+                                                        IF(?direction = ldg:Credit,
+                                                                IF(NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                                        || EXISTS { ?posting ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }, ?amount, 0)
+                                                                        - COALESCE(?cutValue, 0),
+                                                                -?amount),
+                                                        0), 0) AS ?signed)
+                                        } GROUP BY $this ?value ?balance ?stated
                                 }
-                                FILTER (?balance != IF(?stated + ?moved > ?ceiling, ?ceiling, ?stated + ?moved))
-                        }
-                """
-        ] .
-
-ldg:AvailableIsLeastAlongPathShape a sh:NodeShape ;
-        sh:targetNode ldg:BalanceRecord ;
-        sh:sparql [
-                sh:message "A balance record's available value must be the least remaining value along its account's path in the same pass." ;
-                sh:select """
-                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-                        SELECT $this ?value WHERE {
-                                ?value a $this ; ldg:onAccount ?account ; ldg:inPass ?pass ;
-                                        ldg:availableValue ?available ; ldg:remainingValue ?remaining .
-                                FILTER (
-                                        ?available > ?remaining
-                                        || EXISTS {
-                                                ?account ldg:partOfAccount+/^ldg:onAccount ?above .
-                                                FILTER EXISTS { ?above ldg:inPass ?pass ; ldg:remainingValue ?aboveRemaining . FILTER (?available > ?aboveRemaining) }
-                                        }
-                                        || (?available != ?remaining && NOT EXISTS {
-                                                ?account ldg:partOfAccount+/^ldg:onAccount ?least .
-                                                FILTER EXISTS { ?least ldg:inPass ?pass ; ldg:remainingValue ?available }
-                                        })
-                                )
-                        }
-                """
-        ] .
-
-ldg:CreditCeilingShape a sh:NodeShape ;
-        sh:targetNode ldg:BalanceRecord ;
-        sh:sparql [
-                sh:message "A remaining value must not be above the account's credit ceiling, or its stated amount where no ceiling is stated." ;
-                sh:select """
-                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
-                        SELECT $this ?value WHERE {
-                                ?value a $this ; ldg:onAccount ?account ; ldg:remainingValue ?remaining .
-                                ?account ldg:ofDefinition ?definition .
-                                ?definition ldg:statedAmount ?statedQuantity .
-                                ?statedQuantity qnt:numericValue ?stated .
-                                OPTIONAL { ?definition ldg:creditCeiling ?ceilingQuantity . ?ceilingQuantity qnt:numericValue ?stated0 }
-                                FILTER (?remaining > COALESCE(?stated0, ?stated))
+                                FILTER (?balance != ?stated + ?moved)
                         }
                 """
         ] .

@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: MPL-2.0
 
-"""Ledger LG-1 and LG-2: the configuration document and the runtime document (ADR-A131). Row IDs are
-the plan's LG-1 and LG-2 "in detail" tables. Validates LG-0's examples, configuration and runtime
-records, against the structural shapes, the six SHACL-SPARQL constraints and the runtime laws,
-checks the import guard holds, the spec names no term of Party, Eligibility, Wording, Instrument
-or Behaviour, the cycle shape finishes on a generated tree, each runtime law refuses a record
-that breaks it, and the runtime shapes finish on a generated pass, both small here and at the plan's
-sizes in benchmark/ledger-posting-cost/test_shape_scale.py (STD-155). LG2-01 is the
-owl:rational probe on rdflib, Oxigraph and Jena (TSD-70)."""
+"""Ledger LG-1, LG-2 and LG-25: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
+and LG-2 "in detail" tables and LG-25's Validation Pack. Validates LG-0's examples, configuration and runtime records, against
+the structural shapes, the SHACL-SPARQL constraints and the runtime laws, checks the import guard holds, the spec names no term
+of Party, Eligibility, Wording, Instrument or Behaviour, the cycle shape finishes on a generated tree, each runtime law refuses a
+record that breaks it, and the runtime shapes finish on a generated pass, both small here and at the plan's sizes in
+benchmark/ledger-posting-cost/test_shape_scale.py (STD-155). LG2-01 is the owl:rational probe on rdflib, Oxigraph and Jena
+(TSD-70)."""
 
 from __future__ import annotations
 
@@ -60,14 +59,14 @@ def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> No
     constraints = _graph(LEDGER / "shapes" / "constraints.ttl")
     module.CYCLE_SHAPE = graph_cache(_only(constraints, LDG.NoCycleThroughPartOfShape))
     module.RUNTIME_SHAPES = graph_cache(LEDGER / "shapes" / "runtime.ttl")
-    # what the scale test leaves to pySHACL: the shapes of LG-1, and the three runtime shapes that do not run on Oxigraph
+    # what the scale test leaves to pySHACL: the shapes of LG-1, and the runtime shapes too slow on Oxigraph
     module.SCALE_SHAPES = graph_cache(LEDGER / "shapes" / "structural.ttl", LEDGER / "shapes" / "constraints.ttl",
-                                      _only(_runtime_shapes(), LDG.AvailableIsLeastAlongPathShape, LDG.BalanceFoldShape,
-                                            LDG.CheckpointFoldShape))
+                                      _only(_runtime_shapes(), *(URIRef(s) for s in sorted(SLOW_ON_OXIGRAPH))))
     module.validate = validated
 
 
-ACCEPTED = ["licence-seats", "revolving-facility", "research-grant", "authority-aggregate", "insurance-aggregate"]
+ACCEPTED = ["licence-seats", "revolving-facility", "research-grant", "authority-aggregate", "insurance-aggregate",
+            "credit-cut-at-parent"]
 REFUSALS = {
     "refusal-cycle": "NoCycleThroughPartOfShape",
     "refusal-unit": "ChildUnitMatchesParentShape",
@@ -88,25 +87,19 @@ def _violating_shapes(report: Graph) -> set[str]:
 
 # ---- the runtime shapes as plain SELECTs on Oxigraph (CAP-64) ------------------
 #
-# Each runtime shape targets its class (`sh:targetNode ldg:BalanceRecord`) and reads every instance in one query, so pySHACL
+# Each runtime shape targets its class (`sh:targetNode ldg:Posting`) and reads every instance in one query, so pySHACL
 # runs it once, with `$this` the class. The SHACL-SPARQL specification defines that run as the query with `$this` replaced by
 # the class, so it also runs as a plain SELECT on any engine once `$this` is out of the projection and the grouping, the only
 # places it is not a term. A row is a violation and its `?value` the record. Oxigraph and pySHACL on rdflib are different
 # engines (STD-176, STD-274), so every case below that runs through pySHACL also holds Oxigraph to what it finds (`_agree`), and
 # `test_oxigraph_finds_what_pyshacl_finds_at_scale` does so on a generated pass.
-
-# Two kinds of shape stay with pySHACL on rdflib (STD-274 keeps the default where a result differs, STD-176 where a cost does).
 #
-# DIVERGES_ON_OXIGRAPH. These two sum `?signed`, which is unbound for a subject on the account that is not a posting (a balance
-# record, a checkpoint) because `?posting ldg:onAccount/ldg:partOfAccount* ?account` matches any record. Under SPARQL 1.1 §18.5.1
-# `SUM` over an error is an error, so Oxigraph leaves `?moved` unbound, the final `FILTER` errors, and the shape finds nothing,
-# where rdflib skips the row (TSD-41, TSD-43, RDF-30 rule R9). On Oxigraph they are false negatives, so they are not run there
-# (`test_the_fold_shapes_find_nothing_on_oxigraph`).
+# Every sum adds a value for each row it reads, zero for a row that is not a counted posting, so no term of a sum is an error
+# under SPARQL 1.1 §18.5.1 and Oxigraph reads what rdflib reads (TD-158, `test_the_sums_find_on_oxigraph_what_pyshacl_finds`).
 #
-# SLOW_ON_OXIGRAPH. On the 10,000-record pass this query takes 38.7 s on Oxigraph 0.5.13 and 4.7 s through pySHACL on rdflib,
-# where the thirteen others take 0.5 s together. A cost measured on one engine is a hypothesis for the other.
-DIVERGES_ON_OXIGRAPH = frozenset({str(LDG.BalanceFoldShape), str(LDG.CheckpointFoldShape)})
-SLOW_ON_OXIGRAPH = frozenset({str(LDG.AvailableIsLeastAlongPathShape)})
+# SLOW_ON_OXIGRAPH holds a shape whose cost on Oxigraph is far above its cost through pySHACL on rdflib at the benchmark's size,
+# which stays with pySHACL in the scale test (STD-176). A cost measured on one engine is a hypothesis for the other.
+SLOW_ON_OXIGRAPH: frozenset[str] = frozenset()
 
 
 @cache
@@ -134,12 +127,12 @@ def _oxigraph_store(data: Graph) -> ox.Store:
     return store
 
 
-def _on_oxigraph(store: ox.Store, skip: frozenset[str] = DIVERGES_ON_OXIGRAPH) -> set[tuple[str, str]]:
+def _on_oxigraph(store: ox.Store, skip: frozenset[str] = frozenset()) -> set[tuple[str, str]]:
     """(shape, record) of every violation of the runtime shapes in a store, except the shapes in `skip`."""
     return {(shape, row["value"].value) for shape, query in _runtime_selects() if shape not in skip for row in store.query(query)}
 
 
-def _runtime_violations(report: Graph, skip: frozenset[str] = DIVERGES_ON_OXIGRAPH) -> set[tuple[str, str]]:
+def _runtime_violations(report: Graph, skip: frozenset[str] = frozenset()) -> set[tuple[str, str]]:
     """(shape, record) of every violation of the runtime shapes in a pySHACL report, except the shapes in `skip`."""
     runtime = {shape for shape, _ in _runtime_selects()} - skip
     found = {(str(report.value(r, SH.sourceShape)), str(report.value(r, SH.value)))
@@ -148,7 +141,7 @@ def _runtime_violations(report: Graph, skip: frozenset[str] = DIVERGES_ON_OXIGRA
 
 
 def _agree(g: Graph, report: Graph) -> None:
-    """The runtime shapes, but the two of DIVERGES_ON_OXIGRAPH, find on Oxigraph what pySHACL reported for `g` (STD-274)."""
+    """Every runtime shape finds on Oxigraph what pySHACL reported for `g` (STD-274)."""
     assert _on_oxigraph(_oxigraph_store(g)) == _runtime_violations(report)
 
 
@@ -264,6 +257,10 @@ def _integer(value: int) -> Literal:
     return Literal(value, datatype=XSD.integer)
 
 
+def _position(value: int) -> Literal:
+    return Literal(value, datatype=XSD.nonNegativeInteger)
+
+
 # ---- LG2-01: the owl:rational probe (LG-Q6, TSD-70) ---------------------------
 
 def _probe_engines() -> list[str]:
@@ -293,27 +290,69 @@ def test_rational_literals_round_trip_but_never_compare_by_value(engine: str) ->
 
 # ---- LG2-03 to LG2-09 and the further laws: each runtime shape refuses a record that breaks it
 
-def _fold_short(g: Graph) -> None:
+def _running_balance_off(g: Graph) -> None:
     ex = _ex("research-grant")
-    g.set((ex["grant-balance-2"], LDG.remainingValue, _decimal("60001")))
-
-
-def _available_above_ancestor(g: Graph) -> None:
-    ex = _ex("research-grant")
-    posting = ex["direct-posting"]
-    for p, o in [(RDF.type, LDG.Posting), (LDG.onAccount, ex["account-grant-budget"]), (LDG.inPass, ex["pass-1"]),
-                 (LDG.effectivePosition, _integer(1)), (LDG.recordedPosition, _integer(1)),
-                 (LDG.microPosition, _integer(0)), (LDG.direction, LDG.Debit), (LDG.amountValue, _decimal("100000"))]:
-        g.add((posting, p, o))
-    g.set((ex["grant-balance-1"], LDG.remainingValue, _decimal("10000")))
-    g.set((ex["grant-balance-1"], LDG.availableValue, _decimal("10000")))
+    g.set((ex["staff-spend-posting"], LDG.runningBalance, _decimal("30001")))
 
 
 def _credit_above_ceiling(g: Graph) -> None:
     ex = _ex("research-grant")
     g.set((ex["equipment-return-posting"], LDG.amountValue, _decimal("55000")))
-    g.set((ex["equipment-balance-3"], LDG.remainingValue, _decimal("85000")))
-    g.set((ex["equipment-balance-3"], LDG.availableValue, _decimal("85000")))
+    g.set((ex["equipment-return-posting"], LDG.runningBalance, _decimal("85000")))
+
+
+def _applied_above_offered(g: Graph) -> None:
+    ex = _ex("research-grant")
+    g.set((ex["equipment-return-posting"], LDG.offeredValue, _decimal("45000")))
+
+
+def _applied_short_of_the_room(g: Graph) -> None:
+    """40,000 applied of 55,000 offered, the running balance the sum gives, though the account had room for 50,000."""
+    ex = _ex("research-grant")
+    g.set((ex["equipment-return-posting"], LDG.amountValue, _decimal("40000")))
+    g.set((ex["equipment-return-posting"], LDG.runningBalance, _decimal("70000")))
+
+
+def _debit_with_a_kind(g: Graph) -> None:
+    ex = _ex("research-grant")
+    g.add((ex["staff-spend-posting"], LDG.creditKind, ex["unspent-funds"]))
+
+
+def _kind_not_accepted(g: Graph) -> None:
+    """The aggregate restored by recoveries alone, so the reinstatement posted to it is of a kind it does not accept."""
+    ex = _ex("insurance-aggregate")
+    g.add((ex.aggregate, LDG.restoredBy, ex.recovery))
+
+
+def _no_kind_where_kinds_are_named(g: Graph) -> None:
+    """The recovery at the sublimit with no kind, on a path where the annual cap names its kinds."""
+    ex = _ex("insurance-aggregate")
+    g.remove((ex["recovery-2-posting"], LDG.creditKind, None))
+
+
+def _cut_above_applied(g: Graph) -> None:
+    ex = _ex("credit-cut-at-parent")
+    g.set((ex["credit-3-cut-parent"], LDG.cutValue, _decimal("5")))
+
+
+def _cut_at_its_own_account(g: Graph) -> None:
+    ex = _ex("credit-cut-at-parent")
+    g.set((ex["credit-3-cut-parent"], LDG.cutAt, ex["account-child"]))
+
+
+def _cut_missing(g: Graph) -> None:
+    """The credit at the child with no cut at the parent, which then sums to 13 against a ceiling of 10."""
+    ex = _ex("credit-cut-at-parent")
+    g.remove((ex["credit-3-cut-parent"], None, None))
+
+
+def _cut_where_there_was_room(g: Graph) -> None:
+    """A cut of 1 at the grant, which had room for the whole return, so the grant is left below its ceiling."""
+    ex = _ex("research-grant")
+    cut = ex["equipment-return-cut-grant"]
+    for p, o in [(RDF.type, LDG.Cut), (LDG.cutOf, ex["equipment-return-posting"]), (LDG.cutAt, ex["account-grant-budget"]),
+                 (LDG.cutValue, _decimal("1"))]:
+        g.add((cut, p, o))
 
 
 def _proportional_one_short(g: Graph) -> None:
@@ -329,18 +368,18 @@ def _owner_kind_not_admitted(g: Graph) -> None:
 
 def _posting_key_shared(g: Graph) -> None:
     ex = _ex("research-grant")
-    g.set((ex["equipment-return-posting"], LDG.recordedPosition, _integer(1)))
+    g.set((ex["equipment-return-posting"], LDG.recordedPosition, _position(1)))
 
 
 def _forward_dated(g: Graph) -> None:
     ex = _ex("research-grant")
-    g.set((ex["equipment-return-posting"], LDG.effectivePosition, _integer(4)))
+    g.set((ex["equipment-return-posting"], LDG.effectivePosition, _position(4)))
 
 
 def _recorded_against_passes(g: Graph) -> None:
     ex = _ex("research-grant")
-    g.set((ex["equipment-spend-posting"], LDG.recordedPosition, _integer(2)))
-    g.set((ex["equipment-return-posting"], LDG.recordedPosition, _integer(1)))
+    g.set((ex["equipment-spend-posting"], LDG.recordedPosition, _position(2)))
+    g.set((ex["equipment-return-posting"], LDG.recordedPosition, _position(1)))
 
 
 def _merge_not_cited(g: Graph) -> None:
@@ -380,21 +419,30 @@ def _grant_above_request(g: Graph) -> None:
     g.set((ex["staff-spend-grant"], LDG.requestedValue, _decimal("80000")))
 
 
-def _checkpoint(balance: str) -> Callable[[Graph], None]:
+def _checkpoint(balance: str, name: str = "research-grant", account: str = "account-grant-budget",
+                close: int = 3) -> Callable[[Graph], None]:
     def mutate(g: Graph) -> None:
-        ex = _ex("research-grant")
-        checkpoint = ex["grant-checkpoint-3"]
-        for p, o in [(RDF.type, LDG.Checkpoint), (LDG.onAccount, ex["account-grant-budget"]),
-                     (LDG.closePosition, _integer(3)), (LDG.balanceValue, _decimal(balance))]:
+        ex = _ex(name)
+        checkpoint = ex[f"checkpoint-{close}"]
+        for p, o in [(RDF.type, LDG.Checkpoint), (LDG.onAccount, ex[account]),
+                     (LDG.closePosition, _integer(close)), (LDG.balanceValue, _decimal(balance))]:
             g.add((checkpoint, p, o))
     return mutate
 
 
 MUTATIONS = {
-    "LG2-03 a balance record one minor unit off": ("research-grant", _fold_short, "BalanceFoldShape"),
-    "LG2-04 an available value above an ancestor's remaining": (
-        "research-grant", _available_above_ancestor, "AvailableIsLeastAlongPathShape"),
+    "a running balance one minor unit off": ("research-grant", _running_balance_off, "RunningBalanceShape"),
     "LG2-05 a credit above the ceiling": ("research-grant", _credit_above_ceiling, "CreditCeilingShape"),
+    "a credit applied above what it offered": ("research-grant", _applied_above_offered, "CreditAmountsShape"),
+    "a credit applied short of the room": ("research-grant", _applied_short_of_the_room, "CreditAmountsShape"),
+    "a debit with a kind": ("research-grant", _debit_with_a_kind, "CreditAmountsShape"),
+    "a credit of a kind its account does not accept": ("insurance-aggregate", _kind_not_accepted, "CreditKindAcceptedShape"),
+    "a credit with no kind where kinds are named": (
+        "insurance-aggregate", _no_kind_where_kinds_are_named, "CreditKindAcceptedShape"),
+    "a cut above the amount applied": ("credit-cut-at-parent", _cut_above_applied, "CutWithinTheCreditShape"),
+    "a cut at its credit's own account": ("credit-cut-at-parent", _cut_at_its_own_account, "CutWithinTheCreditShape"),
+    "a credit with no cut where its ancestor had less room": ("credit-cut-at-parent", _cut_missing, "CutFillsTheAncestorShape"),
+    "a cut where the ancestor had room": ("research-grant", _cut_where_there_was_room, "CutFillsTheAncestorShape"),
     "LG2-06 a proportional merge one unit short": (
         "authority-aggregate", _proportional_one_short, "MergeWithinAvailabilityShape"),
     "LG2-08 an owner of a kind not admitted": ("research-grant", _owner_kind_not_admitted, "OwnerKindAdmittedShape"),
@@ -409,6 +457,8 @@ MUTATIONS = {
     "a refused merge holding a grant": ("refusal-overdraw", _refused_with_grant, "RefusedMergeShape"),
     "a grant above its request": ("research-grant", _grant_above_request, "GrantWithinRequestShape"),
     "a checkpoint one minor unit off": ("research-grant", _checkpoint("110001"), "CheckpointFoldShape"),
+    "a checkpoint that leaves out the cut": (
+        "credit-cut-at-parent", _checkpoint("13", "credit-cut-at-parent", "account-parent"), "CheckpointFoldShape"),
 }
 
 
@@ -423,12 +473,28 @@ def test_runtime_law_refuses_a_record_that_breaks_it(case: str) -> None:
     _agree(g, report)
 
 
-def test_a_checkpoint_at_the_fold_conforms() -> None:
-    g = MODEL + _example("research-grant")
-    _checkpoint("110000")(g)
+@pytest.mark.parametrize("name,mutate", [
+    ("research-grant", _checkpoint("110000")),
+    ("credit-cut-at-parent", _checkpoint("10", "credit-cut-at-parent", "account-parent")),
+], ids=["the grant after the return", "the parent less its cut"])
+def test_a_checkpoint_at_the_sum_conforms(name: str, mutate: Callable[[Graph], None]) -> None:
+    g = MODEL + _example(name)
+    mutate(g)
     conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
     assert conforms, _violating_shapes(report)
     _agree(g, report)
+
+
+def test_the_cut_example_records_the_addendum_case() -> None:
+    """The conformance case of a cut at an ancestor (ADR-A131, its first addendum of 2026-11-16): the last credit is applied at 4
+    at the child, leaving it at 9, and cut by 3 at the parent."""
+    g = _example("credit-cut-at-parent")
+    ex = _ex("credit-cut-at-parent")
+    credit = ex["credit-3-posting"]
+    assert (g.value(credit, LDG.offeredValue), g.value(credit, LDG.amountValue), g.value(credit, LDG.runningBalance)) == (
+        _decimal("4"), _decimal("4"), _decimal("9"))
+    assert [(g.value(c, LDG.cutAt), g.value(c, LDG.cutValue)) for c in g.subjects(LDG.cutOf, credit)] == [
+        (ex["account-parent"], _decimal("3"))]
 
 
 # ---- LG2-07: the refusal under ldg:Refuse conforms, with no posting and a reason
@@ -444,51 +510,53 @@ def test_refused_merge_conforms_with_no_posting_and_a_reason() -> None:
     assert g.value(ex["merge-1"], LDG.grant) is None
 
 
-# ---- LG2-10: a generated pass, 200 leaves here and 5,000 postings with 10,000 balance records in the benchmark
+# ---- LG2-10: a generated pass, 200 leaves here and 5,000 postings with 5,000 checkpoints in the benchmark
 
 def test_runtime_shapes_scale() -> None:
-    """Thirteen of the sixteen runtime shapes run on Oxigraph, and pySHACL runs the rest and the shapes of LG-1 (`SCALE_SHAPES`),
-    as the engines differ in result (`DIVERGES_ON_OXIGRAPH`) and in cost (`SLOW_ON_OXIGRAPH`), on a pass of 200 leaves. A broken
-    record is then found on Oxigraph, so the empty result is not an empty query. The 5,000-leaf pass with its times recorded is
-    `benchmark/ledger-posting-cost/test_shape_scale.py` (STD-155)."""
+    """The runtime shapes run on Oxigraph, but any of SLOW_ON_OXIGRAPH, and pySHACL runs those and the shapes of LG-1
+    (`SCALE_SHAPES`) on a pass of 200 leaves. A broken record is then found on Oxigraph, so the empty result is not an empty query.
+    The 5,000-leaf pass with its times recorded is `benchmark/ledger-posting-cost/test_shape_scale.py` (STD-155)."""
     g = MODEL + one_pass(200)
     store = _oxigraph_store(g)
-    found = _on_oxigraph(store, skip=SLOW_ON_OXIGRAPH | DIVERGES_ON_OXIGRAPH)
+    found = _on_oxigraph(store, skip=SLOW_ON_OXIGRAPH)
     conforms, report, _ = validate(g, shacl_graph=SCALE_SHAPES, inference="none", advanced=True)
     assert conforms, _violating_shapes(report)
     assert found == set()
     leaf = ox.NamedNode("https://example.org/lattice/ledger/runtime-scale/posting0")
-    amount = ox.NamedNode(str(LDG.effectivePosition))
-    for quad in list(store.quads_for_pattern(leaf, amount, None, None)):
+    effective = ox.NamedNode(str(LDG.effectivePosition))
+    for quad in list(store.quads_for_pattern(leaf, effective, None, None)):
         store.remove(quad)
-    store.add(ox.Quad(leaf, amount, ox.Literal("2", datatype=ox.NamedNode(str(XSD.integer))), ox.DefaultGraph()))
-    assert _on_oxigraph(store, skip=SLOW_ON_OXIGRAPH | DIVERGES_ON_OXIGRAPH) == {(str(LDG.NotForwardDatedShape), leaf.value)}
+    store.add(ox.Quad(leaf, effective, ox.Literal("2", datatype=ox.NamedNode(str(XSD.nonNegativeInteger))), ox.DefaultGraph()))
+    assert _on_oxigraph(store, skip=SLOW_ON_OXIGRAPH) == {(str(LDG.NotForwardDatedShape), leaf.value)}
 
 
 def test_oxigraph_finds_what_pyshacl_finds_at_scale() -> None:
-    """200 leaves, clean and then with a balance one unit off and an available value above its own remaining one. The runtime shapes but
-    the two of DIVERGES_ON_OXIGRAPH, the slow one among them, find the same records on Oxigraph and through pySHACL (STD-274)."""
+    """200 leaves, clean and then with a running balance one unit off and a section's checkpoint one unit off. Every runtime shape
+    finds the same records on Oxigraph and through pySHACL (STD-274)."""
     g = MODEL + one_pass(200)
     ex = Namespace("https://example.org/lattice/ledger/runtime-scale/")
     _, report, _ = validate(g, shacl_graph=RUNTIME_SHAPES, inference="none", advanced=True)
     assert _runtime_violations(report) == _on_oxigraph(_oxigraph_store(g)) == set()
-    g.set((ex["balance-leaf3"], LDG.remainingValue, _decimal("8")))
-    g.set((ex["balance-section7"], LDG.availableValue, _decimal("11")))
+    g.set((ex["posting3"], LDG.runningBalance, _decimal("8")))
+    g.set((ex["checkpoint-section7"], LDG.balanceValue, _decimal("10")))
     _, report, _ = validate(g, shacl_graph=RUNTIME_SHAPES, inference="none", advanced=True)
     found = _runtime_violations(report)
     assert found == _on_oxigraph(_oxigraph_store(g))
-    assert {shape for shape, _ in found} == {str(LDG.AvailableIsLeastAlongPathShape)}
+    assert found == {(str(LDG.RunningBalanceShape), str(ex["posting3"])),
+                     (str(LDG.CheckpointFoldShape), str(ex["checkpoint-section7"]))}
 
 
-def test_the_fold_shapes_find_nothing_on_oxigraph() -> None:
-    """LG2-03's record and a checkpoint, each one minor unit off: pySHACL reports BalanceFoldShape and CheckpointFoldShape, and
-    Oxigraph reports neither (TSD-41, RDF-30 rule R9). When the two shapes stop summing an expression that can error, this fails,
-    and DIVERGES_ON_OXIGRAPH is emptied."""
-    g = MODEL + _example("research-grant")
-    _fold_short(g)
+def test_the_sums_find_on_oxigraph_what_pyshacl_finds() -> None:
+    """A running balance and a checkpoint each one minor unit off, and a credit with no cut where its ancestor had less room: pySHACL
+    and Oxigraph each report the three sums that break, since no term of a sum is an error (TD-158)."""
+    g = MODEL + _example("research-grant") + _example("credit-cut-at-parent")
+    _running_balance_off(g)
     _checkpoint("110001")(g)
+    _cut_missing(g)
     _, report, _ = validate(g, shacl_graph=RUNTIME_SHAPES, inference="none", advanced=True)
-    assert _runtime_violations(report, skip=frozenset()) >= {
-        (str(LDG.BalanceFoldShape), str(_ex("research-grant")["grant-balance-2"])),
-        (str(LDG.CheckpointFoldShape), str(_ex("research-grant")["grant-checkpoint-3"]))}
-    assert {shape for shape, _ in _on_oxigraph(_oxigraph_store(g), skip=frozenset())}.isdisjoint(DIVERGES_ON_OXIGRAPH)
+    found = _runtime_violations(report)
+    assert found == _on_oxigraph(_oxigraph_store(g))
+    research, cut = _ex("research-grant"), _ex("credit-cut-at-parent")
+    assert found >= {(str(LDG.RunningBalanceShape), str(research["staff-spend-posting"])),
+                     (str(LDG.CheckpointFoldShape), str(research["checkpoint-3"])),
+                     (str(LDG.CutFillsTheAncestorShape), str(cut["credit-3-posting"]))}

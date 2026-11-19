@@ -37,6 +37,9 @@
 ex:borrower a fnd:PersistentIdentity ; rdfs:comment "The borrower, owner of the facility account." .
 ex:Borrower a owl:Class ; rdfs:comment "The kind of owner this account admits." .
 
+ex:repayment a skos:Concept ; skos:inScheme ldg:CreditKinds ; skos:prefLabel "repayment" ;
+    rdfs:comment "An amount the borrower repays, which a revolving facility may draw again." .
+
 ex:currencies a qnt:UnitFamily .
 ex:GBP a qnt:Unit ; rdfs:label "pound sterling" .
 ex:EUR a qnt:Unit ; rdfs:label "euro" .
@@ -117,33 +120,26 @@ ex:draw-1-grant a ldg:Grant ;
     ldg:requestedValue "10005000"^^xsd:decimal ; ldg:grantedValue "10005000"^^xsd:decimal .
 ex:draw-1-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:grant ex:draw-1-grant .
 ex:draw-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
+    ldg:runningBalance "9995000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-grant , ex:draw-1-conversion .
-ex:balance-1 a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-1 ;
-    ldg:remainingValue "9995000"^^xsd:decimal ; ldg:availableValue "9995000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:draw-1-posting .
 
 # ==== Position 2: a repayment, made in euros and credited in sterling =========
 
 ex:repayment-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:integer ;
-    ldg:recordedPosition "2"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
-    ldg:direction ldg:Credit ; ldg:amountValue "4400000"^^xsd:decimal ;
+    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:creditKind ex:repayment ;
+    ldg:offeredValue "4400000"^^xsd:decimal ; ldg:amountValue "4400000"^^xsd:decimal ;
+    ldg:runningBalance "14395000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:repayment-conversion .
-ex:balance-2 a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-2 ;
-    ldg:remainingValue "14395000"^^xsd:decimal ; ldg:availableValue "14395000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:repayment-posting .
 
 # ==== Position 3: revaluation of the euros still outstanding ==================
 
@@ -154,19 +150,15 @@ ex:revaluation-grant a ldg:Grant ;
     ldg:requestedValue "245000"^^xsd:decimal ; ldg:grantedValue "245000"^^xsd:decimal .
 ex:revaluation-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:integer ;
+    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
     ldg:grant ex:revaluation-grant .
 ex:revaluation-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:integer ;
-    ldg:recordedPosition "3"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "245000"^^xsd:decimal ;
+    ldg:runningBalance "14150000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:revaluation-merge , ex:revaluation-grant , ex:revaluation-conversion .
-ex:balance-3 a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-3 ;
-    ldg:remainingValue "14150000"^^xsd:decimal ; ldg:availableValue "14150000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:revaluation-posting .
 
 # ==== The account instances and the passes ===================================
 

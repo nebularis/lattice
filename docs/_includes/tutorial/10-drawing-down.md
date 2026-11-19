@@ -5,7 +5,7 @@
 
 A facility has a limit, and the borrower draws against it. The limit is a number in the agreement. What remains available changes with every drawdown and repayment. LATTICE keeps the two apart. The instrument states the **static** limit, and the running balance is **dynamic** state, kept by the Ledger layer as a record of facts rather than a number someone updates.
 
-<div class="callout"><strong>Partly built.</strong> Ledger's account definition is released. The records of each draw, the postings and balance records shown below, are designed and appear in Ledger's own example, but are not yet released. The applied Capacity module, which joins limits into networks, has its runtime profile published and its source ontology still being designed. This chapter says which is which.</div>
+<div class="callout"><strong>Partly built.</strong> Ledger's account definition is released. The records of each draw, the postings and the running balance each one carries, shown below, are designed and appear in Ledger's own example, but are not yet released. The applied Capacity module, which joins limits into networks, has its runtime profile published and its source ontology still being designed. This chapter says which is which.</div>
 
 ### An account, not a balance column
 
@@ -47,18 +47,14 @@ Postings are ordered by whole numbers, **positions**, not by a clock, since cloc
 ```turtle
 ex:draw-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
+    ldg:runningBalance "9995000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-grant , ex:draw-1-conversion .
-ex:balance-1 a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-1 ;
-    ldg:remainingValue "9995000"^^xsd:decimal ; ldg:availableValue "9995000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:draw-1-posting .
 ```
 
-The posting keeps the sterling amount it counts. The euros asked for and the rate used are in the conversion record, which the posting cites beside its merge record and grant. The balance record says what remains after it, and `prov:wasDerivedFrom` records which facts it was worked out from. The example's three positions:
+The posting keeps the sterling amount it counts. The euros asked for and the rate used are in the conversion record, which the posting cites beside its merge record and grant. Its running balance is what remains on the account after it, and the ledger checks it against the sum of the postings, so it can never disagree with them. The repayment at position 2 is a credit, and it records its kind, a repayment, and the amount offered beside the amount applied, since a credit never restores an account above its ceiling. The example's three positions:
 
 | Position | Event | Euros | Rate | Sterling posted | Balance after |
 |---|---|---|---|---|---|

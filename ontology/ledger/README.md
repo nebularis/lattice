@@ -17,11 +17,11 @@ Separate facts require two forms of ordering. A strict before and after ensures 
 
 Each fact carries a whole number placing it among the other facts on its account, called its **position**, and a second number for ordering facts that share a position, called its **micro-position**. The fact itself, containing one draw or credit with its account, owner, amount, direction and position, is referred to as a **posting**.
 
-This one central law then, governs balances: each is a stated amount less what has been drawn, plus what has been restored, ensuring a balance is cheap to compute, but provable across properties checkable as a closed, mechanical law. 
+This one central law then, governs balances: each is a stated amount less what has been drawn, plus what has been restored, less what an account above the one restored had no room for, ensuring a balance is cheap to compute, but provable across properties checkable as a closed, mechanical law. 
 
 Since the effect of a posting is exactly the account plus every ancestor reached by following the ldg:partOf property upward, one fixed edge at a time, the set of accounts a draw touches is always fully enumerable (by walking one chain and checking each link), with no ambiguity about which balances a draw changes.
 
-Avoiding storing a balance also ensures that a balance agrees with its posting history by construction, with no path by which someone might set a balance to a value the postings don't justify.
+A posting records the balance of its account after it, its running balance, so a reader of the current balance reads one value. That value is checked against the sum of the postings, so no path lets someone set a balance to a value the postings don't justify.
 
 When disparate evaluations draw on the same account at the same position (being logically simultaneous, not "whoever runs first"), the model follows a fixed path, 'propose -> merge -> settle'. 
 
@@ -86,6 +86,8 @@ An `ldg:AccountDefinition` states an amount consumed and restored, in a unit of 
 
 A key dimension derives one account per key value, on the first draw that names it (a seat quota per site, a sublimit per borrower). A merge rule arbitrates several proposals at one position: in priority order, proportionally (with a rounding method and a residual allocation, since an exact share need not round to a whole unit of account), or by refusing the whole merge. A credit ceiling, defaulting to the stated amount, is how far a credit may restore a balance, which lets a reinstatement raise a layer's capacity above its first stated amount without inventing a second account for it. A purpose lets one draw debit a second account outside its path (a flood sub-aggregate, say). A draw arrives in its account's unit, and the ledger never converts one.
 
+A credit carries a kind, a concept of `ldg:CreditKinds`, which an applied module fills, such as a recovery, a reinstatement or a repayment. An account definition names the kinds that restore it with `ldg:restoredBy`, and accepts every kind where it names none. A credit is posted to an account that accepts its kind, and is applied there up to the account's room below its ceiling. Each ancestor that accepts the kind takes the least of the amount applied and its own room, and where it takes less, the difference is a `ldg:Cut` at that ancestor. So an account's balance is its stated amount, less the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it. Each posting records that balance for the account it is on, as `ldg:runningBalance`, and a credit records the amount offered beside the amount applied.
+
 The class diagram below is generated from section 6.
 
 <!-- start: {"generated": "class-diagram"} -->
@@ -111,12 +113,6 @@ classDiagram
         statedAmount, exactly one
         unitOfAccount, exactly one
     }
-    class BalanceRecord {
-        availableValue, exactly one
-        inPass, exactly one
-        onAccount, exactly one
-        remainingValue, exactly one
-    }
     class Checkpoint {
         balanceValue, exactly one
         closePosition, exactly one
@@ -124,6 +120,11 @@ classDiagram
     }
     class Class
     class Concept
+    class Cut {
+        cutAt, exactly one
+        cutOf, exactly one
+        cutValue, exactly one
+    }
     class DerivedArtefact
     class Grant {
         forProposal, exactly one
@@ -157,13 +158,16 @@ classDiagram
     class PersistentIdentity
     class Posting {
         amountValue, exactly one
+        creditKind, at most one
         direction, exactly one
         effectivePosition, exactly one
         forPurpose, at most one
         inPass, exactly one
         microPosition, exactly one
+        offeredValue, at most one
         onAccount, exactly one
         recordedPosition, exactly one
+        runningBalance, exactly one
     }
     class Quantity
     class Recurrence
@@ -177,6 +181,7 @@ classDiagram
     AccountDefinition --> AccountDefinition : partOf
     AccountDefinition --> Class : admitsOwnerKind
     AccountDefinition --> Concept : countsPurpose
+    AccountDefinition --> Concept : restoredBy
     AccountDefinition --> MergePolicy : mergePolicy
     AccountDefinition --> Quantity : creditCeiling
     AccountDefinition --> Quantity : statedAmount
@@ -184,7 +189,8 @@ classDiagram
     AccountDefinition --> Recurrence : periodRecurrence
     AccountDefinition --> Recurrence : resetRecurrence
     AccountDefinition --> ValueSpace : unitOfAccount
-    DerivedArtefact <|-- BalanceRecord
+    Cut --> Account : cutAt
+    Cut --> Posting : cutOf
     DerivedArtefact <|-- Checkpoint
     DerivedArtefact <|-- MergeRecord
     DerivedArtefact <|-- Posting
@@ -197,6 +203,7 @@ classDiagram
     MergePolicy --> Concept : unitOrderCriterion
     MergeRecord --> Concept : refusalReason
     MergeRecord --> Grant : grant
+    Posting --> Concept : creditKind
     Posting --> Concept : direction
     Posting --> Concept : forPurpose
     Versioned <|-- MergePolicy
@@ -211,24 +218,27 @@ classDiagram
 
 ### 5.1 Design decisions
 
-- **Configuration and records, in two documents.** Ledger states its configuration: the tree, owner kinds, merge rules and their parameters, the period and closing recurrences, keys, purposes and credit ceiling ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). Its runtime document states the records: account instances, passes, postings, balance records, merge records with their grants, and checkpoints. Computing them is the evaluator's, and Ledger checks what was recorded against its laws (section 7.3).
+- **Configuration and records, in two documents.** Ledger states its configuration: the tree, owner kinds, merge rules and their parameters, the period and closing recurrences, keys, purposes, the kinds of credit that restore an account and credit ceiling ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). Its runtime document states the records: account instances, passes, postings with their running balances, cuts, merge records with their grants, and checkpoints. Computing them is the evaluator's, and Ledger checks what was recorded against its laws (section 7.3).
 - **An account instance is named.** An account is a node with a minted IRI, identified by its definition, its owner, its key and its period, which stay its natural key ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-10-27). A posting names that node rather than repeating the four values. An instance states the instance it is part of, so a fold over a subtree follows one edge.
 - **A period is an account, not a reset.** Where a definition states `ldg:periodRecurrence`, one account is derived per period, its period key the recurrence bin the effective position falls in, computed at write and never supplied by a draw. One recurrence holds along a path, and a keyed child's instance is part of its parent's under the same bin. Nothing resets, so `ldg:resetRecurrence` is deprecated.
-- **Two orderings.** A posting carries an effective position, where the fact sits in the arrangement and comparable across accounts, and a recorded position with a micro-position, where it sits in its own account's append-only sequence. The pass that wrote it carries the position at which it was recorded, on the effective axis, and a posting is never effective later than its pass. Balance records, closes and checkpoints are keyed on the recorded axis, so a reading as of an effective position folds the postings.
+- **Two orderings.** A posting carries an effective position, where the fact sits in the arrangement and comparable across accounts, and a recorded position with a micro-position, where it sits in its own account's append-only sequence. The pass that wrote it carries the position at which it was recorded, on the effective axis, and a posting is never effective later than its pass. Running balances, closes and checkpoints follow the recorded axis, so a reading as of an effective position folds the postings. A position is a natural number on its axis, so the effective and the recorded position are typed `xsd:nonNegativeInteger`, as the shared formal statement of positions that this layer's proofs and the multi-store model use defines one.
 - **A draw arrives in its account's unit.** The ledger never converts. A request in another value space is converted before it reaches the ledger, where the conversion is recorded with its rate, the rate's source and its date, and the draw is then made in the account's unit. A posting may cite that record by `prov:wasDerivedFrom`, as it cites a merge record, so the conversion stays traceable and the ledger states no term for it ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-09).
 - **Post at the drawn account only.** A draw writes one posting, on the account drawn, and an ancestor's balance is derived by a fold over its subtree. A purpose-counting account is outside the drawn account's subtree, so it keeps a posting of its own from the same draw. Where a purpose-counting account and the drawn account share an ancestor, that ancestor's fold would count the draw twice, and the rule that prevents it is open (section 13).
 - **An exact share is two integers.** A proportional grant keeps its exact share as a numerator and a denominator, not as one `owl:rational`, because no store LATTICE runs compares that literal by value (TSD-70), and the merge shapes compare and sum grants.
-- **The running balance waits.** A balance record states what remains and what is available after a pass, for each account the pass moved. A running balance on each posting is not stated, since with postings at the drawn account only, a posting's running balance is ambiguous for an ancestor.
+- **The running balance sits on the posting.** A posting records the balance of the account it is on after it, that account's subtree included, so the hot path reads one value. No record holds a balance for each account and pass, and a state the decision path does not read is answered from the history when it is asked for ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-11-16). The order is the recorded one. On its own account a posting follows those recorded before it, and on an account below it those of an earlier pass, or of its own pass at a lower or equal micro-position.
+- **A credit has a kind, and an account names the kinds that restore it.** The kind is a concept of `ldg:CreditKinds`, which Ledger declares with no member and an applied module fills, since what restores an amount belongs to a domain. An account accepts every kind unless it names some with `ldg:restoredBy`, and an ancestor counts a credit only where it accepts its kind. A credit posted to an account that does not accept its kind is refused, and so is a credit with no kind on a path where an account names its kinds ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first and fourth addenda of 2026-11-16).
+- **A balance is a sum less its cuts.** A credit is applied at the account it is posted to, up to that account's room below its ceiling, and records the amount offered beside the amount applied. `ldg:amountValue` is the amount applied for a credit, as it is the amount drawn for a debit, so a balance is read from one property. Each ancestor that accepts the kind takes the least of the amount applied and its own room, and where it takes less, the writer records the difference as a cut at that ancestor. An account's balance is then its stated amount, less the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it, which equals the balance stepped posting by posting, so no read needs an ordered scan to honour a ceiling ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-11-16).
+- **A cut is a node of its own, and states no position.** One credit can be cut at several ancestors, so a cut is a `ldg:Cut` that names its posting, the ancestor and its value. A read by position joins the cut to its posting, so a position is recorded once and cannot drift from a copy.
 - **A merge policy is a node of its own, and it is versioned.** What a scope declares for competing requests is stated once, on a `ldg:MergePolicy`, and each account definition it governs names a version of it. A contract, a document it cites and a deployment can each state one, and which governs a definition is resolved when the definition is written, so the ledger reads exactly one ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-17).
 - **A rounding difference is settled as the wording says, each direction stated apart.** Shares rounded to the nearest can sum to more than the amount or to less. A policy says whether the rounding is only for show or the difference is settled, and where it is settled, the residual allocation says where a unit short goes and the excess recovery says where a unit over is taken from. Neither is inferred from the other, and silence is refused ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its second addendum of 2026-11-17).
 - **`ldg:AccountDefinition` is a plain class.** It is part of the terms that state it and changes only with them, as Behaviour's allowance definition is, so it needs no superclass from Foundation.
   `ldg:AccountDefinition` is a plain `owl:Class` until then. See Open Issues.
-- **All four concept schemes are declared now**, including `ldg:PostingDirections`, which only the runtime terms use. A concept scheme is a freestanding declaration, independent of which class first points at it.
+- **Every concept scheme is declared now**, including `ldg:PostingDirections`, which only the runtime terms use. A concept scheme is a freestanding declaration, independent of which class first points at it.
 - **Eight constraints** (no cycle, matching units, extensive additivity, a proportional rule's rounding and residual, a stated rounding difference, a stated source for a unit over, a credit ceiling at or above the stated amount, a key dimension's type) are SHACL-SPARQL, in section 7. Cardinalities are generated structural shapes from section 6's Restrictions table. The runtime laws are SHACL-SPARQL too, in section 7.3, each citing the theorem of section 10 it checks on one dataset.
 
 ### 5.2 Worked reading
 
-A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, and a further limit of 2,000,000 for one class of beneficiary, in addition to the aggregate. The sublimit and the section each state `ldg:partOf` their parent, and the further limit states no `ldg:partOf` at all, so it is never debited by a draw on the sublimit. All four state the same unit of account, GBP, extensive, with `qnt:Sum` and `qnt:Difference` capabilities. The aggregate also sits `ldg:partOf` an annual cap of twice its amount, and states a `ldg:creditCeiling` equal to its own stated amount (the default), so a reinstatement credit can restore it in full without ever exceeding that ceiling. The credit rolls up to the pool, so the example also debits the reinstatement at the pool, which keeps the pool the measure of capacity left. [`ontology/ledger/examples/insurance-aggregate.ttl`](examples/insurance-aggregate.ttl) carries this reading in full, with a hand-computed table of its postings and balances.
+A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, and a further limit of 2,000,000 for one class of beneficiary, in addition to the aggregate. The sublimit and the section each state `ldg:partOf` their parent, and the further limit states no `ldg:partOf` at all, so it is never debited by a draw on the sublimit. All four state the same unit of account, GBP, extensive, with `qnt:Sum` and `qnt:Difference` capabilities. The aggregate also sits `ldg:partOf` an annual cap of twice its amount, and states a `ldg:creditCeiling` equal to its own stated amount (the default), so a reinstatement credit can restore it in full without ever exceeding that ceiling. The annual cap is restored by recoveries alone, so a reinstatement restores the aggregate and leaves the cap the measure of capacity left across the original cover and the reinstatement. [`ontology/ledger/examples/insurance-aggregate.ttl`](examples/insurance-aggregate.ttl) carries this reading in full, with a hand-computed table of its postings and balances.
 
 ## 6. Description Logic Encoding
 
@@ -238,7 +248,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** An amount consumed and restored, as the terms state it.
 
-**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against or a credit ceiling only where the terms need them.
+**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against, the kinds of credit that restore it or a credit ceiling only where the terms need them.
 
 **Restrictions.**
 
@@ -284,7 +294,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** One account instance: an account definition held by one owner, for one key value and one period where the definition states them.
 
-**Utility.** Mint one the first time a draw names its definition, owner, key and period, and name it from every posting, balance record, merge record and checkpoint on it. The four values stay its natural key, so an adopter holding them still resolves it. State the instance it is part of where its definition is part of another.
+**Utility.** Mint one the first time a draw names its definition, owner, key and period, and name it from every posting, cut, merge record and checkpoint on it. The four values stay its natural key, so an adopter holding them still resolves it. State the instance it is part of where its definition is part of another.
 
 **Restrictions.**
 
@@ -300,7 +310,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** One evaluation's write of records, recorded at one position.
 
-**Utility.** What an evaluation records about itself beyond its postings. Every posting, balance record, merge record and checkpoint names the pass that wrote it. A pass's position is on the effective axis, so the records it writes are effective no later than it, and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged.
+**Utility.** What an evaluation records about itself beyond its postings. Every posting, merge record and checkpoint names the pass that wrote it. A pass's position is on the effective axis, so the records it writes are effective no later than it, and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged.
 
 **Restrictions.**
 
@@ -314,7 +324,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Subclass of.** `fnd:DerivedArtefact`
 
-**Utility.** Write one per draw, on the account drawn, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. Its read set is `prov:wasDerivedFrom`, which names the merge record and grant a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion.
+**Utility.** Write one per draw or credit, on the account named, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. State the running balance of the account posted to, after the posting. A credit states its kind, where it has one, and the amount offered beside the amount applied, and a cut for each ancestor that had less room. Its read set is `prov:wasDerivedFrom`, which names the merge record and grant a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion.
 
 **Restrictions.**
 
@@ -327,24 +337,24 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 | `ldg:microPosition` | exactly 1 |  |  |
 | `ldg:direction` | exactly 1 |  |  |
 | `ldg:amountValue` | exactly 1 |  |  |
+| `ldg:runningBalance` | exactly 1 |  |  |
+| `ldg:creditKind` | max 1 |  |  |
+| `ldg:offeredValue` | max 1 |  |  |
 | `ldg:forPurpose` | max 1 |  |  |
 
-#### `ldg:BalanceRecord`
+#### `ldg:Cut`
 
-**Definition.** An account's remaining balance and availability after one pass.
+**Definition.** How much less an ancestor took of a credit than was applied at the account it was posted to.
 
-**Subclass of.** `fnd:DerivedArtefact`
-
-**Utility.** Materialise one per account a pass moved, and for its ancestors where a reader needs them. It is keyed by the account and the pass, so it reads along the recorded axis. A reading as of an effective position folds the postings instead.
+**Utility.** Write one for each ancestor that accepts the credit's kind and had less room than the amount applied, with the room it lacked as its value. It is part of its credit's record, never a posting in the ancestor's book, and it states no position, since a read by position joins it to its posting.
 
 **Restrictions.**
 
 | Property | Values | Asserted in | Message |
 |---|---|---|---|
-| `ldg:onAccount` | exactly 1 |  |  |
-| `ldg:inPass` | exactly 1 |  |  |
-| `ldg:remainingValue` | exactly 1 |  |  |
-| `ldg:availableValue` | exactly 1 |  |  |
+| `ldg:cutOf` | exactly 1 |  |  |
+| `ldg:cutAt` | exactly 1 |  |  |
+| `ldg:cutValue` | exactly 1 |  |  |
 
 #### `ldg:MergeRecord`
 
@@ -628,6 +638,16 @@ to twice it, without a second account).
 
 **Characteristics.** functional
 
+#### `ldg:restoredBy`
+
+**Definition.** A kind of credit that restores this account.
+
+**Utility.** State one value for each kind the terms say restores the account, a concept of `ldg:CreditKinds`. An account that states none accepts every kind. A credit is posted only to an account that accepts its kind, and an ancestor counts a credit only where it accepts the kind, so an annual cap that recoveries restore and a reinstatement does not states the recovery alone.
+
+**Domain.** `ldg:AccountDefinition`
+
+**Range.** `skos:Concept`
+
 <!-- start: {"output-file": "spec/ledger-runtime.ttl"} -->
 
 #### `ldg:ofDefinition`
@@ -690,7 +710,7 @@ to twice it, without a second account).
 
 **Definition.** The account instance a record is about.
 
-**Domain.** `ldg:Posting or ldg:BalanceRecord or ldg:MergeRecord or ldg:Checkpoint`
+**Domain.** `ldg:Posting or ldg:MergeRecord or ldg:Checkpoint`
 
 **Range.** `ldg:Account`
 
@@ -700,7 +720,7 @@ to twice it, without a second account).
 
 **Definition.** The pass that wrote a record.
 
-**Domain.** `ldg:Posting or ldg:BalanceRecord or ldg:MergeRecord`
+**Domain.** `ldg:Posting or ldg:MergeRecord`
 
 **Range.** `ldg:Pass`
 
@@ -723,6 +743,40 @@ to twice it, without a second account).
 **Domain.** `ldg:Posting`
 
 **Range.** `skos:Concept`
+
+**Characteristics.** functional
+
+#### `ldg:creditKind`
+
+**Definition.** The kind of a credit, a concept of `ldg:CreditKinds`.
+
+**Utility.** State it on a credit where the terms give its kind. A credit with no kind is accepted only by accounts that state no kind, and is refused on a path where an account states its kinds.
+
+**Domain.** `ldg:Posting`
+
+**Range.** `skos:Concept`
+
+**Characteristics.** functional
+
+#### `ldg:cutOf`
+
+**Definition.** The credit a cut belongs to.
+
+**Domain.** `ldg:Cut`
+
+**Range.** `ldg:Posting`
+
+**Characteristics.** functional
+
+#### `ldg:cutAt`
+
+**Definition.** The ancestor at which a credit was cut.
+
+**Utility.** An ancestor of the account the credit was posted to, which accepts its kind.
+
+**Domain.** `ldg:Cut`
+
+**Range.** `ldg:Account`
 
 **Characteristics.** functional
 
@@ -758,7 +812,7 @@ to twice it, without a second account).
 
 ### 6.3 Datatype Properties
 
-The configuration declares three, a permission and two guards of a merge policy. The runtime document's positions are whole numbers and its amounts decimals in the account's unit of account.
+The configuration declares three, a permission and two guards of a merge policy. In the runtime document a posting's effective and recorded positions are natural numbers, its other positions whole numbers, and its amounts decimals in the account's unit of account.
 
 #### `ldg:allowsResiduals`
 
@@ -816,7 +870,7 @@ The configuration declares three, a permission and two guards of a merge policy.
 
 **Domain.** `ldg:Posting or ldg:MergeRecord`
 
-**Range.** `xsd:integer`
+**Range.** `xsd:nonNegativeInteger`
 
 **Characteristics.** functional
 
@@ -828,15 +882,15 @@ The configuration declares three, a permission and two guards of a merge policy.
 
 **Domain.** `ldg:Posting`
 
-**Range.** `xsd:integer`
+**Range.** `xsd:nonNegativeInteger`
 
 **Characteristics.** functional
 
 #### `ldg:microPosition`
 
-**Definition.** The order of postings that share a recorded position on one account.
+**Definition.** The order of postings that share a recorded position on one account, and of the postings of one pass across accounts.
 
-**Utility.** Assigned by the evaluator from an order defined on the data, never on arrival.
+**Utility.** Assigned by the evaluator from an order defined on the data, never on arrival. A running balance counts a posting of its own pass on another account of its subtree where that posting's micro-position is at or below its own.
 
 **Domain.** `ldg:Posting`
 
@@ -846,7 +900,9 @@ The configuration declares three, a permission and two guards of a merge policy.
 
 #### `ldg:amountValue`
 
-**Definition.** A posting's amount, in its account's unit of account.
+**Definition.** A posting's amount, in its account's unit of account: the amount drawn for a debit, and the amount applied for a credit.
+
+**Utility.** The one amount a balance is summed from. A credit's amount applied is what restored the account it was posted to, up to that account's room below its ceiling.
 
 **Domain.** `ldg:Posting`
 
@@ -854,21 +910,37 @@ The configuration declares three, a permission and two guards of a merge policy.
 
 **Characteristics.** functional
 
-#### `ldg:remainingValue`
+#### `ldg:offeredValue`
 
-**Definition.** An account's remaining balance after a pass.
+**Definition.** The amount a credit offered, before it was applied.
 
-**Domain.** `ldg:BalanceRecord`
+**Utility.** State it on every credit, and on no debit. It is at least the amount applied, which is never below zero, and where it is more, the account posted to is at its ceiling after the credit. A reading of the flows counts it, and a balance does not.
+
+**Domain.** `ldg:Posting`
 
 **Range.** `xsd:decimal`
 
 **Characteristics.** functional
 
-#### `ldg:availableValue`
+#### `ldg:runningBalance`
 
-**Definition.** The least remaining balance along an account's path after a pass.
+**Definition.** The balance of a posting's account after the posting, its subtree included.
 
-**Domain.** `ldg:BalanceRecord`
+**Utility.** Written by the account's writer, which holds the balances along the path. It is the account's stated amount, less the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it, over the postings up to this one in recorded order.
+
+**Domain.** `ldg:Posting`
+
+**Range.** `xsd:decimal`
+
+**Characteristics.** functional
+
+#### `ldg:cutValue`
+
+**Definition.** How much less an ancestor took of a credit than was applied.
+
+**Utility.** Positive, and at most the credit's amount applied. The ancestor's balance after the credit is then at its ceiling.
+
+**Domain.** `ldg:Cut`
 
 **Range.** `xsd:decimal`
 
@@ -950,7 +1022,7 @@ The configuration declares three, a permission and two guards of a merge policy.
 
 ### 6.4 Individuals
 
-The merge rules, posting directions, rounding methods, residual allocations, rounding differences and excess recoveries are each a `skos:Concept` in a scheme of its own. `ldg:PostingDirections` is used only by the runtime terms. `ldg:OrderCriteria` is declared with no member, since what requests are ordered by belongs to a domain, and an applied module adds its concepts to it.
+The merge rules, posting directions, rounding methods, residual allocations, rounding differences and excess recoveries are each a `skos:Concept` in a scheme of its own. `ldg:PostingDirections` is used only by the runtime terms. `ldg:OrderCriteria` is declared with no member, since what requests are ordered by belongs to a domain, and an applied module adds its concepts to it. `ldg:CreditKinds` is declared with no member for the same reason, since what restores an amount, a recovery, a reinstatement or a repayment, belongs to a domain.
 
 **Concept schemes.**
 
@@ -963,6 +1035,7 @@ The merge rules, posting directions, rounding methods, residual allocations, rou
 | `ldg:RoundingDifferences` | `skos:ConceptScheme` | How the difference left by rounding shares to the nearest is settled. |
 | `ldg:ExcessRecoveries` | `skos:ConceptScheme` | Where a unit over is taken from. |
 | `ldg:OrderCriteria` | `skos:ConceptScheme` | What requests are ordered by, for their rank and for the placing of single units. |
+| `ldg:CreditKinds` | `skos:ConceptScheme` | The kinds of credit, which an account names to say what restores it. |
 
 **`ldg:MergeRules`.**
 
@@ -977,7 +1050,7 @@ The merge rules, posting directions, rounding methods, residual allocations, rou
 | Individual | Type | Definition |
 |---|---|---|
 | `ldg:Debit` | `skos:Concept` | A draw, reducing the balance. |
-| `ldg:Credit` | `skos:Concept` | The inverse of a draw along the same path, reducing it. |
+| `ldg:Credit` | `skos:Concept` | A restoration, applied at the account it is posted to up to that account's room, and counted at each ancestor that accepts its kind. |
 
 **`ldg:RoundingMethods`.**
 
@@ -1014,7 +1087,7 @@ The runtime document's classes are pairwise disjoint, and disjoint from the acco
 
 <!-- start: {"output-file": "spec/ledger-runtime.ttl"} -->
 
-**All disjoint.** `ldg:AccountDefinition`, `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:BalanceRecord`, `ldg:MergeRecord`, `ldg:Grant`, `ldg:Checkpoint`
+**All disjoint.** `ldg:AccountDefinition`, `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Grant`, `ldg:Checkpoint`
 
 <!-- end -->
 
@@ -1038,32 +1111,35 @@ ldg:mergePolicy fnd:meaningBearing true .
 
 | Term | Kind | Summary |
 |---|---|---|
-| `ldg:Account` | Class | Disjoint with `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:accountKey` max 1, `ldg:forOwner` exactly 1, `ldg:ofDefinition` exactly 1, `ldg:partOfAccount` max 1, `ldg:periodKey` max 1. |
-| `ldg:AccountDefinition` | Class | Disjoint with `ldg:Account`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:admitsOwnerKind` min 1, `ldg:closingRecurrence` max 1, `ldg:creditCeiling` max 1, `ldg:keyDimension` max 1, `ldg:mergePolicy` exactly 1, `ldg:partOf` max 1, `ldg:periodRecurrence` max 1, `ldg:resetRecurrence` max 1, `ldg:statedAmount` exactly 1, `ldg:unitOfAccount` exactly 1. |
-| `ldg:BalanceRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:availableValue` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:remainingValue` exactly 1. |
-| `ldg:Checkpoint` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:balanceValue` exactly 1, `ldg:closePosition` exactly 1, `ldg:onAccount` exactly 1. |
-| `ldg:Grant` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:forProposal` exactly 1, `ldg:grantedValue` exactly 1, `ldg:proportionDenominator` max 1, `ldg:proportionNumerator` max 1, `ldg:requestedValue` exactly 1. |
+| `ldg:Account` | Class | Disjoint with `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:accountKey` max 1, `ldg:forOwner` exactly 1, `ldg:ofDefinition` exactly 1, `ldg:partOfAccount` max 1, `ldg:periodKey` max 1. |
+| `ldg:AccountDefinition` | Class | Disjoint with `ldg:Account`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:admitsOwnerKind` min 1, `ldg:closingRecurrence` max 1, `ldg:creditCeiling` max 1, `ldg:keyDimension` max 1, `ldg:mergePolicy` exactly 1, `ldg:partOf` max 1, `ldg:periodRecurrence` max 1, `ldg:resetRecurrence` max 1, `ldg:statedAmount` exactly 1, `ldg:unitOfAccount` exactly 1. |
+| `ldg:Checkpoint` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Cut`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:balanceValue` exactly 1, `ldg:closePosition` exactly 1, `ldg:onAccount` exactly 1. |
+| `ldg:Cut` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:cutAt` exactly 1, `ldg:cutOf` exactly 1, `ldg:cutValue` exactly 1. |
+| `ldg:Grant` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:forProposal` exactly 1, `ldg:grantedValue` exactly 1, `ldg:proportionDenominator` max 1, `ldg:proportionNumerator` max 1, `ldg:requestedValue` exactly 1. |
 | `ldg:MergePolicy` | Class | Subclass of `fnd:Versioned`. Restrictions `ldg:allowsResiduals` max 1, `ldg:excessRecovery` max 1, `ldg:mergeRule` exactly 1, `ldg:rankCriterion` max 1, `ldg:requiresDistinctRanks` max 1, `ldg:requiresSamePurpose` max 1, `ldg:residualAllocation` max 1, `ldg:roundingDifference` max 1, `ldg:roundingMethod` max 1, `ldg:unitOrderCriterion` max 1. |
-| `ldg:MergeRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:availableBefore` max 1, `ldg:effectivePosition` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:refusalReason` max 1. |
-| `ldg:Pass` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Posting`. Restrictions `ldg:passPosition` exactly 1. |
-| `ldg:Posting` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:BalanceRecord`, `ldg:Checkpoint`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`. Restrictions `ldg:amountValue` exactly 1, `ldg:direction` exactly 1, `ldg:effectivePosition` exactly 1, `ldg:forPurpose` max 1, `ldg:inPass` exactly 1, `ldg:microPosition` exactly 1, `ldg:onAccount` exactly 1, `ldg:recordedPosition` exactly 1. |
+| `ldg:MergeRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Grant`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:availableBefore` max 1, `ldg:effectivePosition` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:refusalReason` max 1. |
+| `ldg:Pass` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Posting`. Restrictions `ldg:passPosition` exactly 1. |
+| `ldg:Posting` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Grant`, `ldg:MergeRecord`, `ldg:Pass`. Restrictions `ldg:amountValue` exactly 1, `ldg:creditKind` max 1, `ldg:direction` exactly 1, `ldg:effectivePosition` exactly 1, `ldg:forPurpose` max 1, `ldg:inPass` exactly 1, `ldg:microPosition` exactly 1, `ldg:offeredValue` max 1, `ldg:onAccount` exactly 1, `ldg:recordedPosition` exactly 1, `ldg:runningBalance` exactly 1. |
 | `ldg:accountKey` | Object property | Domain `ldg:Account`. Range `skos:Concept` or `qnt:Value`. Functional. |
 | `ldg:admitsOwnerKind` | Object property | Domain `ldg:AccountDefinition`. Range `rdfs:Class`. |
 | `ldg:closingRecurrence` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Recurrence`. Functional. |
 | `ldg:countsPurpose` | Object property | Domain `ldg:AccountDefinition`. Range `skos:Concept`. |
 | `ldg:creditCeiling` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Quantity`. Functional. |
+| `ldg:creditKind` | Object property | Domain `ldg:Posting`. Range `skos:Concept`. Functional. |
+| `ldg:cutAt` | Object property | Domain `ldg:Cut`. Range `ldg:Account`. Functional. |
+| `ldg:cutOf` | Object property | Domain `ldg:Cut`. Range `ldg:Posting`. Functional. |
 | `ldg:direction` | Object property | Domain `ldg:Posting`. Range `skos:Concept`. Functional. |
 | `ldg:excessRecovery` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:forOwner` | Object property | Domain `ldg:Account`. Range `fnd:PersistentIdentity`. Functional. |
 | `ldg:forProposal` | Object property | Domain `ldg:Grant`. Functional. |
 | `ldg:forPurpose` | Object property | Domain `ldg:Posting`. Range `skos:Concept`. Functional. |
 | `ldg:grant` | Object property | Domain `ldg:MergeRecord`. Range `ldg:Grant`. |
-| `ldg:inPass` | Object property | Domain `ldg:Posting` or `ldg:BalanceRecord` or `ldg:MergeRecord`. Range `ldg:Pass`. Functional. |
+| `ldg:inPass` | Object property | Domain `ldg:Posting` or `ldg:MergeRecord`. Range `ldg:Pass`. Functional. |
 | `ldg:keyDimension` | Object property | Domain `ldg:AccountDefinition`. Range `skos:ConceptScheme` or `qnt:ValueSpace`. Functional. |
 | `ldg:mergePolicy` | Object property | Domain `ldg:AccountDefinition`. Range `ldg:MergePolicy`. Functional. |
 | `ldg:mergeRule` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:ofDefinition` | Object property | Domain `ldg:Account`. Range `ldg:AccountDefinition`. Functional. |
-| `ldg:onAccount` | Object property | Domain `ldg:Posting` or `ldg:BalanceRecord` or `ldg:MergeRecord` or `ldg:Checkpoint`. Range `ldg:Account`. Functional. |
+| `ldg:onAccount` | Object property | Domain `ldg:Posting` or `ldg:MergeRecord` or `ldg:Checkpoint`. Range `ldg:Account`. Functional. |
 | `ldg:partOf` | Object property | Domain `ldg:AccountDefinition`. Range `ldg:AccountDefinition`. Functional. |
 | `ldg:partOfAccount` | Object property | Domain `ldg:Account`. Range `ldg:Account`. Functional. |
 | `ldg:periodKey` | Object property | Domain `ldg:Account`. Range `qnt:RecurrenceBin`. Functional. |
@@ -1072,6 +1148,7 @@ ldg:mergePolicy fnd:meaningBearing true .
 | `ldg:refusalReason` | Object property | Domain `ldg:MergeRecord`. Range `skos:Concept`. Functional. |
 | `ldg:resetRecurrence` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Recurrence`. Functional. |
 | `ldg:residualAllocation` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
+| `ldg:restoredBy` | Object property | Domain `ldg:AccountDefinition`. Range `skos:Concept`. |
 | `ldg:roundingDifference` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:roundingMethod` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:statedAmount` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Quantity`. Functional. |
@@ -1080,21 +1157,23 @@ ldg:mergePolicy fnd:meaningBearing true .
 | `ldg:allowsResiduals` | Datatype property | Domain `ldg:MergePolicy`. Range `xsd:boolean`. Functional. |
 | `ldg:amountValue` | Datatype property | Domain `ldg:Posting`. Range `xsd:decimal`. Functional. |
 | `ldg:availableBefore` | Datatype property | Domain `ldg:MergeRecord`. Range `xsd:decimal`. Functional. |
-| `ldg:availableValue` | Datatype property | Domain `ldg:BalanceRecord`. Range `xsd:decimal`. Functional. |
 | `ldg:balanceValue` | Datatype property | Domain `ldg:Checkpoint`. Range `xsd:decimal`. Functional. |
 | `ldg:closePosition` | Datatype property | Domain `ldg:Checkpoint`. Range `xsd:integer`. Functional. |
-| `ldg:effectivePosition` | Datatype property | Domain `ldg:Posting` or `ldg:MergeRecord`. Range `xsd:integer`. Functional. |
+| `ldg:cutValue` | Datatype property | Domain `ldg:Cut`. Range `xsd:decimal`. Functional. |
+| `ldg:effectivePosition` | Datatype property | Domain `ldg:Posting` or `ldg:MergeRecord`. Range `xsd:nonNegativeInteger`. Functional. |
 | `ldg:grantedValue` | Datatype property | Domain `ldg:Grant`. Range `xsd:decimal`. Functional. |
 | `ldg:microPosition` | Datatype property | Domain `ldg:Posting`. Range `xsd:integer`. Functional. |
+| `ldg:offeredValue` | Datatype property | Domain `ldg:Posting`. Range `xsd:decimal`. Functional. |
 | `ldg:passPosition` | Datatype property | Domain `ldg:Pass`. Range `xsd:integer`. Functional. |
 | `ldg:proportionDenominator` | Datatype property | Domain `ldg:Grant`. Range `xsd:integer`. Functional. |
 | `ldg:proportionNumerator` | Datatype property | Domain `ldg:Grant`. Range `xsd:integer`. Functional. |
-| `ldg:recordedPosition` | Datatype property | Domain `ldg:Posting`. Range `xsd:integer`. Functional. |
-| `ldg:remainingValue` | Datatype property | Domain `ldg:BalanceRecord`. Range `xsd:decimal`. Functional. |
+| `ldg:recordedPosition` | Datatype property | Domain `ldg:Posting`. Range `xsd:nonNegativeInteger`. Functional. |
 | `ldg:requestedValue` | Datatype property | Domain `ldg:Grant`. Range `xsd:decimal`. Functional. |
 | `ldg:requiresDistinctRanks` | Datatype property | Domain `ldg:MergePolicy`. Range `xsd:boolean`. Functional. |
 | `ldg:requiresSamePurpose` | Datatype property | Domain `ldg:MergePolicy`. Range `xsd:boolean`. Functional. |
+| `ldg:runningBalance` | Datatype property | Domain `ldg:Posting`. Range `xsd:decimal`. Functional. |
 | `ldg:Credit` | Individual | Type `skos:Concept`. |
+| `ldg:CreditKinds` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:Debit` | Individual | Type `skos:Concept`. |
 | `ldg:ExcessRecoveries` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:FromFirstInOrder` | Individual | Type `skos:Concept`. |
@@ -1277,10 +1356,13 @@ ldg:KeyDimensionTypeShape a sh:NodeShape ;
 
 | Shape | Law | Theorem |
 |---|---|---|
-| `ldg:BalanceFoldShape` | a balance record's remaining value is the stated amount less the debits plus the credits posted in its account's subtree by passes at or before its own, never above the credit ceiling | LC2, LD3 |
-| `ldg:AvailableIsLeastAlongPathShape` | a balance record's available value is the least remaining value along its account's path in the same pass | LD2 |
-| `ldg:CreditCeilingShape` | no remaining value is above the credit ceiling, the stated amount where none is stated | LD3 |
-| `ldg:CheckpointFoldShape` | a checkpoint's balance is the same fold, over the passes recorded by its close | LC2 |
+| `ldg:RunningBalanceShape` | a posting's running balance is its account's stated amount, less the debits, plus the credits the account accepts at the amount applied, less the cuts at it, over the postings in its subtree up to the posting in recorded order | LU1, LB1 |
+| `ldg:CreditCeilingShape` | no running balance is above its account's credit ceiling, the stated amount where none is stated | LD3 |
+| `ldg:CreditAmountsShape` | a credit states the amount offered and applies from zero to that amount, and where it applies less, its account is at its ceiling after it. A debit states no amount offered and no kind | LD3 |
+| `ldg:CreditKindAcceptedShape` | a credit is posted to an account that accepts its kind, and a credit with no kind is posted on no path where an account names its kinds | LU3n |
+| `ldg:CutWithinTheCreditShape` | a cut is of a credit, at an ancestor of its account that accepts its kind, positive and at most the amount applied, and a credit has at most one cut at an account | LU2 |
+| `ldg:CutFillsTheAncestorShape` | an ancestor that accepts a credit is not above its ceiling after it, and is at its ceiling where a cut is recorded at it | LD3, LU1n |
+| `ldg:CheckpointFoldShape` | a checkpoint's balance is the same sum less the cuts, over the passes recorded by its close | LU1 |
 | `ldg:MergeWithinAvailabilityShape` | a merge's grants sum to no more than the availability it was given, and under a proportional rule whose requests exceed it, to exactly that availability | LC3, LA1 |
 | `ldg:GrantWithinRequestShape` | no grant is above its request, and an exact share states its numerator and a positive denominator together | LA1, LA2 |
 | `ldg:RefusedMergeShape` | a refused merge holds no grant and no posting cites it | LD1 |
@@ -1293,44 +1375,182 @@ ldg:KeyDimensionTypeShape a sh:NodeShape ;
 | `ldg:RecordedOrderFollowsPassesShape` | an account's recorded order never runs against the order of the passes that wrote it | |
 | `ldg:NotForwardDatedShape` | no posting or merge is effective later than the pass that recorded it | |
 
-The fold applies a ceiling once, to the total. That is exact where no credit was cut by a ceiling before a later debit in the same subtree, which every example meets, and a history where one was needs a running balance recorded on each posting to be checked, which section 13 leaves open.
+The sums apply no ceiling. The writer settled each credit's amount applied and its cuts in recorded order, so the sum less the cuts equals the balance stepped posting by posting, and the laws on the ceiling check what was applied and what was cut. Every sum adds a value for each row it reads, zero for a row that is not a counted posting, so no term of a sum is an error and every engine reads the same result.
 
 Each shape targets the class it checks as a node and reads every instance in one query, so a result's focus node is the class and its value is the record. A shape per record would run one query per record, which took over a minute and a half on 250 postings with rdflib, against a few seconds for 5,000 postings this way. Each inner pattern starts from a variable already bound, a record's account or its pass, so no query scans every record once per record.
 
 <!-- hidden: {"output-file": "shapes/runtime.ttl"}
 ```turtle-shapes
-# SHACL-SPARQL constraints over Ledger's records: balances fold their
-# postings, a merge stays within availability, account instances keep their
+# SHACL-SPARQL constraints over Ledger's records: a running balance is a sum
+# less its cuts, a credit is applied within its room and cut where an ancestor
+# had less, a merge stays within availability, account instances keep their
 # natural keys and periods, and no record is effective after its pass. Each shape
 # targets the class it checks and reads all its instances in one query, so a
 # dataset's records are checked in one evaluation per law rather than one per
-# record. A result's focus node is the class and its value the record.
+# record. A result's focus node is the class and its value the record. A sum
+# adds zero for a row that is not a counted posting, so no term of it errors.
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 
-ldg:BalanceFoldShape a sh:NodeShape ;
-        sh:targetNode ldg:BalanceRecord ;
+ldg:RunningBalanceShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
         sh:sparql [
-                sh:message "A balance record's remaining value must be its stated amount less the debits plus the credits posted in its account's subtree by passes at or before its own, capped at the credit ceiling." ;
+                sh:message "A posting's running balance must be its account's stated amount, less the debits, plus the credits the account accepts at the amount applied, less the cuts at it, over the postings in its subtree up to the posting in recorded order." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
                         SELECT $this ?value WHERE {
                                 {
-                                        SELECT $this ?value ?remaining ?stated ?ceiling (SUM(?signed) AS ?moved) WHERE {
-                                                ?value a $this ; ldg:onAccount ?account ; ldg:inPass/ldg:passPosition ?at ; ldg:remainingValue ?remaining .
-                                                ?account ldg:ofDefinition/ldg:statedAmount/qnt:numericValue ?stated .
-                                                OPTIONAL { ?account ldg:ofDefinition/ldg:creditCeiling/qnt:numericValue ?statedCeiling }
+                                        SELECT $this ?value ?balance ?stated (SUM(?signed) AS ?moved) WHERE {
+                                                ?value a $this ; ldg:onAccount ?account ; ldg:runningBalance ?balance ;
+                                                        ldg:inPass/ldg:passPosition ?at ; ldg:recordedPosition ?recorded ; ldg:microPosition ?micro .
+                                                ?account ldg:ofDefinition ?definition .
+                                                ?definition ldg:statedAmount/qnt:numericValue ?stated .
                                                 OPTIONAL {
-                                                        ?posting ldg:onAccount/ldg:partOfAccount* ?account .
-                                                        OPTIONAL { ?posting ldg:inPass/ldg:passPosition ?postedAt ; ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        ?earlier ldg:onAccount/ldg:partOfAccount* ?account .
+                                                        OPTIONAL { ?earlier ldg:onAccount ?on ; ldg:inPass/ldg:passPosition ?earlierAt ;
+                                                                ldg:recordedPosition ?earlierRecorded ; ldg:microPosition ?earlierMicro ;
+                                                                ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?cut ldg:cutOf ?earlier ; ldg:cutAt ?account ; ldg:cutValue ?cutValue }
+                                                }
+                                                BIND (COALESCE(IF(
+                                                        IF(?on = ?account,
+                                                                ?earlierRecorded < ?recorded || (?earlierRecorded = ?recorded && ?earlierMicro <= ?micro),
+                                                                ?earlierAt < ?at || (?earlierAt = ?at && ?earlierMicro <= ?micro)),
+                                                        IF(?direction = ldg:Credit,
+                                                                IF(NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                                        || EXISTS { ?earlier ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }, ?amount, 0)
+                                                                        - COALESCE(?cutValue, 0),
+                                                                -?amount),
+                                                        0), 0) AS ?signed)
+                                        } GROUP BY $this ?value ?balance ?stated
+                                }
+                                FILTER (?balance != ?stated + ?moved)
+                        }
+                """
+        ] .
+
+ldg:CreditCeilingShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "A running balance must not be above the account's credit ceiling, or its stated amount where no ceiling is stated." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:onAccount ?account ; ldg:runningBalance ?balance .
+                                ?account ldg:ofDefinition ?definition .
+                                ?definition ldg:statedAmount ?statedQuantity .
+                                ?statedQuantity qnt:numericValue ?stated .
+                                OPTIONAL { ?definition ldg:creditCeiling ?ceilingQuantity . ?ceilingQuantity qnt:numericValue ?ceiling }
+                                FILTER (?balance > COALESCE(?ceiling, ?stated))
+                        }
+                """
+        ] .
+
+ldg:CreditAmountsShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "A credit must state the amount offered and apply from zero to that amount, and where it applies less, its account must be at its ceiling after it. A debit states no amount offered and no kind." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        ?value a $this ; ldg:direction ldg:Credit ; ldg:amountValue ?applied ;
+                                                ldg:onAccount ?account ; ldg:runningBalance ?balance .
+                                        ?account ldg:ofDefinition ?definition .
+                                        ?definition ldg:statedAmount/qnt:numericValue ?stated .
+                                        OPTIONAL { ?definition ldg:creditCeiling/qnt:numericValue ?ceiling }
+                                        OPTIONAL { ?value ldg:offeredValue ?offered }
+                                        FILTER (!BOUND(?offered) || ?applied < 0 || ?applied > ?offered
+                                                || (?applied < ?offered && ?balance != COALESCE(?ceiling, ?stated)))
+                                } UNION {
+                                        ?value a $this ; ldg:direction ldg:Debit .
+                                        FILTER (EXISTS { ?value ldg:offeredValue ?offered } || EXISTS { ?value ldg:creditKind ?kind })
+                                }
+                        }
+                """
+        ] .
+
+ldg:CreditKindAcceptedShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "A credit must be posted to an account that accepts its kind, and a credit with no kind must not be posted on a path where an account names its kinds." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:direction ldg:Credit ; ldg:onAccount ?account .
+                                ?account ldg:ofDefinition ?definition .
+                                FILTER (
+                                        (EXISTS { ?definition ldg:restoredBy ?any }
+                                                && NOT EXISTS { ?value ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind })
+                                        || (NOT EXISTS { ?value ldg:creditKind ?stated }
+                                                && EXISTS { ?account ldg:partOfAccount*/ldg:ofDefinition/ldg:restoredBy ?named })
+                                )
+                        }
+                """
+        ] .
+
+ldg:CutWithinTheCreditShape a sh:NodeShape ;
+        sh:targetNode ldg:Cut ;
+        sh:sparql [
+                sh:message "A cut must be of a credit, at an ancestor of its account that accepts its kind, positive and at most the amount applied, and a credit has at most one cut at an account." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:cutOf ?posting ; ldg:cutAt ?ancestor ; ldg:cutValue ?cut .
+                                OPTIONAL { ?posting ldg:direction ?direction ; ldg:amountValue ?applied ; ldg:onAccount ?account }
+                                FILTER (!BOUND(?direction) || ?direction != ldg:Credit || ?cut <= 0 || ?cut > ?applied
+                                        || NOT EXISTS { ?account ldg:partOfAccount+ ?ancestor }
+                                        || (EXISTS { ?ancestor ldg:ofDefinition/ldg:restoredBy ?any }
+                                                && NOT EXISTS { ?posting ldg:creditKind ?kind . ?ancestor ldg:ofDefinition/ldg:restoredBy ?kind })
+                                        || EXISTS { ?other ldg:cutOf ?posting ; ldg:cutAt ?ancestor . FILTER (?other != ?value) })
+                        }
+                """
+        ] .
+
+ldg:CutFillsTheAncestorShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "An ancestor that accepts a credit must not be above its ceiling after it, and must be at its ceiling where a cut is recorded at it." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        SELECT $this ?value ?ancestor ?stated ?ceiling ?cutHere (SUM(?signed) AS ?moved) WHERE {
+                                                ?value a $this ; ldg:direction ldg:Credit ; ldg:onAccount ?account ;
+                                                        ldg:inPass/ldg:passPosition ?at ; ldg:recordedPosition ?recorded ; ldg:microPosition ?micro .
+                                                ?account ldg:partOfAccount+ ?ancestor .
+                                                ?ancestor ldg:ofDefinition ?definition .
+                                                ?definition ldg:statedAmount/qnt:numericValue ?stated .
+                                                FILTER (NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                        || EXISTS { ?value ldg:creditKind ?creditKind . ?definition ldg:restoredBy ?creditKind })
+                                                OPTIONAL { ?definition ldg:creditCeiling/qnt:numericValue ?statedCeiling }
+                                                OPTIONAL {
+                                                        ?earlier ldg:onAccount/ldg:partOfAccount* ?ancestor .
+                                                        OPTIONAL { ?earlier ldg:onAccount ?on ; ldg:inPass/ldg:passPosition ?earlierAt ;
+                                                                ldg:recordedPosition ?earlierRecorded ; ldg:microPosition ?earlierMicro ;
+                                                                ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?cut ldg:cutOf ?earlier ; ldg:cutAt ?ancestor ; ldg:cutValue ?cutValue }
                                                 }
                                                 BIND (COALESCE(?statedCeiling, ?stated) AS ?ceiling)
-                                                BIND (IF(BOUND(?posting) && ?postedAt <= ?at, IF(?direction = ldg:Credit, ?amount, -?amount), 0) AS ?signed)
-                                        } GROUP BY $this ?value ?remaining ?stated ?ceiling
+                                                BIND (EXISTS { ?here ldg:cutOf ?value ; ldg:cutAt ?ancestor } AS ?cutHere)
+                                                BIND (COALESCE(IF(
+                                                        IF(?on = ?account,
+                                                                ?earlierRecorded < ?recorded || (?earlierRecorded = ?recorded && ?earlierMicro <= ?micro),
+                                                                ?earlierAt < ?at || (?earlierAt = ?at && ?earlierMicro <= ?micro)),
+                                                        IF(?direction = ldg:Credit,
+                                                                IF(NOT EXISTS { ?definition ldg:restoredBy ?all }
+                                                                        || EXISTS { ?earlier ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }, ?amount, 0)
+                                                                        - COALESCE(?cutValue, 0),
+                                                                -?amount),
+                                                        0), 0) AS ?signed)
+                                        } GROUP BY $this ?value ?ancestor ?stated ?ceiling ?cutHere
                                 }
-                                FILTER (?remaining != IF(?stated + ?moved > ?ceiling, ?ceiling, ?stated + ?moved))
+                                FILTER (?stated + ?moved > ?ceiling || (?cutHere && ?stated + ?moved != ?ceiling))
                         }
                 """
         ] .
@@ -1338,67 +1558,31 @@ ldg:BalanceFoldShape a sh:NodeShape ;
 ldg:CheckpointFoldShape a sh:NodeShape ;
         sh:targetNode ldg:Checkpoint ;
         sh:sparql [
-                sh:message "A checkpoint's balance must be its stated amount less the debits plus the credits posted in its account's subtree by passes at or before its close, capped at the credit ceiling." ;
+                sh:message "A checkpoint's balance must be its stated amount, less the debits, plus the credits the account accepts at the amount applied, less the cuts at it, over the postings in its subtree by passes at or before its close." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
                         SELECT $this ?value WHERE {
                                 {
-                                        SELECT $this ?value ?balance ?stated ?ceiling (SUM(?signed) AS ?moved) WHERE {
-                                                ?value a $this ; ldg:onAccount ?account ; ldg:closePosition ?at ; ldg:balanceValue ?balance .
-                                                ?account ldg:ofDefinition/ldg:statedAmount/qnt:numericValue ?stated .
-                                                OPTIONAL { ?account ldg:ofDefinition/ldg:creditCeiling/qnt:numericValue ?statedCeiling }
+                                        SELECT $this ?value ?balance ?stated (SUM(?signed) AS ?moved) WHERE {
+                                                ?value a $this ; ldg:onAccount ?account ; ldg:closePosition ?close ; ldg:balanceValue ?balance .
+                                                ?account ldg:ofDefinition ?definition .
+                                                ?definition ldg:statedAmount/qnt:numericValue ?stated .
                                                 OPTIONAL {
                                                         ?posting ldg:onAccount/ldg:partOfAccount* ?account .
                                                         OPTIONAL { ?posting ldg:inPass/ldg:passPosition ?postedAt ; ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?cut ldg:cutOf ?posting ; ldg:cutAt ?account ; ldg:cutValue ?cutValue }
                                                 }
-                                                BIND (COALESCE(?statedCeiling, ?stated) AS ?ceiling)
-                                                BIND (IF(BOUND(?posting) && ?postedAt <= ?at, IF(?direction = ldg:Credit, ?amount, -?amount), 0) AS ?signed)
-                                        } GROUP BY $this ?value ?balance ?stated ?ceiling
+                                                BIND (COALESCE(IF(?postedAt <= ?close,
+                                                        IF(?direction = ldg:Credit,
+                                                                IF(NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                                        || EXISTS { ?posting ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }, ?amount, 0)
+                                                                        - COALESCE(?cutValue, 0),
+                                                                -?amount),
+                                                        0), 0) AS ?signed)
+                                        } GROUP BY $this ?value ?balance ?stated
                                 }
-                                FILTER (?balance != IF(?stated + ?moved > ?ceiling, ?ceiling, ?stated + ?moved))
-                        }
-                """
-        ] .
-
-ldg:AvailableIsLeastAlongPathShape a sh:NodeShape ;
-        sh:targetNode ldg:BalanceRecord ;
-        sh:sparql [
-                sh:message "A balance record's available value must be the least remaining value along its account's path in the same pass." ;
-                sh:select """
-                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-                        SELECT $this ?value WHERE {
-                                ?value a $this ; ldg:onAccount ?account ; ldg:inPass ?pass ;
-                                        ldg:availableValue ?available ; ldg:remainingValue ?remaining .
-                                FILTER (
-                                        ?available > ?remaining
-                                        || EXISTS {
-                                                ?account ldg:partOfAccount+/^ldg:onAccount ?above .
-                                                FILTER EXISTS { ?above ldg:inPass ?pass ; ldg:remainingValue ?aboveRemaining . FILTER (?available > ?aboveRemaining) }
-                                        }
-                                        || (?available != ?remaining && NOT EXISTS {
-                                                ?account ldg:partOfAccount+/^ldg:onAccount ?least .
-                                                FILTER EXISTS { ?least ldg:inPass ?pass ; ldg:remainingValue ?available }
-                                        })
-                                )
-                        }
-                """
-        ] .
-
-ldg:CreditCeilingShape a sh:NodeShape ;
-        sh:targetNode ldg:BalanceRecord ;
-        sh:sparql [
-                sh:message "A remaining value must not be above the account's credit ceiling, or its stated amount where no ceiling is stated." ;
-                sh:select """
-                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
-                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
-                        SELECT $this ?value WHERE {
-                                ?value a $this ; ldg:onAccount ?account ; ldg:remainingValue ?remaining .
-                                ?account ldg:ofDefinition ?definition .
-                                ?definition ldg:statedAmount ?statedQuantity .
-                                ?statedQuantity qnt:numericValue ?stated .
-                                OPTIONAL { ?definition ldg:creditCeiling ?ceilingQuantity . ?ceilingQuantity qnt:numericValue ?stated0 }
-                                FILTER (?remaining > COALESCE(?stated0, ?stated))
+                                FILTER (?balance != ?stated + ?moved)
                         }
                 """
         ] .
@@ -1603,9 +1787,9 @@ ldg:NotForwardDatedShape a sh:NodeShape ;
 
 ## 8. Examples
 
-The examples in [`examples/`](examples/) are five accepted arrangements (licensing, lending, grants, delegated authority, insurance) a policy that rounds to the nearest and settles the difference, and nine refusals (cycle, unit mismatch, overdraw under `ldg:Refuse`, an unrounded proportional rule, an intensive unit of account, rounding to the nearest beside a residual allocation with no difference stated, a difference settled with no excess recovery stated, an account definition that names no merge policy, a merge policy with no merge rule), validated against the structural shapes and the constraints of section 7. §5.2 walks through one of them.
+The examples in [`examples/`](examples/) are six accepted arrangements (licensing, lending, grants, delegated authority, insurance, and a credit cut at a parent) a policy that rounds to the nearest and settles the difference, and nine refusals (cycle, unit mismatch, overdraw under `ldg:Refuse`, an unrounded proportional rule, an intensive unit of account, rounding to the nearest beside a residual allocation with no difference stated, a difference settled with no excess recovery stated, an account definition that names no merge policy, a merge policy with no merge rule), validated against the structural shapes and the constraints of section 7. §5.2 walks through one of them.
 
-The accepted examples and the refusal under `ldg:Refuse` carry their records too: the account instances, the passes, and the postings, balance records and merge records each position writes, which the runtime laws of section 7.3 check. The licensing example keeps one account per site and licence year, with no reset credit.
+The accepted examples and the refusal under `ldg:Refuse` carry their records too: the account instances, the passes, and the postings with their running balances, cuts and merge records each position writes, which the runtime laws of section 7.3 check. Each example with a credit gives it a kind of its own, a member of `ldg:CreditKinds` in the example's namespace. The licensing example keeps one account per site and licence year, with no reset credit. The example of a credit cut at a parent is the case of a cut at an ancestor: a parent and a child each stated at 10, a debit of 5 at the child, a credit of 4 at the parent, then a credit of 4 at the child, which is applied at 4 and cut by 3 at the parent, whose balance is then 10. With no cut the sum would be 13, above the parent's ceiling.
 
 ## 9. Canonicalisation
 
@@ -1967,6 +2151,8 @@ definition attributed ::
 
 **Credits, and what a posting records.** A `credit` is applied at the account it is posted to, up to that account's room under its ceiling. Each ancestor that accepts its kind takes the least of the amount applied and its own room, and where it takes less the difference is a cut at that ancestor. A `book` states each account's parent, its stated amount, its ceiling, the kinds of credit it accepts and whether it refuses a debit that no longer fits. A `request` is a draw or a restoration, and a posting keeps what was offered, what was applied and the cuts. `post` applies one request and `run` a list of them in turn. A credit posted to an account that does not accept its kind is refused, so nothing is posted and no balance moves, while `credit` itself stays total. `moved` is what one posting moves an account by, read from what the posting records, and `summed` is a balance as a sum, the stated amount less the debits, plus the credits applied, less the cuts.
 
+The runtime document records the same things. `Restored a c x applied cuts` is a posting whose `ldg:direction` is `ldg:Credit`, with `c` its `ldg:creditKind`, `x` its `ldg:offeredValue`, `applied` its `ldg:amountValue`, and a `ldg:Cut` at each account `b` where `cuts b` is positive. `restores` is what `ldg:restoredBy` states, every kind where an account states none, and a posting's `ldg:runningBalance` is `summed` over the postings up to it, at the account it is on.
+
 ```isabelle-spec
 definition credit ::
   "('a \<Rightarrow> 'a option) \<Rightarrow> ('a, 'n::linordered_idom) balances \<Rightarrow> ('a \<Rightarrow> bool) \<Rightarrow> 'a \<Rightarrow> 'n \<Rightarrow> ('a, 'n) balances
@@ -2070,6 +2256,12 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 
 - **Unreleased**.
   - changes meaning. Conversion leaves the ledger ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-09). `ldg:conversionMethod` on an account definition, `ldg:amountAsDrawn` and `ldg:conversionUsed` on a posting, and `ldg:ConversionTogetherShape` are removed, and every draw is made in its account's unit. A document that states them names terms the ledger no longer declares, and no shape reads them. To move it, convert the amount before the ledger, record the conversion there with its rate, the rate's source and its date, post the converted amount, and cite the conversion record from the posting by `prov:wasDerivedFrom`.
+  - changes meaning. The balance record leaves the runtime document, and the running balance sits on the posting ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-11-16). `ldg:BalanceRecord`, `ldg:remainingValue`, `ldg:availableValue`, `ldg:BalanceFoldShape` and `ldg:AvailableIsLeastAlongPathShape` are removed. A document that states them names terms the ledger no longer declares, and no shape reads them. To move it, drop its balance records and state on each posting the balance of its account after it.
+  - may invalidate. A posting states `ldg:runningBalance`, exactly one, and `ldg:RunningBalanceShape` refuses one that is not its account's stated amount, less the debits, plus the credits the account accepts at the amount applied, less the cuts at it, over the postings in its subtree up to it in recorded order. On its own account that order is the recorded position and micro-position, and across accounts the pass position and micro-position, so `ldg:microPosition` also orders the postings of one pass across accounts.
+  - no effect. New terms for credits ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first and fourth addenda of 2026-11-16): the scheme `ldg:CreditKinds`, declared with no member for an applied module to fill, `ldg:restoredBy` on an account definition, any number, `ldg:creditKind` and `ldg:offeredValue` on a posting, each at most one, and the class `ldg:Cut`, with `ldg:cutOf`, `ldg:cutAt` and `ldg:cutValue`.
+  - changes meaning. A credit's `ldg:amountValue` is the amount applied at the account it is posted to, and an ancestor counts a credit only where it accepts its kind, less any cut recorded at it. `ldg:Credit`'s definition says so. `ldg:CheckpointFoldShape` sums the same way and applies no ceiling, and `ldg:CreditCeilingShape` reads a posting's running balance.
+  - may invalidate. `ldg:CreditAmountsShape`, `ldg:CreditKindAcceptedShape`, `ldg:CutWithinTheCreditShape` and `ldg:CutFillsTheAncestorShape` are new. A credit with no amount offered, or posted to an account that does not accept its kind, is refused, and so is a cut that is not within its credit or leaves its ancestor below its ceiling.
+  - changes meaning. `ldg:effectivePosition` and `ldg:recordedPosition` have the range `xsd:nonNegativeInteger`, since a position is a natural number. A document that states a negative position states one outside the range.
 - **0.22.0**.
   - changes meaning. What an account declares for a merge moves to a merge policy ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-17). `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation` have the domain `ldg:MergePolicy`, a new versioned class, and an account definition names its policy with the new `ldg:mergePolicy`, exactly one. A definition that states the three properties itself no longer conforms. To move it, state them on a policy and name the policy from the definition. `ldg:ProportionalNeedsRoundingShape` and `ldg:NearestRoundingStatesTheDifferenceShape` now target the policy.
   - no effect. New on a merge policy, each at most one: `ldg:rankCriterion` and `ldg:unitOrderCriterion`, whose values are concepts of the new scheme `ldg:OrderCriteria` that an applied module fills, and the booleans `ldg:allowsResiduals`, `ldg:requiresDistinctRanks` and `ldg:requiresSamePurpose`.
@@ -2094,11 +2286,8 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 
 ## 13. Open Issues
 
-- **The running balance on a posting.** With postings at the drawn account only, which account's running balance a posting would carry is ambiguous where its account has an ancestor. Balance records state the balance per account per pass instead.
-- **A ceiling cut before a later debit.** The fold of section 7.3 applies the credit ceiling once, to the total, which is exact unless a credit was cut by the ceiling before a later debit in the same subtree. Checking such a history needs the running balance on a posting, above.
 - **A purpose under a shared ancestor.** A draw naming a purpose writes a posting at the purpose-counting account too, and an ancestor of both would fold the draw twice. No example has such an ancestor, and the rule that prevents the double count is not yet decided.
-- **A reinstatement under a capacity pool.** A credit rolls up, so restoring an aggregate also restores the pool above it, and the insurance example debits the reinstatement at the pool to keep the pool the measure of capacity left. Whether a reinstatement is built that way, or the pool is stated otherwise, is not yet decided.
-- **Persistence's record families** for postings, balance records and merge records, append-only, are not yet declared. The storage shape they take is not yet measured.
+- **Persistence's record families** for postings, cuts and merge records, append-only, are not yet declared. The storage shape they take is not yet measured.
 - **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects and threshold regimes drawing on and reading them.
 - **A term proposed for review.** The definitions of section 10 name one thing the README has no term for yet, proposed here and not yet declared.
   - The reasons a merge is refused, a concept scheme `ldg:RefusalReasons`, the range of `ldg:refusalReason`, with `ldg:Exceeds`, `ldg:Unranked`, `ldg:Tied`, `ldg:Undecided`, `ldg:Mixed` and `ldg:Crossing`, each as `reason` defines it in section 10.

@@ -20,13 +20,13 @@ ldg:AccountShape a sh:NodeShape ;
     sh:targetClass ldg:Account ;
     sh:property [ sh:path ldg:accountKey ; sh:maxCount 1 ], [ sh:path ldg:forOwner ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:ofDefinition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOfAccount ; sh:maxCount 1 ], [ sh:path ldg:periodKey ; sh:maxCount 1 ] .
 
-ldg:BalanceRecordShape a sh:NodeShape ;
-    sh:targetClass ldg:BalanceRecord ;
-    sh:property [ sh:path ldg:availableValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:inPass ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:remainingValue ; sh:minCount 1 ; sh:maxCount 1 ] .
-
 ldg:CheckpointShape a sh:NodeShape ;
     sh:targetClass ldg:Checkpoint ;
     sh:property [ sh:path ldg:balanceValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:closePosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+ldg:CutShape a sh:NodeShape ;
+    sh:targetClass ldg:Cut ;
+    sh:property [ sh:path ldg:cutAt ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:cutOf ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:cutValue ; sh:minCount 1 ; sh:maxCount 1 ] .
 
 ldg:GrantShape a sh:NodeShape ;
     sh:targetClass ldg:Grant ;
@@ -46,4 +46,4 @@ ldg:PassShape a sh:NodeShape ;
 
 ldg:PostingShape a sh:NodeShape ;
     sh:targetClass ldg:Posting ;
-    sh:property [ sh:path ldg:amountValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:direction ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:effectivePosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:forPurpose ; sh:maxCount 1 ], [ sh:path ldg:inPass ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:microPosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:recordedPosition ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path ldg:amountValue ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:creditKind ; sh:maxCount 1 ], [ sh:path ldg:direction ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:effectivePosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:forPurpose ; sh:maxCount 1 ], [ sh:path ldg:inPass ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:microPosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:offeredValue ; sh:maxCount 1 ], [ sh:path ldg:onAccount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:recordedPosition ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:runningBalance ; sh:minCount 1 ; sh:maxCount 1 ] .

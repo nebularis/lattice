@@ -12,7 +12,7 @@
 #
 # | Account                | Before      | Position 1 (flood loss 700,000) | Position 2 (recovery 300,000) | Position 3 (loss 9,600,000) | Position 4 (reinstatement) | After       |
 # |--------------------------|------------:|-----------------------------------|----------------------------------|--------------------------------|-------------------------------|------------:|
-# | annual-cap        | 20,000,000  | -700,000 -> 19,300,000           | +300,000 -> 19,600,000           | -9,600,000 -> 10,000,000        | +10,000,000 rolled up, -10,000,000 drawn -> 10,000,000 | 10,000,000  |
+# | annual-cap        | 20,000,000  | -700,000 -> 19,300,000           | +300,000 -> 19,600,000           | -9,600,000 -> 10,000,000        | -- (a reinstatement does not restore it) | 10,000,000  |
 # | aggregate                 | 10,000,000  | -700,000 -> 9,300,000            | +300,000 -> 9,600,000            | -9,600,000 -> 0                 | +10,000,000 -> 10,000,000      | 10,000,000  |
 # | section-a                 |  6,000,000  | -700,000 -> 5,300,000            | +300,000 -> 5,600,000            | --                               | --                              |  5,600,000  |
 # | sublimit-a1                |  1,000,000  | -700,000 -> 300,000              | +300,000 -> 600,000              | --                               | --                              |    600,000  |
@@ -23,12 +23,14 @@
 # Position 3's loss is paid straight from the aggregate (a liability loss not
 # scoped to either section), so it does not touch section-a, sublimit-a1 or
 # section-b. Every posting is written once, at the account it names, and an
-# ancestor's balance is the fold over its subtree (LG-2). So position 4's
-# credit to the aggregate rolls up to the annual cap, and the reinstatement is also
-# debited at the annual cap, since the annual cap's falling balance is the measure of
-# total capacity left across the original cover and the reinstatement, and a
-# reinstatement uses that capacity rather than raising it. Whether a
-# reinstatement is built this way is LG-Q10, recorded for the maintainer.
+# ancestor's balance is the sum over its subtree. Each credit has a kind, a
+# recovery or a reinstatement, of the example's own. The annual cap is
+# restored by recoveries alone, so position 4's reinstatement restores the
+# aggregate and not the annual cap, whose balance stays the measure of total
+# capacity left across the original cover and the reinstatement. Every other
+# account names no kind and accepts both. No ancestor had less room than a
+# credit applied, so nothing is cut. Each posting records the running balance
+# of its own account.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -40,13 +42,18 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/insurance-aggregate/> .
 
-# ==== The owner, the purpose scheme and the value space =======================
+# ==== The owner, the purpose scheme, the kinds of credit and the value space ==
 
 ex:programme a fnd:PersistentIdentity ; rdfs:comment "The programme, owner of every account in this example." .
 ex:Programme a owl:Class ; rdfs:comment "The kind of owner these accounts admit." .
 
 ex:purposes a skos:ConceptScheme ; skos:prefLabel "loss purposes" .
 ex:flood a skos:Concept ; skos:inScheme ex:purposes ; skos:prefLabel "flood" .
+
+ex:recovery a skos:Concept ; skos:inScheme ldg:CreditKinds ; skos:prefLabel "recovery" ;
+    rdfs:comment "An amount recovered after a loss was paid, from a third party or salvage." .
+ex:reinstatement a skos:Concept ; skos:inScheme ldg:CreditKinds ; skos:prefLabel "reinstatement" ;
+    rdfs:comment "The aggregate restored once it is exhausted, as the programme allows once a year." .
 
 ex:money a qnt:ValueSpace ;
     qnt:spaceKey "ledger-insurance-aggregate-money" ; qnt:orderKind qnt:TotalOrder ;
@@ -78,7 +85,8 @@ ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
 ex:annual-cap a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-20000000 ; ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
-    rdfs:comment "Twice the aggregate: the programme's hard cap across the original cover and one reinstatement." .
+    ldg:restoredBy ex:recovery ;
+    rdfs:comment "Twice the aggregate: the programme's hard cap across the original cover and one reinstatement. Recoveries restore it, and a reinstatement does not." .
 
 ex:aggregate a ldg:AccountDefinition ;
     ldg:statedAmount ex:q-10000000 ; ldg:unitOfAccount ex:money ;
@@ -120,94 +128,50 @@ ex:loss-1-grant a ldg:Grant ;
     ldg:requestedValue "700000"^^xsd:decimal ; ldg:grantedValue "700000"^^xsd:decimal .
 ex:loss-1-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-sublimit-a1 ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:grant ex:loss-1-grant .
 ex:loss-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-sublimit-a1 ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "700000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
+    ldg:runningBalance "300000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:loss-1-merge , ex:loss-1-grant .
-ex:balance-1-sublimit a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-sublimit-a1 ;
-    ldg:inPass ex:pass-1 ;
-    ldg:remainingValue "300000"^^xsd:decimal ; ldg:availableValue "300000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:loss-1-posting .
-ex:balance-1-section-a a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-section-a ;
-    ldg:inPass ex:pass-1 ;
-    ldg:remainingValue "5300000"^^xsd:decimal ; ldg:availableValue "5300000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:loss-1-posting .
-ex:balance-1-aggregate a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-aggregate ;
-    ldg:inPass ex:pass-1 ;
-    ldg:remainingValue "9300000"^^xsd:decimal ; ldg:availableValue "9300000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:loss-1-posting .
-ex:balance-1-annual-cap a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-annual-cap ;
-    ldg:inPass ex:pass-1 ;
-    ldg:remainingValue "19300000"^^xsd:decimal ; ldg:availableValue "19300000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:loss-1-posting .
 
 ex:loss-1-flood-grant a ldg:Grant ;
     ldg:forProposal ex:loss-1-proposal ;
     ldg:requestedValue "700000"^^xsd:decimal ; ldg:grantedValue "700000"^^xsd:decimal .
 ex:loss-1-flood-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-flood-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:grant ex:loss-1-flood-grant .
 ex:loss-1-flood-posting a ldg:Posting ;
     ldg:onAccount ex:account-flood-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "700000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
+    ldg:runningBalance "2300000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:loss-1-flood-merge , ex:loss-1-flood-grant .
-ex:balance-1-flood a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-flood-aggregate ;
-    ldg:inPass ex:pass-1 ;
-    ldg:remainingValue "2300000"^^xsd:decimal ; ldg:availableValue "2300000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:loss-1-flood-posting .
 
 # ==== Position 2: a recovery, credited on the same path and purpose ==========
 
 ex:recovery-2-posting a ldg:Posting ;
     ldg:onAccount ex:account-sublimit-a1 ;
-    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:integer ;
-    ldg:recordedPosition "2"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
-    ldg:direction ldg:Credit ; ldg:amountValue "300000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
+    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:creditKind ex:recovery ;
+    ldg:offeredValue "300000"^^xsd:decimal ; ldg:amountValue "300000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
+    ldg:runningBalance "600000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:loss-1-posting .
-ex:balance-2-sublimit a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-sublimit-a1 ;
-    ldg:inPass ex:pass-2 ;
-    ldg:remainingValue "600000"^^xsd:decimal ; ldg:availableValue "600000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:recovery-2-posting .
-ex:balance-2-section-a a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-section-a ;
-    ldg:inPass ex:pass-2 ;
-    ldg:remainingValue "5600000"^^xsd:decimal ; ldg:availableValue "5600000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:recovery-2-posting .
-ex:balance-2-aggregate a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-aggregate ;
-    ldg:inPass ex:pass-2 ;
-    ldg:remainingValue "9600000"^^xsd:decimal ; ldg:availableValue "9600000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:recovery-2-posting .
-ex:balance-2-annual-cap a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-annual-cap ;
-    ldg:inPass ex:pass-2 ;
-    ldg:remainingValue "19600000"^^xsd:decimal ; ldg:availableValue "19600000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:recovery-2-posting .
 
 ex:recovery-2-flood-posting a ldg:Posting ;
     ldg:onAccount ex:account-flood-aggregate ;
-    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:integer ;
-    ldg:recordedPosition "2"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
-    ldg:direction ldg:Credit ; ldg:amountValue "300000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
+    ldg:inPass ex:pass-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:creditKind ex:recovery ;
+    ldg:offeredValue "300000"^^xsd:decimal ; ldg:amountValue "300000"^^xsd:decimal ; ldg:forPurpose ex:flood ;
+    ldg:runningBalance "2600000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:loss-1-flood-posting .
-ex:balance-2-flood a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-flood-aggregate ;
-    ldg:inPass ex:pass-2 ;
-    ldg:remainingValue "2600000"^^xsd:decimal ; ldg:availableValue "2600000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:recovery-2-flood-posting .
 
 # ==== Position 3: a liability loss paid straight from the aggregate ==========
 
@@ -217,49 +181,26 @@ ex:loss-3-grant a ldg:Grant ;
     ldg:requestedValue "9600000"^^xsd:decimal ; ldg:grantedValue "9600000"^^xsd:decimal .
 ex:loss-3-merge a ldg:MergeRecord ;
     ldg:onAccount ex:account-aggregate ;
-    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:integer ;
+    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
     ldg:grant ex:loss-3-grant .
 ex:loss-3-posting a ldg:Posting ;
     ldg:onAccount ex:account-aggregate ;
-    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:integer ;
-    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass ex:pass-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "9600000"^^xsd:decimal ;
+    ldg:runningBalance "0"^^xsd:decimal ;
     prov:wasDerivedFrom ex:loss-3-merge , ex:loss-3-grant .
-ex:balance-3-aggregate a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-aggregate ;
-    ldg:inPass ex:pass-3 ;
-    ldg:remainingValue "0"^^xsd:decimal ; ldg:availableValue "0"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:loss-3-posting .
-ex:balance-3-annual-cap a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-annual-cap ;
-    ldg:inPass ex:pass-3 ;
-    ldg:remainingValue "10000000"^^xsd:decimal ; ldg:availableValue "10000000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:loss-3-posting .
 
-# ==== Position 4: the aggregate is reinstated, drawing on the annual cap ===========
+# ==== Position 4: the aggregate is reinstated, and the annual cap is not =====
 
 ex:reinstatement-4-posting a ldg:Posting ;
     ldg:onAccount ex:account-aggregate ;
-    ldg:inPass ex:pass-4 ; ldg:effectivePosition "4"^^xsd:integer ;
-    ldg:recordedPosition "2"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
-    ldg:direction ldg:Credit ; ldg:amountValue "10000000"^^xsd:decimal ;
-    rdfs:comment "Restores the aggregate to its stated amount, within its credit ceiling. The credit rolls up to the annual cap." .
-ex:reinstatement-4-annual-cap-posting a ldg:Posting ;
-    ldg:onAccount ex:account-annual-cap ;
-    ldg:inPass ex:pass-4 ; ldg:effectivePosition "4"^^xsd:integer ;
-    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
-    ldg:direction ldg:Debit ; ldg:amountValue "10000000"^^xsd:decimal ;
-    rdfs:comment "The reinstatement used, debited at the annual cap so the credit rolled up from the aggregate does not raise total capacity (LG-Q10)." .
-ex:balance-4-aggregate a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-aggregate ;
-    ldg:inPass ex:pass-4 ;
-    ldg:remainingValue "10000000"^^xsd:decimal ; ldg:availableValue "10000000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:reinstatement-4-posting .
-ex:balance-4-annual-cap a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-annual-cap ;
-    ldg:inPass ex:pass-4 ;
-    ldg:remainingValue "10000000"^^xsd:decimal ; ldg:availableValue "10000000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:reinstatement-4-posting , ex:reinstatement-4-annual-cap-posting .
+    ldg:inPass ex:pass-4 ; ldg:effectivePosition "4"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Credit ; ldg:creditKind ex:reinstatement ;
+    ldg:offeredValue "10000000"^^xsd:decimal ; ldg:amountValue "10000000"^^xsd:decimal ;
+    ldg:runningBalance "10000000"^^xsd:decimal ;
+    rdfs:comment "Restores the aggregate to its stated amount, within its credit ceiling. The annual cap does not accept a reinstatement, so it stays at 10,000,000 and takes nothing." .
 
 # ==== The account instances and the passes ===================================
 

@@ -3,10 +3,10 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** building 2026-11-19. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** built 2026-11-19. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-19
 **Plan:** [ledger.md](../plans/ledger.md)
-**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md), [LG-23](../validation/LG-23.md), [LG-11](../validation/LG-11.md)
+**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md), [LG-23](../validation/LG-23.md), [LG-11](../validation/LG-11.md), [LG-25](../validation/LG-25.md)
 
 ---
 
@@ -163,13 +163,14 @@ Results sections. In short:
 | LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figures at the top of the READMEs | merged 2026-11-16, verified 2026-11-16, built 2026-11-16, building 2026-11-15 | LG-19 |
 | LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | merged 2026-11-18, verified 2026-11-19, built 2026-11-17, building 2026-11-17 |  |
 | LG-24 | the merge policy node, what an account declares for a merge moved to a policy the account definition refers to | merged 2026-11-18, verified 2026-11-17, built 2026-11-17, building 2026-11-17 |  |
-| LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed | building 2026-11-19, briefed 2026-11-19 | LG-11 |
+| LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed. [Validation Pack](../validation/LG-25.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 | LG-11 |
 | LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part | briefed 2026-11-19 | LG-25 |
 | LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation | briefed 2026-11-19 | LG-25 |
 | LG-28 | the account definition as a versioned thing, with the scheme edition it pins | briefed 2026-11-19 | LG-26, LG-27 |
 - 2026-11-19: on machine S, per the brief of 2026-11-19, on `spi/worktree-s`, committing locally only. LG-11 marked building.
 - 2026-11-19: LG-11 built. The three conversion properties and their shape are gone from the README and its extracted documents, `revolving-facility.ttl` draws in sterling and cites each conversion as a record outside the ledger, and the conversion mutation is gone from `tools/test_ledger.py`, 40 passed. The proofs name no conversion term and pass.
 - 2026-11-19: LG-25 marked building, after MSA-I5a's agreement lemma landed in the ledger's proof session with every proof green.
+- 2026-11-19: LG-25 built. A credit carries its kind and the amount offered beside the amount applied, an account names the kinds that restore it from the new empty scheme `ldg:CreditKinds`, a posting carries the running balance at its account, and a cut is a node naming its posting and the ancestor. The balance record and its laws are gone, and the runtime laws read a balance as a sum less its cuts. Positions are `xsd:nonNegativeInteger`. `tools/test_ledger.py` 52 passed, no formal block changed and the proofs pass. Two questions for the maintainer are in the pack.
 - 2026-11-19: the maintainer decided PDD-22 and answered LG-Q46 as (a). The writer's half of the rule of a pass is ADR-A131's second addendum of 2026-11-19, drafted as Proposed and accepted by the maintainer the same day, which has a pass written as one request on the revision it was evaluated from and named from its ledger and a key of its evaluation. Behaviour's half waits for LG-3 and the port's for the plan that builds it. LG-27 gains the pass's name, and the brief of 2026-11-19 says so.
 - 2026-11-19: **the maintainer accepted the wording of ADR-A131's addendum of 2026-11-19**, a checkpoint for an account that moved, which LG-27 builds to. The model behind LG-Q45 is kept as [`tools/models/ledger-pass-revision/`](../../../tools/models/ledger-pass-revision/README.md), and its run fails when a count changes.
 - 2026-11-19: the maintainer answered LG-Q45 as (a), raised that day by conditions C1 to C3 of the multi-store epic's read-set census. A pass moves a ledger's revision once, and its write is refused when the ledger has moved from the revision the pass read. LG-27 is unchanged by it. Where the rule is stated is PDD-22, and the census's candidate R6 is PDD-23. The rework is briefed for machine S in the [brief of 2026-11-19](../notes/machine-s-brief-2026-11-19.md), LG-11, LG-25 to LG-28 and then LG-12, and this session reviews it and writes nothing under `ontology/ledger/` meanwhile.

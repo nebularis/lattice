@@ -22,11 +22,11 @@ Separate facts require two forms of ordering. A strict before and after ensures 
 
 Each fact carries a whole number placing it among the other facts on its account, called its position, and a second number for ordering facts that share a position, called its micro-position. The fact itself, containing one draw or credit with its account, owner, amount, direction and position, is referred to as a posting.
 
-This one central law then, governs balances: each is a stated amount less what has been drawn, plus what has been restored, ensuring a balance is cheap to compute, but provable across properties checkable as a closed, mechanical law.
+This one central law then, governs balances: each is a stated amount less what has been drawn, plus what has been restored, less what an account above the one restored had no room for, ensuring a balance is cheap to compute, but provable across properties checkable as a closed, mechanical law.
 
 Since the effect of a posting is exactly the account plus every ancestor reached by following the ldg:partOf property upward, one fixed edge at a time, the set of accounts a draw touches is always fully enumerable (by walking one chain and checking each link), with no ambiguity about which balances a draw changes.
 
-Avoiding storing a balance also ensures that a balance agrees with its posting history by construction, with no path by which someone might set a balance to a value the postings don't justify.
+A posting records the balance of its account after it, its running balance, so a reader of the current balance reads one value. That value is checked against the sum of the postings, so no path lets someone set a balance to a value the postings don't justify.
 
 When disparate evaluations draw on the same account at the same position (being logically simultaneous, not \"whoever runs first\"), the model follows a fixed path, 'propose -> merge -> settle'.
 
@@ -44,7 +44,10 @@ dct:creator a owl:AnnotationProperty .
 dct:description a owl:AnnotationProperty .
 
 ldg:Credit a skos:Concept ;
-    rdfs:comment "The inverse of a draw along the same path, reducing it." .
+    rdfs:comment "A restoration, applied at the account it is posted to up to that account's room, and counted at each ancestor that accepts its kind." .
+
+ldg:CreditKinds a skos:ConceptScheme ;
+    rdfs:comment "The kinds of credit, which an account names to say what restores it." .
 
 ldg:Debit a skos:Concept ;
     rdfs:comment "A draw, reducing the balance." .
