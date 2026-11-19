@@ -46,7 +46,7 @@ import org.nebularis.lattice.studio.model.Workspace;
  * {@link #load} reads the folder the stage tool wrote, and each operation method returns the {@link Update}s to add to one
  * request. Every parameter is checked by the caller library before anything is built, the request digest is the profile's,
  * and a payload with a blank node is refused (skolemise it first, {@link Skolem#skolemise}). The class sends nothing, and reads the store
- * only in {@link #seq}, {@link #claimed}, {@link #workspace} and {@link #asOf}.
+ * only in {@link #seq}, {@link #seqs}, {@link #tombstoned}, {@link #claimed}, {@link #workspace} and {@link #asOf}.
  */
 public final class StudioOperations {
     /** The studio's aggregate families, each the target of one persistence profile. */
@@ -244,6 +244,13 @@ public final class StudioOperations {
     /** The sequence of {@code root}'s version row, empty when it has no row or it is tombstoned. */
     public Optional<Long> seq(StudioStore store, Family f, String root) {
         return store.versionSeq(graphOf(operation(f, "create-if-absent").contract, "metaGraphPrefix"), root);
+    }
+
+    /** The sequence of each live row among {@code roots}, by root, each read in its family's meta graph, in one query. */
+    public Map<String, Long> seqs(StudioStore store, Map<String, Family> roots) {
+        Map<String, String> metas = new HashMap<>();
+        roots.forEach((root, f) -> metas.put(root, metaGraph(f)));
+        return store.versionRows(metas);
     }
 
     /** Whether {@code root}'s version row is tombstoned, so its id cannot be created again. */
