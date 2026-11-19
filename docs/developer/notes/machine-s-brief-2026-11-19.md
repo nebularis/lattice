@@ -27,6 +27,7 @@ Each is recorded in the [ledger plan](../plans/ledger.md)'s questions, and the [
 | LG-Q42 | LG-11 first, then LG-25 to LG-28, released together | all five |
 | LG-Q43 | a checkpoint is written at a close only for an account that moved | LG-27 |
 | LG-Q45 | a pass moves a ledger's revision once | LG-27, unchanged by it |
+| LG-Q46 | a pass's IRI is derived from its ledger and a key the caller gives for the evaluation | LG-27 |
 
 **A position is a natural number.** LG-25 narrows the two position properties from `xsd:integer` to `xsd:nonNegativeInteger`.
 
@@ -53,7 +54,7 @@ Your census found three conditions in `ordered-draws.ttl` that no text stated. C
 - **After a refusal.** C2 does not say which revision a later guard reads. The refusal has to return the revision it was refused at.
 - **A guard that fails leaves no receipt.** A replay then evaluates it on the latest revision, and can post after a later posting of its own pass. The revision the pass started from has to be recorded.
 
-**What this means for the rework.** LG-27 builds what LG-Q37 decided, one triple for each pass, and adds no term for a posting. Where the rule itself is stated is not decided, and is PDD-22 of the [pending design decisions](../pending-design-decisions.md). Your candidate R6 is PDD-23. Build neither.
+**What this means for the rework.** LG-27 builds what LG-Q37 decided, one triple for each pass, and adds no term for a posting. It also states how a pass is named, from its ledger and a key the caller gives for the evaluation, so the same evaluation written twice is one node (LG-Q46). The rule for the writer is [ADR-A131](../../architecture/decisions/ADR-A131-ledger-layer.md)'s second addendum of 2026-11-19, which was Proposed when this brief was written, so say in LG-27's pack whether it was accepted when you built. It is a rule for a runtime and adds no term. Behaviour's half waits for LG-3, and the port's half for the plan that builds the port. Your candidate R6 is PDD-23 of the [pending design decisions](../pending-design-decisions.md), and nothing is built for it.
 
 ## 5. The slices, in one lane
 
@@ -64,7 +65,7 @@ Every slice edits the one ledger README, so the rework has one writer at a time.
 | 1 | LG-11, conversion leaves the ledger | 30k |
 | 2 | LG-25, postings as decided, the balance record removed | 200k |
 | 3 | LG-26, merges as decided | 150k |
-| 4 | LG-27, the ledger node, its profile and revision, the checkpoint's two totals | 150k |
+| 4 | LG-27, the ledger node, its profile and revision, the checkpoint's two totals, a pass's name | 150k |
 | 5 | LG-28, the account definition as a versioned thing | 200k |
 | 6 | LG-12, which draws an account accepts | 30k |
 
@@ -86,7 +87,7 @@ Every slice edits the one ledger README, so the rework has one writer at a time.
 ## 7. What you do not do
 
 - Behaviour's migration (LG-3) and allocation (LG-4), which follow the rework and are not briefed.
-- A revision on a posting, a receipt for each posting, or any term for PDD-22 or PDD-23.
+- A revision on a posting, a receipt for each posting, or any term for PDD-23.
 - Mark a decision record Accepted, or a row `verified`.
 
 ## 8. What you hand back

@@ -436,7 +436,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-24 | the merge policy node, what an account declares for a merge moved to a policy the account definition refers to | ledger | merged 2026-11-18 |  | docs/developer/status/ledger.md#board |
 | LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed | ledger | briefed 2026-11-19 | LG-11 | docs/developer/status/ledger.md#board |
 | LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part | ledger | briefed 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
-| LG-27 | the ledger node, its profile and revision, and the checkpoint's two totals | ledger | briefed 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
+| LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation | ledger | briefed 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
 | LG-28 | the account definition as a versioned thing, with the scheme edition it pins | ledger | briefed 2026-11-19 | LG-26, LG-27 | docs/developer/status/ledger.md#board |
 | MSA-I1 | `spikes/multi-store-shape-census`. 505 node shapes, none closed and bounded, so 0% of sample subjects against the proposed 80%. 134 fail only on closure and reach 43.4% of subjects. Validati | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I2 | the read-set census | multi-store-architecture | planned |  | docs/developer/status/multi-store-architecture.md#position |
