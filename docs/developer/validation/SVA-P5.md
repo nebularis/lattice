@@ -1,0 +1,49 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+# Validation Pack: SVA-P5, an object generated from the boundary shape
+
+**Unit:** [`studio-visual-authoring`](../status/studio-visual-authoring.md), slice SVA-P5, built on 2026-11-19 in autonomous mode, from the answer (c) to SVA-Q12 of the [sketch](../sketches/studio-visual-authoring.md): one small object generated from the boundary shape, with data at size left to BL-11.
+
+## Invariant
+
+Generate fills the simulator's object form from the aggregate's boundary shape with no randomness and no clock, so generating twice gives the same object and a step built from it the same TriG. It makes one root, the members each owned property's minimum requires and no more, and a value for each property whose minimum is at least one, within what the shape states. A reference is taken from the sample world's nodes of its class or left for the author, and never invented. What it cannot give is listed for the author with the reason.
+
+## What changed
+
+- `persistence/objectGenerate.ts` generates the object. A value is derived from an FNV-1a hash of the property's IRI and the node's path in the shape. It honours `sh:in`, `sh:hasValue`, the four bounds, the lengths, `sh:maxCount` and a pattern that is literal text, for strings, the integer types within their own ranges, decimals, booleans, dates, date-times and `xsd:anyURI`. A property is given at most 25 values or members.
+- Left for the author, each with its reason in the pane: a reference with too few nodes of its class in the sample world, a pattern that needs a regular-expression engine, a range or count no value satisfies, an exclusive bound on a date, a datatype it does not handle, a property with no datatype, class or list, and anything over the cap.
+- `objectForm.ts` carries the shape's counts and limits, `ui/SimulatorPane.tsx` has "Generate from the shape" beside "Fill from the sample world" and a list of what is left for the author.
+- The journey's fixture gains a generated create, with the frames the real run worker gave.
+
+## Tests
+
+| ID | Given / When / Then | Level | The break tried | The failure it gave |
+|---|---|---|---|---|
+| P5-T1 | a strict shape with a list, bounds, a length, patterns, owned and nested members / generated / an object the test's checker finds conforming, with exactly the minimum of each owned property | L1 | a minimum read one too low | a test failed |
+| P5-T2 | the same shape twice / generated, and a step built from each / equal objects and equal TriG | L1 | | |
+| P5-T3 | a reference with no node of its class in the world, one with fewer than its minimum, and the root's own class / generated / left for the author, partly given, and the root never chosen | L1 | | |
+| P5-T4 | an unsatisfiable range, an unknown datatype and a minimum over the cap / generated / each left for the author with its reason | L1 | | |
+| P5-T5 | the facility sample on the fake service / Generate, then Run a create / the worker's payload check passes and the step is applied | L2 | | |
+
+The app has no SHACL engine, so P5-T1 checks conformance with a small checker in the test, and P5-T5's payload check is the run worker's, recorded in the fixture.
+
+## Checks run
+
+| Command | Result |
+|---|---|
+| `tsc --noEmit` in `apps/config-studio` | exit 0, nothing printed |
+| `vitest run` | 34 files, 547 tests passed |
+| the Playwright journeys on the fake service, all 70 | 70 passed |
+| `mise exec -- mvn -o -f platform/pom.xml -pl config-studio-transforms -am verify` | BUILD SUCCESS, 0 failures, run by the delegated developer |
+| `mise run check:identifiers` | passed, 0 unresolved |
+| `mise run check:catalogue` | agrees with the tree, run by the delegated developer |
+
+The first three and the identifier check were run by the delegated developer and again by the reviewer. The journeys ran from a configuration outside the commit pointing Playwright at the container's older Chromium.
+
+## Left open
+
+- The facility sample's boundary shape states no `sh:minCount`, so a generated facility is its root alone, and the journey proves the control and the payload check but not values, members or references, which the unit tests prove on a strict shape. Whether the sample should state minimums is for the maintainer.
+
+## Placement
+
+T0. The studio's code is open.

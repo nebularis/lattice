@@ -11,6 +11,7 @@ import { readFiles, Spinner } from "./kit";
 import { OutputExplorer } from "./OutputExplorer";
 import { RunPane, useRunController } from "./RunPane";
 import { useStudio } from "./Workspace";
+import { generateObject, instancesIn } from "../persistence/objectGenerate";
 import { read, useCompilationEpoch, type Load } from "../persistence/compilation";
 import type { LandingPlaces, LandingTarget } from "../persistence/landing";
 import { localName, targetLabel } from "../persistence/landing";
@@ -352,7 +353,13 @@ export function SimulatorPane() {
     if (!spec || !target) return;
     const { data } = graphsOf(target, draft.root);
     const lines = aggregateLines(world, data, draft.root, target.aggregate.owned);
-    if (lines.length > 0) setDraft({ mode: "form", form: formValues(spec, lines, draft.root) });
+    if (lines.length > 0) setDraft({ mode: "form", form: formValues(spec, lines, draft.root), left: undefined });
+  };
+
+  const generate = () => {
+    if (!spec) return;
+    const made = generateObject(spec, draft.root, instancesIn(world));
+    setDraft({ mode: "form", form: made.form, left: made.left });
   };
 
   const controls = (
@@ -444,9 +451,30 @@ export function SimulatorPane() {
                       <FieldInput key={f.path} field={f} value={draft.form.fields[f.path] ?? ""} onChange={(v) => setDraft({ form: { ...draft.form, fields: { ...draft.form.fields, [f.path]: v } } as FormValues })} />
                     ))}
                     <OwnedForm specs={spec.owned} values={draft.form.owned} parent={draft.root} onChange={(owned) => setDraft({ form: { ...draft.form, owned } })} />
-                    <button className="btn sm" disabled={stored === undefined} onClick={fillFromWorld}>
-                      Fill from the sample world
-                    </button>
+                    <div className="row" style={{ gap: 6 }}>
+                      <button className="btn sm" onClick={generate} title="Fill the form with the small object the boundary shape requires">
+                        Generate from the shape
+                      </button>
+                      <button className="btn sm" disabled={stored === undefined} onClick={fillFromWorld}>
+                        Fill from the sample world
+                      </button>
+                    </div>
+                    {draft.left !== undefined && (
+                      <div className="small" role="status" aria-label="Left for the author">
+                        {draft.left.length === 0 ? (
+                          <p className="muted">The shape's requirements are all met. Change anything before Run.</p>
+                        ) : (
+                          <>
+                            <p className="muted">The shape requires these, and they are left for you.</p>
+                            <ul className="sim-list">
+                              {draft.left.map((l) => (
+                                <li key={l}>{l}</li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
                 {draft.mode === "form" && !spec && <p className="small muted">The baseline holds no boundary shape for this target. Give the object as Turtle.</p>}

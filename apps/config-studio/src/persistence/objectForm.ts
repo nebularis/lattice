@@ -2,11 +2,28 @@
 // The object the persistence simulator writes (SVA-P4, SVA-Q12). A form is derived from the aggregate's boundary shape, the node shape the compiled
 // profile's payload contract names, and an object can be given instead as Turtle. Both give the object as lines of N-Triples, with the root and
 // each owned member typed by the class their shape targets. A boundary shape that is not in the baseline has no form, and the author gives Turtle.
-// Generating an object from the shape is SVA-P5.
+// Generating an object from the shape is SVA-P5, in objectGenerate.ts, which reads the limits each field and owned member carries here.
 
 import { Graph, RDF, SH, namedNode, literal, type Term } from "@lattice/authoring-domain";
 import { shapeTargets } from "../rdf/shapes";
 import { ntLine, ntTerm, sortedLines } from "./simulator";
+
+/** What the property shape states of the values of a field, as written, for the form to hold and the generator to keep within. */
+export interface Limits {
+  minCount?: number;
+  maxCount?: number;
+  nodeKind?: string;
+  /** sh:in, where every listed value is an IRI for a reference or a literal for a literal field. */
+  in?: string[];
+  minInclusive?: string;
+  maxInclusive?: string;
+  minExclusive?: string;
+  maxExclusive?: string;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  hasValue?: string;
+}
 
 export interface FieldSpec {
   path: string;
@@ -16,6 +33,7 @@ export interface FieldSpec {
   datatype?: string;
   /** The class a reference is of, where the shape states one. */
   cls?: string;
+  limits?: Limits;
 }
 
 export interface OwnedSpec {
@@ -24,6 +42,8 @@ export interface OwnedSpec {
   /** What a member is called, its class's name in words, for the buttons that add and remove one. */
   member: string;
   cls: string;
+  /** How many members the property shape asks for, `sh:minCount` and `sh:maxCount`. */
+  limits?: Pick<Limits, "minCount" | "maxCount">;
   fields: FieldSpec[];
   owned: OwnedSpec[];
 }
@@ -50,12 +70,44 @@ export const EMPTY_FORM: FormValues = { fields: {}, owned: {} };
 const lastOf = (iri: string) => iri.slice(Math.max(iri.lastIndexOf("#"), iri.lastIndexOf("/")) + 1);
 const words = (name: string) => name.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[-_]+/g, " ").toLowerCase();
 
+const count = (g: Graph, ps: Term, predicate: string): number | undefined => {
+  const text = g.value(ps, predicate);
+  const n = Number(text);
+  return text !== undefined && Number.isInteger(n) && n >= 0 ? n : undefined;
+};
+
+const countLimits = (g: Graph, ps: Term): Pick<Limits, "minCount" | "maxCount"> => {
+  const minCount = count(g, ps, SH("minCount"));
+  const maxCount = count(g, ps, SH("maxCount"));
+  return { ...(minCount === undefined ? {} : { minCount }), ...(maxCount === undefined ? {} : { maxCount }) };
+};
+
+function limitsOf(g: Graph, ps: Term, reference: boolean): Limits | undefined {
+  const limits: Limits = countLimits(g, ps);
+  const nodeKind = g.value(ps, SH("nodeKind"));
+  if (nodeKind !== undefined) limits.nodeKind = nodeKind;
+  const list = g.object(ps, SH("in"));
+  const members = list ? g.list(list) : undefined;
+  if (members && members.length > 0 && members.every((t) => (reference ? t.termType === "NamedNode" : t.termType === "Literal"))) limits.in = members.map((t) => t.value);
+  for (const name of ["minInclusive", "maxInclusive", "minExclusive", "maxExclusive", "pattern", "hasValue"] as const) {
+    const v = g.value(ps, SH(name));
+    if (v !== undefined) limits[name] = v;
+  }
+  for (const name of ["minLength", "maxLength"] as const) {
+    const n = count(g, ps, SH(name));
+    if (n !== undefined) limits[name] = n;
+  }
+  return Object.keys(limits).length > 0 ? limits : undefined;
+}
+
 function fieldOf(g: Graph, ps: Term, path: string): FieldSpec {
   const datatype = g.value(ps, SH("datatype"));
   const cls = g.objects(ps, SH("class")).find((c) => c.termType === "NamedNode")?.value;
   const nodeKind = g.value(ps, SH("nodeKind"));
   const reference = cls !== undefined || nodeKind === SH("IRI");
-  return { path, label: words(lastOf(path)), kind: reference && datatype === undefined ? "iri" : "literal", ...(datatype === undefined ? {} : { datatype }), ...(cls === undefined ? {} : { cls }) };
+  const kind = reference && datatype === undefined ? "iri" : "literal";
+  const limits = limitsOf(g, ps, kind === "iri");
+  return { path, label: words(lastOf(path)), kind, ...(datatype === undefined ? {} : { datatype }), ...(cls === undefined ? {} : { cls }), ...(limits ? { limits } : {}) };
 }
 
 /** The form a node shape gives, its properties with a plain path in the order of their IRIs, a property that points at a node shape being an owned member. */
@@ -69,7 +121,8 @@ function specOf(g: Graph, shape: Term, seen: Set<string>): { fields: FieldSpec[]
     if (node && !seen.has(node.value)) {
       const cls = shapeTargets(g, node)[0];
       if (cls !== undefined) {
-        owned.push({ property: path.value, label: words(lastOf(path.value)), member: words(lastOf(cls)), cls, ...specOf(g, node, new Set([...seen, node.value])) });
+        const limits = countLimits(g, ps);
+        owned.push({ property: path.value, label: words(lastOf(path.value)), member: words(lastOf(cls)), cls, ...(Object.keys(limits).length > 0 ? { limits } : {}), ...specOf(g, node, new Set([...seen, node.value])) });
         continue;
       }
     }

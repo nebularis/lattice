@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-19. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-19. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-P4 for the maintainer, who weighs the confirmation read's causes beyond the patterns guide's four rows (SVA-P3a) and SVA-P4's choices, and says when the next slice starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** paused after SVA-P5 for the maintainer, who decides whether the facility sample's boundary shape should state minimums and says when the next slice starts. Ready: SVA-X1 and SVA-X2, and SVA-M3a, SVA-S2 and SVA-P2. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -53,7 +53,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P3 | the persistence simulation executor | built 2026-11-19, building 2026-11-19 | SVA-R3 |
 | SVA-P3a | the caller libraries' confirmation read | built 2026-11-19, building 2026-11-19 | SVA-P3 |
 | SVA-P4 | the persistence simulator pane | built 2026-11-19, building 2026-11-19 | SVA-R4, SVA-P1, SVA-P3a |
-| SVA-P5 | an object generated from the boundary shape | building 2026-11-19 | SVA-P4 |
+| SVA-P5 | an object generated from the boundary shape | built 2026-11-19, building 2026-11-19 | SVA-P4 |
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
 | SVA-S2 | the surface simulation executor | planned | SVA-P3 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
@@ -197,3 +197,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-19: the maintainer kept the confirmation read's causes beyond the guide's four rows, and section 15.2 of the patterns guide now lists them with a dated note pointing at the persistence contract.
 - 2026-11-19: SVA-P5 started.
 - 2026-11-19: `main`, `docs/placement-vehicles-structure` and `spi/multi-store-architecture` read for what bears on this unit. `main` is in both others. Planned SVA-X1 (BL-20, BL-21 and STD-328 are numbered on `main` for other rows), SVA-X2 (main's new standard that a user-facing document names a decision only in its Design decisions section, seven added lines) and SVA-X3 (the multi-store branch's contract-driven queue topology, MSA-F4, replaces this unit's binding fields), and added the version, release note, expected profiles and `bootstrap:erlang` to SVA-V1's pre-merge steps. The writer's changes on the multi-store branch (MSA-F1 to F9) touch other parts of `Writer.java` and a command's digest covers the fence command's body as this unit sends it. The ledger work on the placement branch touches nothing of this unit.
+- 2026-11-19: SVA-P5 built, [Validation Pack](../validation/SVA-P5.md). Generate fills the simulator's object from the boundary shape, deterministically, with references taken from the sample world or left for the author. The facility sample's shape states no minimum, so its generated facility is the root alone.

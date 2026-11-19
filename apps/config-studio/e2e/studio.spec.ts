@@ -2214,7 +2214,7 @@ test("the simulator creates a facility, changes it, loses a race as another writ
   // The requests were the journey's, and each ran once, since nothing runs until Run is pressed.
   const sent = fake.runs.filter((r) => r.kind === "simulate");
   expect(sent.map((r) => [r.target, r.mediaType, r.wait])).toEqual([["persistence", "application/trig", true], ["persistence", "application/trig", true], ["persistence", "application/trig", true]]);
-  expect(sent.map((r) => r.body)).toEqual(journey.steps.map((s) => s.body));
+  expect(sent.map((r) => r.body)).toEqual(journey.steps.slice(0, STEPS.length).map((s) => s.body));
 
   // Step back removes the change, and the world is the one the create left.
   await pane.getByRole("button", { name: "Step back" }).click();
@@ -2226,6 +2226,32 @@ test("the simulator creates a facility, changes it, loses a race as another writ
   await expect(steps).toHaveText("0 steps");
   await expect(size).toContainText("1 quad,");
   await expect(pane.getByRole("button", { name: "Step back" })).toBeDisabled();
+});
+
+test("the simulator generates a facility from its boundary shape, and creates it", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilityPersistenceCanvas(page, fake);
+  const journey = JSON.parse(readFileSync(join(import.meta.dirname, FIXTURE), "utf-8")) as Recorded;
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await page.getByRole("tab", { name: "Simulator" }).click();
+  const pane = page.getByRole("region", { name: "Simulator", exact: true });
+  await pane.getByRole("combobox", { name: "Simulator target" }).selectOption({ label: "Facility" });
+  // Nothing is generated until the author asks, and the form starts empty.
+  await expect(pane.getByRole("textbox", { name: "margin", exact: true })).toHaveValue("");
+  await expect(pane.getByRole("status", { name: "Left for the author" })).toHaveCount(0);
+  await pane.getByRole("button", { name: "Generate from the shape" }).click();
+  // The facility sample's boundary shape states no minimum, so the object is the root alone and nothing is left for the author.
+  await expect(pane.getByRole("status", { name: "Left for the author" })).toContainText("The shape's requirements are all met");
+  await expect(pane.getByRole("textbox", { name: "Root" })).toHaveValue(ROOT);
+  expect(fake.runs.filter((r) => r.kind === "simulate")).toEqual([]);
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  const outcome = pane.getByRole("region", { name: "The outcome" });
+  await expect(outcome.locator(".chip.outcome")).toHaveText("Applied");
+  await expect(outcome.locator("dd").filter({ hasText: "urn:rev:facility-1/1" })).toBeVisible();
+  await expect(pane.getByRole("region", { name: "The checks" }).getByText("payloadCheck")).toBeVisible();
+  await expect(pane.getByLabel("Steps in the sample world")).toHaveText("1 step");
+  // The step is the one the journey's fixture holds for the generated facility, which the run worker answered.
+  expect(fake.runs.filter((r) => r.kind === "simulate").map((r) => r.body)).toEqual([journey.steps[STEPS.length].body]);
 });
 
 test("the simulator keeps its sample world while the author looks at another view, and an object can be given as Turtle", async ({ page }) => {

@@ -14,6 +14,8 @@ export interface Draft {
   mode: "form" | "turtle";
   form: FormValues;
   turtle: string;
+  /** What the last generation left for the author, as sentences. Undefined until the author generates. */
+  left?: string[];
 }
 
 export interface Sim {

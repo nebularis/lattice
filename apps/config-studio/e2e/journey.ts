@@ -36,6 +36,15 @@ export const STEPS: JourneyStep[] = [
   { label: "change the margin as another writer", margin: "3.75", anotherWriter: true, write: "replace", outcome: "lostRace" },
 ];
 
+/**
+ * The generated facility (SVA-P5), a journey of its own that starts from an empty sample world, so that the root is the same one. The author presses
+ * Generate from the shape and then Run, and nothing is typed. The facility sample's boundary shape states no minimum, so the object is the root alone.
+ */
+export const GENERATED_STEP: JourneyStep = { label: "create the generated facility", margin: "", anotherWriter: false, write: "create", outcome: "applied" };
+
+/** Every step the fixture holds, in the order of its steps. */
+export const FIXTURE_STEPS: JourneyStep[] = [...STEPS, GENERATED_STEP];
+
 export const FIXTURE = "fixtures/simulator-facility-journey.json";
 
 export interface Recorded {

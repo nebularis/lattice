@@ -170,6 +170,63 @@
           "status": "succeeded"
         }
       ]
+    },
+    {
+      "label": "create the generated facility",
+      "outcome": "applied",
+      "body": "@prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\nGRAPH <urn:g:dataset> {\n<urn:g:dataset> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch> \"1\"^^<http://www.w3.org/2001/XMLSchema#long> .\n}\nGRAPH <urn:lattice:studio:step> {\n<urn:lattice:studio:step> a cst:SimulationStepRequest ;\n    cst:forClass <https://example.org/lending#Facility> ;\n    cst:operation \"create-if-absent\" ;\n    cst:transactionTime \"2026-01-15T09:00:00Z\"^^xsd:dateTime ;\n    cst:parameter [ cst:parameterName \"epoch\" ; cst:parameterValue \"1\" ] ,\n        [ cst:parameterName \"newRev\" ; cst:parameterValue \"urn:rev:facility-1/1\" ] ,\n        [ cst:parameterName \"root\" ; cst:parameterValue \"https://example.org/lending#facility-1\" ] ,\n        [ cst:parameterName \"txnId\" ; cst:parameterValue \"urn:txn:facility-1-1\" ] .\n}\nGRAPH <urn:lattice:studio:step/payload> {\n<https://example.org/lending#facility-1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.org/lending#Facility> .\n}\n",
+      "frames": [
+        {
+          "run": "urn:lattice:studio:run:3f2b8c1e-5a47-4d0e-9b1a-6c7d8e9f0a1b",
+          "seq": 0,
+          "last": false,
+          "part": {
+            "index": 0,
+            "role": "check",
+            "mediaType": "application/json"
+          },
+          "text": "{ \n  \"operation\" : \"create-if-absent\" ,\n  \"template\" : \"create-if-absent-composite-patch-log-dataset-guard\" ,\n  \"kind\" : \"Create\" ,\n  \"checks\" : [ \n      { \n        \"name\" : \"callerCheck\" ,\n        \"verdict\" : \"passed\" ,\n        \"reasons\" : [ ]\n      } ,\n      { \n        \"name\" : \"payloadCheck\" ,\n        \"verdict\" : \"passed\" ,\n        \"reasons\" : [ ]\n      }\n    ]\n}\n"
+        },
+        {
+          "run": "urn:lattice:studio:run:3f2b8c1e-5a47-4d0e-9b1a-6c7d8e9f0a1b",
+          "seq": 1,
+          "last": false,
+          "part": {
+            "index": 1,
+            "role": "request",
+            "mediaType": "application/sparql-update"
+          },
+          "text": "# Each NOW() of the operation was replaced with \"2026-01-15T09:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime>, the step's cst:transactionTime. The engine reads no clock.\nPREFIX  xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX  pat:  <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#>\n\nINSERT {\n  GRAPH <urn:g:facilities> {\n    <https://example.org/lending#facility-1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.org/lending#Facility> .\n  }\n  GRAPH ?addGraph {\n    <https://example.org/lending#facility-1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.org/lending#Facility> .\n  }\n  GRAPH <urn:g:meta/6> {\n    <https://example.org/lending#facility-1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> pat:VersionRow .\n    <https://example.org/lending#facility-1> pat:epoch \"1\"^^xsd:long .\n    <https://example.org/lending#facility-1> pat:seq \"1\"^^xsd:long .\n    <https://example.org/lending#facility-1> pat:head <urn:rev:facility-1/1> .\n  }\n  GRAPH <urn:g:txn> {\n    <urn:txn:facility-1-1> pat:rev <urn:rev:facility-1/1> .\n    <urn:txn:facility-1-1> pat:requestDigest \"9cabbf62568482d6d028df19962b99e81ee7dc3799609e49b796205ee1409d0b\" .\n  }\n  GRAPH ?logGraph {\n    <urn:rev:facility-1/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> pat:Revision .\n    <urn:rev:facility-1/1> pat:target <https://example.org/lending#facility-1> .\n    <urn:rev:facility-1/1> pat:epoch \"1\"^^xsd:long .\n    <urn:rev:facility-1/1> pat:seq \"1\"^^xsd:long .\n    <urn:rev:facility-1/1> pat:txn ?txnKey .\n    <urn:rev:facility-1/1> pat:recordedAt ?now .\n    <urn:rev:facility-1/1> pat:asserts ?addGraph .\n  }\n}\nWHERE\n  { { FILTER ( ( ( ( isIRI(<https://example.org/lending#facility-1>) && ( datatype(\"1\"^^xsd:long) = datatype(\"0\"^^xsd:long) ) ) && isIRI(<urn:rev:facility-1/1>) ) && isIRI(<urn:txn:facility-1-1>) ) && ( datatype(\"9cabbf62568482d6d028df19962b99e81ee7dc3799609e49b796205ee1409d0b\") = xsd:string ) ) }\n    BIND(IRI(concat(str(<urn:g:txlog/>), substr(str(\"2026-01-15T09:00:00Z\"^^xsd:dateTime), 1, 7))) AS ?logGraph)\n    BIND(IRI(concat(str(<urn:rev:facility-1/1>), \"/add\")) AS ?addGraph)\n    GRAPH <urn:g:dataset>\n      { <urn:g:dataset>\n                  pat:epoch  \"1\"^^xsd:long\n      }\n    FILTER NOT EXISTS { GRAPH <urn:g:meta/6>\n                          { <https://example.org/lending#facility-1>\n                                      pat:seq  ?any\n                          }\n                      }\n    FILTER NOT EXISTS { GRAPH <urn:g:facilities>\n                          { <https://example.org/lending#facility-1>\n                                      ?anyP  ?anyO\n                          }\n                      }\n    FILTER NOT EXISTS { GRAPH <urn:g:txn>\n                          { <urn:txn:facility-1-1>\n                                      pat:rev  ?any\n                          }\n                      }\n    BIND(str(<urn:txn:facility-1-1>) AS ?txnKey)\n    BIND(\"2026-01-15T09:00:00Z\"^^xsd:dateTime AS ?now)\n  }\n"
+        },
+        {
+          "run": "urn:lattice:studio:run:3f2b8c1e-5a47-4d0e-9b1a-6c7d8e9f0a1b",
+          "seq": 2,
+          "last": false,
+          "part": {
+            "index": 2,
+            "role": "delta",
+            "mediaType": "application/json"
+          },
+          "text": "{ \n  \"places\" : [ \n      { \n        \"place\" : \"https://example.org/lending/Facility/compiled/profile#place-data-urn%3Ag%3Afacilities\" ,\n        \"role\" : \"DataRole\" ,\n        \"graphs\" : [ \n            { \n              \"graph\" : \"urn:g:facilities\" ,\n              \"added\" : [ \"<https://example.org/lending#facility-1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.org/lending#Facility> .\" ] ,\n              \"removed\" : [ ]\n            }\n          ]\n      } ,\n      { \n        \"place\" : \"https://example.org/lending/Facility/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D\" ,\n        \"role\" : \"LogRole\" ,\n        \"graphs\" : [ \n            { \n              \"graph\" : \"urn:g:txlog/2026-01\" ,\n              \"added\" : [ \n                  \"<urn:rev:facility-1/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#Revision> .\" ,\n                  \"<urn:rev:facility-1/1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#asserts> <urn:rev:facility-1/1/add> .\" ,\n                  \"<urn:rev:facility-1/1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch> \\\"1\\\"^^<http://www.w3.org/2001/XMLSchema#long> .\" ,\n                  \"<urn:rev:facility-1/1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#recordedAt> \\\"2026-01-15T09:00:00Z\\\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\" ,\n                  \"<urn:rev:facility-1/1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq> \\\"1\\\"^^<http://www.w3.org/2001/XMLSchema#long> .\" ,\n                  \"<urn:rev:facility-1/1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#target> <https://example.org/lending#facility-1> .\" ,\n                  \"<urn:rev:facility-1/1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#txn> \\\"urn:txn:facility-1-1\\\" .\"\n                ] ,\n              \"removed\" : [ ]\n            }\n          ]\n      } ,\n      { \n        \"place\" : \"https://example.org/lending/Facility/compiled/profile#place-meta-urn%3Ag%3Ameta%2F6\" ,\n        \"role\" : \"MetaRole\" ,\n        \"graphs\" : [ \n            { \n              \"graph\" : \"urn:g:meta/6\" ,\n              \"added\" : [ \n                  \"<https://example.org/lending#facility-1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#VersionRow> .\" ,\n                  \"<https://example.org/lending#facility-1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#epoch> \\\"1\\\"^^<http://www.w3.org/2001/XMLSchema#long> .\" ,\n                  \"<https://example.org/lending#facility-1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#head> <urn:rev:facility-1/1> .\" ,\n                  \"<https://example.org/lending#facility-1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#seq> \\\"1\\\"^^<http://www.w3.org/2001/XMLSchema#long> .\"\n                ] ,\n              \"removed\" : [ ]\n            }\n          ]\n      } ,\n      { \n        \"place\" : \"https://example.org/lending/Facility/compiled/profile#place-patch-%7BnewRev%7D%2Fadd\" ,\n        \"role\" : \"PatchRole\" ,\n        \"graphs\" : [ \n            { \n              \"graph\" : \"urn:rev:facility-1/1/add\" ,\n              \"added\" : [ \"<https://example.org/lending#facility-1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.org/lending#Facility> .\" ] ,\n              \"removed\" : [ ]\n            }\n          ]\n      } ,\n      { \n        \"place\" : \"https://example.org/lending/Facility/compiled/profile#place-txn-urn%3Ag%3Atxn\" ,\n        \"role\" : \"TxnRole\" ,\n        \"graphs\" : [ \n            { \n              \"graph\" : \"urn:g:txn\" ,\n              \"added\" : [ \n                  \"<urn:txn:facility-1-1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#requestDigest> \\\"9cabbf62568482d6d028df19962b99e81ee7dc3799609e49b796205ee1409d0b\\\" .\" ,\n                  \"<urn:txn:facility-1-1> <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#rev> <urn:rev:facility-1/1> .\"\n                ] ,\n              \"removed\" : [ ]\n            }\n          ]\n      }\n    ] ,\n  \"unplaced\" : [ ]\n}\n"
+        },
+        {
+          "run": "urn:lattice:studio:run:3f2b8c1e-5a47-4d0e-9b1a-6c7d8e9f0a1b",
+          "seq": 3,
+          "last": false,
+          "part": {
+            "index": 3,
+            "role": "outcome",
+            "mediaType": "application/json"
+          },
+          "text": "{ \n  \"outcome\" : \"applied\" ,\n  \"classification\" : \"Applied\" ,\n  \"reason\" : \"The claim of the transaction is on the transaction graph with this request's digest, so the write applied, on this attempt or an earlier attempt.\" ,\n  \"revision\" : \"urn:rev:facility-1/1\" ,\n  \"engine\" : \"Apache Jena ARQ 6.2.0, in memory\"\n}\n"
+        },
+        {
+          "run": "urn:lattice:studio:run:3f2b8c1e-5a47-4d0e-9b1a-6c7d8e9f0a1b",
+          "seq": 4,
+          "last": true,
+          "status": "succeeded"
+        }
+      ]
     }
   ]
 }
