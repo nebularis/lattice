@@ -1536,9 +1536,12 @@ The confirmation read goes to the writer or primary, never to a replica: a repli
 |---|---|---|
 | claim present, digest equal | `Applied`, now or on an earlier attempt. Idempotent replay | `204`/`200` with the new ETag |
 | claim present, digest differs | `IdempotencyKeyReuse`: a different request already used this id. Never reported as success | `422` |
-| claim absent, dataset epoch differs from the request's | `EpochChanged`: the store was restored or migrated. Resynchronise | `412`, with a resync signal |
+| claim absent, the epoch the operation guards on differs from the request's, the dataset's for a template with the dataset guard and the version row's otherwise | `EpochChanged`: the store was restored or migrated. Resynchronise | `412`, with a resync signal |
 | claim absent, row tombstoned | `Gone` | `410` |
-| claim absent, CAS form | `PreconditionFailed`: another writer moved the row | `412` with the current ETag |
+| claim absent, CAS form | `PreconditionFailed`: another writer moved the row, or for an append the stream's row exists | `412` with the current ETag |
+| claim absent, a create whose version row, or for a composite create whose root's data, exists | `AlreadyExists`: another writer created the aggregate | `409` |
+| claim absent, a key claim held by another owner | `KeyClaimHeld`: another aggregate holds the key | `409` |
+| claim absent, and no guard that leaves a trace failed, such as a parameter's type, or the request is still in flight | `NotApplied`: resend the identical request, as for `Unknown` | — |
 | transport failure of any kind (timeout, connection reset, `5xx` including `502`/`504`, client crash after send) | `Unknown` until resolved | — |
 
 An `Unknown` outcome is resolved by resending the *identical* request (same txn id, same digest), then confirming. A single confirmation read taken immediately after a transport failure is not definitive, because the original request may still be executing. The resend is safe: it either applies once or is a no-op against the claim. The server's maximum request duration bounds how long the original can remain in flight.
@@ -1546,6 +1549,8 @@ An `Unknown` outcome is resolved by resending the *identical* request (same txn 
 The claim protects retries only while it is retained. A claim pruned too early turns a late retry of an applied CAS into a `412`, and the client, which can no longer find its own claim, may conclude it lost and re-apply its change on top of itself. For the append form, which has no version guard, the late retry is applied a second time. The txn graph's TTL is therefore at least the longest horizon over which any request can be redelivered (client retry window, outbox redelivery, dead-letter replay), and [§24.2](#242-retention-and-pruning) adds audits that detect a duplicate application after the claim is gone.
 
 **Note, 2026-10-20 (formal-methods H2.8a and H2.8b).** The digest of the persistence caller library is `hex(SHA-256(enc([kind, target, expected, part1, part2, ...])))`, where each content part is one component, `enc` of that part's sorted canonical lines, and the parts follow the compiled profile's digest contract. The flat list of `request_digest` below cannot tell the payload of a replace from its added and retracted triples, and gives a different byte string for an operation with one content part. Where the two differ, the vectors in `contracts/persistence/` are the definition ([ADR-A132](decisions/ADR-A132-persistence-caller-library.md) decision 4). The same vectors fix the payload check (every subject is the root or reached from it by owned edges), the events of an append (every subject is an event of the batch or minted under one), the caller check of the parameters, the audit outcome (clean, failed or nothing examined) and the reference modes.
+
+**Note, 2026-11-19.** The caller libraries give this read, and [the persistence contract](../../contracts/persistence/README.md#the-confirmation) specifies it with the facts it asks for by each operation's guards and the order its rules apply in. The vectors in `contracts/persistence/` are its definition where this table and they differ. The table above gained the epoch of the guard in force, `AlreadyExists`, `KeyClaimHeld` and `NotApplied` on that date, each answering a guard of a generated operation.
 
 ### 15.3 Making the store *enforce* the invariant: the SHACL trick
 
