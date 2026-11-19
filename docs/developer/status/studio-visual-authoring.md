@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-19. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-19. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -52,7 +52,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P2 | edits on the persistence canvas | planned | SVA-P1 |
 | SVA-P3 | the persistence simulation executor | built 2026-11-19, building 2026-11-19 | SVA-R3 |
 | SVA-P3a | the caller libraries' confirmation read | built 2026-11-19, building 2026-11-19 | SVA-P3 |
-| SVA-P1c | a general class of landing place | building 2026-11-19 | SVA-P1a |
+| SVA-P1c | a general class of landing place | built 2026-11-19, building 2026-11-19 | SVA-P1a |
 | SVA-P4 | the persistence simulator pane | built 2026-11-19, building 2026-11-19 | SVA-R4, SVA-P1, SVA-P3a |
 | SVA-P5 | an object generated from the boundary shape | built 2026-11-19, building 2026-11-19 | SVA-P4 |
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
@@ -201,3 +201,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-19: SVA-P5 built, [Validation Pack](../validation/SVA-P5.md). Generate fills the simulator's object from the boundary shape, deterministically, with references taken from the sample world or left for the author. The facility sample's shape states no minimum, so its generated facility is the root alone.
 - 2026-11-19: the multi-store unit read the compiled landing places sketch and SVA-P1a's shapes and found the designs agree. It asked, with the maintainer's agreement, for a general class of place above `dal:GraphPlace`, since a profile compiled for a relational store fails the access's shape as built. Planned as SVA-P1c, its name to be proposed to the maintainer. A relational place will be emitted from the mapping declaration, so the class's comment must not tie a place to SPARQL. The multi-store branch's MSA-F13 will refuse a queue whose binding names no declared exchange, noted in SVA-X3, and its relational realisation takes the receipt's month from the transaction time, noted in TD-171.
 - 2026-11-19: the maintainer named the general class `dal:LandingPlace` and agreed that the facility sample's boundary shape states `sh:minCount 1` on its three plain-value properties, as a follow-up of SVA-P5. SVA-P1c started.
+- 2026-11-19: SVA-P1c built, [Validation Pack](../validation/SVA-P1c.md). `dal:LandingPlace` is the range of `dal:landsIn` and the class the access's shape requires, with `dal:GraphPlace` its subclass, and no compiled profile changed. The facility sample's shape states its three plain-value minimums, and the simulator's generated facility carries them. The maintainer pre-approved SVA-X2, SVA-X1 and SVA-M3a in that order, with a pause after.

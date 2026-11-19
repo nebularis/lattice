@@ -9,8 +9,9 @@ each resolved value won through."""
 
 from __future__ import annotations
 
+import pyshacl
 import pytest
-from rdflib import RDF, Graph, Literal, URIRef
+from rdflib import RDF, RDFS, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import SH
 
@@ -29,6 +30,7 @@ from persistence.ir_render import term_text
 from persistence.landing import PATCH_DIRECTIONS, PLACEHOLDERS, LandingError, Place, is_template_of_closed_set, write_places
 from persistence.namespaces import DAL
 from persistence.terms import Integer, Iri, Literal as Lit
+from persistence.witness import SPEC_TTL
 
 from conftest import EXAMPLES_DIR
 from test_builders import _corpus
@@ -358,3 +360,63 @@ def test_the_shape_closes_a_place_s_role_to_the_eleven_roles_of_the_ir_less_deri
     assert _closed("GraphPlaceShape", "inGraphRole") == set(ROLE_INDIVIDUALS.values())
     assert len(ROLE_INDIVIDUALS) == 11
     assert _closed("ResourceAccessShape", "patchDirection") == {"Added", "Removed"}
+
+
+# ---- a place is a dal:LandingPlace, and a realisation states its own subclass -----------------------------------------------------
+
+EX = Namespace("https://example.org/realisation#")
+LANDS_IN_CLASS = "ClassConstraintComponent"
+
+
+def _landing_report(place_types: str, *, with_vocabulary: bool = True) -> set[str]:
+    """The local names of the components that report on the one write access, which lands in ``ex:place``.
+
+    The data graph holds the access, the place typed as ``place_types`` says, a relational realisation's own subclass of
+    ``dal:LandingPlace`` and, unless told not to, the vocabulary. SHACL's ``sh:class`` follows ``rdfs:subClassOf`` only through triples of the
+    data graph, and every validation of a compiled profile here is run with ``inference="none"`` over a graph that holds the vocabulary."""
+    data = Graph()
+    if with_vocabulary:
+        data.parse(SPEC_TTL, format="turtle")
+    data.parse(
+        data=f"""
+        @prefix dal: <{DAL}> . @prefix ex: <{EX}> . @prefix rdfs: <{RDFS}> .
+        ex:RelationalTable rdfs:subClassOf dal:LandingPlace .
+        ex:Unrelated a <http://www.w3.org/2002/07/owl#Class> .
+        <urn:example:access> a dal:ResourceAccess ; dal:resourceKind dal:Aggregate ; dal:accessMode dal:Insert ; dal:landsIn <urn:example:place> .
+        <urn:example:place> a {place_types} .
+        """,
+        format="turtle",
+    )
+    data.bind("dal", DAL)
+    _, report, _ = pyshacl.validate(data, shacl_graph=SHAPES, inference="none", advanced=True, allow_warnings=True)
+    return {
+        _name(report.value(result, SH.sourceConstraintComponent))
+        for result in report.subjects(RDF.type, SH.ValidationResult)
+        if report.value(result, SH.focusNode) == URIRef("urn:example:access")
+    }
+
+
+def test_a_graph_place_is_a_landing_place_through_the_vocabulary_and_passes_the_access_shape():
+    assert (DAL.GraphPlace, RDFS.subClassOf, DAL.LandingPlace) in Graph().parse(SPEC_TTL, format="turtle")
+    assert _landing_report("dal:GraphPlace ; dal:inGraphRole dal:DataRole ; dal:inGraph <urn:g:x>") == set()
+
+
+def test_a_place_typed_by_another_subclass_of_landing_place_passes_the_access_shape_without_being_a_graph_place():
+    assert _landing_report("ex:RelationalTable") == set()
+
+
+def test_a_place_that_is_no_landing_place_fails_the_access_shape():
+    assert _landing_report("ex:Unrelated") == {LANDS_IN_CLASS}
+
+
+def test_a_place_typed_only_as_a_resource_fails_the_access_shape():
+    assert _landing_report("<http://www.w3.org/2000/01/rdf-schema#Resource>") == {LANDS_IN_CLASS}
+
+
+def test_the_subclass_axiom_is_carried_by_the_vocabulary_and_never_by_the_compiled_profile():
+    """The compiled profile is not given a second ``rdf:type`` on each place, so a validation holds the vocabulary in its data graph."""
+    assert _landing_report("dal:GraphPlace ; dal:inGraphRole dal:DataRole ; dal:inGraph <urn:g:x>", with_vocabulary=False) == {LANDS_IN_CLASS}
+    for name, profile in EXPECTED.items():
+        for place in profile.subjects(RDF.type, DAL.GraphPlace):
+            assert set(profile.objects(place, RDF.type)) == {DAL.GraphPlace}, name
+        assert (DAL.GraphPlace, RDFS.subClassOf, DAL.LandingPlace) not in profile, name

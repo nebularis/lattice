@@ -112,9 +112,18 @@ function generated(spec: FormSpec, instances: Instances) {
 }
 
 describe("the object a boundary shape gives", () => {
-  it("is the root alone where the shape requires nothing, as the facility sample's does, and it conforms", () => {
+  it("is the root with a reference, a commitment and a margin where the shape requires those three and nothing else, as the facility sample's does, and it conforms", () => {
     const g = generated(plain, instancesIn(world));
-    expect(g.lines).toEqual([ntLine(ROOT, TYPE, `<${EX}Facility>`)]);
+    const get = (p: string) => g.data.objects(ROOT, `${EX}${p}`).map((t) => t.value);
+    expect(g.lines).toHaveLength(4);
+    expect(g.lines).toContain(ntLine(ROOT, TYPE, `<${EX}Facility>`));
+    expect(get("facilityReference")).toHaveLength(1);
+    expect(get("commitment")).toHaveLength(1);
+    expect(get("margin")).toHaveLength(1);
+    expect(get("arrangedBy")).toEqual([]);
+    expect(get("borrower")).toEqual([]);
+    expect(get("lender")).toEqual([]);
+    expect(get("hasDrawdown")).toEqual([]);
     expect(g.left).toEqual([]);
     expect(conforms(sample, namedNode(`${EX}FacilityShape`), g.data, namedNode(ROOT), instancesIn(world))).toEqual([]);
   });

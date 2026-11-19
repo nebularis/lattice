@@ -560,8 +560,8 @@ dal:ResourceAccessShape
                   sh:message "A resource access has exactly one dal:accessMode, an individual of dal:AccessMode." ] ;
     sh:property [ sh:path dal:keyedBy ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
                   sh:message "dal:keyedBy names a parameter declaration by its IRI." ] ;
-    sh:property [ sh:path dal:landsIn ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:GraphPlace ;
-                  sh:message "An access lands in at most one place, a dal:GraphPlace named by its IRI." ] ;
+    sh:property [ sh:path dal:landsIn ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:LandingPlace ;
+                  sh:message "An access lands in at most one place, a dal:LandingPlace named by its IRI." ] ;
     sh:property [ sh:path dal:patchDirection ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:in ( dal:Added dal:Removed ) ;
                   sh:message "dal:patchDirection is dal:Added or dal:Removed, once." ] ;
     sh:property [ sh:path dal:forConstraint ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;

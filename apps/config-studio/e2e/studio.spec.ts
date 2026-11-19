@@ -2240,9 +2240,12 @@ test("the simulator generates a facility from its boundary shape, and creates it
   await expect(pane.getByRole("textbox", { name: "margin", exact: true })).toHaveValue("");
   await expect(pane.getByRole("status", { name: "Left for the author" })).toHaveCount(0);
   await pane.getByRole("button", { name: "Generate from the shape" }).click();
-  // The facility sample's boundary shape states no minimum, so the object is the root alone and nothing is left for the author.
+  // The facility sample's boundary shape requires a reference, a commitment and a margin and nothing else, so those three are given and nothing is left for the author.
   await expect(pane.getByRole("status", { name: "Left for the author" })).toContainText("The shape's requirements are all met");
   await expect(pane.getByRole("textbox", { name: "Root" })).toHaveValue(ROOT);
+  await expect(pane.getByRole("textbox", { name: "facility reference" })).not.toHaveValue("");
+  await expect(pane.getByRole("textbox", { name: "commitment", exact: true })).not.toHaveValue("");
+  await expect(pane.getByRole("textbox", { name: "margin", exact: true })).not.toHaveValue("");
   expect(fake.runs.filter((r) => r.kind === "simulate")).toEqual([]);
   await pane.getByRole("button", { name: "Run", exact: true }).click();
   const outcome = pane.getByRole("region", { name: "The outcome" });

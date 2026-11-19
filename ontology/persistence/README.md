@@ -655,7 +655,7 @@ classDiagram
 
 <!-- end -->
 
-<!-- start: {"generated": "class-diagram", "part": "The operation contract, parameters and resources", "classes": ["dal:ParameterDeclaration", "dal:ParameterKind", "dal:Rule", "dal:Source", "dal:ResourceAccess", "dal:AccessMode", "dal:ResourceKind", "dal:GraphPlace", "dal:GraphRole", "dal:PatchDirection", "dal:GraphNaming", "dal:OperationKind"], "enumerations": "table"} -->
+<!-- start: {"generated": "class-diagram", "part": "The operation contract, parameters and resources", "classes": ["dal:ParameterDeclaration", "dal:ParameterKind", "dal:Rule", "dal:Source", "dal:ResourceAccess", "dal:AccessMode", "dal:ResourceKind", "dal:LandingPlace", "dal:GraphPlace", "dal:GraphRole", "dal:PatchDirection", "dal:GraphNaming", "dal:OperationKind"], "enumerations": "table"} -->
 
 **The operation contract, parameters and resources**
 
@@ -694,6 +694,7 @@ classDiagram
         RetentionRole
         TxnRole
     }
+    class LandingPlace
     class OperationKind {
         <<enumeration>>
         Append
@@ -767,12 +768,13 @@ classDiagram
     }
     class UniquenessConstraint
     GraphPlace --> GraphRole : inGraphRole
+    LandingPlace <|-- GraphPlace
     ParameterDeclaration --> ParameterDeclaration : mustEqualFor
     ParameterDeclaration --> ParameterKind : parameterKind
     ParameterDeclaration --> Rule : mustEqual
     ParameterDeclaration --> Source : sourcedFrom
     ResourceAccess --> AccessMode : accessMode
-    ResourceAccess --> GraphPlace : landsIn
+    ResourceAccess --> LandingPlace : landsIn
     ResourceAccess --> ParameterDeclaration : keyedBy
     ResourceAccess --> PatchDirection : patchDirection
     ResourceAccess --> ResourceKind : resourceKind
@@ -2246,7 +2248,7 @@ in `shapes/constraints.ttl` check a compiled profile (§7.2), and the files of `
 
 #### 5.8.2 Where the writes land, and the scopes that matched
 
-A `dal:ResourceAccess` states a logical resource and keeps only logical facts, so a relational realisation and a model checker read it unchanged. Its realisation in SPARQL is stated beside it, on a `dal:GraphPlace`, which is one graph or one family of graphs named when an operation runs. A place states exactly one `dal:inGraphRole`, an individual of the closed `dal:GraphRole`, and exactly one of the following.
+A `dal:ResourceAccess` states a logical resource and keeps only logical facts, so a relational realisation and a model checker read it unchanged. Where a realisation keeps the resource is stated beside it, on a `dal:LandingPlace`, and each realisation states its places in a subclass of its own. The SPARQL realisation's is `dal:GraphPlace`, which is one graph or one family of graphs named when an operation runs. A `dal:GraphPlace` states exactly one `dal:inGraphRole`, an individual of the closed `dal:GraphRole`, and exactly one of the following.
 
 | Property | Holds |
 |---|---|
@@ -2255,7 +2257,7 @@ A `dal:ResourceAccess` states a logical resource and keeps only logical facts, s
 
 A template names only the placeholders `{root}`, `{newRev}` and `{month}`. `{root}` is the operation's root parameter, percent-encoded as `ENCODE_FOR_URI` encodes it, as `{id}` is in `dal:graphIriTemplate`. `{newRev}` is the operation's new revision parameter as it is, and `{month}` is the month of the transaction time as `YYYY-MM`. A graph that is neither a fixed IRI nor a template of these makes the compile refuse, naming the operation and the graph.
 
-Each access that inserts or deletes has exactly one `dal:landsIn`, and a read access has none. A compiled profile states each distinct place once, and every access that lands there points at the same node. The IRI of a place is minted as the profile's other declarations are, from the target, the deployment where there is one, the role and the graph or template percent-encoded, for example `<…/Facility/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D>`, so two compiles give the same IRIs. A reader finds every pinned graph by comparing `dal:PinnedRole`, and never by matching a template's text.
+Each access that inserts or deletes has exactly one `dal:landsIn`, a `dal:LandingPlace`, and a read access has none. A reader that validates a compiled profile includes the vocabulary in the graph it validates, since `ResourceAccessShape` follows `rdfs:subClassOf` from `dal:GraphPlace` to `dal:LandingPlace` through the data graph, and the compiled profile does not repeat the axiom. A compiled profile states each distinct place once, and every access that lands there points at the same node. The IRI of a place is minted as the profile's other declarations are, from the target, the deployment where there is one, the role and the graph or template percent-encoded, for example `<…/Facility/compiled/profile#place-log-urn%3Ag%3Atxlog%2F%7Bmonth%7D>`, so two compiles give the same IRIs. A reader finds every pinned graph by comparing `dal:PinnedRole`, and never by matching a template's text.
 
 A patch log's graph of added triples and its graph of removed triples both have the role `dal:PatchRole`. The direction is the constant part of the logical key of `dal:PatchContent`, so the two are two accesses, told apart by `dal:patchDirection`.
 
@@ -3792,12 +3794,18 @@ write skew turns on it.
 
 **Equivalent to.** { dal:Aggregate, dal:DatasetEpoch, dal:Event, dal:KeyClaim, dal:KeyQuarantine, dal:MergeRecord, dal:PatchContent, dal:PropertyValue, dal:Receipt, dal:RetentionMark, dal:TransactionClaim, dal:VersionRow }
 
+#### `dal:LandingPlace`
+
+**Definition.** Where a realisation keeps the resource a write access names. For a SPARQL realisation it is one graph, or one family of graphs named when an operation runs. Each realisation states its places in a subclass of its own, and a write access lands in exactly one place.
+
 #### `dal:GraphPlace`
 
 **Definition.** One graph, or one family of graphs named when an operation runs, in which the data of a compiled target
 lands. It states one role and exactly one of a fixed graph and a naming template. A compiled profile states each distinct
 place once, with an IRI minted from the target, the role and the graph or template, and every write access that lands
 there points at it.
+
+**Subclass of.** `dal:LandingPlace`
 
 #### `dal:GraphRole`
 
@@ -4506,7 +4514,7 @@ that lands in the same place points at the same node.
 
 **Domain.** `dal:ResourceAccess`
 
-**Range.** `dal:GraphPlace`
+**Range.** `dal:LandingPlace`
 
 #### `dal:patchDirection`
 
@@ -6259,11 +6267,12 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:GlobalReadStrategy` | Class | Equivalent to {`dal:WatermarkedRead`, `dal:LagWindowRead`, `dal:DenseFeedRead`, `dal:NoGlobalRead`}. |
 | `dal:GraphNaming` | Class | Equivalent to {`dal:QueryNamed`, `dal:CallerNamed`}. |
 | `dal:GraphPatternScope` | Class | Subclass of `dal:ProfileScope`. |
-| `dal:GraphPlace` | Class |  |
+| `dal:GraphPlace` | Class | Subclass of `dal:LandingPlace`. |
 | `dal:GraphRole` | Class | Equivalent to {`dal:DataRole`, `dal:MetaRole`, `dal:TxnRole`, `dal:LogRole`, `dal:EventRole`, `dal:KeysRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:PinnedRole`, `dal:DatasetRole`, `dal:PatchRole`}. |
 | `dal:GuardStatus` | Class | Equivalent to {`dal:Guarded`, `dal:GuardsOff`, `dal:NoRequiredParameter`, `dal:NotGenerated`}. |
 | `dal:IdentityProfile` | Class |  |
 | `dal:IdentityStrategy` | Class | Equivalent to {`dal:AdoptedIdentity`, `dal:NaturalKeyIdentity`, `dal:DerivedHashIdentity`, `dal:RandomSurrogateIdentity`, `dal:SurrogateClaimedIdentity`, `dal:ExternalRegistryIdentity`, `dal:ContentAddressedIdentity`}. |
+| `dal:LandingPlace` | Class |  |
 | `dal:MembershipEncoding` | Class | Equivalent to {`dal:FullMembership`, `dal:DeltaMembership`}. |
 | `dal:MetaTopology` | Class | Equivalent to {`dal:SharedSharded`, `dal:PerAggregate`}. |
 | `dal:MetaTopologyProfile` | Class |  |
@@ -6363,7 +6372,7 @@ The index is generated from section 6 and drawn collapsed, since it lists every 
 | `dal:keyConstraint` | Object property | Domain `dal:IdentityProfile`. Range `dal:UniquenessConstraint`. |
 | `dal:keyProperty` | Object property | Domain `dal:UniquenessConstraint`. |
 | `dal:keyedBy` | Object property | Domain `dal:ResourceAccess`. Range `dal:ParameterDeclaration`. |
-| `dal:landsIn` | Object property | Domain `dal:ResourceAccess`. Range `dal:GraphPlace`. |
+| `dal:landsIn` | Object property | Domain `dal:ResourceAccess`. Range `dal:LandingPlace`. |
 | `dal:matchedScope` | Object property | Domain `dal:CompiledProfile`. Range `dal:ProfileScope`. |
 | `dal:membershipEncoding` | Object property | Domain `dal:WriteDisciplineProfile`. Range `dal:MembershipEncoding`. |
 | `dal:mergeRelation` | Object property | Domain `dal:UniquenessConstraint`. |
@@ -7279,8 +7288,8 @@ dal:ResourceAccessShape
                   sh:message "A resource access has exactly one dal:accessMode, an individual of dal:AccessMode." ] ;
     sh:property [ sh:path dal:keyedBy ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:ParameterDeclaration ;
                   sh:message "dal:keyedBy names a parameter declaration by its IRI." ] ;
-    sh:property [ sh:path dal:landsIn ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:GraphPlace ;
-                  sh:message "An access lands in at most one place, a dal:GraphPlace named by its IRI." ] ;
+    sh:property [ sh:path dal:landsIn ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:class dal:LandingPlace ;
+                  sh:message "An access lands in at most one place, a dal:LandingPlace named by its IRI." ] ;
     sh:property [ sh:path dal:patchDirection ; sh:maxCount 1 ; sh:nodeKind sh:IRI ; sh:in ( dal:Added dal:Removed ) ;
                   sh:message "dal:patchDirection is dal:Added or dal:Removed, once." ] ;
     sh:property [ sh:path dal:forConstraint ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
@@ -8108,7 +8117,7 @@ version, so that Persistence can enforce Foundation's natural keys (§5.11).
 ## 12. Release Notes
 
 - **Unreleased**.
-  - no effect. A compiled profile states where each write lands. New: `dal:GraphPlace`, `dal:GraphRole` with its eleven individuals (`dal:DataRole`, `dal:MetaRole`, `dal:TxnRole`, `dal:LogRole`, `dal:EventRole`, `dal:KeysRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:PinnedRole`, `dal:DatasetRole` and `dal:PatchRole`), `dal:landsIn`, `dal:inGraphRole`, `dal:inGraph` and `dal:inGraphNamed`. Each access that inserts or deletes gains one `dal:landsIn`, and a read access has none. A patch log's added and removed triples are now two accesses to `dal:PatchContent`, told apart by the new `dal:patchDirection`, `dal:Added` or `dal:Removed`, which the new `dal:PatchDirection` closes. A key claim's access gains `dal:forConstraint`. The compiled profile gains `dal:matchedScope`, and each resolved dimension gains `dal:wonThrough`. `ResourceAccessShape` and the new `GraphPlaceShape` and `ResolvedDimensionShape` hold the compiled profile to them. A reader that counted a profile's accesses sees one more for each patch log a profile writes, and no reader in the repository counts them.
+  - no effect. A compiled profile states where each write lands. New: `dal:LandingPlace`, where a realisation keeps the resource a write access names, and its subclass `dal:GraphPlace` for the SPARQL realisation, `dal:GraphRole` with its eleven individuals (`dal:DataRole`, `dal:MetaRole`, `dal:TxnRole`, `dal:LogRole`, `dal:EventRole`, `dal:KeysRole`, `dal:QuarantineRole`, `dal:RetentionRole`, `dal:PinnedRole`, `dal:DatasetRole` and `dal:PatchRole`), `dal:landsIn`, whose range is `dal:LandingPlace`, `dal:inGraphRole`, `dal:inGraph` and `dal:inGraphNamed`. Each access that inserts or deletes gains one `dal:landsIn`, and a read access has none. A patch log's added and removed triples are now two accesses to `dal:PatchContent`, told apart by the new `dal:patchDirection`, `dal:Added` or `dal:Removed`, which the new `dal:PatchDirection` closes. A key claim's access gains `dal:forConstraint`. The compiled profile gains `dal:matchedScope`, and each resolved dimension gains `dal:wonThrough`. `ResourceAccessShape` and the new `GraphPlaceShape` and `ResolvedDimensionShape` hold the compiled profile to them. A reader that counted a profile's accesses sees one more for each patch log a profile writes, and no reader in the repository counts them.
 - **0.22.0**.
   - State digest and bulk load. New: `dal:recordsStateDigest`, `dal:StateDigestRecord`, `dal:StateDigestRead` and `pat:stateDigest`. A family under `dal:ChangedTriples` also generates `replace-whole` (no effect).
   - The rows replace. New: `dal:ReplaceForm`, `dal:TemplateReplace`, `dal:RowsReplace`, `dal:replaceForm` on `dal:ConcurrencyProfile`, `dal:providesSnapshotUpdateSemantics` on `dal:CapabilitySpec`, and `dal:TripleRows` as a `dal:PayloadEncoding`. A configuration that declares none of them compiles to the same operations as before, and every compiled profile gains the resolved `replaceForm` dimension (no effect).

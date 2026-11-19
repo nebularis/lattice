@@ -364,7 +364,8 @@ dal:GraphPatternScope a owl:Class ;
     rdfs:subClassOf dal:ProfileScope .
 
 dal:GraphPlace a owl:Class ;
-    rdfs:comment "One graph, or one family of graphs named when an operation runs, in which the data of a compiled target lands. It states one role and exactly one of a fixed graph and a naming template. A compiled profile states each distinct place once, with an IRI minted from the target, the role and the graph or template, and every write access that lands there points at it." .
+    rdfs:comment "One graph, or one family of graphs named when an operation runs, in which the data of a compiled target lands. It states one role and exactly one of a fixed graph and a naming template. A compiled profile states each distinct place once, with an IRI minted from the target, the role and the graph or template, and every write access that lands there points at it." ;
+    rdfs:subClassOf dal:LandingPlace .
 
 dal:GraphRole a owl:Class ;
     rdfs:comment "The part of the store a graph belongs to, closed. Its individuals mirror the graph roles of the typed operation IR, and a reader finds, for example, every pinned graph by comparing one individual and never by matching a template's text." ;
@@ -440,6 +441,9 @@ dal:KeysRole a dal:GraphRole ;
 
 dal:LagWindowRead a dal:GlobalReadStrategy ;
     rdfs:comment "Read only below now minus a declared lag window of at least the server-enforced maximum transaction duration (measured from HLC stamp to commit) plus maximum clock skew plus replica lag plus margin, with a late-arrival audit over a trailing window (guide §21.3)." .
+
+dal:LandingPlace a owl:Class ;
+    rdfs:comment "Where a realisation keeps the resource a write access names. For a SPARQL realisation it is one graph, or one family of graphs named when an operation runs. Each realisation states its places in a subclass of its own, and a write access lands in exactly one place." .
 
 dal:LangStringKind a dal:ParameterKind ;
     rdfs:comment "A language-tagged string." .
@@ -1369,7 +1373,7 @@ dal:lagWindowMillis a owl:DatatypeProperty ;
 dal:landsIn a owl:ObjectProperty ;
     rdfs:comment "The place where an access that inserts or deletes lands, exactly one. A read access has none. Every access that lands in the same place points at the same node." ;
     rdfs:domain dal:ResourceAccess ;
-    rdfs:range dal:GraphPlace .
+    rdfs:range dal:LandingPlace .
 
 dal:logShards a owl:DatatypeProperty ;
     rdfs:comment "Shard count applied within each retention time bucket for the receipt log graph, so bucket rotation and shard isolation are both preserved." ;

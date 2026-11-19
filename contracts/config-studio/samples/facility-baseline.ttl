@@ -114,9 +114,9 @@ ex:borrowerRegion a owl:ObjectProperty ;
 
 ex:FacilityShape a sh:NodeShape ;
     sh:targetClass ex:Facility ;
-    sh:property [ sh:path ex:facilityReference ; sh:datatype xsd:string ] ,
-                [ sh:path ex:commitment ; sh:datatype xsd:decimal ] ,
-                [ sh:path ex:margin ; sh:datatype xsd:decimal ] ,
+    sh:property [ sh:path ex:facilityReference ; sh:minCount 1 ; sh:datatype xsd:string ] ,
+                [ sh:path ex:commitment ; sh:minCount 1 ; sh:datatype xsd:decimal ] ,
+                [ sh:path ex:margin ; sh:minCount 1 ; sh:datatype xsd:decimal ] ,
                 [ sh:path ex:arrangedBy ; sh:class ex:Branch ; dal:ownership dal:Reference ] ,
                 [ sh:path ex:borrower ; sh:class ex:Borrower ; dal:ownership dal:Reference ] ,
                 [ sh:path ex:lender ; sh:class ex:Lender ; dal:ownership dal:Reference ] ,
