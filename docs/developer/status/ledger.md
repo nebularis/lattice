@@ -149,8 +149,8 @@ Results sections. In short:
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | merged 2026-11-16, verified 2026-11-16, merged 2026-11-09, built 2026-11-09, building 2026-11-09 |  |
 | LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | merged 2026-11-18, verified 2026-11-19, built 2026-11-16, building 2026-11-16 |  |
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-09, building 2026-11-09 |  |
-| LG-11 | conversion leaves the ledger, the conversion terms removed | planned |  |
-| LG-12 | which draws an account accepts, a shape for compatibility and representability | planned | LG-11 |
+| LG-11 | conversion leaves the ledger, the conversion terms removed | briefed 2026-11-19 |  |
+| LG-12 | which draws an account accepts, a shape for compatibility and representability | briefed 2026-11-19 | LG-11 |
 | LG-13 | the insurance example's cap named for what it is, annual-cap | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-10, building 2026-11-10 |  |
 | LG-14 | a benchmark of the credit kinds' read cost on every backend | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-11, building 2026-11-11 |  |
 | LG-15 | LG-14's gaps closed: native Jena on TDB2, checkpoints, the drawn account's clamp, the loop timed apart, the shortcut | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-11, building 2026-11-11 |  |
@@ -163,10 +163,11 @@ Results sections. In short:
 | LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figures at the top of the READMEs | merged 2026-11-16, verified 2026-11-16, built 2026-11-16, building 2026-11-15 | LG-19 |
 | LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | merged 2026-11-18, verified 2026-11-19, built 2026-11-17, building 2026-11-17 |  |
 | LG-24 | the merge policy node, what an account declares for a merge moved to a policy the account definition refers to | merged 2026-11-18, verified 2026-11-17, built 2026-11-17, building 2026-11-17 |  |
-| LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed | planned | LG-11 |
-| LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part | planned | LG-25 |
-| LG-27 | the ledger node, its profile and revision, and the checkpoint's two totals | planned | LG-25 |
-| LG-28 | the account definition as a versioned thing, with the scheme edition it pins | planned | LG-26, LG-27 |
+| LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed | briefed 2026-11-19 | LG-11 |
+| LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part | briefed 2026-11-19 | LG-25 |
+| LG-27 | the ledger node, its profile and revision, and the checkpoint's two totals | briefed 2026-11-19 | LG-25 |
+| LG-28 | the account definition as a versioned thing, with the scheme edition it pins | briefed 2026-11-19 | LG-26, LG-27 |
+- 2026-11-19: the maintainer answered LG-Q45 as (a), raised that day by conditions C1 to C3 of the multi-store epic's read-set census. A pass moves a ledger's revision once, and its write is refused when the ledger has moved from the revision the pass read. LG-27 is unchanged by it. Where the rule is stated is PDD-22, and the census's candidate R6 is PDD-23. The rework is briefed for machine S in the [brief of 2026-11-19](../notes/machine-s-brief-2026-11-19.md), LG-11, LG-25 to LG-28 and then LG-12, and this session reviews it and writes nothing under `ontology/ledger/` meanwhile.
 - 2026-11-19: **the maintainer verified LG-9, LG-20 and LG-23**, each already on `main`, on the packs and the probes recorded in them.
 - 2026-11-19: the maintainer answered LG-Q38 to LG-Q43, each as leaned. A request has a record of its own on every merge and `ldg:Grant` is retired, a cut joins to its posting for its position, the account definition is versioned in this rework, the residual account is named on the merge policy, the rework is LG-11 and then LG-25 to LG-28, and a checkpoint is written only for an account that moved. No question holds a slice of the rework now. ADR-A131 gains an addendum proposed that day for the checkpoint, which corrects one sentence each of two earlier addenda.
 - 2026-11-19: the plan's decided questions, LG-Q9 to LG-Q37 and LG-Q44 where they opened with "Decided", now open with "Answered" and the day, the form the index reads. It had listed each as open.
