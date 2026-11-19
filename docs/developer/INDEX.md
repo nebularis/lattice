@@ -44,7 +44,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
 | lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-1 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
-| ledger | unit | LG | built 2026-11-19 | LG-3 | [plan](plans/ledger.md), [status](status/ledger.md), 21 Validation Packs |
+| ledger | unit | LG | building 2026-11-19 | LG-3 | [plan](plans/ledger.md), [status](status/ledger.md), 21 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
@@ -436,7 +436,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-24 | the merge policy node, what an account declares for a merge moved to a policy the account definition refers to | ledger | merged 2026-11-18 |  | docs/developer/status/ledger.md#board |
 | LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed. Validation Pack | ledger | built 2026-11-19 | LG-11 | docs/developer/status/ledger.md#board |
 | LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part. Validation Pack | ledger | built 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
-| LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation | ledger | briefed 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
+| LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation | ledger | building 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
 | LG-28 | the account definition as a versioned thing, with the scheme edition it pins | ledger | briefed 2026-11-19 | LG-26, LG-27 | docs/developer/status/ledger.md#board |
 | MSA-I1 | `spikes/multi-store-shape-census`. 505 node shapes, none closed and bounded, so 0% of sample subjects against the proposed 80%. 134 fail only on closure and reach 43.4% of subjects. Validati | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I2 | the read-set census, reworked on the owner's ledger. The falsifier does not fire: the ledger's reads across accounts are inside one ledger, and the one firm read from outside, a guard on a b | multi-store-architecture | built 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
