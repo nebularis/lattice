@@ -67,6 +67,9 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-M3b | the sample pane | planned | SVA-R4, SVA-M3a |
 | SVA-M4 | the output explorer | built 2026-11-17, building 2026-11-17 | SVA-O1, SVA-R4 |
 | SVA-H1 | the stack's secrets in one guarded folder, settings printed redacted, and a guard on reading them | built 2026-11-15, building 2026-11-15 |  |
+| SVA-X1 | register rows renumbered past the other branches | planned |  |
+| SVA-X2 | user-facing text under main's standard on naming decisions | planned |  |
+| SVA-X3 | the run queues on the contract-driven topology | planned | MSA-F4 on `main` |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | planned |  |
 
 ## Knowledge index
@@ -193,3 +196,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-19: SVA-P4 built, [Validation Pack](../validation/SVA-P4.md). The simulator pane runs persistence steps over a sample world the tab holds, with an object from a form or Turtle, as another writer, step back, the four displays and the canvas lighting each place a step wrote. Its journey replays frames the real run worker gave, kept current by a test on each side. All 69 journeys pass.
 - 2026-11-19: the maintainer kept the confirmation read's causes beyond the guide's four rows, and section 15.2 of the patterns guide now lists them with a dated note pointing at the persistence contract.
 - 2026-11-19: SVA-P5 started.
+- 2026-11-19: `main`, `docs/placement-vehicles-structure` and `spi/multi-store-architecture` read for what bears on this unit. `main` is in both others. Planned SVA-X1 (BL-20, BL-21 and STD-328 are numbered on `main` for other rows), SVA-X2 (main's new standard that a user-facing document names a decision only in its Design decisions section, seven added lines) and SVA-X3 (the multi-store branch's contract-driven queue topology, MSA-F4, replaces this unit's binding fields), and added the version, release note, expected profiles and `bootstrap:erlang` to SVA-V1's pre-merge steps. The writer's changes on the multi-store branch (MSA-F1 to F9) touch other parts of `Writer.java` and a command's digest covers the fence command's body as this unit sends it. The ledger work on the placement branch touches nothing of this unit.
