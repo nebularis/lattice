@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-19. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-19. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -53,7 +53,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P3 | the persistence simulation executor | built 2026-11-19, building 2026-11-19 | SVA-R3 |
 | SVA-P3a | the caller libraries' confirmation read | built 2026-11-19, building 2026-11-19 | SVA-P3 |
 | SVA-P4 | the persistence simulator pane | built 2026-11-19, building 2026-11-19 | SVA-R4, SVA-P1, SVA-P3a |
-| SVA-P5 | an object generated from the boundary shape | planned | SVA-P4 |
+| SVA-P5 | an object generated from the boundary shape | building 2026-11-19 | SVA-P4 |
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
 | SVA-S2 | the surface simulation executor | planned | SVA-P3 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
@@ -192,3 +192,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-19: SVA-P4 started.
 - 2026-11-19: SVA-P4 built, [Validation Pack](../validation/SVA-P4.md). The simulator pane runs persistence steps over a sample world the tab holds, with an object from a form or Turtle, as another writer, step back, the four displays and the canvas lighting each place a step wrote. Its journey replays frames the real run worker gave, kept current by a test on each side. All 69 journeys pass.
 - 2026-11-19: the maintainer kept the confirmation read's causes beyond the guide's four rows, and section 15.2 of the patterns guide now lists them with a dated note pointing at the persistence contract.
+- 2026-11-19: SVA-P5 started.
