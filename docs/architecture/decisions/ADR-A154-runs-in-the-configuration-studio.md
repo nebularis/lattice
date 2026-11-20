@@ -4,7 +4,7 @@
 
 **Status:** Accepted 2026-11-15
 **Date:** 2026-11-12 (proposed), 2026-11-15 (accepted)
-**Amends:** ADR-A136, what the studio's events may carry and which components it has. ADR-A148, how a transform's result reaches the browser. Amended by its own addendum of 2026-11-20, Proposed
+**Amends:** ADR-A136, what the studio's events may carry and which components it has. ADR-A148, how a transform's result reaches the browser. Amended by its own addendum of 2026-11-20, accepted that day
 **Related:** [ADR-A136](ADR-A136-configuration-studio.md) (the studio, its writers and its worker), [ADR-A148](ADR-A148-mork-transform-backends.md) (the transforms worker), [ADR-A149](ADR-A149-publication-from-the-studio.md) (who may read a workspace), [ADR-A30](ADR-A30-shared-semantic-platform-cross-runtime-boundary.md) (graph references and CloudEvents across runtimes), [ADR-A35](ADR-A35-trusted-surface-worker-execution-boundary.md) (what a worker takes from a message), [ADR-A132](ADR-A132-persistence-caller-library.md) (the caller library), PRI-52, PRI-56, PRI-58, PRI-75
 **Unit:** [`studio-visual-authoring`](../../developer/plans/studio-visual-authoring.md)
 
@@ -47,16 +47,16 @@ The studio's events already reach a browser tab over the broker's MQTT, on a top
 
 ## Addendum (2026-11-20): a mapping's run over an RDF sample is the studio worker's
 
-**Status of this addendum:** Proposed. The maintainer chose this on 2026-11-20 over a port of the runner to Java, and accepts it before the slice that builds it.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-20, who chose it that day over a port of the driver to Java.
 
-Decision 12 makes the transforms worker the run worker, running XSLT, JOLT and SPARQL on Apache Jena. A mapping compiled by `mork_rdf` is more than its CONSTRUCT queries. `mork_rdf`'s runner rewrites the source's blank nodes before any query reads them, runs the strata in order, keeps a mapping's output only while a later query reads it, writes a closure's axiom once its members are known, and reports what each check query finds. Those rules live in that runner alone, on Oxigraph, and the studio's dry-run job uses it. Running the same mapping elsewhere would be a second implementation of them, on a second engine.
+Decision 12 makes the transforms worker the run worker, running XSLT, JOLT and SPARQL on Apache Jena. A mapping compiled by `mork_rdf` is more than its CONSTRUCT queries. `mork_rdf`'s driver, which runs the compiled queries and interprets nothing, rewrites the source's blank nodes before any query reads them, runs the strata in order, keeps a mapping's output only while a later query reads it, writes a closure's axiom once its members are known, and reports what each check query finds. Those rules live in that driver alone, on Oxigraph, and the studio's dry-run job uses it. Running the same mapping elsewhere would be a second implementation of them, on a second engine.
 
-1. **A sample run of a mapping over an RDF source is run by the studio's Python worker, with `mork_rdf`'s runner.** A sample in Turtle or N-Triples is answered there, and a sample in XML or JSON stays the run worker's. The Python worker runs what the dry-run job runs, so a sample run and a dry run of the same scheme over the same source write the same triples. Persistence and surface steps stay the run worker's.
+1. **A sample run of a mapping over an RDF source is run by the studio's Python worker, with `mork_rdf`'s driver.** A sample in Turtle or N-Triples is answered there, and a sample in XML or JSON stays the run worker's. The Python worker runs what the dry-run job runs, so a sample run and a dry run of the same scheme over the same source write the same triples. Persistence and surface steps stay the run worker's.
 2. **Each worker keeps every rule of a run.** Decisions 1 to 11 hold for both workers alike: the request checked again, the store read and never written, the frames and their bounds, the deadline, a redelivered run failed, and the result ordered canonically. The rules of a frame are the contract's, and both workers are tested against the contract's example frames.
 3. **The RDF sample run has a queue of its own.** The service routes a `sample` run by its input's media type, an RDF sample to a queue the Python worker consumes and any other to the run worker's sample queue, so neither worker receives a run it does not answer. The new queue has the sample queue's deadline and is consumed on its own channel, so a sample run does not hold the worker's jobs.
 4. **The display names the engine.** A sample run's output says it was evaluated by `mork_rdf` on Oxigraph, as decision 12 asks of a simulated write.
 
-**Rejected.** The runner ported to Java on Jena, which is a rewrite of MORK's run rules that two implementations on two engines would then keep in step, considered only if the Python runner is measured as too slow for the sample pane. The Python runner started by the run worker as a process for each run, which puts a Python runtime in the Java worker's image and pays for a process per run.
+**Rejected.** The driver ported to Java on Jena, which is a rewrite of MORK's run rules that two implementations on two engines would then keep in step, considered only if the Python driver is measured as too slow for the sample pane. The Python driver started by the run worker as a process for each run, which puts a Python runtime in the Java worker's image and pays for a process per run.
 
 **Consequences.** The studio has two run workers and one protocol. The rules of a frame are implemented twice, and the contract's examples hold both to them. The topology contract gains a queue. A deployment runs the Python worker for a sample over RDF, which it already runs for the dry-run job.
 
