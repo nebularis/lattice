@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
-"""Ledger LG-1, LG-2, LG-25, LG-26, LG-27 and LG-28: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
-and LG-2 "in detail" tables and the Validation Packs of LG-25 to LG-28. Validates LG-0's examples, configuration and runtime records, against
+"""Ledger LG-1, LG-2, LG-12, LG-25, LG-26, LG-27 and LG-28: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
+and LG-2 "in detail" tables and the Validation Packs of LG-12 and LG-25 to LG-28. Validates LG-0's examples, configuration and runtime records, against
 the structural shapes, the SHACL-SPARQL constraints and the runtime laws, and against Foundation's two shapes for a versioned thing
 (ADR-A142), checks the import guard holds, the spec names no term
 of Party, Eligibility, Wording, Instrument or Behaviour, the cycle shape finishes on a generated tree, each runtime law refuses a
@@ -716,7 +716,7 @@ def test_a_credit_cut_in_full_moves_the_account() -> None:
         (ex["account-parent"], _decimal("1"))]
 
 
-RECORDED = [*ACCEPTED, "refusal-overdraw", "refusal-credit-kind"]
+RECORDED = [*ACCEPTED, "refusal-overdraw", "refusal-credit-kind", "refusal-incompatible-draw", "refusal-unrepresentable-amount"]
 
 
 @pytest.mark.parametrize("name", RECORDED)
@@ -918,7 +918,7 @@ def test_the_account_definition_is_versioned_and_its_edges_bear_meaning() -> Non
 def test_foundation_finds_every_example_versioned_and_its_parts_pinned(name: str) -> None:
     """Every example, accepted or refused: each versioned thing has one identity, and no edge that bears meaning leads to a node that
     is neither versioned, minted under its subject nor a published term, so Foundation's check warns on no quantity (LG-Q40 (a))."""
-    assert len(EXAMPLES) == 18
+    assert len(EXAMPLES) == 20
     g = MODEL + _example(name)
     assert _foundation_findings(g) == set()
     definitions = list(g.subjects(RDF.type, LDG.AccountDefinition))
@@ -999,6 +999,136 @@ def test_a_definition_pins_at_most_one_edition() -> None:
     paths = {str(report.value(r, SH.resultPath)) for r in report.subjects(SH.resultSeverity, SH.Violation)
              if report.value(r, SH.sourceConstraintComponent) == SH.MaxCountConstraintComponent}
     assert paths == {str(LDG.creditKindsEdition)}
+
+
+# ---- LG-12: which draws an account accepts (LG-Q20 (a), ADR-A131's second addendum of 2026-11-09)
+#
+# A draw is a debit posting, and a request on a merge. Its amount is a literal in its account's unit of account, so what can
+# arrive in another space or unit is a quantity named in its read set. Each refusal is by one new shape and no other.
+
+SPACE, UNIT, REPRESENTABLE = LDG.DrawInItsAccountsSpaceShape, LDG.DrawInItsAccountsUnitShape, LDG.DrawRepresentableShape
+REASONS = {SPACE: "qnt:OutsideDeclaredSpace", UNIT: "no permitted conversion", REPRESENTABLE: "qnt:OutsideDeclaredSpace"}
+
+
+def _draws_refused(g: Graph) -> set[tuple[str, str]]:
+    """(shape, record) of every violation in `g`, which must all be of the three draw shapes, each message giving the reason
+    Quantification gives. Oxigraph finds the same."""
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    _agree(g, report)
+    found = set()
+    for r in report.subjects(SH.resultSeverity, SH.Violation):
+        shape = report.value(r, SH.sourceShape)
+        assert shape in REASONS, _violating_shapes(report)
+        assert REASONS[shape] in str(report.value(r, SH.resultMessage))
+        found.add((str(shape), str(report.value(r, SH.value))))
+    assert conforms == (found == set())
+    return found
+
+
+def test_a_draw_in_another_unit_or_space_is_refused_and_a_converted_one_is_not() -> None:
+    """The conformance case: the euros converted before the ledger conform, the euros taken as sterling and the dollars do not."""
+    ex = _ex("refusal-incompatible-draw")
+    assert _draws_refused(MODEL + _example("refusal-incompatible-draw")) == {
+        (str(UNIT), str(ex["draw-2-posting"])), (str(SPACE), str(ex["draw-3-posting"]))}
+
+
+def test_an_unrepresentable_draw_is_refused_with_its_request() -> None:
+    """The conformance case: half of 10 licences, 5, conforms, and 33%, 3.3, is refused on its posting and its request."""
+    ex = _ex("refusal-unrepresentable-amount")
+    assert _draws_refused(MODEL + _example("refusal-unrepresentable-amount")) == {
+        (str(REPRESENTABLE), str(ex["share-33-posting"])), (str(REPRESENTABLE), str(ex["share-33-request"]))}
+
+
+def _reads(name: str, draw: str, quantity: str) -> Callable[[Graph], None]:
+    def mutate(g: Graph) -> None:
+        g.add((_ex(name)[draw], PROV.wasDerivedFrom, _ex(name)[quantity]))
+    return mutate
+
+
+def _reads_another_space(g: Graph) -> None:
+    """The first drawing reads a count of seats, on a space that is not the facility's."""
+    ex = _ex("revolving-facility")
+    for p, o in [(RDF.type, QNT.ValueSpace), (QNT.densityKind, QNT.Discrete), (QNT.additivity, QNT.Extensive)]:
+        g.add((ex.seats, p, o))
+    for p, o in [(RDF.type, QNT.Quantity), (QNT.onSpace, ex.seats), (QNT.numericValue, _decimal("3"))]:
+        g.add((ex["q-seats"], p, o))
+    g.add((ex["draw-1-posting"], PROV.wasDerivedFrom, ex["q-seats"]))
+
+
+def _space(name: str, space: str, prop: URIRef, value: URIRef | str) -> Callable[[Graph], None]:
+    """States a datatype, or a granularity floor of `value` units, on an example's space."""
+    def mutate(g: Graph) -> None:
+        ex = _ex(name)
+        stated = value
+        if prop == QNT.granularityFloor:
+            stated = ex[f"floor-{value}"]
+            for p, o in [(RDF.type, QNT.Quantity), (QNT.onSpace, ex[space]), (QNT.numericValue, _decimal(str(value)))]:
+                g.add((stated, p, o))
+        g.set((ex[space], prop, stated))
+    return mutate
+
+
+def _share_resolved_to_three(g: Graph) -> None:
+    """The 33% draw resolved to 3 licences, so the request, the posting and its balance say 3."""
+    ex = _ex("refusal-unrepresentable-amount")
+    g.set((ex["share-33-request"], LDG.requestedValue, _decimal("3")))
+    g.set((ex["share-33-request"], LDG.grantedValue, _decimal("3")))
+    g.set((ex["share-33-posting"], LDG.amountValue, _decimal("3")))
+    g.set((ex["share-33-posting"], LDG.runningBalance, _decimal("2")))
+
+
+def _floor_dropped_for_integers(g: Graph) -> None:
+    """The pool's space states no floor and its datatype is `xsd:integer`, so 3.3 is refused by the datatype alone."""
+    ex = _ex("refusal-unrepresentable-amount")
+    g.remove((ex.licences, QNT.granularityFloor, None))
+    g.add((ex.licences, QNT.valueDatatype, XSD.integer))
+
+
+def _amount_a_double(g: Graph) -> None:
+    ex = _ex("research-grant")
+    g.set((ex["staff-spend-posting"], LDG.amountValue, Literal("90000", datatype=XSD.double)))
+
+
+GRANT, SEATS = "research-grant", "licence-seats"
+DRAWS = {
+    "a draw that reads a quantity in its account's space and unit": (
+        "revolving-facility", _reads("revolving-facility", "draw-1-posting", "facility/stated-amount"), None),
+    "a draw that reads the euros it was asked for": (
+        "revolving-facility", _reads("revolving-facility", "draw-1-posting", "q-draw-1-eur"), {(UNIT, "draw-1-posting")}),
+    "a request that reads the euros it was asked for": (
+        "revolving-facility", _reads("revolving-facility", "draw-1-request", "q-draw-1-eur"), {(UNIT, "draw-1-request")}),
+    "a credit that reads the euros it was paid in": (
+        "revolving-facility", _reads("revolving-facility", "repayment-posting", "q-repayment-eur"), None),
+    "a draw that reads a quantity on another space": ("revolving-facility", _reads_another_space, {(SPACE, "draw-1-posting")}),
+    "whole seats on a floor of 10": (SEATS, _space(SEATS, "seats", QNT.granularityFloor, 10), None),
+    "seats that are not whole multiples of a floor of 50": (
+        SEATS, _space(SEATS, "seats", QNT.granularityFloor, 50),
+        {(REPRESENTABLE, r) for r in ("london-draw-posting", "london-draw-request", "porto-draw-posting", "porto-draw-request")}),
+    "33% of 10 licences resolved to 3": ("refusal-unrepresentable-amount", _share_resolved_to_three, None),
+    "3.3 licences on a space of integers": (
+        "refusal-unrepresentable-amount", _floor_dropped_for_integers,
+        {(REPRESENTABLE, "share-33-posting"), (REPRESENTABLE, "share-33-request")}),
+    "amounts within xsd:int": (GRANT, _space(GRANT, "funds", QNT.valueDatatype, XSD.int), None),
+    "amounts beyond xsd:short": (
+        GRANT, _space(GRANT, "funds", QNT.valueDatatype, XSD.short),
+        {(REPRESENTABLE, r) for r in ("staff-spend-posting", "staff-spend-request", "equipment-spend-posting",
+                                      "equipment-spend-request")}),
+    "a space whose datatype holds no decimal": (
+        GRANT, _space(GRANT, "funds", QNT.valueDatatype, XSD.double),
+        {(REPRESENTABLE, r) for r in ("staff-spend-posting", "staff-spend-request", "equipment-spend-posting",
+                                      "equipment-spend-request")}),
+    "a draw's amount stated as a double": (GRANT, _amount_a_double, {(REPRESENTABLE, "staff-spend-posting")}),
+}
+
+
+@pytest.mark.parametrize("case", DRAWS)
+def test_an_account_accepts_a_draw_only_in_its_space_and_unit_and_representable(case: str) -> None:
+    """A positive case where nothing is expected, and otherwise a mutation each of the three shapes alone refuses. A credit is not a
+    draw, so one that reads euros is not refused here."""
+    name, mutate, expected = DRAWS[case]
+    g = MODEL + _example(name)
+    mutate(g)
+    assert _draws_refused(g) == {(str(shape), str(_ex(name)[record])) for shape, record in expected or set()}
 
 
 # ---- LG2-10: a generated pass, 200 leaves here and 5,000 postings with 5,000 checkpoints in the benchmark

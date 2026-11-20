@@ -206,7 +206,7 @@ ldg:statedAmount a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:unitOfAccount a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The value space every posting on this account is in." ;
-    fnd:utility "Names the value space an account's amounts are stated and posted in. The space must be extensive (qnt:additivity qnt:Extensive) with qnt:Sum and qnt:Difference capabilities, since Ledger holds only amounts whose parts add to the whole (§1)." ;
+    fnd:utility "Names the value space an account's amounts are stated and posted in. The space must be extensive (qnt:additivity qnt:Extensive) with qnt:Sum and qnt:Difference capabilities, since Ledger holds only amounts whose parts add to the whole (§1). A draw on the account is in this space, and in the unit its stated amount is in where the space has units." ;
     fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:ValueSpace .

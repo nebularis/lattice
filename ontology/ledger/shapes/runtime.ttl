@@ -4,6 +4,7 @@
 # less its cuts, a credit is applied within its room and cut where an ancestor
 # had less, a merge records every request and shares within availability,
 # a checkpoint states its totals and is written for an account that moved,
+# a draw is in its account's value space and unit and representable there,
 # account instances keep their
 # natural keys and periods, a ledger's passes move its revision in order,
 # and no record is effective after its pass. Each shape
@@ -422,6 +423,86 @@ ldg:MergedPostingCitesMergeShape a sh:NodeShape ;
                                 ?merge ldg:request ?request .
                                 OPTIONAL { ?request ldg:grantedValue ?granted }
                                 FILTER (NOT EXISTS { ?value prov:wasDerivedFrom ?merge } || COALESCE(?amount != ?granted, true))
+                        }
+                """
+        ] .
+
+ldg:DrawInItsAccountsSpaceShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting , ldg:Request ;
+        sh:sparql [
+                sh:message "A draw must read no quantity outside its account's unit of account. A draw that does is Undetermined, with Quantification's reason qnt:OutsideDeclaredSpace." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        PREFIX prov: <http://www.w3.org/ns/prov#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; prov:wasDerivedFrom ?quantity ; ldg:onAccount|^ldg:request/ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:unitOfAccount ?space .
+                                FILTER EXISTS { ?quantity a qnt:Quantity }
+                                FILTER NOT EXISTS { ?value ldg:direction ldg:Credit }
+                                OPTIONAL { ?quantity qnt:onSpace ?on }
+                                FILTER (COALESCE(?on != ?space, true))
+                        }
+                """
+        ] .
+
+ldg:DrawInItsAccountsUnitShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting , ldg:Request ;
+        sh:sparql [
+                sh:message "A draw must read no quantity in another unit than the one its account's stated amount is in, since the ledger converts nothing. A draw that does is Undetermined, with no permitted conversion, as Quantification words it." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        PREFIX prov: <http://www.w3.org/ns/prov#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; prov:wasDerivedFrom ?quantity ; ldg:onAccount|^ldg:request/ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:unitOfAccount ?space .
+                                FILTER EXISTS { ?quantity a qnt:Quantity ; qnt:onSpace ?space }
+                                FILTER NOT EXISTS { ?value ldg:direction ldg:Credit }
+                                OPTIONAL { ?quantity qnt:inUnit ?unit }
+                                OPTIONAL { ?account ldg:ofDefinition/ldg:statedAmount/qnt:inUnit ?accountUnit }
+                                FILTER (COALESCE(?unit != ?accountUnit, BOUND(?unit) || BOUND(?accountUnit)))
+                        }
+                """
+        ] .
+
+ldg:DrawRepresentableShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting , ldg:Request ;
+        sh:sparql [
+                sh:message "A draw's amount must be representable in its account's unit of account: a decimal, a value of the space's datatype, xsd:decimal where none is stated, and on a discrete space a whole multiple of the granularity floor where one is stated. An amount that is not is refused, never rounded, and is Undetermined, with Quantification's reason qnt:OutsideDeclaredSpace." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:amountValue|ldg:requestedValue|ldg:grantedValue ?amount ;
+                                        ldg:onAccount|^ldg:request/ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:unitOfAccount ?space .
+                                FILTER NOT EXISTS { ?value ldg:direction ldg:Credit }
+                                OPTIONAL { ?space qnt:valueDatatype ?declared }
+                                OPTIONAL { ?space qnt:densityKind qnt:Discrete ; qnt:granularityFloor/qnt:numericValue ?floor }
+                                BIND (COALESCE(?declared, xsd:decimal) AS ?datatype)
+                                FILTER (DATATYPE(?amount) NOT IN (xsd:decimal, xsd:integer, xsd:nonNegativeInteger, xsd:positiveInteger,
+                                                xsd:nonPositiveInteger, xsd:negativeInteger, xsd:long, xsd:int, xsd:short, xsd:byte,
+                                                xsd:unsignedLong, xsd:unsignedInt, xsd:unsignedShort, xsd:unsignedByte)
+                                        || ?datatype NOT IN (xsd:decimal, xsd:integer, xsd:nonNegativeInteger, xsd:positiveInteger,
+                                                xsd:nonPositiveInteger, xsd:negativeInteger, xsd:long, xsd:int, xsd:short, xsd:byte,
+                                                xsd:unsignedLong, xsd:unsignedInt, xsd:unsignedShort, xsd:unsignedByte)
+                                        || (?datatype != xsd:decimal && FLOOR(?amount) != ?amount)
+                                        || (?datatype IN (xsd:nonNegativeInteger, xsd:unsignedLong, xsd:unsignedInt, xsd:unsignedShort,
+                                                xsd:unsignedByte) && ?amount < 0)
+                                        || (?datatype = xsd:positiveInteger && ?amount < 1)
+                                        || (?datatype = xsd:nonPositiveInteger && ?amount > 0)
+                                        || (?datatype = xsd:negativeInteger && ?amount > -1)
+                                        || (?datatype = xsd:long && (?amount < -9223372036854775808.0 || ?amount > 9223372036854775807.0))
+                                        || (?datatype = xsd:int && (?amount < -2147483648 || ?amount > 2147483647))
+                                        || (?datatype = xsd:short && (?amount < -32768 || ?amount > 32767))
+                                        || (?datatype = xsd:byte && (?amount < -128 || ?amount > 127))
+                                        || (?datatype = xsd:unsignedLong && ?amount > 18446744073709551615.0)
+                                        || (?datatype = xsd:unsignedInt && ?amount > 4294967295)
+                                        || (?datatype = xsd:unsignedShort && ?amount > 65535)
+                                        || (?datatype = xsd:unsignedByte && ?amount > 255)
+                                        || COALESCE(?floor > 0 && FLOOR(?amount / ?floor) * ?floor != ?amount, false))
                         }
                 """
         ] .

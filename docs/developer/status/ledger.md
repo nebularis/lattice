@@ -3,10 +3,10 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** building 2026-11-19. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** built 2026-11-19. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-19
 **Plan:** [ledger.md](../plans/ledger.md)
-**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md), [LG-23](../validation/LG-23.md), [LG-11](../validation/LG-11.md), [LG-25](../validation/LG-25.md), [LG-26](../validation/LG-26.md), [LG-27](../validation/LG-27.md), [LG-28](../validation/LG-28.md)
+**Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md), [LG-23](../validation/LG-23.md), [LG-11](../validation/LG-11.md), [LG-25](../validation/LG-25.md), [LG-26](../validation/LG-26.md), [LG-27](../validation/LG-27.md), [LG-28](../validation/LG-28.md), [LG-12](../validation/LG-12.md)
 
 ---
 
@@ -150,7 +150,7 @@ Results sections. In short:
 | LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | merged 2026-11-18, verified 2026-11-19, built 2026-11-16, building 2026-11-16 |  |
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-09, building 2026-11-09 |  |
 | LG-11 | conversion leaves the ledger, the conversion terms removed. [Validation Pack](../validation/LG-11.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 |  |
-| LG-12 | which draws an account accepts, a shape for compatibility and representability | building 2026-11-19, briefed 2026-11-19 | LG-11 |
+| LG-12 | which draws an account accepts, a shape for compatibility and representability. [Validation Pack](../validation/LG-12.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 | LG-11 |
 | LG-13 | the insurance example's cap named for what it is, annual-cap | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-10, building 2026-11-10 |  |
 | LG-14 | a benchmark of the credit kinds' read cost on every backend | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-11, building 2026-11-11 |  |
 | LG-15 | LG-14's gaps closed: native Jena on TDB2, checkpoints, the drawn account's clamp, the loop timed apart, the shortcut | merged 2026-11-16, verified 2026-11-16, merged 2026-11-15, built 2026-11-11, building 2026-11-11 |  |
@@ -178,6 +178,7 @@ Results sections. In short:
 - 2026-11-19: LG-28 marked building.
 - 2026-11-19: LG-28 built. `ldg:AccountDefinition` is a versioned thing, every example's definitions have an identity, and the edges to the stated amount, the ceiling, the unit, the parent, the period, the policy, the restoring kinds and the residual account bear meaning. A definition that names its restoring kinds pins the edition of their scheme with `ldg:creditKindsEdition`. Each stated amount and ceiling is minted under its definition, so Foundation's check, which the ledger's tests now run, finds nothing. `tools/test_ledger.py` 135 passed and the proofs pass. Five questions for the maintainer are in the pack.
 - 2026-11-19: LG-12 marked building, the last slice of the rework.
+- 2026-11-19: LG-12 built, and with it the rework, LG-11 and LG-25 to LG-28, closes on machine S. Three runtime shapes refuse a draw, a debit or a request, that cites a quantity on another value space or in another unit than its account's, or whose amount its space cannot represent, with Quantification's reason where it has one. Two refusal examples are new. `tools/test_ledger.py` 154 passed. Four questions for the maintainer are in the pack.
 - 2026-11-19: the maintainer decided PDD-22 and answered LG-Q46 as (a). The writer's half of the rule of a pass is ADR-A131's second addendum of 2026-11-19, drafted as Proposed and accepted by the maintainer the same day, which has a pass written as one request on the revision it was evaluated from and named from its ledger and a key of its evaluation. Behaviour's half waits for LG-3 and the port's for the plan that builds it. LG-27 gains the pass's name, and the brief of 2026-11-19 says so.
 - 2026-11-19: **the maintainer accepted the wording of ADR-A131's addendum of 2026-11-19**, a checkpoint for an account that moved, which LG-27 builds to. The model behind LG-Q45 is kept as [`tools/models/ledger-pass-revision/`](../../../tools/models/ledger-pass-revision/README.md), and its run fails when a count changes.
 - 2026-11-19: the maintainer answered LG-Q45 as (a), raised that day by conditions C1 to C3 of the multi-store epic's read-set census. A pass moves a ledger's revision once, and its write is refused when the ledger has moved from the revision the pass read. LG-27 is unchanged by it. Where the rule is stated is PDD-22, and the census's candidate R6 is PDD-23. The rework is briefed for machine S in the [brief of 2026-11-19](../notes/machine-s-brief-2026-11-19.md), LG-11, LG-25 to LG-28 and then LG-12, and this session reviews it and writes nothing under `ontology/ledger/` meanwhile.

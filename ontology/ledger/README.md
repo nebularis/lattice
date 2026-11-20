@@ -253,6 +253,7 @@ classDiagram
 - **A period is an account, not a reset.** Where a definition states `ldg:periodRecurrence`, one account is derived per period, its period key the recurrence bin the effective position falls in, computed at write and never supplied by a draw. One recurrence holds along a path, and a keyed child's instance is part of its parent's under the same bin. Nothing resets, so `ldg:resetRecurrence` is deprecated.
 - **Two orderings.** A posting carries an effective position, where the fact sits in the arrangement and comparable across accounts, and a recorded position with a micro-position, where it sits in its own account's append-only sequence. The pass that wrote it carries the position at which it was recorded, on the effective axis, and a posting is never effective later than its pass. Running balances, closes and checkpoints follow the recorded axis, so a reading as of an effective position folds the postings. A position is a natural number on its axis, so the effective and the recorded position are typed `xsd:nonNegativeInteger`, as the shared formal statement of positions that this layer's proofs and the multi-store model use defines one.
 - **A draw arrives in its account's unit.** The ledger never converts. A request in another value space is converted before it reaches the ledger, where the conversion is recorded with its rate, the rate's source and its date, and the draw is then made in the account's unit. A posting may cite that record by `prov:wasDerivedFrom`, as it cites a merge record, so the conversion stays traceable and the ledger states no term for it ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-09).
+- **An account accepts a draw only in its own value space and unit, and only where its space can represent the amount.** A draw's amount is a literal in its account's unit of account, so a draw that read a quantity in another space or unit took an amount unconverted, or a proportion unresolved, and is refused. An amount that is not a value of its space's datatype, or on a discrete space not a whole multiple of its granularity floor, is refused and never rounded. Each refusal carries the reason Quantification gives, so a draw refused here and a comparison Quantification finds Undetermined say the same thing ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its second addendum of 2026-11-09).
 - **Post at the drawn account only.** A draw writes one posting, on the account drawn, and an ancestor's balance is derived by a fold over its subtree. A purpose-counting account is outside the drawn account's subtree, so it keeps a posting of its own from the same draw. Where a purpose-counting account and the drawn account share an ancestor, that ancestor's fold would count the draw twice, and the rule that prevents it is open (section 13).
 - **An exact share is two integers.** A request granted in proportion keeps its exact share as a numerator and a denominator, not as one `owl:rational`, because no store LATTICE runs compares that literal by value (TSD-70), and the merge shapes compare and sum granted values.
 - **The running balance sits on the posting.** A posting records the balance of the account it is on after it, that account's subtree included, so the hot path reads one value. No record holds a balance for each account and pass, and a state the decision path does not read is answered from the history when it is asked for ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-11-16). The order is the recorded one. On its own account a posting follows those recorded before it, and on an account below it those of an earlier pass, or of its own pass at a lower or equal micro-position.
@@ -396,7 +397,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Subclass of.** `fnd:DerivedArtefact`
 
-**Utility.** Write one per draw or credit, on the account named, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. State the running balance of the account posted to, after the posting. A credit states its kind, where it has one, and the amount offered beside the amount applied, and a cut for each ancestor that had less room. Its read set is `prov:wasDerivedFrom`, which names the merge record and the request a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion.
+**Utility.** Write one per draw or credit, on the account named, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. State the running balance of the account posted to, after the posting. A credit states its kind, where it has one, and the amount offered beside the amount applied, and a cut for each ancestor that had less room. Its read set is `prov:wasDerivedFrom`, which names the merge record and the request a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion. A draw's read set names no quantity outside its account's value space and unit.
 
 **Restrictions.**
 
@@ -507,9 +508,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** The value space every posting on this account is in.
 
-**Utility.** Names the value space an account's amounts are stated and posted in. The space must be
-extensive (`qnt:additivity qnt:Extensive`) with `qnt:Sum` and `qnt:Difference` capabilities, since Ledger
-holds only amounts whose parts add to the whole (§1).
+**Utility.** Names the value space an account's amounts are stated and posted in. The space must be extensive (`qnt:additivity qnt:Extensive`) with `qnt:Sum` and `qnt:Difference` capabilities, since Ledger holds only amounts whose parts add to the whole (§1). A draw on the account is in this space, and in the unit its stated amount is in where the space has units.
 
 **Domain.** `ldg:AccountDefinition`
 
@@ -1070,7 +1069,7 @@ The configuration declares four, a permission and two guards of a merge policy, 
 
 **Definition.** A posting's amount, in its account's unit of account: the amount drawn for a debit, and the amount applied for a credit.
 
-**Utility.** The one amount a balance is summed from. A credit's amount applied is what restored the account it was posted to, up to that account's room below its ceiling.
+**Utility.** The one amount a balance is summed from. A credit's amount applied is what restored the account it was posted to, up to that account's room below its ceiling. A debit's amount is representable in the account's value space, a value of its datatype and on a discrete space a whole multiple of its granularity floor, and is never rounded to be so.
 
 **Domain.** `ldg:Posting`
 
@@ -1681,6 +1680,9 @@ ldg:RestoringKindsInTheirEditionShape a sh:NodeShape ;
 | `ldg:RanksAsDeclaredShape` | a request states a rank exactly where its merge's policy states a rank criterion, and a place exactly where it states a unit order criterion | |
 | `ldg:MergeGuardsShape` | a merge that granted holds no two requests of one rank where its policy requires distinct ranks and the requests exceed the availability, and holds requests that agree on purpose where its policy requires that | LM1, LJ4 |
 | `ldg:MergedPostingCitesMergeShape` | a posting from a request cites the request's merge record and posts what the request was granted | LO1 |
+| `ldg:DrawInItsAccountsSpaceShape` | a draw reads no quantity outside its account's unit of account, and one that does is Undetermined with Quantification's `qnt:OutsideDeclaredSpace` | |
+| `ldg:DrawInItsAccountsUnitShape` | a draw reads no quantity in another unit than its account's stated amount, and one that does is Undetermined with no permitted conversion, in Quantification's words | |
+| `ldg:DrawRepresentableShape` | a draw's amount is a decimal, a value of its space's datatype, and on a discrete space a whole multiple of the granularity floor where one is stated, and one that is not is refused, never rounded, Undetermined with Quantification's `qnt:OutsideDeclaredSpace` | |
 | `ldg:OwnerKindAdmittedShape` | an account's owner is of a kind its definition admits | |
 | `ldg:AccountNaturalKeyShape` | no two account instances share a definition, owner, key and period | |
 | `ldg:PeriodKeyFromRecurrenceShape` | an account has a period key exactly where its definition states a period recurrence, a bin of that recurrence | |
@@ -1692,6 +1694,8 @@ ldg:RestoringKindsInTheirEditionShape a sh:NodeShape ;
 | `ldg:PassWritesOneLedgerShape` | a pass writes at least one record, every record on an account of one owner, and that owner has a ledger | |
 | `ldg:PassRevisionsInOrderShape` | no two passes of one ledger record one revision, a pass at a later position records a greater one, and each revision above the least a ledger's passes record follows one a pass of it recorded | |
 | `ldg:LedgerAtItsLatestPassShape` | a ledger's revision is the greatest revision its passes record | |
+
+A draw is a debit posting, and a request on a merge, which states what was asked and what was granted. Its amount is a literal, in its account's unit of account and in the unit its account's stated amount is in, so the only thing a draw can bring in another value space or unit is a quantity it read, named in its `prov:wasDerivedFrom`. A draw that read one has taken an amount the ledger would have to convert, or a proportion it would have to resolve, and the ledger does neither. A record made before the ledger, such as a conversion or the resolution of a proportion, is not a quantity, so a draw may cite one. An amount is representable where it is a decimal, a value of the datatype the space declares, `xsd:decimal` where it declares none, and, on a discrete space that states a granularity floor, a whole multiple of the floor. So 33% of 10 licences, 3.3, is refused on a space of whole licences, and a count beyond `xsd:int` on a space whose datatype is `xsd:int`. Each refusal carries the reason Quantification gives for the same comparison. A value on another space, or not among the values its space declares, is `qnt:OutsideDeclaredSpace`. Quantification has no term for a unit with no permitted conversion, so that shape's message uses its words.
 
 A checkpoint's totals are what a reading of the flows sums, so a reading from a close adds the postings recorded after it to the checkpoint's totals (LE3). Two checkpoints of one account whose balance and totals are equal have no posting between them that moved the account, since every posting that moves an account raises one of its totals, so the law that a checkpoint is written only where its account moved reads the checkpoints and no posting. The passes of a ledger are those that wrote a record on one of its owner's accounts, since a pass names its ledger by its IRI and states no edge to it.
 
@@ -1705,6 +1709,7 @@ Each shape targets the class it checks as a node and reads every instance in one
 # less its cuts, a credit is applied within its room and cut where an ancestor
 # had less, a merge records every request and shares within availability,
 # a checkpoint states its totals and is written for an account that moved,
+# a draw is in its account's value space and unit and representable there,
 # account instances keep their
 # natural keys and periods, a ledger's passes move its revision in order,
 # and no record is effective after its pass. Each shape
@@ -2127,6 +2132,86 @@ ldg:MergedPostingCitesMergeShape a sh:NodeShape ;
                 """
         ] .
 
+ldg:DrawInItsAccountsSpaceShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting , ldg:Request ;
+        sh:sparql [
+                sh:message "A draw must read no quantity outside its account's unit of account. A draw that does is Undetermined, with Quantification's reason qnt:OutsideDeclaredSpace." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        PREFIX prov: <http://www.w3.org/ns/prov#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; prov:wasDerivedFrom ?quantity ; ldg:onAccount|^ldg:request/ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:unitOfAccount ?space .
+                                FILTER EXISTS { ?quantity a qnt:Quantity }
+                                FILTER NOT EXISTS { ?value ldg:direction ldg:Credit }
+                                OPTIONAL { ?quantity qnt:onSpace ?on }
+                                FILTER (COALESCE(?on != ?space, true))
+                        }
+                """
+        ] .
+
+ldg:DrawInItsAccountsUnitShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting , ldg:Request ;
+        sh:sparql [
+                sh:message "A draw must read no quantity in another unit than the one its account's stated amount is in, since the ledger converts nothing. A draw that does is Undetermined, with no permitted conversion, as Quantification words it." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        PREFIX prov: <http://www.w3.org/ns/prov#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; prov:wasDerivedFrom ?quantity ; ldg:onAccount|^ldg:request/ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:unitOfAccount ?space .
+                                FILTER EXISTS { ?quantity a qnt:Quantity ; qnt:onSpace ?space }
+                                FILTER NOT EXISTS { ?value ldg:direction ldg:Credit }
+                                OPTIONAL { ?quantity qnt:inUnit ?unit }
+                                OPTIONAL { ?account ldg:ofDefinition/ldg:statedAmount/qnt:inUnit ?accountUnit }
+                                FILTER (COALESCE(?unit != ?accountUnit, BOUND(?unit) || BOUND(?accountUnit)))
+                        }
+                """
+        ] .
+
+ldg:DrawRepresentableShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting , ldg:Request ;
+        sh:sparql [
+                sh:message "A draw's amount must be representable in its account's unit of account: a decimal, a value of the space's datatype, xsd:decimal where none is stated, and on a discrete space a whole multiple of the granularity floor where one is stated. An amount that is not is refused, never rounded, and is Undetermined, with Quantification's reason qnt:OutsideDeclaredSpace." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:amountValue|ldg:requestedValue|ldg:grantedValue ?amount ;
+                                        ldg:onAccount|^ldg:request/ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:unitOfAccount ?space .
+                                FILTER NOT EXISTS { ?value ldg:direction ldg:Credit }
+                                OPTIONAL { ?space qnt:valueDatatype ?declared }
+                                OPTIONAL { ?space qnt:densityKind qnt:Discrete ; qnt:granularityFloor/qnt:numericValue ?floor }
+                                BIND (COALESCE(?declared, xsd:decimal) AS ?datatype)
+                                FILTER (DATATYPE(?amount) NOT IN (xsd:decimal, xsd:integer, xsd:nonNegativeInteger, xsd:positiveInteger,
+                                                xsd:nonPositiveInteger, xsd:negativeInteger, xsd:long, xsd:int, xsd:short, xsd:byte,
+                                                xsd:unsignedLong, xsd:unsignedInt, xsd:unsignedShort, xsd:unsignedByte)
+                                        || ?datatype NOT IN (xsd:decimal, xsd:integer, xsd:nonNegativeInteger, xsd:positiveInteger,
+                                                xsd:nonPositiveInteger, xsd:negativeInteger, xsd:long, xsd:int, xsd:short, xsd:byte,
+                                                xsd:unsignedLong, xsd:unsignedInt, xsd:unsignedShort, xsd:unsignedByte)
+                                        || (?datatype != xsd:decimal && FLOOR(?amount) != ?amount)
+                                        || (?datatype IN (xsd:nonNegativeInteger, xsd:unsignedLong, xsd:unsignedInt, xsd:unsignedShort,
+                                                xsd:unsignedByte) && ?amount < 0)
+                                        || (?datatype = xsd:positiveInteger && ?amount < 1)
+                                        || (?datatype = xsd:nonPositiveInteger && ?amount > 0)
+                                        || (?datatype = xsd:negativeInteger && ?amount > -1)
+                                        || (?datatype = xsd:long && (?amount < -9223372036854775808.0 || ?amount > 9223372036854775807.0))
+                                        || (?datatype = xsd:int && (?amount < -2147483648 || ?amount > 2147483647))
+                                        || (?datatype = xsd:short && (?amount < -32768 || ?amount > 32767))
+                                        || (?datatype = xsd:byte && (?amount < -128 || ?amount > 127))
+                                        || (?datatype = xsd:unsignedLong && ?amount > 18446744073709551615.0)
+                                        || (?datatype = xsd:unsignedInt && ?amount > 4294967295)
+                                        || (?datatype = xsd:unsignedShort && ?amount > 65535)
+                                        || (?datatype = xsd:unsignedByte && ?amount > 255)
+                                        || COALESCE(?floor > 0 && FLOOR(?amount / ?floor) * ?floor != ?amount, false))
+                        }
+                """
+        ] .
+
 ldg:OwnerKindAdmittedShape a sh:NodeShape ;
         sh:targetNode ldg:Account ;
         sh:sparql [
@@ -2339,11 +2424,13 @@ ldg:LedgerAtItsLatestPassShape a sh:NodeShape ;
 
 ## 8. Examples
 
-The examples in [`examples/`](examples/) are seven accepted arrangements (licensing, lending, grants, delegated authority, insurance, a credit cut at a parent, and requests of no use in part) a policy that rounds to the nearest and settles the difference, and ten refusals (cycle, unit mismatch, overdraw under `ldg:Refuse`, a credit posted to an account that does not accept its kind, an unrounded proportional rule, an intensive unit of account, rounding to the nearest beside a residual allocation with no difference stated, a difference settled with no excess recovery stated, an account definition that names no merge policy, a merge policy with no merge rule), validated against the structural shapes and the constraints of section 7. §5.2 walks through one of them.
+The examples in [`examples/`](examples/) are seven accepted arrangements (licensing, lending, grants, delegated authority, insurance, a credit cut at a parent, and requests of no use in part) a policy that rounds to the nearest and settles the difference, and ten refusals (cycle, unit mismatch, overdraw under `ldg:Refuse`, a credit posted to an account that does not accept its kind, an unrounded proportional rule, an intensive unit of account, rounding to the nearest beside a residual allocation with no difference stated, a difference settled with no excess recovery stated, an account definition that names no merge policy, a merge policy with no merge rule), validated against the structural shapes and the constraints of section 7, and two draws the runtime laws refuse (a draw that read an amount in another unit or another value space, and a draw of an amount its space cannot represent). §5.2 walks through one of them.
 
 Every example's configuration is versioned as Foundation asks. Its tests run `fnd:MeaningBearingEdgeShape` on it, and `fnd:VersionedShape` on its account definitions, merge policies and ledger profiles, and neither finds anything. Each of those, and each value space and recurrence an edge that bears meaning leads to, has one persistent identity. Each definition's stated amount and credit ceiling are minted under its IRI, written relative to the example's base, so a ceiling equal to the stated amount is a quantity of its own. Each example with a credit declares an edition of its kinds, a versioned scheme with an identity, and each kind is a concept of that edition and of `ldg:CreditKinds`, defined by the edition. A definition that names the kinds that restore it pins that edition.
 
 The accepted examples and the two refusals that are recorded, the overdraw and the credit, carry their records too: the owner's ledger, the account instances, the passes, and the postings with their running balances, cuts and merge records with their requests each position writes, which the runtime laws of section 7.3 check. Each owner's ledger names the example's ledger profile and states the revision its last pass recorded. Each pass is named from the ledger and a key for its evaluation, under a prefix that holds the ledger's IRI, and records the revision it moved the ledger to, one more than the pass before it. A refused merge is a record its pass writes, so that pass moves the revision as any other does. Each example with a credit gives it a kind of its own, a member of `ldg:CreditKinds` and of the example's edition, in the example's namespace. The licensing example keeps one account per site and licence year, with no reset credit. The example of a credit cut at a parent is the case of a cut at an ancestor: a parent and a child each stated at 10, a debit of 5 at the child, a credit of 4 at the parent, then a credit of 4 at the child, which is applied at 4 and cut by 3 at the parent, whose balance is then 10. With no cut the sum would be 13, above the parent's ceiling. A last credit of 1 at the child is cut in full at the parent. Its profile closes the ledger after positions 3 and 4, and both accounts have a checkpoint at both closes with their balances and totals. The parent's balance is 10 at both, and it still moved, since its credits offered rose from 8 to 9. The example of requests of no use in part has requests of 5 and 4, ranked in that order, share 7 each whole or not at all: the first is granted 5 and the second 0, and the merge states a residual of 2, which its policy allows and sends to a residual account. The refused overdraw keeps both its requests with no granted value and states `ldg:ExceedsAvailable`. The refused credit is a merge record with one request and `ldg:KindNotAccepted`, and no posting.
+
+The two refused draws carry records too, whole except for the draws the runtime laws refuse. In the draw in another unit, a sterling facility takes a first draw asked for in euros, converted before the ledger and citing its conversion record, which conforms. A second draw cites the euros it was asked for, with no conversion record, and a third cites a sum in dollars, a value space of its own, and the laws refuse the two. In the unrepresentable draw, a pool of 10 licences, on a discrete space whose granularity floor is one licence, takes a draw of half the pool, resolved to 5 before the ledger, which conforms, and a draw of 33%, resolved to 3.3, which the laws refuse with its request.
 
 ## 9. Canonicalisation
 
@@ -2829,6 +2916,8 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   - may invalidate. An account definition is versioned ([ADR-A142](../../docs/architecture/decisions/ADR-A142-meaning-bearing-edges.md), decisions 1 and 5, and [ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-11-16). `ldg:AccountDefinition` is a subclass of `fnd:Versioned`, so Foundation's `fnd:VersionedShape` refuses a definition with no persistent identity. `ldg:statedAmount`, `ldg:creditCeiling`, `ldg:unitOfAccount`, `ldg:partOf`, `ldg:periodRecurrence`, `ldg:restoredBy` and `ldg:residualAccount` bear meaning, as `ldg:mergePolicy` did already, so `fnd:MeaningBearingEdgeShape` warns where one leads to a node that is neither versioned, minted under its subject nor a published term, and a Persistence profile that takes one of them as a reference by identity no longer compiles. To move a document, give each definition an identity, mint its stated amount and its ceiling under its IRI rather than sharing a quantity, give its value space and its recurrence an identity, and state a change of a definition as a new version.
   - no effect. New on an account definition, at most one: `ldg:creditKindsEdition`, the edition of a scheme of credit kinds that the kinds it names were resolved against, which bears meaning. `ldg:CreditKinds`'s description says an applied module publishes its kinds in editions.
   - may invalidate. The constraint `ldg:RestoringKindsInTheirEditionShape` is new. A definition that names the kinds that restore it and pins no edition, or names a kind that is not a concept of the edition it pins, no longer conforms. To move it, name with `ldg:creditKindsEdition` the edition the kinds were resolved against.
+  - may invalidate. An account accepts a draw only in its own value space and unit, with an amount its space can represent ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its second addendum of 2026-11-09). `ldg:DrawInItsAccountsSpaceShape`, `ldg:DrawInItsAccountsUnitShape` and `ldg:DrawRepresentableShape` are new, on a debit posting and on a request. A draw that names in its `prov:wasDerivedFrom` a quantity on another value space, or in another unit than its account's stated amount, no longer conforms, and nor does a draw whose amount is not a decimal, is not a value of its space's datatype, or on a discrete space is not a whole multiple of the granularity floor the space states. To move a document, convert the amount or resolve the proportion before the ledger and cite the record of it, and refuse an amount the space cannot represent rather than round it.
+  - changes meaning. `ldg:unitOfAccount`'s utility says a draw is in the unit the stated amount is in, `ldg:Posting`'s that a draw's read set names no quantity outside its account's value space and unit, and `ldg:amountValue`'s that a debit's amount is representable in its space and never rounded to be so.
 - **0.22.0**.
   - changes meaning. What an account declares for a merge moves to a merge policy ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-17). `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation` have the domain `ldg:MergePolicy`, a new versioned class, and an account definition names its policy with the new `ldg:mergePolicy`, exactly one. A definition that states the three properties itself no longer conforms. To move it, state them on a policy and name the policy from the definition. `ldg:ProportionalNeedsRoundingShape` and `ldg:NearestRoundingStatesTheDifferenceShape` now target the policy.
   - no effect. New on a merge policy, each at most one: `ldg:rankCriterion` and `ldg:unitOrderCriterion`, whose values are concepts of the new scheme `ldg:OrderCriteria` that an applied module fills, and the booleans `ldg:allowsResiduals`, `ldg:requiresDistinctRanks` and `ldg:requiresSamePurpose`.
@@ -2858,6 +2947,8 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 - **A close is not checked to write every account that moved.** The law of section 7.3 refuses a checkpoint for an account that did not move, and nothing yet refuses a close that leaves out one that did, since the records name a close only by its checkpoints.
 - **Which version of a definition an account folds against after a new version is written.** An account names the version of its definition it was derived under, and that version is part of its natural key. How a later version reaches an account that already has postings, whether as the same account from a stated position or as a new one, is not yet decided, and no example writes a second version.
 - **The edition of a purpose's or a key's scheme is not pinned.** A definition pins the edition of the credit kinds it names. A purpose it counts and the key dimension it states are concepts or schemes of their own, and whether a version of a definition pins their editions too is not yet decided.
+- **A discrete space with no granularity floor.** A draw's amount on a discrete space is held to the space's granularity floor where one is stated. Where none is, only the space's datatype limits it, and whether a discrete unit of account must state a floor is not yet decided.
+- **A credit's amount is not checked for representability.** The shapes of section 7.3 hold a draw to its account's value space, unit and representable amounts, and no shape yet holds a credit, a cut or a residual to them.
 - **Persistence's record families** for postings, cuts and merge records, append-only, are not yet declared. The storage shape they take is not yet measured.
 - **Behaviour's use of Ledger.** Behaviour's allowance terms are to give way to accounts, with its effects and threshold regimes drawing on and reading them.
 - **Allocation with conservation**, one amount split across several accounts by a merge rule, is not yet specified.

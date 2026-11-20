@@ -75,7 +75,7 @@ ldg:Pass a owl:Class ;
 
 ldg:Posting a owl:Class ;
     rdfs:comment "One draw or credit on one account." ;
-    fnd:utility "Write one per draw or credit, on the account named, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. State the running balance of the account posted to, after the posting. A credit states its kind, where it has one, and the amount offered beside the amount applied, and a cut for each ancestor that had less room. Its read set is prov:wasDerivedFrom, which names the merge record and the request a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion." ;
+    fnd:utility "Write one per draw or credit, on the account named, and one more on each account that counts the draw's purpose. An ancestor's balance is derived, never posted. State the running balance of the account posted to, after the posting. A credit states its kind, where it has one, and the amount offered beside the amount applied, and a cut for each ancestor that had less room. Its read set is prov:wasDerivedFrom, which names the merge record and the request a merged draw came from, and any record made before the ledger that the draw rests on, such as a conversion. A draw's read set names no quantity outside its account's value space and unit." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:amountValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditKind ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:direction ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:effectivePosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:forPurpose ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:inPass ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:microPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:offeredValue ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:onAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:recordedPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:runningBalance ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:DerivedArtefact .
 
 ldg:Request a owl:Class ;
@@ -90,7 +90,7 @@ ldg:accountKey a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:amountValue a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "A posting's amount, in its account's unit of account: the amount drawn for a debit, and the amount applied for a credit." ;
-    fnd:utility "The one amount a balance is summed from. A credit's amount applied is what restored the account it was posted to, up to that account's room below its ceiling." ;
+    fnd:utility "The one amount a balance is summed from. A credit's amount applied is what restored the account it was posted to, up to that account's room below its ceiling. A debit's amount is representable in the account's value space, a value of its datatype and on a discrete space a whole multiple of its granularity floor, and is never rounded to be so." ;
     rdfs:domain ldg:Posting ;
     rdfs:range xsd:decimal .
 
