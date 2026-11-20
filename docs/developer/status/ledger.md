@@ -49,7 +49,40 @@ Since then the work has been design rather than build, and it has answered the w
 | WPG-Q2 | **open, leaning (a).** Where the declared ceiling lives: on `ldg:AccountDefinition` as a per-account availability bound, on the draw term, or in Quantification beside LF-Q22(a)'s maximum magnitude per value space. The bound is a property of the account, and LF-Q22's is about a value space, so the two are different things that happen to be upper bounds | the maintainer, then LG-4 |
 | the `owl:rational` probe | **done by LG-2**, TSD-70. rdflib, Oxigraph and Jena keep the literal and none compares it by value, so a proportion is two integers. ES-5 can rely on the finding | closed |
 
-**Next action:** the review of the rework built on machine S, LG-11, LG-25 to LG-28 and LG-12, from their packs, and the questions each pack ends with: the order of one pass's postings on one path and a credit with no kind (LG-25), the five reason names, the rule's name and ADR-A131's addendum proposed 2026-11-19 for the request (LG-26), where the refusal of a ceiling above a stated amount lives and the name `ldg:passRevision` (LG-27), the pin's name, `ldg:residualAccount` as meaning-bearing, the editions of the purpose and key schemes and a definition's new version under postings (LG-28), and whether a draw's unit is read from what it cites and a credit follows the same rule (LG-12). TD-102, TD-158 and TD-159 can be closed, as the packs of LG-28 and LG-25 say. Then LG-3, Behaviour's migration, on the reworked vocabulary, briefed in a [sketch](../sketches/behaviour-on-the-ledger.md) whose questions BHL-Q1 to BHL-Q7 are open. The README's narrative and exemplar expansion is requested and not started. **Then, as soon as the design is settled:** the documentation unit's OD-DOC4, the layer interactions record, whose brief holds the inputs this unit's design discussions produced.
+**Next action:** the maintainer's answers to LG-Q48 to LG-Q51 of the [sketch](../sketches/ledger-definition-versions-in-force.md) on an account under a later version of its definition, which hold LG-29, and to LG-Q47, where a pass's position comes from, now shown on a model. Then LG-29, built here with its proofs, and LG-30, the review's corrections. The maintainer's word on each of LG-11, LG-25 to LG-28 and LG-12 moving to verified, and on the wording of ADR-A131's addendum proposed 2026-11-19 for the request, which the release carrying the rework needs accepted. TD-158 and TD-102 close when LG-25 and LG-28 are verified. Then LG-3, Behaviour's migration, briefed in a [sketch](../sketches/behaviour-on-the-ledger.md) whose questions BHL-Q1 to BHL-Q7 are open. WPG-Q2 is open in the [waterfall proofs sketch](../sketches/waterfall-proofs-and-the-generality-gap.md). The README's narrative and exemplar expansion is requested and not started. **Then, as soon as the design is settled:** the documentation unit's OD-DOC4, the layer interactions record, whose brief holds the inputs this unit's design discussions produced.
+
+## 2026-11-20, the rework reviewed
+
+The rework built on machine S, LG-11, LG-25 to LG-28 and LG-12, was read against the sketch of the vocabulary's rework, the plan's rows, LG-Q36 to LG-Q46 and ADR-A131's addenda. Every decided term, shape and rule has a built counterpart and none differs. No test was removed without its decision named, no version moved, and no theory or claim changed. The checks were run again on macOS by the multi-store unit's session and not by this review, and no adversarial probe was made.
+
+**Two findings went to the maintainer.** An account could never reach a later version of its definition, since `ldg:ofDefinition` names one version and that version is part of the account's key, where the sketch on accounts from instruments had agreed on 2026-11-12 that a posting folds against the definition in force when it took effect. The maintainer decided on 2026-11-20 that the same account folds against the version in force by position, as LG-29, whose questions LG-Q48 to LG-Q51 are open. And no text says who gives a pass its position, which the law on a ledger's passes holds to the order of their revisions. It is LG-Q47, with a model.
+
+**The packs' questions, answered by the maintainer on 2026-11-20.**
+
+| Slice | Question | Answer |
+|---|---|---|
+| LG-25 | the order of one pass's postings on one path | as built, LG-Q9's order |
+| LG-25 | a credit with no kind, refused on any path where an account names its kinds | as built. The kernel refuses it only at the account posted to, which is TD-175 |
+| LG-26 | the names of five reasons | four as built, and `ldg:CrossingLimits` becomes `ldg:CrossingSets`, since its definition speaks of sets of requests. LG-30 |
+| LG-26 | `ldg:WholeOrNothing` as the merge rule for requests of no use in part | as built |
+| LG-26, LG-28 | `ldg:residualAccount` as an edge that bears meaning | as built. A new version of the account that takes a residual needs a new version of the policy, and of each definition that names the policy |
+| LG-27 | where a ceiling above a stated amount is refused | a design-time shape, unless a ledger profile in the same configuration admits it. LG-30 |
+| LG-27 | `ldg:passRevision`, and `ldg:Ledger` in the runtime document | as built |
+| LG-27 | whether a close is checked to checkpoint every account that moved | no. A checkpoint is derived, and a missing one costs a longer fold and never a wrong balance |
+| LG-27 | whether a ledger's first pass records revision 1 | yes, with an owner that has no ledger read as revision 0. LG-30 |
+| LG-28 | `ldg:creditKindsEdition` as the pin | as built |
+| LG-28 | whether a purpose's and a key's schemes are pinned by edition | not now. The README's open issue holds it |
+| LG-28 | Quantification's operation capabilities, versioned with no identity | Quantification's, as TD-176 |
+| LG-12 | a draw's read set as the place another space or unit is found | as built. A draw cites the record of a derivation and never a quantity outside its account's unit |
+| LG-12 | `qnt:OutsideDeclaredSpace` for an amount that is not representable | as built for now |
+| LG-12 | whether a discrete unit of account states a granularity floor | yes, as a configuration constraint. LG-30 |
+| LG-12 | whether a credit is held to the same rule | yes, as LG-31 |
+
+**Smaller findings, carried by LG-30.** `ldg:passPosition`, `ldg:closePosition` and `ldg:microPosition` are still `xsd:integer`. Six examples the rework added or rewrote cite a decision in a comment, and eight older lines cite a decision, a question or a debt. The README says the accepted examples carry their records, and one holds none.
+
+**The debts.** TD-158's cause is gone, since each sum adds zero for a row that is not a posting and one test holds both engines to one result. TD-102's cause is gone for the ledger. Both close when their slices are verified. TD-159 is not closed. Two of its three shapes went, and four laws still walk the account path once for each record. Its row now says so.
+
+**Not decided.** The wording of the addendum proposed 2026-11-19 for the request, and each row's move to verified, are the maintainer's.
 
 ## 2026-11-16, LG-20 built
 
@@ -167,6 +200,9 @@ Results sections. In short:
 | LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part. [Validation Pack](../validation/LG-26.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 | LG-25 |
 | LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation. [Validation Pack](../validation/LG-27.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 | LG-25 |
 | LG-28 | the account definition as a versioned thing, with the scheme edition it pins. [Validation Pack](../validation/LG-28.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 | LG-26, LG-27 |
+| LG-29 | an account under a later version of its definition, the version in force by position. [Sketch](../sketches/ledger-definition-versions-in-force.md) | planned | LG-28, LG-Q48, LG-Q49, LG-Q50, LG-Q51 |
+| LG-30 | the corrections the review of 2026-11-20 found and the maintainer accepted | planned | LG-28 |
+| LG-31 | a credit held to the rule a draw is held to | planned | LG-12 |
 - 2026-11-19: on machine S, per the brief of 2026-11-19, on `spi/worktree-s`, committing locally only. LG-11 marked building.
 - 2026-11-19: LG-11 built. The three conversion properties and their shape are gone from the README and its extracted documents, `revolving-facility.ttl` draws in sterling and cites each conversion as a record outside the ledger, and the conversion mutation is gone from `tools/test_ledger.py`, 40 passed. The proofs name no conversion term and pass.
 - 2026-11-19: LG-25 marked building, after MSA-I5a's agreement lemma landed in the ledger's proof session with every proof green.

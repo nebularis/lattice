@@ -126,7 +126,7 @@ def outcome(S):
             tuple(sorted((a, tuple(f), S["state"].get(a, "")) for a, f in S["fired"].items())))
 
 
-def run(make, actors, crash, choices):
+def run(make, actors, crash, choices, view=None):
     S = make()
     gens = {a: f(S, a) for a, f in actors.items()}
     live, steps, crashed, counts, trace = set(gens), {a: 0 for a in gens}, False, [], []
@@ -146,14 +146,14 @@ def run(make, actors, crash, choices):
             next(gens[a])
         except StopIteration:
             live.discard(a)
-    return outcome(S), counts, " ".join(trace)
+    return (view or outcome)(S), counts, " ".join(trace)
 
 
-def outcomes(make, actors, crash=None):
+def outcomes(make, actors, crash=None, view=None):
     """Every schedule once, by counting through the choices each run met."""
     found, choices = {}, []
     while True:
-        out, counts, trace = run(make, actors, crash, choices)
+        out, counts, trace = run(make, actors, crash, choices, view)
         found.setdefault(out, trace)
         path = choices + [0] * (len(counts) - len(choices))
         i = len(path) - 1

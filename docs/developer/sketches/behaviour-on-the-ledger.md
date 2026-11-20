@@ -126,7 +126,7 @@ Each is compared on what it costs to design with and what it costs at runtime. E
 
 | | Option | Consequence |
 |---|---|---|
-| (a) | by persistent identity. The version is the one in force at the draw's effective position | a new version of the account definition needs no new version of every transition that draws on it. The ledger already picks the version this way for a posting |
+| (a) | by persistent identity. The version is the one in force at the draw's effective position | a new version of the account definition needs no new version of every transition that draws on it. The maintainer decided on 2026-11-20 that an account folds against the version in force by position, which LG-29 builds |
 | (b) | by version | a change of stated amount forces a new version of each transition definition that names it, and the two can disagree with what the posting folds against |
 
 *Leaning (a).* The account instance, its owner and its period key are then derived at evaluation, from the subject and the effective position, and never authored on the effect. Which owner an effect reaches when it is not the subject's own, a programme's account for example, is not settled here and is asked as BHL-Q5.
@@ -169,7 +169,17 @@ It is larger than one slice by the lifecycle's sizing. Five parts, in order, eac
 4. **Behaviour's half of a pass,** as BHL-Q1 and BHL-Q2 are answered, stated in Behaviour's README.
 5. **The users moved and the terms removed or kept,** as BHL-Q6 is answered, with Behaviour's release notes and the applied modules' pins.
 
-## 7. What this leaves out
+## 7. Read against the rework, 2026-11-20
+
+The vocabulary's rework came back and was reviewed. This brief names no term it removed. Five things in it bear on the questions above.
+
+- **BHL-Q1 and BHL-Q2.** A pass's position is not its stimulus's, which is LG-Q47 of the [Ledger plan](../plans/ledger.md). A key formed from the stimulus is stable where the pass's position is read again with the revision.
+- **BHL-Q3.** The layer now says a guard outside the ledger reads a balance as of a revision and records that revision in its read set. That is a duty on Behaviour's finding.
+- **BHL-Q4.** Its leaning stands on LG-Q48 of the [sketch on a later version](ledger-definition-versions-in-force.md).
+- **BHL-Q5.** A pass writes the records of one ledger. An effect on another owner's account is then a second pass in a second ledger, the case the multi-store unit models.
+- **BHL-Q7.** A draw cites the record of a conversion and never a quantity outside its account's unit, which is the rule Behaviour's effect would be held to.
+
+## 8. What this leaves out
 
 - **Allocation over several accounts,** which is LG-4.
 - **An evaluation that writes two ledgers.** The second addendum of 2026-11-19 does not decide it, and the multi-store unit models it.

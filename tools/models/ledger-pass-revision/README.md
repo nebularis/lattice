@@ -58,4 +58,43 @@ Run on 2026-11-19, with Python 3 on macOS.
 - **More than one other writer, or more than one crash.**
 - **How a replay finds its pass.** The model keys a pass's receipt on its activation.
 
+## A pass's position
+
+A second model, `pass_position_model.py`, on the same actors and schedules. The ledger holds its passes to one order, in which a pass at an earlier position never records a greater revision. The model asks which rule for a pass's position keeps that. It is the evidence for LG-Q47 of the [Ledger plan](../../../docs/developer/plans/ledger.md).
+
+Each actor's stimulus has a position of its own, the first actor's before the other's, after it, or the same. With the twelve starting cells and either writer that is 36 cells. The ledger starts with no pass.
+
+| Check | Holds when |
+|---|---|
+| O3, positions follow revisions | in every outcome, the passes' positions never fall as their revisions rise |
+| O4, never before its stimulus | in every outcome, no pass is at a position before its stimulus's |
+
+| Rule | A pass's position is |
+|---|---|
+| stimulus | its stimulus's position |
+| read | the later of its stimulus's position and the position of the ledger's latest pass, read with the revision the pass is evaluated from |
+| writer | the later of its stimulus's position and the position of the ledger's latest pass, taken by the writer when it writes |
+
+```bash
+mise exec -- python tools/models/ledger-pass-revision/pass_position_model.py
+```
+
+It exits non-zero when a count differs from the table below. Run on 2026-11-20, with Python 3 on macOS.
+
+| Protocol | Rule | O3 fails, one after another | O3 fails, no crash | O3 fails, one crash | O4 fails |
+|---|---|---|---|---|---|
+| A | stimulus | 20 of 36 | 20 | 20 | 0 |
+| A | read | 0 | 0 | 0 | 0 |
+| A | writer | 0 | 0 | 0 | 0 |
+| A' | stimulus | 20 | 20 | 20 | 0 |
+| A' | read | 0 | 10 | 10 | 0 |
+| A' | writer | 0 | 0 | 0 | 0 |
+
+- **A pass cannot take its stimulus's position.** Two stimuli written out of the order of their positions break the order with no contention at all, in every cell where both write a pass and their positions differ. A request that is turned away is one way to arrive late, and not the only one.
+- **The later of the two, read with the revision, holds under A.** The request is written only while the ledger is at the revision read, so the latest pass is still the one whose position was read.
+- **Without the refusal it does not.** Under A' a pass reads the latest position, another pass lands at a later one, and the first is written behind it. In four of the cells with a second activation the stale request overdraws and is evaluated again, which is why the count is 10 and not 14.
+- **A position given by the writer holds under either protocol,** and has the writer read the latest pass's position, which a request under A already fixes.
+
+The model gives every pass a stimulus position and a ledger with no earlier pass. It does not show a pass over two ledgers, where each ledger's latest pass may be at a different position.
+
 It checks the instances it generates and proves nothing beyond them.
