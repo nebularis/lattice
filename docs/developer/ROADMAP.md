@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 25 branches, the units' own state from this tree, the newest board day 2026-11-19.
+Built from the status records on 25 branches, the units' own state from this tree, the newest board day 2026-11-20.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -52,7 +52,7 @@ Built from the status records on 25 branches, the units' own state from this tre
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-1 | 5 built, 4 briefed, 1 merged, 1 building | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
 | [ledger](plans/ledger.md) | unit | built 2026-11-19 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · merged 2026-11-18 on docs/placement-vehicles-structure, spi/worktree-s · verified 2026-11-16 on spi/sql-backend | LG-3 | 19 merged, 6 built, 3 planned, 1 blocked | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
-| [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-19 · merged 2026-11-18 on docs/placement-vehicles-structure | MSA-I2 | 18 built, 6 planned, 6 merged | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
+| [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-20 · merged 2026-11-18 on docs/placement-vehicles-structure | MSA-I2 | 16 verified, 7 planned, 6 merged, 2 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
 | [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | built 2026-11-03 |  | no board |  |
@@ -376,20 +376,20 @@ gantt
     dateFormat YYYY-MM-DD
     axisFormat %d %b
     section multi-store-architecture
-    MSA-F1 the studio stream writer :msaf1, 2026-11-18, 2026-11-19
+    MSA-F1 the studio stream writer :msaf1, 2026-11-18, 2026-11-20
     MSA-F10 the stream writer thread :msaf10, 2026-11-19, 2026-11-20
     MSA-F11 a deletion answered from its :msaf11, 2026-11-19, 2026-11-20
     MSA-F12 a reply built from an :msaf12, 2026-11-19, 2026-11-20
     MSA-F13 the Java topology refuses a :msaf13, 2026-11-19, 2026-11-20
     MSA-F14 a command digest separates :msaf14, 2026-11-19, 2026-11-20
-    MSA-F2 a batch the store refuses for :msaf2, 2026-11-18, 2026-11-19
-    MSA-F3 a command id resent with a :msaf3, 2026-11-18, 2026-11-19
-    MSA-F4 the queue topology states each :msaf4, 2026-11-18, 2026-11-19
-    MSA-F5 the event logical key names :msaf5, 2026-11-18, 2026-11-19
-    MSA-F6 a test that a command writing :msaf6, 2026-11-18, 2026-11-19
-    MSA-F7 a deletion whose tombstone :msaf7, 2026-11-18, 2026-11-19
-    MSA-F8 a failure of the stream :msaf8, 2026-11-18, 2026-11-19
-    MSA-F9 a new document save that :msaf9, 2026-11-18, 2026-11-19
+    MSA-F2 a batch the store refuses for :msaf2, 2026-11-18, 2026-11-20
+    MSA-F3 a command id resent with a :msaf3, 2026-11-18, 2026-11-20
+    MSA-F4 the queue topology states each :msaf4, 2026-11-18, 2026-11-20
+    MSA-F5 the event logical key names :msaf5, 2026-11-18, 2026-11-20
+    MSA-F6 a test that a command writing :msaf6, 2026-11-18, 2026-11-20
+    MSA-F7 a deletion whose tombstone :msaf7, 2026-11-18, 2026-11-20
+    MSA-F8 a failure of the stream :msaf8, 2026-11-18, 2026-11-20
+    MSA-F9 a new document save that :msaf9, 2026-11-18, 2026-11-20
     MSA-I1 spikes multi-store-shape-cens :done, msai1, 2026-11-17, 2026-11-18
     MSA-I11 the logical :done, msai11, 2026-11-17, 2026-11-18
     MSA-I12 spikes multi-store-emitted-to :done, msai12, 2026-11-17, 2026-11-18
@@ -897,7 +897,7 @@ Nothing is built in this unit, and the record reads blocked. CCS took NRS-1, NRS
 
 **Where it is.** Eight investigations are built and the six fixes to running code they found. MSA-I1 found no shape in the estate closed and bounded. MSA-I3 found a stable line between semantic and realisation selection once three dimensions split by value. MSA-I4 lowered four operations to a neutral IR and three dialects. MSA-I9 confirmed that a single active consumer is no fence. MSA-I11 wrote the logical port. MSA-I12 emitted the studio's topology from one declaration. On 2026-11-18, MSA-F1 to MSA-F6 fixed the studio writer's offset storing, its retry of a refused batch, a resent id with another body, the topology's dead-letter binding and the event's logical key, and tested ADR-A149 decision 13. On the maintainer's answers of the same day, MSA-F7 made a deletion win over a save that beats its tombstone, MSA-F8 answered a failure of the writer's own code with a 500, and MSA-F9 made a new document's save read its own row, which also stopped a save under a deleted id being answered 200 with nothing kept. MSA-I2, reworked on the owner's ledger as the ledger's unit, finds no firm guard that a read by revision does not cover, on three conditions no text states yet. MSA-I6 checked FMH-5's model A and four new TLA+ models with TLC, and five catalogue rows keep their guarantee with a stated requirement.
 
-**What it waits on.** Refreshed 2026-11-20. Machine S's fixes MSA-F1 to MSA-F9, MSA-I2 and MSA-I6 in part are built. The fixes and the models are reviewed by reading and wait on the maintainer's verdict, and the review planned five more fixes, MSA-F10 to MSA-F14, and a unit for administering running components, [component-administration](plans/component-administration.md), which is planned and built later. On 2026-11-20 the maintainer asked for a design of the studio's writes that admits no inconsistent state, MSA-I14, urgent and ahead of MSA-I8, with MSA-F15 and TD-166 to TD-171 beside it. The ledger's branch is merged into `spi/multi-store-architecture`, and machine S works on `spi/worktree-s`, cut from that merge. MSA-I5a waits on nothing, since ADR-A-FM2's addendum is accepted, and MSA-I5 follows it in Isabelle. Its Rocq half is built off machine S on Rocq 9.3.0. A PostgreSQL test fixture comes first for the rest of MSA-I6, MSA-I7 and MSA-I8. MSA-I7, MSA-I8 and MSA-I10 name the ledger's records, so they wait on the ledger's rework, LG-25 to LG-28. On machine S since: the PostgreSQL fixture MSA-I13, the shared proof session MSA-I5a, the five fixes MSA-F10 to MSA-F14, and the ledger's rework, LG-11, LG-25 to LG-28 and LG-12, all sent in the first bundle of `spi/worktree-s` for review. The bundle was run again on macOS on 2026-11-20 and merged.
+**What it waits on.** Refreshed 2026-11-20. Machine S's fixes MSA-F1 to MSA-F9, MSA-I2 and MSA-I6 in part are built. The fixes and the models are reviewed by reading and wait on the maintainer's verdict, and the review planned five more fixes, MSA-F10 to MSA-F14, and a unit for administering running components, [component-administration](plans/component-administration.md), which is planned and built later. On 2026-11-20 the maintainer asked for a design of the studio's writes that admits no inconsistent state, MSA-I14, urgent and ahead of MSA-I8, with MSA-F15 and TD-166 to TD-171 beside it. The ledger's branch is merged into `spi/multi-store-architecture`, and machine S works on `spi/worktree-s`, cut from that merge. MSA-I5a waits on nothing, since ADR-A-FM2's addendum is accepted, and MSA-I5 follows it in Isabelle. Its Rocq half is built off machine S on Rocq 9.3.0. A PostgreSQL test fixture comes first for the rest of MSA-I6, MSA-I7 and MSA-I8. MSA-I7, MSA-I8 and MSA-I10 name the ledger's records, so they wait on the ledger's rework, LG-25 to LG-28. On machine S since: the PostgreSQL fixture MSA-I13, the shared proof session MSA-I5a, the five fixes MSA-F10 to MSA-F14, and the ledger's rework, LG-11, LG-25 to LG-28 and LG-12, all sent in the first bundle of `spi/worktree-s` for review. The bundle was run again on macOS on 2026-11-20 and merged. The maintainer verified MSA-F1 to MSA-F14, MSA-I13 and MSA-I5a that day. The ledger's session reviews the rework by a handover note, MSA-F16 is planned to bring a studio command's digest to RDFC-1.0, and PostgreSQL moves to 18 after machine S is decommissioned (TD-174).
 
 ## 5. Smaller units
 
@@ -944,7 +944,7 @@ Branches with a commit `main` lacks, from the same reading.
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
-| `spi/multi-store-architecture` | 2026-11-20 | 72 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
+| `spi/multi-store-architecture` | 2026-11-20 | 72 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `spi/sql-backend` | 2026-11-17 | 3 | pushed | no mark |
 | `spi/worktree-s` | 2026-11-19 | 69 | pushed | AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-F1, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `tutorial/studio-guide` | 2026-11-10 | 2 | pushed | no mark |

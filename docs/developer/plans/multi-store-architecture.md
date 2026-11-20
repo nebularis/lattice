@@ -106,6 +106,7 @@ The investigations found five defects in code that runs and one design point to 
 | MSA-F13 | the Java topology refuses a queue whose `bindsTo` names no declared exchange, as the Python worker does | the review of MSA-F4 |
 | MSA-F14 | a command's digest separates two bodies that differ in how their blank nodes connect, each blank node labelled by a hash of its own quads. Built only where a studio command's body can hold a blank node | TD-165 |
 | MSA-F15 | a creation under a document id that has a version row, live or tombstoned, is refused, so a document whose removal is not finished cannot be listed again with what it held. It also tests a deletion delivered twice after a lost tombstone | TD-168, TD-171 |
+| MSA-F16 | a studio command's digest is the SHA-256 of its body's RDFC-1.0 canonical N-Quads, with the work bounded and a conformance vector published. Built on the maintainer's yes to PDD-24 (a) | PDD-24, TD-165 |
 
 MSAI11-01 is by design under [ADR-A149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md) decision 13, which orders a command's operations so that a guard failing part way leaves nothing a reader acts on. MSA-F6 tests that claim for every command that writes several aggregates. A unit on the port is all or nothing, so moving a studio command onto the port gives its operations one guard, which is the next plan's.
 
@@ -148,3 +149,16 @@ Added 2026-11-20, at the maintainer's word, as urgent. The maintainer asked whet
 **Its falsifier.** An option is rejected where the model finds a reachable state no sequence of whole commands gives. The slice is done when the maintainer has decided, the decision is drafted as a Proposed addendum, and the slices that build it are planned.
 
 **What waits on it.** MSA-I8, and any slice that builds a write path on the port. The fixes already built stand until the decision replaces them.
+
+## RDFC-1.0 for a studio command's digest, MSA-F16
+
+Added 2026-11-20. ADR-A143 rules one canonical form for a digest of RDF content, RDFC-1.0, and MSA-F14 built a form of our own for a command's body (TD-165, PDD-24). The maintainer leans to RDFC-1.0 everywhere and asked whether to do it now. The slice waits on that yes.
+
+- **What changes.** `Codec.digest` hashes the command's kind and fields as now, then the RDFC-1.0 canonical N-Quads of its body. MSA-F14's labelling goes. A body with no blank node digests as it does today, since the two forms coincide there, and a test holds that.
+- **The implementation.** Java has none. The candidate is `com.apicatalog:titanium-rdfc` 2.0.0, on the `titanium-rdf-api` that Jena already brings. The slice first confirms the mirror on machine S serves it, reads its licence, and runs it against the W3C test suite for RDFC-1.0. Writing our own is the fallback, a few hundred lines held by the same suite. A new dependency is named for the maintainer in the pack.
+- **A bound on the work.** A command's body comes from a client. RDFC-1.0 can take exponential work on a body built to make it, so the canonicaliser runs under a bound, and a body over it is refused with a 400 that names the bound. The test is a body of the kind the specification warns of.
+- **A vector.** One small body with blank nodes and its digest, published beside the wire contract, which code sharing nothing with ours recomputes (ADR-A143 decision 4, TD-103).
+- **A triple term.** RDFC-1.0 is defined over RDF 1.1. Whether a studio body can hold a triple term is checked first. If it can, such a body is refused until the rule has an answer (TD-173).
+- **Receipts written before.** As MSA-F14's pack says, the studio is not released, so a development store answers one resend of each earlier command that held a blank node with a 400.
+
+**After the studio.** The layers that store a digest are named by ADR-A143 decision 2. The work left for the rule is their conformance vectors (TD-103), the triple term (TD-173), and a Java helper another module can call, whose home the slice's pack proposes and the maintainer decides.

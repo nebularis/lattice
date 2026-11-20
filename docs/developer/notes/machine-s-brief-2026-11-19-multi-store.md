@@ -137,6 +137,29 @@ Both are urgent and go ahead of MSA-I5 in the second lane. The [plan](../plans/m
 - **MSA-F15, an id whose row exists is never created again (TD-168, TD-171).** `Writer.saveDocument` refuses a tombstoned id (MSA-F9) and lets a live, unlisted one through, because `StudioOperations.workspace` reads rows only for the documents the description lists. Refuse a creation, a save expecting revision 0 of a document the description does not list, where the document's row exists, live or tombstoned. The first test leaves a row live and unlisted, as a deletion whose tombstone lost does, saves under its id and finds the save refused and the description unchanged. The second delivers a deletion twice more after a lost tombstone, with the first redelivery's attempt losing too, and finds the row gone. If the second fails, the attempt's transaction id takes the revision it is planned at. MSA-F11's pack rests on "a deleted id is never used again", which holds only once this is built.
 - **The model for MSA-I14.** In `tools/models/multi-store-protocols`, a configuration with two writers on one partition, the studio's receipts and per-aggregate revisions (the configuration MSAI6-01 asks for), and one command over two aggregates beside a save of one of them. The invariant is that every reachable state, after any crash or redelivery, is one that some sequence of whole commands gives. Run it for the design as built, where we expect a violation and want the trace, then for a command under one guard, and for one guard with the partition's epoch checked. It stays in the base tier of section 4.4. Do not build either option in the writer. The maintainer decides first.
 
+### 4.9 Added 2026-11-20, after the first bundle
+
+The first bundle was run again on macOS and merged into `spi/multi-store-architecture`. The maintainer verified MSA-F1 to MSA-F14, MSA-I13 and MSA-I5a that day.
+
+**Before the next slice.**
+
+1. At a pause, as the [merge note](machine-s-merge-note-2026-11-19.md) describes one, merge `origin/spi/multi-store-architecture` into `spi/worktree-s`. Your branch is wholly inside it, so the merge brings only what was added here and should meet no conflict.
+2. Run `mise run bootstrap:reasoning-testkit`. Machine S has no reasoner, so 79 tests of `check:ontology-catalog` skipped in every pack of the bundle. They pass on macOS, 1439 with none skipped. From here a pack reports them run. If the mirror refuses the build, say so in the pack, and the run on macOS stands in.
+3. Read the plan's last two sections and TD-165 to TD-174.
+
+**The second lane's order.** MSA-F15, then the model for MSA-I14 (section 4.8), then MSA-I5, then the rest of MSA-I6. MSA-I8 waits on the maintainer's decision from MSA-I14 and does not start.
+
+**MSA-F16, only once the maintainer says yes to PDD-24 (a).** RDFC-1.0 in `Codec.digest`, as the plan's last section states it. Its first step can run now, since it decides nothing: say whether the mirror serves `com.apicatalog:titanium-rdfc` 2.0.0, and report in the status record.
+
+**What the run on macOS found, for your packs.**
+
+- `check:testing-postgres` fails on a worktree that is not bootstrapped, since it depends only on `bootstrap:pip` and `tools/conftest.py` imports pyshacl. Fix the dependency or say so in the package's README, in MSA-I6's first slice that uses the fixture.
+- The full sweep's versioning failure names Persistence, a standalone module still at 0.23.0 after MSA-F5, as well as the substrate. A handoff line says both.
+- TD-165 is narrowed and kept, not paid. MSA-F14's limit stands until PDD-24 is built.
+- The fixture stays on PostgreSQL 16.15 for the rest of your work. The move to 18 is TD-174, after machine S is decommissioned.
+
+**The ledger's lane** takes its next slice from the ledger's session, which reviews LG-11, LG-25 to LG-28 and LG-12 by the [handover note of 2026-11-20](ledger-handover-2026-11-20.md). Start no ledger slice before that review reports.
+
 ## 5. What the logical port owes, for MSA-I8 and the next plan
 
 The maintainer decided on 2026-11-19 that the port's half of C1 and C2 is stated by the plan that builds the port. Until then MSA-I8 builds to it as recorded in the [plan](../plans/multi-store-architecture.md). A write names the revision it expects. It returns the revision it produced or, where it is turned away, the revision it found. What the layer above records when its request is turned away is Behaviour's to state.
