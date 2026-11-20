@@ -96,7 +96,7 @@ final class RunWorker implements Function<Message, Outcome>, AutoCloseable {
         }
         String type = message.contentType() == null ? "" : message.contentType().split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
         if (!step && RDF_SAMPLES.contains(type)) {
-            return publish(request.run(), RunFrames.failed(request.run(), "RDF samples run in a later slice (SVA-M3a), so this run was not started."));
+            return publish(request.run(), RunFrames.failed(request.run(), "A Turtle or N-Triples sample is run by the studio's Python worker, so this run went to the wrong worker and was not started."));
         }
         if (step && !type.equals("application/trig")) {
             return publish(request.run(), RunFrames.failed(request.run(), "A step is sent as application/trig, so this run was not started."));

@@ -8,13 +8,14 @@ response, so one schema holds both. The two queues of runs are in the topology b
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
 import pytest
 from jsonschema import Draft202012Validator
 from rdflib import Graph, Namespace
-from rdflib.namespace import OWL, RDF, RDFS
+from rdflib.namespace import OWL, RDF, RDFS, SH
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -140,10 +141,10 @@ def test_each_role_of_a_part_is_accepted() -> None:
         assert list(VALIDATOR.iter_errors(middle(part={**PART, "role": role}))) == [], role
 
 
-def test_the_two_run_queues_sit_in_the_topology_with_the_transforms_queues_settings() -> None:
+def test_the_three_run_queues_sit_in_the_topology_with_the_transforms_queues_settings() -> None:
     queues = {q["name"]: q for q in json.loads((CONTRACT / "amqp-topology.json").read_text(encoding="utf-8"))["queues"]}
     transforms = queues["lattice.studio.transforms"]
-    for name in ("lattice.studio.runs.interactive", "lattice.studio.runs"):
+    for name in ("lattice.studio.runs.interactive", "lattice.studio.runs", "lattice.studio.runs.rdf"):
         assert queues[name] == {"name": name, "routingKey": name, "deadLetter": transforms["deadLetter"], "bindTo": transforms["bindTo"]}
     assert transforms["deadLetter"] is False
 
@@ -162,8 +163,25 @@ def test_the_vocabulary_declares_a_run_and_its_two_kinds() -> None:
 def test_the_contract_states_the_limits_the_schema_holds() -> None:
     readme = (CONTRACT / "README.md").read_text(encoding="utf-8")
     assert "run-frame.schema.json" in readme
-    for text in ("49,152", "128 frames", "lattice.studio.runs.interactive", "lattice.studio.runs"):
+    for text in ("49,152", "128 frames", "lattice.studio.runs.interactive", "lattice.studio.runs", "lattice.studio.runs.rdf"):
         assert text in readme, text
+
+
+def test_the_runs_section_says_which_worker_answers_which_run_and_names_the_engine_without_a_working_document() -> None:
+    readme = (CONTRACT / "README.md").read_text(encoding="utf-8")
+    runs = readme[readme.index("\n## Runs\n"):readme.index("\n## Promotions\n")]
+    assert "### Which worker answers a run" in runs
+    for text in ("`lattice.studio.runs.rdf`", "`text/turtle`", "`application/n-triples`", "mork_rdf", "Oxigraph", "`cst:engine`", "wrong worker"):
+        assert text in runs, text
+    # The README is user-facing, so no slice, question or register identifier is in the section (ADR-A127).
+    assert not re.search(r"\b(SVA-[A-Z0-9]+|PRI-\d+|STD-\d+|TD-\d+|BL-\d+|[A-Z]{2,4}-Q\d+)\b", runs)
+
+
+def test_the_vocabulary_declares_the_engine_of_a_report_and_says_what_it_is() -> None:
+    g = Graph().parse(CONTRACT / "studio-vocabulary.ttl")
+    assert (CST.engine, RDF.type, OWL.DatatypeProperty) in g
+    assert (CST.engine, RDFS.domain, SH.ValidationReport) in g
+    assert g.value(CST.engine, RDFS.comment) is not None
 
 
 # --- the persistence step (SVA-P3) -------------------------------------------------------------------------

@@ -120,6 +120,44 @@ class RunsRouteTest {
     }
 
     @Test
+    void aSampleRunIsRoutedByItsInputsMediaTypeAnRdfSampleToTheRdfQueueAndAnyOtherToTheSampleQueue() {
+        String job = compileJob("mapping", true);
+        // Each type, with the parameters and the case a client may send it in, and the queue the run is published to.
+        String[][] cases = {
+            {"text/turtle", Topology.RUNS_RDF_ROUTING_KEY}, {"application/n-triples", Topology.RUNS_RDF_ROUTING_KEY},
+            {"Text/Turtle; charset=utf-8", Topology.RUNS_RDF_ROUTING_KEY}, {"application/n-triples; charset=UTF-8", Topology.RUNS_RDF_ROUTING_KEY},
+            {"application/xml", Topology.RUNS_ROUTING_KEY}, {"text/xml", Topology.RUNS_ROUTING_KEY}, {"application/json", Topology.RUNS_ROUTING_KEY}};
+        for (int i = 0; i < cases.length; i++) {
+            ApiResponse r = post("kind=sample&target=mapping&tab=t" + i + "&job=" + id(job), cases[i][0], "<urn:a> <urn:b> <urn:c> .");
+            assertEquals(202, r.status(), cases[i][0]);
+        }
+        assertEquals(cases.length, f.bus.runs().size());
+        for (int i = 0; i < cases.length; i++) {
+            RunMessage m = f.bus.runs().get(i);
+            assertEquals(cases[i][1], m.routingKey(), cases[i][0]);
+            assertEquals("sample", m.kind(), cases[i][0]);
+            assertEquals("mapping", m.target(), cases[i][0]);
+            assertEquals(job, m.job(), cases[i][0]);
+            assertEquals(120_000, m.expirationMillis(), "the sample queue's deadline holds for both queues");
+        }
+        assertEquals("lattice.studio.runs.rdf", Topology.RUNS_RDF_QUEUE);
+    }
+
+    @Test
+    void everyCheckOfARunHoldsForAnRdfSampleToo() {
+        String job = compileJob("mapping", true);
+        String unfinished = compileJob("mapping", false);
+        String other = compileJob("persistence", true);
+        // An RDF sample is checked as any other: the media type of a kind, the part of the job, its state and the size of the body.
+        assertEquals(409, post("kind=sample&target=mapping&tab=t1&job=" + id(unfinished), "text/turtle", "<urn:a> <urn:b> <urn:c> .").status());
+        assertEquals(409, post("kind=sample&target=mapping&tab=t1&job=" + id(other), "text/turtle", "<urn:a> <urn:b> <urn:c> .").status());
+        assertEquals(415, post("kind=sample&target=mapping&tab=t1&job=" + id(job), "application/ld+json", "{}").status());
+        assertEquals(400, post("kind=sample&target=mapping&tab=T1&job=" + id(job), "text/turtle", "<urn:a> <urn:b> <urn:c> .").status());
+        assertEquals(413, postAs(null, "kind=sample&target=mapping&tab=t1&job=" + id(job), "application/n-triples", new byte[5 * 1024 * 1024 + 1]).status());
+        assertEquals(0, f.bus.runs().size(), "none of them is published");
+    }
+
+    @Test
     void aSimulatorStepGoesToTheInteractiveQueueWithADeadlineOf15SecondsAndTakesTrig() {
         for (String target : List.of("persistence", "surface")) {
             String job = compileJob(target, true);
@@ -387,8 +425,10 @@ class RunsRouteTest {
         counts.put(Topology.JOBS_LONG_QUEUE, 1);
         counts.put(Topology.RUNS_QUEUE, 1);
         counts.put(Topology.RUNS_INTERACTIVE_QUEUE, 0);
+        counts.put(Topology.RUNS_RDF_QUEUE, 0);
         String status = text(with.get("/api/status"));
         assertTrue(status.contains("No worker consumes lattice.studio.runs.interactive"), status);
+        assertTrue(status.contains("No worker consumes lattice.studio.runs.rdf"), status);
         assertFalse(status.contains("No worker consumes lattice.studio.runs,"), status);
         assertFalse(status.contains("consumes lattice.studio.jobs"), status);
     }

@@ -304,6 +304,9 @@ cst:report a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:Job ; 
 cst:code a owl:DatatypeProperty ; rdfs:domain sh:ValidationResult ; rdfs:range xsd:string ;
     rdfs:comment "The compiler's name for a finding, for example CrossAxisViolation. Absent on a SHACL finding." .
 
+cst:engine a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain sh:ValidationReport ; rdfs:range xsd:string ;
+    rdfs:comment "On the report of a sample run over an RDF source, what evaluated the mapping, for example mork_rdf and the store it ran on. The report of a run over an XML or JSON source leaves it out." .
+
 cst:artefact a owl:ObjectProperty ; rdfs:domain cst:Job ; rdfs:range cst:Artefact .
 
 cst:Transform a owl:Class ; rdfs:subClassOf cst:Job ;

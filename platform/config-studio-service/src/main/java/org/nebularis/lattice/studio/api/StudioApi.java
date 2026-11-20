@@ -178,7 +178,8 @@ public final class StudioApi {
             {org.nebularis.lattice.studio.jobs.Topology.JOBS_QUEUE, "validations, compilations and the rest", "mise run studio:worker"},
             {org.nebularis.lattice.studio.jobs.Topology.JOBS_LONG_QUEUE, "proposals by a language model and publications", "mise run studio:worker-long"},
             {org.nebularis.lattice.studio.jobs.Topology.RUNS_INTERACTIVE_QUEUE, "steps of a simulator", "mise run studio:transforms"},
-            {org.nebularis.lattice.studio.jobs.Topology.RUNS_QUEUE, "runs of a mapping over a sample", "mise run studio:transforms"}}) {
+            {org.nebularis.lattice.studio.jobs.Topology.RUNS_QUEUE, "runs of a mapping over an XML or JSON sample", "mise run studio:transforms"},
+            {org.nebularis.lattice.studio.jobs.Topology.RUNS_RDF_QUEUE, "runs of a mapping over a Turtle or N-Triples sample", "mise run studio:worker"}}) {
             long[] last = consumerChecks.computeIfAbsent(lane[0], k -> new long[] {Long.MIN_VALUE, -1});
             synchronized (last) {
                 long now = System.nanoTime();
@@ -1376,18 +1377,28 @@ public final class StudioApi {
         return ApiResponse.turtle(200, Turtle.write(answer));
     }
 
-    /** What a kind of run takes (ADR-A154): the part its compile job must have compiled, its queue, its media types and its deadline. */
-    private record RunKind(String kind, String part, String routingKey, Resource term, Duration limit, List<String> types) {
+    /**
+     * What a kind of run takes (ADR-A154): the part its compile job must have compiled, its queue, its media types and its deadline.
+     * {@code rdfRoutingKey} is the queue of a run whose input is RDF, which another worker answers, and is null for a kind with one queue.
+     */
+    private record RunKind(String kind, String part, String routingKey, String rdfRoutingKey, Resource term, Duration limit, List<String> types) {
+        /** The routing key of a run over an input of {@code media}. */
+        String routingKeyFor(String media) {
+            return rdfRoutingKey != null && RDF_SAMPLE_TYPES.contains(media) ? rdfRoutingKey : routingKey;
+        }
     }
+
+    /** The sample media types that the studio's Python worker answers with {@code mork_rdf}'s driver (ADR-A154 addendum of 2026-11-20). */
+    private static final List<String> RDF_SAMPLE_TYPES = List.of("text/turtle", "application/n-triples");
 
     private static final List<String> SAMPLE_SOURCE_TYPES = List.of("text/turtle", "application/n-triples", "application/xml", "text/xml", "application/json");
     private static final RunKind SAMPLE_RUN = new RunKind("sample", "mapping", org.nebularis.lattice.studio.jobs.Topology.RUNS_ROUTING_KEY,
-        Cst.SampleRun, Duration.ofSeconds(120), SAMPLE_SOURCE_TYPES);
+        org.nebularis.lattice.studio.jobs.Topology.RUNS_RDF_ROUTING_KEY, Cst.SampleRun, Duration.ofSeconds(120), SAMPLE_SOURCE_TYPES);
     private static final Duration SIMULATE_LIMIT = Duration.ofSeconds(15);
     private static final Map<String, RunKind> SIMULATE_RUNS = Map.of(
-        "persistence", new RunKind("simulate", "persistence", org.nebularis.lattice.studio.jobs.Topology.RUNS_INTERACTIVE_ROUTING_KEY,
+        "persistence", new RunKind("simulate", "persistence", org.nebularis.lattice.studio.jobs.Topology.RUNS_INTERACTIVE_ROUTING_KEY, null,
             Cst.SimulationStep, SIMULATE_LIMIT, List.of(TRIG)),
-        "surface", new RunKind("simulate", "surface", org.nebularis.lattice.studio.jobs.Topology.RUNS_INTERACTIVE_ROUTING_KEY,
+        "surface", new RunKind("simulate", "surface", org.nebularis.lattice.studio.jobs.Topology.RUNS_INTERACTIVE_ROUTING_KEY, null,
             Cst.SimulationStep, SIMULATE_LIMIT, List.of(TRIG)));
     private static final String RUN_PREFIX = "urn:lattice:studio:run:";
     /** How long past a run's deadline a waiting request waits for its last frame, so the failed one the service sends at the deadline is heard. */
@@ -1464,7 +1475,7 @@ public final class StudioApi {
         // The run is recorded before it is published, since a worker can answer before the publish call returns and its first frame
         // must find the run. It is forgotten again if the broker did not take the request, so a failed publish leaves nothing pending.
         try {
-            bus.publishRun(new RunMessage(kind.routingKey(), run, Graphs.job(job), kind.kind(), q.get("target"), deadline.toString(), media,
+            bus.publishRun(new RunMessage(kind.routingKeyFor(media), run, Graphs.job(job), kind.kind(), q.get("target"), deadline.toString(), media,
                 Math.max(1, Duration.between(clock.instant(), deadline).toMillis()), input));
         } catch (Exception e) {
             registry.cancel(run);

@@ -22,6 +22,7 @@ class TopologyTest {
             {"name", Topology.TRANSFORMS_QUEUE}, {"routingKey", Topology.TRANSFORMS_ROUTING_KEY},
             {"name", Topology.RUNS_INTERACTIVE_QUEUE}, {"routingKey", Topology.RUNS_INTERACTIVE_ROUTING_KEY},
             {"name", Topology.RUNS_QUEUE}, {"routingKey", Topology.RUNS_ROUTING_KEY},
+            {"name", Topology.RUNS_RDF_QUEUE}, {"routingKey", Topology.RUNS_RDF_ROUTING_KEY},
             {"name", Topology.DEAD_QUEUE}, {"routingKey", Topology.DEAD_ROUTING_KEY}}) {
             assertTrue(json.contains("\"" + pair[0] + "\": \"" + pair[1] + "\""), pair[0] + " " + pair[1]);
         }
@@ -33,7 +34,7 @@ class TopologyTest {
         String transforms = json.substring(json.indexOf("\"lattice.studio.transforms\""), json.indexOf("\"lattice.studio.dead\""));
         assertTrue(transforms.contains("\"deadLetter\": false"));
         String runs = json.substring(json.indexOf("\"lattice.studio.runs.interactive\""), json.indexOf("\"lattice.studio.dead\""));
-        assertEquals(2, runs.split("\"deadLetter\": false", -1).length - 1, "both run queues are not dead-lettered");
+        assertEquals(3, runs.split("\"deadLetter\": false", -1).length - 1, "the three run queues are not dead-lettered");
         assertTrue(runs.indexOf("\"lattice.studio.runs\"") > 0);
         assertTrue(json.contains("\"superStream\": \"" + Topology.WRITES + "\""));
         assertTrue(json.contains("\"partitions\": " + Topology.PARTITIONS));
@@ -58,7 +59,7 @@ class TopologyTest {
                 return null;
             });
         Topology.declare(channel);
-        for (String queue : new String[] {Topology.RUNS_INTERACTIVE_QUEUE, Topology.RUNS_QUEUE}) {
+        for (String queue : new String[] {Topology.RUNS_INTERACTIVE_QUEUE, Topology.RUNS_QUEUE, Topology.RUNS_RDF_QUEUE}) {
             assertEquals(declared.get(Topology.TRANSFORMS_QUEUE), declared.get(queue), queue);
             assertTrue(declared.get(queue).isEmpty(), queue);
             assertTrue(bound.stream().anyMatch(b -> b[0].equals(queue) && b[1].equals(Topology.EXCHANGE) && b[2].equals(queue)), queue);

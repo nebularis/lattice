@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-20. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-20. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -64,7 +64,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-M2c | a library as a unit, and a compile that reads libraries | planned | SVA-M2a |
 | SVA-M2d | the Libraries section | planned | SVA-M1, SVA-M2c |
 | SVA-M2e | template cards for the proposer and the MCP server | planned | SVA-M2b, SVA-M2c |
-| SVA-M3a | a mapping's queries over an RDF sample, as a run | building 2026-11-20 | SVA-P3 |
+| SVA-M3a | a mapping's queries over an RDF sample, as a run | built 2026-11-20, building 2026-11-20 | SVA-P3 |
 | SVA-M3b | the sample pane | planned | SVA-R4, SVA-M3a |
 | SVA-M4 | the output explorer | built 2026-11-17, building 2026-11-17 | SVA-O1, SVA-R4 |
 | SVA-H1 | the stack's secrets in one guarded folder, settings printed redacted, and a guard on reading them | built 2026-11-15, building 2026-11-15 |  |
@@ -210,3 +210,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-20: the maintainer chose that a mapping's run over an RDF sample is the Python worker's, with `mork_rdf`'s runner, since a Java port would be a rewrite considered only for performance. Drafted as an addendum to ADR-A154, Proposed, for the maintainer to accept before SVA-M3a is built, and SVA-M3a's row moved to the worker. The maintainer also asked that working-document identifiers this unit added to user-facing READMEs go, as a follow-up of SVA-X2.
 - 2026-11-20: follow-up of SVA-X2 done. The working-document identifiers this unit added to the app's, the studio contract's and the persistence contract's READMEs (slices, a question, backlog, standards and principles) now read as the rule or fact they stood for, and two older references to the principle on coordination state in the studio contract's README went with them. The persistence contract's README, which the edits touched, has its hard-wrapped paragraphs joined, its words otherwise unchanged. Left, for the maintainer: `platform/config-studio-transforms/README.md` links ADR-A148, which is Proposed, from a line older than this unit. Checked: identifiers, published decisions, and the writing rules on the three files, 0 failures and 0 warnings.
 - 2026-11-20: the maintainer accepted ADR-A154's addendum, worded as `mork_rdf`'s driver since it runs compiled queries and interprets nothing, and said to proceed. SVA-M3a started, with SVA-M3b to follow and a pause after it.
+- 2026-11-20: SVA-M3a built, [Validation Pack](../validation/SVA-M3a.md). An RDF sample run is answered by the Python worker with `mork_rdf`'s driver on a queue of its own, routed by the service on the input's media type, with every rule of a run, and its artefacts equal the dry run's. On the real stack it passes. SVA-P3's real-stack test errors in its fixture, which fills no persistence part, and is fixed next.

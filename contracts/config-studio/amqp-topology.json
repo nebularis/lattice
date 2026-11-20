@@ -33,6 +33,12 @@
       "bindTo": "exchange"
     },
     {
+      "name": "lattice.studio.runs.rdf",
+      "routingKey": "lattice.studio.runs.rdf",
+      "deadLetter": false,
+      "bindTo": "exchange"
+    },
+    {
       "name": "lattice.studio.dead",
       "routingKey": "#",
       "deadLetter": false,

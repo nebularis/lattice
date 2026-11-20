@@ -21,6 +21,7 @@ READY_TIMEOUT = 240.0
 # Files the developer's own stack downloaded, seeded into the cache so a first run does not download them again.
 SEED = ("jena-fuseki-server-*.jar", "rabbitmq-server-*")
 RUNS_QUEUE = "lattice.studio.runs"
+RDF_RUNS_QUEUE = "lattice.studio.runs.rdf"
 
 
 def certificate(into: Path) -> Tuple[Path, Path, Path]:
@@ -191,7 +192,9 @@ class ProcessStudio(Studio):
 
     def _wait_workers(self) -> None:
         """Waits until each jobs queue has a consumer for each of its workers, so the first job does not wait for a cold start."""
-        wants = {"lattice.studio.jobs": self.topology.workers, "lattice.studio.jobs.long": self.topology.long_workers, RUNS_QUEUE: self.topology.run_workers}
+        # The Python worker of the short jobs also consumes the queue of RDF sample runs.
+        wants = {"lattice.studio.jobs": self.topology.workers, "lattice.studio.jobs.long": self.topology.long_workers, RUNS_QUEUE: self.topology.run_workers,
+                 RDF_RUNS_QUEUE: self.topology.workers}
         deadline = time.monotonic() + READY_TIMEOUT
         while any(wants.values()) and time.monotonic() < deadline:
             if all(self.consumers(queue) >= want for queue, want in wants.items()):

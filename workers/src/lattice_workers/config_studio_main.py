@@ -14,8 +14,10 @@ from typing import Mapping, Optional
 import pika
 from pika.exceptions import AMQPConnectionError, ChannelClosed, ChannelWrongStateError, StreamLostError
 
+from . import config_studio_run_consumer as run_consumer
 from .config_studio_consumer import ConnectionLost, Consumer
 from .config_studio_jobs import find_root
+from .config_studio_runs import RdfRunWorker
 from .config_studio_secrets import secret
 from .config_studio_worker import JOBS_QUEUE, TOPOLOGY, ConfigStudioWorker, WriterStore, declare_topology, declare_writes
 from .fuseki_gsp import FusekiGraphStore
@@ -48,6 +50,10 @@ def read_config(env: Mapping[str, str]) -> Config:
         fuseki_password=secret(env, "LATTICE_FUSEKI_PASSWORD"),
         root=find_root(env.get("LATTICE_ROOT")),
     )
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def _clock() -> str:
@@ -137,6 +143,14 @@ def main() -> None:
     consumer = Consumer(lambda: PikaSession(config.amqp_uri, config.queue), config.queue, _Late(holder))
     reader = FusekiGraphStore(config.fuseki_url, config.fuseki_dataset, config.fuseki_user, config.fuseki_password)
     holder["worker"] = ConfigStudioWorker(WriterStore(reader, _Publisher(consumer)), config.root, _clock)
+    # The worker of the default queue also answers a sample run over an RDF source (ADR-A154, addendum of 2026-11-20), on a connection, a
+    # thread and a queue of its own, so a run never holds a job. The worker of the long queue answers none.
+    runs: Optional[run_consumer.RunConsumer] = None
+    runs_thread = None
+    if config.queue == JOBS_QUEUE:
+        runs, runs_thread = run_consumer.start(
+            config.amqp_uri, RdfRunWorker(reader.get_graph, _now), run_consumer.concurrency(os.environ), _now,
+        )
 
     def _stop(signum: int, frame: object) -> None:
         # The first signal finishes the job in hand and stops consuming, so no job is cut off half written. A second ends the process.
@@ -144,12 +158,19 @@ def main() -> None:
             os._exit(1)
         logging.getLogger("lattice_workers.main").info("stopping after the job in hand")
         consumer.stop()
+        if runs is not None:
+            runs.stop()
 
     for name in ("SIGTERM", "SIGINT", "SIGBREAK"):
         if hasattr(signal, name):
             signal.signal(getattr(signal, name), _stop)
     logging.getLogger("lattice_workers.main").info("worker for %s, root %s", config.queue, config.root)
-    consumer.run()
+    try:
+        consumer.run()
+    finally:
+        if runs is not None and runs_thread is not None:
+            runs.stop()
+            runs_thread.join()
 
 
 class _Late:

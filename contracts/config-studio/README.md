@@ -202,7 +202,7 @@ A run executes the artefacts of a finished compile job over an input that is not
 
 | `kind` | `target` | Body | Queue | Deadline, default and maximum |
 |---|---|---|---|---|
-| `sample` | `mapping` | a sample source, `Content-Type` `text/turtle`, `application/n-triples`, `application/xml`, `text/xml` or `application/json`. A run of a compiled mapping over it | `lattice.studio.runs` | 120 seconds |
+| `sample` | `mapping` | a sample source, `Content-Type` `text/turtle`, `application/n-triples`, `application/xml`, `text/xml` or `application/json`. A run of a compiled mapping over it. A source in Turtle or N-Triples is answered by the studio's worker, and one in XML or JSON by the run worker | `lattice.studio.runs.rdf` for Turtle and N-Triples, `lattice.studio.runs` for the others | 120 seconds, for both queues |
 | `simulate` | `persistence` or `surface` | `application/trig`, holding the sample world and the step. For `persistence` it is defined in [A persistence step](#a-persistence-step). What a `surface` step holds is not yet defined, and this contract says only that it is TriG. One step of a simulator | `lattice.studio.runs.interactive` | 15 seconds |
 
 ### The request
@@ -235,9 +235,13 @@ The service answers `429` when the tab already has 4 runs pending, with `Retry-A
 
 With `wait=true` the service collects the run's frames from the events it already reads and answers `200`, `application/json`, a JSON array of the frames in sequence order, each exactly the frame object below, so the same schema holds both ways a result arrives. It answers `504` when the deadline passes first. This is how a tab with no events, or whose connection is down, runs. The worker behaves the same either way. A client may close a waiting request before it is answered. The service then stops collecting that run's frames and forgets it, and the run itself still ends at its deadline in the worker.
 
+### Which worker answers a run
+
+The run worker is two workers that keep one protocol, and the queue says which answers. The Java run worker consumes `lattice.studio.runs.interactive` and `lattice.studio.runs`, and answers a simulator's step and a sample over XML or JSON, with Jena, Saxon and JOLT. The studio's Python worker consumes `lattice.studio.runs.rdf` and answers a sample over Turtle or N-Triples with the driver of `tools/mork_rdf`, the one the dry run of a mapping uses, so a sample run and a dry run of the same scheme over the same source write the same triples. It reads the compiled forms the compile job holds, `{scheme}.compiled.ttl`, and refuses one whose queries no longer give the digest it is named by. Each worker keeps every rule below, and a message that reaches the worker that does not answer it is failed with a frame that says it went to the wrong worker. The Python worker takes a bounded number of runs at once, on a connection and a channel of its own, so a sample run never holds a job. Its output says it was evaluated by `mork_rdf` on Oxigraph, as the `cst:engine` of the report, where a simulator's `outcome` says its engine as `engine`.
+
 ### The message to the run worker
 
-The service publishes the request to exchange `lattice.studio`, routed with `lattice.studio.runs.interactive` for `simulate` and `lattice.studio.runs` for `sample`. The body is the input as received, `content_type` its media type, not persistent. No reply queue is named.
+The service publishes the request to exchange `lattice.studio`, routed with `lattice.studio.runs.interactive` for `simulate`, and for `sample` by the input's media type, with `lattice.studio.runs.rdf` for `text/turtle` and `application/n-triples` and `lattice.studio.runs` for any other. The body is the input as received, `content_type` its media type, not persistent. No reply queue is named.
 
 | Header | Holds |
 |---|---|
@@ -247,7 +251,7 @@ The service publishes the request to exchange `lattice.studio`, routed with `lat
 | `target` | `mapping`, `persistence` or `surface` |
 | `deadline` | the absolute time, as text |
 
-The message's `expiration` is the milliseconds until the deadline, so the broker drops a request no worker took in time. Neither queue is dead-lettered. The worker reads the compile job from the store, checks the request as the service did, and refuses without requeuing a message that lacks a header or whose run or job IRI is not in the forms above. A message the broker marks as redelivered is not run. The worker publishes one failed frame saying that a worker stopped during the run, and acknowledges it, and the author runs it again. A worker stops an execution that passes the deadline.
+The message's `expiration` is the milliseconds until the deadline, so the broker drops a request no worker took in time. None of the three queues is dead-lettered. The worker reads the compile job from the store, checks the request as the service did, and refuses without requeuing a message that lacks a header or whose run or job IRI is not in the forms above. A message the broker marks as redelivered is not run. The worker publishes one failed frame saying that a worker stopped during the run, and acknowledges it, and the author runs it again. A worker stops an execution that passes the deadline.
 
 ### A frame
 
@@ -275,7 +279,7 @@ The run worker publishes each frame to the topic exchange `lattice.studio.events
 
 | `role` | The part is | Defined by |
 |---|---|---|
-| `report` | an `sh:ValidationReport` as Turtle, the findings as every job gives them | this contract |
+| `report` | an `sh:ValidationReport` as Turtle, the findings as every job gives them. The report of a run over an RDF sample also has `cst:engine`, the engine that evaluated the mapping | this contract |
 | `artefact` | what a mapping wrote, as a mapping dry run's artefact is, with `group` the mapping and `step` the stratum | this contract |
 | `check`, `request`, `delta`, `outcome` | the four parts of a simulator step | [A persistence step](#a-persistence-step) for `persistence`, and not yet defined for `surface` |
 

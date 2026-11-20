@@ -274,7 +274,7 @@ class RunWorkerTest {
     }
 
     @Test
-    void anRdfSampleAndASurfaceSimulationEachGiveTheirOneFailedFrame() throws Exception {
+    void anRdfSampleThatReachedTheWrongWorkerAndASurfaceSimulationEachGiveTheirOneFailedFrame() throws Exception {
         QueueWorker samples = queue("sample", 2, jobs());
         samples.deliver(sample(6, Examples.RUN, "text/turtle", "<urn:a> <urn:b> <urn:c> ."));
         samples.deliver(sample(7, RUN_2, "application/n-triples; charset=utf-8", "<urn:a> <urn:b> <urn:c> ."));
@@ -284,8 +284,8 @@ class RunWorkerTest {
         for (long t = 6; t <= 8; t++) {
             awaitSettled(t);
         }
-        assertOneFailedFrame(sink.of(Examples.RUN), "SVA-M3a");
-        assertOneFailedFrame(sink.of(RUN_2), "SVA-M3a");
+        assertOneFailedFrame(sink.of(Examples.RUN), "wrong worker");
+        assertOneFailedFrame(sink.of(RUN_2), "wrong worker");
         assertOneFailedFrame(sink.of(run3), "SVA-S2");
         assertEquals(0, jobReads.get(), "none is run");
         assertEquals(3, sink.log.stream().filter(e -> e.startsWith("ack:")).count());

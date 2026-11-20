@@ -100,6 +100,7 @@ Read by `config_studio_main.read_config`, and the proposer settings by each prop
 | `LATTICE_FUSEKI_DATASET` | no | `studio` | The dataset name, which must be the service's |
 | `LATTICE_FUSEKI_USER`, `LATTICE_FUSEKI_PASSWORD` | no | none | Basic authentication to Fuseki |
 | `LATTICE_WORKER_QUEUE` | no | `lattice.studio.jobs` | The queue this worker consumes. `studio:worker` takes the short jobs, and `studio:worker-long` sets `lattice.studio.jobs.long` for proposals by a language model and publications, which take minutes. Run one worker for each queue, or more where several long jobs at once are wanted |
+| `LATTICE_RUNS_RDF_CONCURRENCY` | no | `2` | The sample runs over a Turtle or N-Triples source this worker handles at once from `lattice.studio.runs.rdf`, a whole number from 1. Only the worker of `lattice.studio.jobs` consumes that queue, on a connection and a thread of its own, so a run never holds a job |
 | `LATTICE_ROOT` | no | found from the working directory | The repository root, where the worker reads the ontology files it validates against |
 | `LATTICE_PROPOSER_PROVIDER` | no | `chat-completions` | Which language model provider the `language-model` and `mapping-language-model` proposers use. `chat-completions` speaks the Chat Completions wire format to `LATTICE_PROPOSER_URL`. `anthropic` uses Anthropic's Messages API through its SDK, with prompt caching on the conversation, so each turn of a mapping proposal reads the turns before it from the cache. Anything else fails the job. The `sentence-forms` and `rml` proposers need none of these settings |
 | `LATTICE_PROPOSER_URL` | for `chat-completions` | none | The endpoint's base URL, to which `/chat/completions` is added. For `anthropic`, it overrides the API's base URL, for example to reach a gateway. Without it, or without the model, a `chat-completions` job fails, saying no language model is configured |
@@ -118,7 +119,7 @@ Read by `TransformsMain`. `LATTICE_FUSEKI_URL` and `LATTICE_AMQP_URI` are requir
 | `LATTICE_RUNS_INTERACTIVE_CONCURRENCY` | no | `2` | The requests the worker handles at once from `lattice.studio.runs.interactive`, a whole number from 1 |
 | `LATTICE_RUNS_CONCURRENCY` | no | `2` | The requests the worker handles at once from `lattice.studio.runs`, a whole number from 1 |
 
-A run is stopped at its deadline and a run the broker redelivers is answered with a failed frame and not run again. Until the slices that build them land, an RDF sample and a `simulate` run are each answered with one failed frame that says so.
+A run is stopped at its deadline and a run the broker redelivers is answered with a failed frame and not run again. Until the slice that builds it lands, a `simulate` run of target `surface` is answered with one failed frame that says so. A sample over Turtle or N-Triples is the studio worker's, and a message of one that reaches this worker is answered with a failed frame that says it went to the wrong worker.
 
 ### Values the stack sets
 
@@ -264,7 +265,8 @@ Declared identically, and idempotently, by the service when it connects and by t
 | Queue | `lattice.studio.jobs.long` | durable. Bound to `lattice.studio` with key `lattice.studio.jobs.long`. Dead-letters to `lattice.studio.dlx`. Jobs that take minutes, a proposal by a language model and a publication, which the service chooses by kind (`Lanes`), so a validation never waits behind one |
 | Queue | `lattice.studio.transforms` | durable, with no dead-lettering. Bound to `lattice.studio` with key `lattice.studio.transforms`. Each request expires when the service stops waiting for it, after 30 seconds |
 | Queue | `lattice.studio.runs.interactive` | durable, with no dead-lettering. Bound to `lattice.studio` with key `lattice.studio.runs.interactive`. The steps of simulators, each expiring at its run's deadline, 15 seconds at most |
-| Queue | `lattice.studio.runs` | durable, with no dead-lettering. Bound to `lattice.studio` with key `lattice.studio.runs`. Sample runs, each expiring at its run's deadline, 120 seconds at most |
+| Queue | `lattice.studio.runs` | durable, with no dead-lettering. Bound to `lattice.studio` with key `lattice.studio.runs`. Sample runs over an XML or JSON source, each expiring at its run's deadline, 120 seconds at most |
+| Queue | `lattice.studio.runs.rdf` | durable, with no dead-lettering. Bound to `lattice.studio` with key `lattice.studio.runs.rdf`. Sample runs over a Turtle or N-Triples source, answered by the studio worker, each expiring at its run's deadline, 120 seconds at most |
 | Queue | `lattice.studio.dead` | durable. Bound to `lattice.studio.dlx` with key `#` |
 | Super stream | `lattice.studio.writes` | a direct exchange with `x-super-stream`. A write's routing key is its workspace's partition, `0` to `7` |
 | Streams | `lattice.studio.writes-0` to `-7` | one per partition, bound with `x-stream-partition-order`, keeping a week or 1 GiB. Consumed by the group `lattice.studio.writers` with a single active consumer per partition |
@@ -407,7 +409,7 @@ A host that speaks MCP over stdio only reaches it through a bridge from stdio to
 | Dataset | `curl -s -o /dev/null -w '%{http_code}\n' 'http://127.0.0.1:3130/studio/sparql?query=ASK%7B%7D'` | `200` |
 | RabbitMQ, downloaded | `mise exec -- .build/config-studio/infra/rabbitmq_server-4.4.0/sbin/rabbitmq-diagnostics -n studio@localhost -q ping` | exit status 0 and no error. Use the version the stack script pins |
 | RabbitMQ, Docker | `docker compose -f deployment/compose/config-studio/docker-compose.yml exec rabbitmq rabbitmq-diagnostics -q ping` | exit status 0. This is also the container's health check |
-| Topology and workers | `mise exec -- .build/config-studio/infra/rabbitmq_server-4.4.0/sbin/rabbitmqctl -n studio@localhost list_queues name messages consumers` | `lattice.studio.jobs`, `lattice.studio.jobs.long`, `lattice.studio.transforms`, `lattice.studio.runs.interactive` and `lattice.studio.runs` each with `consumers` 1, and `messages` 0 when idle. `consumers` 0 means no worker, or no transforms worker, is connected, and a transform then answers `504` |
+| Topology and workers | `mise exec -- .build/config-studio/infra/rabbitmq_server-4.4.0/sbin/rabbitmqctl -n studio@localhost list_queues name messages consumers` | `lattice.studio.jobs`, `lattice.studio.jobs.long`, `lattice.studio.transforms`, `lattice.studio.runs.interactive`, `lattice.studio.runs` and `lattice.studio.runs.rdf` each with `consumers` 1, and `messages` 0 when idle. `consumers` 0 means no worker, or no transforms worker, is connected, and a transform then answers `504` |
 
 The worker has no port. It is healthy when `worker.log` shows no error, each jobs queue has one consumer, `studio:status` shows no part as `exited`, and a submitted job reaches `cst:Succeeded` or `cst:Failed`. The studio shows a warning when a queue has none.
 

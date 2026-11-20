@@ -30,6 +30,7 @@ from lattice_testing_studio_harness.tab import FRAME_TYPE, Tab, settle
 pytestmark = pytest.mark.studio_runs
 
 RUNS = "lattice.studio.runs"
+RDF_RUNS = "lattice.studio.runs.rdf"
 INTERACTIVE = "lattice.studio.runs.interactive"
 EVENTS = "lattice.studio.events"
 GRACE = 2.0
@@ -89,13 +90,56 @@ def persistence_compiled(studio):
     return ws, job
 
 
+_MM, _SRC, _TGT, _REC = ("http://example.org/mapping#", "http://example.org/src#", "http://example.org/tgt#", "http://example.org/records/")
+# A mapping scheme over an RDF source with two strata, a lookup that reads what an earlier stratum wrote and a closure that writes an OWL list.
+RDF_MAPPING = f"""@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . @prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix mm: <{_MM}> . @prefix src: <{_SRC}> . @prefix tgt: <{_TGT}> .
+mm:S a mork:MappingScheme ; sh:declare [ sh:prefix "src" ; sh:namespace "{_SRC}"^^xsd:anyURI ] .
+src:Thing a mork:Entity . mm:C a mork:DataConcept ; mork:representedAs src:Thing .
+mm:Root a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:C ; mork:exactTBoxMatch tgt:Thing .
+src:Species a mork:Entity . mm:SC a mork:DataConcept ; mork:representedAs src:Species .
+src:Animal a mork:Entity . mm:AC a mork:DataConcept ; mork:representedAs src:Animal .
+mm:GenSpecies a mork:DataMapping ; mork:mappingScheme mm:S ; mork:mappingFor mm:SC ; mork:broadTBoxCategoryMatch tgt:Animal ;
+    mork:conceptNameTemplate "${{src:name}}" .
+mm:Yield_Species a mork:DeferredContext ; mork:mappingScheme mm:S ; mork:yieldConcept mm:GenSpecies .
+mm:Animal a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:AC ; mork:conceptName "animal" ;
+    mork:exactTBoxMatch tgt:Animal ; mork:referenceDataMapping mm:AnimalSpecies .
+mm:AnimalSpecies a mork:Lookup ; mork:mappingScheme mm:S ; mork:exactRBoxMatch rdf:type ;
+    mork:exactTBoxMatch mm:Yield_Species ; mork:dataRef "src:species" ; mork:dataInline "" .
+mm:Knows a mork:DataMapping ; mork:mappingScheme mm:S ; mork:broadRBoxCategoryMatch owl:topObjectProperty ;
+    mork:conceptName "#knows" ; mork:assertsPropertyDomains mm:Yield_Species , tgt:A .
+"""
+RDF_SAMPLE = f"""<{_REC}s1> a <{_SRC}Species> ; <{_SRC}name> "Falcon" . <{_REC}s2> a <{_SRC}Species> ; <{_SRC}name> "Owl" .
+<{_REC}a7> a <{_SRC}Animal> ; <{_SRC}species> "Falcon" . <{_REC}a8> a <{_SRC}Animal> ; <{_SRC}species> "Dodo" .
+<{_REC}t> a <{_SRC}Thing> .
+"""
+
+
+@pytest.fixture(scope="module")
+def rdf_compiled(studio):
+    """A workspace whose mapping part maps an RDF source in two strata, and the id of a finished compile job of that part, which `mork_rdf` compiled."""
+    client = studio.client()
+    ws = client.workspace_id(client.create_workspace("rdf runs"))
+    saved = client.save_part(ws, "mapping", RDF_MAPPING, 0)
+    assert saved.status == 204, f"{saved.status} {saved.text[:300]}"
+    part = client.read_part(ws, "mapping")
+    submitted = client.submit_job(ws, "compile", "mapping", part.text)
+    assert submitted.status == 202, submitted.text
+    job = client.job_id(submitted)
+    assert "Succeeded" in client.wait_job(job, timeout=180).text
+    return ws, job
+
+
 @pytest.fixture
 def alone(studio):
     """The stack with no run worker, an empty run queue and both service instances up."""
     def clear() -> None:
         for name in [n for n in studio.pids if n.startswith("run-worker-")]:
             studio.stop_worker(name, kill=True)
-        for queue in (RUNS, INTERACTIVE):
+        for queue in (RUNS, INTERACTIVE, RDF_RUNS):
             studio.purge(queue)
         for name in studio.service_ports:
             if not studio.worker_running(name):
@@ -409,3 +453,37 @@ def test_r5_t10_a_persistence_step_runs_on_the_interactive_queue_and_gives_its_f
     outcome = json.loads("".join(f.get("text", "") for f in first[[i for i, f in enumerate(first) if f.get("part", {}).get("role") == "outcome"][0]:-1]))
     assert outcome["outcome"] == "applied", outcome
     assert without_run(frames[0]) == without_run(frames[1])
+
+
+def test_r5_t11_a_sample_over_rdf_is_answered_by_the_python_worker_from_its_own_queue(alone, rdf_compiled) -> None:
+    """R5-T11 (SVA-M3a). With no Java run worker at all, a `sample` run over Turtle and one over N-Triples are answered, with the frames the contract gives, since the service routes
+    an RDF sample to `lattice.studio.runs.rdf`, which the studio's Python worker consumes. The report names `mork_rdf` on Oxigraph as the engine, the artefacts are what each mapping wrote
+    at each of the two strata, a repeat gives the same frames but for the run's IRI, and the sample as N-Triples gives the frames the Turtle did. A sample over XML waits in the Java queue,
+    which nothing consumes."""
+    from rdflib import Graph
+
+    triples = Graph().parse(data=RDF_SAMPLE, format="turtle").serialize(format="nt")
+    ws, job = rdf_compiled
+    assert alone.consumers(RDF_RUNS) >= 1 and alone.consumers(RUNS) == 0, "a Python worker consumes the RDF queue and no run worker is running"
+    client = alone.client()
+    answers = []
+    for tab, body, media in (("rdfone", RDF_SAMPLE, "text/turtle"), ("rdftwo", RDF_SAMPLE, "text/turtle"), ("rdfthree", triples, "application/n-triples")):
+        reply = client.submit_run(ws, job, tab, body, media, wait=True)
+        assert reply.status == 200, f"{reply.status} {reply.text[:300]}"
+        answers.append(json.loads(reply.text))
+    first = answers[0]
+    assert seqs(first) == list(range(len(first)))
+    assert first[-1]["last"] is True and first[-1]["status"] == "succeeded" and first[-1]["conforms"] is True, first[-1]
+    roles = [f["part"]["role"] for f in first if "part" in f]
+    assert roles[0] == "report" and set(roles) == {"report", "artefact"} and roles.count("artefact") >= 5, roles
+    report = "".join(f.get("text", "") for f in first[:[i for i, f in enumerate(first) if f.get("part", {}).get("index") == 1][0]])
+    assert 'cst:engine "mork_rdf ' in report and " on Oxigraph " in report, report
+    artefacts = [f["part"] for f in first if f.get("part", {}).get("role") == "artefact"]
+    assert {p["step"] for p in artefacts} == {0, 1}, "a mapping at each of the two strata"
+    assert all(p["mediaType"] == "application/n-triples" and p["path"].startswith(f"{p['step']}/") for p in artefacts)
+    assert [(p["group"], p["step"]) for p in artefacts] == sorted((p["group"], p["step"]) for p in artefacts), "in the order of mapping and stratum"
+    assert "_:" in "".join(f.get("text", "") for f in first), "the closure's OWL list, named the same on every run"
+    assert without_run(answers[0]) == without_run(answers[1]) == without_run(answers[2])
+    queued = alone.client().submit_run(ws, job, "rdfxml", SAMPLE_XML, "application/xml")
+    assert queued.status == 202, queued.text
+    assert alone.queue_counts(RUNS, "messages")["messages"] == 1 and alone.queue_counts(RDF_RUNS, "messages")["messages"] == 0

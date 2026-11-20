@@ -312,6 +312,26 @@ def _compile_transforms(result: _Result, g: Graph, now: datetime) -> None:
 _SAMPLE_FORMATS = {"text/turtle": "turtle", "application/n-triples": "nt"}
 
 
+class Recorder:
+    """The sink of a mapping's run, `mork_rdf.run`'s `Sink`: it keeps what each construct and closure wrote, by mapping and stratum. The
+    studio's dry run of a mapping and its sample run over an RDF source both run with it, so they write the same triples."""
+
+    def __init__(self) -> None:
+        self.out: dict = {}
+
+    def write(self, query, triples) -> None:
+        self.out.setdefault((query.mapping, query.stratum), set()).update(triples)
+
+    def close(self) -> None:
+        pass
+
+
+def mapping_artefact_path(mapping: str, stratum: int) -> str:
+    """The path of what a mapping wrote at a stratum, `{stratum}/{name}.nt`, with the name the mapping's IRI ends in."""
+    name = re.sub(r"[^A-Za-z0-9_-]+", "-", mapping.rsplit("#", 1)[-1].rsplit("/", 1)[-1]).strip("-") or "mapping"
+    return f"{stratum}/{name}.nt"
+
+
 def run_mapping(job: URIRef, config: Graph, baseline: Graph, root: str, submitted_at: str) -> Graph:
     """A dry run of the mapping part over the sample source its one cst:ImportDocument carries: every scheme compiled,
     then run stratum by stratum, with what each mapping wrote at each stratum as an N-Triples artefact grouped by the
@@ -333,18 +353,6 @@ def run_mapping(job: URIRef, config: Graph, baseline: Graph, root: str, submitte
         if t[0] != documents[0]:
             mappings.add(t)
 
-    class Recorder:
-        """Keeps what each construct and closure wrote, by mapping and stratum."""
-
-        def __init__(self) -> None:
-            self.out: dict = {}
-
-        def write(self, query, triples) -> None:
-            self.out.setdefault((query.mapping, query.stratum), set()).update(triples)
-
-        def close(self) -> None:
-            pass
-
     compiled: list = []
     conforms = _mapping_findings(result, mappings, baseline, root, now, compiled)
     for c in compiled:
@@ -355,8 +363,7 @@ def run_mapping(job: URIRef, config: Graph, baseline: Graph, root: str, submitte
             result.finding(SH.Warning, message, f.code, URIRef(f.mapping) if f.mapping else None)
         for (mapping, stratum), triples in sorted(recorder.out.items(), key=lambda kv: (kv[0][1], kv[0][0])):
             text = ox.serialize(sorted(triples, key=str), format=ox.RdfFormat.N_TRIPLES).decode("utf-8")
-            name = re.sub(r"[^A-Za-z0-9_-]+", "-", mapping.rsplit("#", 1)[-1].rsplit("/", 1)[-1]).strip("-") or "mapping"
-            result.artefact(f"{stratum}/{name}.nt", "application/n-triples", text, mapping, stratum)
+            result.artefact(mapping_artefact_path(mapping, stratum), "application/n-triples", text, mapping, stratum)
     result.conforms(conforms)
     return result.graph
 

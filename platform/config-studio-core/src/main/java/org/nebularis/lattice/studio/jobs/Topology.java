@@ -31,6 +31,12 @@ public final class Topology {
     public static final String RUNS_INTERACTIVE_ROUTING_KEY = "lattice.studio.runs.interactive";
     public static final String RUNS_QUEUE = "lattice.studio.runs";
     public static final String RUNS_ROUTING_KEY = "lattice.studio.runs";
+    /**
+     * Sample runs of a mapping over an RDF source, which the Python worker answers with {@code mork_rdf}'s driver (ADR-A154 addendum of
+     * 2026-11-20). Like the other run queues it expires a request at its run's deadline and is never dead-lettered.
+     */
+    public static final String RUNS_RDF_QUEUE = "lattice.studio.runs.rdf";
+    public static final String RUNS_RDF_ROUTING_KEY = "lattice.studio.runs.rdf";
     public static final String DEAD_QUEUE = "lattice.studio.dead";
     public static final String DEAD_ROUTING_KEY = "#";
     /**
@@ -61,6 +67,8 @@ public final class Topology {
         channel.queueBind(RUNS_INTERACTIVE_QUEUE, EXCHANGE, RUNS_INTERACTIVE_ROUTING_KEY);
         channel.queueDeclare(RUNS_QUEUE, true, false, false, Map.of());
         channel.queueBind(RUNS_QUEUE, EXCHANGE, RUNS_ROUTING_KEY);
+        channel.queueDeclare(RUNS_RDF_QUEUE, true, false, false, Map.of());
+        channel.queueBind(RUNS_RDF_QUEUE, EXCHANGE, RUNS_RDF_ROUTING_KEY);
         channel.queueDeclare(DEAD_QUEUE, true, false, false, Map.of());
         channel.queueBind(DEAD_QUEUE, DEAD_LETTER_EXCHANGE, DEAD_ROUTING_KEY);
         // A super stream, declared as `rabbitmq-streams add_super_stream` would: the exchange marked as one, and each

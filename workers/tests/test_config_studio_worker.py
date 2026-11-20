@@ -1003,7 +1003,7 @@ def test_each_queue_is_bound_to_the_exchange_its_field_names_and_to_no_other() -
     channel = RecordingTopologyChannel()
     declare_topology(channel, topology)
     exchanges = {"exchange": topology["exchange"], "deadLetterExchange": topology["deadLetterExchange"]}
-    assert len(topology["queues"]) == 6
+    assert len(topology["queues"]) == 7
     for queue in topology["queues"]:
         bound = [(e, k) for q, e, k in channel.bindings if q == queue["name"]]
         assert bound == [(exchanges[queue["bindTo"]], queue["routingKey"])], queue["name"]
