@@ -3,12 +3,14 @@
 # Premise. Refused, under ldg:Refuse (ADR-A131 decision 6). Two proposals at
 # one position together exceed an account's availability, and its merge policy's
 # rule is Refuse, not Proportional or InPriorityOrder. The whole merge is refused:
-# a merge record carries the reason, neither proposal is granted, and no
-# posting is written. Both proposals stay Undetermined.
+# a merge record keeps both requests, grants neither, and states its reason,
+# ldg:ExceedsAvailable, and no posting is written. Both proposals stay
+# Undetermined. The refused merge is a record its pass writes, so the pass
+# moves the owner's ledger to revision 1.
 #
 # | Account      | Available | Proposal 1 | Proposal 2 | Outcome                        |
 # |--------------|----------:|-----------:|-----------:|---------------------------------|
-# | tight-account |       100 |         60 |         70 | refused, no grant, no posting |
+# | tight-account |       100 |         60 |         70 | refused, both requests kept with no granted value, no posting |
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -18,19 +20,21 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/refusal-overdraw/> .
+@prefix pass: <https://example.org/lattice/ledger/refusal-overdraw/ledger-owner/pass/> .
+@base <https://example.org/lattice/ledger/refusal-overdraw/> .
 
 ex:owner a fnd:PersistentIdentity .
 ex:OwnerKind a owl:Class .
 
 ex:units a qnt:ValueSpace ;
+    fnd:hasIdentity ex:units-identity ;
     qnt:spaceKey "ledger-refusal-overdraw-units" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-refusal-overdraw-units-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-identity a fnd:PersistentIdentity .
 ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
 ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
-
-ex:q-100 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
 
 # ==== The merge policies =======================================================
 
@@ -42,28 +46,43 @@ ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 
 ex:tight-account a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:units ;
+    fnd:hasIdentity ex:tight-account-identity ;
+    ldg:statedAmount <tight-account/stated-amount> ; ldg:unitOfAccount ex:units ;
     ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "100 units, refusing whole where proposals together overdraw it." .
+<tight-account/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
+ex:tight-account-identity a fnd:PersistentIdentity .
 
-ex:overdrawn a skos:Concept ;
-    skos:prefLabel "requested more than the account's availability" .
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
 
 ex:proposal-1 rdfs:comment "Requests 60." .
 ex:proposal-2 rdfs:comment "Requests 70." .
 
-# No ldg:Grant exists for either proposal: under ldg:Refuse, a merge that
-# cannot grant every proposal in full grants none of them.
+# Under ldg:Refuse, a merge that cannot grant every request in full grants none
+# of them. It keeps both requests, so the record shows what was refused, and
+# neither states a granted value, since a refusal is never a grant of nothing.
+ex:request-1 a ldg:Request ;
+    ldg:forProposal ex:proposal-1 ; ldg:requestedValue "60"^^xsd:decimal .
+ex:request-2 a ldg:Request ;
+    ldg:forProposal ex:proposal-2 ; ldg:requestedValue "70"^^xsd:decimal .
 ex:merge-1 a ldg:MergeRecord ;
     ldg:onAccount ex:account-tight-account ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:inPass pass:draws-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:availableBefore "100"^^xsd:decimal ;
-    ldg:refusalReason ex:overdrawn ;
-    rdfs:comment "60 + 70 = 130 exceeds the 100 available. No grant. No posting follows." .
+    ldg:request ex:request-1 , ex:request-2 ;
+    ldg:refusalReason ldg:ExceedsAvailable ;
+    rdfs:comment "60 + 70 = 130 exceeds the 100 available. Neither request is granted. No posting follows." .
 
-# ==== The account instances and the passes ===================================
+# ==== The ledger, the account instances and the passes ========================
 
+ex:ledger-owner a ldg:Ledger ;
+    ldg:forOwner ex:owner ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "1"^^xsd:nonNegativeInteger .
 ex:account-tight-account a ldg:Account ;
     ldg:ofDefinition ex:tight-account ; ldg:forOwner ex:owner .
 ex:owner a ex:OwnerKind .
-ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
+pass:draws-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .

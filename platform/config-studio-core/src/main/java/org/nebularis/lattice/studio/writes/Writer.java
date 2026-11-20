@@ -116,6 +116,7 @@ public final class Writer {
         Map<String, Long> done = store.receipts(ids);
         Map<String, String> digests = done.isEmpty() ? Map.of() : store.receiptDigests(done.keySet());
         Batch b = new Batch();
+        List<Command> resent = new ArrayList<>();
         for (int i = 0; i < batch.size(); i++) {
             Command c = batch.get(i);
             Reply refused = check(c);
@@ -124,21 +125,36 @@ public final class Writer {
             } else if (done.containsKey(c.id())) {
                 // A resend is answered from its receipt. An id the receipt holds for another request is refused (MSAI11-02).
                 String held = digests.get(c.id());
-                replies[i] = held == null || held.equals(Codec.digest(c)) ? Reply.ok(done.get(c.id()))
+                boolean same = held == null || held.equals(Codec.digest(c));
+                replies[i] = same ? Reply.ok(done.get(c.id()))
                     : Reply.refused("the command id " + c.id() + " was applied before for another request, so this one is refused");
+                if (same && (c.type() == Command.Type.DELETE_DOCUMENT || c.type() == Command.Type.DELETE_WORKSPACE)) {
+                    resent.add(c);
+                }
             } else {
                 replies[i] = b.plan(i, c);
             }
         }
+        Map<String, Long> applied = Map.of();
+        List<Retired> pending = new ArrayList<>();
         if (!b.planned.isEmpty()) {
             store.update(b.request);
-            Map<String, Long> applied = store.receipts(b.planned.keySet());
-            b.planned.forEach((id, plan) -> replies[plan.index] = applied.containsKey(id) ? plan.reply : plan.unapplied.get());
-            finish(b, applied);
-            for (Plan plan : b.planned.values()) {
-                if (applied.containsKey(batch.get(plan.index).id())) {
-                    publish(batch.get(plan.index));
+            Map<String, Long> receipted = store.receipts(b.planned.keySet());
+            b.planned.forEach((id, plan) -> replies[plan.index] = receipted.containsKey(id) ? plan.reply : plan.unapplied.get());
+            b.retired.forEach((id, planned) -> {
+                if (receipted.containsKey(id)) {
+                    pending.addAll(planned);
                 }
+            });
+            applied = receipted;
+        }
+        // A deletion answered from its receipt may follow a batch whose update committed and whose next step failed, so the
+        // rows its tombstones lost are removed here too (MSAF7-01).
+        pending.addAll(retiredBy(resent));
+        finish(pending);
+        for (Plan plan : b.planned.values()) {
+            if (applied.containsKey(batch.get(plan.index).id())) {
+                publish(batch.get(plan.index));
             }
         }
         return List.of(replies);
@@ -187,33 +203,30 @@ public final class Writer {
     private static final int TOMBSTONE_ROUNDS = 3;
 
     /**
-     * The tombstones of the deletions applied in {@code b} whose row is still live, because a write of the same part or document
-     * moved its revision first, planned again at the revision that write left, so the deletion wins while the row is live
-     * (MSAF6-01). The description no longer names the row, so no reader acts on it meanwhile. Each round is one request and
-     * each tombstone in it is guarded as before. A row still live after the last round is logged and left.
+     * The tombstones of deletions applied, whose row is still live because a write of the same part or document moved its
+     * revision first, planned again at the revision that write left, so the deletion wins while the row is live (MSAF6-01).
+     * The description no longer names the row, so no reader acts on it meanwhile. Each round reads the rows in one query and
+     * is one request, and each tombstone in it is guarded as before. A row still live after the last round is logged and left.
      */
-    private void finish(Batch b, Map<String, Long> applied) {
-        List<Retired> pending = new ArrayList<>();
-        b.retired.forEach((id, planned) -> {
-            if (applied.containsKey(id)) {
-                pending.addAll(planned);
-            }
-        });
+    private void finish(List<Retired> pending) {
         for (int round = 1; !pending.isEmpty(); round++) {
+            Map<String, Family> roots = new HashMap<>();
+            pending.forEach(r -> roots.put(r.root(), r.family()));
+            Map<String, Long> rows = ops.seqs(store, roots);
             UpdateRequest request = new UpdateRequest();
             List<Retired> next = new ArrayList<>();
             for (Retired r : pending) {
-                Optional<Long> live = ops.seq(store, r.family(), r.root());
-                if (live.isEmpty()) {
+                Long live = rows.get(r.root());
+                if (live == null) {
                     continue;
                 }
                 if (round > TOMBSTONE_ROUNDS) {
-                    org.slf4j.LoggerFactory.getLogger(Writer.class).warn("{} is still live at revision {} after its deletion, and is left", r.root(), live.get());
+                    org.slf4j.LoggerFactory.getLogger(Writer.class).warn("{} is still live at revision {} after its deletion, and is left", r.root(), live);
                     continue;
                 }
                 Retired again = r.again(round);
-                ops.tombstone(r.family(), r.root(), live.get(), again.txn(), r.cause(), r.actor()).forEach(request::add);
-                logDrops(r.family(), r.root(), live.get()).forEach(request::add);
+                ops.tombstone(r.family(), r.root(), live, again.txn(), r.cause(), r.actor()).forEach(request::add);
+                logDrops(r.family(), r.root(), live).forEach(request::add);
                 next.add(again);
             }
             if (next.isEmpty()) {
@@ -223,6 +236,40 @@ public final class Writer {
             pending.clear();
             pending.addAll(next);
         }
+    }
+
+    /**
+     * The rows that deletions answered from their receipts retire, which no plan in this batch holds: each part's and
+     * document's graph its receipt says it wrote. A deleted workspace's description is tombstoned, so the receipt is what
+     * still names its documents. A deleted id is never used again (MSA-F9), so a row among them still live is one its
+     * tombstone lost.
+     */
+    private List<Retired> retiredBy(List<Command> resent) {
+        if (resent.isEmpty()) {
+            return List.of();
+        }
+        Map<String, Set<String>> wrote = store.receiptWrote(resent.stream().map(Command::id).toList());
+        List<Retired> out = new ArrayList<>();
+        for (Command c : resent) {
+            String ws = c.workspace();
+            java.util.SortedMap<String, Family> roots = new java.util.TreeMap<>();
+            for (String graph : wrote.getOrDefault(c.id(), Set.of())) {
+                for (String name : Workspace.GRAPHS) {
+                    if (graph.equals(Graphs.config(ws, name))) {
+                        roots.put(Graphs.partRoot(ws, name), Family.PART);
+                    }
+                }
+                String doc = Graphs.documentIdOfGraph(ws, graph);
+                if (doc != null) {
+                    roots.put(Graphs.document(ws, doc), Family.DOCUMENT);
+                }
+            }
+            int k = 0;
+            for (Map.Entry<String, Family> root : roots.entrySet()) {
+                out.add(new Retired(root.getValue(), root.getKey(), "urn:txn:" + c.id() + "/resent/" + (++k), Graphs.receipt(c.id()), actor(c)));
+            }
+        }
+        return out;
     }
 
     /** Drops the patch log of {@code root} up to the revision its tombstone at {@code revision} mints. */

@@ -458,6 +458,23 @@ def test_the_worker_declares_each_queue_where_the_contract_binds_it():
     assert channel.calls == DECLARED
 
 
+def test_the_worker_refuses_a_queue_bound_to_an_exchange_it_does_not_declare():
+    """MSA-F13. The case of the service's `TopologyTest.theServiceRefusesAQueueBoundToAnExchangeItDoesNotDeclare`: the transforms
+    queue bound to an exchange the topology does not declare is refused, and that queue is neither declared nor bound."""
+    import copy
+    import re
+
+    from lattice_workers.config_studio_worker import TOPOLOGY, declare_topology
+
+    topology = copy.deepcopy(TOPOLOGY)
+    topology["queues"][2]["bindsTo"] = "lattice.studio.nowhere"
+    channel = RecordingChannel()
+    message = "queue lattice.studio.transforms: bindsTo names lattice.studio.nowhere, which the topology does not declare"
+    with pytest.raises(ValueError, match=f"^{re.escape(message)}$"):
+        declare_topology(channel, topology)
+    assert not [call for call in channel.calls if call[1] == "lattice.studio.transforms"]
+
+
 class FakePublisher:
     def __init__(self) -> None:
         self.sent: list[tuple[str, str, dict, bytes]] = []

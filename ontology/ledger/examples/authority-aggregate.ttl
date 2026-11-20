@@ -21,16 +21,24 @@
 # one unit short (99 of 100). The largest-remainder residual allocates the
 # missing unit, and the three remainders are tied, so it goes to the first
 # proposal in the order the account declares, here the order they were made,
-# and never by their identifiers (TD-161).
+# and never by their identifiers (TD-161). The policy names that order as its
+# unit order criterion, and each request records its place in it. The merge
+# records all three requests, each with what it asked and what it was granted.
+# The authority's ledger names the profile the deployment gave it, and the one
+# pass, named from the ledger and a key for its evaluation, moved it to
+# revision 1.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/authority-aggregate/> .
+@prefix pass: <https://example.org/lattice/ledger/authority-aggregate/ledger-authority/pass/> .
+@base <https://example.org/lattice/ledger/authority-aggregate/> .
 
 # ==== The owner and the value space ===========================================
 
@@ -38,14 +46,20 @@ ex:authority a fnd:PersistentIdentity ; rdfs:comment "The delegated authority, o
 ex:Authority a owl:Class ; rdfs:comment "The kind of owner this account admits." .
 
 ex:capacity a qnt:ValueSpace ;
+    fnd:hasIdentity ex:capacity-identity ;
     qnt:spaceKey "ledger-authority-aggregate-capacity" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-authority-aggregate-capacity-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:capacity-sum , ex:capacity-difference .
+ex:capacity-identity a fnd:PersistentIdentity .
 ex:capacity-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:capacity .
 ex:capacity-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:capacity .
 
-ex:q-100 a qnt:Quantity ; qnt:onSpace ex:capacity ; qnt:numericValue "100"^^xsd:decimal .
+# ==== The order the terms name =================================================
+
+ex:order-made a skos:Concept ;
+    skos:inScheme ldg:OrderCriteria ;
+    skos:prefLabel "the order in which proposals were made" .
 
 # ==== The merge policies =======================================================
 
@@ -53,15 +67,27 @@ ex:shared-in-proportion a ldg:MergePolicy ;
     fnd:hasIdentity ex:shared-in-proportion-identity ;
     ldg:mergeRule ldg:Proportional ;
     ldg:roundingMethod ldg:TowardZero ;
-    ldg:residualAllocation ldg:LargestRemainder .
+    ldg:residualAllocation ldg:LargestRemainder ;
+    ldg:unitOrderCriterion ex:order-made .
 
 ex:shared-in-proportion-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 
 ex:delegated-aggregate a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:capacity ;
+    fnd:hasIdentity ex:delegated-aggregate-identity ;
+    ldg:statedAmount <delegated-aggregate/stated-amount> ; ldg:unitOfAccount ex:capacity ;
     ldg:admitsOwnerKind ex:Authority ; ldg:mergePolicy ex:shared-in-proportion ;
-    rdfs:comment "100 units of delegated capacity, shared proportionally when oversubscribed." .
+    rdfs:comment "100 units of delegated capacity, shared proportionally when oversubscribed. A version with an identity, its stated amount minted under its IRI." .
+<delegated-aggregate/stated-amount> a qnt:Quantity ; qnt:onSpace ex:capacity ; qnt:numericValue "100"^^xsd:decimal .
+ex:delegated-aggregate-identity a fnd:PersistentIdentity .
+
+# ==== The ledger profile =======================================================
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
 
 # ==== One position, three proposals, one merge record, three postings ========
 
@@ -69,53 +95,53 @@ ex:proposal-1 rdfs:comment "The first proposal, 40 units." .
 ex:proposal-2 rdfs:comment "The second proposal, 40 units." .
 ex:proposal-3 rdfs:comment "The third proposal, 40 units." .
 
-ex:grant-1 a ldg:Grant ;
-    ldg:forProposal ex:proposal-1 ;
+ex:request-1 a ldg:Request ;
+    ldg:forProposal ex:proposal-1 ; ldg:unitOrderPlace "1"^^xsd:nonNegativeInteger ;
     ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "34"^^xsd:decimal ;
     ldg:proportionNumerator "1"^^xsd:integer ; ldg:proportionDenominator "3"^^xsd:integer .
-ex:grant-2 a ldg:Grant ;
-    ldg:forProposal ex:proposal-2 ;
+ex:request-2 a ldg:Request ;
+    ldg:forProposal ex:proposal-2 ; ldg:unitOrderPlace "2"^^xsd:nonNegativeInteger ;
     ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "33"^^xsd:decimal ;
     ldg:proportionNumerator "1"^^xsd:integer ; ldg:proportionDenominator "3"^^xsd:integer .
-ex:grant-3 a ldg:Grant ;
-    ldg:forProposal ex:proposal-3 ;
+ex:request-3 a ldg:Request ;
+    ldg:forProposal ex:proposal-3 ; ldg:unitOrderPlace "3"^^xsd:nonNegativeInteger ;
     ldg:requestedValue "40"^^xsd:decimal ; ldg:grantedValue "33"^^xsd:decimal ;
     ldg:proportionNumerator "1"^^xsd:integer ; ldg:proportionDenominator "3"^^xsd:integer .
 
 ex:merge-1 a ldg:MergeRecord ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
+    ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
     ldg:availableBefore "100"^^xsd:decimal ;
-    ldg:grant ex:grant-1 , ex:grant-2 , ex:grant-3 .
+    ldg:request ex:request-1 , ex:request-2 , ex:request-3 .
 
 ex:posting-1 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "34"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:merge-1 , ex:grant-1 .
+    ldg:runningBalance "66"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:merge-1 , ex:request-1 .
 ex:posting-2 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "2"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:merge-1 , ex:grant-2 .
+    ldg:runningBalance "33"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:merge-1 , ex:request-2 .
 ex:posting-3 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "3"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:merge-1 , ex:grant-3 .
+    ldg:runningBalance "0"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:merge-1 , ex:request-3 .
 
-ex:balance-1 a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-delegated-aggregate ;
-    ldg:inPass ex:pass-1 ;
-    ldg:remainingValue "0"^^xsd:decimal ; ldg:availableValue "0"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:merge-1 , ex:posting-1 , ex:posting-2 , ex:posting-3 .
+# ==== The ledger, the account instances and the passes ========================
 
-# ==== The account instances and the passes ===================================
-
+ex:ledger-authority a ldg:Ledger ;
+    ldg:forOwner ex:authority ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "1"^^xsd:nonNegativeInteger .
 ex:account-delegated-aggregate a ldg:Account ;
     ldg:ofDefinition ex:delegated-aggregate ; ldg:forOwner ex:authority .
 ex:authority a ex:Authority .
-ex:pass-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer .
+pass:claims-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .

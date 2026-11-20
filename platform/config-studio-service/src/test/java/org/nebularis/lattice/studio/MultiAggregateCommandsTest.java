@@ -6,16 +6,20 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
+import java.net.ConnectException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -60,6 +64,33 @@ class MultiAggregateCommandsTest {
                 }
                 try {
                     return method.invoke(real, args);
+                } catch (InvocationTargetException e) {
+                    throw e.getCause();
+                }
+            });
+        return Fixture.textual(proxy);
+    }
+
+    /**
+     * As {@link #interfered}, and once the update that {@code before} preceded has committed, the next query or update fails
+     * once, as a store that cannot be reached does, so the writer's batch fails after its commit and is sent again.
+     */
+    private static StudioStore unreachableAfterCommit(RDFConnection real, AtomicReference<Runnable> before) {
+        AtomicBoolean cut = new AtomicBoolean();
+        RDFConnection proxy = (RDFConnection) Proxy.newProxyInstance(RDFConnection.class.getClassLoader(),
+            new Class<?>[] {RDFConnection.class}, (self, method, args) -> {
+                String name = method.getName();
+                if ((name.equals("update") || name.startsWith("query")) && cut.getAndSet(false)) {
+                    throw new HttpException("connect", new ConnectException("refused"));
+                }
+                boolean interfere = name.equals("update") && before.get() != null;
+                if (interfere) {
+                    before.getAndSet(null).run();
+                }
+                try {
+                    Object out = method.invoke(real, args);
+                    cut.compareAndSet(false, interfere);
+                    return out;
                 } catch (InvocationTargetException e) {
                     throw e.getCause();
                 }
@@ -358,5 +389,81 @@ class MultiAggregateCommandsTest {
 
         assertEquals(Reply.ok(), writer.apply(delete));
         assertEquals(Optional.empty(), Fixture.OPS.seq(store, Family.PART, Graphs.partRoot(WS, "surface")));
+    }
+
+    /**
+     * MSA-F11, MSAF7-01. A {@code deleteDocument} whose tombstone lost to a save commits, then the store cannot be reached for
+     * the step after, so the batch fails and is sent again. The resend is answered from the receipt and still removes the row
+     * the save left live.
+     */
+    @Test
+    void aDocumentDeletionAnsweredFromItsReceiptAfterAFailurePastTheCommitStillDeletesTheDocument() {
+        RDFConnection real = RDFConnection.connect(DatasetFactory.createTxnMem());
+        AtomicReference<Runnable> before = new AtomicReference<>();
+        StudioStore store = unreachableAfterCommit(real, before);
+        StudioStore reader = Fixture.textual(real);
+        Writer writer = writer(store);
+        created(writer);
+        assertEquals(Reply.ok(1), writer.apply(Command.saveDocument(WS, DOC, 0, AT, "Licence", "software-licence", docGraph("one"))));
+        Writer other = writer(reader);
+        Command delete = Command.deleteDocument(WS, DOC);
+        String root = Graphs.document(WS, DOC);
+        before.set(() -> assertEquals(Reply.ok(2),
+            other.apply(Command.saveDocument(WS, DOC, 1, AT, "Licence", "software-licence", docGraph("two")))));
+
+        assertThrows(HttpException.class, () -> writer.apply(delete));
+
+        assertTrue(reader.graph(Graphs.receipts(WS)).contains(null, Cst.commandId, delete.id()), "the batch committed");
+        assertFalse(Fixture.OPS.workspace(reader, WS).documents().containsKey(DOC));
+        assertEquals(Optional.of(2L), Fixture.OPS.seq(reader, Family.DOCUMENT, root), "the tombstone lost, and the row the save left is live");
+
+        assertEquals(Reply.ok(), writer.apply(delete));
+
+        assertEquals(Optional.empty(), Fixture.OPS.seq(reader, Family.DOCUMENT, root), "the resend removed the live row");
+        assertTrue(Fixture.OPS.tombstoned(reader, Family.DOCUMENT, root));
+        assertTrue(reader.graph(Graphs.documentGraph(WS, DOC)).isEmpty());
+        for (long k = 1; k <= 3; k++) {
+            assertTrue(reader.rawGraph(Fixture.OPS.revision(Family.DOCUMENT, root, k) + "/add").isEmpty(), "log " + k);
+        }
+    }
+
+    /**
+     * MSA-F11, MSAF7-01. As for a document, for {@code deleteWorkspace}, whose description is tombstoned, so the resend
+     * finds the rows it retires in the receipt's written graphs. The rows are read in one query a round, whatever their number.
+     */
+    @Test
+    void aWorkspaceDeletionAnsweredFromItsReceiptAfterAFailurePastTheCommitStillRemovesThePart() {
+        RDFConnection real = RDFConnection.connect(DatasetFactory.createTxnMem());
+        AtomicReference<Runnable> before = new AtomicReference<>();
+        StudioStore store = unreachableAfterCommit(real, before);
+        StudioStore reader = Fixture.textual(real);
+        Writer writer = writer(store);
+        created(writer);
+        assertEquals(Reply.ok(1), writer.apply(Command.save(WS, "surface", 0, AT, surface("one"))));
+        assertEquals(Reply.ok(1), writer.apply(Command.saveDocument(WS, DOC, 0, AT, "Licence", "software-licence", docGraph("one"))));
+        Writer other = writer(reader);
+        Command delete = Command.deleteWorkspace(WS);
+        String surface = Graphs.partRoot(WS, "surface");
+        before.set(() -> assertEquals(Reply.ok(2), other.apply(Command.save(WS, "surface", 1, AT, surface("two")))));
+
+        assertThrows(HttpException.class, () -> writer.apply(delete));
+
+        assertTrue(reader.graph(Graphs.STORE_RECEIPTS).contains(null, Cst.commandId, delete.id()), "the batch committed");
+        assertNull(Fixture.OPS.workspace(reader, WS));
+        assertEquals(Optional.of(2L), Fixture.OPS.seq(reader, Family.PART, surface), "the tombstone lost, and the row the save left is live");
+
+        int queries = Fixture.QUERIES.get();
+        assertEquals(Reply.ok(), writer.apply(delete));
+        int asked = Fixture.QUERIES.get() - queries;
+
+        assertEquals(Optional.empty(), Fixture.OPS.seq(reader, Family.PART, surface), "the resend removed the live row");
+        assertTrue(Fixture.OPS.tombstoned(reader, Family.PART, surface));
+        assertTrue(reader.graph(Graphs.config(WS, "surface")).isEmpty());
+        for (long k = 1; k <= 3; k++) {
+            assertTrue(reader.rawGraph(Fixture.OPS.revision(Family.PART, surface, k) + "/add").isEmpty(), "log " + k);
+        }
+        assertTrue(Fixture.OPS.tombstoned(reader, Family.PART, Graphs.partRoot(WS, "baseline")));
+        assertTrue(Fixture.OPS.tombstoned(reader, Family.DOCUMENT, Graphs.document(WS, DOC)));
+        assertEquals(5, asked, "the receipts, their digests, the deletion's written graphs, and the rows once in each of two rounds");
     }
 }

@@ -2,8 +2,7 @@
 
 # `tools/proofs/`
 
-Mechanised Isabelle/HOL theories for the `formal-methods` epic's track E, the prover programme
-(ADR-A-FM1: Isabelle/HOL; ADR-A-FM2: this directory as their home).
+Mechanised Isabelle/HOL theories for the `formal-methods` epic's track E, the prover programme (ADR-A-FM1 chose Isabelle/HOL, and ADR-A-FM2 made this directory their home).
 
 ## Layout
 
@@ -13,7 +12,7 @@ directory:
 
 | File | Origin | Edited by hand? |
 |---|---|---|
-| `Kernel.thy` | **generated** from `ontology/<layer>/README.md`'s `isabelle-spec` fenced blocks, via `tools/literate_extract.py --proofs-root tools/proofs` | never. Regenerate it; do not hand-edit it |
+| `Kernel.thy` | **generated** from `ontology/<layer>/README.md`'s `isabelle-spec` fenced blocks, via `tools/literate_extract.py --proofs-root tools/proofs` | never. Regenerate it, and never hand-edit it |
 | `<Layer>Laws.thy`, `<Layer>.thy`, … | hand-written, importing `Kernel` (or another generated theory) | yes |
 | `ROOT` | an Isabelle session definition (one or more sessions: the layer's own theories, a `Defects` session for seeded defects, by the same convention `spikes/formal-prover/isabelle/ROOT` used) | yes |
 | `claims/*.json` | one claim record per theorem, conforming to `claim-schema.json` | yes |
@@ -24,6 +23,15 @@ imports it. This is why a generated file and a hand-written file are never the s
 the generator again must never silently discard a proof.
 
 **The prelude, `base/`.** One directory is not a layer's. `base/` holds `LatticeBase`, `session LatticeBase = HOL +` with `sessions "HOL-Library"`, whose one theory imports the `HOL-Library` theories the layers' proofs reach for and states no law (ADR-A-FM2's addendum of 2026-11-08). Every layer session parents on it, `session <Layer> = LatticeBase +`, so a library theory is checked once per machine into its heap and no machine builds the `HOL-Library` heap. A layer's `Kernel.thy` keeps importing `Main` or `Complex_Main`, and a library theory is imported by its theorem theories alone. [base/README.md](base/README.md) says why each theory is there.
+
+**The shared session, `shared/`.** A second directory is not a layer's. `shared/` holds `LatticeShared`, `session LatticeShared = LatticeBase +`, hand-written, with its claims gated as a layer's are (ADR-A-FM2's addendum of 2026-11-18). It holds a definition only where two developments both use it: a position, a natural number compared only within one axis, and an amount, a number for each key over a generic number type. A development outside the layers imports it. A layer's theorem theory imports it where its kernel defines the same thing, to prove the two agree, and a generated `Kernel.thy` never does. The ledger's `Agreement.thy` proves its kernel's amount is the shared amount. [shared/README.md](shared/README.md) lists its laws.
+
+| Session | Directory | Parent | Claims |
+|---|---|---|---|
+| `LatticeBase` | `base/` | `HOL` | none |
+| `LatticeShared` | `shared/` | `LatticeBase` | gated |
+| `Eligibility` | `eligibility/` | `LatticeBase` | gated |
+| `Ledger` | `ledger/` | `LatticeBase`, importing `LatticeShared` | gated |
 
 ## Shared infrastructure
 
@@ -51,19 +59,19 @@ mise run check:proofs
 
 `LATTICE_FORMAL_ROOT` moves the install directory on every platform. On Windows keep it short, since long paths fail there. The release includes prebuilt Pure and HOL heaps, so the first check does not build HOL. A Claude Code cloud session gets Isabelle from `tools/claude-cloud-setup.sh` instead, in `/opt/Isabelle2025-2`.
 
-`check:proofs` runs each session through `spikes/formal-prover/env/driver.py`, which finds Isabelle through `FMX_ISABELLE` (its home directory), then the install directory above, then `/opt/Isabelle2025-2`, then `isabelle` on `PATH`. On Windows it runs Isabelle through the bundled Cygwin bash. It builds the prelude first, with `-b` so its heap is saved for the layers to parent on, and every build runs from `tools/proofs/` with `-d base`, so every build names the prelude the same way and finds the one heap. The first run on a machine builds the prelude's heap from source, about a minute and a half on machine S, and a later run finds it current in seconds. Each `ROOT` states its session's own `timeout`, and nothing passes `-o timeout=` or `-f`, either of which would rebuild the prelude.
+`check:proofs` runs each session through `spikes/formal-prover/env/driver.py`, which finds Isabelle through `FMX_ISABELLE` (its home directory), then the install directory above, then `/opt/Isabelle2025-2`, then `isabelle` on `PATH`. On Windows it runs Isabelle through the bundled Cygwin bash. It builds the prelude first, with `-b` so its heap is saved for the layers to parent on, then the shared session, then each layer, and gates each. Every build runs from `tools/proofs/` with `-d base`, and every build after the prelude's adds `-d shared`, so every build names each directory the same way and finds the one heap. The first run on a machine builds the prelude's heap from source, about a minute and a half on machine S, and a later run finds it current in seconds. Each `ROOT` states its session's own `timeout`, and nothing passes `-o timeout=` or `-f`, either of which would rebuild the prelude.
 
 To build one session by hand, from `tools/proofs/`, on macOS or Linux with `isabelle` on `PATH`:
 
 ```bash
-isabelle build -d base -d <layer> -v <SessionName>
+isabelle build -d base -d shared -d <layer> -v <SessionName>
 python gate.py <layer>
 ```
 
 On Windows, run the same `isabelle build` inside Isabelle's Cygwin shell (`C:/fmx/Isabelle2025-2/contrib/cygwin/bin/bash.exe --login`), or let `driver.py` do it, from the repository root:
 
 ```powershell
-python spikes/formal-prover/env/driver.py --route native --workdir tools/proofs isabelle build -d base -d <layer> -v <SessionName>
+python spikes/formal-prover/env/driver.py --route native --workdir tools/proofs isabelle build -d base -d shared -d <layer> -v <SessionName>
 python tools/proofs/gate.py tools/proofs/<layer>
 ```
 

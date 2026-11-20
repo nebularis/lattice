@@ -5,23 +5,23 @@
 
 A facility has a limit, and the borrower draws against it. The limit is a number in the agreement. What remains available changes with every drawdown and repayment. LATTICE keeps the two apart. The instrument states the **static** limit, and the running balance is **dynamic** state, kept by the Ledger layer as a record of facts rather than a number someone updates.
 
-<div class="callout"><strong>Partly built.</strong> Ledger's account definition is released. The records of each draw, the postings and balance records shown below, are designed and appear in Ledger's own example, but are not yet released. The applied Capacity module, which joins limits into networks, has its runtime profile published and its source ontology still being designed. This chapter says which is which.</div>
+<div class="callout"><strong>Partly built.</strong> Ledger's account definition is released. The records of each draw, the postings and the running balance each one carries, shown below, are designed and appear in Ledger's own example, but are not yet released. The applied Capacity module, which joins limits into networks, has its runtime profile published and its source ontology still being designed. This chapter says which is which.</div>
 
 ### An account, not a balance column
 
-A Ledger **account** states an amount that is consumed and restored. Here is a 20,000,000 sterling revolving facility that the borrower draws in euros.
+A Ledger **account** states an amount that is consumed and restored. Here is a 20,000,000 sterling revolving facility. The borrower asks for money in euros, and the facility is drawn in sterling.
 
 <!-- source: ontology/ledger/examples/revolving-facility.ttl -->
 ```turtle
-ex:q-commitment a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "20000000"^^xsd:decimal ; qnt:inUnit ex:GBP .
-
 ex:facility a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-commitment ;
+    fnd:hasIdentity ex:facility-identity ;
+    ldg:statedAmount <facility/stated-amount> ;
     ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Borrower ;
     ldg:mergePolicy ex:refused-when-exceeded ;
-    ldg:conversionMethod ex:fx-2027-06-01 ;
-    rdfs:comment "A 20,000,000 sterling revolving commitment, drawn in euros." .
+    rdfs:comment "A 20,000,000 sterling revolving commitment, drawn in sterling." .
+<facility/stated-amount> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "20000000"^^xsd:decimal ; qnt:inUnit ex:GBP .
+ex:facility-identity a fnd:PersistentIdentity .
 
 ex:refused-when-exceeded a ldg:MergePolicy ;
     fnd:hasIdentity ex:refused-when-exceeded-identity ;
@@ -31,11 +31,13 @@ ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 ```
 
-- **`ldg:statedAmount`** is the commitment. It never changes when money is drawn or repaid.
+- **`fnd:hasIdentity`** says the account definition is versioned. A change of its amount or its policy is a new version beside the old, so a past balance still folds against the terms it was settled under.
+- **`ldg:statedAmount`** is the commitment. It never changes when money is drawn or repaid. The quantity is minted under the definition's own IRI, written relative to the example's base, so it is part of this version and no other definition shares it.
 - **`ldg:unitOfAccount`** is a value space from chapter 7, and it must be extensive, since a balance only means something if amounts add.
 - **`ldg:admitsOwnerKind`** says whose account it can be, here a borrower.
 - **`ldg:mergePolicy`** names the policy that says what happens when several claims arrive at the same moment. Its `ldg:mergeRule` here is `ldg:Refuse`, which refuses them all. Other rules take them in priority order or share the amount in proportion, and then the policy also states how the shares are rounded and where the residual goes.
-- **`ldg:conversionMethod`** names how a drawing in another currency is converted, here by the day's recorded rate.
+
+The account states no rate. Every draw arrives in the account's unit, and the ledger never converts one. A request in euros is converted before it reaches the ledger, and the conversion is recorded there, with its rate, the rate's source and its date.
 
 ### Every draw is a fact, and the balance is derived
 
@@ -47,21 +49,16 @@ Postings are ordered by whole numbers, **positions**, not by a clock, since cloc
 ```turtle
 ex:draw-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-1 ; ldg:effectivePosition "1"^^xsd:integer ;
-    ldg:recordedPosition "1"^^xsd:integer ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:inPass pass:draw-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
     ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
-    ldg:amountAsDrawn ex:q-draw-1-eur ; ldg:conversionUsed ex:fx-2027-06-01 ;
-    prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-grant .
-ex:balance-1 a ldg:BalanceRecord ;
-    ldg:onAccount ex:account-facility ;
-    ldg:inPass ex:pass-1 ;
-    ldg:remainingValue "9995000"^^xsd:decimal ; ldg:availableValue "9995000"^^xsd:decimal ;
-    prov:wasDerivedFrom ex:draw-1-posting .
+    ldg:runningBalance "9995000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-request , ex:draw-1-conversion .
 ```
 
-The posting keeps both the sterling amount it counts and the euros actually drawn, with the rate it used. The balance record says what remains after it, and `prov:wasDerivedFrom` records which facts it was worked out from. The example's three positions:
+The posting keeps the sterling amount it counts. The euros asked for and the rate used are in the conversion record, which the posting cites beside its merge record and the request it was granted on. Its running balance is what remains on the account after it, and the ledger checks it against the sum of the postings, so it can never disagree with them. The repayment at position 2 is a credit, and it records its kind, a repayment, and the amount offered beside the amount applied, since a credit never restores an account above its ceiling. The example's three positions:
 
-| Position | Event | Euros | Rate | Sterling | Balance after |
+| Position | Event | Euros | Rate | Sterling posted | Balance after |
 |---|---|---|---|---|---|
 | 1 | drawing | 11,500,000 | 0.87 | 10,005,000 debit | 9,995,000 |
 | 2 | repayment | 5,000,000 | 0.88 | 4,400,000 credit | 14,395,000 |

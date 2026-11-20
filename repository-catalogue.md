@@ -275,6 +275,11 @@ path = "tools/testing/oxigraph"
 import-names = ["lattice_testing_oxigraph"]
 
 [[tools]]
+name = "testing/postgres"
+path = "tools/testing/postgres"
+import-names = ["lattice_testing_postgres"]
+
+[[tools]]
 name = "testing/studio_harness"
 path = "tools/testing/studio_harness"
 import-names = ["lattice_testing_studio_harness"]

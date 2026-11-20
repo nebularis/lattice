@@ -1,0 +1,10 @@
+(* The shared session, LatticeShared (ADR-A-FM2's addendum of 2026-11-18). Hand-written, with its
+   claims gated as a layer's are. It holds a definition only where two developments both use it:
+   a position and an amount. A layer's theorem theory imports it with a sessions clause, and a
+   generated Kernel.thy never does. *)
+
+session LatticeShared = LatticeBase +
+  options [document = false, quick_and_dirty = false, timeout = 90]
+  theories
+    Positions
+    Amounts

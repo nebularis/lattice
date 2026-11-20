@@ -1,0 +1,13 @@
+{
+  "subject": "SA3",
+  "statedAs": "Amounts.amounts_are_partially_ordered",
+  "statementDigest": "sha256:527bec7d1babab68726f3a5b4a2d8bcd5ace1beb51bce9c6587e65bc793bdea3",
+  "method": "Proof",
+  "scope": "EveryPartialOrder",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

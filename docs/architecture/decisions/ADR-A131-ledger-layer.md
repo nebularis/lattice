@@ -525,6 +525,28 @@ The case of a unit short in the second addendum of 2026-11-16, members with a ba
 
 **What this does not decide.** What the layer above records when its request is turned away or its evaluation is made again. The contract of the port that a request travels through. An evaluation that writes two ledgers, which makes a request to each and was not modelled. How a caller forms the key.
 
+## Addendum (proposed 2026-11-19, third): a merge records every request, and a refusal keeps them
+
+**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided the rule on 2026-11-19. It adds no evaluation semantics, so it carries no conformance cases. What it states is how the outcome of a merge, which decision 6 and its addenda define, is recorded.
+
+**Narrows decision 6.** It also says how the record holds what the second addenda of 2026-11-09 and 2026-11-16 have a merge decide, and how the refusal of a credit by the fourth addendum of 2026-11-16 is recorded.
+
+**A merge records every request.** A merge record holds one request for each request made at its account and position, whether the merge granted or refused. A request names the evaluation that made it and states what it asked. It states its rank where the policy states the criterion a rank is derived from, its place among requests of one rank where the policy states the criterion that orders them, and its purpose where it names one. A request on a merge that granted states what it was granted, zero included. The grant, a node for each proposal granted, is retired.
+
+**A refusal keeps its requests.** A refused merge holds its requests with no granted value, and states one reason. A refusal is never a grant of nothing, so a refused request is not recorded as a grant, and the history shows what was asked, what decided the order and why nothing was granted. A merge that granted states no reason.
+
+**A credit refused alone is recorded the same way.** A credit posted to an account that does not accept its kind is refused, and no posting is written. The refusal is a merge record on that account, with the credit as its one request and the reason that its kind is not accepted.
+
+**The residual is on the merge record, and its account is named on the policy.** Where a rule leaves part of the amount shared, the merge record states the residual. The granted values and the residual sum to the amount shared, the lesser of what the requests asked and what was available. A residual above zero is stated only where the policy allows residuals. The account that takes a residual is named on the merge policy, beside the permission, since what becomes of a residual is part of the treatment a scope states. A scope whose accounts need different residual accounts states different policies. A policy names a residual account only where it allows residuals.
+
+**The reasons for a refusal are one scheme of seven.** The six reasons the second addendum of 2026-11-16 lists and the refusal of a credit by the fourth are the concepts of one scheme, each named for the condition that held: the requests exceed what is available, two requests share a rank where distinct ranks are required, a tie arises with no rule for one, a residual would be left where none is allowed, the purposes differ where one is required, two sets of requests cross, and a credit's kind is not accepted. The layer's formal statement keeps six reasons for a merge, and its refusal of a credit has no reason of its own, which the record supplies.
+
+**Requests of no use in part are a merge rule.** The rule the second addendum of 2026-11-16 names for them is a value of the merge rule. It grants each request whole where it fits what is left, in the declared order, and nothing otherwise, and what no request fitted is the residual.
+
+**The cost.** A refused request costs four to six triples: its type, its evaluation and what it asked, and its rank, its place and its purpose where they are stated. A granted request costs what a grant did, with one triple more for each of its rank, its place and its purpose. A residual costs one triple on its merge record.
+
+**Releases.** The request, the retirement of the grant, the residual and its account, the reasons for a refusal and the rule for requests of no use in part change published meaning, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -567,3 +589,5 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 **The addendum of 2026-11-19.** LG-Q43 of the [Ledger plan](../../developer/plans/ledger.md), raised by the [sketch of the vocabulary's rework](../../developer/sketches/ledger-vocabulary-rework.md), which found the layer's README and STD-331 on one side and the two sentences on the other. The maintainer decided on 2026-11-19 for the accounts that moved, which is what the benchmarks stored. The rule is stated here for an account's totals as well as its balance, where the README speaks of the balance alone, and LG-27 brings the README into line. The maintainer accepted the wording on 2026-11-19.
 
 **The second addendum of 2026-11-19.** LG-Q45 and LG-Q46 of the [Ledger plan](../../developer/plans/ledger.md). The read-set census of the multi-store architecture epic, MSA-I2, found three conditions in Behaviour's `ordered-draws.ttl` that no text stated, the first of which had the writer return a revision with each posting, where the addendum of 2026-11-18 has each pass record one. The maintainer decided on 2026-11-19 for one request for each pass, written on the revision it read, and for a pass named from its ledger and a key of its evaluation, which applies PAT-01 to the pass. Decided the same day, Behaviour states its half when it imports Ledger (LG-3), and the plan that builds the logical port states the port's. LG-27 writes the pass's name into the layer's README. The maintainer accepted the wording on 2026-11-19.
+
+**The proposed third addendum of 2026-11-19.** LG-Q38 and LG-Q41 of the [Ledger plan](../../developer/plans/ledger.md), raised by the [sketch of the vocabulary's rework](../../developer/sketches/ledger-vocabulary-rework.md), which found that a merge refused for a tie recorded no rank, though the second addendum of 2026-11-16 has the merge record show what decided the order. The maintainer decided on 2026-11-19 for one request node on every merge with the grant retired (LG-Q38), and for the residual account on the merge policy (LG-Q41). The seven reasons are those of LG-Q31, named for the condition each states as it asked, and the rule for requests of no use in part is the one the second addendum of 2026-11-16 names. Built as LG-26 ([its pack](../../developer/validation/LG-26.md)). Its wording awaits the maintainer's acceptance.

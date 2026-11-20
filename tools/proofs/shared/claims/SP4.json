@@ -1,0 +1,13 @@
+{
+  "subject": "SP4",
+  "statedAs": "Positions.a_position_pins_one_prefix",
+  "statementDigest": "sha256:5b44d657f7834d76f13fdbc9b1b91dd0b97b96a7f8df4b64933ce85dedb554ff",
+  "method": "Proof",
+  "scope": "EveryList",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

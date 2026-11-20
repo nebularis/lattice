@@ -1,0 +1,129 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused, a draw of an amount its account's space cannot represent
+# (ADR-A131, its second addendum of 2026-11-09). A pool of 10 licences is held
+# on a discrete space whose granularity floor is one licence, so every amount
+# on it is a whole number of licences. Each draw asks for a share of the pool,
+# resolved to an amount before the ledger, where the resolution is recorded.
+#
+# | Position | Asked for       | Resolved to | Posted | Balance after | Outcome |
+# |----------|-----------------|------------:|-------:|--------------:|---------|
+# | 1        | half the pool   |           5 |      5 |             5 | accepted |
+# | 2        | 33% of the pool |         3.3 |    3.3 |           1.7 | refused, qnt:OutsideDeclaredSpace |
+#
+# 3.3 licences is not a whole multiple of the floor, so it is not a value the
+# space declares, and Quantification finds such a value Undetermined with
+# qnt:OutsideDeclaredSpace. It is refused and never rounded, since rounding is
+# a merge rule's and only where a policy declares it. The posting and the
+# request that asked for it are both refused. Every other record is whole, so
+# that draw is all the runtime laws refuse. Each pass moved the holder's ledger
+# by one.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-unrepresentable-amount/> .
+@prefix pass: <https://example.org/lattice/ledger/refusal-unrepresentable-amount/ledger-holder/pass/> .
+@base <https://example.org/lattice/ledger/refusal-unrepresentable-amount/> .
+
+# ==== The owner and the space ==================================================
+
+ex:holder a fnd:PersistentIdentity ; rdfs:comment "The licence holder, owner of the pool." .
+ex:Holder a owl:Class ; rdfs:comment "The kind of owner this account admits." .
+
+ex:licences a qnt:ValueSpace ;
+    fnd:hasIdentity ex:licences-identity ;
+    qnt:spaceKey "ledger-refusal-unrepresentable-amount-licences" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:granularityFloor ex:one-licence ;
+    qnt:spaceHash "ledger-refusal-unrepresentable-amount-licences-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:licences-sum , ex:licences-difference .
+ex:licences-identity a fnd:PersistentIdentity .
+ex:one-licence a qnt:Quantity ; qnt:onSpace ex:licences ; qnt:numericValue "1"^^xsd:decimal .
+ex:licences-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:licences .
+ex:licences-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:licences .
+
+# ==== The pool and its merge policy ============================================
+
+ex:pool a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:pool-identity ;
+    ldg:statedAmount <pool/stated-amount> ; ldg:unitOfAccount ex:licences ;
+    ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
+    rdfs:comment "A pool of 10 licences." .
+<pool/stated-amount> a qnt:Quantity ; qnt:onSpace ex:licences ; qnt:numericValue "10"^^xsd:decimal .
+ex:pool-identity a fnd:PersistentIdentity .
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
+# ==== The shares, resolved before the ledger ==================================
+# Each record is written where the request arrives, outside the ledger, and is
+# not a quantity, so a posting may cite it.
+
+ex:half-resolution a prov:Entity ;
+    rdfs:comment "Half of the pool of 10 licences, resolved to 5 before the draw." ;
+    prov:wasDerivedFrom <pool/stated-amount> .
+ex:share-33-resolution a prov:Entity ;
+    rdfs:comment "33% of the pool of 10 licences, resolved to 3.3 before the draw, which no whole number of licences is." ;
+    prov:wasDerivedFrom <pool/stated-amount> .
+
+# ==== Position 1: half the pool ================================================
+
+ex:half-proposal rdfs:comment "A draw of half the pool." .
+ex:half-request a ldg:Request ;
+    ldg:forProposal ex:half-proposal ;
+    ldg:requestedValue "5"^^xsd:decimal ; ldg:grantedValue "5"^^xsd:decimal .
+ex:half-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:account-pool ;
+    ldg:inPass pass:half ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:request ex:half-request .
+ex:half-posting a ldg:Posting ;
+    ldg:onAccount ex:account-pool ;
+    ldg:inPass pass:half ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "5"^^xsd:decimal ;
+    ldg:runningBalance "5"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:half-merge , ex:half-request , ex:half-resolution .
+
+# ==== Position 2: 33% of the pool, 3.3 licences ================================
+
+ex:share-33-proposal rdfs:comment "A draw of 33% of the pool." .
+ex:share-33-request a ldg:Request ;
+    ldg:forProposal ex:share-33-proposal ;
+    ldg:requestedValue "3.3"^^xsd:decimal ; ldg:grantedValue "3.3"^^xsd:decimal ;
+    rdfs:comment "Refused: 3.3 licences is not a whole number of licences." .
+ex:share-33-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:account-pool ;
+    ldg:inPass pass:share-33 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:request ex:share-33-request .
+ex:share-33-posting a ldg:Posting ;
+    ldg:onAccount ex:account-pool ;
+    ldg:inPass pass:share-33 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "3.3"^^xsd:decimal ;
+    ldg:runningBalance "1.7"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:share-33-merge , ex:share-33-request , ex:share-33-resolution ;
+    rdfs:comment "Refused: 3.3 licences is not a whole number of licences." .
+
+# ==== The ledger, the account instance and the passes ========================
+
+ex:ledger-holder a ldg:Ledger ;
+    ldg:forOwner ex:holder ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "2"^^xsd:nonNegativeInteger .
+ex:account-pool a ldg:Account ;
+    ldg:ofDefinition ex:pool ; ldg:forOwner ex:holder .
+ex:holder a ex:Holder .
+pass:half a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:share-33 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .

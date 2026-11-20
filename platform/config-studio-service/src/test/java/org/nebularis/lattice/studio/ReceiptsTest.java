@@ -135,6 +135,22 @@ class ReceiptsTest {
         assertEquals(1, revision(store));
     }
 
+    /** MSA-F14, TD-165. A body whose blank nodes connect otherwise is another request, though its lines read alike with one label. */
+    @Test
+    void anIdResentWithABodyWhoseBlankNodesConnectOtherwiseIsRefused() {
+        StudioStore store = Fixture.textual(RDFConnection.connect(DatasetFactory.createTxnMem()));
+        Writer writer = created(store);
+        String part = "<https://www.nebularis.org/neuro-semantic/lattice/surface#part>";
+        Command save = Command.save(WS, "surface", 0, AT, Fixture.model(Fixture.PREFIXES + "ex:a " + part + " _:x . ex:b " + part + " _:x ."));
+        assertEquals(Reply.ok(1), writer.apply(save));
+        Command two = Command.save(WS, "surface", 0, AT, Fixture.model(Fixture.PREFIXES + "ex:a " + part + " _:x . ex:b " + part + " _:y ."));
+        Command reused = new Command(save.id(), two.sender(), two.type(), two.workspace(), two.job(), two.part(), two.expect(),
+            two.at(), two.label(), two.sample(), two.body(), two.principal(), two.admin());
+        Reply reply = writer.apply(reused);
+        assertEquals(400, reply.status(), reply.message());
+        assertEquals(1, revision(store));
+    }
+
     @Test
     void aBatchAppliesInOrderInOneRequest() {
         StudioStore store = Fixture.textual(RDFConnection.connect(DatasetFactory.createTxnMem()));

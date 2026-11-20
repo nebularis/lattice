@@ -22,71 +22,86 @@ def _turtle(lines: list[str]) -> Graph:
     return g
 
 
+def _definition(name: str, amount: str, rest: str) -> list[str]:
+    """An account definition versioned as Foundation asks: one identity, and its stated amount minted under its IRI, written
+    relative to the graph's base, on the value space `ex:space`."""
+    return [f"ex:{name} a ldg:AccountDefinition ; fnd:hasIdentity ex:{name}-identity ; ldg:statedAmount <{name}/stated-amount> ; {rest}",
+            f"<{name}/stated-amount> a qnt:Quantity ; qnt:onSpace ex:space ; qnt:numericValue \"{amount}\"^^<{XSD}decimal> .",
+            f"ex:{name}-identity a fnd:PersistentIdentity ."]
+
+
 def account_tree(definitions: int = 10_000, sections: int = 99) -> Graph:
     """`definitions` account definitions in a wide tree: a root, `sections` sections each part of it, and the rest sublimits spread
-    across the sections. Every definition states the same amount on one extensive value space and names one merge policy, which refuses to merge."""
+    across the sections. Every definition states the same amount on one extensive value space and names one merge policy, which
+    refuses to merge. Each definition has an identity and a stated amount of its own, minted under it."""
     lines = [f"@prefix ldg: <{LDG}> .", f"@prefix qnt: <{QNT}> .", f"@prefix fnd: <{FND}> .", "@prefix ex: <https://example.org/lattice/ledger/scale/> .",
-             "ex:space a qnt:ValueSpace ; qnt:spaceKey \"scale\" ; qnt:orderKind qnt:TotalOrder ; "
+             "@base <https://example.org/lattice/ledger/scale/> .",
+             "ex:space a qnt:ValueSpace ; fnd:hasIdentity ex:space-identity ; qnt:spaceKey \"scale\" ; qnt:orderKind qnt:TotalOrder ; "
              "qnt:densityKind qnt:Discrete ; qnt:spaceHash \"scale-v1\" ; qnt:additivity qnt:Extensive ; "
              "qnt:hasOperationCapability ex:sum , ex:diff .",
+             "ex:space-identity a fnd:PersistentIdentity .",
              "ex:sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:space .",
              "ex:diff a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:space .",
-             f"ex:amount a qnt:Quantity ; qnt:onSpace ex:space ; qnt:numericValue \"100\"^^<{XSD}decimal> .",
              "ex:refused-when-exceeded a ldg:MergePolicy ; fnd:hasIdentity ex:refused-when-exceeded-identity ; ldg:mergeRule ldg:Refuse .",
              "ex:refused-when-exceeded-identity a fnd:PersistentIdentity ; <http://www.w3.org/2000/01/rdf-schema#comment> \"The merge policy these terms state.\" .",
-             "ex:root a ldg:AccountDefinition ; ldg:statedAmount ex:amount ; ldg:unitOfAccount ex:space ; "
-             "ldg:admitsOwnerKind qnt:ValueSpace ; ldg:mergePolicy ex:refused-when-exceeded ."]
+             *_definition("root", "100", "ldg:unitOfAccount ex:space ; ldg:admitsOwnerKind qnt:ValueSpace ; "
+                                         "ldg:mergePolicy ex:refused-when-exceeded .")]
     for s in range(sections):
-        lines.append(f"ex:section{s} a ldg:AccountDefinition ; ldg:statedAmount ex:amount ; ldg:unitOfAccount ex:space ; "
-                     f"ldg:admitsOwnerKind qnt:ValueSpace ; ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:root .")
+        lines += _definition(f"section{s}", "100", "ldg:unitOfAccount ex:space ; ldg:admitsOwnerKind qnt:ValueSpace ; "
+                                                  "ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:root .")
     for i in range(definitions - 1 - sections):
-        lines.append(f"ex:sublimit{i} a ldg:AccountDefinition ; ldg:statedAmount ex:amount ; ldg:unitOfAccount ex:space ; "
-                     f"ldg:admitsOwnerKind qnt:ValueSpace ; ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:section{i % sections} .")
+        lines += _definition(f"sublimit{i}", "100", "ldg:unitOfAccount ex:space ; ldg:admitsOwnerKind qnt:ValueSpace ; "
+                                                    f"ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:section{i % sections} .")
     return _turtle(lines)
 
 
 def one_pass(leaves: int = 5_000) -> Graph:
     """One pass over a root, `leaves - 1` sections and `leaves` leaves, each leaf its own definition and account. Each leaf takes
-    one debit of 1 in the pass, and every account moved has a balance record, `2 * leaves` in all, whose remaining and available
-    values are what the postings give."""
+    one debit of 1 in the pass, whose posting records the leaf's running balance, and the root and every section have a checkpoint
+    at the pass's close, `leaves` in all, whose balances and debits are what the postings give. The owner's ledger is at the
+    revision the pass moved it to. Each definition has an identity and a stated amount of its own, minted under it."""
     sections = leaves - 1
     lines = [f"@prefix ldg: <{LDG}> .", f"@prefix qnt: <{QNT}> .", f"@prefix fnd: <{FND}> .", f"@prefix xsd: <{XSD}> .",
              "@prefix ex: <https://example.org/lattice/ledger/runtime-scale/> .",
-             "ex:space a qnt:ValueSpace ; qnt:spaceKey \"runtime-scale\" ; qnt:orderKind qnt:TotalOrder ; "
+             "@base <https://example.org/lattice/ledger/runtime-scale/> .",
+             "ex:space a qnt:ValueSpace ; fnd:hasIdentity ex:space-identity ; qnt:spaceKey \"runtime-scale\" ; qnt:orderKind qnt:TotalOrder ; "
              "qnt:densityKind qnt:Discrete ; qnt:spaceHash \"runtime-scale-v1\" ; qnt:additivity qnt:Extensive ; "
              "qnt:hasOperationCapability ex:sum , ex:diff .",
+             "ex:space-identity a fnd:PersistentIdentity .",
              "ex:sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:space .",
              "ex:diff a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:space .",
-             "ex:big a qnt:Quantity ; qnt:onSpace ex:space ; qnt:numericValue \"10000\"^^xsd:decimal .",
-             "ex:small a qnt:Quantity ; qnt:onSpace ex:space ; qnt:numericValue \"10\"^^xsd:decimal .",
              "ex:Owner a <http://www.w3.org/2002/07/owl#Class> . ex:owner a ex:Owner .",
-             "ex:pass a ldg:Pass ; ldg:passPosition \"1\"^^xsd:integer .",
+             "ex:profile a ldg:LedgerProfile ; fnd:hasIdentity ex:profile-identity .",
+             "ex:profile-identity a fnd:PersistentIdentity .",
+             "ex:ledger a ldg:Ledger ; ldg:forOwner ex:owner ; ldg:ledgerProfile ex:profile ; "
+             "ldg:revision \"1\"^^xsd:nonNegativeInteger .",
+             "ex:pass a ldg:Pass ; ldg:passPosition \"1\"^^xsd:integer ; ldg:passRevision \"1\"^^xsd:nonNegativeInteger .",
              "ex:refused-when-exceeded a ldg:MergePolicy ; fnd:hasIdentity ex:refused-when-exceeded-identity ; ldg:mergeRule ldg:Refuse .",
              "ex:refused-when-exceeded-identity a fnd:PersistentIdentity ; <http://www.w3.org/2000/01/rdf-schema#comment> \"The merge policy these terms state.\" .",
-             "ex:root a ldg:AccountDefinition ; ldg:statedAmount ex:big ; ldg:unitOfAccount ex:space ; "
-             "ldg:admitsOwnerKind ex:Owner ; ldg:mergePolicy ex:refused-when-exceeded .",
+             *_definition("root", "10000", "ldg:unitOfAccount ex:space ; ldg:admitsOwnerKind ex:Owner ; "
+                                           "ldg:mergePolicy ex:refused-when-exceeded ."),
              "ex:account-root a ldg:Account ; ldg:ofDefinition ex:root ; ldg:forOwner ex:owner .",
-             f"ex:balance-root a ldg:BalanceRecord ; ldg:onAccount ex:account-root ; ldg:inPass ex:pass ; "
-             f"ldg:remainingValue \"{10_000 - leaves}\"^^xsd:decimal ; ldg:availableValue \"{10_000 - leaves}\"^^xsd:decimal ."]
+             f"ex:checkpoint-root a ldg:Checkpoint ; ldg:onAccount ex:account-root ; ldg:closePosition \"1\"^^xsd:integer ; "
+             f"ldg:balanceValue \"{10_000 - leaves}\"^^xsd:decimal ; ldg:debitsTotal \"{leaves}\"^^xsd:decimal ; "
+             f"ldg:creditsOfferedTotal \"0\"^^xsd:decimal ."]
     drawn: dict[int, int] = {}
     for i in range(leaves):
         drawn[i % sections] = drawn.get(i % sections, 0) + 1
     for s in range(sections):
-        remaining = 10 - drawn[s]
-        lines += [f"ex:section{s} a ldg:AccountDefinition ; ldg:statedAmount ex:small ; ldg:unitOfAccount ex:space ; "
-                  f"ldg:admitsOwnerKind ex:Owner ; ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:root .",
+        lines += [*_definition(f"section{s}", "10", "ldg:unitOfAccount ex:space ; ldg:admitsOwnerKind ex:Owner ; "
+                                                  "ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:root ."),
                   f"ex:account-section{s} a ldg:Account ; ldg:ofDefinition ex:section{s} ; ldg:forOwner ex:owner ; "
                   f"ldg:partOfAccount ex:account-root .",
-                  f"ex:balance-section{s} a ldg:BalanceRecord ; ldg:onAccount ex:account-section{s} ; ldg:inPass ex:pass ; "
-                  f"ldg:remainingValue \"{remaining}\"^^xsd:decimal ; ldg:availableValue \"{remaining}\"^^xsd:decimal ."]
+                  f"ex:checkpoint-section{s} a ldg:Checkpoint ; ldg:onAccount ex:account-section{s} ; "
+                  f"ldg:closePosition \"1\"^^xsd:integer ; ldg:balanceValue \"{10 - drawn[s]}\"^^xsd:decimal ; "
+                  f"ldg:debitsTotal \"{drawn[s]}\"^^xsd:decimal ; ldg:creditsOfferedTotal \"0\"^^xsd:decimal ."]
     for i in range(leaves):
-        lines += [f"ex:leaf{i} a ldg:AccountDefinition ; ldg:statedAmount ex:small ; ldg:unitOfAccount ex:space ; "
-                  f"ldg:admitsOwnerKind ex:Owner ; ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:section{i % sections} .",
+        lines += [*_definition(f"leaf{i}", "10", "ldg:unitOfAccount ex:space ; ldg:admitsOwnerKind ex:Owner ; "
+                                               f"ldg:mergePolicy ex:refused-when-exceeded ; ldg:partOf ex:section{i % sections} ."),
                   f"ex:account-leaf{i} a ldg:Account ; ldg:ofDefinition ex:leaf{i} ; ldg:forOwner ex:owner ; "
                   f"ldg:partOfAccount ex:account-section{i % sections} .",
                   f"ex:posting{i} a ldg:Posting ; ldg:onAccount ex:account-leaf{i} ; ldg:inPass ex:pass ; "
-                  f"ldg:effectivePosition \"1\"^^xsd:integer ; ldg:recordedPosition \"1\"^^xsd:integer ; "
-                  f"ldg:microPosition \"0\"^^xsd:integer ; ldg:direction ldg:Debit ; ldg:amountValue \"1\"^^xsd:decimal .",
-                  f"ex:balance-leaf{i} a ldg:BalanceRecord ; ldg:onAccount ex:account-leaf{i} ; ldg:inPass ex:pass ; "
-                  f"ldg:remainingValue \"9\"^^xsd:decimal ; ldg:availableValue \"{min(9, 10 - drawn[i % sections])}\"^^xsd:decimal ."]
+                  f"ldg:effectivePosition \"1\"^^xsd:nonNegativeInteger ; ldg:recordedPosition \"1\"^^xsd:nonNegativeInteger ; "
+                  f"ldg:microPosition \"0\"^^xsd:integer ; ldg:direction ldg:Debit ; ldg:amountValue \"1\"^^xsd:decimal ; "
+                  f"ldg:runningBalance \"9\"^^xsd:decimal ."]
     return _turtle(lines)

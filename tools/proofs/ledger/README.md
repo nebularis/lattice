@@ -12,6 +12,7 @@ The laws of [ADR-A131](../../../docs/architecture/decisions/ADR-A131-ledger-laye
 | `Rounding.thy` | whole minor units: floor division and what it leaves short, the units a declared order places, to the first in order and largest remainder under rationing, both lawful, each part within one unit of its exact share, the refinement to exact amounts across accounts | yes |
 | `claims/*.json` | one claim record per law, in `../claim-schema.json`'s shape | written with the theorems |
 | `Predicates.thy`, `Ranks.thy`, `Units.thy`, `Merge.thy`, `Pots.thy`, `Credits.thy`, `Readings.thy` | LG-20's laws, one theory per group of definitions, in the plan's order, each with its examples first | yes |
+| `Agreement.thy` | the lemma `amounts_agree`, that the kernel's amount is the [shared session's](../shared/README.md) amount. It imports `LatticeShared.Amounts`, which the `ROOT` names in a `sessions` clause, and the session still parents on the prelude. The statement type-checks only while both name the same type, so a drift fails the build at that lemma. It defines nothing, so it moves no claim's digest, and it has no claim record | yes |
 
 ## What is proved
 
@@ -117,8 +118,8 @@ Every hypothesis is in the theorem's statement, and nothing is assumed outside t
 
 - LG-20's laws not yet built: LW4, LH1, LH2, LM2, LJ2, LJ3, LP1, LP2, LP4, LPn, LB1n, LU1n, LU3, LE4 and LE5 (its pack says why).
 - The composition law, the uniqueness of a solution and the least fixpoint over the information order, which are ADR-A130 decision 5's and the formal-methods plan's E4b.
-- The runtime terms, postings and balance records as records with natural keys, which LG-2 writes against these theorems.
-- Conversion between value spaces (LG-Q8), and the derivation of one account per key value (LG-Q7).
+- The runtime terms as records with natural keys. The ledger's runtime laws check, on one dataset, that a posting's running balance is the sum less the cuts of LU1, that a credit and its cuts are what `credit` gives (LD3, LU2), and that a credit is posted only where its kind is accepted (LU3n). The map from `Restored a c x applied cuts` to a posting and its cuts is in the ledger README's section 10.
+- Conversion between value spaces, which is not the ledger's, since every draw arrives in its account's unit (ADR-A131, its addendum of 2026-11-09), and the derivation of one account per key value (LG-Q7).
 - Code export. `path` evaluates through its one-step unfolding, which ends where the parent function has no cycle, so `value` and `code_simp` reach `settle`, `spread`, `pots` and `credit`, and no `export_code` is run.
 - Positions. The target kernel orders a merge by ranks and readings by effective day, and has no position type.
 - Any insurance structure, which is applied content.

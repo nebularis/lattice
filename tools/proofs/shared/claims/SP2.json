@@ -1,0 +1,13 @@
+{
+  "subject": "SP2",
+  "statedAs": "Positions.a_write_takes_the_successor",
+  "statementDigest": "sha256:270e0a45569223d926edb95648a1a69da8b12dba49daed8634699f23bf6cd0fa",
+  "method": "Proof",
+  "scope": "EveryList",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}
