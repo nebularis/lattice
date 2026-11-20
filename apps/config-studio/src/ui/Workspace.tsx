@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { Baseline } from "../rdf/baseline";
 import { items, nodeFor, type Item } from "../rdf/editors";
+import { CONFIG_PARTS } from "../rdf/split";
 import { assembliesOf, formsOf } from "../rdf/builder";
 import { termsOf } from "../rdf/meaning";
 import { INS, MORK, compact, type Graph } from "@lattice/authoring-domain";
@@ -48,7 +49,7 @@ import { MeaningView } from "./MeaningView";
 import { ConfigView } from "./ConfigView";
 import { CollapseButton, Code, ColumnsContext, Diff, Modal, ResizeHandle, SeverityIcon, Spinner, go, href, useStoredColumn, useWindowWidth } from "./kit";
 import { DOCK, LIST, NAV_WIDTH, RAIL, columnKey, dockDefaultCollapsed, dockDefaultWidth, maxWidth, resolveWidth } from "./columns";
-import { RunSourceContext, SamplePane, type RunSource } from "./RunPane";
+import { SampleContext, SamplePane, useSampleSession } from "./RunPane";
 import { SimulatorPane } from "./SimulatorPane";
 import { Overview } from "./Overview";
 
@@ -110,7 +111,14 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
   const [listWidth, setListWidth] = useState(0);
   // The dock holds the inspector, in mapping mode the Sample pane, which runs what the mapping view keeps (SVA-R4), and in the persistence view the Simulator (SVA-P4).
   const [dock, setDock] = useState<"inspector" | "sample" | "simulator">("inspector");
-  const [runSource, setRunSource] = useState<RunSource>();
+  // The sample and its last run are the workspace's, so the pane in the dock and the view beside it read the same session. It is given the mapping part and the
+  // revisions of the other parts as they are, and nothing it is given runs anything.
+  const sample = useSampleSession(id);
+  const mappingPart = state.configs.mapping?.current;
+  const sampleContext = CONFIG_PARTS.filter((p) => p !== "mapping").map((p) => state.configs[p]?.revision ?? "").join(" ");
+  useEffect(() => {
+    if (sample && mappingPart) sample.setInputs({ graph: mappingPart, context: sampleContext });
+  }, [sample, mappingPart, sampleContext]);
   const [problemsOpen, setProblemsOpen] = useState(true);
   const [palette, setPalette] = useState(false);
 
@@ -193,7 +201,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
 
   return (
     <StudioContext.Provider value={studio}>
-      <RunSourceContext.Provider value={{ source: runSource, set: setRunSource }}>
+      <SampleContext.Provider value={sample}>
       <ColumnsContext.Provider value={columns}>
       <div className="shell" style={{ "--nav-w": `${navWidth}px`, "--dock-w": `${dockWidth}px` } as CSSProperties}>
         <header className="topbar">
@@ -362,7 +370,7 @@ export function Workspace({ id, route, vocab }: { id: string; route: string[]; v
           </button>
         </div>
       )}
-      </RunSourceContext.Provider>
+      </SampleContext.Provider>
     </StudioContext.Provider>
   );
 }

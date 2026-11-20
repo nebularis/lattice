@@ -19,7 +19,7 @@ const SOURCE_GAP = 40;
 const LAYOUT: LayoutOptions = { direction: "LR", columnGap: COLUMN, rowGap: ROW };
 const DECISION: Record<string, string> = { Accepted: "var(--ok)", Corrected: "var(--warn)", Rejected: "var(--bad)", Deferred: "var(--text-3)" };
 
-type MappingData = { mapping: MappingNode; terms: string; selected: boolean; count?: number };
+type MappingData = { mapping: MappingNode; terms: string; selected: boolean; count?: number; stale?: boolean };
 type SourceData = { label: string; path: string };
 
 function MappingBox({ data }: NodeProps<Node<MappingData>>) {
@@ -30,7 +30,11 @@ function MappingBox({ data }: NodeProps<Node<MappingData>>) {
       {m.review && <span className="canvas-review" style={{ background: DECISION[m.review.decision] }} title={m.review.decision} />}
       <div className="row" style={{ gap: 6 }}>
         <strong className="grow" style={{ fontWeight: m.kind === "Datum" ? 650 : 500 }}>{m.label}</strong>
-        {data.count !== undefined && <span className="small" style={{ color: data.count ? "var(--accent)" : "var(--text-3)" }}>{data.count}</span>}
+        {data.count !== undefined && (
+          <span className="small" data-stale={data.stale ? "true" : undefined} title={data.stale ? "Counted by a run that is out of date" : undefined} style={{ color: data.count ? "var(--accent)" : "var(--text-3)", opacity: data.stale ? 0.5 : 1 }}>
+            {data.count}
+          </span>
+        )}
       </div>
       <div className="small muted canvas-terms">{data.terms || (m.template ? "through its template" : "writes nothing")}</div>
       <Handle type="source" position={Position.Right} />
@@ -64,6 +68,8 @@ export function MappingCanvas(props: {
   add: (type: "Datum" | "DataMapping", parent?: string) => void;
   edit: (change: (g: Graph) => Graph) => void;
   counts?: (mapping: string) => number | undefined;
+  /** Whether the counts come from a run that is out of date. */
+  countsStale?: boolean;
 }) {
   const { scheme, prefixes, selected } = props;
   const storageKey = `lattice-studio:mapping-canvas:${props.workspace}:${scheme.iri}`;
@@ -75,10 +81,10 @@ export function MappingCanvas(props: {
     }));
     const mappings: Node[] = scheme.mappings.map((m) => ({
       id: m.iri, type: "mapping", position: at,
-      data: { mapping: m, terms: written(m, prefixes).map((w) => `${w.box} ${w.term}`).join("  "), selected: m.iri === selected, count: props.counts?.(m.iri) },
+      data: { mapping: m, terms: written(m, prefixes).map((w) => `${w.box} ${w.term}`).join("  "), selected: m.iri === selected, count: props.counts?.(m.iri), stale: props.countsStale },
     }));
     return [...sources, ...mappings];
-  }, [scheme, prefixes, selected, props.counts]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scheme, prefixes, selected, props.counts, props.countsStale]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The source concepts are the rank before the first, in the order the scheme lists them, and a mapping's rank is its depth and its order its row.
   const hints = useMemo<LayoutHints>(() => ({

@@ -587,6 +587,23 @@ table.axiom-rows.nested th { position: static; }
 .landing-ops ul, .landing-list { margin: 4px 0 8px; padding-left: 18px; }
 .landing-path { overflow-wrap: anywhere; }
 
+/* The sample pane in the dock (SVA-M3b). Its controls hold the scheme, the compiled forms and the sample, so the column is as wide as the simulator's, and it stacks above the displays where the dock is narrow. */
+.run-pane.sample { grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.run-pane.sample .run-controls { width: 100%; }
+@container (max-width: 559px) {
+  .run-pane.sample { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; overflow: auto; align-content: start; }
+  .run-pane.sample .run-display { overflow: visible; }
+  .run-pane.sample .run-controls { flex-direction: column; align-items: stretch; border-right: 0; border-bottom: 1px solid var(--border); overflow: visible; }
+}
+.sample-field { display: flex; flex-direction: column; gap: 4px; width: 100%; min-width: 0; margin: 0; padding: 0; border: 0; }
+.sample-field textarea, .sample-field select { width: 100%; box-sizing: border-box; resize: vertical; font-size: 12px; }
+.sample-forms legend { padding: 0; }
+.sample-form { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
+.sample-form-path { overflow-wrap: anywhere; color: var(--text-3); }
+.sample-blocked, .run-note { padding: 6px 8px; border: 1px solid var(--warn); border-radius: 6px; overflow-wrap: anywhere; }
+.run-engine { color: var(--text-2, var(--text)); }
+.sample-libraries { margin: 0; padding-left: 18px; }
+
 /* The persistence simulator in the dock (SVA-P4). Its controls hold a form, so the column is wider than the sample pane's, and it stacks above the displays where the dock is narrow. */
 .run-pane.simulator { grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 .run-pane.simulator .run-controls { width: 100%; }

@@ -11,6 +11,7 @@ import { join } from "node:path";
 import type { Page, Route } from "@playwright/test";
 import { DataFactory, Parser, Store, Writer } from "n3";
 import { FIXTURE as JOURNEY_FIXTURE } from "./journey";
+import { FIXTURE as SAMPLE_FIXTURE, type Recorded as SampleRuns } from "./sampleRuns";
 
 const assets = process.env.LATTICE_STUDIO_ASSETS ?? join(import.meta.dirname, "../../../.build/config-studio");
 const CST = "https://www.nebularis.org/neuro-semantic/lattice/config-studio#";
@@ -51,7 +52,7 @@ function layerResults(job: string, target: string, body: string): string {
 
 const A = "https://example.org/lattice/studio/assembly/";
 const E_BUILDER = "https://example.org/lattice/wording/facility-form/";
-const TARGETS: Record<string, string> = { baseline: "Baseline", "sentence-forms": "SentenceFormProposer", "language-model": "LanguageModelProposer", "mapping-language-model": "MappingLanguageModelProposer", surface: "Surface", assembly: "AssemblyTarget", meaning: "Meaning", review: "Review" };
+const TARGETS: Record<string, string> = { baseline: "Baseline", "sentence-forms": "SentenceFormProposer", "language-model": "LanguageModelProposer", "mapping-language-model": "MappingLanguageModelProposer", mapping: "Mapping", surface: "Surface", assembly: "AssemblyTarget", meaning: "Meaning", review: "Review" };
 
 /** The recorded result of assembling the builder sample: the assembly with a lender count assembles, and the
  * one without is refused at the decide stage, naming the governing variable. Each assembly is answered by its IRI. */
@@ -254,10 +255,6 @@ function importWarnings(baseline: string, held: Held[]): string {
     .join("\n");
 }
 
-/** The mappings the fake's runs report on, each with one canned artefact, as one mapping's output (ADR-A154). */
-const RUN_MAPPINGS = ["https://example.org/lattice/mapping/loan-intake"];
-const RUN_REPORT = "@prefix sh: <http://www.w3.org/ns/shacl#> .\n\n[] a sh:ValidationReport ;\n    sh:conforms true .\n";
-const RUN_ARTEFACT = `<https://example.org/lattice/data/loan-1> <${RDF_TYPE}> <https://example.org/lending#LoanApplication> .\n`;
 const RUN_SAMPLE_TYPES = ["text/turtle", "application/n-triples", "application/xml", "text/xml", "application/json"];
 const RUN_MAX_SECONDS: Record<string, number> = { sample: 120, simulate: 15 };
 const RUN_MAX_BYTES = 5 * 1024 * 1024;
@@ -287,15 +284,31 @@ interface RunFrame {
   conforms?: boolean;
 }
 
-/** The frames of a `sample` run over the canned result: a report part and an artefact part for each mapping, then a succeeded last frame. */
-function sampleRunFrames(run: string, artefact: string = RUN_ARTEFACT): RunFrame[] {
-  const frames: RunFrame[] = [];
-  RUN_MAPPINGS.forEach((mapping, i) => {
-    frames.push({ run, seq: frames.length, last: false, part: { index: 2 * i, role: "report", mediaType: "text/turtle", group: mapping }, text: RUN_REPORT });
-    frames.push({ run, seq: frames.length, last: false, part: { index: 2 * i + 1, role: "artefact", mediaType: "application/n-triples", path: `${i}.nt`, group: mapping, step: 0 }, text: artefact });
-  });
-  frames.push({ run, seq: frames.length, last: true, status: "succeeded", conforms: true });
-  return frames;
+/** The recorded compilations and sample runs of the journeys, which the workers' own tests keep current (see sampleRuns.ts). */
+function recordedSamples(): SampleRuns {
+  return JSON.parse(readFileSync(join(import.meta.dirname, SAMPLE_FIXTURE), "utf-8")) as SampleRuns;
+}
+
+/**
+ * The frames of a `sample` run, which the fake cannot compute since it runs no Saxon, JOLT or mork_rdf. It answers a run over the compilation of a mapping part
+ * the journeys compile, with a sample the journeys give, with the frames the worker gave for that sample over that compilation, which fixtures/sample-runs.json
+ * holds and the workers' own tests keep current. Any other request is one failed frame that says so, so a request that differs from the journeys' is never answered
+ * with a result. `artefact` is the text a test gives the first artefact in place of the recorded one, to see how the explorer shows a text it cannot read.
+ */
+function sampleRunFrames(run: string, compileBody: string, mediaType: string, sample: string, artefact?: string): RunFrame[] {
+  const known = recordedSamples();
+  const workspace = known.workspaces.find((w) => w.compileBody === compileBody);
+  const recorded = workspace && known.runs.find((r) => r.workspace === workspace.id && r.mediaType === mediaType && r.sample === sample);
+  if (!recorded) return [{ run, seq: 0, last: true, status: "failed", message: "The fake service has frames only for the sample runs in fixtures/sample-runs.json, and this request is not one of them." }];
+  const frames = (recorded.frames as RunFrame[]).map((f) => ({ ...f, run }));
+  if (artefact === undefined) return frames;
+  const at = frames.findIndex((f) => f.part?.role === "artefact");
+  if (at < 0) return frames;
+  let end = at + 1;
+  while (end < frames.length && !frames[end].part && !frames[end].last) end++;
+  const replaced = { ...frames[at], text: artefact };
+  delete replaced.more;
+  return [...frames.slice(0, at), replaced, ...frames.slice(end)].map((f, seq) => ({ ...f, seq }));
 }
 
 export interface Submitted {
@@ -329,7 +342,7 @@ export class FakeService {
   runRefusal?: number;
   /** A message every run ends with as a failed last frame, as a run that could not finish does (SVA-R4). */
   runFailure?: string;
-  /** The text of the n-triples artefact each sample run gives in place of the canned one, so a test can give a larger or a broken one (SVA-M4). */
+  /** The text of the first artefact each sample run gives in place of the recorded one, so a test can give a larger or a broken one (SVA-M4). */
   runArtefact?: string;
   /** Milliseconds a run is held before the fake answers it, so a test can see the pane while it runs (SVA-R4). */
   runDelayMs = 0;
@@ -406,6 +419,12 @@ export class FakeService {
       return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms ${result.conforms} ; cst:report <urn:r> .\n<urn:r> a sh:ValidationReport .\n${result.turtle}`;
     }
     if (job.target === "vocabulary" || job.target === "eligibility") return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms true ; cst:report <urn:r> .\n${layerResults(iri, job.target, job.body)}`;
+    // A compilation of a mapping part the journeys compile is what the compiler gave for it, which fixtures/sample-runs.json holds.
+    const mapped = job.kind === "compile" && job.target === "mapping" ? recordedSamples().workspaces.find((w) => w.compileBody === job.body) : undefined;
+    if (mapped) {
+      const written = mapped.compiled.map((a) => ` ; cst:artefact [ cst:path ${JSON.stringify(a.path)} ; cst:mediaType ${JSON.stringify(a.mediaType)} ; cst:group ${JSON.stringify(a.group)} ; cst:content ${JSON.stringify(a.content)} ]`).join("");
+      return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms ${mapped.conforms} ; cst:report <urn:r> ; cst:finishedAt "2026-10-27T10:00:01Z"^^xsd:dateTime${written} .\n<urn:r> a sh:ValidationReport .\n`;
+    }
     const refused = job.body.includes("NoErasure");
     const finding = refused
       ? `<urn:r> sh:result [ sh:resultSeverity sh:Violation ; sh:resultMessage "Personal data has no lawful erasure path." ;
@@ -426,8 +445,8 @@ export class FakeService {
 
   /**
    * `POST /api/workspaces/{ws}/runs` as the contract states it (ADR-A154), the parameters checked in the contract's order. Without `wait`
-   * it answers `202` with the `cst:Run` and delivers nothing, since the fake offers no events. With `wait=true` it answers the frames. Only a
-   * `sample` run over the mapping part has a canned result, and a `simulate` run of the persistence part is answered from the simulator journey's fixture.
+   * it answers `202` with the `cst:Run` and delivers nothing, since the fake offers no events. With `wait=true` it answers the frames. A `sample` run over the
+   * mapping part is answered from the sample runs' fixture, and a `simulate` run of the persistence part from the simulator journey's.
    */
   private async run(route: Route, url: URL, ws: string, turtle: (body: string, status?: number, headers?: Record<string, string>) => Promise<void>): Promise<void> {
     const request = route.request();
@@ -468,7 +487,7 @@ export class FakeService {
         cst:compileJob <urn:lattice:studio:job:${jobId}> ; cst:deadline "${new Date(ends).toISOString().replace(/\.\d+Z$/, "Z")}"^^xsd:dateTime .\n`;
       return turtle(PREFIX + description, 202);
     }
-    const frames: RunFrame[] = this.runFailure !== undefined ? [{ run, seq: 0, last: true, status: "failed", message: this.runFailure }] : kind === "sample" ? sampleRunFrames(run, this.runArtefact) : simulatorFrames(run, target, body);
+    const frames: RunFrame[] = this.runFailure !== undefined ? [{ run, seq: 0, last: true, status: "failed", message: this.runFailure }] : kind === "sample" ? sampleRunFrames(run, job.body, mediaType, body, this.runArtefact) : simulatorFrames(run, target, body);
     return route.fulfill({ status: 200, body: JSON.stringify(frames), headers: { "Content-Type": "application/json" } });
   }
 
@@ -580,8 +599,8 @@ export class FakeService {
         return turtle(PREFIX + open.map(([id, j]) => `<urn:lattice:studio:job:${id}> a cst:Job ; cst:kind cst:${kindOf(j.kind)} ; cst:target cst:${TARGETS[j.target] ?? "Persistence"} ; cst:status cst:Running ; cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime .\n`).join(""));
       }
       if (parts[2] === "jobs") {
-        const compiles = [...this.jobs.entries()].filter(([, j]) => j.ws === parts[1] && j.kind === "compile");
-        return turtle(PREFIX + compiles.map(([id, j]) => `<urn:lattice:studio:job:${id}> a cst:Job ; cst:kind cst:Compile ; cst:target cst:${j.target === "surface" ? "Surface" : "Persistence"} ; cst:status cst:Succeeded ; cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime .\n`).join(""));
+        const compiles = [...this.jobs.entries()].filter(([id, j]) => j.ws === parts[1] && j.kind === "compile" && !this.deletedJobs.includes(id));
+        return turtle(PREFIX + compiles.map(([id, j]) => `<urn:lattice:studio:job:${id}> a cst:Job ; cst:kind cst:Compile ; cst:target cst:${TARGETS[j.target] ?? "Persistence"} ; cst:status cst:Succeeded ; cst:submittedAt "2026-10-27T10:00:00Z"^^xsd:dateTime .\n`).join(""));
       }
     }
     if (parts[0] === "jobs") {

@@ -55,6 +55,14 @@ public final class TransformRun {
             this.output = output;
         }
 
+        /** The engine that evaluates this format's transforms, which a run's report names. */
+        String engine() {
+            if (this == XML) {
+                return "Saxon-HE " + net.sf.saxon.Version.getProductVersion() + ", XSLT 3.0";
+            }
+            return JOLT_VERSION == null ? "JOLT" : "JOLT " + JOLT_VERSION;
+        }
+
         static Format of(String mediaType) {
             String type = mediaType == null ? "" : mediaType.split(";", 2)[0].trim().toLowerCase(java.util.Locale.ROOT);
             return switch (type) {
@@ -86,6 +94,25 @@ public final class TransformRun {
         static final Property focusNode = ResourceFactory.createProperty(NS + "focusNode");
     }
 
+    /**
+     * JOLT's version, from the descriptor Maven keeps in the library's jar, which a build that repackages the jar keeps too. The jar's manifest is not read, since a
+     * repackaged jar replaces it. Null where neither is there.
+     */
+    private static final String JOLT_VERSION = joltVersion();
+
+    private static String joltVersion() {
+        try (java.io.InputStream in = com.bazaarvoice.jolt.Chainr.class.getResourceAsStream("/META-INF/maven/com.bazaarvoice.jolt/jolt-core/pom.properties")) {
+            if (in == null) {
+                return null;
+            }
+            java.util.Properties p = new java.util.Properties();
+            p.load(in);
+            return p.getProperty("version");
+        } catch (java.io.IOException e) {
+            return null;
+        }
+    }
+
     private TransformRun() {
     }
 
@@ -103,11 +130,17 @@ public final class TransformRun {
     /**
      * What a run did, apart from how it is told. {@code events} holds the findings and the outputs in the order they were found,
      * which is deterministic since schemes and mappings are visited in code point order. {@code failure} is null for a run that
-     * finished, and else says why it did not, with the events found before it.
+     * finished, and else says why it did not, with the events found before it. {@code engine} names what evaluated the transforms,
+     * which a run's report states as {@code cst:engine}, and is null where the run did not get as far as a format.
      */
-    public record Result(String failure, List<Object> events) {
+    public record Result(String failure, List<Object> events, String engine) {
         public Result {
             events = List.copyOf(events);
+        }
+
+        /** A result that names no engine. */
+        public Result(String failure, List<Object> events) {
+            this(failure, events, null);
         }
 
         public List<Finding> findings() {
@@ -180,7 +213,7 @@ public final class TransformRun {
                 String output = format == Format.XML ? Transforms.xslt(transform.content(), sample) : Transforms.jolt(transform.content(), sample);
                 RDFParser.fromString(output, format.output).parse(written);
             } catch (TransformException | RuntimeException e) {
-                return new Result(scheme + ": " + e.getMessage(), events);
+                return new Result(scheme + ": " + e.getMessage(), events, format.engine());
             }
             ran = true;
             for (Map.Entry<String, Set<String>> wrote : attribute(written, JSON.parseAny(table.content()).getAsArray()).entrySet()) {
@@ -191,7 +224,7 @@ public final class TransformRun {
         if (!ran) {
             events.add(new Finding(Severity.INFO, "no scheme of the mapping part reads a " + format.label + " source", "NotRun", null));
         }
-        return new Result(null, events);
+        return new Result(null, events, format.engine());
     }
 
     /** Writes finding number {@code n} of a report as {@code <base>#result-n}, as the reply and a run's report both state it. */
@@ -214,7 +247,11 @@ public final class TransformRun {
         StringBuilder t = new StringBuilder("@prefix sh: <" + SHACLM.NS + "> .\n@prefix cst: <" + Cst.NS + "> .\n\n");
         List<Finding> findings = result.findings();
         String results = IntStream.rangeClosed(1, findings.size()).mapToObj(n -> "<" + runIri + "#result-" + n + ">").collect(Collectors.joining(" , "));
-        t.append("<").append(runIri).append("#report> a sh:ValidationReport ;\n    sh:conforms ").append(result.conforms());
+        t.append("<").append(runIri).append("#report> a sh:ValidationReport ;\n");
+        if (result.engine() != null) {
+            t.append("    cst:engine ").append(NodeFmtLib.strNT(NodeFactory.createLiteralString(result.engine()))).append(" ;\n");
+        }
+        t.append("    sh:conforms ").append(result.conforms());
         t.append(findings.isEmpty() ? " .\n" : " ;\n    sh:result " + results + " .\n");
         int n = 0;
         for (Finding f : findings) {

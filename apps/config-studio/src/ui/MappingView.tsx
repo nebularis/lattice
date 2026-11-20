@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: MPL-2.0
 // Mapping mode's view: the source concepts a MORK mapping scheme reads on the left, its mappings drawn as the tree their
 // parent links make, each with the terms it writes and its latest review, and for the mapping picked its review and its
-// editor, whose findings come from compiling the part with mork_rdf as it is edited. Given a sample source, the part runs
-// over it whenever either changes, and the author steps through the run's strata, each mapping showing what it wrote. A
-// language model proposes a scheme from a source vocabulary with MORK's proposal tools, and the author reviews each of
-// its mappings here, each review a mork:MappingReview the next proposal learns from.
+// editor, whose findings come from compiling the part with mork_rdf as it is edited. The dock's Sample pane runs the part over
+// a sample source when the author presses Run, never by itself, and the author steps through the last run's strata, each mapping
+// showing what it wrote, with counts that are marked out of date once the scheme or the sample changes. A language model proposes
+// a scheme from a source vocabulary with MORK's proposal tools, and the author reviews each of its mappings here, each review a
+// mork:MappingReview the next proposal learns from.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Hammer, Network, Plus, Sparkles } from "lucide-react";
 import { CST, Graph, LABEL, MORK, PREFIXES, TYPE, compact, iri, literal, namespaceOf } from "@lattice/authoring-domain";
 import { api, awaitJob } from "../api";
 import { isAbort, useAttach, useUnmountSignal } from "../jobs";
-import type { Artefact, Job } from "../rdf/report";
+import type { Job } from "../rdf/report";
 import { applyArtefacts, importDocument, mediaTypeOf } from "../rdf/odrl";
 import { mint } from "../rdf/editors";
-import { CONFIG_PARTS } from "../rdf/split";
-import { SAMPLE_FORMATS, exampleSources, reviewGraph, sampleFormat, schemeSummary, schemesOf, written, type MappingNode, type RunCost, type SampleFormat, type Scheme } from "../rdf/mapping";
-import { download, go, Spinner, Split } from "./kit";
+import { reviewGraph, schemeSummary, schemesOf, written, type MappingNode, type RunCost, type Scheme } from "../rdf/mapping";
+import { runResult, type RunResult, type SampleState } from "../sample";
+import { go, Spinner, Split } from "./kit";
 import { NodeEditor } from "./ConfigView";
 import { MappingCanvas } from "./MappingCanvas";
 import { useStudio } from "./Workspace";
-import { useRunSource } from "./RunPane";
+import { useSample } from "./RunPane";
 
 const INDENT = 28;
 const BOX_W = 240;
@@ -33,16 +34,21 @@ export function MappingView({ selected }: { selected?: string }) {
   const graph = studio.model.state.configs.mapping!.current;
   const schemes = useMemo(() => schemesOf(graph), [graph]);
   const prefixes = useMemo(() => ({ ...PREFIXES, ...graph.prefixes }), [graph]);
-  const [schemeIri, setSchemeIri] = useState<string>();
   const [source, setSource] = useState<string>();
-  // The picked mapping's scheme, so a correction's link opens the scheme it is in.
-  const scheme = schemes.find((s) => s.mappings.some((m) => m.iri === selected)) ?? schemes.find((s) => s.iri === schemeIri) ?? schemes[0];
+  // The scheme is the sample session's, since the Sample pane lists the forms of the scheme the author is looking at. A picked mapping's scheme comes first, so a correction's link opens the scheme it is in.
+  const { session, state: sampleState } = useSample();
+  const owner = schemes.find((s) => s.mappings.some((m) => m.iri === selected));
+  const scheme = owner ?? schemes.find((s) => s.iri === sampleState.scheme) ?? schemes[0];
+  useEffect(() => {
+    if (owner) session?.setScheme(owner.iri);
+  }, [owner?.iri, session]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (scheme && !schemes.some((s) => s.iri === sampleState.scheme)) session?.setScheme(scheme.iri);
+  }, [scheme?.iri, sampleState.scheme, session]); // eslint-disable-line react-hooks/exhaustive-deps
+  const sampleRun = useSampleView(sampleState);
   const open = (node: string) => go("w", studio.id, "mapping", node);
   const picked = scheme?.mappings.find((m) => m.iri === selected);
   const [busy, setBusy] = useState(false);
-  // A job reads the other parts as saved, so their revisions say when a compilation is out of date (ADR-A149).
-  const context = CONFIG_PARTS.filter((p) => p !== "mapping").map((p) => studio.model.state.configs[p]?.revision ?? "").join(" ");
-  const sampleRun = useSampleRun(studio.id, graph, context, scheme?.label);
   const [drawing, setDrawing] = useState<"tree" | "canvas">(() => {
     try {
       return localStorage.getItem("lattice-studio:mapping-drawing") === "canvas" ? "canvas" : "tree";
@@ -94,8 +100,7 @@ export function MappingView({ selected }: { selected?: string }) {
         <h3>No mapping scheme yet</h3>
         <p className="small">Import a file holding a MORK mapping scheme, such as a mapping pack, or have a language model propose one from a source vocabulary.</p>
         <div style={{ maxWidth: 420, width: "100%", textAlign: "left" }}>
-          <SamplePanel run={sampleRun} graph={graph} />
-          <ProposePanel sample={sampleRun.sample} onProposed={proposed} />
+          <ProposePanel sample={sampleState.sample} onProposed={proposed} />
           <RmlImport onImported={proposed} />
         </div>
       </div>
@@ -109,8 +114,9 @@ export function MappingView({ selected }: { selected?: string }) {
           current={scheme.iri}
           prefixes={prefixes}
           wrote={sampleRun.result ? (m) => sampleRun.output(m).length : undefined}
+          stale={sampleRun.stale}
           onSelect={(s) => {
-            setSchemeIri(s);
+            session?.setScheme(s);
             setSource(undefined);
             go("w", studio.id, "mapping");
           }}
@@ -128,8 +134,7 @@ export function MappingView({ selected }: { selected?: string }) {
             <button className="btn sm" disabled={busy} onClick={() => void compile()}>{busy ? <Spinner /> : <Hammer size={13} />} Compile</button>
           </div>
         </div>
-        <SamplePanel run={sampleRun} graph={graph} />
-        <ProposePanel sample={sampleRun.sample} onProposed={proposed} />
+        <ProposePanel sample={sampleState.sample} onProposed={proposed} />
         <RmlImport onImported={proposed} />
         <h4>Source concepts it maps</h4>
         {scheme.sources.length === 0 && <div className="empty small">No mapping of the scheme names a source concept.</div>}
@@ -148,11 +153,16 @@ export function MappingView({ selected }: { selected?: string }) {
       </div>
       <div className="detail-pane">
         <div className="editor" style={{ maxWidth: "none" }}>
-          {picked && <MappingCard node={picked} schemes={schemes} prefixes={prefixes} open={open} add={add} output={sampleRun.output(picked.iri)} />}
+          {picked && <MappingCard node={picked} schemes={schemes} prefixes={prefixes} open={open} add={add} output={sampleRun.result ? sampleRun.output(picked.iri) : undefined} stale={sampleRun.stale} />}
           {picked && <div style={{ margin: "0 -28px" }}><NodeEditor key={picked.iri} part="mapping" node={picked.iri} /></div>}
           <section className="card section" aria-label={`Mappings of ${scheme.label}`}>
             <header>
               <h3 className="grow">Mappings</h3>
+              {sampleRun.result && sampleRun.stale && (
+                <span className="chip warn" role="note" aria-label="Counts out of date" title="The scheme, another part or the sample has changed since the last run. Run again in the Sample pane.">
+                  Counts out of date
+                </span>
+              )}
               {sampleRun.result && <Stepper run={sampleRun} />}
               <div className="mode-switch" role="group" aria-label="Drawing" style={{ margin: 0 }}>
                 <button aria-pressed={drawing === "tree"} onClick={() => draw("tree")}>Tree</button>
@@ -170,7 +180,7 @@ export function MappingView({ selected }: { selected?: string }) {
               <>
                 <p className="small muted" style={{ margin: "8px 16px 0" }}>Drag from a mapping's right edge to another mapping to make it the parent, or from a source concept to say what a mapping maps for. Right-click a mapping, a link or the canvas for what fits there.</p>
                 <MappingCanvas workspace={studio.id} scheme={scheme} graph={graph} prefixes={prefixes} selected={selected} open={open} add={add}
-                  edit={(change) => studio.model.edit("mapping", change)} counts={sampleRun.result ? (m) => sampleRun.output(m).length : undefined} />
+                  edit={(change) => studio.model.edit("mapping", change)} counts={sampleRun.result ? (m) => sampleRun.output(m).length : undefined} countsStale={sampleRun.stale} />
               </>
             )}
           </section>
@@ -185,7 +195,7 @@ const DECISIONS = ["Accepted", "Corrected", "Rejected", "Deferred"];
 
 /** Every mapping scheme of the workspace, in groups, each a row with what it holds, its review state and, once a sample has
  * run, how many triples the run wrote for it. The row of `current` is marked, and picking a row hands its IRI to `onSelect`. */
-function SchemeList({ groups, current, prefixes, wrote, onSelect }: { groups: { title: string; schemes: Scheme[] }[]; current?: string; prefixes: Record<string, string>; wrote?: (mapping: string) => number; onSelect: (scheme: string) => void }) {
+function SchemeList({ groups, current, prefixes, wrote, stale, onSelect }: { groups: { title: string; schemes: Scheme[] }[]; current?: string; prefixes: Record<string, string>; wrote?: (mapping: string) => number; stale?: boolean; onSelect: (scheme: string) => void }) {
   return (
     <nav aria-label="Mapping schemes" className="scheme-list">
       {groups.map((group) => (
@@ -201,7 +211,7 @@ function SchemeList({ groups, current, prefixes, wrote, onSelect }: { groups: { 
                 <span className="detail mono">{compact(s.iri, prefixes)}</span>
                 <span className="detail">
                   {sum.mappings} mappings · {sum.templates} templates
-                  {triples !== undefined && ` · ${triples} triples written`}
+                  {triples !== undefined && ` · ${triples} triples written${stale ? ", out of date" : ""}`}
                 </span>
                 {review && <span className="detail">{review}</span>}
               </button>
@@ -213,7 +223,7 @@ function SchemeList({ groups, current, prefixes, wrote, onSelect }: { groups: { 
   );
 }
 
-function Tree({ scheme, prefixes, selected, source, open, run }: { scheme: Scheme; prefixes: Record<string, string>; selected?: string; source?: string; open: (n: string) => void; run: SampleRun }) {
+function Tree({ scheme, prefixes, selected, source, open, run }: { scheme: Scheme; prefixes: Record<string, string>; selected?: string; source?: string; open: (n: string) => void; run: SampleView }) {
   const row = new Map(scheme.mappings.map((m) => [m.iri, m]));
   const depth = Math.max(0, ...scheme.mappings.map((m) => m.depth));
   const width = MARGIN * 2 + depth * INDENT + BOX_W + 520;
@@ -249,8 +259,8 @@ function Tree({ scheme, prefixes, selected, source, open, run }: { scheme: Schem
               {m.label.length > 28 ? m.label.slice(0, 27) + "…" : m.label}
             </text>
             {wrote !== undefined && ran && (
-              <text x={x(m) + BOX_W - 8} y={y(m) + BOX_H / 2 + 4} textAnchor="end" style={{ fill: wrote ? "var(--accent)" : "var(--text-3)", fontWeight: 600 }}>
-                <title>{`${wrote} ${wrote === 1 ? "triple" : "triples"} written on the sample`}</title>
+              <text x={x(m) + BOX_W - 8} y={y(m) + BOX_H / 2 + 4} textAnchor="end" data-stale={run.stale ? "true" : undefined} style={{ fill: wrote ? "var(--accent)" : "var(--text-3)", fontWeight: 600, opacity: run.stale ? 0.5 : 1 }}>
+                <title>{`${wrote} ${wrote === 1 ? "triple" : "triples"} written on the sample${run.stale ? ", counted by a run that is out of date" : ""}`}</title>
                 {wrote}
               </text>
             )}
@@ -268,7 +278,7 @@ function Tree({ scheme, prefixes, selected, source, open, run }: { scheme: Schem
 const DECISION: Record<string, string> = { Accepted: "var(--ok)", Corrected: "var(--warn)", Rejected: "var(--bad)", Deferred: "var(--text-3)" };
 
 /** The picked mapping's name, its children to add, and its latest review. Its fields and findings are in its editor. */
-function MappingCard({ node, schemes, prefixes, open, add, output }: { node: MappingNode; schemes: Scheme[]; prefixes: Record<string, string>; open: (n: string) => void; add: (type: "Datum" | "DataMapping", parent?: string) => void; output?: string[] }) {
+function MappingCard({ node, schemes, prefixes, open, add, output, stale }: { node: MappingNode; schemes: Scheme[]; prefixes: Record<string, string>; open: (n: string) => void; add: (type: "Datum" | "DataMapping", parent?: string) => void; output?: string[]; stale?: boolean }) {
   const all = schemes.flatMap((s) => s.mappings);
   const r = node.review;
   return (
@@ -297,7 +307,7 @@ function MappingCard({ node, schemes, prefixes, open, add, output }: { node: Map
       {output && (
         <div className="fields">
           <div className="field">
-            <div className="label"><div className="name">On the sample</div></div>
+            <div className="label"><div className="name">On the sample</div>{stale && <div className="small muted">out of date</div>}</div>
             {output.length === 0 ? (
               <span className="muted small">Wrote nothing by this step.</span>
             ) : (
@@ -324,190 +334,27 @@ function readable(line: string, prefixes: Record<string, string>): string {
     .replace(/ \.$/, "");
 }
 
-interface RunResult {
-  /** Each mapping's output lines, by the stratum that wrote them. */
-  lines: Map<string, { stratum: number; lines: string[] }[]>;
-  /** The first stratum each mapping ran in. */
-  ran: Map<string, number>;
-  strata: number;
-}
-
-interface SampleRun {
-  sample?: string;
-  setSample: (text?: string, filename?: string) => void;
-  format: SampleFormat;
-  setFormat: (format: SampleFormat) => void;
-  state: "idle" | "running" | "failed";
-  message?: string;
+/** What the last run gave, for the tree, the canvas and the scheme list, and the stratum the author steps to. */
+interface SampleView {
   result?: RunResult;
-  /** The stylesheets and chains the last compilation wrote, for an XML or JSON sample. */
-  transforms: Artefact[];
   step: number;
   setStep: (n: number) => void;
   /** What a mapping wrote by the current step. */
   output: (mapping: string) => string[];
+  /** Whether the counts are out of date. */
+  stale: boolean;
 }
 
-function stored(key: string): string | undefined {
-  try {
-    return localStorage.getItem(key) ?? undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function store(key: string, value?: string): void {
-  try {
-    if (value) localStorage.setItem(key, value);
-    else localStorage.removeItem(key);
-  } catch {
-    // A browser that keeps nothing still runs the sample for this visit.
-  }
-}
-
-/** What each mapping wrote, by stratum, from a dry run's or a transform's artefacts. */
-function runResult(job: Job): RunResult {
-  const lines = new Map<string, { stratum: number; lines: string[] }[]>();
-  const ran = new Map<string, number>();
-  let strata = 0;
-  for (const a of job.artefacts) {
-    const stratum = a.stratum ?? 0;
-    strata = Math.max(strata, stratum + 1);
-    lines.set(a.group, [...(lines.get(a.group) ?? []), { stratum, lines: a.content.split("\n").filter(Boolean) }]);
-    ran.set(a.group, Math.min(ran.get(a.group) ?? stratum, stratum));
-  }
-  return { lines, ran, strata };
-}
-
-/** The sample source and its format, kept in this browser for the workspace, and the run of the mapping part over it,
- * rerun 800 ms after the part or the sample last changed. A Turtle sample is a dry run. An XML or JSON one compiles the
- * part, once for each version of it, and runs the compiled transforms over the sample in the transforms worker. */
-function useSampleRun(workspace: string, graph: Graph, context: string, schemeLabel?: string): SampleRun {
-  const key = `lattice-studio:mapping-sample:${workspace}`;
-  const [sample, setSampleState] = useState<string | undefined>(() => stored(key));
-  const [format, setFormatState] = useState<SampleFormat>(() => (stored(`${key}:format`) as SampleFormat | undefined) ?? sampleFormat(sample ?? ""));
-  const [state, setState] = useState<SampleRun["state"]>("idle");
-  const [message, setMessage] = useState<string>();
-  const [result, setResult] = useState<RunResult>();
-  const [step, setStep] = useState(0);
-  const [transforms, setTransforms] = useState<Artefact[]>([]);
-  const compiled = useRef<{ graph: Graph; context: string; job: string } | undefined>(undefined);
-  const setFormat = (f: SampleFormat) => {
-    setFormatState(f);
-    store(`${key}:format`, f);
-  };
-  const setSample = (text?: string, filename?: string) => {
-    setSampleState(text);
-    if (!text) setResult(undefined);
-    store(key, text);
-    if (text) setFormat(sampleFormat(text, filename));
-  };
-  /** The id of the finished compile job of the part as it is, found where the last compilation is of this content and made where it is not. */
-  const ensureCompiled = async (): Promise<string> => {
-    if (compiled.current?.graph !== graph || compiled.current.context !== context) {
-      const id = await api.submit(workspace, "compile", "mapping", graph);
-      const done = await awaitJob(id);
-      if (done.status === "Failed") throw new Error(done.failure ?? "The compilation failed.");
-      // The compilation this one replaces is no longer run, so it leaves the workspace's job history.
-      if (compiled.current) void api.deleteJob(compiled.current.job).catch(() => undefined);
-      compiled.current = { graph, context, job: id };
-      setTransforms(done.artefacts.filter((a) => a.mediaType === "application/xslt+xml" || a.path.endsWith(".jolt.json")));
-    }
-    return compiled.current.job;
-  };
-  // The run pane in the dock runs what this view keeps, so it is given the sample and a way to find or make the compilation (SVA-R4).
-  const latest = useRef(ensureCompiled);
-  latest.current = ensureCompiled;
-  const pane = useRunSource();
-  useEffect(() => {
-    pane?.set({ workspace, scheme: schemeLabel, sample, mediaType: format, ensureCompiled: () => latest.current() });
-    return () => pane?.set(undefined);
-  }, [workspace, schemeLabel, sample, format]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (!sample?.trim() || graph.size === 0) return;
-    let stale = false;
-    const timer = setTimeout(async () => {
-      setState("running");
-      try {
-        let job: Job;
-        if (format === "text/turtle") {
-          const id = await api.submit(workspace, "dry-run", "mapping", graph.merge(importDocument(workspace, sample, "text/turtle", false)));
-          job = await awaitJob(id);
-          void api.deleteJob(id).catch(() => undefined);
-        } else {
-          job = await api.transform(workspace, await ensureCompiled(), format, sample);
-        }
-        if (stale) return;
-        if (job.status === "Failed") {
-          setState("failed");
-          setMessage(job.failure);
-          return;
-        }
-        const next = runResult(job);
-        setResult(next);
-        setStep((s) => (result && s < result.strata - 1 ? Math.min(s, next.strata - 1) : next.strata - 1));
-        setState("idle");
-        const others = job.issues.filter((i) => i.code === "NotRun" && i.focus).length;
-        setMessage(others ? `Ran on the sample. ${others} scheme${others > 1 ? "s read" : " reads"} another format` : undefined);
-      } catch (error) {
-        if (!stale) {
-          setState("failed");
-          setMessage(error instanceof Error ? error.message : String(error));
-        }
-      }
-    }, 800);
-    return () => {
-      stale = true;
-      clearTimeout(timer);
-    };
-  }, [workspace, graph, context, sample, format]); // eslint-disable-line react-hooks/exhaustive-deps
+/** The last run's counts from the sample session, and the step through its strata. A run that has not happened gives no counts. */
+function useSampleView(state: SampleState): SampleView {
+  const result = useMemo(() => (state.last ? runResult(state.last.parts) : undefined), [state.last]);
+  const [at, setAt] = useState<number>();
+  const step = result ? Math.max(0, Math.min(at ?? result.strata - 1, result.strata - 1)) : 0;
   const output = (mapping: string) => (result?.lines.get(mapping) ?? []).filter((o) => o.stratum <= step).flatMap((o) => o.lines);
-  return { sample, setSample, format, setFormat, state, message, result, transforms, step, setStep, output };
+  return { result, step, setStep: setAt, output, stale: state.stale };
 }
 
-function SamplePanel({ run, graph }: { run: SampleRun; graph: Graph }) {
-  const examples = useMemo(() => exampleSources(graph), [graph]);
-  const [draft, setDraft] = useState(run.sample ?? "");
-  useEffect(() => setDraft(run.sample ?? ""), [run.sample]);
-  const load = async (file?: File) => file && run.setSample(await file.text(), file.name);
-  const label = SAMPLE_FORMATS.find(([f]) => f === run.format)![1];
-  return (
-    <>
-      <h4>Sample source</h4>
-      <div style={{ padding: "0 14px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
-        <textarea className="mono small" rows={4} value={draft} placeholder="Paste a source in Turtle, XML or JSON to run the mappings over it" aria-label={`Sample source in ${label}`} onChange={(e) => setDraft(e.target.value)} onBlur={() => draft !== (run.sample ?? "") && run.setSample(draft || undefined)} />
-        <div className="row" style={{ gap: 6 }}>
-          <select className="sm" aria-label="Sample format" value={run.format} onChange={(e) => run.setFormat(e.target.value as SampleFormat)}>
-            {SAMPLE_FORMATS.map(([f, name]) => <option key={f} value={f}>{name}</option>)}
-          </select>
-          <label className="btn sm">
-            Load a file
-            <input type="file" accept=".ttl,.nt,.xml,.json" hidden onChange={(e) => void load(e.target.files?.[0])} />
-          </label>
-          {run.sample && <button className="btn sm ghost" onClick={() => run.setSample(undefined)}>Clear</button>}
-          {!run.sample && examples.map((e) => (
-            <button key={e.scheme} className="btn sm ghost" title={`The example source of ${e.scheme}`} onClick={() => { run.setSample(e.text); run.setFormat(e.format); }}>
-              Use the {SAMPLE_FORMATS.find(([f]) => f === e.format)![1]} example
-            </button>
-          ))}
-          <span className="grow small muted" role="status">
-            {run.state === "running" ? <><Spinner size={12} /> Running</> : run.state === "failed" ? <span style={{ color: "var(--bad)" }}>{run.message ?? "The run failed."}</span> : run.result ? (run.message ?? "Ran on the sample") : ""}
-          </span>
-        </div>
-        {run.format !== "text/turtle" && run.transforms.length > 0 && (
-          <div className="row small" style={{ gap: 6, flexWrap: "wrap" }} aria-label="Compiled transforms">
-            <span className="muted">Compiled</span>
-            {run.transforms.map((a) => (
-              <button key={a.group + a.path} className="btn sm ghost" title={`Download the ${a.mediaType === "application/xslt+xml" ? "XSLT stylesheet" : "JOLT chain"} of ${a.group}`} onClick={() => download(a.path, a.content, a.mediaType)}>{a.path}</button>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
-function Stepper({ run }: { run: SampleRun }) {
+function Stepper({ run }: { run: SampleView }) {
   const strata = run.result!.strata;
   return (
     <div className="row" style={{ gap: 4 }} aria-label="Step through the run">

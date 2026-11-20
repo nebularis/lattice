@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { FakeService, STAGED_FIRST, STAGED_SECOND } from "./fake-service";
+import { FIXTURE as SAMPLE_FIXTURE, type Recorded as SampleRuns } from "./sampleRuns";
 import { EX, FACILITY, FIXTURE, ROOT, STEPS, type Recorded } from "./journey";
 
 const PROFILE = "https://example.org/lending#LoanApplicationStrongProfile";
@@ -1547,13 +1548,11 @@ async function sampleDock(page: Page, fake: FakeService): Promise<Locator> {
   await page.getByRole("button", { name: "Create workspace" }).click();
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   await page.goto(`/#/w/${[...fake.workspaces.keys()][0]}/mapping`);
-  await page.getByRole("button", { name: /^Use the XML example/ }).click();
   // the dock is open at this viewport's width
   await page.getByRole("tab", { name: "Sample" }).click();
   const pane = page.getByRole("region", { name: "Sample", exact: true });
   await expect(pane).toBeVisible();
-  // the automatic run of the sample is a later slice's to remove, so let it end before the pane's own runs are counted. The fake has no transforms route, so it ends as not found
-  await expect(page.getByRole("status").filter({ hasText: /Ran on the sample|not found/ })).toBeVisible();
+  await pane.getByRole("button", { name: /^Use the XML example/ }).click();
   return pane;
 }
 
@@ -1568,16 +1567,18 @@ test("the dock's Sample tab runs nothing until Run is pressed, then shows the ru
   await expect(pane.getByRole("group", { name: "Sample controls" })).toContainText("XML");
   await pane.getByRole("button", { name: "Run" }).click();
   await expect(status).toContainText("Running, 0 parts so far.");
-  await expect(status).toContainText("Complete, 2 parts, conforms.");
+  // the report and an artefact for each of the six mappings the XML scheme writes, as the Java run worker gave them for the XML example
+  await expect(status).toContainText("Complete, 7 parts, conforms.");
   expect(fake.runs).toHaveLength(1);
   expect(fake.runs[0]).toMatchObject({ kind: "sample", target: "mapping", wait: true, mediaType: "application/xml" });
   await expect(status).toContainText(`Compile job ${fake.runs[0].job}`);
   const parts = pane.getByRole("list", { name: "Sample parts" }).getByRole("listitem");
-  await expect(parts).toHaveCount(2);
+  await expect(parts).toHaveCount(7);
   await expect(parts.nth(0).getByRole("region", { name: "Part 1, report" })).toContainText("sh:conforms true");
   await expect(parts.nth(1).getByRole("region", { name: "Part 2, artefact" })).toContainText("application/n-triples");
-  await expect(parts.nth(1).getByRole("region", { name: "Part 2, artefact" })).toContainText("LoanApplication");
-  await expect(parts.nth(1).getByRole("region", { name: "Part 2, artefact" })).toContainText("0.nt");
+  await expect(parts.nth(1).getByRole("region", { name: "Part 2, artefact" })).toContainText("urn:example:mapping/xml#Cover");
+  await expect(parts.nth(1).getByRole("region", { name: "Part 2, artefact" })).toContainText("0/Cover.nt");
+  await expect(parts.nth(5).getByRole("region", { name: "Part 6, artefact" })).toContainText("0/Policy.nt");
 });
 
 test("a run the service refuses shows refused with its status and reason, and a 429's Retry-After", async ({ page }) => {
@@ -1611,9 +1612,172 @@ test("a run that passes its deadline shows incomplete and offers Run again, whic
   await expect(status).toContainText("Incomplete, the run did not finish before its deadline.");
   expect(fake.runs).toHaveLength(0);
   await status.getByRole("button", { name: "Run again" }).click();
-  await expect(status).toContainText("Complete, 2 parts, conforms.");
+  await expect(status).toContainText("Complete, 7 parts, conforms.");
   await expect(status.getByRole("button", { name: "Run again" })).toHaveCount(0);
   expect(fake.runs).toHaveLength(1);
+});
+
+// --- The sample pane's runs, on the fake service, which answers a run only with the frames a worker gave for that sample (SVA-M3b) ---
+
+const sampleRuns = (): SampleRuns => JSON.parse(readFileSync(join(import.meta.dirname, SAMPLE_FIXTURE), "utf-8")) as SampleRuns;
+const recordedRun = (id: string) => sampleRuns().runs.find((r) => r.id === id)!;
+/** The engine a recorded run's report names. */
+const engineOf = (id: string) => /cst:engine "([^"]+)"/.exec(String((recordedRun(id).frames[0] as { text: string }).text))![1];
+
+/** A workspace of the policies sample open on mapping mode with the Sample tab showing, and every request the page makes to the service's transforms route noted. */
+async function policiesPane(page: Page, fake: FakeService, requested: string[] = []): Promise<Locator> {
+  page.on("request", (r) => void requested.push(new URL(r.url()).pathname));
+  const pane = await sampleDock(page, fake);
+  return pane;
+}
+
+test("a Turtle sample runs when Run is pressed and not before, and shows its output with the engine the run names", async ({ page }) => {
+  const fake = new FakeService();
+  await fake.install(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "New workspace" }).first().click();
+  await page.getByRole("button", { name: /^Your own Turtle/ }).click();
+  await page.locator('input[type="file"]').setInputFiles(join(import.meta.dirname, "../../../tools/mork_rdf/tests/fixtures/catalogue-mapping.ttl"));
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`/#/w/${[...fake.workspaces.keys()][0]}/mapping`);
+  await page.getByRole("tab", { name: "Sample" }).click();
+  const pane = page.getByRole("region", { name: "Sample", exact: true });
+  const forms = pane.getByRole("group", { name: "Compiled form" });
+  await expect(forms).toContainText("Not compiled yet");
+  // the sample is typed, and the author waits longer than the old automatic rerun did
+  await pane.getByRole("textbox", { name: /^Sample source/ }).fill(recordedRun("turtle").sample);
+  await expect(pane.getByRole("combobox", { name: "Sample format" })).toHaveValue("text/turtle");
+  await page.waitForTimeout(1500);
+  expect(fake.runs).toHaveLength(0);
+  expect(fake.submitted.filter((s) => s.kind === "compile" || s.kind === "dry-run")).toHaveLength(0);
+  await expect(pane.getByRole("status", { name: "Sample status" })).toContainText("Nothing has run yet.");
+
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  const status = pane.getByRole("status", { name: "Sample status" });
+  await expect(status).toContainText("Complete, 10 parts, does not conform.");
+  expect(fake.runs).toHaveLength(1);
+  expect(fake.runs[0]).toMatchObject({ kind: "sample", mediaType: "text/turtle", body: recordedRun("turtle").sample });
+  expect(fake.submitted.filter((s) => s.kind === "compile")).toHaveLength(1);
+  // the engine the report names, and the form the compilation wrote
+  await expect(pane).toContainText(`Evaluated by ${engineOf("turtle")}.`);
+  expect(engineOf("turtle")).toMatch(/^mork_rdf .* on Oxigraph /);
+  await expect(forms.getByRole("radio", { name: "SPARQL CONSTRUCT" })).toBeChecked();
+  await expect(forms).toContainText("Catalogue.compiled.ttl");
+  await expect(forms).toContainText("Runs here");
+  // each mapping's output through the explorer, and its count in the tree
+  const item = pane.getByRole("region", { name: /^Part \d+, artefact$/ }).filter({ hasText: "0/Map_Title.nt" });
+  await expect(item.getByLabel("Output text")).toContainText("tgt:title");
+  const tree = page.getByRole("tree", { name: /^Mappings of/ });
+  await expect(tree.locator("text:has(title)").first()).toBeVisible();
+  await expect(tree.locator('text[data-stale="true"]')).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Mapping schemes" })).toContainText("triples written");
+  await expect(page.getByRole("navigation", { name: "Mapping schemes" })).not.toContainText("out of date");
+  await expect(page.getByRole("note", { name: "Counts out of date" })).toHaveCount(0);
+
+  // an edit of the scheme runs nothing and marks the counts, the list and the pane as out of date, and undoing it makes them current again
+  page.once("dialog", (d) => void d.accept("Another root"));
+  await page.getByRole("button", { name: "Root datum" }).click();
+  await expect(page.getByRole("note", { name: "Counts out of date" })).toBeVisible();
+  await expect(tree.locator('text[data-stale="true"]').first()).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Mapping schemes" })).toContainText("triples written, out of date");
+  await expect(pane.getByRole("note", { name: "Out of date" })).toContainText("out of date until you run again");
+  await expect(forms).toContainText("The scheme may have changed since this compilation. Run compiles it again.");
+  await page.waitForTimeout(1500);
+  expect(fake.runs).toHaveLength(1);
+  expect(fake.submitted.filter((s) => s.kind === "compile")).toHaveLength(1);
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByRole("note", { name: "Counts out of date" })).toHaveCount(0);
+  await expect(pane.getByRole("note", { name: "Out of date" })).toHaveCount(0);
+});
+
+test("an XML sample runs when Run is pressed and not before, shows its output with the engine named, and an edit of the sample marks the counts out of date", async ({ page }) => {
+  const fake = new FakeService();
+  const requested: string[] = [];
+  const pane = await policiesPane(page, fake, requested);
+  const status = pane.getByRole("status", { name: "Sample status" });
+  const forms = pane.getByRole("group", { name: "Compiled form" });
+  // the XML example belongs to the XML scheme, which the pane lists the forms of
+  await expect(pane.getByRole("group", { name: "Sample controls" })).toContainText("m1:Scheme");
+  await expect(forms).toContainText("Not compiled yet");
+  await expect(pane.getByRole("textbox", { name: "Sample source in XML" })).toHaveValue(recordedRun("xml").sample);
+  await page.waitForTimeout(1500);
+  expect(fake.runs).toHaveLength(0);
+  expect(fake.submitted.filter((s) => s.kind === "compile" || s.kind === "dry-run")).toHaveLength(0);
+  await expect(status).toContainText("Nothing has run yet.");
+
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(status).toContainText("Complete, 7 parts, conforms.");
+  expect(fake.runs).toHaveLength(1);
+  expect(fake.runs[0]).toMatchObject({ kind: "sample", mediaType: "application/xml", body: recordedRun("xml").sample });
+  await expect(pane).toContainText(`Evaluated by ${engineOf("xml")}.`);
+  expect(engineOf("xml")).toMatch(/^Saxon-HE .*XSLT 3\.0$/);
+  // the form of the XML scheme, with a runtime, and the output of one mapping
+  await expect(forms.getByRole("radio", { name: "XSLT 3.0" })).toBeChecked();
+  await expect(forms).toContainText("Scheme.xsl");
+  await expect(forms).toContainText("Runs here");
+  await expect(forms.getByRole("radio")).toHaveCount(1);
+  await expect(pane.getByRole("region", { name: "Part 6, artefact" }).getByLabel("Output text")).toContainText("target:Policy");
+  // the counts of the last run are in the tree, current
+  const tree = page.getByRole("tree", { name: /^Mappings of/ });
+  await expect(tree.locator("text:has(title)").first()).toBeVisible();
+  await expect(tree.locator('text[data-stale="true"]')).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Mapping schemes" })).toContainText("triples written");
+  // the studio does not ask the deprecated route to run anything
+  expect(requested.filter((p) => p.endsWith("/transforms"))).toEqual([]);
+
+  // an edit of the sample runs nothing and marks the counts as out of date
+  const box = pane.getByRole("textbox", { name: "Sample source in XML" });
+  await box.fill(`${recordedRun("xml").sample}<!-- edited -->\n`);
+  await expect(page.getByRole("note", { name: "Counts out of date" })).toBeVisible();
+  await expect(tree.locator('text[data-stale="true"]').first()).toBeVisible();
+  await expect(pane.getByRole("note", { name: "Out of date" })).toBeVisible();
+  await expect(status).toContainText("Complete, 7 parts, conforms.");
+  // the canvas marks its counts the same way
+  await page.getByRole("group", { name: "Drawing" }).getByRole("button", { name: "Canvas" }).click();
+  await expect(page.locator('.react-flow__node-mapping [data-stale="true"]').first()).toBeVisible();
+  await page.getByRole("group", { name: "Drawing" }).getByRole("button", { name: "Tree" }).click();
+  await page.waitForTimeout(1500);
+  expect(fake.runs).toHaveLength(1);
+  // the edited sample is one the fake has no frames for, so its run is the fake's own failure, and the counts of the last run are kept, still out of date
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(status).toContainText("Failed. The fake service has frames only for the sample runs");
+  expect(fake.runs).toHaveLength(2);
+  expect(fake.submitted.filter((s) => s.kind === "compile")).toHaveLength(1);
+  await expect(page.getByRole("note", { name: "Counts out of date" })).toBeVisible();
+  // putting the sample back makes the counts current again
+  await box.fill(recordedRun("xml").sample);
+  await expect(page.getByRole("note", { name: "Counts out of date" })).toHaveCount(0);
+  expect(requested.filter((p) => p.endsWith("/transforms"))).toEqual([]);
+});
+
+test("a JSON sample runs the JOLT form, and an RML form shows that it waits on a runtime and offers no Run", async ({ page }) => {
+  const fake = new FakeService();
+  const pane = await policiesPane(page, fake);
+  const status = pane.getByRole("status", { name: "Sample status" });
+  const forms = pane.getByRole("group", { name: "Compiled form" });
+  // the JSON example belongs to the JSON scheme, so the pane lists that scheme's forms
+  await pane.getByRole("button", { name: "Clear" }).click();
+  await pane.getByRole("button", { name: /^Use the JSON example/ }).click();
+  await expect(pane.getByRole("combobox", { name: "Sample format" })).toHaveValue("application/json");
+  await pane.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(status).toContainText("Complete, 7 parts, conforms.");
+  expect(fake.runs[0]).toMatchObject({ mediaType: "application/json", body: recordedRun("json").sample });
+  await expect(pane).toContainText(`Evaluated by ${engineOf("json")}.`);
+  await expect(forms.getByRole("radio")).toHaveCount(2);
+  await expect(forms.getByRole("radio", { name: "JOLT" })).toBeChecked();
+  const rml = forms.getByRole("radio", { name: "RML" });
+  await expect(forms).toContainText("mapping.rml.ttl");
+  await expect(forms).toContainText("No runtime yet");
+  // choosing the RML form says in words why Run is off
+  await rml.check();
+  await expect(pane.getByRole("button", { name: "Run", exact: true })).toBeDisabled();
+  await expect(pane.getByRole("note", { name: "Why Run is off" })).toContainText("Waits on an RML runtime.");
+  expect(await pane.innerText()).not.toMatch(/\b[A-Z]{2,}-\d+\b/);
+  expect(fake.runs).toHaveLength(1);
+  await forms.getByRole("radio", { name: "JOLT" }).check();
+  await expect(pane.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
+  await expect(pane.getByRole("note", { name: "Why Run is off" })).toHaveCount(0);
 });
 
 test("the Sample tab is in mapping mode's dock only", async ({ page }) => {
@@ -1840,7 +2004,7 @@ test("the mapping canvas and the ontology drawing are whole after a column is co
 async function runSample(page: Page, fake: FakeService): Promise<Locator> {
   const pane = await sampleDock(page, fake);
   await pane.getByRole("button", { name: "Run", exact: true }).click();
-  await expect(pane.getByRole("status", { name: "Sample status" })).toContainText("Complete, 2 parts");
+  await expect(pane.getByRole("status", { name: "Sample status" })).toContainText("Complete, 7 parts");
   return pane;
 }
 
@@ -1852,34 +2016,34 @@ test("a run's artefact opens as Turtle text, switches to a table that filters an
   await expect(artefact.getByRole("group", { name: "Rendering" }).getByRole("button", { name: "Text" })).toHaveAttribute("aria-pressed", "true");
   await expect(artefact.getByRole("group", { name: "Text format" }).getByRole("button", { name: "Turtle" })).toHaveAttribute("aria-pressed", "true");
   const text = artefact.getByLabel("Output text");
-  await expect(text).toContainText("<https://example.org/lattice/data/loan-1> a <https://example.org/lending#LoanApplication>");
+  await expect(text).toContainText("<urn:lattice:studio:mapping/cover/policies/1/policy/1/cover/1> a target:Cover;");
   await expect(text).not.toContainText("application/n-triples");
   await artefact.getByRole("group", { name: "Text format" }).getByRole("button", { name: "N-Triples" }).click();
-  await expect(text).toContainText("<https://example.org/lattice/data/loan-1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.org/lending#LoanApplication> .");
+  await expect(text).toContainText("<urn:lattice:studio:mapping/cover/policies/1/policy/1/cover/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <urn:example:target#Cover> .");
   await expect(artefact.getByRole("button", { name: "Copy" })).toBeVisible();
   await expect(artefact.getByRole("button", { name: "Download" })).toBeVisible();
   // the table, filtered
   await artefact.getByRole("button", { name: "Table", exact: true }).click();
   const table = artefact.getByRole("table", { name: "Triples" });
-  await expect(table.getByRole("row")).toHaveCount(2);
-  await expect(artefact).toContainText("Showing 1 of 1 rows.");
+  await expect(table.getByRole("row")).toHaveCount(9);
+  await expect(artefact).toContainText("Showing 8 of 8 rows.");
   await artefact.getByRole("searchbox", { name: "Filter rows" }).fill("nothing like this");
   await expect(table.getByRole("row")).toHaveCount(1);
-  await expect(artefact).toContainText("Showing 0 of 0 matching rows, 1 held.");
-  await artefact.getByRole("searchbox", { name: "Filter rows" }).fill("LoanApplication");
-  await expect(table.getByRole("row")).toHaveCount(2);
-  await expect(table.getByRole("row").nth(1)).toContainText("rdf:type");
+  await expect(artefact).toContainText("Showing 0 of 0 matching rows, 8 held.");
+  await artefact.getByRole("searchbox", { name: "Filter rows" }).fill("coverOf");
+  await expect(table.getByRole("row")).toHaveCount(5);
+  await expect(table.getByRole("row").nth(1)).toContainText("coverOf");
   // the graph
   await artefact.getByRole("button", { name: "Graph", exact: true }).click();
-  await expect(artefact.locator(".react-flow__node").filter({ hasText: "loan-1" })).toBeVisible();
+  await expect(artefact.locator(".react-flow__node").filter({ hasText: "P-1" })).toBeVisible();
   // the choice is kept for the media type
   await page.reload();
   await page.getByRole("tab", { name: "Sample" }).click();
   const again = page.getByRole("region", { name: "Sample", exact: true });
   await again.getByRole("button", { name: "Run", exact: true }).click();
-  await expect(again.getByRole("status", { name: "Sample status" })).toContainText("Complete, 2 parts");
+  await expect(again.getByRole("status", { name: "Sample status" })).toContainText("Complete, 7 parts");
   await expect(again.getByRole("region", { name: "Part 2, artefact" }).getByRole("button", { name: "Graph", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(again.getByRole("region", { name: "Part 2, artefact" }).locator(".react-flow__node").filter({ hasText: "loan-1" })).toBeVisible();
+  await expect(again.getByRole("region", { name: "Part 2, artefact" }).locator(".react-flow__node").filter({ hasText: "P-1" })).toBeVisible();
   // and the report, another media type, is still Turtle text
   await expect(again.getByRole("region", { name: "Part 1, report" }).getByRole("button", { name: "Text", exact: true })).toHaveAttribute("aria-pressed", "true");
 });
@@ -1892,11 +2056,11 @@ test("the report part opens as text and its table lists the report's triples", a
   await expect(report.getByLabel("Output text")).toContainText("sh:conforms true");
   await report.getByRole("button", { name: "Table", exact: true }).click();
   const rows = report.getByRole("table", { name: "Triples" }).getByRole("row");
-  await expect(rows).toHaveCount(3);
-  await expect(rows.nth(1)).toContainText("rdf:type");
-  await expect(rows.nth(1)).toContainText("sh:ValidationReport");
-  await expect(rows.nth(2)).toContainText("sh:conforms");
-  await expect(rows.nth(2)).toContainText('"true"^^xsd:boolean');
+  // the heading row, then the report's triples, which name the engine and the one finding of a scheme the sample is not read by
+  await expect(rows).toHaveCount(10);
+  await expect(rows.filter({ hasText: "sh:ValidationReport" })).toHaveCount(1);
+  await expect(rows.filter({ hasText: "sh:conforms" })).toContainText('"true"^^xsd:boolean');
+  await expect(rows.filter({ hasText: "cst:engine" })).toContainText("Saxon-HE 12.5, XSLT 3.0");
 });
 
 test("a part whose text does not parse in its media type says so with the parser's message, shows its text and leaves the pane whole", async ({ page }) => {
@@ -1911,7 +2075,7 @@ test("a part whose text does not parse in its media type says so with the parser
   await expect(artefact).toContainText("does not parse");
   // the report beside it still reads
   await expect(pane.getByRole("region", { name: "Part 1, report" }).getByLabel("Output text")).toContainText("sh:conforms true");
-  await expect(pane.getByRole("status", { name: "Sample status" })).toContainText("Complete, 2 parts");
+  await expect(pane.getByRole("status", { name: "Sample status" })).toContainText("Complete, 7 parts");
 });
 
 /** The viewport of the first canvas, as React Flow keeps it, and the middle of its pane in the drawing's own coordinates. */

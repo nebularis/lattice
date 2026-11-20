@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-20. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-20. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -65,7 +65,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-M2d | the Libraries section | planned | SVA-M1, SVA-M2c |
 | SVA-M2e | template cards for the proposer and the MCP server | planned | SVA-M2b, SVA-M2c |
 | SVA-M3a | a mapping's queries over an RDF sample, as a run | built 2026-11-20, building 2026-11-20 | SVA-P3 |
-| SVA-M3b | the sample pane | building 2026-11-20 | SVA-R4, SVA-M3a |
+| SVA-M3b | the sample pane | built 2026-11-20, building 2026-11-20 | SVA-R4, SVA-M3a |
 | SVA-M4 | the output explorer | built 2026-11-17, building 2026-11-17 | SVA-O1, SVA-R4 |
 | SVA-H1 | the stack's secrets in one guarded folder, settings printed redacted, and a guard on reading them | built 2026-11-15, building 2026-11-15 |  |
 | SVA-X1 | register rows renumbered past the other branches | built 2026-11-19, building 2026-11-19 |  |
@@ -213,3 +213,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-20: SVA-M3a built, [Validation Pack](../validation/SVA-M3a.md). An RDF sample run is answered by the Python worker with `mork_rdf`'s driver on a queue of its own, routed by the service on the input's media type, with every rule of a run, and its artefacts equal the dry run's. On the real stack it passes. SVA-P3's real-stack test errors in its fixture, which fills no persistence part, and is fixed next.
 - 2026-11-20: SVA-P3's real-stack test fixed. Its fixture now builds the facility workspace as the app does, with the baseline and the persistence part saved, where it had named the sample and left the part empty. The runs' real-stack suite gives 11 passed and the liveness suite 5 passed, with Erlang on the path.
 - 2026-11-20: SVA-M3b started.
+- 2026-11-20: SVA-M3b built, [Validation Pack](../validation/SVA-M3b.md). Mapping mode's sample pane runs a compiled form over a sample only when the author presses Run, compiling first when the scheme or the other parts changed, and shows the output with the engine named. The automatic rerun and the studio's use of the deprecated transforms route are gone. The journeys replay frames the real workers gave, kept current by a test on each side. The Java run worker's report names its engine too. A run covers every scheme reading the sample's format (TD-174).

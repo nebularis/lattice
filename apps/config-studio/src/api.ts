@@ -319,20 +319,6 @@ export const api = {
     return (response.headers.get("Location") ?? "").split("/").pop() ?? "";
   },
 
-  /** Runs a finished compile job's XSLT stylesheets or JOLT chains over a sample in XML or JSON, through the transforms
-   * worker, and answers at once. The run is never stored (ADR-A148). */
-  async transform(id: string, compileJob: string, mediaType: string, sample: string): Promise<Job> {
-    const response = await request(`/api/workspaces/${id}/transforms?job=${encodeURIComponent(compileJob)}`, {
-      method: "POST",
-      headers: { "Content-Type": mediaType },
-      body: sample,
-    });
-    const graph = Graph.parse(await response.text());
-    const run = graph.ofType(CST("Transform"))[0];
-    if (!run) throw new ApiError(502, "the reply does not describe the run");
-    return readJob(graph, run.value);
-  },
-
   /**
    * Starts a run over an input that is not saved (ADR-A154). Without `wait` the service accepts it with `202` and the run's IRI, and its
    * frames reach the tab's events. With `wait` the answer is the frames, `200`, or `504` at the deadline. Every refusal the contract names is
