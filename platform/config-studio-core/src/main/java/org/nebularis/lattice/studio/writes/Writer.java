@@ -114,26 +114,47 @@ public final class Writer {
             }
         }
         Map<String, Long> done = store.receipts(ids);
+        Map<String, String> digests = done.isEmpty() ? Map.of() : store.receiptDigests(done.keySet());
         Batch b = new Batch();
+        List<Command> resent = new ArrayList<>();
         for (int i = 0; i < batch.size(); i++) {
             Command c = batch.get(i);
             Reply refused = check(c);
             if (refused != null) {
                 replies[i] = refused;
             } else if (done.containsKey(c.id())) {
-                replies[i] = Reply.ok(done.get(c.id()));
+                // A resend is answered from its receipt. An id the receipt holds for another request is refused (MSAI11-02).
+                String held = digests.get(c.id());
+                boolean same = held == null || held.equals(Codec.digest(c));
+                replies[i] = same ? Reply.ok(done.get(c.id()))
+                    : Reply.refused("the command id " + c.id() + " was applied before for another request, so this one is refused");
+                if (same && (c.type() == Command.Type.DELETE_DOCUMENT || c.type() == Command.Type.DELETE_WORKSPACE)) {
+                    resent.add(c);
+                }
             } else {
                 replies[i] = b.plan(i, c);
             }
         }
+        Map<String, Long> applied = Map.of();
+        List<Retired> pending = new ArrayList<>();
         if (!b.planned.isEmpty()) {
             store.update(b.request);
-            Map<String, Long> applied = store.receipts(b.planned.keySet());
-            b.planned.forEach((id, plan) -> replies[plan.index] = applied.containsKey(id) ? plan.reply : plan.unapplied.get());
-            for (Plan plan : b.planned.values()) {
-                if (applied.containsKey(batch.get(plan.index).id())) {
-                    publish(batch.get(plan.index));
+            Map<String, Long> receipted = store.receipts(b.planned.keySet());
+            b.planned.forEach((id, plan) -> replies[plan.index] = receipted.containsKey(id) ? plan.reply : plan.unapplied.get());
+            b.retired.forEach((id, planned) -> {
+                if (receipted.containsKey(id)) {
+                    pending.addAll(planned);
                 }
+            });
+            applied = receipted;
+        }
+        // A deletion answered from its receipt may follow a batch whose update committed and whose next step failed, so the
+        // rows its tombstones lost are removed here too (MSAF7-01).
+        pending.addAll(retiredBy(resent));
+        finish(pending);
+        for (Plan plan : b.planned.values()) {
+            if (applied.containsKey(batch.get(plan.index).id())) {
+                publish(batch.get(plan.index));
             }
         }
         return List.of(replies);
@@ -171,6 +192,96 @@ public final class Writer {
     private record Plan(int index, Reply reply, Supplier<Reply> unapplied) {
     }
 
+    /** A tombstone a deletion planned, in transaction {@code txn}, with the cause and actor it records. */
+    private record Retired(Family family, String root, String txn, String cause, String actor) {
+        Retired again(int round) {
+            return new Retired(family, root, txn + "-again-" + round, cause, actor);
+        }
+    }
+
+    /** How many more times a deletion's lost tombstone is planned, each time at the revision the row then has. */
+    private static final int TOMBSTONE_ROUNDS = 3;
+
+    /**
+     * The tombstones of deletions applied, whose row is still live because a write of the same part or document moved its
+     * revision first, planned again at the revision that write left, so the deletion wins while the row is live (MSAF6-01).
+     * The description no longer names the row, so no reader acts on it meanwhile. Each round reads the rows in one query and
+     * is one request, and each tombstone in it is guarded as before. A row still live after the last round is logged and left.
+     */
+    private void finish(List<Retired> pending) {
+        for (int round = 1; !pending.isEmpty(); round++) {
+            Map<String, Family> roots = new HashMap<>();
+            pending.forEach(r -> roots.put(r.root(), r.family()));
+            Map<String, Long> rows = ops.seqs(store, roots);
+            UpdateRequest request = new UpdateRequest();
+            List<Retired> next = new ArrayList<>();
+            for (Retired r : pending) {
+                Long live = rows.get(r.root());
+                if (live == null) {
+                    continue;
+                }
+                if (round > TOMBSTONE_ROUNDS) {
+                    org.slf4j.LoggerFactory.getLogger(Writer.class).warn("{} is still live at revision {} after its deletion, and is left", r.root(), live);
+                    continue;
+                }
+                Retired again = r.again(round);
+                ops.tombstone(r.family(), r.root(), live, again.txn(), r.cause(), r.actor()).forEach(request::add);
+                logDrops(r.family(), r.root(), live).forEach(request::add);
+                next.add(again);
+            }
+            if (next.isEmpty()) {
+                return;
+            }
+            store.update(request);
+            pending.clear();
+            pending.addAll(next);
+        }
+    }
+
+    /**
+     * The rows that deletions answered from their receipts retire, which no plan in this batch holds: each part's and
+     * document's graph its receipt says it wrote. A deleted workspace's description is tombstoned, so the receipt is what
+     * still names its documents. A deleted id is never used again (MSA-F9), so a row among them still live is one its
+     * tombstone lost.
+     */
+    private List<Retired> retiredBy(List<Command> resent) {
+        if (resent.isEmpty()) {
+            return List.of();
+        }
+        Map<String, Set<String>> wrote = store.receiptWrote(resent.stream().map(Command::id).toList());
+        List<Retired> out = new ArrayList<>();
+        for (Command c : resent) {
+            String ws = c.workspace();
+            java.util.SortedMap<String, Family> roots = new java.util.TreeMap<>();
+            for (String graph : wrote.getOrDefault(c.id(), Set.of())) {
+                for (String name : Workspace.GRAPHS) {
+                    if (graph.equals(Graphs.config(ws, name))) {
+                        roots.put(Graphs.partRoot(ws, name), Family.PART);
+                    }
+                }
+                String doc = Graphs.documentIdOfGraph(ws, graph);
+                if (doc != null) {
+                    roots.put(Graphs.document(ws, doc), Family.DOCUMENT);
+                }
+            }
+            int k = 0;
+            for (Map.Entry<String, Family> root : roots.entrySet()) {
+                out.add(new Retired(root.getValue(), root.getKey(), "urn:txn:" + c.id() + "/resent/" + (++k), Graphs.receipt(c.id()), actor(c)));
+            }
+        }
+        return out;
+    }
+
+    /** Drops the patch log of {@code root} up to the revision its tombstone at {@code revision} mints. */
+    private List<Update> logDrops(Family f, String root, long revision) {
+        List<Update> drops = new ArrayList<>();
+        for (long k = 1; k <= revision + 1; k++) {
+            drops.add(StudioStore.drop(ops.revision(f, root, k) + "/add"));
+            drops.add(StudioStore.drop(ops.revision(f, root, k) + "/del"));
+        }
+        return drops;
+    }
+
     /** The commands of one request, and what the writer knows of each workspace and job as the batch would leave them. */
     private final class Batch {
         final UpdateRequest request = new UpdateRequest();
@@ -183,6 +294,8 @@ public final class Writer {
         final Map<String, Long> seqs = new HashMap<>();
         /** The parts and documents as stored, skolemised, as the batch would leave them, the base of the next delta. */
         final Map<String, Model> rawGraphs = new HashMap<>();
+        /** The tombstones each deletion planned, by command id, which {@link #finish} plans again where a write moved the row first. */
+        final Map<String, List<Retired>> retired = new HashMap<>();
 
         Optional<Workspace> workspace(String id) {
             return workspaces.computeIfAbsent(id, k -> Optional.ofNullable(ops.workspace(store, k)));
@@ -190,6 +303,11 @@ public final class Writer {
 
         long seq(Family f, String root) {
             return seqs.computeIfAbsent(root, r -> ops.seq(store, f, r).orElse(0L));
+        }
+
+        /** Whether {@code root} is tombstoned in the store, or by a deletion earlier in this batch. */
+        boolean deleted(Family f, String root) {
+            return retired.values().stream().flatMap(List::stream).anyMatch(r -> r.root().equals(root)) || ops.tombstoned(store, f, root);
         }
 
         /** The operations of one command in order, each in a transaction of its own (PB-D10), and its receipt after them. */
@@ -577,6 +695,12 @@ public final class Writer {
             }
             long next = c.expect() + 1;
             Workspace.Document held = ws.documents().get(doc);
+            String root = Graphs.document(ws.id(), doc);
+            // A deleted document's row stays tombstoned, and a create over it writes nothing, so its id is refused before the
+            // description could list a document with no graph (MSA-F9).
+            if (held == null && c.expect() == 0 && deleted(Family.DOCUMENT, root)) {
+                return Reply.refused("the document was deleted, so its id cannot be used again");
+            }
             boolean described = held != null && held.title().equals(c.label()) && held.template().equals(c.sample());
             if (described && c.expect() != 0 && unchanged(Family.DOCUMENT, Graphs.document(ws.id(), doc), graph)) {
                 return Reply.ok(c.expect());
@@ -596,13 +720,21 @@ public final class Writer {
                 if (now == null) {
                     return Reply.notFound();
                 }
-                // A deleted document's row stays tombstoned, so its id cannot be created again.
-                return now.documentRevision(doc) == c.expect() ? Reply.refused("the document was deleted, so its id cannot be used again")
-                    : Reply.stale(now.documentRevision(doc));
+                if (now.documentRevision(doc) != c.expect()) {
+                    return Reply.stale(now.documentRevision(doc));
+                }
+                // The document's own row says which it was: tombstoned, the id was deleted meanwhile, and otherwise another
+                // command moved the description the save was guarded on, and a resend completes it (MSAF6-02).
+                return ops.tombstoned(store, Family.DOCUMENT, root) ? Reply.refused("the document was deleted, so its id cannot be used again")
+                    : changed(id);
             });
         }
 
-        /** The description without the document, then the document tombstoned and its patch log dropped. */
+        /**
+         * The description without the document, then the document tombstoned and its patch log dropped. The receipt is guarded on
+         * the description's step, since once the description no longer lists the document no reader finds it, and a tombstone
+         * that a save of the document beat is planned again after the commit (MSAF6-01).
+         */
         private Reply deleteDocument(int index, Command c) {
             String doc = c.part();
             if (!Graphs.isId(doc) || named(c).hasNext() || !c.body().getDefaultModel().isEmpty()) {
@@ -616,7 +748,7 @@ public final class Writer {
             Steps s = new Steps(c);
             describe(s, ws.withDocument(doc, null, ws.modifiedAt()), false);
             retire(s, c, Family.DOCUMENT, Graphs.document(ws.id(), doc), ws.documentRevision(doc), Graphs.documentGraph(ws.id(), doc));
-            s.commit(Graphs.receipts(ws.id()), null);
+            s.commit(Graphs.receipts(ws.id()), s.first, null);
             workspaces.put(ws.id(), Optional.of(ws.withDocument(doc, null, ws.modifiedAt())));
             return planned(index, c, Reply.ok(), () -> changed(ws.id()));
         }
@@ -627,14 +759,12 @@ public final class Writer {
                 return;
             }
             s.op(graph, txn -> ops.tombstone(f, root, revision, txn, Graphs.receipt(c.id()), actor(c)));
+            retired.computeIfAbsent(c.id(), k -> new ArrayList<>()).add(new Retired(f, root, s.last, Graphs.receipt(c.id()), actor(c)));
             retireLog(s, f, root, revision);
         }
 
         private void retireLog(Steps s, Family f, String root, long revision) {
-            for (long k = 1; k <= revision + 1; k++) {
-                s.raw(StudioStore.drop(ops.revision(f, root, k) + "/add"));
-                s.raw(StudioStore.drop(ops.revision(f, root, k) + "/del"));
-            }
+            logDrops(f, root, revision).forEach(s::raw);
         }
 
         /** An import's graphs are named by their roots, under the new workspace's id, which {@code ImportedWorkspace} gave them. */
@@ -699,7 +829,8 @@ public final class Writer {
         /**
          * The description is tombstoned first, so the receipt, which is guarded on its claim, says the workspace is gone. Then each part
          * and document with a version row is tombstoned and its patch log dropped, and the jobs and the workspace's receipts are
-         * cleared. The receipt is kept in the store's own receipt graph.
+         * cleared. The receipt is kept in the store's own receipt graph. A tombstone that a save of its part or document beat is
+         * planned again after the commit (MSAF6-01).
          */
         private Reply deleteWorkspace(int index, Command c) {
             String id = c.workspace();
@@ -1024,6 +1155,7 @@ public final class Writer {
                 add(u, g, r, Cst.requestedAt.asNode(), NodeFactory.createLiteralDT(c.at().toString(), XSDDatatype.XSDdateTime));
             }
             add(u, g, r, Cst.committedAt.asNode(), NodeFactory.createLiteralDT(clock.instant().toString(), XSDDatatype.XSDdateTime));
+            add(u, g, r, Cst.requestDigest.asNode(), NodeFactory.createLiteralString(Codec.digest(c)));
             for (String w : wrote) {
                 add(u, g, r, Cst.wrote.asNode(), iri(w));
             }

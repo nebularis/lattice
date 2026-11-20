@@ -23,6 +23,14 @@
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
   </dependencies>
   <build>
+    <resources>
+      <!-- The broker topology the service and the writer declare, read from the contract itself (MSA-F4), as the worker reads its packaged copy. -->
+      <resource>
+        <directory>${project.basedir}/../../contracts/config-studio</directory>
+        <includes><include>amqp-topology.json</include></includes>
+        <targetPath>org/nebularis/lattice/studio/jobs</targetPath>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

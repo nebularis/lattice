@@ -1,8 +1,12 @@
 (* The ledger laws, ADR-A131 decisions 3, 4 and 6, over the kernel extracted from
-   ontology/ledger/README.md section 10 (ADR-A-FM2, plan ledger, LG-7). *)
+   ontology/ledger/README.md section 10 (ADR-A-FM2, plan ledger, LG-7). Agreement imports the
+   shared session, LatticeShared, to prove the kernel's amount is the shared amount (ADR-A-FM2's
+   addendum of 2026-11-18). *)
 
 session Ledger = LatticeBase +
   options [document = false, quick_and_dirty = false, timeout = 90]
+  sessions
+    LatticeShared
   theories
     Kernel
     Allocation
@@ -15,3 +19,4 @@ session Ledger = LatticeBase +
     Pots
     Credits
     Readings
+    Agreement

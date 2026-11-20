@@ -113,6 +113,7 @@ public final class Cst {
     public static final Property committedAt = p("committedAt");
     public static final Property wrote = p("wrote");
     public static final Property receiptRevision = p("receiptRevision");
+    public static final Property requestDigest = p("requestDigest");
     public static final Resource Analyse = r("Analyse");
     public static final Resource Assemble = r("Assemble");
     public static final Resource Propose = r("Propose");

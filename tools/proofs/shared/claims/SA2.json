@@ -1,0 +1,13 @@
+{
+  "subject": "SA2",
+  "statedAs": "Amounts.subtracting_undoes_adding",
+  "statementDigest": "sha256:47fc0034745feaf888817e884bd3f885be0fb24ca462d6f45f68039ca147fb54",
+  "method": "Proof",
+  "scope": "EveryAbelianGroup",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

@@ -62,7 +62,7 @@ FMH-2  # named in a plan, no board row yet
 FMH-H1  # named in a plan, no board row yet
 FMH-H1.4a  # named in a plan, no board row yet
 FMH-H2  # named in a plan, no board row yet
-# unit ledger, 1 slice(s)
+# unit ledger, 2 slice(s)
 LG-1.5b  # named in a plan, no board row yet
 # unit multi-store-conformance, 1 slice(s)
 MSC-6  # named in a plan, no board row yet

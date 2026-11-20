@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lattice-testing-postgres"
+version = "0.1.0"
+description = "A throwaway PostgreSQL server at a pinned version for LATTICE's tests, checks and benchmarks, with a clean database per test (ADR-A125). Not a store SPI"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+  "pytest>=8.0",
+  "psycopg[binary]>=3.2,<4",
+]
+
+[project.entry-points.pytest11]
+lattice_postgres = "lattice_testing_postgres.plugin"
+
+[project.optional-dependencies]
+server = [
+  "postgresql-binaries==16.15.0",
+]
+test = [
+  "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

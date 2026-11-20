@@ -120,7 +120,7 @@ What the studio keeps. Computing a delta against the state it read is the caller
 | `Unknown` | the request or the read failed in transport | `COMMIT`'s answer was lost | the commit's answer was lost | never |
 | a batch of units | one request, each unit's operations in one `DELETE`/`INSERT`/`WHERE` with joint guards, so one unit's failure leaves the others | one transaction with a savepoint per unit, rolled back to it on a failed guard | one transaction per unit unless the product has savepoints *(verify)* | one call per unit |
 
-Two rows need more than the studio has. On SPARQL a unit of several aggregates is all or nothing only when its operations share one `WHERE`, so their guards are evaluated together. The studio's operations are separate, and its receipt is guarded on the last operation's claim alone, so an earlier operation can apply while a later one does not. On SQL the unit is one transaction with a savepoint and needs nothing more.
+Two rows need more than the studio has. On SPARQL a unit of several aggregates is all or nothing only when its operations share one `WHERE`, so their guards are evaluated together. The studio's operations are separate, and its receipt is guarded on one operation's claim, so an earlier operation can apply while a later one does not. The studio makes that safe for readers by the order of its operations ([ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md) decision 13), and a unit on the port makes it unnecessary, since the unit's operations take one guard. On SQL the unit is one transaction with a savepoint and needs nothing more.
 
 ## 6. Verdict
 
@@ -137,7 +137,7 @@ Two needs of the studio are not met by any port that holds only generated operat
 
 | ID | Finding | Consequence |
 |---|---|---|
-| MSAI11-01 | A studio command that writes several aggregates runs them as separate operations in one request, with its receipt guarded on one operation's claim, the last by default (`Writer.Steps.commit`). An earlier operation can apply while a later one does not, and the command is then answered as not applied | on the port a unit is all or nothing. On SPARQL its operations share one `WHERE`. Whether any studio command reaches this state today was not tested |
+| MSAI11-01 | A studio command that writes several aggregates runs them as separate operations in one request, with its receipt guarded on one operation's claim, the last by default (`Writer.Steps.commit`). An earlier operation can apply while a later one does not. This is by design: [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md) decision 13 orders a command's operations so that a guard failing part way leaves nothing a reader acts on, a version before its lineage, the parts before the description on creation, the description first on deletion | on the port a unit is all or nothing, so a studio command moved onto the port gives its operations one guard, and on SPARQL its operations share one `WHERE`. MSA-F6 tested decision 13 on six commands: nothing a reader acts on remains in each, and a resend completes a publication and a new document's save but not a deletion whose later tombstone failed, which leaves a graph no reader reaches ([MSA-F6](../../validation/MSA-F6.md)) |
 | MSAI11-02 | A resend of a command id with a different body is answered 200 from the receipt. The writer reads receipts by id and never compares the request digest it writes into the claim | the port's `KeyReuse`. The studio has the digest in the store already |
 | MSAI11-03 | The epoch is a process setting, `LATTICE_STUDIO_EPOCH`, checked against each version row and never against the dataset | `EpochChanged`, with the dataset epoch as the source |
 | MSAI11-04 | `GraphReference` accepts only `http` and `https` IRIs, so `ScopedDataset` cannot read the studio's graphs | `Root` replaces it |
@@ -149,4 +149,4 @@ Two needs of the studio are not met by any port that holds only generated operat
 - **For MSA-I5.** A unit is one command of MSA-I4's IR whose guards are the union of its operations' guards, so the laws cover units without a construct of their own.
 - **For MSA-I6.** Model X3, a relay reading receipts, reads unit receipts.
 - **For MSA-I8.** The family run on PostgreSQL goes behind `LogicalStore`, with the savepoint batch of §5.
-- **For the maintainer.** MSAI11-01, MSAI11-02 and MSAI11-05 are about running code, and this note changes none.
+- **For the maintainer.** MSAI11-02 and MSAI11-05 were defects in running code, fixed by MSA-F3 and MSA-F2. MSAI11-01 is decision 13's design, tested by MSA-F6.

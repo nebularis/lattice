@@ -69,6 +69,23 @@ def test_h2_6b_t1_a_three_row_append_steps_the_seq_once_and_writes_one_receipt_o
         assert (e, U(PAT + "opSeq"), engines.canon(LONG(n))) in events
 
 
+@engines.each_engine_and_guards
+def test_msa_f5_the_event_s_logical_key_names_each_event_of_an_append():
+    """MSAI4-04: one append writes its three events under one revision and one sequence number, so the event's logical key has to
+    name more than the stream and the sequence to name one event. Each event's key, read from what the append wrote, is distinct."""
+    from persistence.contract import LOGICAL_KEYS, ResourceKind
+
+    ds = run_append(_store(), triples=DOMAIN)
+    events = graph_holding(ds, "urn:event:1")
+    seq = {str(o) for s, p, o in ds.graph(U("urn:g:meta")) if s == STREAM and p == U(PAT + "seq")}
+    keys = set()
+    for e in (U(f"urn:event:{n}") for n in (1, 2, 3)):
+        assert (e, U(PAT + "revision"), U(REV1)) in events, "every event of the append is under the one revision"
+        parts = {"stream": str(STREAM), "seq": next(iter(seq)), "event": str(e)}
+        keys.add(tuple(parts[part] for part in LOGICAL_KEYS[ResourceKind.EVENT]))
+    assert len(keys) == 3
+
+
 @engines.rdflib_only
 def test_h2_6b_t2_the_three_row_append_is_the_same_under_every_hash_seed_on_rdflib():
     """TSD-01: rdflib applies the solutions one at a time in an order that follows the hash seed. Every solution writes the same

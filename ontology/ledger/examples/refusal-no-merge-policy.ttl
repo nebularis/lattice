@@ -11,20 +11,24 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/refusal-no-merge-policy/> .
+@base <https://example.org/lattice/ledger/refusal-no-merge-policy/> .
 
 ex:OwnerKind a owl:Class .
 
 ex:units a qnt:ValueSpace ;
+    fnd:hasIdentity ex:units-identity ;
     qnt:spaceKey "ledger-refusal-no-merge-policy-units" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-refusal-no-merge-policy-units-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-identity a fnd:PersistentIdentity .
 ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
 ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
 
-ex:q-100 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
-
 ex:account a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:units ;
+    fnd:hasIdentity ex:account-identity ;
+    ldg:statedAmount <account/stated-amount> ; ldg:unitOfAccount ex:units ;
     ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergeRule ldg:Refuse ;
     rdfs:comment "Refused. It states a merge rule itself and names no merge policy." .
+<account/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
+ex:account-identity a fnd:PersistentIdentity .

@@ -4,23 +4,27 @@
   "queues": [
     {
       "name": "lattice.studio.jobs",
+      "bindsTo": "lattice.studio",
       "routingKey": "lattice.studio.jobs",
-      "deadLetter": true
+      "deadLettersTo": "lattice.studio.dlx"
     },
     {
       "name": "lattice.studio.jobs.long",
+      "bindsTo": "lattice.studio",
       "routingKey": "lattice.studio.jobs.long",
-      "deadLetter": true
+      "deadLettersTo": "lattice.studio.dlx"
     },
     {
       "name": "lattice.studio.transforms",
+      "bindsTo": "lattice.studio",
       "routingKey": "lattice.studio.transforms",
-      "deadLetter": false
+      "deadLettersTo": null
     },
     {
       "name": "lattice.studio.dead",
+      "bindsTo": "lattice.studio.dlx",
       "routingKey": "#",
-      "deadLetter": false
+      "deadLettersTo": null
     }
   ],
   "writes": {

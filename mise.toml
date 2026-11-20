@@ -50,7 +50,7 @@ run = "python tools/hooks.py install --bootstrap"
 [tasks."bootstrap:python"]
 description = "Install every Python package of the repository into this checkout's .venv in one resolve"
 depends = ["bootstrap:pip"]
-run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring,studio]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/wording_assembler[test]\" -e \"./tools/mork_rdf[test]\" -e \"./tools/v_rig[test]\" -e \"./tools/mork_transforms[test]\" -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/studio_harness[test]\" -e \"./tools/testing/jena[test]\" -e \"./tools/testing/sparql_probes[test]\" -e \"./tools/testing/ledger_corpus[test]\" -e \"./tools/testing/mem_check[test]\" -e \"./tools/testing/requires[test]\""
+run = "python -m pip install -c requirements-lock.txt \".[reasoning,test,knowledge]\" -e \"./workers[test,authoring,studio]\" -e ./tools/mork -e \"./tools/mork_compilers[test]\" -e ./tools/surface -e \"./tools/wording_assembler[test]\" -e \"./tools/mork_rdf[test]\" -e \"./tools/v_rig[test]\" -e \"./tools/mork_transforms[test]\" -e ./packages/persistence/python -e \"./tools/persistence[test]\" -e \"./tools/vocabulary[test]\" -e \"./tools/reference/eligibility[test]\" -e \"./packages/minting/python[test]\" -e \"./tools/testing/oxigraph[test]\" -e \"./tools/testing/studio_harness[test]\" -e \"./tools/testing/jena[test]\" -e \"./tools/testing/sparql_probes[test]\" -e \"./tools/testing/ledger_corpus[test]\" -e \"./tools/testing/mem_check[test]\" -e \"./tools/testing/requires[test]\" -e \"./tools/testing/postgres[test]\""
 
 # The knowledge index, after the packages it needs (ADR-A134 decision 13). The first build fetches
 # the embedding model, and where that is blocked it notes why and still builds, so bootstrap never
@@ -164,6 +164,16 @@ run = "python -m pip install -e \"./tools/testing/requires[test]\""
 [tasks."check:testing-requires"]
 description = "Run the requires marker's tests: a skip naming the package, and LATTICE_REQUIRE_ALL failing it (STD-323)"
 run = "python -m pytest tools/testing/requires/tests -q"
+
+[tasks."bootstrap:testing-postgres"]
+depends = ["bootstrap:pip"]
+description = "Install the PostgreSQL test-support package with its pinned server, postgresql-binaries 16.15.0, and unpack the server once (ADR-A125). Tests that need it skip without the server"
+run = ["python -m pip install -c requirements-lock.txt -e \"./tools/testing/postgres[test,server]\"", "python -m lattice_testing_postgres"]
+
+[tasks."check:testing-postgres"]
+depends = ["bootstrap:testing-postgres"]
+description = "Run the PostgreSQL test-support package's own tests, which start a server, write and read a row in a transaction and stop it (ADR-A125)"
+run = "python -m pytest tools/testing/postgres/tests -q"
 
 [tasks."bootstrap:vocabulary"]
 depends = ["bootstrap:pip"]

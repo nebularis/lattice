@@ -1,0 +1,144 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. A credit its account does not accept, the conformance case of
+# ADR-A131's fourth addendum of 2026-11-16. A parent and its child are each
+# stated at 10, with a ceiling of 10. The parent is restored by recoveries, and
+# the child only by write-backs, so it does not accept a recovery. A debit of 5
+# at the child, then a credit of 5, a recovery, posted to the child.
+#
+# | Position | Event                               | Child   | Parent  |
+# |----------|-------------------------------------|---------|---------|
+# | start    |                                     | 10      | 10      |
+# | 1        | debit of 5 at the child             | -5 -> 5 | -5 -> 5 |
+# | 2        | recovery of 5 posted to the child   | refused | refused |
+#
+# The credit is refused, no posting is written, and both balances stay at 5. It
+# is recorded as a merge record on the child with the credit as its one
+# request, no granted value, and the reason ldg:KindNotAccepted. The refusal is
+# a record its pass writes, so that pass moves the holder's ledger as the
+# first did, to revision 2.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-credit-kind/> .
+@prefix pass: <https://example.org/lattice/ledger/refusal-credit-kind/ledger-holder/pass/> .
+@base <https://example.org/lattice/ledger/refusal-credit-kind/> .
+
+# ==== The owner, the kinds of credit and the value space =====================
+
+ex:holder a fnd:PersistentIdentity ; rdfs:comment "The owner of both accounts." .
+ex:Holder a owl:Class ; rdfs:comment "The kind of owner these accounts admit." .
+
+ex:credit-kinds-edition-1 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:credit-kinds-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "the holder's kinds of credit, first edition" .
+ex:credit-kinds-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The scheme of credit kinds an applied module publishes, through its editions." .
+
+ex:recovery a skos:Concept ; skos:inScheme ldg:CreditKinds , ex:credit-kinds-edition-1 ;
+    rdfs:isDefinedBy ex:credit-kinds-edition-1 ; skos:prefLabel "recovery" .
+ex:write-back a skos:Concept ; skos:inScheme ldg:CreditKinds , ex:credit-kinds-edition-1 ;
+    rdfs:isDefinedBy ex:credit-kinds-edition-1 ; skos:prefLabel "write-back" .
+
+ex:units a qnt:ValueSpace ;
+    fnd:hasIdentity ex:units-identity ;
+    qnt:spaceKey "ledger-refusal-credit-kind-units" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-refusal-credit-kind-units-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-identity a fnd:PersistentIdentity .
+ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
+ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
+
+# ==== The merge policy =========================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
+# ==== The ledger profile =======================================================
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
+# ==== The configuration: a parent and a child ================================
+# Each definition is a version with an identity, its stated amount and its
+# ceiling minted under its IRI. Both name their kinds and pin their edition.
+
+ex:parent a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:parent-identity ;
+    ldg:statedAmount <parent/stated-amount> ; ldg:unitOfAccount ex:units ; ldg:creditCeiling <parent/credit-ceiling> ;
+    ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
+    ldg:restoredBy ex:recovery ; ldg:creditKindsEdition ex:credit-kinds-edition-1 ;
+    rdfs:comment "Stated at 10, restored by recoveries." .
+<parent/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "10"^^xsd:decimal .
+<parent/credit-ceiling> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "10"^^xsd:decimal .
+ex:parent-identity a fnd:PersistentIdentity .
+
+ex:child a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:child-identity ;
+    ldg:statedAmount <child/stated-amount> ; ldg:unitOfAccount ex:units ; ldg:creditCeiling <child/credit-ceiling> ;
+    ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
+    ldg:partOf ex:parent ; ldg:restoredBy ex:write-back ; ldg:creditKindsEdition ex:credit-kinds-edition-1 ;
+    rdfs:comment "Stated at 10, part of the parent, restored by write-backs alone." .
+<child/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "10"^^xsd:decimal .
+<child/credit-ceiling> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "10"^^xsd:decimal .
+ex:child-identity a fnd:PersistentIdentity .
+
+# ==== Position 1: a debit of 5 at the child ===================================
+
+ex:debit-1-proposal rdfs:comment "A draw of 5 on the child." .
+ex:debit-1-request a ldg:Request ;
+    ldg:forProposal ex:debit-1-proposal ;
+    ldg:requestedValue "5"^^xsd:decimal ; ldg:grantedValue "5"^^xsd:decimal .
+ex:debit-1-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:account-child ;
+    ldg:inPass pass:debit-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:availableBefore "10"^^xsd:decimal ;
+    ldg:request ex:debit-1-request .
+ex:debit-1-posting a ldg:Posting ;
+    ldg:onAccount ex:account-child ;
+    ldg:inPass pass:debit-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "5"^^xsd:decimal ;
+    ldg:runningBalance "5"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:debit-1-merge , ex:debit-1-request .
+
+# ==== Position 2: a recovery of 5 posted to the child, refused ================
+
+ex:credit-2-proposal rdfs:comment "A recovery of 5, which the terms post to the child." .
+ex:credit-2-request a ldg:Request ;
+    ldg:forProposal ex:credit-2-proposal ; ldg:requestedValue "5"^^xsd:decimal .
+ex:credit-2-refusal a ldg:MergeRecord ;
+    ldg:onAccount ex:account-child ;
+    ldg:inPass pass:credit-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:request ex:credit-2-request ;
+    ldg:refusalReason ldg:KindNotAccepted ;
+    rdfs:comment "The child does not accept a recovery. Nothing is posted, and the child and the parent stay at 5." .
+
+# ==== The ledger, the account instances and the passes ========================
+
+ex:ledger-holder a ldg:Ledger ;
+    ldg:forOwner ex:holder ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "2"^^xsd:nonNegativeInteger .
+ex:account-parent a ldg:Account ;
+    ldg:ofDefinition ex:parent ; ldg:forOwner ex:holder .
+ex:account-child a ldg:Account ;
+    ldg:ofDefinition ex:child ; ldg:forOwner ex:holder ;
+    ldg:partOfAccount ex:account-parent .
+ex:holder a ex:Holder .
+pass:debit-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:credit-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .

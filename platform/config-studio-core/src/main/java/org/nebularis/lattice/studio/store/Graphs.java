@@ -81,6 +81,12 @@ public final class Graphs {
         return iri != null && iri.startsWith(prefix) && isId(iri.substring(prefix.length())) ? iri.substring(prefix.length()) : null;
     }
 
+    /** The id of the document whose graph is {@code graph} in workspace {@code ws}, or null when it is no document's graph there. */
+    public static String documentIdOfGraph(String ws, String graph) {
+        String prefix = DOCUMENT_GRAPH_PREFIX + encodeForUri(workspace(ws) + ":document:");
+        return graph != null && graph.startsWith(prefix) && isId(graph.substring(prefix.length())) ? graph.substring(prefix.length()) : null;
+    }
+
     /**
      * The base the Wording IRIs of every document are minted under. A document's id is a UUID, so its IRIs need no
      * workspace's, and they stay the same when an export is imported under another workspace.

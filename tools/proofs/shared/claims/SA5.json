@@ -1,0 +1,13 @@
+{
+  "subject": "SA5",
+  "statedAs": "Amounts.the_sum_adds, the_sum_keeps_the_order",
+  "statementDigest": "sha256:ad9feefe3d0264cd4ab8686d21d79f1ed5df9c4473d86fc3a73eed8615b70b57",
+  "method": "Proof",
+  "scope": "EveryKeySet",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

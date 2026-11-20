@@ -17,19 +17,21 @@ Versions: stream-client 1.12.0, amqp-client 5.37.0, slf4j 2.0.20, shade jar buil
 ## Layout and how to run
 
 ```powershell
+mise exec -- mvn -q -f platform/pom.xml -pl config-studio-writer -am install -DskipTests   # from the repository root, once, for the writer mode
 Set-Location spikes\multi-store-stream-probes
 .\scripts\cluster-up.ps1                                  # builds target\probes.jar if missing, starts the cluster and msa-i9-ctl
 .\scripts\p1.ps1 -Mode kill -Run p1-kill-1
 .\scripts\p1.ps1 -Mode partition -Run p1-partition-2 -HeartbeatS 10 -BatchMs 300
 .\scripts\p2-dedup.ps1
 .\scripts\p3-offsets.ps1 -Run p3-before-apply-env -Point before-apply -StoreVia env
+.\scripts\p3-offsets.ps1 -Run p3-before-apply-writer -Point before-apply -StoreVia writer
 .\scripts\p3-leader-kill.ps1 -Run p3-leader-kill-2 -KillNode 2
 .\scripts\cluster-down.ps1
 ```
 
 Every Docker object is prefixed `msa-i9-`. Each run writes `results\<run>\` with an `analysis.txt` (the numbers below), the harness log, and the client logs (large ones gzipped). The harness and client logs are not committed, and the analyses, broker views, stored offsets and the debug trace of `p3-dbg` are. `analysis.txt` columns are described at the head of each table it prints. Do not pipe a probe script into `Select-Object -First N`. It ends the pipe before the final analysis. Use `-Last N`.
 
-The Java probes (`src/main/java/org/nebularis/lattice/probes/msa/`) are `Sac` (consumer), `Pub` and `Dedup` (publishers), `Offsets` and `Analyze` (read-back and analysis), `Topo` (declare, delete, `--spread`), `Log` (JSON lines).
+The Java probes (`src/main/java/org/nebularis/lattice/probes/msa/`) are `Sac` (consumer), `Pub` and `Dedup` (publishers), `Offsets` and `Analyze` (read-back and analysis), `Topo` (declare, delete, `--spread`), `Log` (JSON lines). `StudioWriterBridge`, in the writer's own package, runs a batch through the studio's `StreamWriter.apply` for `--store-via writer`, so that mode tests the writer's code and not a copy. It needs the writer installed into the local Maven repository, the first line above.
 
 ## P1: stop and partition of one of two consumers
 
@@ -79,6 +81,7 @@ c1 halts at batch 3 at a chosen point (`before-apply`, `before-store`, `after-st
 - `p3-before-store` and `p3-pause`: c2 began at 16 on 6 of 8 partitions against 9 stored by c1, so a stop before the store gives no redelivery for those partitions (those messages were applied, so nothing skipped).
 - The P1 kill run skipped 18 for the same reason (6 each on partitions 2, 4, 6).
 - Mitigation: `--store-via env`, `Environment.storeOffset(reference, stream, offset)` with the applied offset. `p3-before-apply-env`: 0 skipped, c2 began at 10 on all 8 partitions.
+- The fix, MSA-F1, rerun on 2026-11-18 with `--store-via writer`, which runs the batch through the studio's fixed `StreamWriter.apply`. `p3-before-apply-writer`: 0 confirmed messages skipped, and c2 began on each partition at the offset after the one c1 had stored. The control on the same day, `p3-before-apply-context-2026-11-18`, skipped 36 as before.
 - `p3-dbg` is a debug-logging run kept for the client trace that located the cause.
 
 ## P3b: loss of a broker node that leads partitions

@@ -6,7 +6,7 @@
   <version>0.1.0-SNAPSHOT</version>
   <description>Probes of a RabbitMQ super stream under failover and partition, as the Configuration Studio's store writer uses it (MSA-I9).</description>
   <properties>
-    <maven.compiler.release>21</maven.compiler.release>
+    <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- The versions of platform/config-studio-writer/pom.xml and platform/config-studio-core/pom.xml, so the probes run what the studio runs. -->
     <studio.stream.version>1.12.0</studio.stream.version>
@@ -21,6 +21,9 @@
     <dependency><groupId>com.rabbitmq</groupId><artifactId>stream-client</artifactId><version>${studio.stream.version}</version></dependency>
     <dependency><groupId>com.rabbitmq</groupId><artifactId>amqp-client</artifactId><version>${studio.amqp.version}</version></dependency>
     <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-simple</artifactId><version>2.0.20</version></dependency>
+    <!-- The studio's writer itself, for the probe's writer mode of storing offsets (MSA-F1). Installed into the local
+         repository first with the platform build's install of config-studio-writer, as the README says. -->
+    <dependency><groupId>org.nebularis.lattice</groupId><artifactId>config-studio-writer</artifactId><version>0.1.0-SNAPSHOT</version></dependency>
   </dependencies>
   <build>
     <finalName>probes</finalName>

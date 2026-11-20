@@ -1,37 +1,179 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# SHACL-SPARQL constraints over Ledger's records: balances fold their
-# postings, a merge stays within availability, account instances keep their
-# natural keys and periods, and no record is effective after its pass. Each shape
+# SHACL-SPARQL constraints over Ledger's records: a running balance is a sum
+# less its cuts, a credit is applied within its room and cut where an ancestor
+# had less, a merge records every request and shares within availability,
+# a checkpoint states its totals and is written for an account that moved,
+# a draw is in its account's value space and unit and representable there,
+# account instances keep their
+# natural keys and periods, a ledger's passes move its revision in order,
+# and no record is effective after its pass. Each shape
 # targets the class it checks and reads all its instances in one query, so a
 # dataset's records are checked in one evaluation per law rather than one per
-# record. A result's focus node is the class and its value the record.
+# record. A result's focus node is the class and its value the record. A sum
+# adds zero for a row that is not a counted posting, so no term of it errors.
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 
-ldg:BalanceFoldShape a sh:NodeShape ;
-        sh:targetNode ldg:BalanceRecord ;
+ldg:RunningBalanceShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
         sh:sparql [
-                sh:message "A balance record's remaining value must be its stated amount less the debits plus the credits posted in its account's subtree by passes at or before its own, capped at the credit ceiling." ;
+                sh:message "A posting's running balance must be its account's stated amount, less the debits, plus the credits the account accepts at the amount applied, less the cuts at it, over the postings in its subtree up to the posting in recorded order." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
                         SELECT $this ?value WHERE {
                                 {
-                                        SELECT $this ?value ?remaining ?stated ?ceiling (SUM(?signed) AS ?moved) WHERE {
-                                                ?value a $this ; ldg:onAccount ?account ; ldg:inPass/ldg:passPosition ?at ; ldg:remainingValue ?remaining .
-                                                ?account ldg:ofDefinition/ldg:statedAmount/qnt:numericValue ?stated .
-                                                OPTIONAL { ?account ldg:ofDefinition/ldg:creditCeiling/qnt:numericValue ?statedCeiling }
+                                        SELECT $this ?value ?balance ?stated (SUM(?signed) AS ?moved) WHERE {
+                                                ?value a $this ; ldg:onAccount ?account ; ldg:runningBalance ?balance ;
+                                                        ldg:inPass/ldg:passPosition ?at ; ldg:recordedPosition ?recorded ; ldg:microPosition ?micro .
+                                                ?account ldg:ofDefinition ?definition .
+                                                ?definition ldg:statedAmount/qnt:numericValue ?stated .
                                                 OPTIONAL {
-                                                        ?posting ldg:onAccount/ldg:partOfAccount* ?account .
-                                                        OPTIONAL { ?posting ldg:inPass/ldg:passPosition ?postedAt ; ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        ?earlier ldg:onAccount/ldg:partOfAccount* ?account .
+                                                        OPTIONAL { ?earlier ldg:onAccount ?on ; ldg:inPass/ldg:passPosition ?earlierAt ;
+                                                                ldg:recordedPosition ?earlierRecorded ; ldg:microPosition ?earlierMicro ;
+                                                                ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?cut ldg:cutOf ?earlier ; ldg:cutAt ?account ; ldg:cutValue ?cutValue }
+                                                }
+                                                BIND (COALESCE(IF(
+                                                        IF(?on = ?account,
+                                                                ?earlierRecorded < ?recorded || (?earlierRecorded = ?recorded && ?earlierMicro <= ?micro),
+                                                                ?earlierAt < ?at || (?earlierAt = ?at && ?earlierMicro <= ?micro)),
+                                                        IF(?direction = ldg:Credit,
+                                                                IF(NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                                        || EXISTS { ?earlier ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }, ?amount, 0)
+                                                                        - COALESCE(?cutValue, 0),
+                                                                -?amount),
+                                                        0), 0) AS ?signed)
+                                        } GROUP BY $this ?value ?balance ?stated
+                                }
+                                FILTER (?balance != ?stated + ?moved)
+                        }
+                """
+        ] .
+
+ldg:CreditCeilingShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "A running balance must not be above the account's credit ceiling, or its stated amount where no ceiling is stated." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:onAccount ?account ; ldg:runningBalance ?balance .
+                                ?account ldg:ofDefinition ?definition .
+                                ?definition ldg:statedAmount ?statedQuantity .
+                                ?statedQuantity qnt:numericValue ?stated .
+                                OPTIONAL { ?definition ldg:creditCeiling ?ceilingQuantity . ?ceilingQuantity qnt:numericValue ?ceiling }
+                                FILTER (?balance > COALESCE(?ceiling, ?stated))
+                        }
+                """
+        ] .
+
+ldg:CreditAmountsShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "A credit must state the amount offered and apply from zero to that amount, and where it applies less, its account must be at its ceiling after it. A debit states no amount offered and no kind." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        ?value a $this ; ldg:direction ldg:Credit ; ldg:amountValue ?applied ;
+                                                ldg:onAccount ?account ; ldg:runningBalance ?balance .
+                                        ?account ldg:ofDefinition ?definition .
+                                        ?definition ldg:statedAmount/qnt:numericValue ?stated .
+                                        OPTIONAL { ?definition ldg:creditCeiling/qnt:numericValue ?ceiling }
+                                        OPTIONAL { ?value ldg:offeredValue ?offered }
+                                        FILTER (!BOUND(?offered) || ?applied < 0 || ?applied > ?offered
+                                                || (?applied < ?offered && ?balance != COALESCE(?ceiling, ?stated)))
+                                } UNION {
+                                        ?value a $this ; ldg:direction ldg:Debit .
+                                        FILTER (EXISTS { ?value ldg:offeredValue ?offered } || EXISTS { ?value ldg:creditKind ?kind })
+                                }
+                        }
+                """
+        ] .
+
+ldg:CreditKindAcceptedShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "A credit must be posted to an account that accepts its kind, and a credit with no kind must not be posted on a path where an account names its kinds." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:direction ldg:Credit ; ldg:onAccount ?account .
+                                ?account ldg:ofDefinition ?definition .
+                                FILTER (
+                                        (EXISTS { ?definition ldg:restoredBy ?any }
+                                                && NOT EXISTS { ?value ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind })
+                                        || (NOT EXISTS { ?value ldg:creditKind ?stated }
+                                                && EXISTS { ?account ldg:partOfAccount*/ldg:ofDefinition/ldg:restoredBy ?named })
+                                )
+                        }
+                """
+        ] .
+
+ldg:CutWithinTheCreditShape a sh:NodeShape ;
+        sh:targetNode ldg:Cut ;
+        sh:sparql [
+                sh:message "A cut must be of a credit, at an ancestor of its account that accepts its kind, positive and at most the amount applied, and a credit has at most one cut at an account." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:cutOf ?posting ; ldg:cutAt ?ancestor ; ldg:cutValue ?cut .
+                                OPTIONAL { ?posting ldg:direction ?direction ; ldg:amountValue ?applied ; ldg:onAccount ?account }
+                                FILTER (!BOUND(?direction) || ?direction != ldg:Credit || ?cut <= 0 || ?cut > ?applied
+                                        || NOT EXISTS { ?account ldg:partOfAccount+ ?ancestor }
+                                        || (EXISTS { ?ancestor ldg:ofDefinition/ldg:restoredBy ?any }
+                                                && NOT EXISTS { ?posting ldg:creditKind ?kind . ?ancestor ldg:ofDefinition/ldg:restoredBy ?kind })
+                                        || EXISTS { ?other ldg:cutOf ?posting ; ldg:cutAt ?ancestor . FILTER (?other != ?value) })
+                        }
+                """
+        ] .
+
+ldg:CutFillsTheAncestorShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting ;
+        sh:sparql [
+                sh:message "An ancestor that accepts a credit must not be above its ceiling after it, and must be at its ceiling where a cut is recorded at it." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        SELECT $this ?value ?ancestor ?stated ?ceiling ?cutHere (SUM(?signed) AS ?moved) WHERE {
+                                                ?value a $this ; ldg:direction ldg:Credit ; ldg:onAccount ?account ;
+                                                        ldg:inPass/ldg:passPosition ?at ; ldg:recordedPosition ?recorded ; ldg:microPosition ?micro .
+                                                ?account ldg:partOfAccount+ ?ancestor .
+                                                ?ancestor ldg:ofDefinition ?definition .
+                                                ?definition ldg:statedAmount/qnt:numericValue ?stated .
+                                                FILTER (NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                        || EXISTS { ?value ldg:creditKind ?creditKind . ?definition ldg:restoredBy ?creditKind })
+                                                OPTIONAL { ?definition ldg:creditCeiling/qnt:numericValue ?statedCeiling }
+                                                OPTIONAL {
+                                                        ?earlier ldg:onAccount/ldg:partOfAccount* ?ancestor .
+                                                        OPTIONAL { ?earlier ldg:onAccount ?on ; ldg:inPass/ldg:passPosition ?earlierAt ;
+                                                                ldg:recordedPosition ?earlierRecorded ; ldg:microPosition ?earlierMicro ;
+                                                                ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?cut ldg:cutOf ?earlier ; ldg:cutAt ?ancestor ; ldg:cutValue ?cutValue }
                                                 }
                                                 BIND (COALESCE(?statedCeiling, ?stated) AS ?ceiling)
-                                                BIND (IF(BOUND(?posting) && ?postedAt <= ?at, IF(?direction = ldg:Credit, ?amount, -?amount), 0) AS ?signed)
-                                        } GROUP BY $this ?value ?remaining ?stated ?ceiling
+                                                BIND (EXISTS { ?here ldg:cutOf ?value ; ldg:cutAt ?ancestor } AS ?cutHere)
+                                                BIND (COALESCE(IF(
+                                                        IF(?on = ?account,
+                                                                ?earlierRecorded < ?recorded || (?earlierRecorded = ?recorded && ?earlierMicro <= ?micro),
+                                                                ?earlierAt < ?at || (?earlierAt = ?at && ?earlierMicro <= ?micro)),
+                                                        IF(?direction = ldg:Credit,
+                                                                IF(NOT EXISTS { ?definition ldg:restoredBy ?all }
+                                                                        || EXISTS { ?earlier ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }, ?amount, 0)
+                                                                        - COALESCE(?cutValue, 0),
+                                                                -?amount),
+                                                        0), 0) AS ?signed)
+                                        } GROUP BY $this ?value ?ancestor ?stated ?ceiling ?cutHere
                                 }
-                                FILTER (?remaining != IF(?stated + ?moved > ?ceiling, ?ceiling, ?stated + ?moved))
+                                FILTER (?stated + ?moved > ?ceiling || (?cutHere && ?stated + ?moved != ?ceiling))
                         }
                 """
         ] .
@@ -39,67 +181,87 @@ ldg:BalanceFoldShape a sh:NodeShape ;
 ldg:CheckpointFoldShape a sh:NodeShape ;
         sh:targetNode ldg:Checkpoint ;
         sh:sparql [
-                sh:message "A checkpoint's balance must be its stated amount less the debits plus the credits posted in its account's subtree by passes at or before its close, capped at the credit ceiling." ;
+                sh:message "A checkpoint's balance must be its stated amount, less the debits, plus the credits the account accepts at the amount applied, less the cuts at it, over the postings in its subtree by passes at or before its close." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
                         SELECT $this ?value WHERE {
                                 {
-                                        SELECT $this ?value ?balance ?stated ?ceiling (SUM(?signed) AS ?moved) WHERE {
-                                                ?value a $this ; ldg:onAccount ?account ; ldg:closePosition ?at ; ldg:balanceValue ?balance .
-                                                ?account ldg:ofDefinition/ldg:statedAmount/qnt:numericValue ?stated .
-                                                OPTIONAL { ?account ldg:ofDefinition/ldg:creditCeiling/qnt:numericValue ?statedCeiling }
+                                        SELECT $this ?value ?balance ?stated (SUM(?signed) AS ?moved) WHERE {
+                                                ?value a $this ; ldg:onAccount ?account ; ldg:closePosition ?close ; ldg:balanceValue ?balance .
+                                                ?account ldg:ofDefinition ?definition .
+                                                ?definition ldg:statedAmount/qnt:numericValue ?stated .
                                                 OPTIONAL {
                                                         ?posting ldg:onAccount/ldg:partOfAccount* ?account .
                                                         OPTIONAL { ?posting ldg:inPass/ldg:passPosition ?postedAt ; ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?cut ldg:cutOf ?posting ; ldg:cutAt ?account ; ldg:cutValue ?cutValue }
                                                 }
-                                                BIND (COALESCE(?statedCeiling, ?stated) AS ?ceiling)
-                                                BIND (IF(BOUND(?posting) && ?postedAt <= ?at, IF(?direction = ldg:Credit, ?amount, -?amount), 0) AS ?signed)
-                                        } GROUP BY $this ?value ?balance ?stated ?ceiling
+                                                BIND (COALESCE(IF(?postedAt <= ?close,
+                                                        IF(?direction = ldg:Credit,
+                                                                IF(NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                                        || EXISTS { ?posting ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }, ?amount, 0)
+                                                                        - COALESCE(?cutValue, 0),
+                                                                -?amount),
+                                                        0), 0) AS ?signed)
+                                        } GROUP BY $this ?value ?balance ?stated
                                 }
-                                FILTER (?balance != IF(?stated + ?moved > ?ceiling, ?ceiling, ?stated + ?moved))
+                                FILTER (?balance != ?stated + ?moved)
                         }
                 """
         ] .
 
-ldg:AvailableIsLeastAlongPathShape a sh:NodeShape ;
-        sh:targetNode ldg:BalanceRecord ;
+ldg:CheckpointTotalsShape a sh:NodeShape ;
+        sh:targetNode ldg:Checkpoint ;
         sh:sparql [
-                sh:message "A balance record's available value must be the least remaining value along its account's path in the same pass." ;
+                sh:message "A checkpoint's debits must be the debits in its account's subtree, and its credits offered the amounts offered of the credits the account accepts there, by passes at or before its close." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
-                                ?value a $this ; ldg:onAccount ?account ; ldg:inPass ?pass ;
-                                        ldg:availableValue ?available ; ldg:remainingValue ?remaining .
-                                FILTER (
-                                        ?available > ?remaining
-                                        || EXISTS {
-                                                ?account ldg:partOfAccount+/^ldg:onAccount ?above .
-                                                FILTER EXISTS { ?above ldg:inPass ?pass ; ldg:remainingValue ?aboveRemaining . FILTER (?available > ?aboveRemaining) }
-                                        }
-                                        || (?available != ?remaining && NOT EXISTS {
-                                                ?account ldg:partOfAccount+/^ldg:onAccount ?least .
-                                                FILTER EXISTS { ?least ldg:inPass ?pass ; ldg:remainingValue ?available }
-                                        })
-                                )
+                                {
+                                        SELECT $this ?value ?debits ?offered (SUM(?drawn) AS ?drawnTotal) (SUM(?credited) AS ?offeredTotal) WHERE {
+                                                ?value a $this ; ldg:onAccount ?account ; ldg:closePosition ?close ;
+                                                        ldg:debitsTotal ?debits ; ldg:creditsOfferedTotal ?offered .
+                                                ?account ldg:ofDefinition ?definition .
+                                                OPTIONAL {
+                                                        ?posting ldg:onAccount/ldg:partOfAccount* ?account .
+                                                        OPTIONAL { ?posting ldg:inPass/ldg:passPosition ?postedAt ; ldg:direction ?direction ; ldg:amountValue ?amount }
+                                                        OPTIONAL { ?posting ldg:offeredValue ?offeredValue }
+                                                }
+                                                BIND (COALESCE(IF(?postedAt <= ?close && ?direction = ldg:Debit, ?amount, 0), 0) AS ?drawn)
+                                                BIND (COALESCE(IF(?postedAt <= ?close && ?direction = ldg:Credit
+                                                        && (NOT EXISTS { ?definition ldg:restoredBy ?any }
+                                                                || EXISTS { ?posting ldg:creditKind ?kind . ?definition ldg:restoredBy ?kind }),
+                                                        ?offeredValue, 0), 0) AS ?credited)
+                                        } GROUP BY $this ?value ?debits ?offered
+                                }
+                                FILTER (?debits != ?drawnTotal || ?offered != ?offeredTotal)
                         }
                 """
         ] .
 
-ldg:CreditCeilingShape a sh:NodeShape ;
-        sh:targetNode ldg:BalanceRecord ;
+ldg:CheckpointOnlyWhereMovedShape a sh:NodeShape ;
+        sh:targetNode ldg:Checkpoint ;
         sh:sparql [
-                sh:message "A remaining value must not be above the account's credit ceiling, or its stated amount where no ceiling is stated." ;
+                sh:message "A checkpoint must be written only for an account that moved: its balance or one of its totals must differ from its account's previous checkpoint, or from the stated amount with nothing drawn or offered where the account has none." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
                         SELECT $this ?value WHERE {
-                                ?value a $this ; ldg:onAccount ?account ; ldg:remainingValue ?remaining .
-                                ?account ldg:ofDefinition ?definition .
-                                ?definition ldg:statedAmount ?statedQuantity .
-                                ?statedQuantity qnt:numericValue ?stated .
-                                OPTIONAL { ?definition ldg:creditCeiling ?ceilingQuantity . ?ceilingQuantity qnt:numericValue ?stated0 }
-                                FILTER (?remaining > COALESCE(?stated0, ?stated))
+                                {
+                                        SELECT $this ?value ?account ?balance ?debits ?offered (MAX(?earlierClose) AS ?lastClose) WHERE {
+                                                ?value a $this ; ldg:onAccount ?account ; ldg:closePosition ?close ;
+                                                        ldg:balanceValue ?balance ; ldg:debitsTotal ?debits ; ldg:creditsOfferedTotal ?offered .
+                                                OPTIONAL { ?earlier ldg:onAccount ?account ; ldg:closePosition ?earlierClose . FILTER (?earlierClose < ?close) }
+                                        } GROUP BY $this ?value ?account ?balance ?debits ?offered
+                                }
+                                ?account ldg:ofDefinition/ldg:statedAmount/qnt:numericValue ?stated .
+                                OPTIONAL {
+                                        ?previous ldg:onAccount ?account ; ldg:closePosition ?previousClose ; ldg:balanceValue ?previousBalance ;
+                                                ldg:debitsTotal ?previousDebits ; ldg:creditsOfferedTotal ?previousOffered .
+                                        FILTER (?previousClose = ?lastClose)
+                                }
+                                FILTER (?balance = COALESCE(?previousBalance, ?stated) && ?debits = COALESCE(?previousDebits, 0)
+                                        && ?offered = COALESCE(?previousOffered, 0))
                         }
                 """
         ] .
@@ -107,39 +269,53 @@ ldg:CreditCeilingShape a sh:NodeShape ;
 ldg:MergeWithinAvailabilityShape a sh:NodeShape ;
         sh:targetNode ldg:MergeRecord ;
         sh:sparql [
-                sh:message "A merge's grants must sum to no more than the availability it was given, and under a proportional rule whose requests exceed it, to exactly that availability." ;
+                sh:message "A merge that granted must give its requests and its residual together the amount it shared, the lesser of what they asked and the availability it was given." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
                                 {
-                                        SELECT $this ?value ?available (SUM(?granted) AS ?grantedTotal) (SUM(?requested) AS ?requestedTotal) WHERE {
-                                                ?value a $this ; ldg:availableBefore ?available ; ldg:grant ?grant .
-                                                ?grant ldg:grantedValue ?granted ; ldg:requestedValue ?requested .
+                                        SELECT $this ?value ?available (SUM(COALESCE(?granted, 0)) AS ?grantedTotal) (SUM(?requested) AS ?requestedTotal) WHERE {
+                                                ?value a $this ; ldg:availableBefore ?available ; ldg:request ?request .
+                                                ?request ldg:requestedValue ?requested .
+                                                OPTIONAL { ?request ldg:grantedValue ?granted }
                                         } GROUP BY $this ?value ?available
                                 }
-                                ?value ldg:onAccount ?account .
-                                ?account ldg:ofDefinition ?definition .
-                                ?definition ldg:mergePolicy ?policy .
-                                ?policy ldg:mergeRule ?rule .
-                                FILTER (?grantedTotal > ?available
-                                        || (?rule = ldg:Proportional && ?requestedTotal > ?available && ?grantedTotal != ?available))
+                                FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                OPTIONAL { ?value ldg:residualValue ?residual }
+                                BIND (IF(?available < 0, 0, ?available) AS ?room)
+                                FILTER (?grantedTotal + COALESCE(?residual, 0) != IF(?requestedTotal < ?room, ?requestedTotal, ?room))
                         }
                 """
         ] .
 
-ldg:GrantWithinRequestShape a sh:NodeShape ;
-        sh:targetNode ldg:Grant ;
+ldg:GrantedWithinRequestShape a sh:NodeShape ;
+        sh:targetNode ldg:Request ;
         sh:sparql [
-                sh:message "A grant must not be above its request, and an exact share states its numerator and a positive denominator together." ;
+                sh:message "A request must not be granted more than it asked or less than zero, and an exact share states its numerator and a positive denominator together." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
-                                ?value a $this ; ldg:grantedValue ?granted ; ldg:requestedValue ?requested .
+                                ?value a $this ; ldg:requestedValue ?requested .
+                                OPTIONAL { ?value ldg:grantedValue ?granted }
                                 OPTIONAL { ?value ldg:proportionNumerator ?numerator }
                                 OPTIONAL { ?value ldg:proportionDenominator ?denominator }
-                                FILTER (?granted > ?requested || ?granted < 0
+                                FILTER (COALESCE(?granted > ?requested || ?granted < 0, false)
                                         || BOUND(?numerator) != BOUND(?denominator)
                                         || (BOUND(?denominator) && ?denominator <= 0))
+                        }
+                """
+        ] .
+
+ldg:GrantedMergeShape a sh:NodeShape ;
+        sh:targetNode ldg:MergeRecord ;
+        sh:sparql [
+                sh:message "A merge that states no reason must give every request a granted value." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:request ?request .
+                                FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                FILTER NOT EXISTS { ?request ldg:grantedValue ?granted }
                         }
                 """
         ] .
@@ -147,13 +323,89 @@ ldg:GrantWithinRequestShape a sh:NodeShape ;
 ldg:RefusedMergeShape a sh:NodeShape ;
         sh:targetNode ldg:MergeRecord ;
         sh:sparql [
-                sh:message "A refused merge must hold no grant, and no posting may cite it." ;
+                sh:message "A refused merge must state a reason of ldg:RefusalReasons, grant no request and state no residual, and no posting may cite it." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX prov: <http://www.w3.org/ns/prov#>
+                        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                         SELECT $this ?value WHERE {
                                 ?value a $this ; ldg:refusalReason ?reason .
-                                FILTER (EXISTS { ?value ldg:grant ?grant } || EXISTS { ?posting prov:wasDerivedFrom ?value })
+                                FILTER (NOT EXISTS { ?reason skos:inScheme ldg:RefusalReasons }
+                                        || EXISTS { ?value ldg:request ?request . ?request ldg:grantedValue ?granted }
+                                        || EXISTS { ?value ldg:residualValue ?residual }
+                                        || EXISTS { ?posting prov:wasDerivedFrom ?value })
+                        }
+                """
+        ] .
+
+ldg:ResidualPermittedShape a sh:NodeShape ;
+        sh:targetNode ldg:MergeRecord ;
+        sh:sparql [
+                sh:message "A merge's residual must not be below zero, and may be above zero only where its policy allows residuals." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:residualValue ?residual ; ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                FILTER (?residual < 0 || (?residual > 0 && NOT EXISTS { ?policy ldg:allowsResiduals true }))
+                        }
+                """
+        ] .
+
+ldg:RanksAsDeclaredShape a sh:NodeShape ;
+        sh:targetNode ldg:Request ;
+        sh:sparql [
+                sh:message "A request must state a rank exactly where its merge's policy states a rank criterion, and a place exactly where it states a unit order criterion." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this .
+                                ?merge ldg:request ?value ; ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                FILTER (EXISTS { ?policy ldg:rankCriterion ?rankCriterion } != EXISTS { ?value ldg:rank ?rank }
+                                        || EXISTS { ?policy ldg:unitOrderCriterion ?unitCriterion } != EXISTS { ?value ldg:unitOrderPlace ?place })
+                        }
+                """
+        ] .
+
+ldg:MergeGuardsShape a sh:NodeShape ;
+        sh:targetNode ldg:MergeRecord ;
+        sh:sparql [
+                sh:message "A merge that granted must hold no two requests of one rank where its policy requires distinct ranks and the requests exceed the availability, and must hold requests that agree on purpose where its policy requires that." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        {
+                                                SELECT $this ?value ?available (SUM(?requested) AS ?requestedTotal) WHERE {
+                                                        ?value a $this ; ldg:availableBefore ?available ; ldg:request ?request .
+                                                        ?request ldg:requestedValue ?requested .
+                                                } GROUP BY $this ?value ?available
+                                        }
+                                        FILTER (?requestedTotal > ?available)
+                                        FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                        ?value ldg:onAccount ?account .
+                                        ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                        ?policy ldg:requiresDistinctRanks true .
+                                        FILTER EXISTS {
+                                                ?value ldg:request ?one , ?other .
+                                                OPTIONAL { ?one ldg:rank ?oneRank }
+                                                OPTIONAL { ?other ldg:rank ?otherRank }
+                                                FILTER (?one != ?other && COALESCE(?oneRank = ?otherRank, true))
+                                        }
+                                } UNION {
+                                        ?value a $this ; ldg:onAccount ?account .
+                                        ?account ldg:ofDefinition/ldg:mergePolicy ?policy .
+                                        ?policy ldg:requiresSamePurpose true .
+                                        FILTER NOT EXISTS { ?value ldg:refusalReason ?reason }
+                                        FILTER EXISTS {
+                                                ?value ldg:request ?one , ?other .
+                                                OPTIONAL { ?one ldg:forPurpose ?onePurpose }
+                                                OPTIONAL { ?other ldg:forPurpose ?otherPurpose }
+                                                FILTER (?one != ?other
+                                                        && COALESCE(?onePurpose != ?otherPurpose, BOUND(?onePurpose) != BOUND(?otherPurpose)))
+                                        }
+                                }
                         }
                 """
         ] .
@@ -161,15 +413,96 @@ ldg:RefusedMergeShape a sh:NodeShape ;
 ldg:MergedPostingCitesMergeShape a sh:NodeShape ;
         sh:targetNode ldg:Posting ;
         sh:sparql [
-                sh:message "A posting from a grant must cite the grant's merge record and post the amount granted." ;
+                sh:message "A posting from a request must cite the request's merge record and post the value the request was granted." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX prov: <http://www.w3.org/ns/prov#>
                         SELECT $this ?value WHERE {
-                                ?grant a ldg:Grant ; ldg:grantedValue ?granted .
-                                ?value prov:wasDerivedFrom ?grant ; a $this ; ldg:amountValue ?amount .
-                                ?merge ldg:grant ?grant .
-                                FILTER (NOT EXISTS { ?value prov:wasDerivedFrom ?merge } || ?amount != ?granted)
+                                ?request a ldg:Request .
+                                ?value prov:wasDerivedFrom ?request ; a $this ; ldg:amountValue ?amount .
+                                ?merge ldg:request ?request .
+                                OPTIONAL { ?request ldg:grantedValue ?granted }
+                                FILTER (NOT EXISTS { ?value prov:wasDerivedFrom ?merge } || COALESCE(?amount != ?granted, true))
+                        }
+                """
+        ] .
+
+ldg:DrawInItsAccountsSpaceShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting , ldg:Request ;
+        sh:sparql [
+                sh:message "A draw must read no quantity outside its account's unit of account. A draw that does is Undetermined, with Quantification's reason qnt:OutsideDeclaredSpace." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        PREFIX prov: <http://www.w3.org/ns/prov#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; prov:wasDerivedFrom ?quantity ; ldg:onAccount|^ldg:request/ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:unitOfAccount ?space .
+                                FILTER EXISTS { ?quantity a qnt:Quantity }
+                                FILTER NOT EXISTS { ?value ldg:direction ldg:Credit }
+                                OPTIONAL { ?quantity qnt:onSpace ?on }
+                                FILTER (COALESCE(?on != ?space, true))
+                        }
+                """
+        ] .
+
+ldg:DrawInItsAccountsUnitShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting , ldg:Request ;
+        sh:sparql [
+                sh:message "A draw must read no quantity in another unit than the one its account's stated amount is in, since the ledger converts nothing. A draw that does is Undetermined, with no permitted conversion, as Quantification words it." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        PREFIX prov: <http://www.w3.org/ns/prov#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; prov:wasDerivedFrom ?quantity ; ldg:onAccount|^ldg:request/ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:unitOfAccount ?space .
+                                FILTER EXISTS { ?quantity a qnt:Quantity ; qnt:onSpace ?space }
+                                FILTER NOT EXISTS { ?value ldg:direction ldg:Credit }
+                                OPTIONAL { ?quantity qnt:inUnit ?unit }
+                                OPTIONAL { ?account ldg:ofDefinition/ldg:statedAmount/qnt:inUnit ?accountUnit }
+                                FILTER (COALESCE(?unit != ?accountUnit, BOUND(?unit) || BOUND(?accountUnit)))
+                        }
+                """
+        ] .
+
+ldg:DrawRepresentableShape a sh:NodeShape ;
+        sh:targetNode ldg:Posting , ldg:Request ;
+        sh:sparql [
+                sh:message "A draw's amount must be representable in its account's unit of account: a decimal, a value of the space's datatype, xsd:decimal where none is stated, and on a discrete space a whole multiple of the granularity floor where one is stated. An amount that is not is refused, never rounded, and is Undetermined, with Quantification's reason qnt:OutsideDeclaredSpace." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:amountValue|ldg:requestedValue|ldg:grantedValue ?amount ;
+                                        ldg:onAccount|^ldg:request/ldg:onAccount ?account .
+                                ?account ldg:ofDefinition/ldg:unitOfAccount ?space .
+                                FILTER NOT EXISTS { ?value ldg:direction ldg:Credit }
+                                OPTIONAL { ?space qnt:valueDatatype ?declared }
+                                OPTIONAL { ?space qnt:densityKind qnt:Discrete ; qnt:granularityFloor/qnt:numericValue ?floor }
+                                BIND (COALESCE(?declared, xsd:decimal) AS ?datatype)
+                                FILTER (DATATYPE(?amount) NOT IN (xsd:decimal, xsd:integer, xsd:nonNegativeInteger, xsd:positiveInteger,
+                                                xsd:nonPositiveInteger, xsd:negativeInteger, xsd:long, xsd:int, xsd:short, xsd:byte,
+                                                xsd:unsignedLong, xsd:unsignedInt, xsd:unsignedShort, xsd:unsignedByte)
+                                        || ?datatype NOT IN (xsd:decimal, xsd:integer, xsd:nonNegativeInteger, xsd:positiveInteger,
+                                                xsd:nonPositiveInteger, xsd:negativeInteger, xsd:long, xsd:int, xsd:short, xsd:byte,
+                                                xsd:unsignedLong, xsd:unsignedInt, xsd:unsignedShort, xsd:unsignedByte)
+                                        || (?datatype != xsd:decimal && FLOOR(?amount) != ?amount)
+                                        || (?datatype IN (xsd:nonNegativeInteger, xsd:unsignedLong, xsd:unsignedInt, xsd:unsignedShort,
+                                                xsd:unsignedByte) && ?amount < 0)
+                                        || (?datatype = xsd:positiveInteger && ?amount < 1)
+                                        || (?datatype = xsd:nonPositiveInteger && ?amount > 0)
+                                        || (?datatype = xsd:negativeInteger && ?amount > -1)
+                                        || (?datatype = xsd:long && (?amount < -9223372036854775808.0 || ?amount > 9223372036854775807.0))
+                                        || (?datatype = xsd:int && (?amount < -2147483648 || ?amount > 2147483647))
+                                        || (?datatype = xsd:short && (?amount < -32768 || ?amount > 32767))
+                                        || (?datatype = xsd:byte && (?amount < -128 || ?amount > 127))
+                                        || (?datatype = xsd:unsignedLong && ?amount > 18446744073709551615.0)
+                                        || (?datatype = xsd:unsignedInt && ?amount > 4294967295)
+                                        || (?datatype = xsd:unsignedShort && ?amount > 65535)
+                                        || (?datatype = xsd:unsignedByte && ?amount > 255)
+                                        || COALESCE(?floor > 0 && FLOOR(?amount / ?floor) * ?floor != ?amount, false))
                         }
                 """
         ] .
@@ -300,20 +633,84 @@ ldg:NotForwardDatedShape a sh:NodeShape ;
                 """
         ] .
 
-ldg:ConversionTogetherShape a sh:NodeShape ;
-        sh:targetNode ldg:Posting ;
+ldg:OneLedgerPerOwnerShape a sh:NodeShape ;
+        sh:targetNode ldg:Ledger ;
         sh:sparql [
-                sh:message "A posting must state the amount as drawn and the conversion used both or neither." ;
+                sh:message "No two ledgers may share an owner." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this ; ldg:forOwner ?owner .
+                                FILTER EXISTS { ?other ldg:forOwner ?owner ; a $this . FILTER (?other != ?value) }
+                        }
+                """
+        ] .
+
+ldg:PassWritesOneLedgerShape a sh:NodeShape ;
+        sh:targetNode ldg:Pass ;
+        sh:sparql [
+                sh:message "A pass must write at least one record, every record on an account of one owner, and that owner must have a ledger." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
                                 {
-                                        ?value ldg:amountAsDrawn ?drawn ; a $this .
-                                        FILTER NOT EXISTS { ?value ldg:conversionUsed ?conversion }
-                                } UNION {
-                                        ?value ldg:conversionUsed ?used ; a $this .
-                                        FILTER NOT EXISTS { ?value ldg:amountAsDrawn ?amount }
+                                        SELECT $this ?value (COUNT(DISTINCT ?owner) AS ?owners) (SAMPLE(?owner) AS ?anOwner) WHERE {
+                                                ?value a $this .
+                                                OPTIONAL { ?record ldg:inPass ?value . ?record ldg:onAccount ?account . ?account ldg:forOwner ?owner }
+                                        } GROUP BY $this ?value
                                 }
+                                FILTER (?owners != 1 || NOT EXISTS { ?ledger ldg:forOwner ?anOwner ; a ldg:Ledger })
+                        }
+                """
+        ] .
+
+ldg:PassRevisionsInOrderShape a sh:NodeShape ;
+        sh:targetNode ldg:Pass ;
+        sh:sparql [
+                sh:message "No two passes of one ledger may record one revision, a pass at a later position must record a greater one, and each revision above the least a ledger's passes record must follow one a pass of it recorded." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        SELECT $this ?value (SUM(?clash) AS ?clashes) (SUM(?below) AS ?lower) (SUM(?justBelow) AS ?previous) WHERE {
+                                                {
+                                                        SELECT $this ?value ?owner ?at ?revision WHERE {
+                                                                ?value a $this ; ldg:passPosition ?at ; ldg:passRevision ?revision .
+                                                                ?record ldg:inPass ?value . ?record ldg:onAccount ?account . ?account ldg:forOwner ?owner .
+                                                        } GROUP BY $this ?value ?owner ?at ?revision
+                                                }
+                                                {
+                                                        SELECT DISTINCT ?other ?owner ?otherAt ?otherRevision WHERE {
+                                                                ?other ldg:passPosition ?otherAt ; ldg:passRevision ?otherRevision .
+                                                                ?otherRecord ldg:inPass ?other . ?otherRecord ldg:onAccount ?otherAccount .
+                                                                ?otherAccount ldg:forOwner ?owner .
+                                                        }
+                                                }
+                                                BIND (IF(?other != ?value && (?otherRevision = ?revision || (?otherAt < ?at && ?otherRevision > ?revision)), 1, 0) AS ?clash)
+                                                BIND (IF(?otherRevision < ?revision, 1, 0) AS ?below)
+                                                BIND (IF(?otherRevision = ?revision - 1, 1, 0) AS ?justBelow)
+                                        } GROUP BY $this ?value
+                                }
+                                FILTER (?clashes > 0 || (?lower > 0 && ?previous = 0))
+                        }
+                """
+        ] .
+
+ldg:LedgerAtItsLatestPassShape a sh:NodeShape ;
+        sh:targetNode ldg:Ledger ;
+        sh:sparql [
+                sh:message "A ledger's revision must be the greatest revision its passes record." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        SELECT $this ?value ?revision (MAX(?passRevision) AS ?latest) WHERE {
+                                                ?value a $this ; ldg:forOwner ?owner ; ldg:revision ?revision .
+                                                ?account ldg:forOwner ?owner ; a ldg:Account .
+                                                ?record ldg:onAccount ?account ; ldg:inPass/ldg:passRevision ?passRevision .
+                                        } GROUP BY $this ?value ?revision
+                                }
+                                FILTER (?revision != ?latest)
                         }
                 """
         ] .

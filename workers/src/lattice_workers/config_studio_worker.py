@@ -480,20 +480,23 @@ class WriterStore:
 
 
 def declare_topology(channel: Any, topology: Mapping[str, Any]) -> None:
-    """Declares the exchanges, queues and bindings of `topology`. Idempotent."""
-    exchange = topology["exchange"]
-    dead_letter_exchange = topology["deadLetterExchange"]
-    channel.exchange_declare(exchange=exchange, exchange_type="topic", durable=True)
-    channel.exchange_declare(exchange=dead_letter_exchange, exchange_type="topic", durable=True)
+    """Declares the exchanges, queues and bindings of `topology`. Idempotent.
+
+    Each queue is bound to the exchange its `bindsTo` names and dead-letters to the one its `deadLettersTo` names, or
+    nowhere when that is null, as `Topology.declare` does in the Java service (MSAI12-01).
+    """
+    exchanges = (topology["exchange"], topology["deadLetterExchange"])
+    for exchange in exchanges:
+        channel.exchange_declare(exchange=exchange, exchange_type="topic", durable=True)
     for queue in topology["queues"]:
-        if queue["deadLetter"]:
-            channel.queue_declare(
-                queue=queue["name"], durable=True, arguments={"x-dead-letter-exchange": dead_letter_exchange}
-            )
-            channel.queue_bind(queue=queue["name"], exchange=exchange, routing_key=queue["routingKey"])
-        else:
+        for field in ("bindsTo", "deadLettersTo"):
+            if queue[field] is not None and queue[field] not in exchanges:
+                raise ValueError(f"queue {queue['name']}: {field} names {queue[field]}, which the topology does not declare")
+        if queue["deadLettersTo"] is None:
             channel.queue_declare(queue=queue["name"], durable=True)
-            channel.queue_bind(queue=queue["name"], exchange=dead_letter_exchange, routing_key=queue["routingKey"])
+        else:
+            channel.queue_declare(queue=queue["name"], durable=True, arguments={"x-dead-letter-exchange": queue["deadLettersTo"]})
+        channel.queue_bind(queue=queue["name"], exchange=queue["bindsTo"], routing_key=queue["routingKey"])
 
 
 def routing_key(workspace: str) -> str:

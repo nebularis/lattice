@@ -25,7 +25,7 @@ A closing recurrence fixes the positions at which checkpoints exist, so every st
 | A checkpoint bounds the fold | postings folded per read, checkpointed against post-once |
 | A running balance makes a contract read one lookup | postings folded and time per contract read, balance-after against post-once |
 | Naming the periods' graphs bounds the read in time, not only in postings folded | time per read, period-graphs against checkpointed, across the sizes |
-| The ledger's shapes finish on a tree of 10,000 definitions and on a pass of 5,000 postings with 10,000 balance records, and find a broken record | `test_shape_scale.py`, every shape through pySHACL on rdflib and the runtime laws on Oxigraph, the time of each recorded as a pytest property and never asserted (STD-155, the plan's LG1-09 and LG2-10) |
+| The ledger's shapes finish on a tree of 10,000 definitions and on a pass of 5,000 postings, each with its running balance, and 5,000 checkpoints, and find a broken record | `test_shape_scale.py`, every shape through pySHACL on rdflib and the runtime laws on Oxigraph, the time of each recorded as a pytest property and never asserted (STD-155, the plan's LG1-09 and LG2-10) |
 
 ## Pass criterion
 

@@ -7,6 +7,10 @@ It prints every difference it finds. It reads the hand copies and changes none o
 2. The RabbitMQ calls each copy makes are set against the calls the declaration implies. A JSON file makes no call, so the
    real ``declare_topology`` and ``declare_writes`` of the Python worker are run against a recording channel with each file's
    text. ``Topology.declare`` is read from its source, with a small evaluator for the literals and the one loop it uses.
+   Since MSA-F4 ``Topology.declare`` no longer holds the queues as literals, it reads them from the contract JSON, so for
+   that part the Java calls are derived by applying the rule the Java code implements to the contract JSON (the code is not
+   run), and only the super stream part is read from the Java literals. A Java source in the old literal form is still read
+   by the evaluator, which is also how the emitted Java fragment is read.
 3. The other places in the Java sources that declare an exchange or a queue are listed, since none is in a copy.
 4. The partition function is tried in Python and read from the Java source.
 5. The consumer and sender settings the declaration records are looked for where the code sets them.
@@ -223,15 +227,66 @@ def java_constants(masked: str) -> dict:
     return scope
 
 
-def java_operations(source: str) -> tuple[set[tuple], list[str], dict]:
-    """The calls of ``declare``, with its constants, and the calls it makes that this reader does not model."""
+CONTRACT_LOOPS = re.compile(r"for \((?:String|JsonValue) \w+ : [^{]*\)\s*\{")
+# The statements of the rule Topology.declare implements on the contract. Each must be present for the rule below to apply.
+CONTRACT_RULE_PARTS = (
+    r'contract\.getString\("exchange"\)',
+    r'contract\.getString\("deadLetterExchange"\)',
+    r'channel\.exchangeDeclare\(exchange, "topic", true\)',
+    r'contract\.get\("queues"\)',
+    r'queue\.get\("deadLettersTo"\)',
+    r'deadLettersTo\.isNull\(\) \? Map\.of\(\)\s*:\s*Map\.of\("x-dead-letter-exchange", deadLettersTo\.getAsString\(\)\.value\(\)\)',
+    r'channel\.queueDeclare\(queue\.getString\("name"\), true, false, false, arguments\)',
+    r'channel\.queueBind\(queue\.getString\("name"\), queue\.getString\("bindsTo"\), queue\.getString\("routingKey"\)\)',
+)
+
+
+def contract_operations(contract: dict) -> set[tuple]:
+    """The calls Topology.declare makes for the contract's exchanges and queues, by the rule it implements (read in
+    Topology.java, not run): both exchanges as durable topic exchanges, then each queue durable, not exclusive, not
+    auto-delete, with ``x-dead-letter-exchange`` set to ``deadLettersTo`` unless that is null, and bound to ``bindsTo`` with
+    its ``routingKey``."""
+    ops = {emit.exchange_op(contract["exchange"], "topic"), emit.exchange_op(contract["deadLetterExchange"], "topic")}
+    for queue in contract["queues"]:
+        dead = None if queue["deadLettersTo"] is None else {"x-dead-letter-exchange": queue["deadLettersTo"]}
+        ops.add(emit.queue_op(queue["name"], dead))
+        ops.add(emit.bind_op(queue["name"], queue["bindsTo"], queue["routingKey"]))
+    return ops
+
+
+def java_operations(source: str, contract: dict | None = None) -> tuple[set[tuple], list[str], dict, bool]:
+    """The calls of ``declare``, with its constants, the calls it makes that this reader does not model, and whether the
+    exchanges and queues were derived from the contract (the form of Topology.java since MSA-F4) and not read as literals."""
     masked = mask(source)
     scope = java_constants(masked)
-    head = re.search(r"static void declare\(Channel channel\) throws IOException\s*\{", masked)
+    # Since MSA-F13 the rule is in declare(Channel, JsonObject), which declare(Channel) calls with the contract on the classpath.
+    head = re.search(r"static void declare\(Channel channel, JsonObject contract\) throws IOException\s*\{", masked) or re.search(
+        r"static void declare\(Channel channel\) throws IOException\s*\{", masked
+    )
     if head is None:
         raise ValueError("no declare(Channel) method")
     open_at = head.end() - 1
     body = masked[open_at + 1 : balanced(masked, open_at, "{", "}")]
+    whole = body
+    from_contract = '"amqp-topology.json"' in masked and bool(CONTRACT_LOOPS.search(body))
+    derived: set[tuple] = set()
+    unmodelled: list[str] = []
+    if from_contract:
+        removed, cursor, kept = [], 0, []
+        for loop in CONTRACT_LOOPS.finditer(body):
+            if loop.start() < cursor:
+                continue
+            end = balanced(body, loop.end() - 1, "{", "}")
+            removed.append(body[loop.start() : end + 1])
+            kept.append(body[cursor : loop.start()])
+            cursor = end + 1
+        kept.append(body[cursor:])
+        body = " ".join(kept)
+        missing = [part for part in CONTRACT_RULE_PARTS if re.search(part, whole) is None]
+        if missing:
+            unmodelled.append("the declaring rule on the contract is not in the form this reader knows, missing " + "; ".join(missing))
+        else:
+            derived = contract_operations(contract if contract is not None else json.loads(CONTRACT.read_text(encoding="utf-8")))
     segments: list[tuple[str, dict]] = []
     cursor = 0
     for loop in re.finditer(r"for \(int (\w+) = (\d+); \1 < (\w+); \1\+\+\)\s*\{", body):
@@ -244,8 +299,7 @@ def java_operations(source: str) -> tuple[set[tuple], list[str], dict]:
             segments.append((body[loop.end() : end], {variable: value}))
         cursor = end + 1
     segments.append((body[cursor:], {}))
-    ops: set[tuple] = set()
-    unmodelled: list[str] = []
+    ops: set[tuple] = set(derived)
     for text, extra in segments:
         local = {**scope, **extra}
         for m in re.finditer(r"\bchannel\.(\w+)\(", text):
@@ -262,7 +316,7 @@ def java_operations(source: str) -> tuple[set[tuple], list[str], dict]:
                 ops.add(("bind", args[0], args[1], args[2], emit._args(args[3] if len(args) == 4 else {})))
             else:
                 unmodelled.append(f"{method} with {len(args)} arguments")
-    return ops, unmodelled, scope
+    return ops, unmodelled, scope, from_contract
 
 
 # ---- sets of calls ---------------------------------------------------------------------------------------
@@ -297,9 +351,15 @@ def compare_operations(decl: dict, contract: dict, packaged: dict, emitted: dict
     except Exception as error:  # the worker module needs its own imports
         print(f"  the Python worker could not be loaded ({error.__class__.__name__}: {error}), so its calls are not compared")
     source = TOPOLOGY_JAVA.read_text(encoding="utf-8")
-    java_ops, unmodelled, constants = java_operations(source)
+    java_ops, unmodelled, constants, from_contract = java_operations(source, contract)
     views["java@Topology.java"] = java_ops
-    emitted_ops, emitted_unmodelled, _ = java_operations(emit.java(decl))
+    if from_contract:
+        print("  Topology.java declares its exchanges and queues from the contract JSON, so those Java calls are derived by applying the")
+        print("  rule the Java code implements (read from its source) to the contract JSON, and only the super stream calls are read from")
+        print("  the Java literals. The Java code was not run here (TopologyTest.java records what it calls).")
+    else:
+        print("  Topology.java declares its queues as literals, read with the evaluator.")
+    emitted_ops, emitted_unmodelled, _, _ = java_operations(emit.java(decl))
     views["java@emitted"] = emitted_ops
     for name, extra in (("Topology.java", unmodelled), ("emitted Java", emitted_unmodelled)):
         for call in extra:
@@ -444,7 +504,7 @@ def main(argv: list[str]) -> int:
     contract, packaged, emitted = compare_json(decl)
     compare_operations(decl, contract, packaged, emitted, args.matrix)
     other_declare_sites()
-    _, _, scope = java_operations(TOPOLOGY_JAVA.read_text(encoding="utf-8"))
+    _, _, scope, _ = java_operations(TOPOLOGY_JAVA.read_text(encoding="utf-8"), contract)
     compare_routing(decl, scope)
     compare_settings(decl, contract)
     grouped: dict[tuple[str, str], list[str]] = {}

@@ -1,0 +1,13 @@
+{
+  "subject": "SAn",
+  "statedAs": "Amounts.amounts_are_not_totally_ordered",
+  "statementDigest": "sha256:b60ee0f2b8a42c21138d5349f66f7a801716f63233a82dcb8c7167397608b5c5",
+  "method": "Proof",
+  "scope": "OneInstance",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

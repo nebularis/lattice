@@ -98,6 +98,10 @@ public final class StudioStore implements AutoCloseable {
 
     private static final String RECEIPTS_QUERY = PREFIXES
         + "SELECT ?id ?revision WHERE { GRAPH ?g { ?r cst:commandId ?id OPTIONAL { ?r cst:receiptRevision ?revision } } }";
+    private static final String RECEIPT_DIGESTS_QUERY = PREFIXES
+        + "SELECT ?id ?digest WHERE { GRAPH ?g { ?r cst:commandId ?id ; cst:requestDigest ?digest } }";
+    private static final String RECEIPT_WROTE_QUERY = PREFIXES
+        + "SELECT ?id ?wrote WHERE { GRAPH ?g { ?r cst:commandId ?id ; cst:wrote ?wrote } }";
 
     private static final String GRAPH_NAMES_QUERY = "SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }";
 
@@ -171,6 +175,18 @@ public final class StudioStore implements AutoCloseable {
             }
         });
         return out.stream().findFirst();
+    }
+
+    /** Whether {@code root} has a version row in {@code metaGraph} that is tombstoned, which no create can bring back. */
+    public boolean tombstoned(String metaGraph, String root) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(VERSION_ROW_QUERY);
+        query.setIri("meta", metaGraph);
+        query.setIri("root", root);
+        boolean[] out = {false};
+        connection.querySelect(query.asQuery(), row -> {
+            out[0] |= row.contains("deleted") && "true".equals(row.getLiteral("deleted").getLexicalForm());
+        });
+        return out[0];
     }
 
     /**
@@ -317,6 +333,38 @@ public final class StudioStore implements AutoCloseable {
             .binding(id, org.apache.jena.graph.NodeFactory.createLiteralString(v))).toList());
         connection.querySelect(query, row -> out.put(row.getLiteral("id").getString(),
             row.contains("revision") ? row.getLiteral("revision").getLong() : 0L));
+        return out;
+    }
+
+    /** For each command id whose receipt holds the digest of its request, that digest. A receipt from before digests has none. */
+    public Map<String, String> receiptDigests(java.util.Collection<String> ids) {
+        Map<String, String> out = new java.util.HashMap<>();
+        if (ids.isEmpty()) {
+            return out;
+        }
+        Query query = constant(RECEIPT_DIGESTS_QUERY);
+        org.apache.jena.sparql.core.Var id = org.apache.jena.sparql.core.Var.alloc("id");
+        query.setValuesDataBlock(List.of(id), ids.stream().map(v -> org.apache.jena.sparql.engine.binding.BindingFactory
+            .binding(id, org.apache.jena.graph.NodeFactory.createLiteralString(v))).toList());
+        connection.querySelect(query, row -> out.put(row.getLiteral("id").getString(), row.getLiteral("digest").getString()));
+        return out;
+    }
+
+    /** For each command id with a receipt in the store, the graphs its receipt says the command wrote. */
+    public Map<String, java.util.Set<String>> receiptWrote(java.util.Collection<String> ids) {
+        Map<String, java.util.Set<String>> out = new java.util.HashMap<>();
+        if (ids.isEmpty()) {
+            return out;
+        }
+        Query query = constant(RECEIPT_WROTE_QUERY);
+        org.apache.jena.sparql.core.Var id = org.apache.jena.sparql.core.Var.alloc("id");
+        query.setValuesDataBlock(List.of(id), ids.stream().map(v -> org.apache.jena.sparql.engine.binding.BindingFactory
+            .binding(id, org.apache.jena.graph.NodeFactory.createLiteralString(v))).toList());
+        connection.querySelect(query, row -> {
+            if (row.get("wrote").isURIResource()) {
+                out.computeIfAbsent(row.getLiteral("id").getString(), k -> new java.util.HashSet<>()).add(row.getResource("wrote").getURI());
+            }
+        });
         return out;
     }
 

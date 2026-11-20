@@ -1,0 +1,13 @@
+{
+  "subject": "SP3",
+  "statedAs": "Positions.positions_are_totally_ordered, no_position_between_successors",
+  "statementDigest": "sha256:718595b721f51158d66d0fd36f41bd145035ed9d7094f937879e459a8e08e2b1",
+  "method": "Proof",
+  "scope": "EveryPosition",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

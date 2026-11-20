@@ -15,18 +15,19 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/refusal-intensive-unit/> .
+@base <https://example.org/lattice/ledger/refusal-intensive-unit/> .
 
 ex:owner a fnd:PersistentIdentity .
 ex:OwnerKind a owl:Class .
 
 ex:temperature a qnt:ValueSpace ;
+    fnd:hasIdentity ex:temperature-identity ;
     qnt:spaceKey "ledger-refusal-intensive-unit-temperature" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-refusal-intensive-unit-temperature-v1" ;
     qnt:additivity qnt:Intensive ;
     qnt:hasOperationCapability ex:temperature-compare .
+ex:temperature-identity a fnd:PersistentIdentity .
 ex:temperature-compare a qnt:OperationCapability ; qnt:operationKind qnt:Compare .
-
-ex:q-20-degrees a qnt:Quantity ; qnt:onSpace ex:temperature ; qnt:numericValue "20"^^xsd:decimal .
 
 # ==== The merge policies =======================================================
 
@@ -38,6 +39,9 @@ ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 
 ex:degree-days-account a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-20-degrees ; ldg:unitOfAccount ex:temperature ;
+    fnd:hasIdentity ex:degree-days-account-identity ;
+    ldg:statedAmount <degree-days-account/stated-amount> ; ldg:unitOfAccount ex:temperature ;
     ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "Refused. Its unit of account, a temperature, is intensive, not extensive." .
+<degree-days-account/stated-amount> a qnt:Quantity ; qnt:onSpace ex:temperature ; qnt:numericValue "20"^^xsd:decimal .
+ex:degree-days-account-identity a fnd:PersistentIdentity .

@@ -6,14 +6,23 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.apache.jena.atlas.iterator.Iter;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.RiotException;
+import org.apache.jena.riot.out.NodeFmtLib;
+import org.apache.jena.sparql.core.Quad;
 
 /**
  * A command on the wire, as `contracts/config-studio/README.md` describes it: its fields as AMQP headers, its graphs as
@@ -52,6 +61,57 @@ public final class Codec {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         RDFDataMgr.write(out, c.body(), Lang.NQUADS);
         return out.toByteArray();
+    }
+
+    /**
+     * The SHA-256, in hex, of what a command asks for: its kind, the fields that address and qualify it, and its graphs as
+     * sorted N-Quads. Each blank node is written as the hash of its own quads, with itself as one label and every other blank
+     * node as another, so a resend that relabels them digests the same and two bodies that connect them otherwise do not.
+     * Two blank nodes whose own quads are the same get the same label, and this is not full canonicalisation. Who sent it
+     * and when are not part of the request. The receipt holds it, and an id sent again with another digest is refused
+     * (MSAI11-02).
+     */
+    public static String digest(Command c) {
+        StringBuilder text = new StringBuilder(c.type().wire).append('\n');
+        for (Object field : new Object[] {c.workspace(), c.job(), c.part(), c.expect(), c.label(), c.sample()}) {
+            text.append(field == null ? "" : field).append('\n');
+        }
+        if (c.body() != null) {
+            List<Quad> quads = Iter.toList(c.body().asDatasetGraph().find());
+            Map<Node, List<Quad>> own = new HashMap<>();
+            for (Quad q : quads) {
+                for (Node n : new LinkedHashSet<>(List.of(q.getGraph(), q.getSubject(), q.getPredicate(), q.getObject()))) {
+                    if (n.isBlank()) {
+                        own.computeIfAbsent(n, k -> new ArrayList<>()).add(q);
+                    }
+                }
+            }
+            Map<Node, String> labels = new HashMap<>();
+            own.forEach((node, its) -> labels.put(node, "_:" + sha256(its.stream()
+                .map(q -> line(q, n -> n.equals(node) ? "_:self" : "_:other")).sorted().collect(Collectors.joining("\n")))));
+            quads.stream().map(q -> line(q, labels::get)).sorted().forEach(line -> text.append(line).append('\n'));
+        }
+        return sha256(text.toString());
+    }
+
+    /** A quad as its N-Quads line, with each blank node written as {@code blank} names it. */
+    private static String line(Quad q, Function<Node, String> blank) {
+        StringBuilder s = new StringBuilder();
+        Node[] nodes = q.isDefaultGraph() ? new Node[] {q.getSubject(), q.getPredicate(), q.getObject()}
+            : new Node[] {q.getSubject(), q.getPredicate(), q.getObject(), q.getGraph()};
+        for (Node n : nodes) {
+            s.append(n.isBlank() ? blank.apply(n) : NodeFmtLib.strNT(n)).append(' ');
+        }
+        return s.append('.').toString();
+    }
+
+    private static String sha256(String text) {
+        try {
+            return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                .digest(text.getBytes(StandardCharsets.UTF_8)));
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("every Java platform has SHA-256", e);
+        }
     }
 
     /** The command, or null when the headers or the body are not a command's. */

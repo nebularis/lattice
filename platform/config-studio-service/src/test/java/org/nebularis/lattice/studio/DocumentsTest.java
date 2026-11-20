@@ -150,9 +150,17 @@ class DocumentsTest {
         assertTrue(f.store.graph(Graphs.documentGraph(WS, DOC)).isEmpty());
         assertEquals(404, f.get(DOCS + "/" + DOC).status());
 
-        assertEquals(204, put("\"0\"", licence).status());
-        assertEquals(204, f.send("DELETE", "/api/workspaces/" + WS, null, Map.of(), new byte[0]).status());
+        // A deleted document's id is not used again (MSA-F9): a create over its tombstone would write nothing.
+        assertEquals(400, put("\"0\"", licence).status());
         assertTrue(f.store.graph(Graphs.documentGraph(WS, DOC)).isEmpty());
+        assertEquals(404, f.get(DOCS + "/" + DOC).status());
+
+        String other = "00000004-0000-4000-8000-000000000000";
+        ApiResponse saved = put(other, "\"0\"", licence.replace(DOC, other), "application/xml");
+        assertEquals(204, saved.status(), () -> new String(saved.body(), StandardCharsets.UTF_8));
+        assertTrue(!f.store.graph(Graphs.documentGraph(WS, other)).isEmpty());
+        assertEquals(204, f.send("DELETE", "/api/workspaces/" + WS, null, Map.of(), new byte[0]).status());
+        assertTrue(f.store.graph(Graphs.documentGraph(WS, other)).isEmpty());
     }
 
     @Test

@@ -56,13 +56,16 @@ def routing_key_prose(decl: dict) -> str:
 
 
 def contract(decl: dict) -> dict:
-    """The structure of amqp-topology.json. It has one flag, deadLetter, where the declaration has two facts (what a lane does
-    on failure, and which exchange its queue is bound to), so the emitter writes the flag and the second fact is lost here."""
+    """The structure of amqp-topology.json. Each queue has two fields for the two facts the declaration holds, the exchange the
+    queue is bound to (``bindsTo``) and the exchange it dead-letters to (``deadLettersTo``, null for none). Since MSA-F4 the
+    structure can say where a queue binds, so the transforms lane is emitted faithfully: bound to the hub, dead-lettering nowhere."""
     writes = decl["ordered_writes"]
     sink = decl["failure_sink"]
-    queues = [{"name": lane["name"], "routingKey": lane["key"], "deadLetter": lane["on_failure"] == "dead-letter"}
+    hub, failures = decl["hub"]["name"], decl["hub"]["failures"]
+    queues = [{"name": lane["name"], "bindsTo": hub, "routingKey": lane["key"],
+               "deadLettersTo": failures if lane["on_failure"] == "dead-letter" else None}
               for lane in decl["lanes"]]
-    queues.append({"name": sink["name"], "routingKey": ROUTING_KEY_FOR[sink["collects"]], "deadLetter": False})
+    queues.append({"name": sink["name"], "bindsTo": failures, "routingKey": ROUTING_KEY_FOR[sink["collects"]], "deadLettersTo": None})
     return {
         "exchange": decl["hub"]["name"],
         "deadLetterExchange": decl["hub"]["failures"],

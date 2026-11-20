@@ -1,0 +1,43 @@
+consumers: [c1, c2]
+events c1: [joined@1795000792975, halt@1795000795691]
+events c2: [joined@1795000802649, stopping@1795000822652]
+confirmed seqs: 1200, unknown (publisher saw an error): 0
+first receiver by partition: 0:c1 1:c1 2:c1 3:c1 4:c1 5:c1 6:c1 7:c1
+
+kill of c1 at t=1795000795691
+partition | previous owner rx | takeover by | takeover after (ms) | owner rx after | owner applies after | owner applies after takeover | last owner apply after takeover (ms)
+0 | yes | c2 | 6953 | 1 | 0 | 0 | 0
+1 | yes | c2 | 6942 | 0 | 0 | 0 | 0
+2 | yes | c2 | 6931 | 0 | 0 | 0 | 0
+3 | yes | c2 | 6920 | 0 | 0 | 0 | 0
+4 | yes | c2 | 6904 | 0 | 0 | 0 | 0
+5 | yes | c2 | 6891 | 0 | 0 | 0 | 0
+6 | yes | c2 | 6878 | 0 | 0 | 0 | 0
+7 | yes | c2 | 6964 | 0 | 0 | 0 | 0
+takeover after: min 6878 ms, max 6964 ms, partitions taken over 8
+applies by c1 after another consumer had begun receiving the same partition: 0
+
+per partition: applies, extra applies of a seq, older seq applied after a newer one, overlapping batches of different consumers, skipped, not yet applied
+0 | 56 | 0 | 0 | 0 (0 ms) | 0 | 94
+1 | 56 | 0 | 0 | 0 (0 ms) | 0 | 94
+2 | 56 | 0 | 0 | 0 (0 ms) | 0 | 94
+3 | 66 | 0 | 0 | 0 (0 ms) | 0 | 84
+4 | 62 | 0 | 0 | 0 (0 ms) | 0 | 88
+5 | 69 | 0 | 0 | 0 (0 ms) | 0 | 81
+6 | 63 | 0 | 0 | 0 (0 ms) | 0 | 87
+7 | 56 | 0 | 0 | 0 (0 ms) | 0 | 94
+total | extra applies 0 | older after newer 0 | overlapping batches of different consumers 0 (0 ms) | confirmed but skipped 0 | confirmed, not yet applied at the end 716
+
+resume of c2 after c1
+partition | last offset stored by first | first offset received by second | offsets between | seqs applied by both
+0 | 9 | 10 | 0 | 0
+1 | 9 | 10 | 0 | 0
+2 | 9 | 10 | 0 | 0
+3 | 9 | 10 | 0 | 0
+4 | 9 | 10 | 0 | 0
+5 | 10 | 11 | 0 | 0
+6 | 10 | 11 | 0 | 0
+7 | 9 | 10 | 0 | 0
+harness note harness at +0.0 s run p3-before-apply-writer point before-apply dieAtBatch 3 rate 150 publish 8 s
+harness kill c1 at +13.5 s halt at batch 3 before-apply
+harness note harness at +19.5 s c2 started

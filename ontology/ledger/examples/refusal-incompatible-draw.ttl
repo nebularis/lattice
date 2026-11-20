@@ -1,0 +1,169 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused, a draw that read an amount in another unit or another value
+# space (ADR-A131, its addendum of 2026-11-09 and its second addendum of the
+# same day). A 10,000 sterling facility holds sterling and euros as units of
+# one money space, and dollars in a space of their own. An account accepts a
+# draw only in its own value space and unit, and the ledger converts nothing.
+#
+# | Position | Asked for  | Read set                         | GBP posted | Balance after | Outcome |
+# |----------|-----------:|----------------------------------|-----------:|--------------:|---------|
+# | 1        | EUR 1,250  | the conversion record, at 0.80   |      1,000 |         9,000 | accepted |
+# | 2        | EUR 500    | the euros asked for, no record   |        500 |         8,500 | refused, no permitted conversion |
+# | 3        | USD 400    | the dollars asked for, no record |        400 |         8,100 | refused, qnt:OutsideDeclaredSpace |
+#
+# Position 1 is converted where the request arrives, and the posting cites the
+# record of that, which is not a quantity. Position 2's posting cites the euros
+# it was asked for and takes them as sterling, so the ledger would have had to
+# convert them. Its unit is not the one the facility's stated amount is in, and
+# Quantification finds such a comparison Undetermined, with no permitted
+# conversion. Position 3's posting cites dollars, on a space that is not the
+# facility's unit of account, which Quantification finds Undetermined with
+# qnt:OutsideDeclaredSpace. Every other record is whole, so the two draws are
+# all the runtime laws refuse. Each pass moved the borrower's ledger by one.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-incompatible-draw/> .
+@prefix pass: <https://example.org/lattice/ledger/refusal-incompatible-draw/ledger-borrower/pass/> .
+@base <https://example.org/lattice/ledger/refusal-incompatible-draw/> .
+
+# ==== The owner, the spaces and the units ======================================
+
+ex:borrower a fnd:PersistentIdentity ; rdfs:comment "The borrower, owner of the facility account." .
+ex:Borrower a owl:Class ; rdfs:comment "The kind of owner this account admits." .
+
+ex:currencies a qnt:UnitFamily .
+ex:GBP a qnt:Unit ; rdfs:label "pound sterling" .
+ex:EUR a qnt:Unit ; rdfs:label "euro" .
+
+ex:money a qnt:ValueSpace ;
+    fnd:hasIdentity ex:money-identity ;
+    qnt:spaceKey "ledger-refusal-incompatible-draw-money" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-refusal-incompatible-draw-money-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:unitContract [ a qnt:UnitContract ; qnt:requiresUnit true ;
+                       qnt:unitFamily ex:currencies ; qnt:canonicalUnit ex:GBP ] ;
+    qnt:hasOperationCapability ex:money-sum , ex:money-difference .
+ex:money-identity a fnd:PersistentIdentity .
+ex:money-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:money .
+ex:money-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:money .
+
+ex:dollars a qnt:ValueSpace ;
+    fnd:hasIdentity ex:dollars-identity ;
+    qnt:spaceKey "ledger-refusal-incompatible-draw-dollars" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-refusal-incompatible-draw-dollars-v1" ;
+    qnt:additivity qnt:Extensive .
+ex:dollars-identity a fnd:PersistentIdentity .
+
+ex:eur-to-gbp a qnt:Conversion ; qnt:fromUnit ex:EUR ; qnt:toUnit ex:GBP ;
+    qnt:conversionKind qnt:Contextual ; qnt:conversionFunction ex:fx-spot .
+ex:fx-spot a qnt:ConversionFunction ; rdfs:label "spot exchange rate on the context's date" .
+
+# ==== What the draws were asked as, and the one conversion ====================
+# The conversion record is written where the request arrives, outside the
+# ledger. The other two amounts reach the ledger unconverted.
+
+ex:q-draw-1-eur a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "1250"^^xsd:decimal ; qnt:inUnit ex:EUR .
+ex:draw-1-conversion a prov:Entity ;
+    rdfs:comment "EUR 1,250 asked for, converted at 0.80 to GBP 1,000 before the draw." ;
+    prov:wasDerivedFrom ex:q-draw-1-eur .
+
+ex:q-draw-2-eur a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "500"^^xsd:decimal ; qnt:inUnit ex:EUR .
+ex:q-draw-3-usd a qnt:Quantity ; qnt:onSpace ex:dollars ; qnt:numericValue "400"^^xsd:decimal .
+
+# ==== The facility and its merge policy ======================================
+
+ex:facility a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:facility-identity ;
+    ldg:statedAmount <facility/stated-amount> ;
+    ldg:unitOfAccount ex:money ;
+    ldg:admitsOwnerKind ex:Borrower ;
+    ldg:mergePolicy ex:refused-when-exceeded ;
+    rdfs:comment "A 10,000 sterling facility, drawn in sterling." .
+<facility/stated-amount> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "10000"^^xsd:decimal ; qnt:inUnit ex:GBP .
+ex:facility-identity a fnd:PersistentIdentity .
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
+# ==== Position 1: asked for in euros, converted before the ledger =============
+
+ex:draw-1-proposal rdfs:comment "A drawing of GBP 1,000, asked for as EUR 1,250." .
+ex:draw-1-request a ldg:Request ;
+    ldg:forProposal ex:draw-1-proposal ;
+    ldg:requestedValue "1000"^^xsd:decimal ; ldg:grantedValue "1000"^^xsd:decimal .
+ex:draw-1-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass pass:draw-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:request ex:draw-1-request .
+ex:draw-1-posting a ldg:Posting ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass pass:draw-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "1000"^^xsd:decimal ;
+    ldg:runningBalance "9000"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-request , ex:draw-1-conversion .
+
+# ==== Position 2: the euros asked for, taken as sterling =======================
+
+ex:draw-2-proposal rdfs:comment "A drawing asked for as EUR 500." .
+ex:draw-2-request a ldg:Request ;
+    ldg:forProposal ex:draw-2-proposal ;
+    ldg:requestedValue "500"^^xsd:decimal ; ldg:grantedValue "500"^^xsd:decimal .
+ex:draw-2-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass pass:draw-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:request ex:draw-2-request .
+ex:draw-2-posting a ldg:Posting ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass pass:draw-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "500"^^xsd:decimal ;
+    ldg:runningBalance "8500"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:draw-2-merge , ex:draw-2-request , ex:q-draw-2-eur ;
+    rdfs:comment "Refused: it read euros, and the ledger converts nothing." .
+
+# ==== Position 3: dollars, a value space of their own ==========================
+
+ex:draw-3-proposal rdfs:comment "A drawing asked for as USD 400." .
+ex:draw-3-request a ldg:Request ;
+    ldg:forProposal ex:draw-3-proposal ;
+    ldg:requestedValue "400"^^xsd:decimal ; ldg:grantedValue "400"^^xsd:decimal .
+ex:draw-3-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass pass:draw-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
+    ldg:request ex:draw-3-request .
+ex:draw-3-posting a ldg:Posting ;
+    ldg:onAccount ex:account-facility ;
+    ldg:inPass pass:draw-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:direction ldg:Debit ; ldg:amountValue "400"^^xsd:decimal ;
+    ldg:runningBalance "8100"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:draw-3-merge , ex:draw-3-request , ex:q-draw-3-usd ;
+    rdfs:comment "Refused: it read dollars, on a space that is not the facility's unit of account." .
+
+# ==== The ledger, the account instance and the passes ========================
+
+ex:ledger-borrower a ldg:Ledger ;
+    ldg:forOwner ex:borrower ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "3"^^xsd:nonNegativeInteger .
+ex:account-facility a ldg:Account ;
+    ldg:ofDefinition ex:facility ; ldg:forOwner ex:borrower .
+ex:borrower a ex:Borrower .
+pass:draw-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:draw-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
+pass:draw-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:integer ; ldg:passRevision "3"^^xsd:nonNegativeInteger .

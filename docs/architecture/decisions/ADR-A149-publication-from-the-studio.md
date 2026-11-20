@@ -60,6 +60,27 @@ The studio's derived data is no longer five graphs rebuilt by a job after writes
 
 **Renames the derived data of decisions 12 and 14.** The derived data those decisions call projections is named promotions from PM-0, after the kind of contract that produces it, `srf:PromotionContract` (PM-Q8 (a)). The word projection is kept for the output of an `srf:ProjectionContract` and for unrelated meanings. The contract file is `contracts/config-studio/promotions.ttl`, its target namespace ends `config-studio/promotion#`, each source's promoted rows lie in the partition `urn:lattice:studio:promoted:{source graph}`, and the job that rebuilds them is of kind `cst:Rebuild`. The decisions stand as accepted.
 
+## Addendum, 2026-11-19, a deletion wins over a write of what it deletes
+
+**Proposed 2026-11-19, for the maintainer. Narrows decision 13.** Decision 13 orders a deletion so that the description's mention goes first, and guards each tombstone on the revision it expects. It did not say what happens when a write of the same part or document moves that revision first. The tombstone then wrote nothing, and the row and its graph stayed live with nothing reaching them.
+
+1. **A deletion wins.** A deletion removes the part or document it names whatever write of it was applied first. The write that came first committed and was answered as applied, and the deletion then removes what it wrote, which is the order the two were applied in.
+2. **The tombstone stays guarded, and is planned again.** A tombstone is still the generated operation, guarded on the revision it expects (decision 12). Where a write moved a row's revision first, the writer plans the tombstone again at the revision the row then has, in a request after the command's own, until the row is gone or three attempts have failed.
+3. **The receipt follows the description's step.** A deletion's receipt is guarded on the step that removes the description's mention, since after it no reader finds what is deleted. So a deletion is answered as applied once that step commits, whether or not every tombstone has landed.
+4. **A deletion delivered again finishes the removal.** A deletion answered from its receipt still removes a row its tombstone lost, so a writer that stopped between the command's request and the later one leaves nothing behind once the command is delivered again.
+5. **An id whose row exists is never created again.** A save that creates a document refuses an id that has a version row, live or tombstoned. A document whose removal is not finished has a live row the description does not list, and a creation under its id would otherwise write nothing, list the document again and show what the deletion removed. Point 4 relies on this rule, since it removes whatever row a deleted id still has.
+
+**What it costs.** A deletion that lost no tombstone reads the revision of each row it retired once more, and one that lost a tombstone makes up to three more requests. A write answered as applied can be removed a moment later by a deletion already under way, and its sender is not told.
+
+**What it admits.** This addendum does not give a design free of inconsistent states. It bounds two, and each needs a second writer on the partition first, which a single active consumer does not prevent.
+
+- **Between the command's request and the last tombstone,** a deletion is answered as applied while the row and graph it deletes are still in the store. No reader reaches them through the description.
+- **After the third attempt, or where the command is never delivered again,** the row is logged and left. That is a deletion we confirmed and did not carry out, and the content stays in the store until something removes it. A sweep of the rows no description reaches would, and is not built.
+
+A command that applies whole or not at all, with the writer that lost its partition fenced, would admit neither. That design is not decided here.
+
 ## Provenance
 
 Raised by the maintainer on 2026-10-31, while deciding how a source's codes reach a mapping (TD-133). The maintainer answered PB-Q1 to PB-Q3, PB-Q6 and PB-Q7 the same day, asked for authentication now, and left PB-Q4's timing of modes and PB-Q5 to the unit, which chose decisions 9 and 11. They answered PB-Q8 to PB-Q11 the same day, which became decisions 12 to 14, and accepted three projections beyond the two first proposed in decision 14. The [sketch](../../developer/sketches/studio-publication.md) holds the questions.
+
+The addendum of 2026-11-19 was raised by a test of decision 13's ordering for every command that writes several aggregates (MSA-F6 of the multi-store unit), which found a deletion whose tombstone lost to a save and left the row live. The maintainer answered on 2026-11-18 that the deletion wins. Points 1 to 3 are as built by MSA-F7. Point 4 comes from the review of 2026-11-19 and is built by MSA-F11. Point 5 and the paragraph on what the addendum admits come from the maintainer's question of 2026-11-20 on whether it can leave the store inconsistent. The maintainer accepted both that day and asked for a design that admits no such state, which is MSA-I14 of the multi-store unit, with the states recorded as TD-166 to TD-171. Point 5 is built by MSA-F15.

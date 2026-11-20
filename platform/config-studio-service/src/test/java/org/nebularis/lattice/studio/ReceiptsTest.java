@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.nebularis.lattice.studio.store.Cst;
 import org.nebularis.lattice.studio.store.Graphs;
 import org.nebularis.lattice.studio.store.StudioStore;
+import org.nebularis.lattice.studio.writes.Codec;
 import org.nebularis.lattice.studio.writes.Command;
 import org.nebularis.lattice.studio.writes.Reply;
 import org.nebularis.lattice.studio.writes.Writer;
@@ -101,6 +102,52 @@ class ReceiptsTest {
         Command save = Command.save(WS, "surface", 0, AT, surface("one"));
         assertEquals(Reply.ok(1), writer.apply(save));
         assertEquals(Reply.ok(1), writer.apply(save), "the same command again, as after a lost acknowledgement");
+        assertEquals(1, revision(store));
+    }
+
+    /** MSA-F3, MSAI11-02. An id names one request. Sent again with another body, it is refused and changes nothing. */
+    @Test
+    void aCommandIdResentWithAnotherRequestIsRefusedAndChangesNothing() {
+        StudioStore store = Fixture.textual(RDFConnection.connect(DatasetFactory.createTxnMem()));
+        Writer writer = created(store);
+        Command save = Command.save(WS, "surface", 0, AT, surface("one"));
+        assertEquals(Reply.ok(1), writer.apply(save));
+        Command two = Command.save(WS, "surface", 0, AT, surface("two"));
+        Command reused = new Command(save.id(), two.sender(), two.type(), two.workspace(), two.job(), two.part(), two.expect(),
+            two.at(), two.label(), two.sample(), two.body(), two.principal(), two.admin());
+        Reply reply = writer.apply(reused);
+        assertEquals(400, reply.status(), reply.message());
+        assertEquals(1, revision(store));
+        assertTrue(surface("one").isIsomorphicWith(store.graph(Graphs.config(WS, "surface"))));
+        assertEquals(Reply.ok(1), writer.apply(save), "the request the id names is still answered from its receipt");
+    }
+
+    /** MSA-F3. A resend through the wire relabels blank nodes, and is still the same request. */
+    @Test
+    void aResendThroughTheWireIsTheSameRequest() {
+        StudioStore store = Fixture.textual(RDFConnection.connect(DatasetFactory.createTxnMem()));
+        Writer writer = created(store);
+        Command save = Command.save(WS, "surface", 0, AT,
+            Fixture.model(Fixture.PREFIXES + "ex:cfg <https://www.nebularis.org/neuro-semantic/lattice/surface#part> [ a ex:Part ] ."));
+        assertEquals(Reply.ok(1), writer.apply(save));
+        Command again = Codec.decode(Codec.headers(save), Codec.body(save));
+        assertEquals(Reply.ok(1), writer.apply(again));
+        assertEquals(1, revision(store));
+    }
+
+    /** MSA-F14, TD-165. A body whose blank nodes connect otherwise is another request, though its lines read alike with one label. */
+    @Test
+    void anIdResentWithABodyWhoseBlankNodesConnectOtherwiseIsRefused() {
+        StudioStore store = Fixture.textual(RDFConnection.connect(DatasetFactory.createTxnMem()));
+        Writer writer = created(store);
+        String part = "<https://www.nebularis.org/neuro-semantic/lattice/surface#part>";
+        Command save = Command.save(WS, "surface", 0, AT, Fixture.model(Fixture.PREFIXES + "ex:a " + part + " _:x . ex:b " + part + " _:x ."));
+        assertEquals(Reply.ok(1), writer.apply(save));
+        Command two = Command.save(WS, "surface", 0, AT, Fixture.model(Fixture.PREFIXES + "ex:a " + part + " _:x . ex:b " + part + " _:y ."));
+        Command reused = new Command(save.id(), two.sender(), two.type(), two.workspace(), two.job(), two.part(), two.expect(),
+            two.at(), two.label(), two.sample(), two.body(), two.principal(), two.admin());
+        Reply reply = writer.apply(reused);
+        assertEquals(400, reply.status(), reply.message());
         assertEquals(1, revision(store));
     }
 
