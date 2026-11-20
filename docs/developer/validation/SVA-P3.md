@@ -30,7 +30,7 @@ A persistence step is a function of its request. The run worker reads the finish
 | P3-T8 | a world of 150,000 triples and a deadline of 1 ms / run / Jena's timeout ends the update, and the worker sends nothing after the deadline | L1 | | |
 | P3-T9 | a result over 128 frames / run / one failed last frame saying the result is too large | L1 | | |
 | P3-T10 | two handler threads, then one / a slow step and a fast one / with two the fast one is answered while the slow one runs, with one it waits | L1 | | |
-| P3-T11 | the facility sample on the real stack / a step on the interactive queue / the four parts | L3 | | written, not run (see below) |
+| P3-T11 | the facility sample on the real stack / a step on the interactive queue / the four parts | L3 | | run on 2026-11-20 after its fixture was fixed, passed (see below) |
 
 ## Checks run
 
@@ -46,6 +46,8 @@ A persistence step is a function of its request. The run worker reads the finish
 
 - The caller library has no confirmation read that classifies an outcome, so `PersistenceStep.confirm` classifies it from the claim and the guards' graphs, after section 15.2 of the patterns guide, with two classifications of its own, `AlreadyExists` and `NotApplied`. TD-173.
 - The generated writes still read `NOW()`, TD-171. The simulator shows the update with the time it replaced.
+
+**Follow-up, 2026-11-20.** P3-T11's fixture created its workspace with the facility sample's name, which the service records and does not fill parts from, so the persistence part was empty and its compile was refused. It now creates the workspace with the facility baseline and saves the persistence part, as the app does. With Erlang on the path, the runs' real-stack suite gave 11 passed in 188 s, P3-T11 among them, and the liveness suite 5 passed.
 
 ## Placement
 

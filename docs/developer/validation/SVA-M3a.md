@@ -38,7 +38,7 @@ A `sample` run of a mapping whose input is Turtle or N-Triples is answered by th
 | `mise exec -- python -m pytest tools/test_config_studio_contract.py tools/test_config_studio_stage.py tools/testing/studio_harness/tests -q` | 94 passed |
 | `mise exec -- mvn -o -f platform/pom.xml -pl config-studio-service,config-studio-transforms -am verify` | BUILD SUCCESS, the service 250 and the run worker 61 tests, 0 failures |
 | `mise run check:identifiers` | passed |
-| the runs' real-stack suite and the liveness test, with Erlang on the path | 15 passed and 1 error, run by the delegated developer. M3a-T7 passed. The error is R5-T10's fixture, from SVA-P3, which creates its workspace with a sample name the service does not use to fill a workspace's parts, so its persistence part is empty and the compile is refused. Fixed in the change after this one |
+| the runs' real-stack suite and the liveness test, with Erlang on the path | 15 passed and 1 error, run by the delegated developer. M3a-T7 passed. The error is R5-T10's fixture, from SVA-P3, which creates its workspace with a sample name the service does not use to fill a workspace's parts, so its persistence part is empty and the compile is refused. Fixed in the change after this one, after which the runs suite gave 11 passed and the liveness suite 5 passed |
 
 The first four were run by the delegated developer and again by the reviewer.
 

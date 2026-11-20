@@ -79,10 +79,17 @@ def compiled(studio):
 
 @pytest.fixture(scope="module")
 def persistence_compiled(studio):
-    """A workspace from the facility sample and the id of a finished compile job of its persistence part, whose operations a simulated step runs."""
+    """A workspace from the facility sample and the id of a finished compile job of its persistence part, whose operations a simulated step runs.
+    The service records the sample's name and does not fill the parts from it. The browser loads the sample's files and saves each part, so the fixture does the same
+    with the baseline and the persistence file, the two parts a persistence compile reads."""
     client = studio.client()
-    ws = client.workspace_id(client.create_workspace("steps", sample="facility"))
+    samples = Path(__file__).resolve().parents[2] / "contracts" / "config-studio" / "samples"
+    baseline = (samples / "facility-baseline.ttl").read_text(encoding="utf-8")
+    ws = client.workspace_id(client.create_workspace("steps", baseline=baseline, sample="facility"))
+    saved = client.save_part(ws, "persistence", (samples / "facility-persistence.ttl").read_text(encoding="utf-8"), 0)
+    assert saved.status == 204, f"{saved.status} {saved.text[:300]}"
     part = client.read_part(ws, "persistence")
+    assert part.text.strip(), "the persistence part was saved and reads back"
     submitted = client.submit_job(ws, "compile", "persistence", part.text)
     assert submitted.status == 202, submitted.text
     job = client.job_id(submitted)
