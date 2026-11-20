@@ -173,7 +173,7 @@ It is larger than one slice by the lifecycle's sizing. Five parts, in order, eac
 
 The vocabulary's rework came back and was reviewed. This brief names no term it removed. Five things in it bear on the questions above.
 
-- **BHL-Q1 and BHL-Q2.** A pass's position is not its stimulus's, which is LG-Q47 of the [Ledger plan](../plans/ledger.md). A key formed from the stimulus is stable where the pass's position is read again with the revision.
+- **BHL-Q1 and BHL-Q2.** A pass's position is not its stimulus's. LG-Q47 of the [Ledger plan](../plans/ledger.md) was answered on 2026-11-20, and a pass takes the later of its stimulus's position and its ledger's latest pass's. A key formed from the stimulus is stable where the pass's position is read again with the revision.
 - **BHL-Q3.** The layer now says a guard outside the ledger reads a balance as of a revision and records that revision in its read set. That is a duty on Behaviour's finding.
 - **BHL-Q4.** Its leaning stands on LG-Q48 of the [sketch on a later version](ledger-definition-versions-in-force.md).
 - **BHL-Q5.** A pass writes the records of one ledger. An effect on another owner's account is then a second pass in a second ledger, the case the multi-store unit models.

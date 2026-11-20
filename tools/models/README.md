@@ -24,3 +24,4 @@ convention track D and E's toolchains already use — see `tools/proofs/README.m
   composition, refusal of cycles, two phases at a shared account, and signed shares.
 - `multi-store-protocols/` — the multi-store architecture epic's MSA-I6, in TLA+ checked with TLC: FMH-5's model A, the serialised writer over two stores, evidence read across stores, receipts as the outbox, and a change of authority while live.
 - `ledger-pass-revision/` — the ledger's LG-Q45, an exhaustive model in plain Python of whether a pass moves a ledger's revision once or once for each posting, over the three transitions of Behaviour's `ordered-draws.ttl`. A second model there asks where a pass's position comes from (LG-Q47).
+- `ledger-versions-in-force/` — the ledger's LG-Q49, eleven worked histories in plain Python of which postings count against which version of an account's terms, under four rules and two invariants.

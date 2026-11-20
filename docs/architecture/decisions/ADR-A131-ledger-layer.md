@@ -525,9 +525,9 @@ The case of a unit short in the second addendum of 2026-11-16, members with a ba
 
 **What this does not decide.** What the layer above records when its request is turned away or its evaluation is made again. The contract of the port that a request travels through. An evaluation that writes two ledgers, which makes a request to each and was not modelled. How a caller forms the key.
 
-## Addendum (proposed 2026-11-19, third): a merge records every request, and a refusal keeps them
+## Addendum (2026-11-19, third): a merge records every request, and a refusal keeps them
 
-**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided the rule on 2026-11-19. It adds no evaluation semantics, so it carries no conformance cases. What it states is how the outcome of a merge, which decision 6 and its addenda define, is recorded.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-20, who decided the rule on 2026-11-19. It adds no evaluation semantics, so it carries no conformance cases. What it states is how the outcome of a merge, which decision 6 and its addenda define, is recorded.
 
 **Narrows decision 6.** It also says how the record holds what the second addenda of 2026-11-09 and 2026-11-16 have a merge decide, and how the refusal of a credit by the fourth addendum of 2026-11-16 is recorded.
 
@@ -546,6 +546,24 @@ The case of a unit short in the second addendum of 2026-11-16, members with a ba
 **The cost.** A refused request costs four to six triples: its type, its evaluation and what it asked, and its rank, its place and its purpose where they are stated. A granted request costs what a grant did, with one triple more for each of its rank, its place and its purpose. A residual costs one triple on its merge record.
 
 **Releases.** The request, the retirement of the grant, the residual and its account, the reasons for a refusal and the rule for requests of no use in part change published meaning, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
+
+## Addendum (proposed 2026-11-20): a pass's position is the later of its stimulus's and its ledger's latest pass's
+
+**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided the rule on 2026-11-20. It adds no evaluation semantics, so it carries no conformance cases. What it states is how a runtime gives a pass its position, which no text said.
+
+**A pass's position is the later of two.** They are the position of the stimulus the pass was evaluated for, and the position of the latest pass of its ledger at the revision the pass was evaluated from. A ledger's first pass takes its stimulus's position.
+
+**It is read with the revision.** The evaluation reads the latest pass's position with the revision, and the request carries the position it computed. The writer writes the request only while the ledger is at that revision, as the second addendum of 2026-11-19 has it, so the position read is still the latest when the pass is written. The writer reads no clock.
+
+**A record keeps its stimulus's position as its effective position.** That is no later than its pass's, so the first addendum of 2026-10-27 holds as it stands, and a reading by effective position is unchanged.
+
+**Why not the stimulus's position alone.** Two stimuli may be written out of the order of their positions, with one writer and no contention. For example, a credit at position 2 is written, and then an activation whose stimulus is at position 1. The second pass would record a greater revision at an earlier position, which the law of a ledger's passes refuses. A request that is turned away and evaluated again is one such case and not the only one.
+
+**The cost.** No triple is added. An evaluation reads one more value with the revision.
+
+**The evidence.** A second exhaustive [model](../../../tools/models/ledger-pass-revision/README.md) on the actors of the first, over 36 cells, the twelve starting balances with the two stimuli in either order of position or at one position. A pass that takes its stimulus's position breaks the order in 20, with the actors one after another. The later of the two, read with the revision, keeps it in all 36, with a stop or without. Written on whatever revision is latest, it breaks in 10. No pass falls before its stimulus under any rule.
+
+**What this does not decide.** A pass over two ledgers, whose latest passes may differ and which was not modelled. What a layer above forms an evaluation's key from where its position may be read again.
 
 ## Provenance
 
@@ -590,4 +608,6 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 
 **The second addendum of 2026-11-19.** LG-Q45 and LG-Q46 of the [Ledger plan](../../developer/plans/ledger.md). The read-set census of the multi-store architecture epic, MSA-I2, found three conditions in Behaviour's `ordered-draws.ttl` that no text stated, the first of which had the writer return a revision with each posting, where the addendum of 2026-11-18 has each pass record one. The maintainer decided on 2026-11-19 for one request for each pass, written on the revision it read, and for a pass named from its ledger and a key of its evaluation, which applies PAT-01 to the pass. Decided the same day, Behaviour states its half when it imports Ledger (LG-3), and the plan that builds the logical port states the port's. LG-27 writes the pass's name into the layer's README. The maintainer accepted the wording on 2026-11-19.
 
-**The proposed third addendum of 2026-11-19.** LG-Q38 and LG-Q41 of the [Ledger plan](../../developer/plans/ledger.md), raised by the [sketch of the vocabulary's rework](../../developer/sketches/ledger-vocabulary-rework.md), which found that a merge refused for a tie recorded no rank, though the second addendum of 2026-11-16 has the merge record show what decided the order. The maintainer decided on 2026-11-19 for one request node on every merge with the grant retired (LG-Q38), and for the residual account on the merge policy (LG-Q41). The seven reasons are those of LG-Q31, named for the condition each states as it asked, and the rule for requests of no use in part is the one the second addendum of 2026-11-16 names. Built as LG-26 ([its pack](../../developer/validation/LG-26.md)). Its wording awaits the maintainer's acceptance.
+**The third addendum of 2026-11-19.** LG-Q38 and LG-Q41 of the [Ledger plan](../../developer/plans/ledger.md), raised by the [sketch of the vocabulary's rework](../../developer/sketches/ledger-vocabulary-rework.md), which found that a merge refused for a tie recorded no rank, though the second addendum of 2026-11-16 has the merge record show what decided the order. The maintainer decided on 2026-11-19 for one request node on every merge with the grant retired (LG-Q38), and for the residual account on the merge policy (LG-Q41). The seven reasons are those of LG-Q31, named for the condition each states as it asked, and the rule for requests of no use in part is the one the second addendum of 2026-11-16 names. Built as LG-26 ([its pack](../../developer/validation/LG-26.md)). Its wording awaits the maintainer's acceptance.
+
+**The proposed addendum of 2026-11-20.** LG-Q47 of the [Ledger plan](../../developer/plans/ledger.md), raised by the review of the vocabulary's rework, which found that the layer holds a ledger's passes to one order of position and revision and that no text says who gives a pass its position. The maintainer decided on 2026-11-20, on the model, for the later of the two read with the revision. The correction to the layer's documents is a slice of its own.
