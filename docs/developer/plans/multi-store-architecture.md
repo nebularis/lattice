@@ -39,12 +39,13 @@ Each slice is the sketch's investigation of the same identifier, with the falsif
 | MSA-I5 | proofs | `spikes/multi-store-model/` | MSA-I4, the ledger branch's proof gate, and MSA-I5a, the shared session that holds a position and an amount (sketch §4.14) |
 | MSA-I6 | models | `tools/models/<topic>/` | MSA-I2, MSA-I9, and the choice of TLA+ or Quint (Track H records it as not chosen) |
 | MSA-I7 | benchmark | `benchmark/` | the ledger's runtime document, LG-2 |
-| MSA-I8 | proof of concept | `spikes/` | MSA-I5, MSA-I6, MSA-I7, MSA-I10 and the ledger's design |
+| MSA-I8 | proof of concept | `spikes/` | MSA-I5, MSA-I6, MSA-I7, MSA-I10, MSA-I14 and the ledger's design |
 | MSA-I9 | probes | `spikes/multi-store-stream-probes/` | none |
 | MSA-I10 | paper | `docs/developer/notes/multi-store/` | MSA-I1, LG-2 |
 | MSA-I11 | paper | `docs/developer/notes/multi-store/` | MSA-I4 |
 | MSA-I12 | proof of concept | `spikes/multi-store-emitted-topology/` | none |
 | MSA-I13 | test support | `tools/testing/postgres/` | none |
+| MSA-I14 | paper, with a model | `docs/developer/notes/multi-store/`, `tools/models/multi-store-protocols/` | none. MSA-I8 waits on it |
 
 ## Decided by the maintainer, 2026-11-17
 
@@ -104,6 +105,7 @@ The investigations found five defects in code that runs and one design point to 
 | MSA-F12 | a reply built from an exception carries a fixed message, and the exception's text goes to the log with the command's id | MSAF8-01 |
 | MSA-F13 | the Java topology refuses a queue whose `bindsTo` names no declared exchange, as the Python worker does | the review of MSA-F4 |
 | MSA-F14 | a command's digest separates two bodies that differ in how their blank nodes connect, each blank node labelled by a hash of its own quads. Built only where a studio command's body can hold a blank node | TD-165 |
+| MSA-F15 | a creation under a document id that has a version row, live or tombstoned, is refused, so a document whose removal is not finished cannot be listed again with what it held. It also tests a deletion delivered twice after a lost tombstone | TD-168, TD-171 |
 
 MSAI11-01 is by design under [ADR-A149](../../architecture/decisions/ADR-A149-publication-from-the-studio.md) decision 13, which orders a command's operations so that a guard failing part way leaves nothing a reader acts on. MSA-F6 tests that claim for every command that writes several aggregates. A unit on the port is all or nothing, so moving a studio command onto the port gives its operations one guard, which is the next plan's.
 
@@ -124,3 +126,24 @@ The maintainer answered the review's smaller points on 2026-11-19.
 - **The Java topology's `bindsTo` check** is MSA-F13.
 - **The models' README on X2's audit** is settled by a run. MSA-I6 adds an invariant that a flagged decision's evidence is stale, which we expect TLC to violate, and both sentences are rewritten from what it prints.
 - **Wider instances** are run in MSA-I6, sized to the machine that runs them. The models have to run on macOS and in a Linux cloud session with far less memory than machine S, so the runner reads the memory it has and skips with a reason what does not fit, as the [brief of 2026-11-19](../notes/machine-s-brief-2026-11-19-multi-store.md)'s section 4.4 states.
+
+## A design that admits no inconsistent state, MSA-I14 and MSA-F15
+
+Added 2026-11-20, at the maintainer's word, as urgent. The maintainer asked whether the addendum to ADR-A149's decision 13 can leave the store inconsistent. It can. TD-166 to TD-171 record three states, their two causes and one unchecked point, read from the writer's code with nothing run.
+
+**The requirement.** After any request commits, and after any crash, redelivery or handover, the store is in a state that some sequence of whole commands gives. No command is answered as applied while part of it is not, and none leaves a row its answer does not account for. The addendum bounds the states it admits and does not meet this.
+
+**MSA-F15, the fix that cannot wait.** A creation under a document id that has a version row, live or tombstoned, is refused (the addendum's point 5, TD-168). Its test leaves a document's row live and unlisted, saves under its id expecting revision 0, and finds the save refused and the description unchanged. It fails before the fix. A second test delivers a deletion twice more after a lost tombstone and finds the row gone (TD-171). Machine S builds it next.
+
+**MSA-I14, the design.** A note with options, their costs in requests and in contention, and a recommendation, for the maintainer to decide. It is written by the session that reviews this unit, and machine S adds the model. It answers these.
+
+- **Which guard makes a command whole.** One guard over every row the command writes, so the request applies all of its steps or none, with the command planned again from fresh revisions where it is refused. A unit on the logical port is all or nothing (MSA-I11), and the ledger's pass is refused whole and evaluated again by the same rule (LG-Q45). The hypothesis to test is that the studio's commands take that rule today, without waiting for the port.
+- **Whether a fence is needed as well.** MSA-I9 found a single active consumer is no fence. A whole-command guard catches a second writer only on rows the command writes. A fence the store checks, for example the partition's epoch guarded in every request, would refuse the second writer outright. The note says whether the first makes the second unnecessary, with the case that shows it.
+- **What a deletion's receipt then means.** With one guard a deletion has no later request, so points 2 to 4 of the addendum fall away and it is answered as applied only when everything it deletes is gone. The note drafts the addendum's replacement.
+- **What it costs.** A command refused whole is planned again, so the note counts the extra requests under contention, and says what a sender is told when a command loses three times.
+- **The model.** A configuration of X1 with two writers on one partition, the studio's receipts and per-aggregate revisions (MSAI6-01's configuration), and a command over two aggregates. It checks the requirement above for the design as built, where we expect TLC to find TD-166 and TD-169's states, and for each option.
+- **What stays outside one guard.** Jobs and the promotion maintenance done in the same request are not generated writes (MSA-I11). The note says whether they can leave a state of this kind.
+
+**Its falsifier.** An option is rejected where the model finds a reachable state no sequence of whole commands gives. The slice is done when the maintainer has decided, the decision is drafted as a Proposed addendum, and the slices that build it are planned.
+
+**What waits on it.** MSA-I8, and any slice that builds a write path on the port. The fixes already built stand until the decision replaces them.
