@@ -259,11 +259,15 @@ def java_operations(source: str, contract: dict | None = None) -> tuple[set[tupl
     exchanges and queues were derived from the contract (the form of Topology.java since MSA-F4) and not read as literals."""
     masked = mask(source)
     scope = java_constants(masked)
-    head = re.search(r"static void declare\(Channel channel\) throws IOException\s*\{", masked)
+    # Since MSA-F13 the rule is in declare(Channel, JsonObject), which declare(Channel) calls with the contract on the classpath.
+    head = re.search(r"static void declare\(Channel channel, JsonObject contract\) throws IOException\s*\{", masked) or re.search(
+        r"static void declare\(Channel channel\) throws IOException\s*\{", masked
+    )
     if head is None:
         raise ValueError("no declare(Channel) method")
     open_at = head.end() - 1
     body = masked[open_at + 1 : balanced(masked, open_at, "{", "}")]
+    whole = body
     from_contract = '"amqp-topology.json"' in masked and bool(CONTRACT_LOOPS.search(body))
     derived: set[tuple] = set()
     unmodelled: list[str] = []
@@ -278,8 +282,7 @@ def java_operations(source: str, contract: dict | None = None) -> tuple[set[tupl
             cursor = end + 1
         kept.append(body[cursor:])
         body = " ".join(kept)
-        rule = " ".join(removed)
-        missing = [part for part in CONTRACT_RULE_PARTS if re.search(part, rule) is None]
+        missing = [part for part in CONTRACT_RULE_PARTS if re.search(part, whole) is None]
         if missing:
             unmodelled.append("the declaring rule on the contract is not in the form this reader knows, missing " + "; ".join(missing))
         else:

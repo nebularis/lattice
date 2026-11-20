@@ -66,12 +66,28 @@ public final class Topology {
      * {@code deadLettersTo} names, or nowhere when that is null, as the worker's {@code declare_topology} does (MSAI12-01).
      */
     public static void declare(Channel channel) throws IOException {
-        JsonObject contract = contract();
-        for (String exchange : List.of(contract.getString("exchange"), contract.getString("deadLetterExchange"))) {
+        declare(channel, contract());
+    }
+
+    /**
+     * Declares the exchanges and queues of {@code contract}, which has the form of the contract file, then the super stream.
+     * A queue whose {@code bindsTo} or {@code deadLettersTo} names an exchange the contract does not declare is refused
+     * before it is declared, as the worker's {@code declare_topology} refuses it.
+     */
+    public static void declare(Channel channel, JsonObject contract) throws IOException {
+        List<String> exchanges = List.of(contract.getString("exchange"), contract.getString("deadLetterExchange"));
+        for (String exchange : exchanges) {
             channel.exchangeDeclare(exchange, "topic", true);
         }
         for (JsonValue entry : contract.get("queues").getAsArray()) {
             JsonObject queue = entry.getAsObject();
+            for (String field : List.of("bindsTo", "deadLettersTo")) {
+                JsonValue named = queue.get(field);
+                if (!named.isNull() && !exchanges.contains(named.getAsString().value())) {
+                    throw new IllegalArgumentException("queue " + queue.getString("name") + ": " + field + " names "
+                        + named.getAsString().value() + ", which the topology does not declare");
+                }
+            }
             JsonValue deadLettersTo = queue.get("deadLettersTo");
             Map<String, Object> arguments = deadLettersTo.isNull() ? Map.of()
                 : Map.of("x-dead-letter-exchange", deadLettersTo.getAsString().value());

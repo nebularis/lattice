@@ -2,6 +2,8 @@
 package org.nebularis.lattice.studio;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.rabbitmq.client.Channel;
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.atlas.json.JsonObject;
+import org.apache.jena.atlas.json.JsonString;
 import org.junit.jupiter.api.Test;
 import org.nebularis.lattice.studio.jobs.Topology;
 
@@ -54,18 +57,7 @@ class TopologyTest {
     @Test
     void theServiceDeclaresEachQueueWhereTheContractBindsIt() throws IOException {
         List<List<Object>> calls = new ArrayList<>();
-        Channel channel = (Channel) Proxy.newProxyInstance(Channel.class.getClassLoader(), new Class<?>[] {Channel.class},
-            (self, method, args) -> {
-                switch (method.getName()) {
-                    case "exchangeDeclare" -> calls.add(List.of("exchange", args[0], args[1], args[2], args.length > 4 ? args[4] : Map.of()));
-                    case "queueDeclare" -> calls.add(List.of("queue", args[0], args[1], args[4]));
-                    case "queueBind" -> calls.add(List.of("bind", args[0], args[1], args[2], args.length > 3 ? args[3] : Map.of()));
-                    default -> {
-                    }
-                }
-                return null;
-            });
-        Topology.declare(channel);
+        Topology.declare(recording(calls));
         assertEquals(List.of(
             List.of("exchange", "lattice.studio", "topic", true, Map.of()),
             List.of("exchange", "lattice.studio.dlx", "topic", true, Map.of()),
@@ -77,6 +69,38 @@ class TopologyTest {
             List.of("bind", "lattice.studio.transforms", "lattice.studio", "lattice.studio.transforms", Map.of()),
             List.of("queue", "lattice.studio.dead", true, Map.of()),
             List.of("bind", "lattice.studio.dead", "lattice.studio.dlx", "#", Map.of())), calls.subList(0, 10));
+    }
+
+    /**
+     * MSA-F13. The case of the worker's {@code test_the_worker_refuses_a_queue_bound_to_an_exchange_it_does_not_declare}: the
+     * contract with the transforms queue bound to an exchange it does not declare is refused, and that queue is neither declared
+     * nor bound.
+     */
+    @Test
+    void theServiceRefusesAQueueBoundToAnExchangeItDoesNotDeclare() throws IOException {
+        JsonObject contract = contract();
+        contract.get("queues").getAsArray().get(2).getAsObject().put("bindsTo", new JsonString("lattice.studio.nowhere"));
+        List<List<Object>> calls = new ArrayList<>();
+        IllegalArgumentException refused = assertThrows(IllegalArgumentException.class,
+            () -> Topology.declare(recording(calls), contract));
+        assertEquals("queue lattice.studio.transforms: bindsTo names lattice.studio.nowhere, which the topology does not declare",
+            refused.getMessage());
+        assertTrue(calls.stream().noneMatch(call -> call.get(1).equals("lattice.studio.transforms")), calls::toString);
+    }
+
+    /** A channel that records the exchange, queue and binding calls, as the broker would receive them. */
+    private static Channel recording(List<List<Object>> calls) {
+        return (Channel) Proxy.newProxyInstance(Channel.class.getClassLoader(), new Class<?>[] {Channel.class},
+            (self, method, args) -> {
+                switch (method.getName()) {
+                    case "exchangeDeclare" -> calls.add(List.of("exchange", args[0], args[1], args[2], args.length > 4 ? args[4] : Map.of()));
+                    case "queueDeclare" -> calls.add(List.of("queue", args[0], args[1], args[4]));
+                    case "queueBind" -> calls.add(List.of("bind", args[0], args[1], args[2], args.length > 3 ? args[3] : Map.of()));
+                    default -> {
+                    }
+                }
+                return null;
+            });
     }
 
     @Test

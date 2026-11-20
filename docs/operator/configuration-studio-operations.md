@@ -242,7 +242,7 @@ RabbitMQ runs on the Erlang mise installs, so start it through `mise`. Its user 
 
 ### Topology
 
-Declared identically, and idempotently, by the service when it connects and by the worker when it starts, from [`amqp-topology.json`](../../contracts/config-studio/amqp-topology.json).
+Declared identically, and idempotently, by the service when it connects and by the worker when it starts, from [`amqp-topology.json`](../../contracts/config-studio/amqp-topology.json). Both refuse a queue whose `bindsTo` or `deadLettersTo` names an exchange the file does not declare, before they declare that queue.
 
 | Kind | Name | Notes |
 |---|---|---|
