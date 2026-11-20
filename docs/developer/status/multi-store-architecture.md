@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** building 2026-11-19.
+**Status:** built 2026-11-19.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous on machine S, at the maintainer's request of 2026-11-19 and the two briefs of that day, on `spi/worktree-s`, committing locally only and never pushing, with up to two sub-agents. The branch defers versioning, so Persistence's spec, changed by MSA-F5, is reported unbumped until the merge.
 
@@ -38,7 +38,7 @@
 | MSA-F11 | a deletion answered from its receipt still removes a row its tombstone lost, so a batch that fails after its update commits is completed by its retry (MSAF7-01) A resend answered from its receipt finds the rows its deletion retires from the receipt's written graphs and tombstones any still live, and `finish` reads them with the batched read. [Validation Pack](../validation/MSA-F11.md) | built 2026-11-19 |  |
 | MSA-F12 | a reply built from an exception carries a fixed message, and the exception's text goes to the log with the command's id (MSAF8-01) A refused write and the writer's own failure are answered with a fixed message naming the command's id, the exception goes to the log, and a message that is not a command is answered 400. A part's save can carry a blank node to the digest, so MSA-F14 is built. [Validation Pack](../validation/MSA-F12.md) | built 2026-11-19 |  |
 | MSA-F13 | the Java topology refuses a queue whose `bindsTo` names no declared exchange, as the Python worker does `Topology` refuses a queue whose `bindsTo` or `deadLettersTo` names an exchange it does not declare, in the Python worker's words, and the pack names the binding an upgrade has to unbind. [Validation Pack](../validation/MSA-F13.md) | built 2026-11-19 |  |
-| MSA-F14 | a command's digest separates two bodies that differ in how their blank nodes connect (TD-165). Built only where a studio command's body can hold a blank node | building 2026-11-19 |  |
+| MSA-F14 | a command's digest separates two bodies that differ in how their blank nodes connect (TD-165). Built only where a studio command's body can hold a blank node `Codec.digest` labels each blank node by a hash of its own quads, itself as one label and every other blank node as another. Blank nodes whose own quads are alike still digest alike, which is stated. [Validation Pack](../validation/MSA-F14.md) | built 2026-11-19 |  |
 
 **Next action:** machine S, on `spi/worktree-s`, by the [brief of 2026-11-19](../notes/machine-s-brief-2026-11-19-multi-store.md), builds the fixes MSA-F10 to MSA-F14 the review found, the PostgreSQL test fixture, MSA-I13, then MSA-I5a and MSA-I5 in Isabelle, the rest of MSA-I6 (the saga row, a pass over two ledgers, FMH-5's models B to D, the probes on PostgreSQL and Fuseki, trace validation), MSA-I10, MSA-I7's arm and MSA-I8, beside the ledger's rework. MSA-I7, MSA-I8 and MSA-I10 name the ledger's records, so they follow LG-27. The Rocq half of MSA-I5 is built off machine S, on Rocq 9.3.0, once the Isabelle `exec` function and its laws exist. Built since on machine S: MSA-I13 and MSA-I5a, and on the ledger's lane LG-11 and LG-25 to LG-27. The second lane takes MSA-F10 to MSA-F14 next, as the merge note of 2026-11-19 says.
 
@@ -107,3 +107,4 @@ C1 to C3 of MSA-I2 are decided. A pass is one request that moves a ledger's revi
 - 2026-11-19: MSA-F13 marked building.
 - 2026-11-19: MSA-F13 built. The Java test failed before the check and passes after. The Python worker had the refusal and no test of it, so it gains one with the same case. `check:config-studio` and `check:workers` pass.
 - 2026-11-19: MSA-F14 marked building, since MSA-F12's pack shows a part's save can carry a blank node to the digest.
+- 2026-11-19: MSA-F14 built. Two tests, the brief's pair of bodies and a resend whose blank nodes connect otherwise, failed before the change and pass after, and the relabelled resend still digests the same. `check:config-studio` passes. The pack proposes TD-165's row as paid, for the maintainer.
