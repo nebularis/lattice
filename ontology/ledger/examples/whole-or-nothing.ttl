@@ -29,6 +29,7 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/whole-or-nothing/> .
 @prefix pass: <https://example.org/lattice/ledger/whole-or-nothing/ledger-issuer/pass/> .
+@base <https://example.org/lattice/ledger/whole-or-nothing/> .
 
 # ==== The owner, the order and the value space ================================
 
@@ -40,14 +41,14 @@ ex:order-of-application a skos:Concept ;
     skos:prefLabel "the order in which applications were made" .
 
 ex:units a qnt:ValueSpace ;
+    fnd:hasIdentity ex:units-identity ;
     qnt:spaceKey "ledger-whole-or-nothing-units" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-whole-or-nothing-units-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-identity a fnd:PersistentIdentity .
 ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
 ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
-
-ex:q-7 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "7"^^xsd:decimal .
 
 # ==== The merge policies =======================================================
 
@@ -69,16 +70,25 @@ ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy of the account that takes a residual." .
 
 # ==== The configuration: the pool and the account that takes a residual ======
+# Each definition is a version with an identity, its stated amount minted
+# under its IRI. The policy names the version of the account that takes a
+# residual.
 
 ex:pool a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-7 ; ldg:unitOfAccount ex:units ;
+    fnd:hasIdentity ex:pool-identity ;
+    ldg:statedAmount <pool/stated-amount> ; ldg:unitOfAccount ex:units ;
     ldg:admitsOwnerKind ex:Issuer ; ldg:mergePolicy ex:blocks-whole ;
     rdfs:comment "7 units, offered in blocks that are each granted whole or not at all." .
+<pool/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "7"^^xsd:decimal .
+ex:pool-identity a fnd:PersistentIdentity .
 
 ex:unallocated a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-7 ; ldg:unitOfAccount ex:units ;
+    fnd:hasIdentity ex:unallocated-identity ;
+    ldg:statedAmount <unallocated/stated-amount> ; ldg:unitOfAccount ex:units ;
     ldg:admitsOwnerKind ex:Issuer ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "What no block took, held for a later offer under its own policy." .
+<unallocated/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "7"^^xsd:decimal .
+ex:unallocated-identity a fnd:PersistentIdentity .
 
 # ==== The ledger profile =======================================================
 

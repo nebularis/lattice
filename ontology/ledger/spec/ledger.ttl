@@ -45,8 +45,8 @@ dct:description a owl:AnnotationProperty .
 
 ldg:AccountDefinition a owl:Class ;
     rdfs:comment "An amount consumed and restored, as the terms state it." ;
-    fnd:utility "Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against, the kinds of credit that restore it or a credit ceiling only where the terms need them." ;
-    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsOwnerKind ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditCeiling ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:keyDimension ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergePolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:partOf ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:periodRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:resetRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:statedAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOfAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+    fnd:utility "Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against, the kinds of credit that restore it or a credit ceiling only where the terms need them. A definition is versioned. Give it one persistent identity, mint its stated amount and its credit ceiling under its IRI, and name its parent, its policy, its unit of account, its period recurrence and the edition of the kinds that restore it by version. A change of any of them is a new version, which an account reaches only where it names it, so a past balance still folds against the version it was settled under." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:admitsOwnerKind ; owl:minCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditCeiling ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:creditKindsEdition ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:keyDimension ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:mergePolicy ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:partOf ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:periodRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:resetRecurrence ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:statedAmount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:unitOfAccount ; owl:cardinality "1"^^xsd:nonNegativeInteger ], fnd:Versioned .
 
 ldg:LedgerProfile a owl:Class ;
     rdfs:comment "The rules a deployment sets for every ledger it runs." ;
@@ -90,9 +90,17 @@ ldg:countsPurpose a owl:ObjectProperty ;
 
 ldg:creditCeiling a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The most a credit restores this account to." ;
-    fnd:utility "States the ceiling a credit may never restore the balance above. Defaults to the stated amount where unset. State a ceiling above the stated amount for a reinstatement (the aggregate's own stated amount stays the per-layer limit, and the ceiling lets one reinstatement credit raise the balance to twice it, without a second account)." ;
+    fnd:utility "States the ceiling a credit may never restore the balance above. Defaults to the stated amount where unset. State a ceiling above the stated amount for a reinstatement (the aggregate's own stated amount stays the per-layer limit, and the ceiling lets one reinstatement credit raise the balance to twice it, without a second account). Mint the quantity under the definition's IRI, as the stated amount is, even where the two are equal." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:Quantity .
+
+ldg:creditKindsEdition a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:comment "The edition of a scheme of credit kinds that a definition's restoring kinds were resolved against." ;
+    fnd:utility "State it on every definition that names the kinds that restore it, and name the edition itself, a version of the scheme an applied module publishes its kinds in, never the scheme's identity. Each kind the definition names with ldg:restoredBy is a concept of that edition. A later edition reaches the definition only through a new version of it, so a historical read uses the kinds as they were. Leave it unset on a definition that accepts every kind." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
+    rdfs:domain ldg:AccountDefinition ;
+    rdfs:range skos:ConceptScheme .
 
 ldg:excessRecovery a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "Where a unit over is taken from when shares rounded to the nearest sum to more than the amount." ;
@@ -109,6 +117,7 @@ ldg:keyDimension a owl:FunctionalProperty, owl:ObjectProperty ;
 ldg:mergePolicy a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The merge policy that governs requests competing on this account." ;
     fnd:utility "Name the version of the policy in force for the account. Which policy governs is resolved when the definition is written, from the contract's clauses, then a document it cites, then the deployment's rules. A definition states exactly one, so nothing is looked up when requests are merged, and it names a version, so a later change to the policy does not reach it." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range ldg:MergePolicy .
 
@@ -120,13 +129,15 @@ ldg:mergeRule a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:partOf a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "\"Part of and not in addition to\": the parent edge of the account tree." ;
-    fnd:utility "States that this account's balance is drawn from its parent's too, along the same path. An account outside another's subtree is in addition to it, never drawn through it, so state no ldg:partOf for a limit that sits beside another rather than inside it. The edge is stated, never inferred, and may not cycle." ;
+    fnd:utility "States that this account's balance is drawn from its parent's too, along the same path. An account outside another's subtree is in addition to it, never drawn through it, so state no ldg:partOf for a limit that sits beside another rather than inside it. The edge is stated, never inferred, and may not cycle. It names a version of the parent, so a later version of the parent reaches this definition only through a new version of it." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range ldg:AccountDefinition .
 
 ldg:periodRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The recurrence whose periods each have an account of their own." ;
-    fnd:utility "States that the amount applies once per period (an annual seat licence, a quarterly support-hours bundle). The period key of an account is the bin of this recurrence that a draw's effective position falls in, computed at write and never supplied by the draw, and a draw whose effective position cannot be binned is Undetermined. One recurrence holds along a path. Leave unset for an amount that never renews." ;
+    fnd:utility "States that the amount applies once per period (an annual seat licence, a quarterly support-hours bundle). The period key of an account is the bin of this recurrence that a draw's effective position falls in, computed at write and never supplied by the draw, and a draw whose effective position cannot be binned is Undetermined. One recurrence holds along a path. Name a version of the recurrence, since its bins say which account a draw was on. Leave unset for an amount that never renews." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:Recurrence .
 
@@ -156,7 +167,8 @@ ldg:resetRecurrence a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:residualAccount a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The account that takes what a merge under this policy leaves." ;
-    fnd:utility "State it only beside ldg:allowsResiduals true, and only where the terms say where a residual goes. Its value is an account definition, and the owner's instance of it takes the residual. That account's own policy says what becomes of it. Leave it unset where a residual is only stated on the merge record." ;
+    fnd:utility "State it only beside ldg:allowsResiduals true, and only where the terms say where a residual goes. Its value is a version of an account definition, and the owner's instance of it takes the residual. That account's own policy says what becomes of it. Leave it unset where a residual is only stated on the merge record." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain ldg:MergePolicy ;
     rdfs:range ldg:AccountDefinition .
 
@@ -168,7 +180,8 @@ ldg:residualAllocation a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:restoredBy a owl:ObjectProperty ;
     rdfs:comment "A kind of credit that restores this account." ;
-    fnd:utility "State one value for each kind the terms say restores the account, a concept of ldg:CreditKinds. An account that states none accepts every kind. A credit is posted only to an account that accepts its kind, and an ancestor counts a credit only where it accepts the kind, so an annual cap that recoveries restore and a reinstatement does not states the recovery alone." ;
+    fnd:utility "State one value for each kind the terms say restores the account, a concept of ldg:CreditKinds. An account that states none accepts every kind. A credit is posted only to an account that accepts its kind, and an ancestor counts a credit only where it accepts the kind, so an annual cap that recoveries restore and a reinstatement does not states the recovery alone. Each kind is a concept of the edition the definition names with ldg:creditKindsEdition." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range skos:Concept .
 
@@ -186,13 +199,15 @@ ldg:roundingMethod a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:statedAmount a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The amount when fresh." ;
-    fnd:utility "States an account definition's amount before any draw, in its unit of account. Point at a qnt:Quantity on the same space named by ldg:unitOfAccount." ;
+    fnd:utility "States an account definition's amount before any draw, in its unit of account. Point at a qnt:Quantity on the same space named by ldg:unitOfAccount, minted under the definition's IRI, so it is part of that version and never shared with another definition." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:Quantity .
 
 ldg:unitOfAccount a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The value space every posting on this account is in." ;
     fnd:utility "Names the value space an account's amounts are stated and posted in. The space must be extensive (qnt:additivity qnt:Extensive) with qnt:Sum and qnt:Difference capabilities, since Ledger holds only amounts whose parts add to the whole (§1)." ;
+    fnd:meaningBearing "true"^^xsd:boolean ;
     rdfs:domain ldg:AccountDefinition ;
     rdfs:range qnt:ValueSpace .
 
@@ -201,7 +216,5 @@ ldg:unitOrderCriterion a owl:FunctionalProperty, owl:ObjectProperty ;
     fnd:utility "State it where a rule places units one at a time, as ldg:ToFirstInOrder does and as ldg:LargestRemainder does among equal remainders. The rank criterion cannot serve, since requests of one rank are tied under it. Where none is stated, a unit that needs an order is left where the policy permits a residual, and the merge is refused where it does not. Its value is a concept of ldg:OrderCriteria." ;
     rdfs:domain ldg:MergePolicy ;
     rdfs:range skos:Concept .
-
-ldg:mergePolicy fnd:meaningBearing true .
 
 ldg:resetRecurrence owl:deprecated true .

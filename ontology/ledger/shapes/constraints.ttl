@@ -4,7 +4,8 @@
 # units of account match and are extensive, a merge rule states what it needs,
 # a residual account stands beside the permission to leave a residual,
 # a credit ceiling is not below the stated amount, a key dimension is typed,
-# and a closing recurrence is a ledger profile's.
+# a closing recurrence is a ledger profile's, and the kinds a definition
+# names are concepts of the edition it pins.
 # Each targets the class as one node and reads every definition in one query,
 # so a validator runs each once rather than once per definition.
 
@@ -164,6 +165,22 @@ ldg:ClosingRecurrenceOnProfileShape a sh:NodeShape ;
 			SELECT $this ?value WHERE {
 				?value a $this .
 				?value ldg:closingRecurrence ?recurrence .
+			}
+		"""
+	] .
+
+ldg:RestoringKindsInTheirEditionShape a sh:NodeShape ;
+	sh:targetNode ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "An account definition that names the kinds that restore it must pin the edition they were resolved against, and each kind must be a concept of that edition." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+			SELECT DISTINCT $this ?value WHERE {
+				?value a $this ;
+					ldg:restoredBy ?kind .
+				OPTIONAL { ?value ldg:creditKindsEdition ?edition }
+				FILTER (!BOUND(?edition) || NOT EXISTS { ?kind skos:inScheme ?edition })
 			}
 		"""
 	] .

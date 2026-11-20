@@ -36,6 +36,7 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/licence-seats/> .
 @prefix pass: <https://example.org/lattice/ledger/licence-seats/ledger-customer/pass/> .
+@base <https://example.org/lattice/ledger/licence-seats/> .
 
 # ==== The owner and the key dimension ========================================
 
@@ -52,17 +53,19 @@ ex:porto a skos:Concept ; skos:inScheme ex:sites ; skos:prefLabel "Porto" .
 # ==== The value space and the configuration ==================================
 
 ex:seats a qnt:ValueSpace ;
+    fnd:hasIdentity ex:seats-identity ;
     qnt:spaceKey "ledger-licence-seats" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-licence-seats-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:seats-sum , ex:seats-difference .
+ex:seats-identity a fnd:PersistentIdentity .
 ex:seats-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:seats .
 ex:seats-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:seats .
 
-ex:q-500 a qnt:Quantity ; qnt:onSpace ex:seats ; qnt:numericValue "500"^^xsd:decimal .
-
 ex:licence-year a qnt:Recurrence ;
+    fnd:hasIdentity ex:licence-year-identity ;
     rdfs:comment "Annual, by the licence's anniversary." .
+ex:licence-year-identity a fnd:PersistentIdentity .
 ex:year-2027 a qnt:RecurrenceBin ; qnt:generatedByRecurrence ex:licence-year ; qnt:binKey "2027" .
 ex:year-2028 a qnt:RecurrenceBin ; qnt:generatedByRecurrence ex:licence-year ; qnt:binKey "2028" .
 
@@ -76,13 +79,16 @@ ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 
 ex:seat-licence a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-500 ;
+    fnd:hasIdentity ex:seat-licence-identity ;
+    ldg:statedAmount <seat-licence/stated-amount> ;
     ldg:unitOfAccount ex:seats ;
     ldg:admitsOwnerKind ex:Licensee ;
     ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:periodRecurrence ex:licence-year ;
     ldg:keyDimension ex:sites ;
-    rdfs:comment "500 seats a year, one account derived per site and licence year." .
+    rdfs:comment "500 seats a year, one account derived per site and licence year. A version with an identity, its stated amount minted under its IRI." .
+<seat-licence/stated-amount> a qnt:Quantity ; qnt:onSpace ex:seats ; qnt:numericValue "500"^^xsd:decimal .
+ex:seat-licence-identity a fnd:PersistentIdentity .
 
 # ==== The ledger profile =======================================================
 

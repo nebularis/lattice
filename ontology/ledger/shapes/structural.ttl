@@ -14,7 +14,7 @@
 
 ldg:AccountDefinitionShape a sh:NodeShape ;
     sh:targetClass ldg:AccountDefinition ;
-    sh:property [ sh:path ldg:admitsOwnerKind ; sh:minCount 1 ], [ sh:path ldg:creditCeiling ; sh:maxCount 1 ], [ sh:path ldg:keyDimension ; sh:maxCount 1 ], [ sh:path ldg:mergePolicy ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOf ; sh:maxCount 1 ], [ sh:path ldg:periodRecurrence ; sh:maxCount 1 ], [ sh:path ldg:resetRecurrence ; sh:maxCount 1 ], [ sh:path ldg:statedAmount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:unitOfAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
+    sh:property [ sh:path ldg:admitsOwnerKind ; sh:minCount 1 ], [ sh:path ldg:creditCeiling ; sh:maxCount 1 ], [ sh:path ldg:creditKindsEdition ; sh:maxCount 1 ], [ sh:path ldg:keyDimension ; sh:maxCount 1 ], [ sh:path ldg:mergePolicy ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:partOf ; sh:maxCount 1 ], [ sh:path ldg:periodRecurrence ; sh:maxCount 1 ], [ sh:path ldg:resetRecurrence ; sh:maxCount 1 ], [ sh:path ldg:statedAmount ; sh:minCount 1 ; sh:maxCount 1 ], [ sh:path ldg:unitOfAccount ; sh:minCount 1 ; sh:maxCount 1 ] .
 
 ldg:AccountShape a sh:NodeShape ;
     sh:targetClass ldg:Account ;

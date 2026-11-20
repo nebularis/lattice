@@ -27,6 +27,7 @@
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
@@ -34,26 +35,31 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/research-grant/> .
 @prefix pass: <https://example.org/lattice/ledger/research-grant/ledger-institution/pass/> .
+@base <https://example.org/lattice/ledger/research-grant/> .
 
 # ==== The owner, the kind of credit and the value space =======================
 
 ex:institution a fnd:PersistentIdentity ; rdfs:comment "The grantee institution, owner of the budget accounts." .
 ex:Grantee a owl:Class ; rdfs:comment "The kind of owner these accounts admit." .
 
-ex:unspent-funds a skos:Concept ; skos:inScheme ldg:CreditKinds ;
-    skos:prefLabel "unspent funds returned" .
+ex:credit-kinds-edition-1 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:credit-kinds-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "the grant's kinds of credit, first edition" .
+ex:credit-kinds-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The scheme of credit kinds an applied module publishes, through its editions." .
+
+ex:unspent-funds a skos:Concept ; skos:inScheme ldg:CreditKinds , ex:credit-kinds-edition-1 ;
+    rdfs:isDefinedBy ex:credit-kinds-edition-1 ; skos:prefLabel "unspent funds returned" .
 
 ex:funds a qnt:ValueSpace ;
+    fnd:hasIdentity ex:funds-identity ;
     qnt:spaceKey "ledger-research-grant-funds" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-research-grant-funds-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:funds-sum , ex:funds-difference .
+ex:funds-identity a fnd:PersistentIdentity .
 ex:funds-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:funds .
 ex:funds-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:funds .
-
-ex:q-200000 a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "200000"^^xsd:decimal .
-ex:q-120000 a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "120000"^^xsd:decimal .
-ex:q-80000  a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "80000"^^xsd:decimal .
 
 # ==== The merge policies =======================================================
 
@@ -73,23 +79,35 @@ ex:ledger-profile-identity a fnd:PersistentIdentity ;
     rdfs:comment "The ledger profile the deployment gives this example's ledger." .
 
 # ==== The configuration: a budget with two sub-budgets ========================
+# Each definition is a version with an identity, its stated amount and its
+# ceiling minted under its IRI. None names its kinds, so none pins an edition.
 
 ex:grant-budget a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-200000 ; ldg:unitOfAccount ex:funds ;
+    fnd:hasIdentity ex:grant-budget-identity ;
+    ldg:statedAmount <grant-budget/stated-amount> ; ldg:unitOfAccount ex:funds ;
     ldg:admitsOwnerKind ex:Grantee ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "The grant's overall budget." .
+<grant-budget/stated-amount> a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "200000"^^xsd:decimal .
+ex:grant-budget-identity a fnd:PersistentIdentity .
 
 ex:staff-budget a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-120000 ; ldg:unitOfAccount ex:funds ;
+    fnd:hasIdentity ex:staff-budget-identity ;
+    ldg:statedAmount <staff-budget/stated-amount> ; ldg:unitOfAccount ex:funds ;
     ldg:admitsOwnerKind ex:Grantee ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:grant-budget ;
     rdfs:comment "The staff sub-budget, part of the grant." .
+<staff-budget/stated-amount> a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "120000"^^xsd:decimal .
+ex:staff-budget-identity a fnd:PersistentIdentity .
 
 ex:equipment-budget a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-80000 ; ldg:unitOfAccount ex:funds ;
+    fnd:hasIdentity ex:equipment-budget-identity ;
+    ldg:statedAmount <equipment-budget/stated-amount> ; ldg:unitOfAccount ex:funds ;
     ldg:admitsOwnerKind ex:Grantee ; ldg:mergePolicy ex:refused-when-exceeded ;
-    ldg:partOf ex:grant-budget ; ldg:creditCeiling ex:q-80000 ;
+    ldg:partOf ex:grant-budget ; ldg:creditCeiling <equipment-budget/credit-ceiling> ;
     rdfs:comment "The equipment sub-budget, part of the grant. Its credit ceiling equals its stated amount." .
+<equipment-budget/stated-amount> a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "80000"^^xsd:decimal .
+<equipment-budget/credit-ceiling> a qnt:Quantity ; qnt:onSpace ex:funds ; qnt:numericValue "80000"^^xsd:decimal .
+ex:equipment-budget-identity a fnd:PersistentIdentity .
 
 # ==== Position 1: staff spending ==============================================
 

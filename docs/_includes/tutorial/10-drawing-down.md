@@ -13,14 +13,15 @@ A Ledger **account** states an amount that is consumed and restored. Here is a 2
 
 <!-- source: ontology/ledger/examples/revolving-facility.ttl -->
 ```turtle
-ex:q-commitment a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "20000000"^^xsd:decimal ; qnt:inUnit ex:GBP .
-
 ex:facility a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-commitment ;
+    fnd:hasIdentity ex:facility-identity ;
+    ldg:statedAmount <facility/stated-amount> ;
     ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Borrower ;
     ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "A 20,000,000 sterling revolving commitment, drawn in sterling." .
+<facility/stated-amount> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "20000000"^^xsd:decimal ; qnt:inUnit ex:GBP .
+ex:facility-identity a fnd:PersistentIdentity .
 
 ex:refused-when-exceeded a ldg:MergePolicy ;
     fnd:hasIdentity ex:refused-when-exceeded-identity ;
@@ -30,7 +31,8 @@ ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 ```
 
-- **`ldg:statedAmount`** is the commitment. It never changes when money is drawn or repaid.
+- **`fnd:hasIdentity`** says the account definition is versioned. A change of its amount or its policy is a new version beside the old, so a past balance still folds against the terms it was settled under.
+- **`ldg:statedAmount`** is the commitment. It never changes when money is drawn or repaid. The quantity is minted under the definition's own IRI, written relative to the example's base, so it is part of this version and no other definition shares it.
 - **`ldg:unitOfAccount`** is a value space from chapter 7, and it must be extensive, since a balance only means something if amounts add.
 - **`ldg:admitsOwnerKind`** says whose account it can be, here a borrower.
 - **`ldg:mergePolicy`** names the policy that says what happens when several claims arrive at the same moment. Its `ldg:mergeRule` here is `ldg:Refuse`, which refuses them all. Other rules take them in priority order or share the amount in proportion, and then the policy also states how the shares are rounded and where the residual goes.

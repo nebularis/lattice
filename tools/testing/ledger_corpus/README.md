@@ -13,7 +13,7 @@ It carries no insurance or other domain content. The graphs hold the ledger's ow
 | `account_tree(definitions, sections)` | `definitions` account definitions, one root, `sections` sections part of it and the rest sublimits spread across the sections, the shape real account trees have |
 | `one_pass(leaves)` | a root, `leaves - 1` sections and `leaves` leaves, each leaf its own definition and account, one pass in which each leaf takes one debit of 1 with its running balance, and a checkpoint for the root and every section at the pass's close, so `2 * leaves` records |
 
-Each returns the data alone. The caller adds the model graphs it validates against.
+Each returns the data alone. The caller adds the model graphs it validates against. Every account definition, merge policy, ledger profile and value space has one persistent identity, and each definition's stated amount is minted under its IRI, so Foundation's shapes for a versioned thing find nothing in either graph.
 
 ## Install
 

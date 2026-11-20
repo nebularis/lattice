@@ -24,7 +24,8 @@
 # scoped to either section), so it does not touch section-a, sublimit-a1 or
 # section-b. Every posting is written once, at the account it names, and an
 # ancestor's balance is the sum over its subtree. Each credit has a kind, a
-# recovery or a reinstatement, of the example's own. The annual cap is
+# recovery or a reinstatement, of the example's own, in the first edition of
+# its kinds, which the annual cap pins. The annual cap is
 # restored by recoveries alone, so position 4's reinstatement restores the
 # aggregate and not the annual cap, whose balance stays the measure of total
 # capacity left across the original cover and the reinstatement. Every other
@@ -37,6 +38,7 @@
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
@@ -44,6 +46,7 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/insurance-aggregate/> .
 @prefix pass: <https://example.org/lattice/ledger/insurance-aggregate/ledger-programme/pass/> .
+@base <https://example.org/lattice/ledger/insurance-aggregate/> .
 
 # ==== The owner, the purpose scheme, the kinds of credit and the value space ==
 
@@ -53,26 +56,28 @@ ex:Programme a owl:Class ; rdfs:comment "The kind of owner these accounts admit.
 ex:purposes a skos:ConceptScheme ; skos:prefLabel "loss purposes" .
 ex:flood a skos:Concept ; skos:inScheme ex:purposes ; skos:prefLabel "flood" .
 
-ex:recovery a skos:Concept ; skos:inScheme ldg:CreditKinds ; skos:prefLabel "recovery" ;
+ex:credit-kinds-edition-1 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:credit-kinds-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "the programme's kinds of credit, first edition" .
+ex:credit-kinds-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The scheme of credit kinds an applied module publishes, through its editions." .
+
+ex:recovery a skos:Concept ; skos:inScheme ldg:CreditKinds , ex:credit-kinds-edition-1 ;
+    rdfs:isDefinedBy ex:credit-kinds-edition-1 ; skos:prefLabel "recovery" ;
     rdfs:comment "An amount recovered after a loss was paid, from a third party or salvage." .
-ex:reinstatement a skos:Concept ; skos:inScheme ldg:CreditKinds ; skos:prefLabel "reinstatement" ;
+ex:reinstatement a skos:Concept ; skos:inScheme ldg:CreditKinds , ex:credit-kinds-edition-1 ;
+    rdfs:isDefinedBy ex:credit-kinds-edition-1 ; skos:prefLabel "reinstatement" ;
     rdfs:comment "The aggregate restored once it is exhausted, as the programme allows once a year." .
 
 ex:money a qnt:ValueSpace ;
+    fnd:hasIdentity ex:money-identity ;
     qnt:spaceKey "ledger-insurance-aggregate-money" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-insurance-aggregate-money-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:money-sum , ex:money-difference .
+ex:money-identity a fnd:PersistentIdentity .
 ex:money-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:money .
 ex:money-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:money .
-
-ex:q-20000000 a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "20000000"^^xsd:decimal .
-ex:q-10000000 a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "10000000"^^xsd:decimal .
-ex:q-6000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "6000000"^^xsd:decimal .
-ex:q-4000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "4000000"^^xsd:decimal .
-ex:q-1000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "1000000"^^xsd:decimal .
-ex:q-2000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "2000000"^^xsd:decimal .
-ex:q-3000000  a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "3000000"^^xsd:decimal .
 
 # ==== The merge policies =======================================================
 
@@ -92,44 +97,69 @@ ex:ledger-profile-identity a fnd:PersistentIdentity ;
     rdfs:comment "The ledger profile the deployment gives this example's ledger." .
 
 # ==== The configuration: the tree, a limit beside it, and a purpose outside ===
+# Each definition is a version with an identity of its own, and its stated
+# amount and ceiling are minted under its IRI. The annual cap names the kinds
+# that restore it, so it pins the edition they were resolved against.
 
 ex:annual-cap a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-20000000 ; ldg:unitOfAccount ex:money ;
+    fnd:hasIdentity ex:annual-cap-identity ;
+    ldg:statedAmount <annual-cap/stated-amount> ; ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
-    ldg:restoredBy ex:recovery ;
+    ldg:restoredBy ex:recovery ; ldg:creditKindsEdition ex:credit-kinds-edition-1 ;
     rdfs:comment "Twice the aggregate: the programme's hard cap across the original cover and one reinstatement. Recoveries restore it, and a reinstatement does not." .
+<annual-cap/stated-amount> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "20000000"^^xsd:decimal .
+ex:annual-cap-identity a fnd:PersistentIdentity .
 
 ex:aggregate a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-10000000 ; ldg:unitOfAccount ex:money ;
+    fnd:hasIdentity ex:aggregate-identity ;
+    ldg:statedAmount <aggregate/stated-amount> ; ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
-    ldg:partOf ex:annual-cap ; ldg:creditCeiling ex:q-10000000 ;
+    ldg:partOf ex:annual-cap ; ldg:creditCeiling <aggregate/credit-ceiling> ;
     rdfs:comment "The programme's annual aggregate, reinstatable once." .
+<aggregate/stated-amount> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "10000000"^^xsd:decimal .
+<aggregate/credit-ceiling> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "10000000"^^xsd:decimal .
+ex:aggregate-identity a fnd:PersistentIdentity .
 
 ex:section-a a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-6000000 ; ldg:unitOfAccount ex:money ;
+    fnd:hasIdentity ex:section-a-identity ;
+    ldg:statedAmount <section-a/stated-amount> ; ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:aggregate .
+<section-a/stated-amount> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "6000000"^^xsd:decimal .
+ex:section-a-identity a fnd:PersistentIdentity .
 
 ex:sublimit-a1 a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-1000000 ; ldg:unitOfAccount ex:money ;
+    fnd:hasIdentity ex:sublimit-a1-identity ;
+    ldg:statedAmount <sublimit-a1/stated-amount> ; ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:section-a .
+<sublimit-a1/stated-amount> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "1000000"^^xsd:decimal .
+ex:sublimit-a1-identity a fnd:PersistentIdentity .
 
 ex:section-b a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-4000000 ; ldg:unitOfAccount ex:money ;
+    fnd:hasIdentity ex:section-b-identity ;
+    ldg:statedAmount <section-b/stated-amount> ; ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:aggregate .
+<section-b/stated-amount> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "4000000"^^xsd:decimal .
+ex:section-b-identity a fnd:PersistentIdentity .
 
 ex:beneficiary-class-limit a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-2000000 ; ldg:unitOfAccount ex:money ;
+    fnd:hasIdentity ex:beneficiary-class-limit-identity ;
+    ldg:statedAmount <beneficiary-class-limit/stated-amount> ; ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "A further limit for one class of beneficiary, in addition to the aggregate: no ldg:partOf edge." .
+<beneficiary-class-limit/stated-amount> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "2000000"^^xsd:decimal .
+ex:beneficiary-class-limit-identity a fnd:PersistentIdentity .
 
 ex:flood-aggregate a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-3000000 ; ldg:unitOfAccount ex:money ;
+    fnd:hasIdentity ex:flood-aggregate-identity ;
+    ldg:statedAmount <flood-aggregate/stated-amount> ; ldg:unitOfAccount ex:money ;
     ldg:admitsOwnerKind ex:Programme ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:countsPurpose ex:flood ;
     rdfs:comment "Outside the tree. A draw naming the flood purpose debits this account too." .
+<flood-aggregate/stated-amount> a qnt:Quantity ; qnt:onSpace ex:money ; qnt:numericValue "3000000"^^xsd:decimal .
+ex:flood-aggregate-identity a fnd:PersistentIdentity .
 
 # ==== Position 1: a flood loss on the sublimit, and the flood purpose =========
 

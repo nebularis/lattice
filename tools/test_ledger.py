@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: MPL-2.0
 
-"""Ledger LG-1, LG-2, LG-25, LG-26 and LG-27: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
-and LG-2 "in detail" tables and the Validation Packs of LG-25, LG-26 and LG-27. Validates LG-0's examples, configuration and runtime records, against
-the structural shapes, the SHACL-SPARQL constraints and the runtime laws, checks the import guard holds, the spec names no term
+"""Ledger LG-1, LG-2, LG-25, LG-26, LG-27 and LG-28: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
+and LG-2 "in detail" tables and the Validation Packs of LG-25 to LG-28. Validates LG-0's examples, configuration and runtime records, against
+the structural shapes, the SHACL-SPARQL constraints and the runtime laws, and against Foundation's two shapes for a versioned thing
+(ADR-A142), checks the import guard holds, the spec names no term
 of Party, Eligibility, Wording, Instrument or Behaviour, the cycle shape finishes on a generated tree, each runtime law refuses a
 record that breaks it, and the runtime shapes finish on a generated pass, both small here and at the plan's sizes in
 benchmark/ledger-posting-cost/test_shape_scale.py (STD-155). LG2-01 is the owl:rational probe on rdflib, Oxigraph and Jena
@@ -60,6 +61,8 @@ def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> No
     constraints = _graph(LEDGER / "shapes" / "constraints.ttl")
     module.CYCLE_SHAPE = graph_cache(_only(constraints, LDG.NoCycleThroughPartOfShape))
     module.RUNTIME_SHAPES = graph_cache(LEDGER / "shapes" / "runtime.ttl")
+    foundation = _graph(ONTOLOGY / "foundation" / "shapes" / "constraints.ttl", ONTOLOGY / "foundation" / "shapes" / "structural.ttl")
+    module.FOUNDATION_SHAPES = graph_cache(_only(foundation, FND.VersionedShape, FND.MeaningBearingEdgeShape))
     # what the scale test leaves to pySHACL: the shapes of LG-1, and the runtime shapes too slow on Oxigraph
     module.SCALE_SHAPES = graph_cache(LEDGER / "shapes" / "structural.ttl", LEDGER / "shapes" / "constraints.ttl",
                                       _only(_runtime_shapes(), *(URIRef(s) for s in sorted(SLOW_ON_OXIGRAPH))))
@@ -582,6 +585,18 @@ def _closing_recurrence_on_a_definition(g: Graph) -> None:
     g.add((ex.child, LDG.closingRecurrence, ex.closes))
 
 
+def _kinds_with_no_edition(g: Graph) -> None:
+    """The annual cap names the kinds that restore it and pins no edition."""
+    ex = _ex("insurance-aggregate")
+    g.remove((ex["annual-cap"], LDG.creditKindsEdition, None))
+
+
+def _kind_outside_the_edition(g: Graph) -> None:
+    """The recovery the parent names is no longer a concept of the edition the parent pins."""
+    ex = _ex("credit-cut-at-parent")
+    g.remove((ex.recovery, SKOS.inScheme, ex["credit-kinds-edition-1"]))
+
+
 MUTATIONS = {
     "a running balance one minor unit off": ("research-grant", _running_balance_off, "RunningBalanceShape"),
     "LG2-05 a credit above the ceiling": ("research-grant", _credit_above_ceiling, "CreditCeilingShape"),
@@ -659,6 +674,10 @@ MUTATIONS = {
         "research-grant", _ledger_revision("research-grant", "institution", 2), "LedgerAtItsLatestPassShape"),
     "a closing recurrence on an account definition": (
         "credit-cut-at-parent", _closing_recurrence_on_a_definition, "ClosingRecurrenceOnProfileShape"),
+    "a definition that names its kinds and pins no edition": (
+        "insurance-aggregate", _kinds_with_no_edition, "RestoringKindsInTheirEditionShape"),
+    "a kind outside the edition its definition pins": (
+        "credit-cut-at-parent", _kind_outside_the_edition, "RestoringKindsInTheirEditionShape"),
 }
 
 
@@ -859,6 +878,127 @@ def test_the_grant_is_retired_and_the_seven_reasons_are_one_scheme() -> None:
     assert reasons == {LDG.ExceedsAvailable, LDG.RanksNotDistinct, LDG.TieWithoutRule, LDG.ResidualNotPermitted,
                        LDG.MixedPurposes, LDG.CrossingLimits, LDG.KindNotAccepted}
     assert all((reason, RDF.type, SKOS.Concept) in MODEL for reason in reasons)
+
+
+# ---- LG-28: the account definition versioned, its edges that bear meaning, and the edition of its kinds
+
+EXAMPLES = sorted(path.stem for path in (LEDGER / "examples").glob("*.ttl"))
+MEANING_BEARING = {LDG.statedAmount, LDG.creditCeiling, LDG.unitOfAccount, LDG.partOf, LDG.mergePolicy, LDG.periodRecurrence,
+                   LDG.restoredBy, LDG.creditKindsEdition, LDG.residualAccount, LDG.ledgerProfile}
+
+
+def _foundation_findings(g: Graph) -> set[tuple[str, str, str]]:
+    """(shape, focus node, message) of every result of Foundation's `fnd:MeaningBearingEdgeShape` on `g`, and of its
+    `fnd:VersionedShape` on the ledger's own versioned classes, violations and warnings alike. The message of a meaning-bearing edge
+    names the edge. Quantification's operation capabilities are versioned too and carry no identity in any module's example, which
+    is Quantification's to answer, so the ledger's tests leave them out."""
+    _, report, _ = validate(g, shacl_graph=FOUNDATION_SHAPES, inference="none", advanced=True)
+    ours = {LDG.AccountDefinition, LDG.MergePolicy, LDG.LedgerProfile}
+    found = set()
+    for r in report.subjects(RDF.type, SH.ValidationResult):
+        shape, focus = str(report.value(r, SH.sourceShape)).rsplit("#", 1)[-1], report.value(r, SH.focusNode)
+        if shape == "VersionedShape" and not ours & set(g.objects(focus, RDF.type)):
+            continue
+        found.add((shape, str(focus), str(report.value(r, SH.resultMessage))))
+    return found
+
+
+def test_the_account_definition_is_versioned_and_its_edges_bear_meaning() -> None:
+    """`ldg:AccountDefinition` is a `fnd:Versioned` (LG-Q40, TD-102). The ledger marks exactly these edges `fnd:meaningBearing`
+    (ADR-A142 decision 2), and `ldg:creditKindsEdition` is the pin LG-Q22 (a) decided, at most one on a definition."""
+    assert (LDG.AccountDefinition, RDFS.subClassOf, FND.Versioned) in MODEL
+    marked = {p for p in MODEL.subjects(FND.meaningBearing, Literal(True)) if str(p).startswith(str(LDG))}
+    assert marked == MEANING_BEARING
+    assert (MODEL.value(LDG.creditKindsEdition, RDFS.domain), MODEL.value(LDG.creditKindsEdition, RDFS.range)) == (
+        LDG.AccountDefinition, SKOS.ConceptScheme)
+    assert (LDG.creditKindsEdition, RDF.type, OWL.FunctionalProperty) in MODEL
+
+
+@pytest.mark.parametrize("name", EXAMPLES)
+def test_foundation_finds_every_example_versioned_and_its_parts_pinned(name: str) -> None:
+    """Every example, accepted or refused: each versioned thing has one identity, and no edge that bears meaning leads to a node that
+    is neither versioned, minted under its subject nor a published term, so Foundation's check warns on no quantity (LG-Q40 (a))."""
+    assert len(EXAMPLES) == 18
+    g = MODEL + _example(name)
+    assert _foundation_findings(g) == set()
+    definitions = list(g.subjects(RDF.type, LDG.AccountDefinition))
+    assert definitions and all(len(list(g.objects(d, FND.hasIdentity))) == 1 for d in definitions)
+
+
+def _no_identity(name: str, subject: str) -> Callable[[Graph], None]:
+    def mutate(g: Graph) -> None:
+        g.remove((_ex(name)[subject], FND.hasIdentity, None))
+    return mutate
+
+
+def _shared_stated_amount(g: Graph) -> None:
+    """The staff budget's stated amount is a quantity of the example's own, minted under no definition."""
+    ex = _ex("research-grant")
+    for p, o in [(RDF.type, QNT.Quantity), (QNT.onSpace, ex.funds), (QNT.numericValue, _decimal("120000"))]:
+        g.add((ex["q-120000"], p, o))
+    g.set((ex["staff-budget"], LDG.statedAmount, ex["q-120000"]))
+
+
+def _ceiling_of_another_definition(g: Graph) -> None:
+    """The equipment budget's ceiling is the grant's stated amount, minted under the grant and not under it."""
+    ex = _ex("research-grant")
+    g.set((ex["equipment-budget"], LDG.creditCeiling, ex["grant-budget/stated-amount"]))
+
+
+def _kind_not_published(g: Graph) -> None:
+    g.remove((_ex("insurance-aggregate").recovery, RDFS.isDefinedBy, None))
+
+
+FOUNDATION_MUTATIONS = {
+    "a definition with no identity": ("insurance-aggregate", _no_identity("insurance-aggregate", "aggregate"),
+                                      "VersionedShape", "aggregate", None),
+    "a parent with no identity": ("insurance-aggregate", _no_identity("insurance-aggregate", "aggregate"),
+                                  "MeaningBearingEdgeShape", "section-a", LDG.partOf),
+    "a stated amount minted under no definition": ("research-grant", _shared_stated_amount, "MeaningBearingEdgeShape",
+                                                   "staff-budget", LDG.statedAmount),
+    "a ceiling minted under another definition": ("research-grant", _ceiling_of_another_definition, "MeaningBearingEdgeShape",
+                                                  "equipment-budget", LDG.creditCeiling),
+    "a unit of account with no identity": ("research-grant", _no_identity("research-grant", "funds"), "MeaningBearingEdgeShape",
+                                           "grant-budget", LDG.unitOfAccount),
+    "a merge policy with no identity": ("research-grant", _no_identity("research-grant", "refused-when-exceeded"),
+                                        "MeaningBearingEdgeShape", "grant-budget", LDG.mergePolicy),
+    "a period recurrence with no identity": ("licence-seats", _no_identity("licence-seats", "licence-year"),
+                                             "MeaningBearingEdgeShape", "seat-licence", LDG.periodRecurrence),
+    "a kind that is not a published term": ("insurance-aggregate", _kind_not_published, "MeaningBearingEdgeShape", "annual-cap",
+                                            LDG.restoredBy),
+    "an edition with no identity": ("insurance-aggregate", _no_identity("insurance-aggregate", "credit-kinds-edition-1"),
+                                    "MeaningBearingEdgeShape", "annual-cap", LDG.creditKindsEdition),
+    "a residual account with no identity": ("whole-or-nothing", _no_identity("whole-or-nothing", "unallocated"),
+                                            "MeaningBearingEdgeShape", "blocks-whole", LDG.residualAccount),
+}
+
+
+@pytest.mark.parametrize("case", FOUNDATION_MUTATIONS)
+def test_foundation_reports_a_part_that_can_change_under_a_version(case: str) -> None:
+    """Each mutation leaves a versioned thing, or what one of its edges that bear meaning leads to, open to an edit that would change
+    what a past version meant. Foundation's shape reports it, a violation for a missing identity and a warning for an edge."""
+    name, mutate, shape, focus, edge = FOUNDATION_MUTATIONS[case]
+    g = MODEL + _example(name)
+    mutate(g)
+    found = {(s, f) for s, f, message in _foundation_findings(g) if edge is None or str(edge) in message}
+    assert (shape, str(_ex(name)[focus])) in found, found
+
+
+def test_the_corpus_is_versioned_as_foundation_asks() -> None:
+    """The generated tree and pass give every definition an identity and a stated amount minted under it."""
+    assert _foundation_findings(MODEL + account_tree(50, sections=4)) == set()
+    assert _foundation_findings(MODEL + one_pass(20)) == set()
+
+
+def test_a_definition_pins_at_most_one_edition() -> None:
+    g = MODEL + _example("insurance-aggregate")
+    ex = _ex("insurance-aggregate")
+    g.add((ex["annual-cap"], LDG.creditKindsEdition, ex["credit-kinds-edition-2"]))
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert not conforms
+    paths = {str(report.value(r, SH.resultPath)) for r in report.subjects(SH.resultSeverity, SH.Violation)
+             if report.value(r, SH.sourceConstraintComponent) == SH.MaxCountConstraintComponent}
+    assert paths == {str(LDG.creditKindsEdition)}
 
 
 # ---- LG2-10: a generated pass, 200 leaves here and 5,000 postings with 5,000 checkpoints in the benchmark

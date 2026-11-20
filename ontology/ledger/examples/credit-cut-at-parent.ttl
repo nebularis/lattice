@@ -37,6 +37,7 @@
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix voc:  <https://www.nebularis.org/neuro-semantic/lattice/vocabulary#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
@@ -44,25 +45,32 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/credit-cut-at-parent/> .
 @prefix pass: <https://example.org/lattice/ledger/credit-cut-at-parent/ledger-holder/pass/> .
+@base <https://example.org/lattice/ledger/credit-cut-at-parent/> .
 
 # ==== The owner, the kind of credit and the value space =======================
 
 ex:holder a fnd:PersistentIdentity ; rdfs:comment "The owner of both accounts." .
 ex:Holder a owl:Class ; rdfs:comment "The kind of owner these accounts admit." .
 
-ex:recovery a skos:Concept ; skos:inScheme ldg:CreditKinds ;
-    skos:prefLabel "recovery" ;
+ex:credit-kinds-edition-1 a voc:ConceptScheme ;
+    fnd:hasIdentity ex:credit-kinds-identity ; fnd:hasGovernanceState fnd:Active ;
+    skos:prefLabel "the holder's kinds of credit, first edition" .
+ex:credit-kinds-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The scheme of credit kinds an applied module publishes, through its editions." .
+
+ex:recovery a skos:Concept ; skos:inScheme ldg:CreditKinds , ex:credit-kinds-edition-1 ;
+    rdfs:isDefinedBy ex:credit-kinds-edition-1 ; skos:prefLabel "recovery" ;
     rdfs:comment "An amount recovered after it was paid, which restores what it was drawn from." .
 
 ex:units a qnt:ValueSpace ;
+    fnd:hasIdentity ex:units-identity ;
     qnt:spaceKey "ledger-credit-cut-at-parent-units" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-credit-cut-at-parent-units-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-identity a fnd:PersistentIdentity .
 ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
 ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
-
-ex:q-10 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "10"^^xsd:decimal .
 
 # ==== The merge policy =========================================================
 
@@ -83,21 +91,31 @@ ex:ledger-profile-identity a fnd:PersistentIdentity ;
     rdfs:comment "The ledger profile the deployment gives this example's ledger." .
 
 ex:closes a qnt:Recurrence ;
+    fnd:hasIdentity ex:closes-identity ;
     rdfs:comment "The ledger closes after positions 3 and 4, as this example states." .
+ex:closes-identity a fnd:PersistentIdentity .
 
 # ==== The configuration: a parent and a child ================================
+# Each definition is a version with an identity, its stated amount minted
+# under its IRI. The parent names its kinds and pins their edition.
 
 ex:parent a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-10 ; ldg:unitOfAccount ex:units ;
+    fnd:hasIdentity ex:parent-identity ;
+    ldg:statedAmount <parent/stated-amount> ; ldg:unitOfAccount ex:units ;
     ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
-    ldg:restoredBy ex:recovery ;
+    ldg:restoredBy ex:recovery ; ldg:creditKindsEdition ex:credit-kinds-edition-1 ;
     rdfs:comment "Stated at 10, its ceiling the stated amount, restored by recoveries." .
+<parent/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "10"^^xsd:decimal .
+ex:parent-identity a fnd:PersistentIdentity .
 
 ex:child a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-10 ; ldg:unitOfAccount ex:units ;
+    fnd:hasIdentity ex:child-identity ;
+    ldg:statedAmount <child/stated-amount> ; ldg:unitOfAccount ex:units ;
     ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:parent ;
     rdfs:comment "Stated at 10, part of the parent. It names no kind, so every kind restores it." .
+<child/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "10"^^xsd:decimal .
+ex:child-identity a fnd:PersistentIdentity .
 
 # ==== Position 1: a debit of 5 at the child ===================================
 

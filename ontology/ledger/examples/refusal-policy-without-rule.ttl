@@ -10,18 +10,19 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/refusal-policy-without-rule/> .
+@base <https://example.org/lattice/ledger/refusal-policy-without-rule/> .
 
 ex:OwnerKind a owl:Class .
 
 ex:units a qnt:ValueSpace ;
+    fnd:hasIdentity ex:units-identity ;
     qnt:spaceKey "ledger-refusal-policy-without-rule-units" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-refusal-policy-without-rule-units-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-identity a fnd:PersistentIdentity .
 ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
 ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
-
-ex:q-100 a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
 
 # ==== The merge policies =======================================================
 
@@ -33,5 +34,8 @@ ex:silent-policy-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 
 ex:account a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:units ;
+    fnd:hasIdentity ex:account-identity ;
+    ldg:statedAmount <account/stated-amount> ; ldg:unitOfAccount ex:units ;
     ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:silent-policy .
+<account/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
+ex:account-identity a fnd:PersistentIdentity .

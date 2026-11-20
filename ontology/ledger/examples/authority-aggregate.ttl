@@ -38,6 +38,7 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/authority-aggregate/> .
 @prefix pass: <https://example.org/lattice/ledger/authority-aggregate/ledger-authority/pass/> .
+@base <https://example.org/lattice/ledger/authority-aggregate/> .
 
 # ==== The owner and the value space ===========================================
 
@@ -45,14 +46,14 @@ ex:authority a fnd:PersistentIdentity ; rdfs:comment "The delegated authority, o
 ex:Authority a owl:Class ; rdfs:comment "The kind of owner this account admits." .
 
 ex:capacity a qnt:ValueSpace ;
+    fnd:hasIdentity ex:capacity-identity ;
     qnt:spaceKey "ledger-authority-aggregate-capacity" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-authority-aggregate-capacity-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:capacity-sum , ex:capacity-difference .
+ex:capacity-identity a fnd:PersistentIdentity .
 ex:capacity-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:capacity .
 ex:capacity-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:capacity .
-
-ex:q-100 a qnt:Quantity ; qnt:onSpace ex:capacity ; qnt:numericValue "100"^^xsd:decimal .
 
 # ==== The order the terms name =================================================
 
@@ -73,9 +74,12 @@ ex:shared-in-proportion-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 
 ex:delegated-aggregate a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-100 ; ldg:unitOfAccount ex:capacity ;
+    fnd:hasIdentity ex:delegated-aggregate-identity ;
+    ldg:statedAmount <delegated-aggregate/stated-amount> ; ldg:unitOfAccount ex:capacity ;
     ldg:admitsOwnerKind ex:Authority ; ldg:mergePolicy ex:shared-in-proportion ;
-    rdfs:comment "100 units of delegated capacity, shared proportionally when oversubscribed." .
+    rdfs:comment "100 units of delegated capacity, shared proportionally when oversubscribed. A version with an identity, its stated amount minted under its IRI." .
+<delegated-aggregate/stated-amount> a qnt:Quantity ; qnt:onSpace ex:capacity ; qnt:numericValue "100"^^xsd:decimal .
+ex:delegated-aggregate-identity a fnd:PersistentIdentity .
 
 # ==== The ledger profile =======================================================
 

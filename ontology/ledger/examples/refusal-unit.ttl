@@ -13,28 +13,30 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex:   <https://example.org/lattice/ledger/refusal-unit/> .
+@base <https://example.org/lattice/ledger/refusal-unit/> .
 
 ex:owner a fnd:PersistentIdentity .
 ex:OwnerKind a owl:Class .
 
 ex:pounds a qnt:ValueSpace ;
+    fnd:hasIdentity ex:pounds-identity ;
     qnt:spaceKey "ledger-refusal-unit-pounds" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-refusal-unit-pounds-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:pounds-sum , ex:pounds-difference .
+ex:pounds-identity a fnd:PersistentIdentity .
 ex:pounds-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:pounds .
 ex:pounds-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:pounds .
 
 ex:dollars a qnt:ValueSpace ;
+    fnd:hasIdentity ex:dollars-identity ;
     qnt:spaceKey "ledger-refusal-unit-dollars" ; qnt:orderKind qnt:TotalOrder ;
     qnt:densityKind qnt:Dense ; qnt:spaceHash "ledger-refusal-unit-dollars-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:dollars-sum , ex:dollars-difference .
+ex:dollars-identity a fnd:PersistentIdentity .
 ex:dollars-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:dollars .
 ex:dollars-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:dollars .
-
-ex:q-100000-gbp a qnt:Quantity ; qnt:onSpace ex:pounds ; qnt:numericValue "100000"^^xsd:decimal .
-ex:q-10000-usd  a qnt:Quantity ; qnt:onSpace ex:dollars ; qnt:numericValue "10000"^^xsd:decimal .
 
 # ==== The merge policies =======================================================
 
@@ -46,12 +48,18 @@ ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
     rdfs:comment "The merge policy these terms state." .
 
 ex:parent-account a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-100000-gbp ; ldg:unitOfAccount ex:pounds ;
+    fnd:hasIdentity ex:parent-account-identity ;
+    ldg:statedAmount <parent-account/stated-amount> ; ldg:unitOfAccount ex:pounds ;
     ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
     rdfs:comment "A section stated in pounds." .
+<parent-account/stated-amount> a qnt:Quantity ; qnt:onSpace ex:pounds ; qnt:numericValue "100000"^^xsd:decimal .
+ex:parent-account-identity a fnd:PersistentIdentity .
 
 ex:child-account a ldg:AccountDefinition ;
-    ldg:statedAmount ex:q-10000-usd ; ldg:unitOfAccount ex:dollars ;
+    fnd:hasIdentity ex:child-account-identity ;
+    ldg:statedAmount <child-account/stated-amount> ; ldg:unitOfAccount ex:dollars ;
     ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
     ldg:partOf ex:parent-account ;
     rdfs:comment "Refused. A dollar sublimit part of a pound section." .
+<child-account/stated-amount> a qnt:Quantity ; qnt:onSpace ex:dollars ; qnt:numericValue "10000"^^xsd:decimal .
+ex:child-account-identity a fnd:PersistentIdentity .
