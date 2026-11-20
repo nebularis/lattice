@@ -2,9 +2,7 @@
 
 # Persistence Contracts
 
-The public contract between the persistence compiler's generated operations and whoever calls them: the `lattice-persistence` library
-([`packages/persistence`](../../packages/persistence/README.md)), or your own implementation ([ADR-A132](../../docs/architecture/decisions/ADR-A132-persistence-caller-library.md)).
-Everything here is usable without any LATTICE code.
+The public contract between the persistence compiler's generated operations and whoever calls them: the `lattice-persistence` library ([`packages/persistence`](../../packages/persistence/README.md)), or your own implementation ([ADR-A132](../../docs/architecture/decisions/ADR-A132-persistence-caller-library.md)). Everything here is usable without any LATTICE code.
 
 | File | What it is |
 |---|---|
@@ -17,8 +15,7 @@ Everything here is usable without any LATTICE code.
 
 **Canonical N-Triples.** One line per triple, `<s> <p> o .`, sorted by the UTF-8 bytes of the line, with no duplicate line.
 
-* A literal escapes backslash, quote, line feed and carriage return as `\\`, `\"`, `\n` and `\r`, and nothing else. A tab, a non-ASCII
-  character and an astral character are written as themselves, and a backslash before `u` stays two backslashes.
+* A literal escapes backslash, quote, line feed and carriage return as `\\`, `\"`, `\n` and `\r`, and nothing else. A tab, a non-ASCII character and an astral character are written as themselves, and a backslash before `u` stays two backslashes.
 * A literal of `xsd:string` is written plain. Any other datatype is kept, with its lexical form as given. A language tag is lower case.
 * A payload holds no blank node. A subject or a predicate is an IRI, an IRI holds none of the characters `< > " { } | \ ^` and a grave accent, and no space or control character.
 
@@ -29,21 +26,12 @@ requestDigest = hex(SHA-256(enc([kind, target, expected, part1, part2, ...])))
 ```
 
 * `enc` is the tuple encoding of the patterns guide's Chapter 5. Each component is its UTF-8 length in decimal, a colon and its bytes.
-* `kind` is the operation's kind as the compiled profile names it (`Create`, `Replace`, `DeltaReplace`, `Tombstone`, `Append`, `AppendVersion`). `target` is the IRI
-  without angle brackets, and `expected` is the expected seq as a decimal string. Either is the empty string where the operation has none.
-* Each content part is one component, and it is `enc` of the part's canonical lines. The parts are those the profile's digest contract declares,
-  in its `partOrder`: the payload, or for an append the events, then the add part and the del part where the operation has them. An empty
-  part is still a component, so a triple in the add part and the same triple in the del part give different digests.
+* `kind` is the operation's kind as the compiled profile names it (`Create`, `Replace`, `DeltaReplace`, `Tombstone`, `Append`, `AppendVersion`). `target` is the IRI without angle brackets, and `expected` is the expected seq as a decimal string. Either is the empty string where the operation has none.
+* Each content part is one component, and it is `enc` of the part's canonical lines. The parts are those the profile's digest contract declares, in its `partOrder`: the payload, or for an append the events, then the add part and the del part where the operation has them. An empty part is still a component, so a triple in the add part and the same triple in the del part give different digests.
 * The add and del parts mean different things for the two kinds of operation that have them. Under `dal:DeltaMembership` they hold the members a new version adds and drops, as `<v> pat:addsMember <m>` and `<v> pat:dropsMember <m>` (for example `<urn:quote:1/v5> pat:addsMember <urn:quote:1/line7>`). Under a patch log they hold the triples of the aggregate a write adds and removes (for example a renamed project's new `<urn:project:1> <urn:ex:title> "Beta"` in the add part and its old title in the del part). The digest treats both alike. A `DeltaReplace` has the add part and the del part and no payload part, since its request carries the change and not the state (`digest-delta-replace`).
-* The event part is the lines of each row's `rdf:type`, `pat:opSeq` (`xsd:long`) and `pat:occurredAt` triples together with the event triples,
-  sorted and de-duplicated as one list. It leaves out `pat:revision`, which the store mints.
+* The event part is the lines of each row's `rdf:type`, `pat:opSeq` (`xsd:long`) and `pat:occurredAt` triples together with the event triples, sorted and de-duplicated as one list. It leaves out `pat:revision`, which the store mints.
 
-**The payload check.** A vector gives the root, the boundary shape, the edges of the shape and the payload, and states the subjects that are outside.
-Start at the state (root, shape). From a state (node, shape), follow each edge whose source is the shape and whose ownership is `Owned`, forward
-from the node (`s p o` with the node as `s`) or backward for an inverse edge, to the state (the other end, the edge's target shape). The root and
-every node of a reached state are inside. A subject that is not inside is outside. An edge that names no target shape leads to a member that owns
-nothing further. A family with a null shape bounds nothing. Reference and vocabulary edges are not followed, so a node reached only by one is
-outside. The shape of the source matters, so `hasSubtask` owned from a task does not make a milestone own a subtask.
+**The payload check.** A vector gives the root, the boundary shape, the edges of the shape and the payload, and states the subjects that are outside. Start at the state (root, shape). From a state (node, shape), follow each edge whose source is the shape and whose ownership is `Owned`, forward from the node (`s p o` with the node as `s`) or backward for an inverse edge, to the state (the other end, the edge's target shape). The root and every node of a reached state are inside. A subject that is not inside is outside. An edge that names no target shape leads to a member that owns nothing further. A family with a null shape bounds nothing. Reference and vocabulary edges are not followed, so a node reached only by one is outside. The shape of the source matters, so `hasSubtask` owned from a task does not make a milestone own a subtask.
 
 **The events of an append.** Every subject of the event triples is an event of the batch or starts with `{event}/part/`. The batch has at least one event, each event IRI and each `opSeq` are distinct, and a row has all four values. The codes are `EventOutsideBound`, `NoEvents`, `DuplicateEvent`, `DuplicateOpSeq` and `UndefInRow`.
 
@@ -57,11 +45,11 @@ outside. The shape of the source matters, so `hasSubtask` owned from a task does
 
 ## The confirmation
 
-A `204` from the store does not say whether a write's guards matched, so after every write the caller reads what the store holds and classifies the write (STD-312, obligation 3 of [the compiler's README](../../tools/persistence/README.md#obligations-the-sparql-cannot-enforce-for-you)). The libraries give the read and the classification (`confirm_query`, `classify` and `confirm` in Python, `Confirmation.query`, `classify` and `run` in Java), and the vectors fix the classification. It follows section 15.2 of the [patterns guide](../../docs/architecture/rdf-sparql-patterns-guide.md#152-the-receipt-then-the-txn-claim), and where the guide has no row for a guard that a generated operation has, this section does.
+A `204` from the store does not say whether a write's guards matched, so after every write the caller reads what the store holds and classifies the write (obligation 3 of [the compiler's README](../../tools/persistence/README.md#obligations-the-sparql-cannot-enforce-for-you)). The libraries give the read and the classification (`confirm_query`, `classify` and `confirm` in Python, `Confirmation.query`, `classify` and `run` in Java), and the vectors fix the classification. It follows section 15.2 of the [patterns guide](../../docs/architecture/rdf-sparql-patterns-guide.md#152-the-receipt-then-the-txn-claim), and where the guide has no row for a guard that a generated operation has, this section does.
 
 **What it confirms.** An operation of kind `Create`, `Replace`, `DeltaReplace`, `Tombstone`, `Append` or `AppendVersion`, which records a transaction claim, and `KeyClaimWrite` and `KeyClaimWriteDual`, which record none and have a read of their own. Any other operation is not confirmed by this read, and a library refuses to build it (`ConfirmationError`, `ConfirmationException`).
 
-**The read.** One `SELECT` of `?fact` and `?value`, run on the writer and never on a replica, since a replica that has not applied the write reports a fact absent. A row is one fact the store holds, and a fact the store does not hold has no row. The graphs and the node of the dataset are the operation's compile-time bindings, and every other term is an IRI of the request, rendered by the library from a typed IRI, so no value is read as SPARQL (PRI-55). The request's epoch, position and digest are never sent. They are compared in the classification, so the read cannot be fooled by the datatype of a stored number. The target is the request's `root`, or its `stream` for an `Append`.
+**The read.** One `SELECT` of `?fact` and `?value`, run on the writer and never on a replica, since a replica that has not applied the write reports a fact absent. A row is one fact the store holds, and a fact the store does not hold has no row. The graphs and the node of the dataset are the operation's compile-time bindings, and every other term is an IRI of the request, rendered by the library from a typed IRI, so no value is read as SPARQL. The request's epoch, position and digest are never sent. They are compared in the classification, so the read cannot be fooled by the datatype of a stored number. The target is the request's `root`, or its `stream` for an `Append`.
 
 | Fact | The objects of | In graph | Asked when |
 |---|---|---|---|
