@@ -1851,7 +1851,7 @@ ldg:VersionsKeepTheAccountsPlaceShape a sh:NodeShape ;
 | `ldg:PassRevisionsInOrderShape` | no two passes of one ledger record one revision, a pass at a later position records a greater one, the least a ledger's passes record is 1, and each revision above it follows one a pass of it recorded | |
 | `ldg:LedgerAtItsLatestPassShape` | a ledger's revision is the greatest revision its passes record | |
 | `ldg:SupersessionNamesOneVersionOfEachDefinitionShape` | no two superseding versions of one supersession share a definition's identity | |
-| `ldg:SupersessionPeriodFromRecurrenceShape` | a supersession whose superseding version states a period recurrence states a period key that is a bin of it, and one whose versions state none states no period key | |
+| `ldg:SupersessionPeriodFromRecurrenceShape` | a supersession whose superseding version states a period recurrence states a period key that is a bin of it, and a supersession that states a period key names no version that states no recurrence, so it holds the versions of one period | |
 
 A draw is a debit posting, and a request on a merge, which states what was asked and what was granted. Its amount is a literal, in its account's unit of account and in the unit its account's stated amount is in, so the only thing a draw can bring in another value space or unit is a quantity it read, named in its `prov:wasDerivedFrom`. A draw that read one has taken an amount the ledger would have to convert, or a proportion it would have to resolve, and the ledger does neither. A record made before the ledger, such as a conversion or the resolution of a proportion, is not a quantity, so a draw may cite one. An amount is representable where it is a decimal, a value of the datatype the space declares, `xsd:decimal` where it declares none, and, on a discrete space that states a granularity floor, a whole multiple of the floor. So 33% of 10 licences, 3.3, is refused on a space of whole licences, and a count beyond `xsd:int` on a space whose datatype is `xsd:int`. Each refusal carries the reason Quantification gives for the same comparison. A value on another space, or not among the values its space declares, is `qnt:OutsideDeclaredSpace`. Quantification has no term for a unit with no permitted conversion, so that shape's message uses its words.
 
@@ -2608,7 +2608,7 @@ ldg:SupersessionNamesOneVersionOfEachDefinitionShape a sh:NodeShape ;
 ldg:SupersessionPeriodFromRecurrenceShape a sh:NodeShape ;
         sh:targetNode ldg:Supersession ;
         sh:sparql [
-                sh:message "A supersession must state a period key, a bin of the recurrence, where a later version it names states a period recurrence, and no period key where none of them does." ;
+                sh:message "A supersession must state a period key, a bin of the recurrence, where a later version it names states a period recurrence, and must then name no later version that states none, so it holds the versions of one period." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
@@ -2618,8 +2618,8 @@ ldg:SupersessionPeriodFromRecurrenceShape a sh:NodeShape ;
                                         ?version ldg:periodRecurrence ?recurrence .
                                         FILTER NOT EXISTS { ?value ldg:periodKey ?bin . ?bin qnt:generatedByRecurrence ?recurrence }
                                 } UNION {
-                                        ?value a $this ; ldg:periodKey ?unwanted .
-                                        FILTER NOT EXISTS { ?value ldg:supersedingVersion/ldg:periodRecurrence ?any }
+                                        ?value a $this ; ldg:periodKey ?unwanted ; ldg:supersedingVersion ?bare .
+                                        FILTER NOT EXISTS { ?bare ldg:periodRecurrence ?any }
                                 }
                         }
                 """

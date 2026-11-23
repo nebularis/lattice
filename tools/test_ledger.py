@@ -671,6 +671,13 @@ def _period_key_without_a_recurrence(g: Graph) -> None:
                         ("supersession-1", LDG.periodKey, "year-2028"))
 
 
+def _period_key_beside_a_version_with_no_recurrence(g: Graph) -> None:
+    """The aggregate's second version states a recurrence and the supersession its bin, and the section's second version states none."""
+    _period_recurrence_stated(g, "aggregate-2")
+    _supersession_graph(g, ("year-2028", RDF.type, QNT.RecurrenceBin), ("year-2028", QNT.generatedByRecurrence, "year"),
+                        ("supersession-1", LDG.periodKey, "year-2028"))
+
+
 def _supersession_forward_dated(g: Graph) -> None:
     g.set((_ex("supersession-raised-amount")["supersession-1"], LDG.effectivePosition, _position(3)))
 
@@ -735,6 +742,8 @@ MUTATIONS = {
         "supersession-raised-amount", _recurrence_without_a_period_key, "SupersessionPeriodFromRecurrenceShape"),
     "a supersession with a period key where no version states a recurrence": (
         "supersession-raised-amount", _period_key_without_a_recurrence, "SupersessionPeriodFromRecurrenceShape"),
+    "a supersession with a period key that names a version of no recurrence": (
+        "supersession-raised-amount", _period_key_beside_a_version_with_no_recurrence, "SupersessionPeriodFromRecurrenceShape"),
     "a forward-dated supersession": ("supersession-raised-amount", _supersession_forward_dated, "NotForwardDatedShape"),
     "a pass whose one record is a supersession for an owner with no ledger": (
         "supersession-raised-amount", _supersession_for_an_owner_with_no_ledger, "PassWritesOneLedgerShape"),

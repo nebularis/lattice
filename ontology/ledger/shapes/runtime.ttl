@@ -745,7 +745,7 @@ ldg:SupersessionNamesOneVersionOfEachDefinitionShape a sh:NodeShape ;
 ldg:SupersessionPeriodFromRecurrenceShape a sh:NodeShape ;
         sh:targetNode ldg:Supersession ;
         sh:sparql [
-                sh:message "A supersession must state a period key, a bin of the recurrence, where a later version it names states a period recurrence, and no period key where none of them does." ;
+                sh:message "A supersession must state a period key, a bin of the recurrence, where a later version it names states a period recurrence, and must then name no later version that states none, so it holds the versions of one period." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
@@ -755,8 +755,8 @@ ldg:SupersessionPeriodFromRecurrenceShape a sh:NodeShape ;
                                         ?version ldg:periodRecurrence ?recurrence .
                                         FILTER NOT EXISTS { ?value ldg:periodKey ?bin . ?bin qnt:generatedByRecurrence ?recurrence }
                                 } UNION {
-                                        ?value a $this ; ldg:periodKey ?unwanted .
-                                        FILTER NOT EXISTS { ?value ldg:supersedingVersion/ldg:periodRecurrence ?any }
+                                        ?value a $this ; ldg:periodKey ?unwanted ; ldg:supersedingVersion ?bare .
+                                        FILTER NOT EXISTS { ?bare ldg:periodRecurrence ?any }
                                 }
                         }
                 """

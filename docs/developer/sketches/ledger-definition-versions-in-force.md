@@ -2,7 +2,7 @@
 
 # An account under a later version of its definition, a brief for LG-29
 
-**Unit:** ledger ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Questions:** LG-Q48 to LG-Q57. **Status:** sketched 2026-11-20, worked examples and LG-Q52 to LG-Q54 added the same day, revised 2026-11-23 on the maintainer's questions.
+**Unit:** ledger ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Questions:** LG-Q48 to LG-Q58. **Status:** sketched 2026-11-20, worked examples and LG-Q52 to LG-Q54 added the same day, revised 2026-11-23 on the maintainer's questions.
 
 ## 1. Why now
 
@@ -319,7 +319,17 @@ Instrument and Wording each declare an `Amendment`, for the act and for the chan
 
 **What (a) gives.** The same facts recorded in another order give the same `ldg:ofDefinition`, where under (b) it depends on whether an account's first draw was recorded before or after the supersession. The accounts a supersession reaches are found by an equality of period keys, which the records hold, and never by comparing a position with the bounds of a period, which they do not.
 
-*Leaning (a).* It is what LG-Q52's option (c) described, a record with its period, carried to the account that states no period. LG-29 is built on (a) while this waits, and a different answer changes one entry and one law under (b), and the range of `ldg:ofDefinition` and every account under (d).
+**Answered 2026-11-23, (a).** Decided by the maintainer. It is what LG-Q52's option (c) described, a record with its period, carried to the account that states no period, and it is what LG-29 built. Its rule is promoted with LG-Q58's, in one addendum to ADR-A131.
+
+**LG-Q58. Which definitions one supersession may name.** As LG-29 built it, a supersession names later versions of any definitions of one owner, held only to one period. Three things suggested narrowing it to one tree. A change of terms cascades down one tree. One recurrence holds along a tree. And a partition's unit is named from a root account, which is one account for a tree in a period, so a supersession of one tree and one period might live in that root's open unit.
+
+| Option | What it is | Consequence | Cost |
+|---|---|---|---|
+| (a) | as built. Any definitions of one owner whose versions state one recurrence, or none | one record for a change of terms, whatever it touches. Its home in a partitioned store is not a root's unit, so it sits with the pass that wrote it, and a read of a balance reads that as well as the root's units | 5 triples and one for each version. For a change to an aggregate's tree of 14 definitions and to a separate aggregate of one, 20 |
+| (b) | one tree. Every version it names is under one root definition | a change that touches two trees is two supersessions in one pass. A tree whose root is keyed, for example a quota for each site with nothing above it, has a root account for each key value, so the supersession still has no single root's unit to live in | the same change is 25 triples, and a law that walks `ldg:partOf` to the root for each version named |
+| (c) | on the root account. It names the root account of the tree and period it changes, as a posting names its account, and its owner and period are read from that account | the laws of a pass need no case for it, its reach is the root account's subtree, and its home is the root's open unit. A keyed root has an account for each key value, so a change to it is a record for each, which is the cost LG-Q52 decided against | the same change is 23 triples. A raise of a quota keyed by 1,000 sites is 5,000 triples, where (a) and (b) write 6 |
+
+*Leaning (a).* The reason we gave for one tree, a home in a root's unit, does not survive a keyed root, and (c) brings back a record for each account where a root is keyed. What (b) adds beyond (a) is a restriction with no law that needs it. One gap that the question exposed is closed whatever the answer. A supersession with a period key that also named a version stating no recurrence would have reached none of that version's accounts, and `ldg:SupersessionPeriodFromRecurrenceShape` now refuses it. Where a supersession is stored is then a question for the record families Persistence has yet to declare for the ledger, and the multi-store unit's.
 
 ## 5. What LG-29, LG-34 and LG-35 build
 
