@@ -2,7 +2,7 @@
 
 # An account under a later version of its definition, a brief for LG-29
 
-**Unit:** ledger ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Questions:** LG-Q48 to LG-Q56. **Status:** sketched 2026-11-20, worked examples and LG-Q52 to LG-Q54 added the same day, revised 2026-11-23 on the maintainer's questions.
+**Unit:** ledger ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Questions:** LG-Q48 to LG-Q57. **Status:** sketched 2026-11-20, worked examples and LG-Q52 to LG-Q54 added the same day, revised 2026-11-23 on the maintainer's questions.
 
 ## 1. Why now
 
@@ -291,6 +291,16 @@ Instrument and Wording each declare an `Amendment`, for the act and for the chan
 | the eighth reason for a refusal | `ldg:StatedBelowDrawn` | the seven are named for the condition that held, such as `ldg:ExceedsAvailable` and `ldg:KindNotAccepted` |
 
 **Answered 2026-11-23, all three as proposed.** Decided by the maintainer, who notes that overdrawn is common parlance. None is declared by any layer. LG-29 declares them.
+
+**LG-Q57. Which version an account opens under, and which accounts a supersession reaches.** The addendum leaves the first open, and LG-29 cannot state `ldg:ofDefinition` without it. A period is an account of its own, so an account of last year must not come under a version in force from this year. For example, last year's account has 8 drawn of 10, and a version of 6 is in force from a position in this year. Read against the latest version, last year's account would be over by 2, where its terms never changed.
+
+| Option | Consequence |
+|---|---|
+| (a) | an account names the version in force for its owner at the first position of its period, and at the first position of all where its definition states no period. A supersession states the period its effective position falls in, where its definitions state a recurrence, and reaches the accounts of that period. An account of a later period opens under the later version and needs no record. An account of an earlier period is never reached |
+| (b) | an account names the version in force when it is first drawn on. An account first drawn on after a supersession opens under the later version, and a draw backdated onto it is never held to the earlier one, which is the fault E2 of section 3 shows |
+| (c) | a supersession names each account it reaches. This is option (a) of LG-Q52, which the maintainer decided against |
+
+*Leaning (a).* It is what LG-Q52's option (c) described, a record with its period, carried to the account that states no period. One supersession then holds the versions of one period, so a pass that changes terms under two recurrences writes two. LG-29 is built on (a) while this waits, and a different answer changes one entry and one law.
 
 ## 5. What LG-29, LG-34 and LG-35 build
 
