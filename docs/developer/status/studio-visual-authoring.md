@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-20. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-23. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -56,7 +56,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P4 | the persistence simulator pane | built 2026-11-19, building 2026-11-19 | SVA-R4, SVA-P1, SVA-P3a |
 | SVA-P5 | an object generated from the boundary shape | built 2026-11-19, building 2026-11-19 | SVA-P4 |
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
-| SVA-S2 | the surface simulation executor | planned | SVA-P3 |
+| SVA-S2 | the surface simulation executor | building 2026-11-23 | SVA-P3 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
@@ -214,3 +214,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-20: SVA-P3's real-stack test fixed. Its fixture now builds the facility workspace as the app does, with the baseline and the persistence part saved, where it had named the sample and left the part empty. The runs' real-stack suite gives 11 passed and the liveness suite 5 passed, with Erlang on the path.
 - 2026-11-20: SVA-M3b started.
 - 2026-11-20: SVA-M3b built, [Validation Pack](../validation/SVA-M3b.md). Mapping mode's sample pane runs a compiled form over a sample only when the author presses Run, compiling first when the scheme or the other parts changed, and shows the output with the engine named. The automatic rerun and the studio's use of the deprecated transforms route are gone. The journeys replay frames the real workers gave, kept current by a test on each side. The Java run worker's report names its engine too. A run covers every scheme reading the sample's format (TD-174).
+- 2026-11-23: SVA-S2 started.
