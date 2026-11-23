@@ -27,7 +27,7 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 25 branches, the units' own state from this tree, the newest board day 2026-11-20.
+Built from the status records on 25 branches, the units' own state from this tree, the newest board day 2026-11-23.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
@@ -66,7 +66,7 @@ Built from the status records on 25 branches, the units' own state from this tre
 | rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 2 built, 1 planned |  |
 | [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | built 2026-10-31 | PB-1 | 17 built |  |
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
-| [studio-visual-authoring](plans/studio-visual-authoring.md) | multi-slice unit | built 2026-11-20 | SVA-R0 | 39 built, 11 planned | claude/modest-ramanujan-cgvs0p |
+| [studio-visual-authoring](plans/studio-visual-authoring.md) | multi-slice unit | built 2026-11-23 | SVA-R0 | 40 built, 12 planned | claude/modest-ramanujan-cgvs0p |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
@@ -519,6 +519,7 @@ gantt
     SVA-R4 the browser run controller :svar4, 2026-11-16, 2026-11-17
     SVA-R4a the runs contract corrected :svar4a, 2026-11-16, 2026-11-17
     SVA-R5 the run protocol failure :svar5, 2026-11-17, 2026-11-18
+    SVA-S2 the surface simulation :svas2, 2026-11-23, 2026-11-24
     SVA-U1 columns the author collapses :svau1, 2026-11-16, 2026-11-17
     SVA-X1 register rows renumbered past :svax1, 2026-11-19, 2026-11-20
     SVA-X2 user-facing text under main :svax2, 2026-11-19, 2026-11-20
@@ -941,8 +942,8 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 703 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-20 | 99 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P1c, SVA-P2, SVA-P3, SVA-P3a, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1, SVA-X1, SVA-X2, SVA-X3 |
-| `docs/placement-vehicles-structure` | 2026-11-20 | 106 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-23 | 103 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-D1, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P1c, SVA-P2, SVA-P3, SVA-P3a, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S3, SVA-U1, SVA-V1, SVA-X1, SVA-X2, SVA-X3, SVA-X4 |
+| `docs/placement-vehicles-structure` | 2026-11-23 | 107 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 684 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
@@ -1011,7 +1012,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 117 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 120 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
