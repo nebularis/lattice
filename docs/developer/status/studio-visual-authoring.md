@@ -71,6 +71,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-X1 | register rows renumbered past the other branches | built 2026-11-19, building 2026-11-19 |  |
 | SVA-X2 | user-facing text under main's standard on naming decisions | built 2026-11-19, building 2026-11-19 |  |
 | SVA-X3 | the run queues on the contract-driven topology | planned | MSA-F4 on `main` |
+| SVA-D1 | sample documents for every capability, and the examples README | planned |  |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | planned |  |
 
 ## Knowledge index
@@ -215,3 +216,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-20: SVA-M3b started.
 - 2026-11-20: SVA-M3b built, [Validation Pack](../validation/SVA-M3b.md). Mapping mode's sample pane runs a compiled form over a sample only when the author presses Run, compiling first when the scheme or the other parts changed, and shows the output with the engine named. The automatic rerun and the studio's use of the deprecated transforms route are gone. The journeys replay frames the real workers gave, kept current by a test on each side. The Java run worker's report names its engine too. A run covers every scheme reading the sample's format (TD-174).
 - 2026-11-23: SVA-S2 started.
+- 2026-11-23: the maintainer asked that everything the unit built can be demonstrated from sample documents in known locations, listed in one README with how to demonstrate against each. Planned SVA-D1 before SVA-V1, added it to the unit's acceptance, and made it a principle that each slice adding a capability adds its samples and its README entry.

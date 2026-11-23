@@ -565,6 +565,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-X1 | register rows renumbered past the other branches | studio-visual-authoring | built 2026-11-19 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-X2 | user-facing text under main's standard on naming decisions | studio-visual-authoring | built 2026-11-19 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-X3 | the run queues on the contract-driven topology | studio-visual-authoring | planned | MSA-F4 on `main` | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-D1 | sample documents for every capability, and the examples README | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
 | WL-0 | the plan, this record, the board | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
 | WL-1 | reproductions that fail today, the view's fate on remount, a worker's idle memory | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
