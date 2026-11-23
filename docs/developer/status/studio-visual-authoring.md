@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-23. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-23. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -58,7 +58,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
 | SVA-S2 | the surface simulation executor | built 2026-11-23, building 2026-11-23 | SVA-P3 |
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | planned | SVA-S2 |
-| SVA-S2b | the first instance of a class names its contracts | planned | SVA-S2 |
+| SVA-S2b | the first instance of a class names its contracts | building 2026-11-23 | SVA-S2 |
 | SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
@@ -225,3 +225,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-23: the maintainer decided the questions after SVA-S2. A promotion keeps its rows by the surface compiler's rule, across graphs and subclasses, since a promotion that cannot read across aggregates loses its point, planned as SVA-S2a. The compiler's invalidation is fixed in this unit, SVA-S2b. Every behaviour the sketch names is built in this unit, so projections are SVA-S2c. LegalRuleML samples for SVA-D1 are the OASIS example with its notice and a clean-room document of our own expressing insurance terms. And this unit's debt rows move clear of other branches' numbers, SVA-X4, started.
 - 2026-11-23: SVA-X4 started.
 - 2026-11-23: SVA-X4 built. This unit's twelve debt rows moved to TD-250 to TD-261, in their order, past every branch (`main` at TD-163, `docs/placement-vehicles-structure` at TD-177, `spi/multi-store-architecture` at TD-171), with every reference. Lines naming the closed row on the confirmation read reworded, since another branch has since used its number. Checked: agent guidance, identifiers, catalogue, and no old number left.
+- 2026-11-23: the maintainer pre-approved SVA-S2b, SVA-S2a and SVA-S2c in that order, with a pause after. SVA-S2b started.
