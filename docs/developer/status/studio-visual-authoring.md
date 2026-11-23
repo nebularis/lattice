@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-S2a for the maintainer, who decides how projections are built (SVA-S2c), and whether the studio's own promotions read the world as a workspace's do. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** the maintainer answers SVA-Q24 to SVA-Q30 of the [projection backend sketch](../sketches/projection-backend.md), then its slices are planned. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -235,3 +235,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-23: SVA-S2a built, [Validation Pack](../validation/SVA-S2a.md). A promotion's fill reads each hop in the graph that holds it and matches subclasses, and a write also refills every source its change reaches, found by a reach query along the read path, in the same request, in the writer and the simulator. The facility samples keep their borrowers in their own graphs. The studio's own six promotions stay on the single-graph fill, since each reads one family. Also fixed, from earlier slices: STD-338 named files where the index wants a governed quantum, and CAP-100's claim was over 200 characters.
 - 2026-11-23: the maintainer decided that the studio's own promotions stay on the single-graph fill, preferring correctness, since a published version's rows must not follow a draft that reuses its concept IRIs. For projections the maintainer chose a projection backend built in this unit, its design first, planned as SVA-S2d before SVA-S2c.
 - 2026-11-23: SVA-S2d started.
+- 2026-11-23: SVA-S2d's sketch written, [projection backend](../sketches/projection-backend.md), with SVA-Q24 to SVA-Q30 for the maintainer. A derivation's operation is stated nowhere today, MORK has no arithmetic, and `mork_rdf` has no rule to write onto the carrier itself, so each is a question.
