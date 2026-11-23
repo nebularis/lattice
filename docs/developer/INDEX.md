@@ -554,7 +554,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-S2 | the surface simulation executor | studio-visual-authoring | built 2026-11-23 | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | studio-visual-authoring | building 2026-11-23 | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2b | the first instance of a class names its contracts | studio-visual-authoring | built 2026-11-23 | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-S2c | projections lowered and run in a surface step | studio-visual-authoring | building 2026-11-23 | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S2c | projections lowered and run in a surface step | studio-visual-authoring | planned | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S3 | the surface simulator pane | studio-visual-authoring | planned | SVA-S1, SVA-S2, SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M1 | the mapping schemes listed on the left | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M2a | MORK's template library, with `mork_rdf` | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |

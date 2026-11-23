@@ -59,7 +59,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2 | the surface simulation executor | built 2026-11-23, building 2026-11-23 | SVA-P3 |
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | building 2026-11-23 | SVA-S2 |
 | SVA-S2b | the first instance of a class names its contracts | built 2026-11-23, building 2026-11-23 | SVA-S2 |
-| SVA-S2c | projections lowered and run in a surface step | building 2026-11-23 | SVA-S2 |
+| SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
@@ -230,3 +230,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-23: SVA-S2a started.
 - 2026-11-23: SVA-S2a stopped before changing anything: a promotion whose read path reaches a borrower's graph keeps its rows in the facilities source, so a borrower's write must rebuild other sources. The maintainer chose that the studio's writer does that within the write, since one writer applies a workspace's writes in order (MEC-88), and asked for the tier 2 maintainer's way as a slice of `projection-maintenance`, planned there as PM-5. SVA-S2c runs while SVA-S2a waits for its brief to be updated.
 - 2026-11-23: SVA-S2c started.
+- 2026-11-23: SVA-S2c stopped before changing anything. A projection lowers to a bare `mork:DataMapping` holding its role bindings and no path mappings or expressions, as its own note says, and no backend compiles it: `mork_rdf` reports a projection mapping as another backend's and compiles no query from it, and the surface compiler emits no SPARQL for one. So no compiled form exists for a step to run, on any engine. Set back to planned, and put to the maintainer, who decides whether a projection backend is built in this unit.
