@@ -26,6 +26,7 @@ Sketched and planned on 2026-10-31 at the maintainer's request, answering SQ-Q2 
 | PM-3b | PM-Q20 (d), the broker's checks of identity and the relay | built 2026-11-02, [Validation Pack](../validation/PM-3b.md) | the review |
 | PM-3c | the proxy run of PM-Q22 in the browser gate | planned | PM-Q22 |
 | PM-4 | the tier 2 maintainer | planned | PM-Q13 to PM-Q17 |
+| PM-5 | the tier 2 maintainer keeps a promotion's dependents across aggregates | planned | PM-4 |
 
 ## Log
 
@@ -40,3 +41,4 @@ Sketched and planned on 2026-10-31 at the maintainer's request, answering SQ-Q2 
 - 2026-11-02: PM-Q18 (a) and PM-Q20 (d) answered by the maintainer, who refuted (a) to (c) as copies of a permission in the broker that fail open. PM-3a probed RabbitMQ 4.4's Web MQTT and HTTP auth backend (recorded in [PM-3b](../validation/PM-3b.md)), and PM-3b built the broker's checks of identity, the relay in place of the WebSocket, `events.ts` over mqtt.js 5.16.1, and TLS in the real-stack run. PM-Q19 (c) and PM-Q21 (a) with (b) built as leanings while open.
 - 2026-11-02: the maintainer asked why the Docker stack offered no events, which found that the development stacks' broker let any page in as `guest` over Web MQTT, and a local principal by name. Fixed at the maintainer's request: one broker user with a password made for each stack and no `guest`, the broker's checks under a secret, a key from the session for local sign-in, and events in the Docker stack, with an override for Docker Desktop and one for Docker Engine on Linux. Run on macOS with Docker Desktop, the host-network override in its VM. Not run on a Linux host or on Windows ([PM-3b](../validation/PM-3b.md)). `main` was merged in, bringing `config_studio_GD`.
 - 2026-11-02: `main` merged in, with the work board. The plan declares the prefix PM, the slices are PM-0 to PM-4 and their packs renamed to match, and the record has a board.
+- 2026-11-23: PM-5 planned at the maintainer's request from the `studio-visual-authoring` unit, whose studio writer keeps a promotion's rows across aggregates by rebuilding the dependent sources within the write. PM-5 is the tier 2 maintainer's way of doing the same after the write.

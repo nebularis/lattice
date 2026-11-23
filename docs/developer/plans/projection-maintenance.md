@@ -44,6 +44,7 @@ The studio's derived data is kept current by the write that changes its source, 
 | PM-3b | PM-Q20 (d): the broker's checks of identity, the relay in place of the service's WebSocket, `events.ts` over MQTT, and TLS in the real-stack run | PM-3's tests carried over to the relay, and the real-stack run passing with the broker's negative cases | 150k tokens |
 | PM-3c | the proxy run of PM-Q22 in the browser gate | the proxy run passes with every negative case | 80k tokens |
 | PM-4 | the tier 2 maintainer: partitioned by scope, its dependency index from the surface compiler's invalidation planning, batching, a watermark a source, and the reader's three choices, with the check that its sources keep a patch log | a materialisation spanning two aggregates reaches each write, a reader waiting for its write is released when the watermark covers it, and a scope whose source keeps no patch log is reported | 300k tokens |
+| PM-5 | the tier 2 maintainer rebuilds the sources a promotion's read path reaches across aggregates when one of them is written, so a write keeps only its own source's rows and its dependents are kept after it, as the alternative to the studio writer's fan-out within the write that the configuration studio adopted on 2026-11-23 | a borrower's write leaves the rows of the facilities whose drawdowns reach it stale until the maintainer's watermark covers them, then right, and a reader that waits for the write is released only then | 120k tokens |
 
 ## 4. Not in this unit
 

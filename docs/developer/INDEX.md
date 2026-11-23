@@ -490,6 +490,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | PM-3b | PM-Q20 (d), the broker's checks of identity and the relay | projection-maintenance | built 2026-11-02 | the review | docs/developer/status/projection-maintenance.md#slices |
 | PM-3c | the proxy run of PM-Q22 in the browser gate | projection-maintenance | planned | PM-Q22 | docs/developer/status/projection-maintenance.md#slices |
 | PM-4 | the tier 2 maintainer | projection-maintenance | planned | PM-Q13 to PM-Q17 | docs/developer/status/projection-maintenance.md#slices |
+| PM-5 | the tier 2 maintainer keeps a promotion's dependents across aggregates | projection-maintenance | planned | PM-4 | docs/developer/status/projection-maintenance.md#slices |
 | RSP-1 | Core patterns | rdf-sparql-patterns-status | built 2026-09-22 |  | docs/developer/status/rdf-sparql-patterns-status.md#slice-status |
 | RSP-2 | Substrate and compiler | rdf-sparql-patterns-status | built 2026-09-22 |  | docs/developer/status/rdf-sparql-patterns-status.md#slice-status |
 | RSP-3 | Housekeeping first cut | rdf-sparql-patterns-status | planned |  | docs/developer/status/rdf-sparql-patterns-status.md#slice-status |
@@ -553,7 +554,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-S2 | the surface simulation executor | studio-visual-authoring | built 2026-11-23 | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | studio-visual-authoring | building 2026-11-23 | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2b | the first instance of a class names its contracts | studio-visual-authoring | built 2026-11-23 | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-S2c | projections lowered and run in a surface step | studio-visual-authoring | planned | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S2c | projections lowered and run in a surface step | studio-visual-authoring | building 2026-11-23 | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S3 | the surface simulator pane | studio-visual-authoring | planned | SVA-S1, SVA-S2, SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M1 | the mapping schemes listed on the left | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M2a | MORK's template library, with `mork_rdf` | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |

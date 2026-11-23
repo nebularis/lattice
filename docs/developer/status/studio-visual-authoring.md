@@ -59,7 +59,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2 | the surface simulation executor | built 2026-11-23, building 2026-11-23 | SVA-P3 |
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | building 2026-11-23 | SVA-S2 |
 | SVA-S2b | the first instance of a class names its contracts | built 2026-11-23, building 2026-11-23 | SVA-S2 |
-| SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2 |
+| SVA-S2c | projections lowered and run in a surface step | building 2026-11-23 | SVA-S2 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
@@ -228,3 +228,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-23: the maintainer pre-approved SVA-S2b, SVA-S2a and SVA-S2c in that order, with a pause after. SVA-S2b started.
 - 2026-11-23: SVA-S2b built, [Validation Pack](../validation/SVA-S2b.md). The surface compiler's read set records each carrier class with or without instances, so the first instance names its contracts, in the compiler and the simulator. Its debt row is closed.
 - 2026-11-23: SVA-S2a started.
+- 2026-11-23: SVA-S2a stopped before changing anything: a promotion whose read path reaches a borrower's graph keeps its rows in the facilities source, so a borrower's write must rebuild other sources. The maintainer chose that the studio's writer does that within the write, since one writer applies a workspace's writes in order (MEC-88), and asked for the tier 2 maintainer's way as a slice of `projection-maintenance`, planned there as PM-5. SVA-S2c runs while SVA-S2a waits for its brief to be updated.
+- 2026-11-23: SVA-S2c started.
