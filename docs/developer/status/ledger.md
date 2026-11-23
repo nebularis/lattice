@@ -188,7 +188,7 @@ Results sections. In short:
 | LG-0 | examples, as data the model must accept or refuse, from licensing, lending and grants | merged 2026-10-27, built 2026-10-27 |  |
 | LG-1 | the configuration document, the README in ADR-A126's layout with account definitions, the tree, owner kinds and the merge rule scheme | merged 2026-10-27, built 2026-10-27 |  |
 | LG-2 | the runtime document, postings, balance records, their keys and PROV, the two phases at one position | merged 2026-11-09, verified 2026-11-09, built 2026-11-08, building 2026-11-08, built 2026-11-08, building 2026-11-08, briefed 2026-10-27 |  |
-| LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | planned | LG-2 |
+| LG-3 | Behaviour's migration, the import, effects onto accounts, threshold regimes over a balance | planned | LG-2, LG-29 |
 | LG-4 | allocation with conservation, one amount split into postings by a merge rule, the conservation law as a shape | planned | LG-3 |
 | LG-5 | a benchmark, a generated corpus of account trees and draws at the performance section's volumes, part built ahead of LG-4 | blocked | LG-4 |
 | LG-6 | the fold investigation of the ledger-folds-and-stores sketch, probes P1 to P6, arms A, B, B0 and C, sharing LG-5's corpus | planned | LG-5 |

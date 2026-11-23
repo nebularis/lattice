@@ -2,7 +2,7 @@
 
 # LATTICE roadmap
 
-**As of** 2026-10-21. **Read from** `main` at `a19e6dd` and every branch on the remote with commits not yet on `main`.
+**As of** 2026-11-23. **Read from** `main` at `75a23ca9` and every branch on the remote with commits not yet on `main`. Sections 1, 7, 9 and 11 are generated at every refresh, and each hand-written section says when it was last refreshed.
 
 **What this is.** One view across every epic, unit and branch: what is done, what is in flight, what waits on what, and what the maintainer is asked to do next. It summarises and links. It decides nothing. The status record of each unit stays its one authoritative live state (skill `lattice-lifecycle`). Where this roadmap and a status record disagree, the status record is right and this page is stale.
 
@@ -655,7 +655,7 @@ gantt
 
 ## 2. How the epics depend on one another
 
-Arrows point from the work that must come first. A dashed arrow is a dependency that is planned or not yet in force. Ledger's layer is on `main` and ADR-A131 is Accepted, so its dashed edges are the imports and slices still to come (LG-3, LG-4). Ensemble is still Proposed.
+Arrows point from the work that must come first. A dashed arrow is a dependency that is planned or not yet in force. Ledger's layer is on `main` and ADR-A131 is Accepted, so its dashed edges are the imports and slices still to come (LG-3, LG-4). Ensemble is still Proposed. The multi-store architecture epic was added on 2026-11-23. Three of its slices name the ledger's records, and one uses the proof gate.
 
 ```mermaid
 flowchart LR
@@ -670,6 +670,7 @@ flowchart LR
     PLAT["Platform programme"]
     TUT["Tutorial"]
     CBAA["Open CBAA, downstream"]
+    MSA["Multi-store architecture"]
 
     FM -->|"Eligibility pass for CCS-9b.3"| CCS
     CCS -->|"HQ-6a closures for AIR-3.3"| AIR
@@ -688,6 +689,8 @@ flowchart LR
     IOD -->|"literate layout and one release"| CCS
     IOD -->|"literate layout and one release"| AIR
     IOD -->|"OD-DOC3 reviews it"| TUT
+    LDG -.->|"LG-30 and LG-29 for MSA-I7, MSA-I8, MSA-I10"| MSA
+    FM -->|"the proof gate for MSA-I5"| MSA
 ```
 
 The arrow from NRS into CCS is NRS-1. CCS does its work (NQ-2, 2026-10-10) and its row stays on the NRS board, where its plan defines it. These arrows are the CCS plan's section 5, by the maintainer's decision of 2026-11-04: AIR-3.3 and NRS-1 gate CCS-13, NRS-1 gates CCS-13a, and CCS-12 waits on Ledger LG-3 and Ensemble ES-3.
@@ -769,7 +772,7 @@ flowchart LR
 
 **Documents.** [epic plan](plans/applied-insurance-reference.md), [status](status/applied-insurance-reference.md), [lanes](plans/applied-insurance-reference-lanes.md), [claims plan](plans/applied-insurance-reference-claims.md), [substrate plan](plans/applied-insurance-reference-substrate.md), [leftovers](plans/air-leftovers.md).
 
-**How it runs.** Two machines (lanes §2 to §4). Machine R verifies and merges, and also builds CCS. Machine S builds the slices in one trip on one branch, which comes to R once the trip is done. S became unavailable on 2026-10-14 and R built AIR-4.2a to AIR-4.4. The epic is in round 3, the trip's commits up to AIR-4.4 are on `main`, and AIR-4.5 is next on the trip. The record's Status line still reads planned.
+**How it runs.** Two machines (lanes §2 to §4). Machine R verifies and merges, and also builds CCS. Machine S builds the slices in one trip on one branch, which comes to R once the trip is done. S became unavailable on 2026-10-14 and R built AIR-4.2a to AIR-4.4. The epic is in round 3, the trip's commits up to AIR-4.4 are on `main`, and AIR-4.5 is next on the trip.
 
 **Where it is.** The board rows are the state. AIR-1.1, AIR-1.2, AIR-2.1, AIR-3.1 and AIR-3.2 are merged. AIR-2.0, AIR-2.2, AIR-2.3, AIR-2.4, AIR-2.6, AIR-4.1, AIR-4.2, AIR-4.2a, AIR-4.3 and AIR-4.4 are built.
 
@@ -856,7 +859,7 @@ flowchart LR
 
 **Where it is.** The record reads verified, in progress. OD-0, OD-RC2, OD-RC3, OD-1, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-VER1 and OD-REL1 are verified on its board, OD-RC1, OD-2 to OD-6 and OD-DOC2b are built, and OD-DOC2 is merged. `docs/literate-v2` was squash-merged into `main` on 2026-10-20 (`cf1b8eb`). That brought the repository catalogue and its reader (OD-RC1 to OD-RC3), the literate README layout and its compilers to OWL and SHACL (OD-1 to OD-5), the Eligibility and Vocabulary pilots (OD-6, OD-7), published decisions and the site sections (OD-DOC1, OD-DOC2, OD-DOC2b), and one release number for the substrate and standalone ontologies, 0.18.0 (OD-VER1, OD-REL1). `GOVERNANCE.md` and the validation and test plan were retired in the same change.
 
-**Next.** The tag `ontologies-v0.18.0` is on the merge commit and the line has since reached `ontologies-v0.21.0`, but the board rows have not moved to merged. OD-8 onward is planned and migrates the remaining layers one at a time, after OD-7 and, for Foundation and Party, their part of TD-16. OD-RC4 to OD-RC6 are planned and extend the catalogue downstream, promote packages and fold in the XML catalogue (OD-RC6 needs a new ADR on ADR-A88). OD-DOC3 is planned and reviews the tutorial once it is merged.
+**Next.** The tag `ontologies-v0.18.0` is on the merge commit and the line has since reached `ontologies-v0.21.0`. The board's rows have since moved, and 17 read merged as of 2026-11-23. OD-8 onward is planned and migrates the remaining layers one at a time, after OD-7 and, for Foundation and Party, their part of TD-16. OD-RC4 to OD-RC6 are planned and extend the catalogue downstream, promote packages and fold in the XML catalogue (OD-RC6 needs a new ADR on ADR-A88). OD-DOC3 is planned and reviews the tutorial once it is merged.
 
 ### 4.5 Ensemble and Ledger, substrate layers
 
@@ -876,7 +879,7 @@ Ensemble is proposed on `docs/placement-vehicles-structure`, with its sketch and
 |---|---|---|
 | Prefix and home | `ens:`, `ontology/ensemble/` | `ldg:`, `ontology/ledger/` |
 | ADR | A-130, Proposed | A-131, Accepted |
-| Holds | identities naming member instruments by role, reified relations between instruments (kinds K1 to K8), judgements across an ensemble, confidentiality between members, evaluation by composition | account definitions and their tree, postings and balance records, allocation with conservation, Behaviour's migration from allowances to accounts |
+| Holds | identities naming member instruments by role, reified relations between instruments (kinds K1 to K8), judgements across an ensemble, confidentiality between members, evaluation by composition | versioned account definitions and their tree, one ledger for each owner, passes, postings with their running balances, merge records with their requests, checkpoints, allocation with conservation, Behaviour's migration from allowances to accounts |
 | Takes over | CCS HQ-2 (second case), HQ-7, HQ-12 | PDD-07 and the ledger part of PDD-08 |
 | Serves | AIR Phase 7, AIR-6.8's cross-instrument reads | AIR Phase 7, Behaviour's threshold regimes |
 
@@ -898,7 +901,7 @@ Nothing is built in this unit, and the record reads blocked. CCS took NRS-1, NRS
 
 **Where it is.** Eight investigations are built and the six fixes to running code they found. MSA-I1 found no shape in the estate closed and bounded. MSA-I3 found a stable line between semantic and realisation selection once three dimensions split by value. MSA-I4 lowered four operations to a neutral IR and three dialects. MSA-I9 confirmed that a single active consumer is no fence. MSA-I11 wrote the logical port. MSA-I12 emitted the studio's topology from one declaration. On 2026-11-18, MSA-F1 to MSA-F6 fixed the studio writer's offset storing, its retry of a refused batch, a resent id with another body, the topology's dead-letter binding and the event's logical key, and tested ADR-A149 decision 13. On the maintainer's answers of the same day, MSA-F7 made a deletion win over a save that beats its tombstone, MSA-F8 answered a failure of the writer's own code with a 500, and MSA-F9 made a new document's save read its own row, which also stopped a save under a deleted id being answered 200 with nothing kept. MSA-I2, reworked on the owner's ledger as the ledger's unit, finds no firm guard that a read by revision does not cover, on three conditions no text states yet. MSA-I6 checked FMH-5's model A and four new TLA+ models with TLC, and five catalogue rows keep their guarantee with a stated requirement.
 
-**What it waits on.** Refreshed 2026-11-20. Machine S's fixes MSA-F1 to MSA-F9, MSA-I2 and MSA-I6 in part are built. The fixes and the models are reviewed by reading and wait on the maintainer's verdict, and the review planned five more fixes, MSA-F10 to MSA-F14, and a unit for administering running components, [component-administration](plans/component-administration.md), which is planned and built later. On 2026-11-20 the maintainer asked for a design of the studio's writes that admits no inconsistent state, MSA-I14, urgent and ahead of MSA-I8, with MSA-F15 and TD-166 to TD-171 beside it. The ledger's branch is merged into `spi/multi-store-architecture`, and machine S works on `spi/worktree-s`, cut from that merge. MSA-I5a waits on nothing, since ADR-A-FM2's addendum is accepted, and MSA-I5 follows it in Isabelle. Its Rocq half is built off machine S on Rocq 9.3.0. A PostgreSQL test fixture comes first for the rest of MSA-I6, MSA-I7 and MSA-I8. MSA-I7, MSA-I8 and MSA-I10 name the ledger's records, so they wait on the ledger's rework, LG-25 to LG-28. On machine S since: the PostgreSQL fixture MSA-I13, the shared proof session MSA-I5a, the five fixes MSA-F10 to MSA-F14, and the ledger's rework, LG-11, LG-25 to LG-28 and LG-12, all sent in the first bundle of `spi/worktree-s` for review. The bundle was run again on macOS on 2026-11-20 and merged. The maintainer verified MSA-F1 to MSA-F14, MSA-I13 and MSA-I5a that day. The ledger's session reviews the rework by a handover note, MSA-F16 is planned to bring a studio command's digest to RDFC-1.0, and PostgreSQL moves to 18 after machine S is decommissioned (TD-174).
+**What it waits on.** Refreshed 2026-11-20. Machine S's fixes MSA-F1 to MSA-F9, MSA-I2 and MSA-I6 in part are built. The fixes and the models are reviewed by reading and wait on the maintainer's verdict, and the review planned five more fixes, MSA-F10 to MSA-F14, and a unit for administering running components, [component-administration](plans/component-administration.md), which is planned and built later. On 2026-11-20 the maintainer asked for a design of the studio's writes that admits no inconsistent state, MSA-I14, urgent and ahead of MSA-I8, with MSA-F15 and TD-166 to TD-171 beside it. The ledger's branch is merged into `spi/multi-store-architecture`, and machine S works on `spi/worktree-s`, cut from that merge. MSA-I5a waits on nothing, since ADR-A-FM2's addendum is accepted, and MSA-I5 follows it in Isabelle. Its Rocq half is built off machine S on Rocq 9.3.0. A PostgreSQL test fixture comes first for the rest of MSA-I6, MSA-I7 and MSA-I8. MSA-I7, MSA-I8 and MSA-I10 name the ledger's records, so they wait on the ledger's rework, LG-25 to LG-28. On machine S since: the PostgreSQL fixture MSA-I13, the shared proof session MSA-I5a, the five fixes MSA-F10 to MSA-F14, and the ledger's rework, LG-11, LG-25 to LG-28 and LG-12, all sent in the first bundle of `spi/worktree-s` for review. The bundle was run again on macOS on 2026-11-20 and merged. The maintainer verified MSA-F1 to MSA-F14, MSA-I13 and MSA-I5a that day. The ledger's session reviewed the rework on 2026-11-20 and answered its questions with the maintainer by 2026-11-23. What MSA-I7, MSA-I8 and MSA-I10 name is not yet final, since LG-30 narrows three positions and renames a reason, and LG-29 moves an account's key to its definition's identity and adds the record of a later version, so those three slices wait on LG-30 and LG-29 as well. MSA-F16 is planned to bring a studio command's digest to RDFC-1.0, and PostgreSQL moves to 18 after machine S is decommissioned (TD-174).
 
 ## 5. Smaller units
 
@@ -939,7 +942,7 @@ Branches with a commit `main` lacks, from the same reading.
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
 | `claude/modest-ramanujan-cgvs0p` | 2026-11-23 | 110 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-D1, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P1c, SVA-P2, SVA-P3, SVA-P3a, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S2a, SVA-S2b, SVA-S2c, SVA-S3, SVA-U1, SVA-V1, SVA-X1, SVA-X2, SVA-X3, SVA-X4 |
-| `docs/placement-vehicles-structure` | 2026-11-23 | 111 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
+| `docs/placement-vehicles-structure` | 2026-11-23 | 113 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
@@ -969,7 +972,9 @@ flowchart LR
     K94 --> REST["CCS-9d, CCS-9c"]
     REST --> CCS12["CCS-12 evaluator"]
     REST --> CCS13
-    LG3C["Ledger LG-3"] --> CCS12
+    LG29C["Ledger LG-30 and LG-29"] --> LG3C["Ledger LG-3"]
+    LG29C --> MSA78["MSA-I7, MSA-I8, MSA-I10"]
+    LG3C --> CCS12
     ES3C["Ensemble ES-3"] --> CCS12
     K8A["CCS-8a template library"] --> CLOSE
     K94 --> K16c["CCS-16c Party shares removed"]
@@ -996,8 +1001,8 @@ flowchart LR
 
 - **CCS-9b.3b and CCS-9b.4** gate the most work. CCS-9b.4, CCS-9d, CCS-9c and CCS-16c, the evaluator, the epic's close, FMB-4 and FM track G, and IMA Phase 3 sit downstream. CCS-13a does not, since it is blocked on NRS-1 only.
 - **AIR-3.3** is ready once AIR-3.3-Q1 is answered, since HQ-6a.2 has merged. It gates CCS-13 on the CCS board and NRS-1 on the NRS board, so relation plans wait on it twice over, and the evaluator does not.
-- **Ledger LG-3 and Ensemble ES-3** gate the evaluator, CCS-12, from outside CCS. LG-3 is planned, and the ensemble gained a status record on 2026-11-04 carrying all ten of its rows.
-- **The ledger does not gate the ensemble as a unit. One slice does.** Refreshed 2026-11-07. ES-3 waits on LG-2 alone, ES-4 on LG-2 with LG-Q3 and LG-Q4 answered, and LG-4 gates only ES-8, the last ensemble slice. LG-3, LG-5 and LG-6 have no ensemble dependency. Two slices move the substrate release and so cannot be concurrent, LG-2 and ES-1, which puts ES-1 behind LG-2's merge rather than behind its build.
+- **Ledger LG-3 and Ensemble ES-3** gate the evaluator, CCS-12, from outside CCS. LG-3 is planned, and the ensemble gained a status record on 2026-11-04 carrying all ten of its rows. Refreshed 2026-11-23. LG-3 now waits on LG-29 as well as on its own questions, since an effect names an account definition by its identity, which LG-29 makes the account's key. LG-30 and LG-29 also stand before the three multi-store slices that name the ledger's records.
+- **The ledger does not gate the ensemble as a unit. One slice does.** Refreshed 2026-11-07, and LG-2 has been merged since 2026-11-09, so the gate it was is passed. ES-3 waits on LG-2 alone, ES-4 on LG-2 with LG-Q3 and LG-Q4 answered, and LG-4 gates only ES-8, the last ensemble slice. LG-3, LG-5 and LG-6 have no ensemble dependency. Two slices move the substrate release and so cannot be concurrent, LG-2 and ES-1, which puts ES-1 behind LG-2's merge rather than behind its build.
 - **C4 is the ensemble's head gate, not the ledger.** ES-0 is blocked on ADR-A130's acceptance, which the ensemble plan places after the C4 Alloy model, so ES-0 to ES-2 cannot start whatever the ledger does. C4 is briefed in the track C plan with twelve checks as of 2026-11-07. Since 2026-11-07 it waits on [v-rig](plans/v-rig.md), whose RDF projection of a verification rig's declared view is the requirements oracle for the ledger and ensemble drafts, so that ADR-A130's text settles before C4 models it rather than after. The unit was built on 2026-11-08, every slice with its Validation Pack, and on its own mini-rig the layers refuse the projection 142 times, mostly for identities and units the format does not state, and 14 of 28 competency questions have no answer, among them that no term links an instrument to the account of its limit. What stands between C4 and its start is a run on a rig and the triage of its findings into the ledger, ensemble and programme plans, which is the maintainer's.
 - **ADR-A130** alone takes the three CCS held questions HQ-2 (second case), HQ-7 and HQ-12, and it is still Proposed. ADR-A131 is Accepted and Ledger's layer is on `main`, and Ledger takes PDD-07, not a CCS held question.
 - **AIR-7.1** waits on Ensemble ES-4 and ES-5 and on Ledger LG-2 and LG-3, along with AIR-7.0, P7-Q5 and CCS's Instrument tranche. The ADRs are not the gate, the slices are.
@@ -1082,7 +1087,7 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 
 ## 10. The maintainer's queue
 
-In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-06.
+In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-06. **Checked 2026-11-23.** Item 1's branch, `fix/studio-worker-heartbeat`, is no longer on the remote, and the two worktrees of item 6 are gone, so both look done but for the ours-merge on `ccs-trunk`. Item 9's branch is still on the remote. Items 12 and 13 come first for the two machines' work, and within item 12 the order we propose is the verdicts on the six rows, then LG-30 and LG-29, then LG-35 and LG-34.
 
 1. **Verify and merge `fix/studio-worker-heartbeat`**, which keeps the studio worker alive through a job of minutes, so validation no longer shows Validating without end and a compilation or a proposal finishes. Run `mise run check:config-studio`, `mise run studio:liveness` and `mise run test:config-studio-browser`, and note that the studio's stack now starts a second worker for the long queue.
 2. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work.
@@ -1179,7 +1184,7 @@ gantt
 
 These are findings from building this roadmap, offered as hypotheses for the maintainer to check. Rewritten 2026-11-02, when sections 1, 7, 9 and 11 became generated. One added 2026-11-05.
 
-- **A slice named only in prose is invisible to the board.** 34 remain after `work:adopt`, listed by unit in the identifier exceptions baseline, and the git log names none of them as built. The ensemble's ten gained a record on 2026-11-04 and are no longer among them.
+- **A slice named only in prose is invisible to the board.** 40 remain as section 9 counts them on 2026-11-23, 34 after `work:adopt`, listed by unit in the identifier exceptions baseline, and the git log names none of them as built. The ensemble's ten gained a record on 2026-11-04 and are no longer among them.
 - **A proof of a law for one domain's instance is not a proof of the law.** Added 2026-11-07. An external Isabelle development of the reinsurance inurement waterfall proves uniqueness over an acyclic dependency relation, and its argument uses only well-foundedness and the fact that a step reads its declared predecessors, so the general theorem looks to be a refactoring away. What it does not carry is Undetermined, which is the order ADR-A130 decision 5's least fixpoint is taken over, and reading one for the other had me report a decision unsound that is not. The gap worth naming is between the OWL encodings, the proofs and the runtime: a law can hold in all three and be a different law in each, and a code-generation spike found the generated code partial on a cofinite set that neither the encoding nor the proof restricts (TD-155).
 - **Two branches numbered the same standards.** `docs/work-board` and `realign/config-authoring-studio` both took STD-300 upward on 2026-11-02, and both held a TD-137. `check:identifiers` dates a row by its day, so first in wins found a tie, and at the realign branch's merge of `main` the work board's rows kept their numbers and the realign rows became STD-308 to STD-316 and TD-139. A branch cannot know what another numbers until a fetch, and the board's `--fetch` is the moment to look.
 - **The historic ids were the real cost.** Four of the five branch analyses asked for on 2026-11-02 were answered by content measurement in minutes, but the 34 track H ids took three passes to recognise as the packs' own spelling of boarded slices. A pack named by its slice closes that gap for new work.
