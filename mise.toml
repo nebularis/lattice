@@ -485,6 +485,11 @@ depends = ["bootstrap:testing-oxigraph", "bootstrap:testing-ledger-corpus"]
 description = "Measure the storage and read cost of recording a draw on an account tree five ways on Oxigraph (ADR-A124): at every level, at the drawn account only, with checkpoints, with a running balance, and with each period's postings in a named graph, and run the ledger's shapes on a tree of 10,000 definitions and a pass of 5,000 postings with their times recorded (STD-155). Run on demand, not part of check. Fails on a wrong balance, count or shape result, never on time. LEDGER_COST_MAX caps the events, LEDGER_COST_QUICK=1 runs the smallest size, LEDGER_COST_PROBE=N runs one size of its own"
 run = ["python -m pytest benchmark/ledger-posting-cost -q -p no:cacheprovider", "python benchmark/ledger-posting-cost/check.py"]
 
+[tasks."check:ledger-supersession-read"]
+depends = ["bootstrap:testing-oxigraph"]
+description = "Measure what a record of a change of terms adds to the read of a balance, by holding the same history four ways (a record for each account, the same with the account's balance, a record for each later version, one record a pass) and reading the stated amount in force, a leaf's balance now and as of earlier revisions, an ancestor's balance and every stated amount in one query, on Oxigraph, and on Jena and rdflib where their test-support packages are installed (ADR-A124, LG-32, LG-Q52). Run on demand, not part of check. Fails on a wrong value or a wrong stored count, never on time. LEDGER_SUPERSESSION_MAX caps the events, LEDGER_SUPERSESSION_QUICK=1 runs the smallest size, LEDGER_SUPERSESSION_ENGINES picks the engines, LEDGER_SUPERSESSION_REPS sets the repetitions. Jena runs when its test kit jar is built (mise run bootstrap:sparql-testkit)"
+run = ["python -m pytest benchmark/ledger-supersession-read -q -p no:cacheprovider", "python benchmark/ledger-supersession-read/check.py"]
+
 [tasks."check:vocabulary"]
 description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"
 run = "python -m pytest tools/vocabulary/tests -q"

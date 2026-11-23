@@ -219,7 +219,30 @@ For scale, a posting is 11 to 13 triples in the layer's insurance example. So (a
 
 Under every option the account's natural key moves from a version of its definition to the definition's identity, which changes the key laws LG-28 built.
 
-*Leaning (c),* which the maintainer shares on storage as of 2026-11-23. The maintainer asked for the read's cost to be measured before answering, which is the benchmark of LG-32. What it costs is that the accounts a record reaches are derived and not stated. They are the accounts of the same owner whose definition has a version in the record, in the period the record names, and each law that reads a stated amount carries that join. An account's `ldg:ofDefinition` then names the version in force when its period began, so an account of a later period starts under the later version and needs no record, and an account of an earlier period is never reached. How an account whose definition states no period finds its first version is for LG-29 to work through.
+**Measured 2026-11-23, by LG-32.** The [benchmark](../../../benchmark/ledger-supersession-read/README.md) holds one history four ways, the three options and option (a) with the account's balance on each record, on the tree above with 1,014 accounts. Every read equals a plain model under every variant on every engine. The figures below are medians at 20,000 postings, on a laptop, with pyoxigraph 0.5.13 on disk, Jena ARQ 5.1.0 and rdflib 7.6.0, and the [pack](../validation/LG-32.md) has the rest. Where a cell has three figures they are for no change of terms, one and ten.
+
+| Measure | (a) | (a) with a balance | (b) | (c) |
+|---|---|---|---|---|
+| triples one change writes at runtime | 5,065 | 6,078 | 70 | 18 |
+| stored after ten changes, above none | 52,270, or 21% | 62,400, or 25% | 2,320, or 0.9% | 1,800, or 0.7% |
+| writing one change, Oxigraph, ms | 39 to 42 | 46 to 47 | 3.1 to 3.5 | 3.0 to 3.1 |
+| a leaf's balance now, Oxigraph, ms | 0.39, 0.44, 0.72 | 0.22, 0.32, 0.38 | 0.46, 0.50, 0.82 | 0.46, 0.49, 0.82 |
+| the same, Jena, ms | 1.24, 0.99, 1.16 | 0.50, 0.51, 0.58 | 1.31, 1.04, 1.30 | 1.32, 1.05, 1.27 |
+| the same, rdflib, ms | 15.2, 13.0, 14.1 | 5.6, 5.7, 6.4 | 16.3, 14.9, 21.6 | 16.4, 14.6, 19.4 |
+| the amount in force for every account in one query, Oxigraph, ms | 7.3, 35, 257 | 7.2, 34, 252 | 9.5, 12.9, 25 | 9.5, 12.4, 24 |
+| the same, Jena, ms | 36, 68, 161 | 36, 68, 161 | 25, 26, 31 | 25, 26, 30 |
+| the same, rdflib, ms | 112, 194, 701 | 112, 194, 700 | 33, 69, 1,544 | 33, 60, 181 |
+
+- **The lookup that (c) adds to a leaf's read is 0.05 to 0.10 ms on Oxigraph,** 11% to 19% above (a) at the same number of changes. It is 6% to 9% on Jena and 8% to 38% on rdflib.
+- **It is paid with no change of terms as well,** 0.46 ms against 0.39 on Oxigraph, since the read must look before it finds nothing.
+- **A leaf's read grows with the changes under every option,** by 1.8 times at ten on Oxigraph under (c), since it finds the latest of them.
+- **A balance on each record halves a leaf's read,** which is then one query, at the largest storage of the four.
+- **The query a law would run is cheaper under (c),** by ten times on Oxigraph at ten changes, five on Jena and four on rdflib, since it reads 14 versions and not 1,013 records for each change.
+- **An ancestor's balance does not differ between the options,** since its fold over the subtree is 104 ms and more on Oxigraph and the lookup is a thousandth of that.
+
+**What the figures do not cover.** Periods, a lowered amount, more than ten changes, more than one keyed definition, a store other than these three, and writers in contention. Each write time is one sample. The bulk query's time depends on its form by three orders of magnitude on two engines, and the figures are for the form that was kept, which is TD-178. On Oxigraph an ancestor's read rises by about a third after the first change under every option. The session that built the benchmark traced part of that to a write made after a bulk load, and the review did not repeat its probe.
+
+*Leaning (c),* which the maintainer shares on storage as of 2026-11-23, and which the measurement leaves standing. A tenth of a millisecond on a leaf's read buys a change of terms that writes 18 triples and not 5,065, and a law that runs ten times faster. Option (a) with a balance is the one to take instead if a leaf's read is ever what limits a deployment. What it costs is that the accounts a record reaches are derived and not stated. They are the accounts of the same owner whose definition has a version in the record, in the period the record names, and each law that reads a stated amount carries that join. An account's `ldg:ofDefinition` then names the version in force when its period began, so an account of a later period starts under the later version and needs no record, and an account of an earlier period is never reached. How an account whose definition states no period finds its first version is for LG-29 to work through.
 
 **The same gap is open for a ledger's profile.** `ldg:ledgerProfile` is functional and names a version, so a ledger cannot reach a later version of its profile either. A record written on the owner's ledger could carry it. LG-29 does not build that, and it is recorded as TD-177.
 
