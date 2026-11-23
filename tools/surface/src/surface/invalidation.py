@@ -59,7 +59,7 @@ def instance_graph_query(contract: Contract) -> str:
     """The SPARQL CONSTRUCT that gives the graph the compiler hashes as the contract's ``srf:InstanceGraphSource`` entry, over any graph it
     is run on: every triple of each instance of the carrier or of a subclass of it, and every triple of each IRI the read path reaches from
     one. It lets an engine other than rdflib, which holds no compiler, say whether an edit changed what a contract's rows are read from. The
-    compiler records the entry only when the source holds an instance, so an empty result is a source with no entry.
+    compiler records the entry for every contract that materialises rows, so an empty result is the entry of a class with no instance yet, whose digest the first instance changes.
 
     The entry covers an instance and the value its path ends at. It does not cover the nodes the path passes through, so an edit to one of
     those leaves the digest as it was while the contract's rows change."""

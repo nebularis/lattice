@@ -636,6 +636,39 @@ class InvalidationTests(unittest.TestCase):
         self.assertEqual(len(report.changes), 1)
         self.assertEqual(report.changes[0].source, key[1])
 
+    def test_the_first_instance_of_a_class_names_its_contract_and_a_class_whose_instances_all_go_is_still_named(self) -> None:
+        graph = load("employment-job-family.ttl")
+        contract = only_contract(graph, "job-family")
+        full = SurfaceCompiler(contract, graph, AT).compile().read_set
+        instances = carrier_instances(graph, contract.carrier)
+        self.assertTrue(instances)
+        bare = Graph()
+        for triple in graph:
+            bare.add(triple)
+        for instance in instances:
+            for triple in list(bare.triples((instance, None, None))):
+                bare.remove(triple)
+        self.assertFalse(carrier_instances(bare, contract.carrier))
+        empty = SurfaceCompiler(contract, bare, AT).compile().read_set
+
+        def entry(read_set):
+            return [e for e in read_set if e.kind == SRF.InstanceGraphSource]
+
+        # a class with no instance records the entry, with the digest of the empty graph
+        self.assertEqual(len(entry(empty)), 1)
+        self.assertEqual(entry(empty)[0].digest, canonical.hash_graph(Graph()))
+        # its first instance is a change the compiler's invalidation names
+        current = {e.key(): e.digest for e in full}
+        report = compare_read_set(empty, current)
+        self.assertEqual([c.kind for c in report.changes], [str(SRF.InstanceGraphSource)])
+        # and a class whose instances all go is still named, now as a changed digest and not a missing one
+        gone = {e.key(): e.digest for e in empty}
+        report = compare_read_set(full, gone)
+        self.assertEqual([c.kind for c in report.changes], [str(SRF.InstanceGraphSource)])
+        self.assertEqual(report.changes[0].current_digest, canonical.hash_graph(Graph()))
+        # the entry of a class that has instances is what it was
+        self.assertEqual(entry(full)[0].digest, canonical.hash_graph(Graph().parse(data=graph.query(instance_graph_query(contract)).serialize(format="nt"), format="nt")))
+
     def test_the_instance_graph_query_gives_the_graph_the_compiler_hashes(self) -> None:
         """The query is how an engine without the compiler says whether an edit touched a contract's instance graph."""
         checked = 0

@@ -41,7 +41,6 @@ Each was run by the delegated developer and again by the reviewer. The real stac
 ## Left open
 
 - The writer's fills and the compiler's rebuild agree on the five samples, and would differ where a read path leaves the source's graph or a carrier is typed by a subclass, since a fill reads one source graph and matches `rdf:type` exactly. The samples keep the borrowers in the facilities graph so the two agree, which the facility profile's own layout does not. TD-259.
-- The compiler's invalidation records an instance only where the source already holds one of the carrier's class, so the first instance of a class asserts a row and touches no contract. The simulator shows it as the compiler gives it. TD-260.
 - The surface compile job lowers no projection, so a step runs promotions and reports indexes as not kept, and no projection's queries run. TD-261.
 
 ## Placement

@@ -635,9 +635,9 @@ class SurfaceCompiler:
         if not contract.emits_assertions:
             return
         instances = carrier_instances(self.source, contract.carrier)
-        if not instances:
-            return
 
+        # The entry is recorded whether or not the source holds an instance yet. A class with no instance has the empty graph's digest, so its
+        # first instance changes the entry and names the contract, and a class whose instances all go is still named.
         instance_graph = Graph()
         for instance in instances:
             for triple in self.source.triples((instance, None, None)):

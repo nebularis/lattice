@@ -72,7 +72,9 @@
     "sources": [
       "urn:g:facilities"
     ],
-    "touched": []
+    "touched": [
+      "drawdown-sector"
+    ]
   },
   "facility-surface-step-repay.trig": {
     "contracts": {

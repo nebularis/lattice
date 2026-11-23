@@ -172,21 +172,20 @@ def test_the_steps_are_the_five_the_tests_name():
     assert STEPS == [f"facility-surface-step-{n}.trig" for n in ("borrower", "drawdown", "first", "repay", "sector")]
 
 
-def test_the_invalidation_names_no_contract_for_the_first_instance_of_its_carrier(declarations, base):
-    """Evidence of what the compiler's invalidation leaves out, which the simulator reproduces rather than corrects. A contract records its
-    instance graph only where the source holds an instance of its carrier, and only a recorded entry can be called stale. The first drawdown
-    asserts a row and names no contract, and the same edit made to a world that has a drawdown names the contract."""
+def test_the_invalidation_names_the_contract_for_the_first_instance_of_its_carrier(declarations, base):
+    """A contract records its instance graph whether or not the source holds an instance of its carrier, with the empty graph's digest where it
+    holds none, so the first drawdown asserts a row and names the contract, as the same edit made to a world that has a drawdown does."""
     expected = {name: expectation(name, declarations, base) for name in STEPS}
     first = expected["facility-surface-step-first.trig"]
-    assert first["contracts"]["drawdown-sector"]["asserted"] and first["touched"] == []
+    assert first["contracts"]["drawdown-sector"]["asserted"] and first["touched"] == ["drawdown-sector"]
     assert expected["facility-surface-step-drawdown.trig"]["touched"] == ["drawdown-sector"]
-    assert expected["facility-surface-step-repay.trig"]["touched"] == ["drawdown-sector"], "a contract whose instances all went is stale, as its entry is gone"
+    assert expected["facility-surface-step-repay.trig"]["touched"] == ["drawdown-sector"], "a contract whose instances all went is stale, as its digest is now the empty graph's"
     sector = expected["facility-surface-step-sector.trig"]
     assert sector["touched"] == ["borrower-sector", "drawdown-sector"], "the index reads the borrower, and the promotion the sector's triples at the path's end"
 
 
 def test_the_instance_graph_query_names_the_contracts_the_invalidation_names(declarations, base):
-    """The query the job holds, run over the world before and after, gives the compiler's answer for each step."""
+    """The query the job holds, run over the world before and after, gives the compiler's answer for each step, an empty result being the entry of a class with no instance."""
     for name in STEPS:
         world, added, removed = read_step(name)
         after = apply(world, added, removed)
@@ -195,7 +194,7 @@ def test_the_instance_graph_query_names_the_contracts_the_invalidation_names(dec
             query = instance_graph_query(contract)
             recorded = {tuple(t) for t in (base + union(world)).query(query)}
             now = {tuple(t) for t in (base + union(after)).query(query)}
-            if recorded and recorded != now:
+            if recorded != now:
                 names.append(contract.key)
         assert names == expectation(name, declarations, base)["touched"], name
 

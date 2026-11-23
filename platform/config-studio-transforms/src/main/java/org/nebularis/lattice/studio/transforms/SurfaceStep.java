@@ -251,9 +251,9 @@ final class SurfaceStep {
     // ---- the read sets
 
     /**
-     * The contracts the edit touched, as the compiler's invalidation names them. The compiler records a contract's instance graph only when the
-     * source holds an instance, and calls the contract stale when the graph it reads now differs from the one recorded or is gone. A contract
-     * that recorded none before the edit cannot be called stale, whatever the edit adds. The graph is read over every graph of the world, the
+     * The contracts the edit touched, as the compiler's invalidation names them. The compiler records a contract's instance graph whether or not
+     * the source holds an instance, with the empty graph's digest where it holds none, and calls the contract stale when the graph it reads now
+     * differs from the one recorded. So the first instance of a class touches its contracts, and so does the loss of the last. The graph is read over every graph of the world, the
      * default graph included, since the compiler reads one merged source.
      */
     private static Set<String> touched(List<Contract> contracts, DatasetGraph before, DatasetGraph after, long budgetMillis) throws Failed {
@@ -265,7 +265,7 @@ final class SurfaceStep {
                 continue;
             }
             Set<Triple> recorded = read(c, unionBefore, budgetMillis);
-            if (!recorded.isEmpty() && !recorded.equals(read(c, unionAfter, budgetMillis))) {
+            if (!recorded.equals(read(c, unionAfter, budgetMillis))) {
                 out.add(c.key());
             }
         }

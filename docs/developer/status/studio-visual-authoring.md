@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-23. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-23. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -58,7 +58,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
 | SVA-S2 | the surface simulation executor | built 2026-11-23, building 2026-11-23 | SVA-P3 |
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | planned | SVA-S2 |
-| SVA-S2b | the first instance of a class names its contracts | building 2026-11-23 | SVA-S2 |
+| SVA-S2b | the first instance of a class names its contracts | built 2026-11-23, building 2026-11-23 | SVA-S2 |
 | SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
@@ -221,8 +221,9 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-20: SVA-M3b built, [Validation Pack](../validation/SVA-M3b.md). Mapping mode's sample pane runs a compiled form over a sample only when the author presses Run, compiling first when the scheme or the other parts changed, and shows the output with the engine named. The automatic rerun and the studio's use of the deprecated transforms route are gone. The journeys replay frames the real workers gave, kept current by a test on each side. The Java run worker's report names its engine too. A run covers every scheme reading the sample's format (TD-258).
 - 2026-11-23: SVA-S2 started.
 - 2026-11-23: the maintainer asked that everything the unit built can be demonstrated from sample documents in known locations, listed in one README with how to demonstrate against each. Planned SVA-D1 before SVA-V1, added it to the unit's acceptance, and made it a principle that each slice adding a capability adds its samples and its README entry.
-- 2026-11-23: SVA-S2 built, [Validation Pack](../validation/SVA-S2.md). A surface step runs the writer's own clear and fills over the world before and after an edit, given as the quads a persistence step added and removed, and answers with each contract's rows, what was asserted and retracted, and the contracts touched. It agrees with the surface compiler on five samples. Three findings went to the debt register for the maintainer: the writer and the compiler keep a promotion by different rules where a read path leaves the source's graph (TD-259), the compiler's invalidation misses the first instance of a class (TD-260), and no projection is lowered for a step to run (TD-261). Every debt row this unit numbered is now numbered on another branch too, so SVA-X4 is planned.
+- 2026-11-23: SVA-S2 built, [Validation Pack](../validation/SVA-S2.md). A surface step runs the writer's own clear and fills over the world before and after an edit, given as the quads a persistence step added and removed, and answers with each contract's rows, what was asserted and retracted, and the contracts touched. It agrees with the surface compiler on five samples. Three findings went to the debt register for the maintainer: the writer and the compiler keep a promotion by different rules where a read path leaves the source's graph (TD-259), the compiler's invalidation misses the first instance of a class (fixed in SVA-S2b), and no projection is lowered for a step to run (TD-261). Every debt row this unit numbered is now numbered on another branch too, so SVA-X4 is planned.
 - 2026-11-23: the maintainer decided the questions after SVA-S2. A promotion keeps its rows by the surface compiler's rule, across graphs and subclasses, since a promotion that cannot read across aggregates loses its point, planned as SVA-S2a. The compiler's invalidation is fixed in this unit, SVA-S2b. Every behaviour the sketch names is built in this unit, so projections are SVA-S2c. LegalRuleML samples for SVA-D1 are the OASIS example with its notice and a clean-room document of our own expressing insurance terms. And this unit's debt rows move clear of other branches' numbers, SVA-X4, started.
 - 2026-11-23: SVA-X4 started.
 - 2026-11-23: SVA-X4 built. This unit's twelve debt rows moved to TD-250 to TD-261, in their order, past every branch (`main` at TD-163, `docs/placement-vehicles-structure` at TD-177, `spi/multi-store-architecture` at TD-171), with every reference. Lines naming the closed row on the confirmation read reworded, since another branch has since used its number. Checked: agent guidance, identifiers, catalogue, and no old number left.
 - 2026-11-23: the maintainer pre-approved SVA-S2b, SVA-S2a and SVA-S2c in that order, with a pause after. SVA-S2b started.
+- 2026-11-23: SVA-S2b built, [Validation Pack](../validation/SVA-S2b.md). The surface compiler's read set records each carrier class with or without instances, so the first instance names its contracts, in the compiler and the simulator. Its debt row is closed.
