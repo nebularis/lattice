@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-19. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** building 2026-11-23. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-19
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md), [LG-23](../validation/LG-23.md), [LG-11](../validation/LG-11.md), [LG-25](../validation/LG-25.md), [LG-26](../validation/LG-26.md), [LG-27](../validation/LG-27.md), [LG-28](../validation/LG-28.md), [LG-12](../validation/LG-12.md)
@@ -85,6 +85,8 @@ The rework built on machine S, LG-11, LG-25 to LG-28 and LG-12, was read against
 **Not decided.** Each row's move to verified is the maintainer's. The maintainer accepted the wording of the third addendum of 2026-11-19, for the request, on 2026-11-20.
 
 **Answered the same day, after the review.** LG-Q47 as (a), a pass takes the later of its stimulus's position and its ledger's latest pass's, read with the revision, drafted as ADR-A131's addendum proposed 2026-11-20 and built by LG-30. LG-Q51 as (a), a later version taking force is an event of the kernel. The maintainer asked for worked examples before answering the rest, so the [sketch](../sketches/ledger-definition-versions-in-force.md) now holds eleven histories under four rules, computed by a [model](../../../tools/models/ledger-versions-in-force/README.md), and two invariants that say what the rule we lean to keeps. Working them through raised three more questions. LG-Q52 asks what the record is written on, where one record for each account costs about 5,000 triples in an example that one record a pass covers in 19. LG-Q53 asks what a version that states less than is drawn does. LG-Q54 asks the record's name, since the first draft's `ldg:Adoption` collides with accounting's word and with this repository's own. TD-177 records that a ledger cannot reach a later version of its profile either.
+
+**2026-11-23, LG-32 marked building.** The maintainer asked for LG-Q52's read cost to be measured before answering it, so the benchmark is a slice of its own, built here.
 
 **2026-11-23.** The maintainer answered LG-Q54, and the record is an `ldg:Supersession`. They objected to a balance below zero, so the leaning on LG-Q53 changed to a balance of zero beside what the account is over by. The sketch now says what a change of parent inside one identity would mean, whether the lookup under LG-Q50 can be avoided, and what each option of LG-Q52 brings beyond its size. A figure was corrected, 159 triples of configuration for the example's raise where the sketch said about 175. The maintainer then answered LG-Q50 as (a), now STD-338. Versions of one definition differ only in the amount, the ceiling, the kinds that restore it, the merge policy and the owner kinds, and a different parent, unit, period, key or counted purpose is a new identity. No drafting was found that moves an account to another parent with its history.
 
@@ -207,6 +209,7 @@ Results sections. In short:
 | LG-29 | an account under a later version of its definition, the version in force by position. [Sketch](../sketches/ledger-definition-versions-in-force.md) | planned | LG-28, LG-Q48, LG-Q49, LG-Q52, LG-Q53 |
 | LG-30 | the corrections the review of 2026-11-20 found and the maintainer accepted | planned | LG-28 |
 | LG-31 | a credit held to the rule a draw is held to | planned | LG-12 |
+| LG-32 | a benchmark of a balance read under each way of writing a supersession, for LG-Q52 | building 2026-11-23 |  |
 - 2026-11-19: on machine S, per the brief of 2026-11-19, on `spi/worktree-s`, committing locally only. LG-11 marked building.
 - 2026-11-19: LG-11 built. The three conversion properties and their shape are gone from the README and its extracted documents, `revolving-facility.ttl` draws in sterling and cites each conversion as a record outside the ledger, and the conversion mutation is gone from `tools/test_ledger.py`, 40 passed. The proofs name no conversion term and pass.
 - 2026-11-19: LG-25 marked building, after MSA-I5a's agreement lemma landed in the ledger's proof session with every proof green.
