@@ -208,7 +208,8 @@ def stage_persistence(catalogue: lattice_repo_catalogue.Catalogue, folder: Path)
 def stage_maintenance(catalogue: lattice_repo_catalogue.Catalogue, folder: Path) -> None:
     """The operations that keep each of the studio's promotions from the write that changes its source (PM2). The writer writes such a
     source whole, so it sends the partition clear and each promotion's fill over the whole source. `manifest.json` names each promotion's
-    key, its source family (`cst:sourceFamily`) and its fill."""
+    key, its source family (`cst:sourceFamily`) and its fill. Each promotion reads one family of aggregates that hold the nodes it follows, so
+    its fill reads its source alone (`scope="source"`) and no write of another graph reaches its rows."""
     import json
     import shutil
 
@@ -228,7 +229,7 @@ def stage_maintenance(catalogue: lattice_repo_catalogue.Catalogue, folder: Path)
         source = declarations.value(contract.iri, family)
         if not isinstance(source, Literal):
             raise SystemExit(f"{contract.iri} names no cst:sourceFamily, so no write would keep its rows")
-        (folder / f"{contract.key}-fill-all.rq").write_text(render(fill_all(contract)), encoding="utf-8", newline="\n")
+        (folder / f"{contract.key}-fill-all.rq").write_text(render(fill_all(contract, scope="source")), encoding="utf-8", newline="\n")
         manifest.append({"key": contract.key, "family": str(source), "fill": f"{contract.key}-fill-all.rq"})
     (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
 

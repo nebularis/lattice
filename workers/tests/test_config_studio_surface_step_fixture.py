@@ -2,10 +2,11 @@
 
 The simulator runs the writer's maintenance in Jena over a sample world, and the compiler is what says what its rows and read sets should be.
 This test reads each facility surface step of `contracts/config-studio/samples/facility-surface-step-*.trig`, applies its edit to its world, and
-gives for each promotion the rows the compiler's own rebuild gives for the world after (`config_studio_rebuild`'s rule, which compiles the
-contract over the declarations and one source), and the contracts the compiler's invalidation names for the edit, by comparing the read set
-recorded for the world before with the digests the world after gives (`surface.invalidation.compare_read_set`). It also keeps the operations
-the facility's surface compile job holds, which the run worker's tests read in place of a compiler.
+gives for each promotion the rows the compiler's own rebuild gives for the world after, which compiles the contract over the declarations and
+the merged world, each row kept in the source that types its carrier, and the contracts the compiler's invalidation names for the edit, by
+comparing the read set recorded for the world before with the digests the world after gives (`surface.invalidation.compare_read_set`). The
+sources are the graphs the edit changes and those it reaches, which are the others whose rows it changes. It also keeps the operations the
+facility's surface compile job holds, which the run worker's tests read in place of a compiler.
 
     LATTICE_WRITE_SURFACE_STEP_FIXTURE=1 mise exec -- python -m pytest workers/tests/test_config_studio_surface_step_fixture.py -q
 
@@ -21,7 +22,7 @@ from urllib.parse import unquote
 
 import pytest
 from rdflib import BNode, Dataset, Graph, URIRef
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, RDFS, SKOS
 from surface.compile import SurfaceCompiler, compile_contract
 from surface.invalidation import compare_read_set, instance_graph_query, read_set_key
 from surface.model import read_contracts
@@ -110,29 +111,42 @@ def lines(rows: set, partition: str) -> list[str]:
     return sorted(f"{s.n3()} {p.n3()} {o.n3()} <{partition}> ." for s, p, o in rows)
 
 
-def rebuilt(contract, declarations: Graph, source: Graph) -> set:
-    """The rows of one source by the compiler's own rebuild (`config_studio_rebuild._rows`): the contract compiled over the declarations and the source."""
-    assertions = compile_contract(contract, declarations + source, SUBMITTED).modules["assertions"]
+def rebuilt(contract, declarations: Graph, world: Graph) -> set:
+    """The rows of the compiler's own rebuild: the contract compiled over the declarations and the merged world."""
+    assertions = compile_contract(contract, declarations + world, SUBMITTED).modules["assertions"]
     return {t for t in assertions.triples((None, contract.promotes_to, None)) if not isinstance(t[0], BNode) and not isinstance(t[2], BNode)}
+
+
+def rows_by_source(contract, declarations: Graph, world: dict[str, Graph]) -> dict[str, set]:
+    """The rows of the rebuild over the merged world, each in the source that types its carrier by the contract's carrier or a class below it."""
+    merged = union(world)
+    rows = rebuilt(contract, declarations, merged)
+    below = {contract.carrier} | {c for c in set(merged.subjects(RDFS.subClassOf, None)) if contract.carrier in set(merged.transitive_objects(c, RDFS.subClassOf))}
+    return {name: {row for row in rows if any((row[0], RDF.type, k) in graph for k in below)} for name, graph in world.items()}
 
 
 def expectation(name: str, declarations: Graph, base: Graph) -> dict:
     world, added, removed = read_step(name)
     after = apply(world, added, removed)
-    sources = sorted({*added, *removed} - {"urn:x-rdflib:default"}, key=lambda s: s.encode())
+    edited = sorted({*added, *removed} - {"urn:x-rdflib:default"}, key=lambda s: s.encode())
     contracts = read_contracts(declarations)
     kept = sorted((c for c in contracts if not c.is_index and c.emits_assertions), key=lambda c: c.key)
-    out: dict = {"sources": sources, "contracts": {}}
+    before_rows = {c.key: rows_by_source(c, declarations, world) for c in kept}
+    after_rows = {c.key: rows_by_source(c, declarations, {**{n: Graph() for n in world}, **after}) for c in kept}
+    names = {*world, *after}
+    # the sources the edit reaches are the others whose rows it changes
+    reached = sorted((n for n in names - set(edited) if any(before_rows[c.key].get(n, set()) != after_rows[c.key].get(n, set()) for c in kept)), key=lambda s: s.encode())
+    sources = sorted({*edited, *reached}, key=lambda s: s.encode())
+    out: dict = {"sources": edited, "reached": reached, "contracts": {}}
     for contract in kept:
-        before_rows = {s: rebuilt(contract, declarations, world.get(s, Graph())) for s in sources}
-        after_rows = {s: rebuilt(contract, declarations, after.get(s, Graph())) for s in sources}
         entry = {"before": [], "after": [], "asserted": [], "retracted": []}
         for source in sources:
             partition = PROMOTED + source
-            entry["before"] += lines(before_rows[source], partition)
-            entry["after"] += lines(after_rows[source], partition)
-            entry["asserted"] += lines(after_rows[source] - before_rows[source], partition)
-            entry["retracted"] += lines(before_rows[source] - after_rows[source], partition)
+            was, now = before_rows[contract.key].get(source, set()), after_rows[contract.key].get(source, set())
+            entry["before"] += lines(was, partition)
+            entry["after"] += lines(now, partition)
+            entry["asserted"] += lines(now - was, partition)
+            entry["retracted"] += lines(was - now, partition)
         out["contracts"][contract.key] = {k: sorted(v) for k, v in entry.items()}
     # the contracts the compiler's invalidation names: the read set recorded for the world before against the digests the world after gives
     touched = []
@@ -146,15 +160,17 @@ def expectation(name: str, declarations: Graph, base: Graph) -> dict:
 
 
 @pytest.mark.parametrize("name", STEPS)
-def test_the_rows_of_each_source_are_the_rows_of_the_compilers_rebuild_over_the_whole_world(name, declarations):
-    """The facility samples hold a source's three-hop path in the one source, so the rebuild of the merged world and the rebuild of each source
-    agree, and the simulator's per-source rows are the rebuild's rows for the world after."""
+def test_the_facility_samples_read_across_graphs_so_a_fill_that_read_one_source_would_miss_rows(name, declarations):
+    """The borrowers sit in graphs of their own, as the facility profile places them, so the rows of the facilities source hold a sector that a
+    rebuild of that source alone does not reach. A step that kept the source's rows from its own graph would not give the compiler's rows."""
     world, added, removed = read_step(name)
     after = apply(world, added, removed)
-    for contract in (c for c in read_contracts(declarations) if not c.is_index):
-        merged = rebuilt(contract, declarations, union(after))
-        per_source = set().union(*(rebuilt(contract, declarations, graph) for graph in after.values()))
-        assert merged == per_source, contract.key
+    contract = next(c for c in read_contracts(declarations) if c.key == "drawdown-sector")
+    differs = False
+    for state in (world, after):
+        merged_rows = rows_by_source(contract, declarations, state)["urn:g:facilities"]
+        differs = differs or merged_rows != rebuilt(contract, declarations, state["urn:g:facilities"])
+    assert differs, name
 
 
 @pytest.mark.parametrize("name", STEPS)
@@ -164,12 +180,12 @@ def test_the_vocabulary_graph_of_a_step_holds_its_concepts_as_the_configuration_
     world, _, _ = read_step(name)
     vocabulary = world["urn:g:vocabulary"]
     assert len(vocabulary)
-    for concept in set(vocabulary.subjects()):
+    for concept in set(vocabulary.subjects(RDF.type, SKOS.Concept)):
         assert set(vocabulary.triples((concept, None, None))) == set(base.triples((concept, None, None))), concept
 
 
-def test_the_steps_are_the_five_the_tests_name():
-    assert STEPS == [f"facility-surface-step-{n}.trig" for n in ("borrower", "drawdown", "first", "repay", "sector")]
+def test_the_steps_are_the_seven_the_tests_name():
+    assert STEPS == [f"facility-surface-step-{n}.trig" for n in ("borrower", "drawdown", "first", "repay", "sector", "subtype", "vocabulary")]
 
 
 def test_the_invalidation_names_the_contract_for_the_first_instance_of_its_carrier(declarations, base):

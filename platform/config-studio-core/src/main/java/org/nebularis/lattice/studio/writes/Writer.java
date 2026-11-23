@@ -128,6 +128,7 @@ public final class Writer {
             }
         }
         if (!b.planned.isEmpty()) {
+            b.fanOut();
             store.update(b.request);
             Map<String, Long> applied = store.receipts(b.planned.keySet());
             b.planned.forEach((id, plan) -> replies[plan.index] = applied.containsKey(id) ? plan.reply : plan.unapplied.get());
@@ -184,6 +185,54 @@ public final class Writer {
         final Map<String, Long> seqs = new HashMap<>();
         /** The parts and documents as stored, skolemised, as the batch would leave them, the base of the next delta. */
         final Map<String, Model> rawGraphs = new HashMap<>();
+        /** The triples the batch adds and removes, collected only where some promotion reads across graphs, since only then can a write reach another source (PM-2). */
+        final List<org.apache.jena.graph.Triple> delta = new ArrayList<>();
+
+        /**
+         * A graph the batch leaves as {@code after}, so what it adds and removes is what the promotions that read across graphs name their other
+         * sources from. Nothing is read or kept where no promotion does, which is every promotion of the studio's own.
+         */
+        void changed(String graph, Model after) {
+            if (!maintenance.reaches()) {
+                return;
+            }
+            Model before = rawGraphs.computeIfAbsent(graph, store::rawGraph);
+            before.difference(after).getGraph().find().forEachRemaining(delta::add);
+            after.difference(before).getGraph().find().forEachRemaining(delta::add);
+            rawGraphs.put(graph, after);
+        }
+
+        /** A graph the batch empties. */
+        void cleared(String graph) {
+            changed(graph, ModelFactory.createDefaultModel());
+        }
+
+        /** What a delta replace asserted and retracted. */
+        void changed(Model asserted, Model retracted) {
+            if (maintenance.reaches()) {
+                asserted.getGraph().find().forEachRemaining(delta::add);
+                retracted.getGraph().find().forEachRemaining(delta::add);
+            }
+        }
+
+        /**
+         * Keeps the rows of every other source the batch reaches, last in the request so they read the world the whole batch leaves. A
+         * promotion that reads across graphs names them with its reach query, run over the store as it is before the request, which is
+         * exact for the triples the batch changes (see {@code Maintenance.reach}). One writer applies a workspace's writes in order, so the
+         * work is added to the write and contends with no other writer.
+         */
+        void fanOut() {
+            if (delta.isEmpty()) {
+                return;
+            }
+            for (String family : maintenance.reachingFamilies()) {
+                Set<String> reached = new java.util.TreeSet<>();
+                for (org.apache.jena.query.Query query : maintenance.reach(family, delta)) {
+                    reached.addAll(store.sources(query));
+                }
+                reached.stream().filter(g -> family.equals(Graphs.familyOf(g))).forEach(g -> maintenance.keep(family, g).forEach(request::add));
+            }
+        }
 
         Optional<Workspace> workspace(String id) {
             return workspaces.computeIfAbsent(id, k -> Optional.ofNullable(ops.workspace(store, k)));
@@ -373,6 +422,7 @@ public final class Writer {
                 Model content = contents.get(i);
                 String root = Graphs.importGraph(held.digest());
                 updated = updated.withImport(root, held.label(), declared(held.job()));
+                changed(Graphs.importedGraph(held.digest()), content);
                 s.op(Graphs.importedGraph(held.digest()), txn -> ops.create(Family.IMPORT, root, content, txn));
             }
             describe(s, updated, false);
@@ -515,6 +565,7 @@ public final class Writer {
         private void describe(Steps s, Workspace updated, boolean create) {
             String root = Graphs.workspace(updated.id());
             Model body = Skolem.skolemise(updated.stored());
+            changed(Graphs.description(updated.id()), body);
             if (create) {
                 s.op(Graphs.description(updated.id()), txn -> ops.create(Family.DESCRIPTION, root, body, txn));
                 seqs.put(root, 1L);
@@ -537,11 +588,13 @@ public final class Writer {
             String graph = ops.graph(f, root);
             Model next = Skolem.skolemise(body);
             if (expect == 0) {
+                changed(next, ModelFactory.createDefaultModel());
                 s.op(graph, txn -> ops.create(f, root, next, txn));
             } else {
                 Model old = rawGraphs.computeIfAbsent(graph, store::rawGraph);
                 Model asserted = next.difference(old);
                 Model retracted = old.difference(next);
+                changed(asserted, retracted);
                 if (asserted.isEmpty() && retracted.isEmpty()) {
                     // A delta that changes nothing is never sent (STD-309). A row that must still move, a document whose description
                     // changed, takes the whole replace.
@@ -739,6 +792,7 @@ public final class Writer {
             if (revision == 0) {
                 return;
             }
+            cleared(graph);
             s.op(graph, txn -> ops.tombstone(f, root, revision, txn, Graphs.receipt(c.id()), actor(c)));
             retireLog(s, f, root, revision);
         }
@@ -824,6 +878,7 @@ public final class Writer {
             Steps s = new Steps(c);
             String root = Graphs.workspace(id);
             long described = seq(Family.DESCRIPTION, root);
+            cleared(Graphs.description(id));
             s.op(Graphs.description(id), txn -> ops.tombstone(Family.DESCRIPTION, root, described, txn, Graphs.receipt(c.id()), actor(c)));
             retireLog(s, Family.DESCRIPTION, root, described);
             for (String name : Workspace.GRAPHS) {
@@ -841,6 +896,7 @@ public final class Writer {
             });
             cleared.add(Graphs.receipts(id));
             s.wrote.addAll(cleared);
+            cleared.forEach(this::cleared);
             s.commit(Graphs.STORE_RECEIPTS, s.first, null);
             cleared.forEach(g -> request.add(clear(g, mine(c, Graphs.STORE_RECEIPTS))));
             keep(cleared);
@@ -867,6 +923,7 @@ public final class Writer {
             }
             String receipts = Graphs.jobReceipts(c.job());
             receipt(c, receipts, group(notExists(quad(jobIri, iri(jobIri), RDF.type.asNode(), Cst.Job.asNode()))), List.of(jobIri), null);
+            changed(jobIri, description);
             request.add(insert(jobIri, description, mine(c, receipts)));
             jobs.put(c.job(), Optional.of(description));
             return planned(index, c, Reply.ok(), () -> Reply.refused("the job exists"));
@@ -908,6 +965,8 @@ public final class Writer {
             String receipts = Graphs.jobReceipts(c.job());
             Element guard = group(exists(ws.id()), notExists(quad(jobIri, iri(jobIri), RDF.type.asNode(), Cst.Job.asNode())));
             receipt(c, receipts, guard, List.of(jobIri, input), null);
+            changed(jobIri, description);
+            changed(input, c.body().getNamedModel(input));
             request.add(insert(jobIri, description, mine(c, receipts)));
             request.add(insert(input, c.body().getNamedModel(input), mine(c, receipts)));
             keep(List.of(jobIri));
@@ -968,6 +1027,7 @@ public final class Writer {
             }
             String receipts = Graphs.jobReceipts(c.job());
             receipt(c, receipts, ownerGuard(c, jobIri), names.stream().sorted().toList(), null);
+            changed(jobIri, update);
             request.add(clear(jobIri, mine(c, receipts)));
             request.add(insert(jobIri, update, mine(c, receipts)));
             for (String name : names) {
@@ -977,6 +1037,7 @@ public final class Writer {
                 }
             }
             if (record != null) {
+                changed(recordIri, record);
                 request.add(clear(recordIri, mine(c, receipts)));
                 request.add(insert(recordIri, record, mine(c, receipts)));
             }
@@ -984,6 +1045,7 @@ public final class Writer {
                 // A rebuild that succeeded has nothing left to read, so the update that writes its promotions deletes the job
                 // and its receipts too, last, which saves the service a request and the store a commit for every rebuild.
                 List<String> graphs = List.of(jobIri, Graphs.jobInput(c.job()), Graphs.jobRecord(c.job()), receipts);
+                graphs.forEach(this::cleared);
                 graphs.forEach(g -> request.add(clear(g, mine(c, receipts))));
                 jobs.put(c.job(), Optional.empty());
                 return planned(index, c, Reply.ok(), () -> store.graph(jobIri).isEmpty() ? Reply.ok() : Reply.notFound());
@@ -1062,6 +1124,8 @@ public final class Writer {
             Model body = Skolem.skolemise(registry);
             Steps s = new Steps(c);
             // The same digest is the same content, so a version whose row exists is left as it is and an orphan is reused.
+            changed(versionGraph, Skolem.skolemise(content));
+            changed(lineageGraph, body);
             s.op(versionGraph, txn -> ops.create(Family.VERSION, version, Skolem.skolemise(content), txn));
             s.op(lineageGraph, txn -> rowSeq == 0
                 ? ops.create(Family.LINEAGE, lineage, body, txn)
@@ -1090,6 +1154,7 @@ public final class Writer {
             // A rebuild job belongs to no workspace, so its receipts are its own and go with it, and its deletion leaves none.
             String receipts = rebuild ? Graphs.jobReceipts(c.job()) : Graphs.receipts(c.workspace());
             receipt(c, receipts, ownerGuard(c, jobIri), graphs, null);
+            graphs.forEach(this::cleared);
             graphs.forEach(g -> request.add(clear(g, mine(c, receipts))));
             keep(graphs);
             jobs.put(c.job(), Optional.empty());

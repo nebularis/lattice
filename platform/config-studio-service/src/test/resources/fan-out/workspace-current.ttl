@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# A promotion of the studio's own graphs that reads across aggregates, for the writer's tests of fan-out within the write. A workspace's
+# description holds the lineages it follows, and each lineage's own graph holds its current version, so the rows of the description's
+# partition change when a publication moves a lineage. The studio's own promotions read one aggregate each, so this contract is a test's.
+# `workers/tests/test_config_studio_fan_out_fixture.py` writes the operations beside it from this file.
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix cst:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix prm:  <https://www.nebularis.org/neuro-semantic/lattice/config-studio/promotion#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+prm:fan-out-profile a srf:SurfaceProfile ;
+    fnd:hasIdentity prm:fan-out-profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/1" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 .
+
+prm:workspace-current-step-0 a srf:PathStep ;
+    srf:stepIndex 0 ;
+    srf:stepProperty cst:dependsOn ;
+    srf:stepDirection srf:Forward .
+
+prm:workspace-current-step-1 a srf:PathStep ;
+    srf:stepIndex 1 ;
+    srf:stepProperty cst:current ;
+    srf:stepDirection srf:Forward .
+
+# The current version of each lineage a workspace depends on.
+prm:workspace-current-promotion a srf:PromotionContract ;
+    fnd:hasIdentity prm:workspace-current-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "workspace-current" ;
+    cst:sourceFamily "description" ;
+    srf:carrier cst:Workspace ;
+    srf:hasPathStep prm:workspace-current-step-0 , prm:workspace-current-step-1 ;
+    srf:targetNamespace "https://www.nebularis.org/neuro-semantic/lattice/config-studio/promotion#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile prm:fan-out-profile ;
+    srf:promotesTo prm:workspaceCurrent ;
+    srf:sourceFidelity srf:ExactSource .

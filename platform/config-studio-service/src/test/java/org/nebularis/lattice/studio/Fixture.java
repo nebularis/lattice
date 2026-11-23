@@ -44,14 +44,10 @@ final class Fixture {
     /** Every completion event the writer published, and a listener a test may set to hear the next ones (PM3). */
     final java.util.List<org.nebularis.lattice.outbox.CloudEvent> events = new java.util.concurrent.CopyOnWriteArrayList<>();
     volatile java.util.function.Consumer<org.nebularis.lattice.outbox.CloudEvent> listener = e -> { };
-    final DirectWrites writes = new DirectWrites(new Writer(store, OPS, MAINTENANCE, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC),
-        e -> {
-            events.add(e);
-            listener.accept(e);
-        }));
+    final DirectWrites writes;
     final RecordingJobBus bus = new RecordingJobBus();
     /** Stands in for the worker's rebuild jobs, which every bus the api is given hands to it. */
-    final RebuildWorker rebuildWorker = new RebuildWorker(store, writes);
+    final RebuildWorker rebuildWorker;
     final Path assets;
     final StudioApi api;
     private final AtomicLong counter = new AtomicLong();
@@ -70,7 +66,18 @@ final class Fixture {
 
     /** With the clock the service reads, which a test may move. */
     Fixture(Path assets, JobBus busOverride, java.util.Set<String> features, Clock clock) {
+        this(assets, busOverride, features, clock, MAINTENANCE);
+    }
+
+    /** With the promotions the writer keeps, which a test may replace with others. */
+    Fixture(Path assets, JobBus busOverride, java.util.Set<String> features, Clock clock, org.nebularis.lattice.studio.store.Maintenance maintenance) {
         this.assets = assets;
+        this.writes = new DirectWrites(new Writer(store, OPS, maintenance, java.time.Clock.fixed(java.time.Instant.parse("2026-10-27T10:00:00Z"), java.time.ZoneOffset.UTC),
+            e -> {
+                events.add(e);
+                listener.accept(e);
+            }));
+        this.rebuildWorker = new RebuildWorker(store, writes);
         bus.runWith(rebuildWorker::handle);
         JobBus given = busOverride == null ? bus : new JobBus() {
             @Override

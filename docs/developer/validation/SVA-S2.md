@@ -40,7 +40,7 @@ Each was run by the delegated developer and again by the reviewer. The real stac
 
 ## Left open
 
-- The writer's fills and the compiler's rebuild agree on the five samples, and would differ where a read path leaves the source's graph or a carrier is typed by a subclass, since a fill reads one source graph and matches `rdf:type` exactly. The samples keep the borrowers in the facilities graph so the two agree, which the facility profile's own layout does not. TD-259.
+- The writer's fills and the compiler's rebuild agreed on the five samples only because the samples kept the borrowers in the facilities graph. SVA-S2a brought the fills to the compiler's rule, a read path read across graphs and a carrier typed by a subclass, and the samples now place the borrowers as the facility profile does ([Validation Pack](SVA-S2a.md)).
 - The surface compile job lowers no projection, so a step runs promotions and reports indexes as not kept, and no projection's queries run. TD-261.
 
 ## Placement

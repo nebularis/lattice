@@ -11,6 +11,7 @@
     "contract": "https://example.org/lending#drawdown-sector-promotion",
     "kind": "promotion",
     "readSet": "drawdown-sector-read-set.rq",
-    "fill": "drawdown-sector-fill-all.rq"
+    "fill": "drawdown-sector-fill-all.rq",
+    "reach": "drawdown-sector-reach.rq"
   }
 ]

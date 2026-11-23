@@ -300,6 +300,13 @@ public final class StudioStore implements AutoCloseable {
         return connection.queryConstruct(query.asQuery());
     }
 
+    /** The graphs a query names as {@code ?src}, each once, which a promotion's reach query gives for the triples a write changes. */
+    public java.util.SortedSet<String> sources(Query query) {
+        java.util.SortedSet<String> out = new java.util.TreeSet<>();
+        connection.querySelect(query, row -> out.add(row.getResource("src").getURI()));
+        return out;
+    }
+
     /** Applies one update request, which the store runs as one transaction. */
     public void update(UpdateRequest request) {
         connection.update(request);

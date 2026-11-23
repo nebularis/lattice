@@ -1,0 +1,109 @@
+SELECT DISTINCT ?src
+WHERE {
+  {
+    {
+      SELECT ?k
+      WHERE {
+        { BIND(<https://www.nebularis.org/neuro-semantic/lattice/config-studio#Workspace> AS ?k) } UNION {
+          GRAPH ?mg1 {
+            ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* <https://www.nebularis.org/neuro-semantic/lattice/config-studio#Workspace>
+          }
+        } UNION {
+          GRAPH ?mg1 {
+            ?m1 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* <https://www.nebularis.org/neuro-semantic/lattice/config-studio#Workspace>
+          }
+          GRAPH ?mg2 {
+            ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?m1
+          }
+        } UNION {
+          GRAPH ?mg1 {
+            ?m2 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* <https://www.nebularis.org/neuro-semantic/lattice/config-studio#Workspace>
+          }
+          GRAPH ?mg2 {
+            ?m1 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?m2
+          }
+          GRAPH ?mg3 {
+            ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?m1
+          }
+        }
+      }
+    }
+    VALUES (?s ?p ?o) { {{{delta}}} }
+    FILTER(sameTerm(?p, <https://www.nebularis.org/neuro-semantic/lattice/config-studio#dependsOn>))
+    BIND(?s AS ?c)
+    GRAPH ?src { ?c <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?k }
+  } UNION {
+    {
+      SELECT ?k
+      WHERE {
+        { BIND(<https://www.nebularis.org/neuro-semantic/lattice/config-studio#Workspace> AS ?k) } UNION {
+          GRAPH ?mg1 {
+            ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* <https://www.nebularis.org/neuro-semantic/lattice/config-studio#Workspace>
+          }
+        } UNION {
+          GRAPH ?mg1 {
+            ?m1 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* <https://www.nebularis.org/neuro-semantic/lattice/config-studio#Workspace>
+          }
+          GRAPH ?mg2 {
+            ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?m1
+          }
+        } UNION {
+          GRAPH ?mg1 {
+            ?m2 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* <https://www.nebularis.org/neuro-semantic/lattice/config-studio#Workspace>
+          }
+          GRAPH ?mg2 {
+            ?m1 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?m2
+          }
+          GRAPH ?mg3 {
+            ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?m1
+          }
+        }
+      }
+    }
+    VALUES (?s ?p ?o) { {{{delta}}} }
+    FILTER(sameTerm(?p, <https://www.nebularis.org/neuro-semantic/lattice/config-studio#current>))
+    GRAPH ?h1 {
+      ?c <https://www.nebularis.org/neuro-semantic/lattice/config-studio#dependsOn> ?s
+    }
+    GRAPH ?src { ?c <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?k }
+  } UNION {
+    VALUES (?s ?p ?o) { {{{delta}}} }
+    FILTER(sameTerm(?p, <http://www.w3.org/2000/01/rdf-schema#subClassOf>))
+    FILTER(ISIRI(?s))
+    BIND(?s AS ?k)
+    GRAPH ?src { ?c <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?k }
+  } UNION {
+    VALUES (?s ?p ?o) { {{{delta}}} }
+    FILTER(sameTerm(?p, <http://www.w3.org/2000/01/rdf-schema#subClassOf>))
+    FILTER(ISIRI(?s))
+    GRAPH ?ug1 {
+      ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?s
+    }
+    GRAPH ?src { ?c <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?k }
+  } UNION {
+    VALUES (?s ?p ?o) { {{{delta}}} }
+    FILTER(sameTerm(?p, <http://www.w3.org/2000/01/rdf-schema#subClassOf>))
+    FILTER(ISIRI(?s))
+    GRAPH ?ug1 {
+      ?u1 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?s
+    }
+    GRAPH ?ug2 {
+      ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?u1
+    }
+    GRAPH ?src { ?c <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?k }
+  } UNION {
+    VALUES (?s ?p ?o) { {{{delta}}} }
+    FILTER(sameTerm(?p, <http://www.w3.org/2000/01/rdf-schema#subClassOf>))
+    FILTER(ISIRI(?s))
+    GRAPH ?ug1 {
+      ?u2 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?s
+    }
+    GRAPH ?ug2 {
+      ?u1 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?u2
+    }
+    GRAPH ?ug3 {
+      ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?u1
+    }
+    GRAPH ?src { ?c <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?k }
+  }
+}

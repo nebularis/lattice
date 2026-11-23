@@ -326,9 +326,12 @@ class _Checker:
         if not isinstance(graph, Graph):
             raise IrError("MissingGraphRole", f"{self.op.id}: a graph block needs a Graph with a role")
         term = graph.term
+        if graph.role is GraphRole.WORLD and not where:
+            raise IrError("InvalidForm", f"{self.op.id}: a template writes a named graph, and the world is every graph, so nothing is written there")
         if isinstance(term, Var):
             self._var(term)
-            if where and scope is not None and term.name not in scope.definite and term.name not in scope.joined:
+            # the world is read across every graph on purpose, so its variable is not bound first. A graph role that names one part of the store is
+            if graph.role is not GraphRole.WORLD and where and scope is not None and term.name not in scope.definite and term.name not in scope.joined:
                 raise IrError(
                     "UnboundGraphVariable",
                     f"{self.op.id}: GRAPH ?{term.name} is matched before a BIND or VALUES binds it in this group or an enclosing one, "

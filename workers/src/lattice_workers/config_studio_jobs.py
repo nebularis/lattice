@@ -460,17 +460,18 @@ def _compile_surface(result: _Result, config: Graph, baseline: Graph, root: str,
 
 MAINTENANCE = "maintenance"
 """The group of the artefacts a surface compilation holds for the surface simulator, in the layout `config_studio_stage.py` stages for the
-studio's own promotions: `partition-clear.rq`, a `{key}-fill-all.rq` and a `{key}-read-set.rq` for each contract that has them, and the
-`manifest.json` that names them."""
+studio's own promotions: `partition-clear.rq`, a `{key}-fill-all.rq`, a `{key}-reach.rq` and a `{key}-read-set.rq` for each contract that has them,
+and the `manifest.json` that names them."""
 
 
 def _maintenance_artefacts(result: _Result, contracts: Iterable[Any]) -> None:
     """What the run worker needs to simulate a write over a source, since it has no compiler to generate it. A promotion whose rows a write
-    keeps has the fill the writer sends (`surface.maintenance.fill_all`), and a contract that materialises rows has the query that gives the
-    graph its read set hashes (`surface.invalidation.instance_graph_query`). A contract a write does not keep is listed with the reason."""
+    keeps has the fill the writer sends (`surface.maintenance.fill_all`, which reads the world as the compiler does) and the query that names the
+    sources another write reaches (`surface.maintenance.reach`), and a contract that materialises rows has the query that gives the graph its
+    read set hashes (`surface.invalidation.instance_graph_query`). A contract a write does not keep is listed with the reason."""
     from persistence.ir_render import render
     from surface.invalidation import instance_graph_query
-    from surface.maintenance import MaintenanceRefused, fill_all, partition_clear
+    from surface.maintenance import MaintenanceRefused, fill_all, partition_clear, reach
 
     manifest = []
     for contract in sorted(contracts, key=lambda c: c.key):
@@ -484,12 +485,14 @@ def _maintenance_artefacts(result: _Result, contracts: Iterable[Any]) -> None:
             entry["reason"] = "an index mints its symbols under its naming policy, which a write does not do yet"
         else:
             try:
-                text = render(fill_all(contract))
+                text, lookup = render(fill_all(contract)), render(reach(contract))
             except MaintenanceRefused as refused:
                 entry["reason"] = refused.reason
             else:
                 entry["fill"] = f"{contract.key}-fill-all.rq"
+                entry["reach"] = f"{contract.key}-reach.rq"
                 result.artefact(f"{MAINTENANCE}/{entry['fill']}", _SPARQL_UPDATE, text, MAINTENANCE)
+                result.artefact(f"{MAINTENANCE}/{entry['reach']}", _SPARQL_QUERY, lookup, MAINTENANCE)
         manifest.append(entry)
     if any("fill" in entry for entry in manifest):
         result.artefact(f"{MAINTENANCE}/partition-clear.rq", _SPARQL_UPDATE, render(partition_clear()), MAINTENANCE)

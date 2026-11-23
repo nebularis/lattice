@@ -37,7 +37,7 @@ import org.nebularis.lattice.studio.store.Graphs;
  */
 class SurfaceStepTest {
     private static final String RUN = "urn:lattice:studio:run:3f2b8c1e-5a47-4d0e-9b1a-6c7d8e9f0a1b";
-    private static final List<String> STEPS = List.of("borrower", "drawdown", "first", "repay", "sector").stream().map(n -> "facility-surface-step-" + n + ".trig").toList();
+    private static final List<String> STEPS = List.of("borrower", "drawdown", "first", "repay", "sector", "subtype", "vocabulary").stream().map(n -> "facility-surface-step-" + n + ".trig").toList();
     private static final String PREFIXES = """
         @prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
         @prefix ex:  <https://example.org/lending#> .
@@ -122,6 +122,8 @@ class SurfaceStepTest {
             JsonObject outcome = json(r, "outcome");
             assertEquals(PersistenceStep.ENGINE, outcome.get("engine").getAsString().value());
             assertEquals(want.get("sources").getAsArray().stream().map(v -> v.getAsString().value()).toList(), outcome.get("sources").getAsArray().stream().map(v -> v.getAsString().value()).toList());
+            assertEquals(want.get("reached").getAsArray().stream().map(v -> v.getAsString().value()).toList(), outcome.get("reached").getAsArray().stream().map(v -> v.getAsString().value()).toList(),
+                name + " reaches the sources whose rows the compiler's rebuild changes");
             List<String> touched = outcome.get("contracts").getAsArray().stream().map(JsonValue::getAsObject)
                 .filter(o -> o.get("readSetTouched").getAsBoolean().value()).map(o -> o.get("key").getAsString().value()).toList();
             assertEquals(want.get("touched").getAsArray().stream().map(v -> v.getAsString().value()).toList(), touched, name + " touches the contracts the invalidation names");

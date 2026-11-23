@@ -3,7 +3,35 @@ INSERT {
 }
 WHERE {
   { FILTER(ISIRI($source) && ISIRI($derived)) }
-  GRAPH $source {
-    ?c <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.org/lending#Drawdown> ; <https://example.org/lending#drawnUnder>/<https://example.org/lending#borrower>/<https://example.org/lending#borrowerSector> ?v
+  {
+    SELECT ?k
+    WHERE {
+      { BIND(<https://example.org/lending#Drawdown> AS ?k) } UNION {
+        GRAPH ?mg1 {
+          ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* <https://example.org/lending#Drawdown>
+        }
+      } UNION {
+        GRAPH ?mg1 {
+          ?m1 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* <https://example.org/lending#Drawdown>
+        }
+        GRAPH ?mg2 {
+          ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?m1
+        }
+      } UNION {
+        GRAPH ?mg1 {
+          ?m2 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* <https://example.org/lending#Drawdown>
+        }
+        GRAPH ?mg2 {
+          ?m1 <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?m2
+        }
+        GRAPH ?mg3 {
+          ?k <http://www.w3.org/2000/01/rdf-schema#subClassOf>/(<http://www.w3.org/2000/01/rdf-schema#subClassOf>)* ?m1
+        }
+      }
+    }
   }
+  GRAPH $source { ?c <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?k }
+  GRAPH ?g1 { ?c <https://example.org/lending#drawnUnder> ?x1 }
+  GRAPH ?g2 { ?x1 <https://example.org/lending#borrower> ?x2 }
+  GRAPH ?g3 { ?x2 <https://example.org/lending#borrowerSector> ?v }
 }

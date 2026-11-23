@@ -1,0 +1,7 @@
+DELETE {
+  GRAPH $derived { ?s ?p ?o }
+}
+WHERE {
+  { FILTER(ISIRI($derived)) }
+  GRAPH $derived { ?s ?p ?o }
+}

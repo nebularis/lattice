@@ -151,6 +151,7 @@ def _refusals() -> list[tuple[str, str, object]]:
         ("UnboundTemplateVariable", "OptionalAllowed and never bound", lambda: valid(insert_=(*insert(), GraphBlock(META, (Triple(ROOT, pat("p"), optional("ghost")),))))),
         ("OptionalTagOnBoundVariable", "always bound", lambda: valid(insert_=insert(now=Binding.OPTIONAL_ALLOWED))),
         ("UnboundGraphVariable", "free GRAPH ?g", lambda: valid(where_=(*where(), GraphBlock(Graph(GraphRole.LOG, Var("free")), (Triple(Var("a"), pat("p"), Var("b")),))))),
+        ("InvalidForm", "a template that writes the world", lambda: valid(insert_=(*insert(), GraphBlock(Graph(GraphRole.WORLD, Var("w")), (Triple(ROOT, pat("p"), bound("now")),))))),
         ("BindTargetInScope", "already in scope", lambda: valid(where_=(*where(), Bind(string("x"), Var("now"))))),
         ("WrongGuard", "value comparison on a term-matched position", lambda: _long_filter(ValueGuard("<=", EXPECTED, ParamRef("nextSeq")))),
         ("WrongGuard", "value comparison on an untyped variable", lambda: _long_filter(ValueGuard(">", Var("now"), string("x")))),
@@ -252,6 +253,14 @@ def test_h2_1_t7_graph_variables_are_accepted_when_a_bind_or_values_binds_them()
     params = (Param("logGraphs", Kind.REGISTRY_LIST),)
     select = Select((Var("r"),))
     check(Operation.build("audit", params, Group(values), select=select))
+
+
+def test_the_world_is_read_across_every_graph_without_a_variable_bound_first():
+    """A promotion's read path crosses aggregates, so its fill reads each hop in whichever graph holds it. The world role is the only one whose
+    graph variable may range over every graph, and the other roles still refuse a free one (UnboundGraphVariable)."""
+    free = GraphBlock(Graph(GraphRole.WORLD, Var("free")), (Triple(Var("a"), pat("p"), Var("b")),))
+    check(valid(where_=(*where(), free)))
+    assert "GRAPH ?free" in render(valid(where_=(*where(), free)))
 
 
 def _joined_graph(shape: str) -> Operation:

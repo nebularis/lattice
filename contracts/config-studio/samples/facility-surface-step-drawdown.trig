@@ -3,8 +3,8 @@
 # The input of a simulate run of target surface, for the facility sample's surface part (a drawdown is added under facility-1). The sample world is the graphs that are not
 # reserved, as it was before the edit. The edit is the quads a write added and removed, which are the quads of a persistence step's delta part, in
 # <urn:lattice:studio:step/added/{graph}> and <urn:lattice:studio:step/removed/{graph}>, where {graph} is the edited graph's IRI percent-encoded as
-# ENCODE_FOR_URI does, urn%3Ag%3Afacilities for <urn:g:facilities>. The facilities graph holds the borrowers too, so the promotion's three-hop read
-# path lies in the one source whose rows a write keeps. The graph <urn:g:vocabulary> holds the sector concepts as the vocabulary configuration states them,
+# ENCODE_FOR_URI does, urn%3Ag%3Afacilities for <urn:g:facilities>. Each borrower is in a graph of its own, <urn:g:borrower/{id}>, as the facility
+# persistence profile places it, so the promotion's three-hop read path leaves the facilities graph for the borrower's. The graph <urn:g:vocabulary> holds the sector concepts as the vocabulary configuration states them,
 # since the compiler reads the end of the path with its triples, and a step reads only the world it is sent. Every IRI is a placeholder under example.org.
 
 @prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
@@ -22,9 +22,15 @@
     ex:Retail a skos:Concept ; skos:broader ex:Consumer ; skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 ; skos:prefLabel "Retail"@en .
 }
 
-<urn:g:facilities> {
+<urn:g:borrower/acme-foods> {
     ex:acme-foods a ex:Borrower ; ex:borrowerSector ex:FoodProcessing .
+}
+
+<urn:g:borrower/fjord-retail> {
     ex:fjord-retail a ex:Borrower ; ex:borrowerSector ex:Retail .
+}
+
+<urn:g:facilities> {
     ex:facility-1 a ex:Facility ; ex:borrower ex:acme-foods ; ex:hasDrawdown ex:drawdown-1 , ex:drawdown-2 ; ex:margin 3.25 .
     ex:facility-2 a ex:Facility ; ex:borrower ex:fjord-retail ; ex:hasDrawdown ex:drawdown-3 ; ex:margin 2.75 .
     ex:facility-3 a ex:Facility ; ex:borrower ex:acme-foods ; ex:margin 3.0 .

@@ -354,8 +354,8 @@ def _closed(shape: str, path: str) -> set[str]:
     return {_name(x) for x in Collection(SHAPES, SHAPES.value(prop, SH["in"]))}
 
 
-def test_the_shape_closes_a_place_s_role_to_the_eleven_roles_of_the_ir_less_derived():
-    roles = {role.value for role in GraphRole} - {"derived"}
+def test_the_shape_closes_a_place_s_role_to_the_eleven_roles_of_the_ir_less_derived_and_world():
+    roles = {role.value for role in GraphRole} - {"derived", "world"}
     assert roles == set(ROLE_INDIVIDUALS)
     assert _closed("GraphPlaceShape", "inGraphRole") == set(ROLE_INDIVIDUALS.values())
     assert len(ROLE_INDIVIDUALS) == 11

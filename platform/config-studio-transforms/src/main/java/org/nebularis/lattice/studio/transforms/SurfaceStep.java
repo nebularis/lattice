@@ -43,8 +43,10 @@ import org.nebularis.lattice.studio.store.Maintenance;
  * and its input alone, and the time it runs at is the one the input states (PRI-56). The input is a sample world and an edit of it, the
  * quads a write added and removed. The step keeps the rows of each source the edit changed as the studio's writer keeps them, with the
  * writer's own {@link Maintenance}, which sends the partition clear and then each contract's fill over the whole source, and it does so over
- * the world before the edit and over the world after it, each in a dataset of its own. It also says which contracts read what the edit
- * changed, by the query the compiler's read set is defined by. The operations are those the compile job holds, since this worker has no
+ * the world before the edit and over the world after it, each in a dataset of its own. A fill reads the world, each hop in the graph that
+ * holds it, so the edit also reaches the other sources whose carriers' read paths pass through a node it changed, and the step keeps those
+ * too, the sources the job's reach queries name over the world before the edit, as the writer does within the write. It also says which
+ * contracts read what the edit changed, by the query the compiler's read set is defined by. The operations are those the compile job holds, since this worker has no
  * compiler. Nothing is shared with another step, and nothing is stored.
  */
 final class SurfaceStep {
@@ -64,8 +66,8 @@ final class SurfaceStep {
         }
     }
 
-    /** One contract of the compile job, from its manifest. {@code fill}, {@code readSet} and {@code reason} are each null where the job has none. */
-    private record Contract(String key, String iri, String kind, String fill, Query readSet, String reason) {
+    /** One contract of the compile job, from its manifest. {@code fill}, {@code reach}, {@code readSet} and {@code reason} are each null where the job has none. */
+    private record Contract(String key, String iri, String kind, String fill, String reach, Query readSet, String reason) {
     }
 
     /** The parts of a step in order, or the reason the step could not be run, in words an author reads. */
@@ -94,10 +96,14 @@ final class SurfaceStep {
         SurfaceStepRequest step = SurfaceStepRequest.parse(trig);
         List<Contract> contracts = contracts(artefacts);
         Maintenance maintenance = maintenance(contracts, artefacts);
-        List<String> sources = step.sources();
+        List<String> edited = step.sources();
         Node time = step.transactionTime();
 
         DatasetGraph after = step.after();
+        List<String> reached = reached(maintenance, step, edited, budgetMillis);
+        List<String> sources = new ArrayList<>(edited);
+        sources.addAll(reached);
+        sources.sort(PersistenceStep.BYTES);
         Map<String, Set<Quad>> rowsBefore = keep(step.world(), sources, maintenance, contracts, time, budgetMillis);
         Map<String, Set<Quad>> rowsAfter = keep(after, sources, maintenance, contracts, time, budgetMillis);
         Set<String> touched = touched(contracts, step.world(), after, budgetMillis);
@@ -126,7 +132,8 @@ final class SurfaceStep {
         parts.add(new PersistenceStep.Part("delta", "application/json", JSON.toString(delta)));
         JsonObject outcome = new JsonObject();
         outcome.put("engine", PersistenceStep.ENGINE);
-        outcome.put("sources", PersistenceStep.strings(sources));
+        outcome.put("sources", PersistenceStep.strings(edited));
+        outcome.put("reached", PersistenceStep.strings(reached));
         outcome.put("contracts", table);
         parts.add(new PersistenceStep.Part("outcome", "application/json", JSON.toString(outcome)));
         return parts;
@@ -154,6 +161,7 @@ final class SurfaceStep {
             JsonObject entry = value.getAsObject();
             String key = entry.getString("key");
             String fill = file(artefacts, entry, "fill");
+            String reach = file(artefacts, entry, "reach");
             String readSet = file(artefacts, entry, "readSet");
             Query query = null;
             if (readSet != null) {
@@ -167,7 +175,7 @@ final class SurfaceStep {
                 }
             }
             String reason = entry.hasKey("reason") && entry.get("reason").isString() ? entry.getString("reason") : null;
-            if (byKey.put(key, new Contract(key, entry.getString("contract"), entry.getString("kind"), fill, query, reason)) != null) {
+            if (byKey.put(key, new Contract(key, entry.getString("contract"), entry.getString("kind"), fill, reach, query, reason)) != null) {
                 throw new Failed("The job's maintenance manifest names the contract " + key + " more than once, so this step was not run.");
             }
         }
@@ -192,12 +200,39 @@ final class SurfaceStep {
     }
 
     private static Maintenance maintenance(List<Contract> contracts, Map<String, String> artefacts) throws Failed {
-        List<Maintenance.Fill> fills = contracts.stream().filter(c -> c.fill() != null).map(c -> new Maintenance.Fill(c.key(), c.fill())).toList();
+        List<Maintenance.Fill> fills = contracts.stream().filter(c -> c.fill() != null).map(c -> new Maintenance.Fill(c.key(), c.fill(), c.reach())).toList();
         String clear = artefacts.get(CLEAR);
         if (!fills.isEmpty() && clear == null) {
             throw new Failed("The job holds the fills of its contracts and no partition clear (" + CLEAR + "), so this step was not run.");
         }
         return Maintenance.of(clear, Map.of(FAMILY, fills));
+    }
+
+    // ---- the sources an edit reaches
+
+    /**
+     * The sources, beside those the edit changed, whose rows the edit reaches, in the order of their bytes. They are named by the job's reach
+     * queries, run over the world before the edit with the triples the edit added and removed in the named graphs. The default graph is read by
+     * no fill. A partition is no source, and a source the edit changed is kept already.
+     */
+    private static List<String> reached(Maintenance maintenance, SurfaceStepRequest step, List<String> edited, long budgetMillis) throws Failed {
+        // what the edit changes, which is what it adds that the world lacks and what it removes that the world holds
+        Set<org.apache.jena.graph.Triple> delta = new HashSet<>();
+        step.added().stream().filter(q -> !Quad.isDefaultGraph(q.getGraph()) && !step.world().contains(q)).forEach(q -> delta.add(q.asTriple()));
+        step.removed().stream().filter(q -> !Quad.isDefaultGraph(q.getGraph()) && step.world().contains(q)).forEach(q -> delta.add(q.asTriple()));
+        Set<String> found = new TreeSet<>(PersistenceStep.BYTES);
+        for (Query query : maintenance.reach(FAMILY, delta)) {
+            try {
+                QueryExec.dataset(step.world()).query(query).timeout(Math.max(budgetMillis, 1), TimeUnit.MILLISECONDS).build().select()
+                    .forEachRemaining(row -> found.add(row.get("src").getURI()));
+            } catch (QueryCancelledException e) {
+                throw new Failed("The reach of the edit was still being read at the run's deadline, so it was stopped.");
+            } catch (RuntimeException e) {
+                throw new Failed("Jena could not read which sources the edit reaches. " + e.getMessage());
+            }
+        }
+        found.removeIf(g -> g.startsWith(Graphs.PROMOTED_PREFIX) || edited.contains(g));
+        return List.copyOf(found);
     }
 
     // ---- keeping the rows

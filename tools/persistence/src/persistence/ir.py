@@ -245,6 +245,7 @@ class GraphRole(Enum):
     DATASET = "dataset"
     PATCH = "patch"
     DERIVED = "derived"  # the materialised rows of a surface contract, kept by the write that changes their source (PM1)
+    WORLD = "world"  # every named graph of the store, which a promotion's read path crosses. A read may leave its variable unbound, and nothing is written there
 
 
 @dataclass(frozen=True)

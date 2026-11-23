@@ -65,7 +65,7 @@ GRAPH_ROLES = {
     "data": "DataRole", "meta": "MetaRole", "txn": "TxnRole", "log": "LogRole", "event": "EventRole", "keys": "KeysRole",
     "quarantine": "QuarantineRole", "retention": "RetentionRole", "pinned": "PinnedRole", "dataset": "DatasetRole", "patch": "PatchRole",
 }
-"""The ``dal:GraphRole`` individual of each `persistence.ir.GraphRole` value. The IR's ``derived`` role is the surface compiler's and has none."""
+"""The ``dal:GraphRole`` individual of each `persistence.ir.GraphRole` value. The IR's ``derived`` and ``world`` roles are the surface compiler's and have none."""
 
 
 def emit_place(g: Graph, node: URIRef, place: Place) -> None:
