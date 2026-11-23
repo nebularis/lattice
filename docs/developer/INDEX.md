@@ -442,7 +442,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part. Validation Pack | ledger | built 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
 | LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation. Validation Pack | ledger | built 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
 | LG-28 | the account definition as a versioned thing, with the scheme edition it pins. Validation Pack | ledger | built 2026-11-19 | LG-26, LG-27 | docs/developer/status/ledger.md#board |
-| LG-29 | the record and the key of an account under a later version of its definition. Sketch | ledger | briefed | LG-28, LG-Q56 | docs/developer/status/ledger.md#board |
+| LG-29 | the record and the key of an account under a later version of its definition. Sketch | ledger | briefed | LG-28 | docs/developer/status/ledger.md#board |
 | LG-30 | the corrections the review of 2026-11-20 found and the maintainer accepted | ledger | planned | LG-28 | docs/developer/status/ledger.md#board |
 | LG-31 | a credit held to the rule a draw is held to | ledger | planned | LG-12 | docs/developer/status/ledger.md#board |
 | LG-32 | a benchmark of a balance read under each way of writing a supersession, for LG-Q52. Validation Pack | ledger | built 2026-11-23 |  | docs/developer/status/ledger.md#board |
