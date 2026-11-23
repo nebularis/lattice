@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-23. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-23. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-M3b for the maintainer, who says when the next slice starts. Ready: SVA-S2, and SVA-P2, SVA-S1 and SVA-M2a, which each open with a design question. SVA-X3 waits on the multi-store branch reaching `main`. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** paused after SVA-S2 for the maintainer, who decides TD-178 (which rule keeps a promotion), whether TD-179 and TD-180 are this unit's, and the provenance of LegalRuleML samples for SVA-D1. SVA-X4 is ready. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -56,7 +56,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P4 | the persistence simulator pane | built 2026-11-19, building 2026-11-19 | SVA-R4, SVA-P1, SVA-P3a |
 | SVA-P5 | an object generated from the boundary shape | built 2026-11-19, building 2026-11-19 | SVA-P4 |
 | SVA-S1 | the surface canvas | planned | SVA-O2 |
-| SVA-S2 | the surface simulation executor | building 2026-11-23 | SVA-P3 |
+| SVA-S2 | the surface simulation executor | built 2026-11-23, building 2026-11-23 | SVA-P3 |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
@@ -71,6 +71,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-X1 | register rows renumbered past the other branches | built 2026-11-19, building 2026-11-19 |  |
 | SVA-X2 | user-facing text under main's standard on naming decisions | built 2026-11-19, building 2026-11-19 |  |
 | SVA-X3 | the run queues on the contract-driven topology | planned | MSA-F4 on `main` |
+| SVA-X4 | this unit's debt rows renumbered past the other branches | planned |  |
 | SVA-D1 | sample documents for every capability, and the examples README | planned |  |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | planned |  |
 
@@ -217,3 +218,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-20: SVA-M3b built, [Validation Pack](../validation/SVA-M3b.md). Mapping mode's sample pane runs a compiled form over a sample only when the author presses Run, compiling first when the scheme or the other parts changed, and shows the output with the engine named. The automatic rerun and the studio's use of the deprecated transforms route are gone. The journeys replay frames the real workers gave, kept current by a test on each side. The Java run worker's report names its engine too. A run covers every scheme reading the sample's format (TD-174).
 - 2026-11-23: SVA-S2 started.
 - 2026-11-23: the maintainer asked that everything the unit built can be demonstrated from sample documents in known locations, listed in one README with how to demonstrate against each. Planned SVA-D1 before SVA-V1, added it to the unit's acceptance, and made it a principle that each slice adding a capability adds its samples and its README entry.
+- 2026-11-23: SVA-S2 built, [Validation Pack](../validation/SVA-S2.md). A surface step runs the writer's own clear and fills over the world before and after an edit, given as the quads a persistence step added and removed, and answers with each contract's rows, what was asserted and retracted, and the contracts touched. It agrees with the surface compiler on five samples. Three findings went to the debt register for the maintainer: the writer and the compiler keep a promotion by different rules where a read path leaves the source's graph (TD-178), the compiler's invalidation misses the first instance of a class (TD-179), and no projection is lowered for a step to run (TD-180). Every debt row this unit numbered is now numbered on another branch too, so SVA-X4 is planned.

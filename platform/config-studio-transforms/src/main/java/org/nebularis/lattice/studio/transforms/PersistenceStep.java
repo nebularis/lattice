@@ -80,13 +80,19 @@ final class PersistenceStep {
     private static final Set<String> PAYLOAD_CODES = Set.of("PayloadOutsideBound", "EventOutsideBound");
     private static final Pattern SLOT = Pattern.compile("\\{\\{\\{([A-Za-z]+)\\}\\}\\}");
     private static final Pattern LONG = Pattern.compile("[+-]?[0-9]+");
-    private static final Comparator<String> BYTES = (a, b) -> Arrays.compareUnsigned(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
+    static final Comparator<String> BYTES = (a, b) -> Arrays.compareUnsigned(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
 
     private PersistenceStep() {
     }
 
-    /** A part of a step's result, which the run turns into frames. */
-    record Part(String role, String mediaType, String text) {
+    /**
+     * A part of a step's result, which the run turns into frames. {@code group} and {@code path} are given for a part that is a file of a
+     * group, as a surface step's rows are, and are null otherwise.
+     */
+    record Part(String role, String mediaType, String group, String path, String text) {
+        Part(String role, String mediaType, String text) {
+            this(role, mediaType, null, null, text);
+        }
     }
 
     /** The parts of a step in order, or the reason the step could not be run, in words an author reads. */
@@ -448,24 +454,24 @@ final class PersistenceStep {
         return JSON.toString(o);
     }
 
-    private static Set<Quad> quads(DatasetGraph dataset) {
+    static Set<Quad> quads(DatasetGraph dataset) {
         Set<Quad> out = new HashSet<>();
         dataset.find().forEachRemaining(out::add);
         return out;
     }
 
-    private static String graphName(Node graph) {
+    static String graphName(Node graph) {
         if (Quad.isDefaultGraph(graph)) {
             return "";
         }
         return graph.isURI() ? graph.getURI() : "_:" + graph.getBlankNodeLabel();
     }
 
-    private static String line(Quad q) {
+    static String line(Quad q) {
         return NodeFmtLib.strNT(q.getSubject()) + " " + NodeFmtLib.strNT(q.getPredicate()) + " " + NodeFmtLib.strNT(q.getObject()) + " .";
     }
 
-    private static Map<String, List<String>> byGraph(Set<Quad> quads) {
+    static Map<String, List<String>> byGraph(Set<Quad> quads) {
         Map<String, List<String>> out = new TreeMap<>(BYTES);
         for (Quad q : quads) {
             out.computeIfAbsent(graphName(q.getGraph()), g -> new ArrayList<>()).add(line(q));
@@ -474,7 +480,7 @@ final class PersistenceStep {
         return out;
     }
 
-    private static JsonArray strings(List<String> lines) {
+    static JsonArray strings(List<String> lines) {
         JsonArray a = new JsonArray();
         lines.forEach(a::add);
         return a;

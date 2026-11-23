@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * input is bounded to 5 MiB and the stylesheets and chains are the compiler's, which keeps the time an abandoned execution can use short
  * in practice, and it is a limit of the engines rather than of this worker.
  *
- * <p>A persistence step is Jena's, whose update timeout does stop the evaluation, so it is given the time left and a second beyond it. The
+ * <p>A persistence step and a surface step are Jena's, whose update timeout does stop the evaluation, so each is given the time left and a second beyond it. The
  * worker stops the step at the deadline first and publishes nothing more, and Jena's stop frees the execution thread soon after. Each step has
  * a dataset of its own, and the handler's thread holds until its step ends or the deadline passes, so a slow step holds one of the queue's
  * threads and a fast one is served by another, and when every thread is held a step waits in the broker for a thread or for its deadline.
@@ -91,9 +91,6 @@ final class RunWorker implements Function<Message, Outcome>, AutoCloseable {
             return Outcome.ACK;
         }
         boolean step = request.kind().equals("simulate");
-        if (step && !request.target().equals("persistence")) {
-            return publish(request.run(), RunFrames.failed(request.run(), "The surface simulator runs in a later slice (SVA-S2), so this run was not started."));
-        }
         String type = message.contentType() == null ? "" : message.contentType().split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
         if (!step && RDF_SAMPLES.contains(type)) {
             return publish(request.run(), RunFrames.failed(request.run(), "A Turtle or N-Triples sample is run by the studio's Python worker, so this run went to the wrong worker and was not started."));
@@ -116,7 +113,9 @@ final class RunWorker implements Function<Message, Outcome>, AutoCloseable {
             }
             if (step) {
                 // Jena is given a little longer than the worker, so it is the worker that stops a step at the deadline and says nothing more.
-                return RunFrames.ofStep(request.run(), PersistenceStep.execute(job, request.job(), input, budget + STEP_GRACE_MILLIS));
+                return RunFrames.ofStep(request.run(), request.target().equals("surface")
+                    ? SurfaceStep.execute(job, request.job(), input, budget + STEP_GRACE_MILLIS)
+                    : PersistenceStep.execute(job, request.job(), input, budget + STEP_GRACE_MILLIS));
             }
             return RunFrames.of(request.run(), TransformRun.execute(job, request.job(), message.contentType(), input));
         });

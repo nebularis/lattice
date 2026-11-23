@@ -274,7 +274,7 @@ class RunWorkerTest {
     }
 
     @Test
-    void anRdfSampleThatReachedTheWrongWorkerAndASurfaceSimulationEachGiveTheirOneFailedFrame() throws Exception {
+    void anRdfSampleThatReachedTheWrongWorkerAndASurfaceStepOverAJobOfAnotherPartEachGiveTheirOneFailedFrame() throws Exception {
         QueueWorker samples = queue("sample", 2, jobs());
         samples.deliver(sample(6, Examples.RUN, "text/turtle", "<urn:a> <urn:b> <urn:c> ."));
         samples.deliver(sample(7, RUN_2, "application/n-triples; charset=utf-8", "<urn:a> <urn:b> <urn:c> ."));
@@ -286,9 +286,46 @@ class RunWorkerTest {
         }
         assertOneFailedFrame(sink.of(Examples.RUN), "wrong worker");
         assertOneFailedFrame(sink.of(RUN_2), "wrong worker");
-        assertOneFailedFrame(sink.of(run3), "SVA-S2");
-        assertEquals(0, jobReads.get(), "none is run");
+        assertOneFailedFrame(sink.of(run3), "not a finished compilation of the surface part");
+        assertEquals(1, jobReads.get(), "the sample runs are not run, and the step reads its job and finds it is of the mapping part");
         assertEquals(3, sink.log.stream().filter(e -> e.startsWith("ack:")).count());
+    }
+
+    @Test
+    void aSurfaceStepPublishesTheRowsTheChangeAndTheContractsItTouchedAndIsAcknowledgedAfterThem() throws Exception {
+        QueueWorker steps = queue("simulate", 2, job -> {
+            jobReads.incrementAndGet();
+            try {
+                return SurfaceJob.job();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        String trig = Files.readString(FacilityJob.SAMPLES.resolve("facility-surface-step-sector.trig"));
+        steps.deliver(message(60, false, headers(Examples.RUN, "simulate", "surface", NOW.plusSeconds(15)), "application/trig", trig));
+        awaitSettled(60);
+        assertEquals(List.of("publish:" + Examples.RUN, "ack:60"), sink.log);
+        List<JsonObject> frames = sink.of(Examples.RUN);
+        assertEquals("succeeded", frames.get(frames.size() - 1).get("status").getAsString().value());
+        List<String> roles = frames.stream().filter(f -> f.hasKey("part")).map(f -> f.get("part").getAsObject().get("role").getAsString().value()).toList();
+        assertEquals(List.of("artefact", "artefact", "delta", "outcome"), roles);
+        JsonObject first = frames.get(0).get("part").getAsObject();
+        assertEquals("drawdown-sector/rows-before.trig", first.get("path").getAsString().value());
+        assertEquals("application/trig", first.get("mediaType").getAsString().value());
+        String outcome = frames.get(frames.size() - 2).get("text").getAsString().value();
+        assertTrue(outcome.contains("Apache Jena ARQ"), outcome);
+        assertTrue(outcome.contains("\"readSetTouched\" : true"), outcome);
+        assertEquals(1, jobReads.get());
+    }
+
+    @Test
+    void aRedeliveredSurfaceStepIsNotRunButFailedAndAcknowledged() throws Exception {
+        String trig = Files.readString(FacilityJob.SAMPLES.resolve("facility-surface-step-sector.trig"));
+        queue("simulate", 2, jobs()).deliver(message(61, true, headers(Examples.RUN, "simulate", "surface", NOW.plusSeconds(15)), "application/trig", trig));
+        awaitSettled(61);
+        assertEquals(List.of("publish:" + Examples.RUN, "ack:61"), sink.log);
+        assertOneFailedFrame(sink.of(Examples.RUN), "worker stopped");
+        assertEquals(0, jobReads.get(), "a redelivered step is never run");
     }
 
     private static Message step(long tag, String run, String trig) {

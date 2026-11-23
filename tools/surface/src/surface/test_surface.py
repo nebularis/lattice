@@ -43,6 +43,7 @@ from .compile import (
     enumerate_population,
     evaluate_path,
 )
+from .invalidation import instance_graph_query
 from .model import ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
 from .mork import HAS_PROJECTION_PROVENANCE, PROJECTION_MAPPING, lift, lower
 from .lowering import lower_all, lower_contract, lower_projection
@@ -634,6 +635,27 @@ class InvalidationTests(unittest.TestCase):
         self.assertFalse(report.fresh)
         self.assertEqual(len(report.changes), 1)
         self.assertEqual(report.changes[0].source, key[1])
+
+    def test_the_instance_graph_query_gives_the_graph_the_compiler_hashes(self) -> None:
+        """The query is how an engine without the compiler says whether an edit touched a contract's instance graph."""
+        checked = 0
+        for name in sorted(path.name for path in EXAMPLES.glob("*.ttl")):
+            graph = load(name)
+            for contract in read_contracts(graph):
+                try:
+                    compiled = SurfaceCompiler(contract, graph, AT).compile()
+                except (CompileError, ContractError, ValueError):
+                    continue
+                entries = [e for e in compiled.read_set if e.kind == SRF.InstanceGraphSource]
+                if not entries:
+                    continue
+                rows = Graph()
+                for triple in graph.query(instance_graph_query(contract)):
+                    rows.add(triple)
+                with self.subTest(example=name, contract=contract.key):
+                    self.assertEqual(canonical.hash_graph(rows), entries[0].digest)
+                    checked += 1
+        self.assertGreaterEqual(checked, 3)
 
     def test_surface_source_change_propagates_downstream(self) -> None:
         upstream = URIRef("https://example.org/surface/upstream")

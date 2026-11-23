@@ -43,7 +43,7 @@ record StepRequest(String targetClass, String deployment, String operation, Node
     static final String PAYLOAD_GRAPH = STEP_GRAPH + "/payload";
     private static final String PAYLOAD_PREFIX = PAYLOAD_GRAPH + "/";
 
-    private static Property cst(String name) {
+    static Property cst(String name) {
         return ResourceFactory.createProperty(Cst.NS + name);
     }
 
@@ -132,7 +132,7 @@ record StepRequest(String targetClass, String deployment, String operation, Node
         return null;
     }
 
-    private static String iri(Resource request, Property property, String what, boolean required) throws StepFormatException {
+    static String iri(Resource request, Property property, String what, boolean required) throws StepFormatException {
         List<Statement> values = request.listProperties(property).toList();
         if (values.isEmpty()) {
             if (required) {
@@ -146,7 +146,7 @@ record StepRequest(String targetClass, String deployment, String operation, Node
         return values.get(0).getResource().getURI();
     }
 
-    private static String string(Resource request, Property property, String what) throws StepFormatException {
+    static String string(Resource request, Property property, String what) throws StepFormatException {
         List<Statement> values = request.listProperties(property).toList();
         if (values.isEmpty()) {
             throw new StepFormatException("The step does not say " + what + ". Add it to the step graph as a string.");
@@ -158,11 +158,11 @@ record StepRequest(String targetClass, String deployment, String operation, Node
         return values.get(0).getString();
     }
 
-    private static boolean isString(Literal l) {
+    static boolean isString(Literal l) {
         return l.getDatatype() == null || l.getDatatypeURI().equals(XSDDatatype.XSDstring.getURI());
     }
 
-    private static Node time(Resource request) throws StepFormatException {
+    static Node time(Resource request) throws StepFormatException {
         List<Statement> values = request.listProperties(TRANSACTION_TIME).toList();
         if (values.isEmpty()) {
             throw new StepFormatException("The step does not say cst:transactionTime, the time it runs at. Add it as an xsd:dateTime with a time zone.");

@@ -17,6 +17,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import RDF
 
 from .compile import ReadSetRecord
+from .model import Contract
 from .namespaces import MORK, SRF
 
 ReadSetKey = Tuple[str, str]
@@ -52,6 +53,27 @@ class RegenerationPlan:
     mappings: Tuple[str, ...]
     artefacts: Tuple[str, ...]
     reasons: Tuple[str, ...]
+
+
+def instance_graph_query(contract: Contract) -> str:
+    """The SPARQL CONSTRUCT that gives the graph the compiler hashes as the contract's ``srf:InstanceGraphSource`` entry, over any graph it
+    is run on: every triple of each instance of the carrier or of a subclass of it, and every triple of each IRI the read path reaches from
+    one. It lets an engine other than rdflib, which holds no compiler, say whether an edit changed what a contract's rows are read from. The
+    compiler records the entry only when the source holds an instance, so an empty result is a source with no entry.
+
+    The entry covers an instance and the value its path ends at. It does not cover the nodes the path passes through, so an edit to one of
+    those leaves the digest as it was while the contract's rows change."""
+    carrier, path = contract.carrier.n3(), contract.read_path().n3()
+    return (
+        "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
+        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+        "CONSTRUCT { ?s ?p ?o } WHERE {\n"
+        "  ?s ?p ?o .\n"
+        f"  {{ ?s rdf:type/rdfs:subClassOf* {carrier} }}\n"
+        "  UNION\n"
+        f"  {{ ?i rdf:type/rdfs:subClassOf* {carrier} . ?i {path} ?s . FILTER isIRI(?s) }}\n"
+        "}\n"
+    )
 
 
 def read_set_key(kind: URIRef, source: URIRef) -> ReadSetKey:

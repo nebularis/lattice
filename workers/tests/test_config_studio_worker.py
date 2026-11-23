@@ -229,8 +229,11 @@ def test_surface_compile():
     assert g.value(job, CST.status) == CST.Succeeded
     assert g.value(job, CST.conforms) == Literal(True)
     files = artefacts(g, job)
-    assert files and all(media == "text/turtle" and path.endswith(".ttl") and group == path.split("/")[0]
-                         for path, (media, _, group) in files.items())
+    modules = {path: v for path, v in files.items() if v[2] != "maintenance"}
+    assert modules and all(media == "text/turtle" and path.endswith(".ttl") and group == path.split("/")[0] for path, (media, _, group) in modules.items())
+    # the operations the surface simulator runs, in the layout the studio stages for its own promotions
+    maintenance = {path: v for path, v in files.items() if v[2] == "maintenance"}
+    assert "maintenance/manifest.json" in maintenance and all(path.startswith("maintenance/") for path in maintenance)
 
 
 def _without_times(g: Graph) -> Graph:

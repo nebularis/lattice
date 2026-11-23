@@ -255,7 +255,7 @@ def test_surface_validates_and_compiles_both_contracts():
     assert g.value(JOB, CST.conforms) == Literal(True)
     assert findings(g, SH.Violation) == [] and findings(g, SH.Warning) == []
     files = artefacts(g, JOB)
-    assert {group for _, _, group in files.values()} == {"drawdown-sector", "borrower-sector"}
+    assert {group for _, _, group in files.values()} == {"drawdown-sector", "borrower-sector", "maintenance"}
     promotion = Graph().parse(data=files["drawdown-sector/assertions.ttl"][1], format="turtle")
     exec_ns = Namespace("https://example.org/lending/exec#")
     # Both drawdowns are drawn under a facility whose borrower works in food processing.

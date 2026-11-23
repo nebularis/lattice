@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The input of a simulate run of target surface, for the facility sample's surface part (every drawdown is removed). The sample world is the graphs that are not
+# reserved, as it was before the edit. The edit is the quads a write added and removed, which are the quads of a persistence step's delta part, in
+# <urn:lattice:studio:step/added/{graph}> and <urn:lattice:studio:step/removed/{graph}>, where {graph} is the edited graph's IRI percent-encoded as
+# ENCODE_FOR_URI does, urn%3Ag%3Afacilities for <urn:g:facilities>. The facilities graph holds the borrowers too, so the promotion's three-hop read
+# path lies in the one source whose rows a write keeps. The graph <urn:g:vocabulary> holds the sector concepts as the vocabulary configuration states them,
+# since the compiler reads the end of the path with its triples, and a step reads only the world it is sent. Every IRI is a placeholder under example.org.
+
+@prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:g:meta/6> {
+    ex:facility-1 pat:epoch "1"^^xsd:long ; pat:seq "2"^^xsd:long ; pat:head <urn:rev:facility-1/2> .
+}
+
+<urn:g:vocabulary> {
+    ex:FoodProcessing a skos:Concept ; skos:broader ex:Manufacturing ; skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 ; skos:prefLabel "Food processing"@en .
+    ex:Retail a skos:Concept ; skos:broader ex:Consumer ; skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 ; skos:prefLabel "Retail"@en .
+}
+
+<urn:g:facilities> {
+    ex:acme-foods a ex:Borrower ; ex:borrowerSector ex:FoodProcessing .
+    ex:fjord-retail a ex:Borrower ; ex:borrowerSector ex:Retail .
+    ex:facility-1 a ex:Facility ; ex:borrower ex:acme-foods ; ex:hasDrawdown ex:drawdown-1 , ex:drawdown-2 ; ex:margin 3.25 .
+    ex:facility-2 a ex:Facility ; ex:borrower ex:fjord-retail ; ex:hasDrawdown ex:drawdown-3 ; ex:margin 2.75 .
+    ex:facility-3 a ex:Facility ; ex:borrower ex:acme-foods ; ex:margin 3.0 .
+    ex:drawdown-1 a ex:Drawdown ; ex:drawnUnder ex:facility-1 ; ex:drawnAmount 40000000.0 .
+    ex:drawdown-2 a ex:Drawdown ; ex:drawnUnder ex:facility-1 ; ex:drawnAmount 25000000.0 .
+    ex:drawdown-3 a ex:Drawdown ; ex:drawnUnder ex:facility-2 ; ex:drawnAmount 10000000.0 .
+}
+
+<urn:lattice:studio:step> {
+    <urn:lattice:studio:step> a cst:SimulationStepRequest ;
+        cst:forPart cst:Surface ;
+        cst:transactionTime "2026-04-02T09:30:00Z"^^xsd:dateTime .
+}
+
+<urn:lattice:studio:step/removed/urn%3Ag%3Afacilities> {
+    ex:drawdown-1 a ex:Drawdown ; ex:drawnUnder ex:facility-1 ; ex:drawnAmount 40000000.0 .
+    ex:drawdown-2 a ex:Drawdown ; ex:drawnUnder ex:facility-1 ; ex:drawnAmount 25000000.0 .
+    ex:drawdown-3 a ex:Drawdown ; ex:drawnUnder ex:facility-2 ; ex:drawnAmount 10000000.0 .
+    ex:facility-1 ex:hasDrawdown ex:drawdown-1 , ex:drawdown-2 .
+    ex:facility-2 ex:hasDrawdown ex:drawdown-3 .
+}

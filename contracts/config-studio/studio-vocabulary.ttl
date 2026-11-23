@@ -321,13 +321,15 @@ cst:SimulationStep a cst:JobKind ; rdfs:comment "One step of a simulator over a 
 cst:deadline a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Run ; rdfs:range xsd:dateTime ;
     rdfs:comment "The absolute time by which the run must have ended. After it the broker drops a request no worker took, a worker stops the execution, and the accepting service instance ends the run with a failed frame." .
 
-# A step of the persistence simulator, held in the graph <urn:lattice:studio:step> of a simulate run's input (SVA-P3).
+# A step of a simulator, held in the graph <urn:lattice:studio:step> of a simulate run's input (SVA-P3, SVA-S2).
 cst:SimulationStepRequest a owl:Class ;
-    rdfs:comment "One step of the persistence simulator, the request a simulate run of target persistence carries beside its sample world. It names the compiled profile's class, the operation and the transaction time, and states each parameter of the operation." .
+    rdfs:comment "One step of a simulator, the request a simulate run carries beside its sample world. A persistence step names the compiled profile's class, the operation and the transaction time, and states each parameter of the operation. A surface step names cst:Surface as its part and the transaction time, and states its edit in graphs of its own." .
 cst:forClass a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:SimulationStepRequest ;
     rdfs:comment "The target class of the compiled profile the step runs an operation of, as dal:forTarget states it. Not cst:target, which names a part of the configuration." .
 cst:forDeployment a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:SimulationStepRequest ;
     rdfs:comment "The deployment of the compiled profile, as dal:forDeployment states it, where the class has more than one. Left out where the profile has none." .
+cst:forPart a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain cst:SimulationStepRequest ; rdfs:range cst:Target ;
+    rdfs:comment "The part of the configuration the step simulates, cst:Surface for a surface step. A persistence step names its class instead and leaves this out." .
 cst:operation a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:SimulationStepRequest ; rdfs:range xsd:string ;
     rdfs:comment "The operation to run, by the name the compiled profile gives it, as dal:forOperation does, for example cas-replace." .
 cst:transactionTime a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:SimulationStepRequest ; rdfs:range xsd:dateTime ;

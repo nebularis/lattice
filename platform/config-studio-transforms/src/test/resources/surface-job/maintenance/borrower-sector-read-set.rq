@@ -1,0 +1,8 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+CONSTRUCT { ?s ?p ?o } WHERE {
+  ?s ?p ?o .
+  { ?s rdf:type/rdfs:subClassOf* <https://example.org/lending#Borrower> }
+  UNION
+  { ?i rdf:type/rdfs:subClassOf* <https://example.org/lending#Borrower> . ?i <https://example.org/lending#borrowerSector> ?s . FILTER isIRI(?s) }
+}

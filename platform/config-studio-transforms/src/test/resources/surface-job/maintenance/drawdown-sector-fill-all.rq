@@ -1,0 +1,9 @@
+INSERT {
+  GRAPH $derived { ?c <https://example.org/lending/exec#drawdownSector> ?v }
+}
+WHERE {
+  { FILTER(ISIRI($source) && ISIRI($derived)) }
+  GRAPH $source {
+    ?c <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.org/lending#Drawdown> ; <https://example.org/lending#drawnUnder>/<https://example.org/lending#borrower>/<https://example.org/lending#borrowerSector> ?v
+  }
+}

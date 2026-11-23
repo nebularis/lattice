@@ -31,19 +31,37 @@ public final class Maintenance {
     /** The families whose writes keep promotions. */
     public static final Set<String> FAMILIES = Set.of("description", "lineage", "version", "job");
 
-    private final String clear;
-    private final Map<String, List<String>> fills;
+    /** One promotion's fill over a whole source, with the key of the contract it keeps. */
+    public record Fill(String key, String text) {
+    }
 
-    private Maintenance(String clear, Map<String, List<String>> fills) {
+    /** One update of {@link #operations}, with the key of the contract whose rows it writes, and null for the partition clear. */
+    public record Operation(String contract, Update update) {
+    }
+
+    private final String clear;
+    private final Map<String, List<Fill>> fills;
+
+    private Maintenance(String clear, Map<String, List<Fill>> fills) {
         this.clear = clear;
         this.fills = fills;
+    }
+
+    /**
+     * A maintenance made of texts the caller holds, for a caller whose contracts are not the studio's own, such as a simulator reading the
+     * operations a compile job holds. The families are the caller's, and are not checked against {@link #FAMILIES}.
+     */
+    public static Maintenance of(String clear, Map<String, List<Fill>> fills) {
+        Map<String, List<Fill>> copy = new LinkedHashMap<>();
+        fills.forEach((family, those) -> copy.put(family, List.copyOf(those)));
+        return new Maintenance(clear, copy);
     }
 
     /** Reads {@code folder/manifest.json}, the partition clear and every fill it names. A promotion of an unknown family fails here. */
     public static Maintenance load(Path folder) {
         try {
             JsonArray manifest = JSON.parseAny(Files.readString(folder.resolve("manifest.json"), StandardCharsets.UTF_8)).getAsArray();
-            Map<String, List<String>> fills = new LinkedHashMap<>();
+            Map<String, List<Fill>> fills = new LinkedHashMap<>();
             for (JsonValue value : manifest) {
                 JsonObject entry = value.getAsObject();
                 String family = entry.getString("family");
@@ -51,7 +69,7 @@ public final class Maintenance {
                     throw new IllegalStateException(entry.getString("key") + " reads the family " + family + ", which no write of the studio keeps");
                 }
                 fills.computeIfAbsent(family, k -> new ArrayList<>())
-                    .add(Files.readString(folder.resolve(entry.getString("fill")), StandardCharsets.UTF_8));
+                    .add(new Fill(entry.getString("key"), Files.readString(folder.resolve(entry.getString("fill")), StandardCharsets.UTF_8)));
             }
             return new Maintenance(Files.readString(folder.resolve("partition-clear.rq"), StandardCharsets.UTF_8), fills);
         } catch (IOException e) {
@@ -70,14 +88,19 @@ public final class Maintenance {
      * no guard of their own. Nothing when the family keeps no promotion.
      */
     public List<Update> keep(String family, String source) {
-        List<String> those = fills.getOrDefault(family, List.of());
+        return operations(family, source).stream().map(Operation::update).toList();
+    }
+
+    /** The same updates as {@link #keep}, each with the key of the contract whose rows it writes, so a caller can tell which wrote which. */
+    public List<Operation> operations(String family, String source) {
+        List<Fill> those = fills.getOrDefault(family, List.of());
         if (those.isEmpty() || clear == null) {
             return List.of();
         }
         String derived = Graphs.promoted(source);
-        List<Update> out = new ArrayList<>();
-        out.add(bind(clear, source, derived));
-        those.forEach(fill -> out.add(bind(fill, source, derived)));
+        List<Operation> out = new ArrayList<>();
+        out.add(new Operation(null, bind(clear, source, derived)));
+        those.forEach(fill -> out.add(new Operation(fill.key(), bind(fill.text(), source, derived))));
         return out;
     }
 

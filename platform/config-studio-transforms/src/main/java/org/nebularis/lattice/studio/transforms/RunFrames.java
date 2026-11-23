@@ -61,7 +61,7 @@ final class RunFrames {
         List<JsonObject> frames = new ArrayList<>();
         int index = 0;
         for (PersistenceStep.Part p : result.parts()) {
-            index = part(frames, run, index, p.role(), p.mediaType(), null, null, p.text());
+            index = part(frames, run, index, p.role(), p.mediaType(), p.group(), p.path(), p.text());
             if (frames.size() >= MAX_FRAMES) {
                 break;
             }

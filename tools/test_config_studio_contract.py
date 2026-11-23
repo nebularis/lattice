@@ -243,3 +243,59 @@ def test_the_contract_defines_the_persistence_step_and_its_four_parts() -> None:
     for text in ("urn:lattice:studio:step/payload", "cst:transactionTime", "NOW()", "`check`", "`request`", "`delta`", "`outcome`", "unplaced", "ENCODE_FOR_URI",
                  "lostRace", "facility-step-create.trig", "facility-step-replace.trig"):
         assert text in readme, text
+
+
+# --- the surface step (SVA-S2) -----------------------------------------------------------------------------
+
+SURFACE_STEP_SAMPLES = sorted(p.name for p in (CONTRACT / "samples").glob("facility-surface-step-*.trig"))
+
+
+def test_the_vocabulary_declares_the_part_a_surface_step_names_and_says_what_it_is() -> None:
+    g = Graph().parse(CONTRACT / "studio-vocabulary.ttl")
+    assert (CST.forPart, RDF.type, OWL.ObjectProperty) in g and (CST.forPart, RDF.type, OWL.FunctionalProperty) in g
+    assert (CST.forPart, RDFS.domain, CST.SimulationStepRequest) in g and (CST.forPart, RDFS.range, CST.Target) in g
+    assert g.value(CST.forPart, RDFS.comment) is not None
+    assert (CST.Surface, RDF.type, CST.Target) in g
+
+
+@pytest.mark.parametrize("name", SURFACE_STEP_SAMPLES)
+def test_a_surface_step_sample_holds_one_step_and_an_edit_in_the_graphs_the_contract_names(name: str) -> None:
+    from urllib.parse import unquote
+
+    from rdflib import URIRef
+    from rdflib.namespace import XSD
+
+    dataset = step_sample(name)
+    vocabulary = Graph().parse(CONTRACT / "studio-vocabulary.ttl")
+    graphs = {str(g.identifier): g for g in dataset.graphs()}
+    step = graphs[STEP_GRAPH]
+    requests = list(step.subjects(RDF.type, CST.SimulationStepRequest))
+    assert requests == [URIRef(STEP_GRAPH)]
+    request = requests[0]
+    assert list(step.objects(request, CST.forPart)) == [CST.Surface]
+    assert not list(step.objects(request, CST.forClass))
+    time = list(step.objects(request, CST.transactionTime))
+    assert len(time) == 1 and time[0].datatype == XSD.dateTime and time[0].toPython().tzinfo is not None
+    for predicate in {p for _, p, _ in step if str(p).startswith(str(CST))}:
+        assert (predicate, RDF.type, None) in vocabulary, predicate
+    reserved = sorted(g for g in graphs if g.startswith(STEP_GRAPH + "/"))
+    assert reserved, "an edit of nothing is not a sample"
+    for graph in reserved:
+        side, _, edited = graph[len(STEP_GRAPH) + 1:].partition("/")
+        assert side in ("added", "removed"), graph
+        assert not edited or unquote(edited).startswith("urn:"), graph
+    assert any(g.startswith(STEP_GRAPH + "/removed") or g.startswith(STEP_GRAPH + "/added") for g in reserved)
+
+
+def test_the_contract_defines_the_surface_step_and_its_parts() -> None:
+    readme = (CONTRACT / "README.md").read_text(encoding="utf-8")
+    assert "### A surface step" in readme
+    section = readme[readme.index("### A surface step"):readme.index("### Delivery to the tab")]
+    for text in ("cst:forPart", "cst:Surface", "urn:lattice:studio:step/added", "urn:lattice:studio:step/removed", "ENCODE_FOR_URI", "cst:transactionTime", "NOW()",
+                 "maintenance/manifest.json", "maintenance/partition-clear.rq", "-fill-all.rq", "-read-set.rq", "`artefact`", "`delta`", "`outcome`", "readSetTouched",
+                 "srf:InstanceGraphSource", "rows-before.trig", "rows-after.trig", *SURFACE_STEP_SAMPLES):
+        assert text in section or text in readme, text
+    assert "not yet defined" not in readme
+    assert ";" not in section, "the contract's prose has no semicolons"
+    for identifier in ("SVA-", "TD-", "STD-", "PRI-", "ADR-", "BL-"):
+        assert identifier not in section, identifier

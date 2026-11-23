@@ -454,6 +454,46 @@ def _compile_surface(result: _Result, config: Graph, baseline: Graph, root: str,
         for name, text in sorted(files.items()):
             result.artefact(f"{contract.key}/{name}.ttl", "text/turtle", text, contract.key)
     result.conforms(not failed)
+    if not failed:
+        _maintenance_artefacts(result, contracts)
+
+
+MAINTENANCE = "maintenance"
+"""The group of the artefacts a surface compilation holds for the surface simulator, in the layout `config_studio_stage.py` stages for the
+studio's own promotions: `partition-clear.rq`, a `{key}-fill-all.rq` and a `{key}-read-set.rq` for each contract that has them, and the
+`manifest.json` that names them."""
+
+
+def _maintenance_artefacts(result: _Result, contracts: Iterable[Any]) -> None:
+    """What the run worker needs to simulate a write over a source, since it has no compiler to generate it. A promotion whose rows a write
+    keeps has the fill the writer sends (`surface.maintenance.fill_all`), and a contract that materialises rows has the query that gives the
+    graph its read set hashes (`surface.invalidation.instance_graph_query`). A contract a write does not keep is listed with the reason."""
+    from persistence.ir_render import render
+    from surface.invalidation import instance_graph_query
+    from surface.maintenance import MaintenanceRefused, fill_all, partition_clear
+
+    manifest = []
+    for contract in sorted(contracts, key=lambda c: c.key):
+        entry: dict[str, Any] = {"key": contract.key, "contract": str(contract.iri), "kind": "index" if contract.is_index else "promotion"}
+        if contract.emits_assertions:
+            entry["readSet"] = f"{contract.key}-read-set.rq"
+            result.artefact(f"{MAINTENANCE}/{entry['readSet']}", _SPARQL_QUERY, instance_graph_query(contract), MAINTENANCE)
+        if not contract.emits_assertions:
+            entry["reason"] = "the contract stores no rows, since it only defines"
+        elif contract.is_index:
+            entry["reason"] = "an index mints its symbols under its naming policy, which a write does not do yet"
+        else:
+            try:
+                text = render(fill_all(contract))
+            except MaintenanceRefused as refused:
+                entry["reason"] = refused.reason
+            else:
+                entry["fill"] = f"{contract.key}-fill-all.rq"
+                result.artefact(f"{MAINTENANCE}/{entry['fill']}", _SPARQL_UPDATE, text, MAINTENANCE)
+        manifest.append(entry)
+    if any("fill" in entry for entry in manifest):
+        result.artefact(f"{MAINTENANCE}/partition-clear.rq", _SPARQL_UPDATE, render(partition_clear()), MAINTENANCE)
+    result.artefact(f"{MAINTENANCE}/manifest.json", "application/json", json.dumps(manifest, indent=2) + "\n", MAINTENANCE)
 
 
 def run_job(

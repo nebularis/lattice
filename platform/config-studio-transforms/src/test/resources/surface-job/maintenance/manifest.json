@@ -1,0 +1,16 @@
+[
+  {
+    "key": "borrower-sector",
+    "contract": "https://example.org/lending#borrower-sector-index",
+    "kind": "index",
+    "readSet": "borrower-sector-read-set.rq",
+    "reason": "an index mints its symbols under its naming policy, which a write does not do yet"
+  },
+  {
+    "key": "drawdown-sector",
+    "contract": "https://example.org/lending#drawdown-sector-promotion",
+    "kind": "promotion",
+    "readSet": "drawdown-sector-read-set.rq",
+    "fill": "drawdown-sector-fill-all.rq"
+  }
+]
