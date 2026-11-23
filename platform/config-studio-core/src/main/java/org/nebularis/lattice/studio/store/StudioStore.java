@@ -189,6 +189,16 @@ public final class StudioStore implements AutoCloseable {
         return out[0];
     }
 
+    /** Whether {@code root} has a version row in {@code metaGraph}, live or tombstoned. */
+    public boolean hasVersionRow(String metaGraph, String root) {
+        ParameterizedSparqlString query = new ParameterizedSparqlString(VERSION_ROW_QUERY);
+        query.setIri("meta", metaGraph);
+        query.setIri("root", root);
+        boolean[] out = {false};
+        connection.querySelect(query.asQuery(), row -> out[0] = true);
+        return out[0];
+    }
+
     /**
      * The {@code pat:seq} of each live row among {@code roots}, by root, each root read in the meta graph it is keyed to, in one query.
      * Its cost is one lookup a root, however many rows the meta graphs hold.

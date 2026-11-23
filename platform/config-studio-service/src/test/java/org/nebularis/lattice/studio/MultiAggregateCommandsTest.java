@@ -102,6 +102,19 @@ class MultiAggregateCommandsTest {
         return new Writer(store, Fixture.OPS, Fixture.MAINTENANCE, CLOCK);
     }
 
+    /**
+     * A write that moves document {@code root}'s row from revision {@code from} to the next, as a writer that read it before
+     * would, then puts the next move in {@code slot}, {@code times} moves in all, for {@link #interfered} to run before each update.
+     */
+    private static Runnable moves(RDFConnection real, AtomicReference<Runnable> slot, String root, long from, int times) {
+        return () -> {
+            write(real, Fixture.OPS.replace(Family.DOCUMENT, root, from, docGraph("moved " + from), null, null, "urn:txn:interference/" + from));
+            if (times > 1) {
+                slot.set(moves(real, slot, root, from + 1, times - 1));
+            }
+        };
+    }
+
     /** An aggregate's generated operations, applied as they are, which no command makes alone. */
     private static void write(RDFConnection real, List<Update> operations) {
         UpdateRequest request = new UpdateRequest();
@@ -465,5 +478,73 @@ class MultiAggregateCommandsTest {
         assertTrue(Fixture.OPS.tombstoned(reader, Family.PART, Graphs.partRoot(WS, "baseline")));
         assertTrue(Fixture.OPS.tombstoned(reader, Family.DOCUMENT, Graphs.document(WS, DOC)));
         assertEquals(5, asked, "the receipts, their digests, the deletion's written graphs, and the rows once in each of two rounds");
+    }
+
+    /**
+     * MSA-F15, TD-168. A deletion whose tombstone lost leaves the document's row live, and the description lists it no more. A
+     * save that creates a document under its id is refused, so what the deletion removed does not come back.
+     */
+    @Test
+    void savingANewDocumentUnderAnIdWhoseRowALostTombstoneLeftLiveIsRefused() {
+        RDFConnection real = RDFConnection.connect(DatasetFactory.createTxnMem());
+        AtomicReference<Runnable> before = new AtomicReference<>();
+        StudioStore store = unreachableAfterCommit(real, before);
+        StudioStore reader = Fixture.textual(real);
+        Writer writer = writer(store);
+        created(writer);
+        assertEquals(Reply.ok(1), writer.apply(Command.saveDocument(WS, DOC, 0, AT, "Licence", "software-licence", docGraph("one"))));
+        Writer other = writer(reader);
+        String root = Graphs.document(WS, DOC);
+        String description = Graphs.workspace(WS);
+        before.set(() -> assertEquals(Reply.ok(2),
+            other.apply(Command.saveDocument(WS, DOC, 1, AT, "Licence", "software-licence", docGraph("two")))));
+        assertThrows(HttpException.class, () -> writer.apply(Command.deleteDocument(WS, DOC)));
+        assertFalse(Fixture.OPS.workspace(reader, WS).documents().containsKey(DOC));
+        assertEquals(Optional.of(2L), Fixture.OPS.seq(reader, Family.DOCUMENT, root), "the tombstone lost, and the row is live and unlisted");
+        long described = Fixture.OPS.seq(reader, Family.DESCRIPTION, description).orElseThrow();
+        Model listed = reader.graph(Fixture.OPS.graph(Family.DESCRIPTION, description));
+
+        Reply again = other.apply(Command.saveDocument(WS, DOC, 0, AT, "Licence", "software-licence", docGraph("three")));
+
+        assertEquals(Reply.refused("the document was deleted, so its id cannot be used again"), again);
+        assertEquals(Optional.of(described), Fixture.OPS.seq(reader, Family.DESCRIPTION, description), "the description did not move");
+        assertTrue(listed.isIsomorphicWith(reader.graph(Fixture.OPS.graph(Family.DESCRIPTION, description))), "the description is unchanged");
+        assertFalse(Fixture.OPS.workspace(reader, WS).documents().containsKey(DOC));
+        assertEquals(Optional.of(2L), Fixture.OPS.seq(reader, Family.DOCUMENT, root), "nothing was written to the row");
+    }
+
+    /**
+     * MSA-F15, TD-171. A deletion whose tombstone lost is delivered again, to another member, and each attempt of that delivery
+     * loses to a write that moves the row first, so the row is left live. Delivered once more, the deletion removes the row,
+     * since an attempt that lost leaves nothing that makes the next delivery's attempt write nothing.
+     */
+    @Test
+    void aDeletionDeliveredTwiceMoreAfterALostTombstoneWhoseFirstRedeliveryLosesStillRemovesTheRow() {
+        RDFConnection real = RDFConnection.connect(DatasetFactory.createTxnMem());
+        AtomicReference<Runnable> before = new AtomicReference<>();
+        StudioStore store = unreachableAfterCommit(real, before);
+        StudioStore reader = Fixture.textual(real);
+        Writer writer = writer(store);
+        created(writer);
+        assertEquals(Reply.ok(1), writer.apply(Command.saveDocument(WS, DOC, 0, AT, "Licence", "software-licence", docGraph("one"))));
+        Writer other = writer(reader);
+        Command delete = Command.deleteDocument(WS, DOC);
+        String root = Graphs.document(WS, DOC);
+        before.set(() -> assertEquals(Reply.ok(2),
+            other.apply(Command.saveDocument(WS, DOC, 1, AT, "Licence", "software-licence", docGraph("two")))));
+        assertThrows(HttpException.class, () -> writer.apply(delete));
+        assertEquals(Optional.of(2L), Fixture.OPS.seq(reader, Family.DOCUMENT, root), "the tombstone lost, and the row is live");
+
+        AtomicReference<Runnable> moved = new AtomicReference<>();
+        Writer member = writer(interfered(real, moved));
+        moved.set(moves(real, moved, root, 2, 3));
+        assertEquals(Reply.ok(), member.apply(delete));
+        assertEquals(Optional.of(5L), Fixture.OPS.seq(reader, Family.DOCUMENT, root), "each of the first redelivery's attempts lost, and the row is left");
+
+        assertEquals(Reply.ok(), writer.apply(delete));
+
+        assertEquals(Optional.empty(), Fixture.OPS.seq(reader, Family.DOCUMENT, root), "the second redelivery removed the row");
+        assertTrue(Fixture.OPS.tombstoned(reader, Family.DOCUMENT, root));
+        assertTrue(reader.graph(Graphs.documentGraph(WS, DOC)).isEmpty());
     }
 }

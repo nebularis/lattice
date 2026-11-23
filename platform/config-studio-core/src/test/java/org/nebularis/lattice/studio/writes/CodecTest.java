@@ -29,6 +29,12 @@ class CodecTest {
             "a and b name one node, then two");
     }
 
+    /** MSA-F15. Where a blank node names another, and where it names itself, are two bodies, however a blank node is labelled. */
+    @Test
+    void aBlankNodeThatNamesAnotherAndOneThatNamesItselfDigestApart() {
+        assertNotEquals(digest("_:x ex:p _:y ."), digest("_:x ex:p _:x ."), "x names y, then x names itself");
+    }
+
     @Test
     void aBodyWhoseBlankNodesAreRelabelledDigestsTheSame() {
         assertEquals(digest("_:x ex:p _:y . _:y ex:q \"1\" . _:z ex:q \"2\" ."),
