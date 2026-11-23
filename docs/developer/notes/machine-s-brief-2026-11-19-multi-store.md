@@ -11,6 +11,7 @@
 | Your branch | `spi/worktree-s`, cut from the merge of `docs/placement-vehicles-structure` into `spi/multi-store-architecture`. Fetch it and work on it alone |
 | What it holds | your second bundle, the ledger's branch as of 2026-11-19, both halves of this brief and every text they name |
 | What you never do | commit on `spi/multi-store-architecture` or on `docs/placement-vehicles-structure`. The first is a merging point, and the ledger session keeps working on the second |
+| From 2026-11-23 | your branch is `spi/worktree-s2`, cut as the [handover of 2026-11-23](machine-s-handover-2026-11-23.md) says. `spi/worktree-s` is merged and closed |
 | A decision you need midweek | arrives as a merge of `spi/multi-store-architecture` into your branch, which the maintainer brings you. Merge it, never rebase |
 
 **Two bundles, of `spi/worktree-s`.**
@@ -141,13 +142,7 @@ Both are urgent and go ahead of MSA-I5 in the second lane. The [plan](../plans/m
 
 The first bundle was run again on macOS and merged into `spi/multi-store-architecture`. The maintainer verified MSA-F1 to MSA-F14, MSA-I13 and MSA-I5a that day.
 
-**Before the next slice.**
-
-1. At a pause, as the [merge note](machine-s-merge-note-2026-11-19.md) describes one, merge `origin/spi/multi-store-architecture` into `spi/worktree-s`. Your branch is wholly inside it, so the merge brings only what was added here and should meet no conflict.
-2. Run `mise run bootstrap:reasoning-testkit`. Machine S has no reasoner, so 79 tests of `check:ontology-catalog` skipped in every pack of the bundle. They pass on macOS, 1439 with none skipped. From here a pack reports them run. If the mirror refuses the build, say so in the pack, and the run on macOS stands in.
-3. Read the plan's last two sections and TD-165 to TD-174.
-
-**The second lane's order.** MSA-F15, then the model for MSA-I14 (section 4.8), then MSA-I5, then the rest of MSA-I6. MSA-I8 waits on the maintainer's decision from MSA-I14 and does not start.
+**What to do next** is in the [handover of 2026-11-23](machine-s-handover-2026-11-23.md), which replaces this section's first steps and the two lanes of section 3. It gives the new branch, the order, what not to touch and how the second bundle is made.
 
 **MSA-F16, only once the maintainer says yes to PDD-24 (a).** RDFC-1.0 in `Codec.digest`, as the plan's last section states it. Its first step can run now, since it decides nothing: say whether the mirror serves `com.apicatalog:titanium-rdfc` 2.0.0, and report in the status record.
 
@@ -157,8 +152,6 @@ The first bundle was run again on macOS and merged into `spi/multi-store-archite
 - The full sweep's versioning failure names Persistence, a standalone module still at 0.23.0 after MSA-F5, as well as the substrate. A handoff line says both.
 - TD-165 is narrowed and kept, not paid. MSA-F14's limit stands until PDD-24 is built.
 - The fixture stays on PostgreSQL 16.15 for the rest of your work. The move to 18 is TD-174, after machine S is decommissioned.
-
-**The ledger's lane** takes its next slice from the ledger's session, which reviews LG-11, LG-25 to LG-28 and LG-12 by the [handover note of 2026-11-20](ledger-handover-2026-11-20.md). Start no ledger slice before that review reports.
 
 ## 5. What the logical port owes, for MSA-I8 and the next plan
 
