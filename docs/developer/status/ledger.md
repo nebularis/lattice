@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** built 2026-11-23. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** building 2026-11-23. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-19
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md), [LG-23](../validation/LG-23.md), [LG-11](../validation/LG-11.md), [LG-25](../validation/LG-25.md), [LG-26](../validation/LG-26.md), [LG-27](../validation/LG-27.md), [LG-28](../validation/LG-28.md), [LG-12](../validation/LG-12.md)
@@ -85,6 +85,24 @@ The rework built on machine S, LG-11, LG-25 to LG-28 and LG-12, was read against
 **Not decided.** Each row's move to verified is the maintainer's. The maintainer accepted the wording of the third addendum of 2026-11-19, for the request, on 2026-11-20.
 
 **Answered the same day, after the review.** LG-Q47 as (a), a pass takes the later of its stimulus's position and its ledger's latest pass's, read with the revision, drafted as ADR-A131's addendum proposed 2026-11-20 and built by LG-30. LG-Q51 as (a), a later version taking force is an event of the kernel. The maintainer asked for worked examples before answering the rest, so the [sketch](../sketches/ledger-definition-versions-in-force.md) now holds eleven histories under four rules, computed by a [model](../../../tools/models/ledger-versions-in-force/README.md), and two invariants that say what the rule we lean to keeps. Working them through raised three more questions. LG-Q52 asks what the record is written on, where one record for each account costs about 5,000 triples in an example that one record a pass covers in 19. LG-Q53 asks what a version that states less than is drawn does. LG-Q54 asks the record's name, since the first draft's `ldg:Adoption` collides with accounting's word and with this repository's own. TD-177 records that a ledger cannot reach a later version of its profile either.
+
+**2026-11-23, adversarial probes on the rework and on LG-32.** The maintainer asked for a probe of our choosing on each of LG-11, LG-25 to LG-28, LG-12 and LG-32. A subagent made each break in the generated Turtle, or in the benchmark's code, ran `tools/test_ledger.py` whole, and restored the file. The untouched tree gave 155 passed before and after. The test of literate freshness fails on every break and is not counted.
+
+| Slice | The break | Caught by a test of the law |
+|---|---|---|
+| LG-11 | a removed conversion term declared again in the spec | no. The pack's check is a search of the files and no test asserts the terms are gone |
+| LG-25 | `ldg:RunningBalanceShape` no longer subtracts the cuts at an account | no. The example with a cut has no later posting on the account the cut is at, so no running balance reads the cut |
+| LG-25 | the same shape made to report nothing | yes, by the case of a running balance one minor unit off |
+| LG-26 | `ldg:RefusedMergeShape` made to report nothing | yes, by four cases |
+| LG-27 | `ldg:PassRevisionsInOrderShape` made to report nothing | yes, by three cases |
+| LG-28 | `ldg:RestoringKindsInTheirEditionShape` made to report nothing | yes, by two cases |
+| LG-12 | `ldg:DrawInItsAccountsUnitShape` made to report nothing | yes, by three tests |
+| LG-32 | the lookup for one record a pass takes the earliest record | yes, by the read against the model with two changes |
+| LG-32 | the same lookup leaves out a record written at the revision read | no. No sampled read falls on the revision of a change |
+
+No break showed the implementation wrong. Three showed a law, a removal or a boundary that no test holds, and LG-30 adds a test for each and runs the three probes again. Our recommendation to the maintainer is that LG-26, LG-27, LG-28 and LG-12 can be verified, LG-28 with the note that LG-29 changes its account key, and that LG-11, LG-25 and LG-32 wait for LG-30's tests.
+
+**2026-11-23, LG-30 marked building.** It goes first of the remaining slices, with LG-29 after it, since the multi-store unit's MSA-I7, MSA-I8 and MSA-I10 name records these two change.
 
 **2026-11-23, the names and the split approved.** The maintainer answered LG-Q56 as proposed, `ldg:admitsStatedBelowDrawn`, `ldg:overdrawnValue` and `ldg:StatedBelowDrawn`, agreed that owner kinds may differ between versions, accepted the tenth conformance case, and approved the split into LG-35, LG-29 and LG-34. The addendum's wording as a whole is not yet marked accepted.
 
@@ -215,7 +233,7 @@ Results sections. In short:
 | LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation. [Validation Pack](../validation/LG-27.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 | LG-25 |
 | LG-28 | the account definition as a versioned thing, with the scheme edition it pins. [Validation Pack](../validation/LG-28.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 | LG-26, LG-27 |
 | LG-29 | the record and the key of an account under a later version of its definition. [Sketch](../sketches/ledger-definition-versions-in-force.md) | briefed | LG-28 |
-| LG-30 | the corrections the review of 2026-11-20 found and the maintainer accepted | planned | LG-28 |
+| LG-30 | the corrections the review of 2026-11-20 found and the maintainer accepted, and the tests the probes of 2026-11-23 found missing | building 2026-11-23 | LG-28 |
 | LG-31 | a credit held to the rule a draw is held to | planned | LG-12 |
 | LG-32 | a benchmark of a balance read under each way of writing a supersession, for LG-Q52. [Validation Pack](../validation/LG-32.md) | built 2026-11-23, building 2026-11-23 |  |
 | LG-33 | the form of a query for absence, a probe and a finding for TD-178, taken at the end of the unit | planned |  |
