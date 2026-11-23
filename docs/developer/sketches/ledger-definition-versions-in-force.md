@@ -2,7 +2,7 @@
 
 # An account under a later version of its definition, a brief for LG-29
 
-**Unit:** ledger ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Questions:** LG-Q48 to LG-Q54. **Status:** sketched 2026-11-20, worked examples and LG-Q52 to LG-Q54 added the same day.
+**Unit:** ledger ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Questions:** LG-Q48 to LG-Q54. **Status:** sketched 2026-11-20, worked examples and LG-Q52 to LG-Q54 added the same day, revised 2026-11-23 on the maintainer's questions.
 
 ## 1. Why now
 
@@ -131,7 +131,26 @@ A part may differ where it bounds or arbitrates what is posted later, and leaves
 | (a) | the table above, with a constraint that refuses two versions of one identity that differ in a part marked no. The tree is one tree at every position, and the theories of draws, merges and pots stand |
 | (b) | anything a definition states. A change of parent moves a subtree's history from one ancestor to another, the kernel's parent becomes a function of position, and about 2,000 more lines of proof move |
 
-*Leaning (a).* Nothing a wording can say is lost. For example, a sublimit with 3 drawn of 5 moves from a section of 6 to a section of 4. Whether the first section gets the 3 back, and whether the second starts 3 down, each moves money, and the wording must say which. Under (a) it says so in what the new definition states, and the old account stays as history. Under (b) the layer would have to choose. The leaning narrows what the sketch of 2026-11-12 listed as the parts of a version, where the parent is among them, and that drift is recorded with the answer. It costs one lookup for each credit and each merge record, to read the kinds and the policy held when it was written.
+**What a change of parent inside one identity would mean.** A definition has one persistent identity and a version for each statement of it. An account is keyed by that identity, so two versions of one identity are the terms of the same account, which keeps its postings. A change of parent inside one identity is then a second version that states another parent, with the account carrying on. For example, an aggregate of 10 has a section A of 6 and a section B of 4, and a sublimit of 5 under A has 3 drawn, so A has 3 left and B has 4. A second version of the sublimit states B as its parent, in force from 100.
+
+| Reading | A after | B after | What it asks of the layer |
+|---|---|---|---|
+| the history moves with the account | 6 left | 1 left | A's balance rises with no credit recorded and B's falls with no draw recorded, and both changed at revisions already read |
+| the history stays where it was drawn | 3 left | 4 left | a draw on the sublimit effective at 120 is counted in B and one effective at 90 in A, so the account has two paths and each ancestor's fold counts a part of the account's postings, chosen by effective position |
+
+The first reading breaks the rule that a balance as of a revision never changes. The second is what option (b) would build. The kernel's parent is a function of the account, a path is one set of accounts, and an ancestor's balance is its stated amount less everything drawn in its subtree. Under the second reading each of the three is stated for a position, which is where the 2,000 lines come from. The second reading is also what two definitions already say, the old sublimit under A, drawn no further, and a new one under B that states what the wording gives it.
+
+*Leaning (a).* Nothing a wording can say is lost, since the wording must choose between the readings and under (a) it does so in what the new definition states, with the old account kept as history. Under (b) the layer would have to choose. The leaning narrows what the sketch of 2026-11-12 listed as the parts of a version, where the parent is among them, and that drift is recorded with the answer.
+
+**The lookup that (a) brings, and whether it can be avoided.** Where the kinds that restore an account or its merge policy may differ between versions, whatever checks a credit or a merge record must know the version held when it was written. Three things could remove that, and each costs more than it saves.
+
+| Way | What it costs |
+|---|---|
+| the kinds and the policy may not differ between versions | a change of either is a new account that starts with nothing drawn, the fault this slice exists to remove |
+| each credit and each merge record names the version it was decided under | one triple for each such record for ever, to save a lookup that only a check or a replay makes |
+| an ancestor that does not accept a credit's kind records a cut of the whole amount | four triples for each such credit and ancestor, and it reverses the ruling of 2026-11-15 that nothing is recorded in that ancestor's book |
+
+The lookup falls on the laws and on a reading by effective position, which replay the records. It does not fall on a draw's decision, which reads a running balance already computed, nor on the write of a credit, where the evaluator holds the latest version. For an account whose definition has one version, which is nearly every account, it is the hop from the account to its definition that the laws make today. So it is avoidable, and we lean to keeping it.
 
 **LG-Q51. How the kernel states it.**
 
@@ -173,7 +192,7 @@ The diagram shows option (c). Under (a) each account has a record of its own, an
 | (b) | one record for each version, with its type, owner, pass, effective position, period and version | 84 | is reached as every other account of its definition is |
 | (c) | one record a pass, with its type, owner, pass, effective position and period, and one edge for each version that comes into force there | 19 | the same as (b) |
 
-The configuration costs about 175 triples under every option, 14 versions of 11 to 16 triples each with their link to the version before. That grows with the definitions below the one changed, never with accounts or postings.
+The configuration costs 159 triples under every option, counted on the layer's insurance example. The aggregate's later version is 16, its type, identity, parent, unit, owner kind, policy, comment, two amounts of three triples each with their two edges, and the link from the version before. Each of the 13 below is 11, having one amount and no comment. The figure is the same with 1,014 accounts or with one, and with no posting or a million, since it counts definitions. An earlier draft said about 175, which counted the 14 links twice.
 
 For scale, a posting is 11 to 13 triples in the layer's insurance example. So (a) writes what about 420 draws write, or about 930 with the checkpoints, and (c) writes less than two draws do. Nothing is added to a posting, a pass, a request or a checkpoint under any option, and no balance is stored for a version.
 
@@ -182,22 +201,35 @@ For scale, a posting is 11 to 13 triples in the layer's insurance example. So (a
 | defensible history | when the terms moved is stated account by account | stated once, at one revision, and the accounts reached are derived |
 | storage | grows with the accounts under the changed definition | grows with the definitions under it |
 | read | the version an account holds is one lookup on the account | two joins more, from the account's definition to its identity and to the versions of it that the owner's records name, over a set as small as the number of changes of terms |
-| a read from a checkpoint | unchanged where each account is given a checkpoint, at the cost above | adds the difference of the stated amounts for each record written after that close |
+| a read of a balance | the record can carry the account's balance after it, one triple more for each, so the latest record on an account still gives its balance in one read | starts from the latest posting or checkpoint and adds the difference of the stated amounts for each record written after it, one lookup by owner and definition that nearly always finds nothing, and that is not measured |
 | contention | one request of about 5,000 triples holds the ledger's one writer for longer, which is not measured | one small request |
 
-*Leaning (c).* What it costs is that the accounts a record reaches are derived and not stated. They are the accounts of the same owner whose definition has a version in the record, in the period the record names, and each law that reads a stated amount carries that join. An account's `ldg:ofDefinition` then names the version in force when its period began, so an account of a later period starts under the later version and needs no record, and an account of an earlier period is never reached. How an account whose definition states no period finds its first version is for LG-29 to work through.
+**No checkpoint is written for an account only because its terms moved.** The addendum of 2026-11-19 decided, on the benchmarks, that a close writes a checkpoint only for an account a posting moved, and that the read pays. A later version is not a posting, so that rule already answers it, and the 6,078 triples under (a) are what ignoring it would cost. One sentence of that addendum changes, where it says an earlier checkpoint is still exactly true. Its totals are, and its balance is true less the difference of the stated amounts.
+
+**What each option brings beyond its size.**
+
+- **(a), for.** An account's own records show that its terms moved, the accounts reached are stated and not derived, and no read gains a lookup.
+- **(a), against.** Storage and the size of one request grow with the accounts. An account minted later needs a rule of its own. A thousand records of one change can disagree, for example by leaving one account out, so a law must check that every account reached has one.
+- **(b), for.** Storage grows with the definitions, and each version's coming into force is a node that can be cited alone.
+- **(b), against.** Fourteen nodes repeat one pass, one owner, one position and one period, and nothing says they are one change. The reach is derived, as under (c).
+- **(c), for.** The least storage, and one node says these versions came into force together, so a change is recorded whole or not at all.
+- **(c), against.** The reach is derived, so every law that reads a stated amount and every read of a balance carries the lookup above. Nothing can be said of one account alone, for example that one site keeps the earlier terms, which the terms would state as another definition. Versions that take force at different positions are separate records. The record is on no account, so it names its owner, and the law that a pass writes one ledger reads that as well. A definition that states no period needs a rule for the version its accounts open under.
+
+Under every option the account's natural key moves from a version of its definition to the definition's identity, which changes the key laws LG-28 built.
+
+*Leaning (c),* which the maintainer shares on storage as of 2026-11-23 and has not yet answered. What it costs is that the accounts a record reaches are derived and not stated. They are the accounts of the same owner whose definition has a version in the record, in the period the record names, and each law that reads a stated amount carries that join. An account's `ldg:ofDefinition` then names the version in force when its period began, so an account of a later period starts under the later version and needs no record, and an account of an earlier period is never reached. How an account whose definition states no period finds its first version is for LG-29 to work through.
 
 **The same gap is open for a ledger's profile.** `ldg:ledgerProfile` is functional and names a version, so a ledger cannot reach a later version of its profile either. A record written on the owner's ledger could carry it. LG-29 does not build that, and it is recorded as TD-177.
 
-**LG-Q53. A later version that states less than is drawn.** E10 of section 3, where 8 is drawn and a version states 6.
+**LG-Q53. A later version that states less than is drawn.** E10 of section 3, where 8 is drawn and a version states 6. The state is real in the layer's own example domains, for example a seat quota cut from 10 to 6 with 8 seats in use, or a facility's commitment reduced below what is drawn. Each says two things of it, that nothing is available and that the account is over by 2. A release of 3 then leaves 1 available.
 
 | Option | Consequence | Cost |
 |---|---|---|
-| (a) | the request that records the version is refused, with a reason. No balance falls below zero stays a law of every event. An applied layer states what the wording gives another way, for example a version that states what is drawn | a refusal that is not a merge's, so a new record or an eighth reason. A state the parties can agree to is not representable. For example, 8 drawn, lowered to 6 and then restored by 3 leaves 1 under the wording, and 3 under a version that states 8 |
-| (b) | the version is recorded, and the balance reads below zero until credits restore it. No draw is granted meanwhile, which the kernel's guard already gives | `ldg:runningBalance` and a checkpoint's balance return to integers, which reverses a narrowing of LG-25. The law becomes that no draw takes a balance below zero, and that a balance is below zero only after such a version |
-| (c) | the version is recorded, the balance reads zero, and the excess is a record beside it that a later credit repays first | one more kind of record, and every reader of a balance must also read it |
+| (a) | the request that records the version is refused, with a reason. No balance falls below zero stays a law of every event | a refusal that is not a merge's, so a new record or an eighth reason. A state those domains have is not representable. A version that states 8 in its place leaves 3 after the release, where the terms give 1 |
+| (b) | the version is recorded, and the balance reads below zero until credits restore it | withdrawn. The maintainer objected on 2026-11-23 that a balance below zero makes no sense for an amount consumed and restored. The layer's own law and LG-25's narrowing of the balance to a natural number say the same |
+| (c) | the version is recorded, the balance reads zero, and the account states what it is over by. They are two natural numbers of which at most one is above zero. No draw is granted while the account is over, and a credit reduces what it is over by before it restores the balance | one datatype property, stated on a posting recorded while its account is over. Nothing is written when the version takes force, since the first posting after it computes both from the last balance and the difference of the stated amounts. `ldg:runningBalance` stays a natural number. The proofs keep one integer, the balance less what the account is over by, as they do today |
 
-*Leaning (b).* It models what the parties agreed and adds no record. The kernel's balances are integers already, and its guard on a draw refuses while the balance is below the draw. That such a wording occurs is a hypothesis.
+*Leaning (c),* changed on 2026-11-23 from (b). It says what the domains say, in their two figures, and keeps every balance a natural number. That the property is worth its term over refusing the version is for the maintainer.
 
 **LG-Q54. What the record is called.** The first draft of this sketch proposed `ldg:Adoption`, as a plain word for an account taking a version. No layer declares the term, and it is no market's word for a change of terms. Two things count against it. Accounting has the adoption of accounts and the adoption of a standard, on a layer whose subject is accounts, which STD-325 rules out. This repository's prose calls whoever takes LATTICE up an adopter, in the ledger's own README among other places, which STD-258 rules out. An account also does not act.
 
@@ -209,7 +241,9 @@ For scale, a posting is 11 to 13 triples in the layer's insurance example. So (a
 
 A name built on "entry into force" collides with accounting's entry, which is a posting. The market's words for a change of terms, such as an endorsement, name the instrument above the ledger, and the layer coins nothing from market vocabulary.
 
-*Leaning `ldg:Supersession`,* with `ldg:supersedingVersion` for its edge to each version.
+Instrument and Wording each declare an `Amendment`, for the act and for the change to the words, so that name is taken by the layers above (STD-258).
+
+**Answered 2026-11-23, `ldg:Supersession`.** Decided by the maintainer, who agrees that a commencement reads as a start. The name of its edge to each version, for which we propose `ldg:supersedingVersion`, is not yet answered. LG-29 declares the term.
 
 ## 5. What LG-29 builds once answered
 

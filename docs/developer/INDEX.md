@@ -442,7 +442,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part. Validation Pack | ledger | built 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
 | LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation. Validation Pack | ledger | built 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
 | LG-28 | the account definition as a versioned thing, with the scheme edition it pins. Validation Pack | ledger | built 2026-11-19 | LG-26, LG-27 | docs/developer/status/ledger.md#board |
-| LG-29 | an account under a later version of its definition, the version in force by position. Sketch | ledger | planned | LG-28, LG-Q48, LG-Q49, LG-Q50, LG-Q52, LG-Q53, LG-Q54 | docs/developer/status/ledger.md#board |
+| LG-29 | an account under a later version of its definition, the version in force by position. Sketch | ledger | planned | LG-28, LG-Q48, LG-Q49, LG-Q50, LG-Q52, LG-Q53 | docs/developer/status/ledger.md#board |
 | LG-30 | the corrections the review of 2026-11-20 found and the maintainer accepted | ledger | planned | LG-28 | docs/developer/status/ledger.md#board |
 | LG-31 | a credit held to the rule a draw is held to | ledger | planned | LG-12 | docs/developer/status/ledger.md#board |
 | MSA-I1 | `spikes/multi-store-shape-census`. 505 node shapes, none closed and bounded, so 0% of sample subjects against the proposed 80%. 134 fail only on closure and reach 43.4% of subjects. Validati | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
