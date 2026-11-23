@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Premise. Requests of no use in part, the conformance case of ADR-A131's
-# second addendum of 2026-11-16. A pool of 7 units is offered in blocks, and a
+# Premise. Requests of no use in part, the conformance case of the rule
+# ldg:WholeOrNothing. A pool of 7 units is offered in blocks, and a
 # block is of no use in part. Two applications arrive at one position, for 5
 # and for 4, ranked by the order in which they were made. Under the merge rule
 # ldg:WholeOrNothing each is granted whole where it fits what is left, in rank
@@ -43,10 +43,11 @@ ex:order-of-application a skos:Concept ;
 ex:units a qnt:ValueSpace ;
     fnd:hasIdentity ex:units-identity ;
     qnt:spaceKey "ledger-whole-or-nothing-units" ; qnt:orderKind qnt:TotalOrder ;
-    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-whole-or-nothing-units-v1" ;
+    qnt:densityKind qnt:Discrete ; qnt:granularityFloor ex:units-floor ; qnt:spaceHash "ledger-whole-or-nothing-units-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:units-sum , ex:units-difference .
 ex:units-identity a fnd:PersistentIdentity .
+ex:units-floor a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "1"^^xsd:decimal .
 ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
 ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
 
@@ -121,7 +122,7 @@ ex:merge-1 a ldg:MergeRecord ;
 ex:posting-1 a ldg:Posting ;
     ldg:onAccount ex:account-pool ;
     ldg:inPass pass:blocks-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "5"^^xsd:decimal ;
     ldg:runningBalance "2"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:request-1 .
@@ -134,4 +135,4 @@ ex:ledger-issuer a ldg:Ledger ;
 ex:account-pool a ldg:Account ;
     ldg:ofDefinition ex:pool ; ldg:forOwner ex:issuer .
 ex:issuer a ex:Issuer .
-pass:blocks-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:blocks-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:nonNegativeInteger ; ldg:passRevision "1"^^xsd:nonNegativeInteger .

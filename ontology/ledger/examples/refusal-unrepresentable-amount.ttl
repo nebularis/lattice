@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Premise. Refused, a draw of an amount its account's space cannot represent
-# (ADR-A131, its second addendum of 2026-11-09). A pool of 10 licences is held
-# on a discrete space whose granularity floor is one licence, so every amount
+# Premise. Refused, a draw of an amount its account's space cannot represent.
+# A pool of 10 licences is held on a discrete space whose granularity floor is one licence, so every amount
 # on it is a whole number of licences. Each draw asks for a share of the pool,
 # resolved to an amount before the ledger, where the resolution is recorded.
 #
@@ -92,7 +91,7 @@ ex:half-merge a ldg:MergeRecord ;
 ex:half-posting a ldg:Posting ;
     ldg:onAccount ex:account-pool ;
     ldg:inPass pass:half ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "5"^^xsd:decimal ;
     ldg:runningBalance "5"^^xsd:decimal ;
     prov:wasDerivedFrom ex:half-merge , ex:half-request , ex:half-resolution .
@@ -111,7 +110,7 @@ ex:share-33-merge a ldg:MergeRecord ;
 ex:share-33-posting a ldg:Posting ;
     ldg:onAccount ex:account-pool ;
     ldg:inPass pass:share-33 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "3.3"^^xsd:decimal ;
     ldg:runningBalance "1.7"^^xsd:decimal ;
     prov:wasDerivedFrom ex:share-33-merge , ex:share-33-request , ex:share-33-resolution ;
@@ -125,5 +124,5 @@ ex:ledger-holder a ldg:Ledger ;
 ex:account-pool a ldg:Account ;
     ldg:ofDefinition ex:pool ; ldg:forOwner ex:holder .
 ex:holder a ex:Holder .
-pass:half a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
-pass:share-33 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
+pass:half a ldg:Pass ; ldg:passPosition "1"^^xsd:nonNegativeInteger ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:share-33 a ldg:Pass ; ldg:passPosition "2"^^xsd:nonNegativeInteger ; ldg:passRevision "2"^^xsd:nonNegativeInteger .

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Premise. A credit cut at a parent, the conformance case of a cut at an
-# ancestor (ADR-A131, its first addendum of 2026-11-16). A parent and its
+# ancestor. A parent and its
 # child are each stated at 10, and each ceiling is its stated amount. Both are
 # restored by recoveries: the parent names the kind, and the child names none,
 # so it accepts every kind. A debit of 5 at the child, a credit of 4 at the
@@ -65,10 +65,11 @@ ex:recovery a skos:Concept ; skos:inScheme ldg:CreditKinds , ex:credit-kinds-edi
 ex:units a qnt:ValueSpace ;
     fnd:hasIdentity ex:units-identity ;
     qnt:spaceKey "ledger-credit-cut-at-parent-units" ; qnt:orderKind qnt:TotalOrder ;
-    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-credit-cut-at-parent-units-v1" ;
+    qnt:densityKind qnt:Discrete ; qnt:granularityFloor ex:units-floor ; qnt:spaceHash "ledger-credit-cut-at-parent-units-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:units-sum , ex:units-difference .
 ex:units-identity a fnd:PersistentIdentity .
+ex:units-floor a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "1"^^xsd:decimal .
 ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
 ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
 
@@ -130,7 +131,7 @@ ex:debit-1-merge a ldg:MergeRecord ;
 ex:debit-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-child ;
     ldg:inPass pass:debit-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "5"^^xsd:decimal ;
     ldg:runningBalance "5"^^xsd:decimal ;
     prov:wasDerivedFrom ex:debit-1-merge , ex:debit-1-request .
@@ -140,7 +141,7 @@ ex:debit-1-posting a ldg:Posting ;
 ex:credit-2-posting a ldg:Posting ;
     ldg:onAccount ex:account-parent ;
     ldg:inPass pass:credit-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Credit ; ldg:creditKind ex:recovery ;
     ldg:offeredValue "4"^^xsd:decimal ; ldg:amountValue "4"^^xsd:decimal ;
     ldg:runningBalance "9"^^xsd:decimal ;
@@ -151,7 +152,7 @@ ex:credit-2-posting a ldg:Posting ;
 ex:credit-3-posting a ldg:Posting ;
     ldg:onAccount ex:account-child ;
     ldg:inPass pass:credit-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Credit ; ldg:creditKind ex:recovery ;
     ldg:offeredValue "4"^^xsd:decimal ; ldg:amountValue "4"^^xsd:decimal ;
     ldg:runningBalance "9"^^xsd:decimal ;
@@ -166,7 +167,7 @@ ex:credit-3-cut-parent a ldg:Cut ;
 ex:credit-4-posting a ldg:Posting ;
     ldg:onAccount ex:account-child ;
     ldg:inPass pass:credit-4 ; ldg:effectivePosition "4"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Credit ; ldg:creditKind ex:recovery ;
     ldg:offeredValue "1"^^xsd:decimal ; ldg:amountValue "1"^^xsd:decimal ;
     ldg:runningBalance "10"^^xsd:decimal ;
@@ -179,19 +180,19 @@ ex:credit-4-cut-parent a ldg:Cut ;
 # ==== The checkpoints at the closes after positions 3 and 4 ===================
 
 ex:checkpoint-child-3 a ldg:Checkpoint ;
-    ldg:onAccount ex:account-child ; ldg:closePosition "3"^^xsd:integer ;
+    ldg:onAccount ex:account-child ; ldg:closePosition "3"^^xsd:nonNegativeInteger ;
     ldg:balanceValue "9"^^xsd:decimal ;
     ldg:debitsTotal "5"^^xsd:decimal ; ldg:creditsOfferedTotal "4"^^xsd:decimal .
 ex:checkpoint-parent-3 a ldg:Checkpoint ;
-    ldg:onAccount ex:account-parent ; ldg:closePosition "3"^^xsd:integer ;
+    ldg:onAccount ex:account-parent ; ldg:closePosition "3"^^xsd:nonNegativeInteger ;
     ldg:balanceValue "10"^^xsd:decimal ;
     ldg:debitsTotal "5"^^xsd:decimal ; ldg:creditsOfferedTotal "8"^^xsd:decimal .
 ex:checkpoint-child-4 a ldg:Checkpoint ;
-    ldg:onAccount ex:account-child ; ldg:closePosition "4"^^xsd:integer ;
+    ldg:onAccount ex:account-child ; ldg:closePosition "4"^^xsd:nonNegativeInteger ;
     ldg:balanceValue "10"^^xsd:decimal ;
     ldg:debitsTotal "5"^^xsd:decimal ; ldg:creditsOfferedTotal "5"^^xsd:decimal .
 ex:checkpoint-parent-4 a ldg:Checkpoint ;
-    ldg:onAccount ex:account-parent ; ldg:closePosition "4"^^xsd:integer ;
+    ldg:onAccount ex:account-parent ; ldg:closePosition "4"^^xsd:nonNegativeInteger ;
     ldg:balanceValue "10"^^xsd:decimal ;
     ldg:debitsTotal "5"^^xsd:decimal ; ldg:creditsOfferedTotal "9"^^xsd:decimal ;
     rdfs:comment "The balance is as at the close after position 3, and the account moved, since a credit cut in full at it was offered." .
@@ -207,7 +208,7 @@ ex:account-child a ldg:Account ;
     ldg:ofDefinition ex:child ; ldg:forOwner ex:holder ;
     ldg:partOfAccount ex:account-parent .
 ex:holder a ex:Holder .
-pass:debit-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
-pass:credit-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
-pass:credit-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:integer ; ldg:passRevision "3"^^xsd:nonNegativeInteger .
-pass:credit-4 a ldg:Pass ; ldg:passPosition "4"^^xsd:integer ; ldg:passRevision "4"^^xsd:nonNegativeInteger .
+pass:debit-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:nonNegativeInteger ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:credit-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:nonNegativeInteger ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
+pass:credit-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:nonNegativeInteger ; ldg:passRevision "3"^^xsd:nonNegativeInteger .
+pass:credit-4 a ldg:Pass ; ldg:passPosition "4"^^xsd:nonNegativeInteger ; ldg:passRevision "4"^^xsd:nonNegativeInteger .

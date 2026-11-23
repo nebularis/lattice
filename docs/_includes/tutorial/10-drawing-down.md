@@ -50,7 +50,7 @@ Postings are ordered by whole numbers, **positions**, not by a clock, since cloc
 ex:draw-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
     ldg:inPass pass:draw-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "10005000"^^xsd:decimal ;
     ldg:runningBalance "9995000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-request , ex:draw-1-conversion .

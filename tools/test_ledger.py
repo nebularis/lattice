@@ -78,6 +78,8 @@ REFUSALS = {
     "refusal-intensive-unit": "ExtensiveUnitOfAccountShape",
     "refusal-nearest-beside-residual": "NearestRoundingStatesTheDifferenceShape",
     "refusal-settled-without-excess": "SettledToNearestStatesTheExcessShape",
+    "refusal-ceiling-above-stated": "CreditCeilingAboveStatedAdmittedShape",
+    "refusal-discrete-without-floor": "DiscreteUnitStatesAFloorShape",
 }
 
 
@@ -191,6 +193,45 @@ def test_a_policy_that_settles_to_the_nearest_conforms() -> None:
     conforms, report, _ = validate(MODEL + _example("rounding-to-the-nearest"), shacl_graph=SHAPES, inference="none", advanced=True)
     assert conforms, _violating_shapes(report)
 
+def _profile_admits_a_ceiling_above(g: Graph) -> None:
+    g.set((_ex("refusal-ceiling-above-stated")["ledger-profile"], LDG.admitsCeilingAboveStated, Literal(True)))
+
+
+def _floor_stated(g: Graph) -> None:
+    ex = _ex("refusal-discrete-without-floor")
+    for p, o in [(RDF.type, QNT.Quantity), (QNT.onSpace, ex.units), (QNT.numericValue, _decimal("1"))]:
+        g.add((ex["units-floor"], p, o))
+    g.add((ex.units, QNT.granularityFloor, ex["units-floor"]))
+
+
+@pytest.mark.parametrize("name,mutate", [("refusal-ceiling-above-stated", _profile_admits_a_ceiling_above),
+                                         ("refusal-discrete-without-floor", _floor_stated)],
+                         ids=["a ceiling above the stated amount a profile admits", "a discrete unit with its floor stated"])
+def test_the_design_time_refusal_lifts_where_its_condition_is_met(name: str, mutate: Callable[[Graph], None]) -> None:
+    g = MODEL + _example(name)
+    mutate(g)
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert conforms, _violating_shapes(report)
+    _agree(g, report)
+
+
+def test_every_discrete_unit_of_an_example_states_a_floor_but_the_refusal() -> None:
+    for path in sorted((LEDGER / "examples").glob("*.ttl")):
+        g = _graph(path)
+        spaces = set(g.subjects(QNT.densityKind, QNT.Discrete))
+        bare = {str(sp) for sp in spaces if g.value(sp, QNT.granularityFloor) is None}
+        assert bool(bare) == (path.stem == "refusal-discrete-without-floor"), (path.name, bare)
+
+
+def test_the_conversion_terms_are_gone() -> None:
+    """The four terms the ledger dropped when conversion left it are declared by no document of the layer."""
+    gone = {LDG.conversionMethod, LDG.amountAsDrawn, LDG.conversionUsed, LDG.ConversionTogetherShape}
+    for folder in ("spec", "vocab", "shapes"):
+        for path in sorted((LEDGER / folder).glob("*.ttl")):
+            g = _graph(path)
+            assert not {t for t in gone if (t, None, None) in g}, path.name
+
+
 # A refusal by a generated structural shape, named by the property whose count is wrong, since such a shape is a blank node in the report.
 STRUCTURAL_REFUSALS = {
     "refusal-no-merge-policy": "mergePolicy",
@@ -255,10 +296,6 @@ def _ex(name: str) -> Namespace:
 
 def _decimal(value: str) -> Literal:
     return Literal(Decimal(value), datatype=XSD.decimal)
-
-
-def _integer(value: int) -> Literal:
-    return Literal(value, datatype=XSD.integer)
 
 
 def _position(value: int) -> Literal:
@@ -501,7 +538,7 @@ def _checkpoint(balance: str, name: str = "research-grant", account: str = "acco
         ex = _ex(name)
         checkpoint = ex[f"checkpoint-{close}"]
         for p, o in [(RDF.type, LDG.Checkpoint), (LDG.onAccount, ex[account]),
-                     (LDG.closePosition, _integer(close)), (LDG.balanceValue, _decimal(balance)),
+                     (LDG.closePosition, _position(close)), (LDG.balanceValue, _decimal(balance)),
                      (LDG.debitsTotal, _decimal(debits)), (LDG.creditsOfferedTotal, _decimal(offered))]:
             g.add((checkpoint, p, o))
     return mutate
@@ -576,7 +613,7 @@ def _owner_without_a_ledger(g: Graph) -> None:
 
 def _pass_without_a_record(g: Graph) -> None:
     idle = _pass("research-grant", "idle")
-    for p, o in [(RDF.type, LDG.Pass), (LDG.passPosition, _integer(4)), (LDG.passRevision, _position(4))]:
+    for p, o in [(RDF.type, LDG.Pass), (LDG.passPosition, _position(4)), (LDG.passRevision, _position(4))]:
         g.add((idle, p, o))
 
 
@@ -670,6 +707,9 @@ MUTATIONS = {
     "a revision skipped": (
         "research-grant", _both(_pass_revision("research-grant", "equipment-return", 4),
                                 _ledger_revision("research-grant", "institution", 4)), "PassRevisionsInOrderShape"),
+    "a ledger whose first pass records revision 2": (
+        "whole-or-nothing", _both(_pass_revision("whole-or-nothing", "blocks-1", 2),
+                                  _ledger_revision("whole-or-nothing", "issuer", 2)), "PassRevisionsInOrderShape"),
     "a ledger behind its latest pass": (
         "research-grant", _ledger_revision("research-grant", "institution", 2), "LedgerAtItsLatestPassShape"),
     "a closing recurrence on an account definition": (
@@ -788,6 +828,39 @@ def test_the_cut_example_records_the_addendum_case() -> None:
         (ex["account-parent"], _decimal("3"))]
 
 
+def _later_debit_at_the_parent(balance: str) -> Callable[[Graph], None]:
+    """One more debit of 1 at the parent, in a fifth pass, recording `balance` after it. The parent's stated 10, less the 6 drawn in its
+    subtree, plus the 9 credits applied in it, less the cuts of 4 recorded at it, is 9, and 13 where the cuts are ignored."""
+    def mutate(g: Graph) -> None:
+        ex = _ex("credit-cut-at-parent")
+        later = _pass("credit-cut-at-parent", "debit-5")
+        for p, o in [(RDF.type, LDG.Pass), (LDG.passPosition, _position(5)), (LDG.passRevision, _position(5))]:
+            g.add((later, p, o))
+        posting = ex["debit-5-posting"]
+        for p, o in [(RDF.type, LDG.Posting), (LDG.onAccount, ex["account-parent"]), (LDG.inPass, later),
+                     (LDG.effectivePosition, _position(5)), (LDG.recordedPosition, _position(2)), (LDG.microPosition, _position(0)),
+                     (LDG.direction, LDG.Debit), (LDG.amountValue, _decimal("1")), (LDG.runningBalance, _decimal(balance))]:
+            g.add((posting, p, o))
+        g.set((ex["ledger-holder"], LDG.revision, _position(5)))
+    return mutate
+
+
+def test_a_running_balance_reads_the_cuts_at_its_account() -> None:
+    """A debit on the parent after the cuts at it. Its balance is the stated amount less the debits plus the credits applied, less the
+    cuts recorded at the parent, so one that ignores them is reported."""
+    g = MODEL + _example("credit-cut-at-parent")
+    _later_debit_at_the_parent("9")(g)
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert conforms, _violating_shapes(report)
+    _agree(g, report)
+    g = MODEL + _example("credit-cut-at-parent")
+    _later_debit_at_the_parent("13")(g)
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert not conforms
+    assert any(v.endswith("#RunningBalanceShape") for v in _violating_shapes(report)), _violating_shapes(report)
+    _agree(g, report)
+
+
 # ---- LG2-07: the refusal under ldg:Refuse conforms, with no posting and a reason, and keeps its requests
 
 def test_refused_merge_conforms_with_no_posting_and_a_reason() -> None:
@@ -876,7 +949,7 @@ def test_the_grant_is_retired_and_the_seven_reasons_are_one_scheme() -> None:
     assert (LDG.Grant, None, None) not in MODEL and (LDG.grant, None, None) not in MODEL
     reasons = set(MODEL.subjects(SKOS.inScheme, LDG.RefusalReasons))
     assert reasons == {LDG.ExceedsAvailable, LDG.RanksNotDistinct, LDG.TieWithoutRule, LDG.ResidualNotPermitted,
-                       LDG.MixedPurposes, LDG.CrossingLimits, LDG.KindNotAccepted}
+                       LDG.MixedPurposes, LDG.CrossingSets, LDG.KindNotAccepted}
     assert all((reason, RDF.type, SKOS.Concept) in MODEL for reason in reasons)
 
 
@@ -918,7 +991,7 @@ def test_the_account_definition_is_versioned_and_its_edges_bear_meaning() -> Non
 def test_foundation_finds_every_example_versioned_and_its_parts_pinned(name: str) -> None:
     """Every example, accepted or refused: each versioned thing has one identity, and no edge that bears meaning leads to a node that
     is neither versioned, minted under its subject nor a published term, so Foundation's check warns on no quantity (LG-Q40 (a))."""
-    assert len(EXAMPLES) == 20
+    assert len(EXAMPLES) == 22
     g = MODEL + _example(name)
     assert _foundation_findings(g) == set()
     definitions = list(g.subjects(RDF.type, LDG.AccountDefinition))
@@ -1078,9 +1151,11 @@ def _share_resolved_to_three(g: Graph) -> None:
 
 
 def _floor_dropped_for_integers(g: Graph) -> None:
-    """The pool's space states no floor and its datatype is `xsd:integer`, so 3.3 is refused by the datatype alone."""
+    """The pool's space is dense with no floor and its datatype is `xsd:integer`, so 3.3 is refused by the datatype alone. A discrete
+    space with no floor is refused by its own constraint."""
     ex = _ex("refusal-unrepresentable-amount")
     g.remove((ex.licences, QNT.granularityFloor, None))
+    g.set((ex.licences, QNT.densityKind, QNT.Dense))
     g.add((ex.licences, QNT.valueDatatype, XSD.integer))
 
 

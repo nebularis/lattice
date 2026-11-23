@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Premise. Licensing, with seats keyed per site (ADR-A131 decision 3).
+# Premise. Licensing, with seats keyed per site.
 # One account definition states the amount once, and a separate account is
 # derived for each key value the first draw against it names. A customer's
 # seat licence grants 500 seats a year at each site. London and Porto draw
 # independently in the 2027 licence year. A periodic amount is one account per
-# period (PDD-15), keyed by the bin of the licence-year recurrence its
+# period, keyed by the bin of the licence-year recurrence its
 # effective position falls in, so the 2028 year's first draw at London opens a
 # fresh account at the stated amount, and the 2027 accounts keep their
 # balances. Nothing is credited back at the year's boundary.
@@ -17,7 +17,7 @@
 # | seats, London, 2028   |    500 | --          | -50 -> 450 |   450 |
 #
 # Porto's 2028 account has no record, since nothing has drawn on it. A draw
-# proposes and merges even with nothing to arbitrate (decision 6), so each
+# proposes and merges even with nothing to arbitrate, so each
 # account gets its own one-request merge record. Each posting records the running
 # balance of its account. Which bin a position falls in
 # is the evaluator's to compute from the recurrence, and here positions 1 and
@@ -55,10 +55,11 @@ ex:porto a skos:Concept ; skos:inScheme ex:sites ; skos:prefLabel "Porto" .
 ex:seats a qnt:ValueSpace ;
     fnd:hasIdentity ex:seats-identity ;
     qnt:spaceKey "ledger-licence-seats" ; qnt:orderKind qnt:TotalOrder ;
-    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-licence-seats-v1" ;
+    qnt:densityKind qnt:Discrete ; qnt:granularityFloor ex:seats-floor ; qnt:spaceHash "ledger-licence-seats-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:seats-sum , ex:seats-difference .
 ex:seats-identity a fnd:PersistentIdentity .
+ex:seats-floor a qnt:Quantity ; qnt:onSpace ex:seats ; qnt:numericValue "1"^^xsd:decimal .
 ex:seats-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:seats .
 ex:seats-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:seats .
 
@@ -111,7 +112,7 @@ ex:london-draw-merge a ldg:MergeRecord ;
 ex:london-draw-posting a ldg:Posting ;
     ldg:onAccount ex:account-seat-licence-london-2027 ;
     ldg:inPass pass:draws-2027 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "120"^^xsd:decimal ;
     ldg:runningBalance "380"^^xsd:decimal ;
     prov:wasDerivedFrom ex:london-draw-merge , ex:london-draw-request .
@@ -127,7 +128,7 @@ ex:porto-draw-merge a ldg:MergeRecord ;
 ex:porto-draw-posting a ldg:Posting ;
     ldg:onAccount ex:account-seat-licence-porto-2027 ;
     ldg:inPass pass:draws-2027 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "80"^^xsd:decimal ;
     ldg:runningBalance "420"^^xsd:decimal ;
     prov:wasDerivedFrom ex:porto-draw-merge , ex:porto-draw-request .
@@ -145,7 +146,7 @@ ex:london-2028-draw-merge a ldg:MergeRecord ;
 ex:london-2028-draw-posting a ldg:Posting ;
     ldg:onAccount ex:account-seat-licence-london-2028 ;
     ldg:inPass pass:london-2028-draw ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "50"^^xsd:decimal ;
     ldg:runningBalance "450"^^xsd:decimal ;
     prov:wasDerivedFrom ex:london-2028-draw-merge , ex:london-2028-draw-request .
@@ -165,5 +166,5 @@ ex:account-seat-licence-london-2028 a ldg:Account ;
     ldg:ofDefinition ex:seat-licence ; ldg:forOwner ex:customer ;
     ldg:accountKey ex:london ; ldg:periodKey ex:year-2028 .
 ex:customer a ex:Licensee .
-pass:draws-2027 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
-pass:london-2028-draw a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
+pass:draws-2027 a ldg:Pass ; ldg:passPosition "1"^^xsd:nonNegativeInteger ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:london-2028-draw a ldg:Pass ; ldg:passPosition "2"^^xsd:nonNegativeInteger ; ldg:passRevision "2"^^xsd:nonNegativeInteger .

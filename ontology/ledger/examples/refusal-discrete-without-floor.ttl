@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused. An account definition's unit of account is on a value
+# space that Quantification marks discrete and that states no granularity
+# floor, so what counts as one step on it is not stated and an amount cannot be
+# held to a whole multiple of it. A discrete unit of account states its floor,
+# so the definition does not conform. With qnt:granularityFloor stated on the
+# space, the same definition conforms.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-discrete-without-floor/> .
+@base <https://example.org/lattice/ledger/refusal-discrete-without-floor/> .
+
+ex:OwnerKind a owl:Class .
+
+ex:units a qnt:ValueSpace ;
+    fnd:hasIdentity ex:units-identity ;
+    qnt:spaceKey "ledger-refusal-discrete-without-floor-units" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-refusal-discrete-without-floor-units-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-identity a fnd:PersistentIdentity .
+ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
+ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
+
+# ==== The merge policy =========================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
+# ==== The configuration ========================================================
+
+ex:pool a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:pool-identity ;
+    ldg:statedAmount <pool/stated-amount> ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
+    rdfs:comment "Refused. Its unit of account is discrete and states no granularity floor." .
+<pool/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
+ex:pool-identity a fnd:PersistentIdentity .

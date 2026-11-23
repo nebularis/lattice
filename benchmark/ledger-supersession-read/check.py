@@ -539,6 +539,11 @@ def sample(m: Model) -> list[int]:
     return list(dict.fromkeys(i for i in picks if i is not None))
 
 
+def read_points(m: Model) -> list[int]:
+    """The revisions a balance is read as of: a quarter, a half and three quarters of the way, and the revision of each change of terms itself, where a read as of exactly that revision must see the change."""
+    return sorted({m.now * q // 4 for q in (1, 2, 3)} | set(m.change_revs))
+
+
 def percentile(values: list[float], share: float) -> float:
     ordered = sorted(values)
     return ordered[max(math.ceil(share * len(ordered)) - 1, 0)]
@@ -589,7 +594,7 @@ def run_config(engine: str, variant: str, m: Model, common: list[tuple], chunks:
             leaves = sample(m)
             ancestors = [i for i, a in enumerate(m.accounts) if a.definition in ("sec0", "agg", "cap")]
             v_accounts = leaves + ancestors
-            points = [m.now * q // 4 for q in (1, 2, 3)]
+            points = read_points(m)
             now = m.now
             pools: dict[str, list[float]] = {name: [] for name in READS}
 

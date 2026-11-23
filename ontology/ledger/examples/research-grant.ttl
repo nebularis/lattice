@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Premise. Grants, with sub-budgets (the "part of and not in addition to"
-# tree, ADR-A131 decision 3) and a credit ceiling (decision 3). A 200,000
+# tree) and a credit ceiling. A 200,000
 # research grant has a staff sub-budget and an
 # equipment sub-budget. A draw on a sub-budget also debits the grant as its
 # ancestor, in the same posting's closure. Unspent equipment funds are
@@ -122,7 +122,7 @@ ex:staff-spend-merge a ldg:MergeRecord ;
 ex:staff-spend-posting a ldg:Posting ;
     ldg:onAccount ex:account-staff-budget ;
     ldg:inPass pass:staff-spend ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "90000"^^xsd:decimal ;
     ldg:runningBalance "30000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:staff-spend-merge , ex:staff-spend-request .
@@ -140,7 +140,7 @@ ex:equipment-spend-merge a ldg:MergeRecord ;
 ex:equipment-spend-posting a ldg:Posting ;
     ldg:onAccount ex:account-equipment-budget ;
     ldg:inPass pass:equipment-spend ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "50000"^^xsd:decimal ;
     ldg:runningBalance "30000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:equipment-spend-merge , ex:equipment-spend-request .
@@ -150,7 +150,7 @@ ex:equipment-spend-posting a ldg:Posting ;
 ex:equipment-return-posting a ldg:Posting ;
     ldg:onAccount ex:account-equipment-budget ;
     ldg:inPass pass:equipment-return ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Credit ; ldg:creditKind ex:unspent-funds ;
     ldg:offeredValue "55000"^^xsd:decimal ; ldg:amountValue "50000"^^xsd:decimal ;
     ldg:runningBalance "80000"^^xsd:decimal ;
@@ -170,6 +170,6 @@ ex:account-staff-budget a ldg:Account ;
     ldg:ofDefinition ex:staff-budget ; ldg:forOwner ex:institution ;
     ldg:partOfAccount ex:account-grant-budget .
 ex:institution a ex:Grantee .
-pass:staff-spend a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
-pass:equipment-spend a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
-pass:equipment-return a ldg:Pass ; ldg:passPosition "3"^^xsd:integer ; ldg:passRevision "3"^^xsd:nonNegativeInteger .
+pass:staff-spend a ldg:Pass ; ldg:passPosition "1"^^xsd:nonNegativeInteger ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:equipment-spend a ldg:Pass ; ldg:passPosition "2"^^xsd:nonNegativeInteger ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
+pass:equipment-return a ldg:Pass ; ldg:passPosition "3"^^xsd:nonNegativeInteger ; ldg:passRevision "3"^^xsd:nonNegativeInteger .

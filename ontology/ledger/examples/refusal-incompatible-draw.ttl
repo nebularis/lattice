@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Premise. Refused, a draw that read an amount in another unit or another value
-# space (ADR-A131, its addendum of 2026-11-09 and its second addendum of the
-# same day). A 10,000 sterling facility holds sterling and euros as units of
+# space. A 10,000 sterling facility holds sterling and euros as units of
 # one money space, and dollars in a space of their own. An account accepts a
 # draw only in its own value space and unit, and the ledger converts nothing.
 #
@@ -113,7 +112,7 @@ ex:draw-1-merge a ldg:MergeRecord ;
 ex:draw-1-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
     ldg:inPass pass:draw-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "1000"^^xsd:decimal ;
     ldg:runningBalance "9000"^^xsd:decimal ;
     prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-request , ex:draw-1-conversion .
@@ -131,7 +130,7 @@ ex:draw-2-merge a ldg:MergeRecord ;
 ex:draw-2-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
     ldg:inPass pass:draw-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "500"^^xsd:decimal ;
     ldg:runningBalance "8500"^^xsd:decimal ;
     prov:wasDerivedFrom ex:draw-2-merge , ex:draw-2-request , ex:q-draw-2-eur ;
@@ -150,7 +149,7 @@ ex:draw-3-merge a ldg:MergeRecord ;
 ex:draw-3-posting a ldg:Posting ;
     ldg:onAccount ex:account-facility ;
     ldg:inPass pass:draw-3 ; ldg:effectivePosition "3"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "400"^^xsd:decimal ;
     ldg:runningBalance "8100"^^xsd:decimal ;
     prov:wasDerivedFrom ex:draw-3-merge , ex:draw-3-request , ex:q-draw-3-usd ;
@@ -164,6 +163,6 @@ ex:ledger-borrower a ldg:Ledger ;
 ex:account-facility a ldg:Account ;
     ldg:ofDefinition ex:facility ; ldg:forOwner ex:borrower .
 ex:borrower a ex:Borrower .
-pass:draw-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
-pass:draw-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:integer ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
-pass:draw-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:integer ; ldg:passRevision "3"^^xsd:nonNegativeInteger .
+pass:draw-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:nonNegativeInteger ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:draw-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:nonNegativeInteger ; ldg:passRevision "2"^^xsd:nonNegativeInteger .
+pass:draw-3 a ldg:Pass ; ldg:passPosition "3"^^xsd:nonNegativeInteger ; ldg:passRevision "3"^^xsd:nonNegativeInteger .

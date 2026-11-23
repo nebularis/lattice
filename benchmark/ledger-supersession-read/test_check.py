@@ -63,6 +63,12 @@ def test_ss4_each_variant_reads_the_models_values_at_every_sampled_point(variant
     assert (result.write_ms is None) == (changes == 0)
 
 
+@pytest.mark.parametrize("changes", [1, 2])
+def test_ss4b_a_read_as_of_the_revision_of_a_change_is_sampled(changes):
+    m, *_ = build(changes)
+    assert set(m.change_revs) <= set(check.read_points(m))
+
+
 def test_ss5_the_sample_holds_a_site_with_no_posting_and_one_not_posted_since_the_last_change():
     m = check.build_model(300, 2, check.build_accounts(400))
     picked = [i for i in check.sample(m) if m.accounts[i].key]

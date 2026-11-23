@@ -60,7 +60,7 @@ ldg:Cut a owl:Class ;
 
 ldg:Ledger a owl:Class ;
     rdfs:comment "The accounts of one owner, as the unit one writer at a time writes and a write sees unchanged." ;
-    fnd:utility "Mint one for each owner, the first time a pass writes one of its accounts, and derive its IRI from the owner's, so every writer of that owner reaches one node. Name the profile the deployment gave it, and state its revision. The revision is the one fact of a ledger that changes in place. Its writer moves it by one with each pass, in the request that writes the pass, and only while the ledger is at the revision the pass was evaluated from. An account reaches its ledger through its owner, so no account names it." ;
+    fnd:utility "Mint one for each owner, the first time a pass writes one of its accounts, and derive its IRI from the owner's, so every writer of that owner reaches one node. Name the profile the deployment gave it, and state its revision. The revision is the one fact of a ledger that changes in place. Its writer moves it by one with each pass, in the request that writes the pass, and only while the ledger is at the revision the pass was evaluated from. An owner with no ledger is read as revision 0, so the first pass of a ledger is evaluated from 0 and moves it to 1. An account reaches its ledger through its owner, so no account names it." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:forOwner ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:ledgerProfile ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:revision ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 ldg:MergeRecord a owl:Class ;
@@ -70,7 +70,7 @@ ldg:MergeRecord a owl:Class ;
 
 ldg:Pass a owl:Class ;
     rdfs:comment "One evaluation's write of records, recorded at one position." ;
-    fnd:utility "What an evaluation records about itself beyond its postings. Every posting and merge record names the pass that wrote it. Derive its IRI from its ledger's and a key the caller gives for the evaluation that writes it. The layer gives the key no meaning, and the same evaluation made again gives the same key, so it is never taken from a clock or from a counter read when the request is made, and the same evaluation written twice is one node. A pass writes the records of one ledger, the ledger of the owner of the accounts its records are on, and writes at least one record. State the revision it moved that ledger to, which is one more than the revision it was evaluated from. A pass's position is on the effective axis, so the records it writes are effective no later than it, and it is the recorded axis's order across accounts. A speculative pass is written to a graph that can be dropped, never flagged." ;
+    fnd:utility "What an evaluation records about itself beyond its postings. Every posting and merge record names the pass that wrote it. Derive its IRI from its ledger's and a key the caller gives for the evaluation that writes it. The layer gives the key no meaning, and the same evaluation made again gives the same key, so it is never taken from a clock or from a counter read when the request is made, and the same evaluation written twice is one node. A pass writes the records of one ledger, the ledger of the owner of the accounts its records are on, and writes at least one record. State the revision it moved that ledger to, which is one more than the revision it was evaluated from, so the first pass of a ledger records revision 1. A pass's position is on the effective axis, so the records it writes are effective no later than it, and it is the recorded axis's order across accounts. It is the later of the position of the stimulus the pass was evaluated for and the position of its ledger's latest pass at the revision it was evaluated from, and each record keeps its stimulus's position as its effective position. A speculative pass is written to a graph that can be dropped, never flagged." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ldg:passPosition ; owl:cardinality "1"^^xsd:nonNegativeInteger ], [ a owl:Restriction ; owl:onProperty ldg:passRevision ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
 
 ldg:Posting a owl:Class ;
@@ -107,7 +107,7 @@ ldg:balanceValue a owl:DatatypeProperty, owl:FunctionalProperty ;
 ldg:closePosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The position of the close a checkpoint was written at, on the axis of pass positions." ;
     rdfs:domain ldg:Checkpoint ;
-    rdfs:range xsd:integer .
+    rdfs:range xsd:nonNegativeInteger .
 
 ldg:creditKind a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The kind of a credit, a concept of ldg:CreditKinds." ;
@@ -193,7 +193,7 @@ ldg:microPosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The order of postings that share a recorded position on one account, and of the postings of one pass across accounts." ;
     fnd:utility "Assigned by the evaluator from an order defined on the data, never on arrival. A running balance counts a posting of its own pass on another account of its subtree where that posting's micro-position is at or below its own." ;
     rdfs:domain ldg:Posting ;
-    rdfs:range xsd:integer .
+    rdfs:range xsd:nonNegativeInteger .
 
 ldg:ofDefinition a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:comment "The account definition an account instance holds." ;
@@ -219,12 +219,13 @@ ldg:partOfAccount a owl:FunctionalProperty, owl:ObjectProperty ;
 
 ldg:passPosition a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The position at which a pass was recorded, on the effective axis." ;
+    fnd:utility "The later of the position of the stimulus the pass was evaluated for and the position of the latest pass of its ledger at the revision it was evaluated from. The evaluation reads that latest pass's position with the revision, and the request carries it. A record the pass writes keeps its stimulus's position as its effective position." ;
     rdfs:domain ldg:Pass ;
-    rdfs:range xsd:integer .
+    rdfs:range xsd:nonNegativeInteger .
 
 ldg:passRevision a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The revision a pass moved its ledger to." ;
-    fnd:utility "One more than the revision the pass was evaluated from, so the passes of one ledger record revisions one apart, in the order of their positions. It is the pass's receipt. A replay finds the pass by its IRI and evaluates it again from the revision before this one." ;
+    fnd:utility "One more than the revision the pass was evaluated from, so the passes of one ledger record revisions one apart, in the order of their positions, and the first pass of a ledger records 1, since an owner with no ledger is read as revision 0. It is the pass's receipt. A replay finds the pass by its IRI and evaluates it again from the revision before this one." ;
     rdfs:domain ldg:Pass ;
     rdfs:range xsd:nonNegativeInteger .
 
@@ -282,7 +283,7 @@ ldg:residualValue a owl:DatatypeProperty, owl:FunctionalProperty ;
 
 ldg:revision a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "The revision of a ledger, which its writer moves by one with each pass." ;
-    fnd:utility "Changes only when a pass is written, so it is the revision the ledger's latest pass recorded. A guard or a derivation outside the ledger reads a balance as of a revision, which never changes, and records that revision in its read set." ;
+    fnd:utility "Changes only when a pass is written, so it is the revision the ledger's latest pass recorded. An owner with no ledger is read as revision 0, so the first pass moves it to 1. A guard or a derivation outside the ledger reads a balance as of a revision, which never changes, and records that revision in its read set." ;
     rdfs:domain ldg:Ledger ;
     rdfs:range xsd:nonNegativeInteger .
 

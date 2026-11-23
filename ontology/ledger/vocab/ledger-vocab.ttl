@@ -49,7 +49,7 @@ ldg:Credit a skos:Concept ;
 ldg:CreditKinds a skos:ConceptScheme ;
     rdfs:comment "The kinds of credit, which an account names to say what restores it." .
 
-ldg:CrossingLimits a skos:Concept ;
+ldg:CrossingSets a skos:Concept ;
     rdfs:comment "Two sets of requests, each limited by the accounts its requests reach, overlap with neither inside the other." ;
     skos:inScheme ldg:RefusalReasons .
 

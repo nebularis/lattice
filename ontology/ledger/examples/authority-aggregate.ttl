@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: MPL-2.0
 
-# Premise. Delegated authority, with a proportional merge (ADR-A131 decision
-# 6). An authority owns one aggregate of 100 units of delegated
+# Premise. Delegated authority, with a proportional merge. An authority owns one aggregate of 100 units of delegated
 # capacity. Three proposals, each for 40, arrive at the same position, 120 in
 # all against 100 available. The merge rule is proportional: each proposal's
 # exact share is its request scaled by availability over the total requested,
 # kept as an exact rational, then rounded toward zero to the account's unit
 # and corrected by the largest-remainder residual so the granted values still
 # sum to the availability. Rounding to the nearest beside a residual rule is
-# refused unless the account states how the difference is settled (LG-Q16),
-# so the account rounds toward zero, as the maintainer chose on 2026-11-09.
+# refused unless the account states how the difference is settled, so the
+# account rounds toward zero.
 #
 # | Proposal | Requested | Exact share (100 x 40 / 120) | Rounded (toward zero) | Residual | Granted |
 # |----------|----------:|------------------------------:|----------------------:|----------|--------:|
@@ -21,7 +20,7 @@
 # one unit short (99 of 100). The largest-remainder residual allocates the
 # missing unit, and the three remainders are tied, so it goes to the first
 # proposal in the order the account declares, here the order they were made,
-# and never by their identifiers (TD-161). The policy names that order as its
+# and never by their identifiers. The policy names that order as its
 # unit order criterion, and each request records its place in it. The merge
 # records all three requests, each with what it asked and what it was granted.
 # The authority's ledger names the profile the deployment gave it, and the one
@@ -48,10 +47,11 @@ ex:Authority a owl:Class ; rdfs:comment "The kind of owner this account admits."
 ex:capacity a qnt:ValueSpace ;
     fnd:hasIdentity ex:capacity-identity ;
     qnt:spaceKey "ledger-authority-aggregate-capacity" ; qnt:orderKind qnt:TotalOrder ;
-    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-authority-aggregate-capacity-v1" ;
+    qnt:densityKind qnt:Discrete ; qnt:granularityFloor ex:capacity-floor ; qnt:spaceHash "ledger-authority-aggregate-capacity-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:capacity-sum , ex:capacity-difference .
 ex:capacity-identity a fnd:PersistentIdentity .
+ex:capacity-floor a qnt:Quantity ; qnt:onSpace ex:capacity ; qnt:numericValue "1"^^xsd:decimal .
 ex:capacity-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:capacity .
 ex:capacity-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:capacity .
 
@@ -117,21 +117,21 @@ ex:merge-1 a ldg:MergeRecord ;
 ex:posting-1 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
     ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "34"^^xsd:decimal ;
     ldg:runningBalance "66"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:request-1 .
 ex:posting-2 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
     ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "2"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
     ldg:runningBalance "33"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:request-2 .
 ex:posting-3 a ldg:Posting ;
     ldg:onAccount ex:account-delegated-aggregate ;
     ldg:inPass pass:claims-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
-    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:integer ;
+    ldg:recordedPosition "3"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
     ldg:direction ldg:Debit ; ldg:amountValue "33"^^xsd:decimal ;
     ldg:runningBalance "0"^^xsd:decimal ;
     prov:wasDerivedFrom ex:merge-1 , ex:request-3 .
@@ -144,4 +144,4 @@ ex:ledger-authority a ldg:Ledger ;
 ex:account-delegated-aggregate a ldg:Account ;
     ldg:ofDefinition ex:delegated-aggregate ; ldg:forOwner ex:authority .
 ex:authority a ex:Authority .
-pass:claims-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:integer ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:claims-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:nonNegativeInteger ; ldg:passRevision "1"^^xsd:nonNegativeInteger .

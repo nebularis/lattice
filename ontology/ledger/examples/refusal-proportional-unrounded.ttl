@@ -22,10 +22,11 @@ ex:OwnerKind a owl:Class .
 ex:units a qnt:ValueSpace ;
     fnd:hasIdentity ex:units-identity ;
     qnt:spaceKey "ledger-refusal-proportional-unrounded-units" ; qnt:orderKind qnt:TotalOrder ;
-    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-refusal-proportional-unrounded-units-v1" ;
+    qnt:densityKind qnt:Discrete ; qnt:granularityFloor ex:units-floor ; qnt:spaceHash "ledger-refusal-proportional-unrounded-units-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:units-sum , ex:units-difference .
 ex:units-identity a fnd:PersistentIdentity .
+ex:units-floor a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "1"^^xsd:decimal .
 ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
 ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
 

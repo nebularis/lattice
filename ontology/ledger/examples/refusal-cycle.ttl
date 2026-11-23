@@ -2,9 +2,8 @@
 
 # Premise. Refused: two account definitions each ldg:partOf the other. A tree
 # has no cycle, so a definition can never be its own ancestor through any
-# chain of partOf edges. Refused by the no-cycle shape over ldg:partOf
-# (SHACL-SPARQL per ADR-A128, following a cycle through the property
-# rather than one hop).
+# chain of partOf edges. Refused by the no-cycle shape over ldg:partOf,
+# which follows a cycle through the property rather than one hop.
 
 @prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
 @prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
@@ -21,10 +20,11 @@ ex:OwnerKind a owl:Class .
 ex:units a qnt:ValueSpace ;
     fnd:hasIdentity ex:units-identity ;
     qnt:spaceKey "ledger-refusal-cycle-units" ; qnt:orderKind qnt:TotalOrder ;
-    qnt:densityKind qnt:Discrete ; qnt:spaceHash "ledger-refusal-cycle-units-v1" ;
+    qnt:densityKind qnt:Discrete ; qnt:granularityFloor ex:units-floor ; qnt:spaceHash "ledger-refusal-cycle-units-v1" ;
     qnt:additivity qnt:Extensive ;
     qnt:hasOperationCapability ex:units-sum , ex:units-difference .
 ex:units-identity a fnd:PersistentIdentity .
+ex:units-floor a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "1"^^xsd:decimal .
 ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
 ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
 

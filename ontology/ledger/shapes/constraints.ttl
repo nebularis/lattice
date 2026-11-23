@@ -3,7 +3,9 @@
 # SHACL-SPARQL constraints for ldg:AccountDefinition: the tree has no cycle,
 # units of account match and are extensive, a merge rule states what it needs,
 # a residual account stands beside the permission to leave a residual,
-# a credit ceiling is not below the stated amount, a key dimension is typed,
+# a credit ceiling is not below the stated amount and is above it only where a
+# ledger profile admits it, a discrete unit of account states a granularity floor,
+# a key dimension is typed,
 # a closing recurrence is a ledger profile's, and the kinds a definition
 # names are concepts of the edition it pins.
 # Each targets the class as one node and reads every definition in one query,
@@ -135,6 +137,41 @@ ldg:CreditCeilingNotBelowStatedShape a sh:NodeShape ;
 				?stated qnt:numericValue ?statedValue .
 				?ceiling qnt:numericValue ?ceilingValue .
 				FILTER (?ceilingValue < ?statedValue)
+			}
+		"""
+	] .
+
+ldg:CreditCeilingAboveStatedAdmittedShape a sh:NodeShape ;
+	sh:targetNode ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "A credit ceiling above the account's stated amount must be admitted by a ledger profile that states ldg:admitsCeilingAboveStated true." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:statedAmount ?stated ;
+					  ldg:creditCeiling ?ceiling .
+				?stated qnt:numericValue ?statedValue .
+				?ceiling qnt:numericValue ?ceilingValue .
+				FILTER (?ceilingValue > ?statedValue)
+				FILTER NOT EXISTS { ?profile a ldg:LedgerProfile ; ldg:admitsCeilingAboveStated true }
+			}
+		"""
+	] .
+
+ldg:DiscreteUnitStatesAFloorShape a sh:NodeShape ;
+	sh:targetNode ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "An account definition whose unit of account is on a discrete value space must have that space state a granularity floor." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+			SELECT $this ?value WHERE {
+				?value a $this .
+				?value ldg:unitOfAccount ?space .
+				?space qnt:densityKind qnt:Discrete .
+				FILTER NOT EXISTS { ?space qnt:granularityFloor ?floor }
 			}
 		"""
 	] .

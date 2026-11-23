@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused. An account definition states a credit ceiling of 150
+# above its stated amount of 100, so a credit could restore it past what it
+# started with. A ceiling above the stated amount is admitted only where a
+# ledger profile says so, and the one profile of the data states that it does
+# not, so the definition does not conform. With the profile stating
+# ldg:admitsCeilingAboveStated true, the same definition conforms.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-ceiling-above-stated/> .
+@base <https://example.org/lattice/ledger/refusal-ceiling-above-stated/> .
+
+ex:OwnerKind a owl:Class .
+
+ex:units a qnt:ValueSpace ;
+    fnd:hasIdentity ex:units-identity ;
+    qnt:spaceKey "ledger-refusal-ceiling-above-stated-units" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:granularityFloor ex:units-floor ; qnt:spaceHash "ledger-refusal-ceiling-above-stated-units-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-identity a fnd:PersistentIdentity .
+ex:units-floor a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "1"^^xsd:decimal .
+ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
+ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
+
+# ==== The merge policy =========================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
+# ==== The ledger profile, which does not admit a ceiling above the stated amount
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity ;
+    ldg:admitsCeilingAboveStated false .
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledgers." .
+
+# ==== The configuration ========================================================
+
+ex:pool a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:pool-identity ;
+    ldg:statedAmount <pool/stated-amount> ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
+    ldg:creditCeiling <pool/credit-ceiling> ;
+    rdfs:comment "Refused. Its credit ceiling of 150 is above its stated amount of 100." .
+<pool/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
+<pool/credit-ceiling> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "150"^^xsd:decimal .
+ex:pool-identity a fnd:PersistentIdentity .

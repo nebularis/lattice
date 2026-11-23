@@ -667,12 +667,12 @@ ldg:PassWritesOneLedgerShape a sh:NodeShape ;
 ldg:PassRevisionsInOrderShape a sh:NodeShape ;
         sh:targetNode ldg:Pass ;
         sh:sparql [
-                sh:message "No two passes of one ledger may record one revision, a pass at a later position must record a greater one, and each revision above the least a ledger's passes record must follow one a pass of it recorded." ;
+                sh:message "No two passes of one ledger may record one revision, a pass at a later position must record a greater one, the least a ledger's passes record must be 1, and each revision above it must follow one a pass of it recorded." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
                                 {
-                                        SELECT $this ?value (SUM(?clash) AS ?clashes) (SUM(?below) AS ?lower) (SUM(?justBelow) AS ?previous) WHERE {
+                                        SELECT $this ?value (SAMPLE(?revision) AS ?mine) (SUM(?clash) AS ?clashes) (SUM(?below) AS ?lower) (SUM(?justBelow) AS ?previous) WHERE {
                                                 {
                                                         SELECT $this ?value ?owner ?at ?revision WHERE {
                                                                 ?value a $this ; ldg:passPosition ?at ; ldg:passRevision ?revision .
@@ -691,7 +691,7 @@ ldg:PassRevisionsInOrderShape a sh:NodeShape ;
                                                 BIND (IF(?otherRevision = ?revision - 1, 1, 0) AS ?justBelow)
                                         } GROUP BY $this ?value
                                 }
-                                FILTER (?clashes > 0 || (?lower > 0 && ?previous = 0))
+                                FILTER (?clashes > 0 || (?lower > 0 && ?previous = 0) || (?lower = 0 && ?mine != 1))
                         }
                 """
         ] .
