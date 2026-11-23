@@ -140,7 +140,9 @@ A part may differ where it bounds or arbitrates what is posted later, and leaves
 
 The first reading breaks the rule that a balance as of a revision never changes. The second is what option (b) would build. The kernel's parent is a function of the account, a path is one set of accounts, and an ancestor's balance is its stated amount less everything drawn in its subtree. Under the second reading each of the three is stated for a position, which is where the 2,000 lines come from. The second reading is also what two definitions already say, the old sublimit under A, drawn no further, and a new one under B that states what the wording gives it.
 
-*Leaning (a).* Nothing a wording can say is lost, since the wording must choose between the readings and under (a) it does so in what the new definition states, with the old account kept as history. Under (b) the layer would have to choose. The leaning narrows what the sketch of 2026-11-12 listed as the parts of a version, where the parent is among them, and that drift is recorded with the answer.
+**Answered 2026-11-23, (a), now STD-338.** Decided by the maintainer, row by row. No drafting moves a sublimit from one section to another while its contract is in force and carries its erosion with it, in insurance or outside it. Where balances do change branch, for example loans redesignated between tranches, the drafting moves them by postings or by a new entitlement. The nearest insurance case, a location reassigned from one zone's aggregate to another's, is a new account, or a new construct such as a regime under which a new account is linked, and never the same account under a later version. A reinstatement added, or a kind of credit newly accepted, is uncommon and is supported, and so is a changed merge policy. A changed unit, period, key or counted purpose is a new identity, since neither of us can name drafting that does it to a live account. Owner kinds were in the table and not in the rows the maintainer went through, and stand as the table has them until said otherwise.
+
+Nothing a wording can say is lost, since under (a) the wording says what it means in what the new definition states, with the old account kept as history. The answer narrows what the sketch of 2026-11-12 listed as the parts of a version, where the parent is among them.
 
 **The lookup that (a) brings, and whether it can be avoided.** Where the kinds that restore an account or its merge policy may differ between versions, whatever checks a credit or a merge record must know the version held when it was written. Three things could remove that, and each costs more than it saves.
 
@@ -150,7 +152,7 @@ The first reading breaks the rule that a balance as of a revision never changes.
 | each credit and each merge record names the version it was decided under | one triple for each such record for ever, to save a lookup that only a check or a replay makes |
 | an ancestor that does not accept a credit's kind records a cut of the whole amount | four triples for each such credit and ancestor, and it reverses the ruling of 2026-11-15 that nothing is recorded in that ancestor's book |
 
-The lookup falls on the laws and on a reading by effective position, which replay the records. It does not fall on a draw's decision, which reads a running balance already computed, nor on the write of a credit, where the evaluator holds the latest version. For an account whose definition has one version, which is nearly every account, it is the hop from the account to its definition that the laws make today. So it is avoidable, and we lean to keeping it.
+The lookup falls on the laws and on a reading by effective position, which replay the records. It does not fall on a draw's decision, which reads a running balance already computed, nor on the write of a credit, where the evaluator holds the latest version. For an account whose definition has one version, which is nearly every account, it is the hop from the account to its definition that the laws make today. So it is avoidable, and the maintainer keeps it, since versions that differ in the kinds and the policy are supported.
 
 **LG-Q51. How the kernel states it.**
 
@@ -248,7 +250,7 @@ Instrument and Wording each declare an `Amendment`, for the act and for the chan
 ## 5. What LG-29 builds once answered
 
 - **The record and the key.** The record of LG-Q52 under the name of LG-Q54, the account's natural key on the definition's identity, and `ldg:ofDefinition`'s entry saying which version it names.
-- **The laws.** The running balance and the checkpoint read the stated amount of the latest version in force by the posting's pass or the close. A law for I2. A constraint for what versions of one identity may differ in.
+- **The laws.** The running balance and the checkpoint read the stated amount of the latest version in force by the posting's pass or the close. A law for I2. A constraint that refuses two versions of one identity that differ in a part STD-338 gives a new identity.
 - **The kernel and its proofs,** as LG-Q51 was answered.
 - **Examples** for E2, E3, E6, E8 and E10 of section 3, with a credit cut at a ceiling under a version that has ended, which the model leaves out.
 - **The estimate** is 350k tokens, on the leanings above.
