@@ -76,7 +76,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | spc-package-split | unit |  | merged 2026-09-20 |  | [status](status/spc-package-split.md) |
 | studio-publication | multi-slice unit in four phases | PB | built 2026-10-31 | PB-1 | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
 | studio-quality | multi-slice unit | SQ | built 2026-10-31 | SQ-1 | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
-| studio-visual-authoring | multi-slice unit | SVA | built 2026-11-23 | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md), 38 Validation Packs |
+| studio-visual-authoring | multi-slice unit | SVA | building 2026-11-23 | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md), 38 Validation Packs |
 | studio-worker-liveness | multi-slice unit | WL | built 2026-11-06 | WL-0 | [plan](plans/studio-worker-liveness.md), [status](status/studio-worker-liveness.md) |
 | surface-mork-unified-projection | unit |  | merged 2026-09-22 |  | [status](status/surface-mork-unified-projection.md) |
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
@@ -551,6 +551,9 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-P5 | an object generated from the boundary shape | studio-visual-authoring | built 2026-11-19 | SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S1 | the surface canvas | studio-visual-authoring | planned | SVA-O2 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2 | the surface simulation executor | studio-visual-authoring | built 2026-11-23 | SVA-P3 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | studio-visual-authoring | planned | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S2b | the first instance of a class names its contracts | studio-visual-authoring | planned | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S2c | projections lowered and run in a surface step | studio-visual-authoring | planned | SVA-S2 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S3 | the surface simulator pane | studio-visual-authoring | planned | SVA-S1, SVA-S2, SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M1 | the mapping schemes listed on the left | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M2a | MORK's template library, with `mork_rdf` | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
@@ -565,7 +568,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-X1 | register rows renumbered past the other branches | studio-visual-authoring | built 2026-11-19 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-X2 | user-facing text under main's standard on naming decisions | studio-visual-authoring | built 2026-11-19 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-X3 | the run queues on the contract-driven topology | studio-visual-authoring | planned | MSA-F4 on `main` | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-X4 | this unit's debt rows renumbered past the other branches | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-X4 | this unit's debt rows renumbered past the other branches | studio-visual-authoring | building 2026-11-23 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-D1 | sample documents for every capability, and the examples README | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
 | WL-0 | the plan, this record, the board | studio-worker-liveness | built 2026-11-05 |  | docs/developer/status/studio-worker-liveness.md#position |
