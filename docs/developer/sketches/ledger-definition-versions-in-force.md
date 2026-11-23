@@ -2,7 +2,7 @@
 
 # An account under a later version of its definition, a brief for LG-29
 
-**Unit:** ledger ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Questions:** LG-Q48 to LG-Q55. **Status:** sketched 2026-11-20, worked examples and LG-Q52 to LG-Q54 added the same day, revised 2026-11-23 on the maintainer's questions.
+**Unit:** ledger ([plan](../plans/ledger.md), [status](../status/ledger.md)). **Questions:** LG-Q48 to LG-Q56. **Status:** sketched 2026-11-20, worked examples and LG-Q52 to LG-Q54 added the same day, revised 2026-11-23 on the maintainer's questions.
 
 ## 1. Why now
 
@@ -96,7 +96,7 @@ sequenceDiagram
 | (a) | a record a pass writes, naming the version and the effective position it is in force from | the revision moves when the terms do, so a balance as of an earlier revision is unchanged. The history shows when, and at which revision, the terms moved | what LG-Q52 decides, between 19 and about 11,000 triples in its example, and one request |
 | (b) | the configuration alone. A version states the position it is in force from, and every fold selects by position | writing a version into the configuration changes balances at revisions already read, which the second addendum of 2026-11-19 rules out. Two owners that share a definition cannot take a version at different positions | no write, and one more join in every law that reads a stated amount |
 
-**Answered 2026-11-23, (a).** Decided by the maintainer. It follows from the rule that a balance as of a revision never changes. What the record is written on is LG-Q52, and its name is LG-Q54. LG-29 states the rule, and its addendum to ADR-A131 is drafted with it.
+**Answered 2026-11-23, (a), now ADR-A131's addendum proposed 2026-11-23.** Decided by the maintainer. It follows from the rule that a balance as of a revision never changes. What the record is written on is LG-Q52, and its name is LG-Q54.
 
 **LG-Q49. Which postings count against which version.** The rules and the histories of section 3.
 
@@ -106,7 +106,7 @@ sequenceDiagram
 | R2 | refuses E3, and grants E6 and E8 against a bound already used. The kernel's state becomes a movement, every bound is restated for a position, and a guard outside the ledger reads a balance for an effective position as well as a revision | every law that reads a balance, and Behaviour's guard |
 | R3 | agrees with our reading on every history. A posting's running balance stays one number, the latest version's stated amount less everything recorded, which is R1's figure. A posting effective before a later version took force is also held to each version between, by a reading as of the position that version ended | nothing where a posting takes effect under the latest version. One fold by effective position for each version that ended after the posting took effect |
 
-**Answered 2026-11-23, R3.** Decided by the maintainer, on the histories of section 3. It is R1 with one more guard for a backdated posting, so the common path costs what R1 costs. LG-29 states the rule as the two invariants I1 and I2, and its addendum to ADR-A131 is drafted with it.
+**Answered 2026-11-23, R3, now ADR-A131's addendum proposed 2026-11-23.** Decided by the maintainer, on the histories of section 3. It is R1 with one more guard for a backdated posting, so the common path costs what R1 costs. The addendum states it as the two invariants I1 and I2.
 
 **LG-Q50. What the versions of one identity may differ in.**
 
@@ -161,7 +161,7 @@ The lookup falls on the laws and on a reading by effective position, which repla
 | (a) | a later version taking force is an event of the kernel beside a draw and a restore. The book holds the terms an account opens with, the event moves the account's balance by the difference of the stated amounts and replaces its ceiling and kinds, and the bound on a backdated posting is a reading by position | `Kernel.thy` from the book on, `Credits.thy` and `Readings.thy`, 24 lemmas to carry through one more case, and new laws for the event and the backdated bound. The other ten theories are untouched |
 | (b) | the kernel stays as it is and versions live in the records and shapes alone | no proof moves, and no law is proved of an account that changes terms |
 
-**Answered 2026-11-20, (a).** The maintainer sees no way to avoid it. The claims the README makes of a balance would otherwise hold only for an account that never changes terms. LG-29 states the rule, and its addendum to ADR-A131 is drafted with it.
+**Answered 2026-11-20, (a), now ADR-A131's addendum proposed 2026-11-23.** The maintainer sees no way to avoid it. The claims the README makes of a balance would otherwise hold only for an account that never changes terms. LG-35 builds it.
 
 **LG-Q52. What the record is written on.**
 
@@ -242,7 +242,7 @@ Under every option the account's natural key moves from a version of its definit
 
 **What the figures do not cover.** Periods, a lowered amount, more than ten changes, more than one keyed definition, a store other than these three, and writers in contention. Each write time is one sample. The bulk query's time depends on its form by three orders of magnitude on two engines, and the figures are for the form that was kept, which is TD-178. On Oxigraph an ancestor's read rises by about a third after the first change under every option. The session that built the benchmark traced part of that to a write made after a bulk load, and the review did not repeat its probe.
 
-*Leaning (c),* which the maintainer shares on storage as of 2026-11-23, and which the measurement leaves standing. A tenth of a millisecond on a leaf's read buys a change of terms that writes 18 triples and not 5,065, and a law that runs ten times faster. Option (a) with a balance is the one to take instead if a leaf's read is ever what limits a deployment. What it costs is that the accounts a record reaches are derived and not stated. They are the accounts of the same owner whose definition has a version in the record, in the period the record names, and each law that reads a stated amount carries that join. An account's `ldg:ofDefinition` then names the version in force when its period began, so an account of a later period starts under the later version and needs no record, and an account of an earlier period is never reached. How an account whose definition states no period finds its first version is for LG-29 to work through.
+**Answered 2026-11-23, (c), now ADR-A131's addendum proposed 2026-11-23.** Decided by the maintainer on the measurement. A tenth of a millisecond on a leaf's read buys a change of terms that writes 18 triples and not 5,065, and a law that runs ten times faster. Option (a) with a balance is the one to take instead if a leaf's read is ever what limits a deployment. What it costs is that the accounts a record reaches are derived and not stated. They are the accounts of the same owner whose definition has a version in the record, in the period the record names, and each law that reads a stated amount carries that join. An account's `ldg:ofDefinition` then names the version in force when its period began, so an account of a later period starts under the later version and needs no record, and an account of an earlier period is never reached. How an account whose definition states no period finds its first version is for LG-29 to work through.
 
 **The same gap is open for a ledger's profile.** `ldg:ledgerProfile` is functional and names a version, so a ledger cannot reach a later version of its profile either. A record written on the owner's ledger could carry it. LG-29 does not build that, and it is recorded as TD-177.
 
@@ -256,7 +256,7 @@ Under every option the account's natural key moves from a version of its definit
 
 **How it arrives from drafting.** A reduced amount is a variation of a contract in force, which needs the parties' agreement, and whether that variation is valid is Instrument's to say and not the ledger's. The ledger is asked only whether it can record the result. Drafting gives both answers. Some terms forbid the state, for example a facility whose commitment may be cancelled only as far as it is undrawn, and an endorsement that reduces a limit is checked against what is paid before it is agreed. Other terms allow it and say what follows, for example a borrowing base that falls below what is drawn, where the excess is to be repaid, or a seat quota cut below the seats in use, with a time to come back under it.
 
-**Answered 2026-11-23, both, with refusal where nothing admits the state.** Decided by the maintainer. A later version that states less than is drawn is refused unless it is admitted. Where it is admitted, it is recorded as (c), a balance of zero beside what the account is over by, so a report can show both. Option (b) stays withdrawn. Where the admission is stated is LG-Q55.
+**Answered 2026-11-23, both, with refusal where nothing admits the state, now ADR-A131's addendum proposed 2026-11-23.** Decided by the maintainer. A later version that states less than is drawn is refused unless it is admitted. Where it is admitted, it is recorded as (c), a balance of zero beside what the account is over by, so a report can show both. Option (b) stays withdrawn. Where the admission is stated is LG-Q55.
 
 **LG-Q55. Where it is stated that a version below what is drawn is admitted.**
 
@@ -266,7 +266,7 @@ Under every option the account's natural key moves from a version of its definit
 | (b) | on the account definition, as a part of its terms | each contract says what its drafting says. A deployment cannot forbid it for all, and the part is one more that bears meaning and that a version may differ in |
 | (c) | both. The definition states it, and it holds only where the ledger's profile admits it | the terms decide and the deployment can still forbid. Two places to state it, and a shape that reads both, as the check of a ceiling above a stated amount does |
 
-*Leaning (c).* The drafting differs by contract, which (a) cannot say, and the maintainer expects a deployment to set it by its policy or general terms, which (b) cannot say. A refusal is recorded with a reason of its own, an eighth, and refuses the whole record, so a change of terms that would take any account it reaches over its amount is not recorded in part.
+**Answered 2026-11-23, (c), now ADR-A131's addendum proposed 2026-11-23.** Decided by the maintainer. The drafting differs by contract, which (a) cannot say, and the maintainer expects a deployment to set it by its policy or general terms, which (b) cannot say. A refusal is recorded with a reason of its own, an eighth, and refuses the whole record, so a change of terms that would take any account it reaches over its amount is not recorded in part.
 
 **LG-Q54. What the record is called.** The first draft of this sketch proposed `ldg:Adoption`, as a plain word for an account taking a version. No layer declares the term, and it is no market's word for a change of terms. Two things count against it. Accounting has the adoption of accounts and the adoption of a standard, on a layer whose subject is accounts, which STD-325 rules out. This repository's prose calls whoever takes LATTICE up an adopter, in the ledger's own README among other places, which STD-258 rules out. An account also does not act.
 
@@ -282,13 +282,23 @@ Instrument and Wording each declare an `Amendment`, for the act and for the chan
 
 **Answered 2026-11-23, `ldg:Supersession`, with `ldg:supersedingVersion` for its edge to each version.** Decided by the maintainer, who agrees that a commencement reads as a start. LG-29 declares both terms.
 
-## 5. What LG-29 builds once answered
+**LG-Q56. Three names the answers need.** Each is a proposal, held to STD-258 and STD-325 as the record's name was.
 
-- **The record and the key.** The record of LG-Q52 under the name of LG-Q54, the account's natural key on the definition's identity, and `ldg:ofDefinition`'s entry saying which version it names.
-- **The laws.** The running balance and the checkpoint read the stated amount of the latest version in force by the posting's pass or the close. A law for I2. A constraint that refuses two versions of one identity that differ in a part STD-338 gives a new identity.
-- **The kernel and its proofs,** as LG-Q51 was answered.
-- **Examples** for E2, E3, E6, E8 and E10 of section 3, with a credit cut at a ceiling under a version that has ended, which the model leaves out.
-- **The estimate** is 350k tokens, on the leanings above.
+| For | Proposed | Grounds |
+|---|---|---|
+| the statement, on a definition and on a ledger profile, that a version below what is drawn is admitted | `ldg:admitsStatedBelowDrawn` | it follows `ldg:admitsCeilingAboveStated`, the layer's one other admission, word for word in its form |
+| what an account is over by | `ldg:overdrawnValue` | the layer's amounts are named as values, such as `ldg:cutValue` and `ldg:residualValue`, and its own example of a draw beyond what is available is called an overdraw. An excess is ruled out, since the layer uses it for a unit over in rounding and insurance uses it for a deductible |
+| the eighth reason for a refusal | `ldg:StatedBelowDrawn` | the seven are named for the condition that held, such as `ldg:ExceedsAvailable` and `ldg:KindNotAccepted` |
+
+*Leaning as proposed.* None is declared by any layer.
+
+## 5. What LG-29, LG-34 and LG-35 build
+
+The work is three slices, since one of 350k tokens across the vocabulary, the laws and the proofs is more than a review can hold. The kernel goes first, since a proof may still refute a detail of the rule and the laws cite its theorems.
+
+- **LG-35, the kernel and its proofs.** A supersession as an event of the kernel, the two invariants I1 and I2 as theorems, and the 24 lemmas of `Credits.thy` and `Readings.thy` carried through the new case. It works through a credit cut at a ceiling under a version that has ended, which the model leaves out. 150k tokens.
+- **LG-29, the record and the key.** `ldg:Supersession` and `ldg:supersedingVersion`, the names of LG-Q56, the account's natural key on the definition's identity, `ldg:ofDefinition`'s entry saying which version it names, and the constraint that enforces STD-338. 120k tokens.
+- **LG-34, the laws and the examples.** The running balance and the checkpoint read the stated amount in force by the posting's pass or the close. A law for I2. The refusal of a version below what is drawn and the account that is over where it is admitted. Examples for E2, E3, E6, E8 and E10 of section 3. 130k tokens.
 
 ## 6. What this leaves out
 

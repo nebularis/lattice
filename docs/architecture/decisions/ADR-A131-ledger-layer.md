@@ -565,6 +565,49 @@ The case of a unit short in the second addendum of 2026-11-16, members with a ba
 
 **What this does not decide.** A pass over two ledgers, whose latest passes may differ and which was not modelled. What a layer above forms an evaluation's key from where its position may be read again.
 
+## Addendum (proposed 2026-11-23): an account comes under a later version of its definition by a supersession
+
+**Status of this addendum:** Proposed, for the maintainer's acceptance of its wording. The maintainer decided each rule between 2026-11-20 and 2026-11-23, from eleven worked histories and a benchmark on three engines. Decision 8 says new evaluation semantics come by an addendum with conformance cases, and the cases are at its end.
+
+**Narrows the first addendum of 2026-10-27, the addendum of 2026-11-19 and the third addendum of 2026-11-19.** The first identifies an account by its definition, which is now the definition's identity and not one version of it. The second says an earlier checkpoint of an account that did not move is still exactly true, which holds of its totals, and of its balance less the difference of the stated amounts. The third gives a refusal one of seven reasons, and there are now eight.
+
+**An account keeps its postings under a later version of its definition.** An account is identified by its definition's identity, its owner, its key and its period. A later version of the definition is the same account's terms from the position that version is in force from. No account is opened for it, so an amount raised in the middle of a period acts on what was already drawn.
+
+**Versions of one definition differ only in what bounds or arbitrates later postings.** They are the stated amount, the credit ceiling, the kinds that restore it with their edition, the merge policy and the owner kinds, and the parent where it is a later version of the same parent. A different parent, unit of account, period recurrence, key dimension or counted purpose is another definition, and so another account, since each says which account a posting belongs to or what its amount means.
+
+**A supersession is a record a pass writes.** It names the owner, the effective position its versions are in force from, and each later version that comes into force there, and it is one record for the pass. It reaches the accounts of that owner whose definition has a version among them. The pass moves the ledger's revision as any pass does, so a balance read as of an earlier revision does not change when the terms do. Writing a version into the configuration reaches no account.
+
+**Two bounds hold of an account.** Everything recorded is within the stated amount of the latest version in force. And for each version that has a successor, what took effect before the successor's position is within that version's stated amount. A draw that would break either is refused. A credit counts towards a version's bound where it took effect before that version's successor.
+
+**A balance is read against the latest version in force.** A posting's running balance is its account's stated amount under the latest version in force by the posting's pass, less what is drawn and plus what is restored. A read that starts from an earlier posting or from a checkpoint adds the difference of the stated amounts for each supersession written after it. No checkpoint is written for an account only because its terms moved.
+
+**A later version that states less than is drawn is refused unless it is admitted.** It is admitted where the later version says so and the ledger's profile admits it. Where it is admitted, the account's balance reads zero and the account states what it is over by, two natural numbers of which at most one is above zero. No draw is granted while an account is over, and a credit reduces what the account is over by before it restores the balance. Where it is not admitted, the supersession is refused whole, with a reason of its own, so a change of terms is never recorded for some of the accounts it reaches and not for others.
+
+**The layer's formal statement gains an event.** A supersession is an event of the kernel beside a draw and a restore. The book holds the terms an account opens with, and the event replaces them from an effective position.
+
+**The cost.** A supersession is four statements and one for each later version, 18 for a change that reaches 14 definitions and 1,013 accounts, where a record for each account would be 5,065. On Oxigraph it adds 0.05 to 0.10 ms to the read of a leaf account's balance, with or without a change of terms, and the query a law runs over every account is ten times faster at ten changes than under a record for each account. A change high in a tree is also a later version of every definition below it, since a child names its parent by version, which was 159 statements of configuration for the same change.
+
+**The evidence.** A [model](../../../tools/models/ledger-versions-in-force/README.md) of eleven histories under four rules, in which the two bounds are the only rule that agrees with our reading of the drafting on every history. A [benchmark](../../../benchmark/ledger-supersession-read/README.md) of one history held four ways on Oxigraph on disk, Jena and rdflib, in which every read equals a plain model.
+
+**Conformance cases.** One account, whose first version states 10. Amounts are whole units, a draw or a credit is written as its amount and its effective position, and the steps are in the order they are recorded.
+
+| Case | Given | Result |
+|---|---|---|
+| a raise, every draw forward | 10 at 50, a version of 15 from 100, then 3 at 120 | granted. 13 is drawn of 15 |
+| a draw backdated onto a spent version | 10 at 50, a version of 15 from 100, then 2 at 90 | refused. Before 100, 12 would be drawn of 10 |
+| the same draw where the first version has room | 4 at 50, a version of 15 from 100, 9 at 120, then 2 at 90 | granted. Before 100, 6 is drawn of 10, and in all 15 of 15 |
+| a version recorded late | 10 at 50, then 3 at 120, then a version of 15 from 100, then 3 at 120 again | the first 3 is refused and stays refused at its revision. The second is granted |
+| a lowered amount, every draw forward | 4 at 50, a version of 6 from 100, then 3 at 120, then 2 at 120 | the 3 is refused and the 2 is granted |
+| a lowered amount and a backdated draw | 3 at 50, a version of 6 from 100, 2 at 120, then 4 at 90 | refused. In all, 9 would be drawn of 6 |
+| a credit that took effect before the version ended | 10 at 50, a credit of 10 at 80, a version of 15 from 100, then 2 at 90 | granted |
+| a credit that took effect after the version ended | 10 at 50, a version of 15 from 100, a credit of 10 at 120, then 2 at 90 | refused. Before 100, 12 would be drawn of 10 |
+| three versions | 10 at 50, a version of 15 from 100, 5 at 150, a version of 20 from 200, then 2 at 90, 2 at 160 and 2 at 210 | the first two are refused, each by a version that ended after it took effect, and the third is granted |
+| a version below what is drawn | 8 at 50, then a version of 6 from 100 | refused where it is not admitted. Where it is admitted, the balance reads zero and the account is over by 2, a draw of 1 at 120 is refused, and a credit of 3 leaves a balance of 1 |
+
+**What this does not decide.** The version an account opens under where its definition states no period. How a credit is cut at a ceiling under a version that has ended. A later version of a ledger's profile, which a ledger cannot yet reach. How an amendment of an instrument gives the later versions. The names of the statement that admits a version below what is drawn, of what an account is over by, and of the eighth reason.
+
+**Releases.** The supersession, the account's identification by its definition's identity, the two bounds and the eighth reason change published meaning, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -611,3 +654,5 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 **The third addendum of 2026-11-19.** LG-Q38 and LG-Q41 of the [Ledger plan](../../developer/plans/ledger.md), raised by the [sketch of the vocabulary's rework](../../developer/sketches/ledger-vocabulary-rework.md), which found that a merge refused for a tie recorded no rank, though the second addendum of 2026-11-16 has the merge record show what decided the order. The maintainer decided on 2026-11-19 for one request node on every merge with the grant retired (LG-Q38), and for the residual account on the merge policy (LG-Q41). The seven reasons are those of LG-Q31, named for the condition each states as it asked, and the rule for requests of no use in part is the one the second addendum of 2026-11-16 names. Built as LG-26 ([its pack](../../developer/validation/LG-26.md)). Its wording awaits the maintainer's acceptance.
 
 **The proposed addendum of 2026-11-20.** LG-Q47 of the [Ledger plan](../../developer/plans/ledger.md), raised by the review of the vocabulary's rework, which found that the layer holds a ledger's passes to one order of position and revision and that no text says who gives a pass its position. The maintainer decided on 2026-11-20, on the model, for the later of the two read with the revision. The correction to the layer's documents is a slice of its own.
+
+**The proposed addendum of 2026-11-23.** LG-Q48 to LG-Q55 of the [sketch on an account under a later version of its definition](../../developer/sketches/ledger-definition-versions-in-force.md). The review of the vocabulary's rework found that an account could never reach a later version of its definition, since an account named one version and that version was part of its key, where the [sketch on accounts from instruments](../../developer/sketches/ledger-accounts-from-instruments.md) had agreed on 2026-11-12 that a posting folds against the definition in force when it took effect. The maintainer decided on 2026-11-20 for the same account under the version in force, and answered what that left between then and 2026-11-23, the last of it on a benchmark built as LG-32. What versions may differ in is also STD-338.
