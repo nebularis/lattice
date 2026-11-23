@@ -1,0 +1,13 @@
+{
+  "subject": "MM6",
+  "statedAs": "Laws.a_claim_held_by_another_is_refused_and_changes_nothing, an_applied_claim_names_its_owner",
+  "statementDigest": "sha256:0757e4ec23dbd6770052d7dbd4a37d3e78aac794730101c60db93cf80ed53865",
+  "method": "Proof",
+  "scope": "EveryState",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

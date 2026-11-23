@@ -3,7 +3,7 @@
 # Multi-store architecture: status
 
 **Unit ID:** `multi-store-architecture`
-**Status:** building 2026-11-23.
+**Status:** built 2026-11-23.
 **Plan:** [multi-store-architecture.md](../plans/multi-store-architecture.md)
 **Mode:** autonomous on machine S, at the maintainer's request of 2026-11-23 and the handover of that day, on `spi/worktree-s2`, committing locally only and never pushing, with up to two sub-agents. The branch defers versioning, so Persistence's spec, changed by MSA-F5, is reported unbumped until the merge. The branch defers versioning, so Persistence's spec, changed by MSA-F5, is reported unbumped until the merge.
 
@@ -16,7 +16,7 @@
 | MSA-I3 | [the classification](../notes/multi-store/MSA-I3-dimensions-by-dialect.md). 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. [Validation Pack](../validation/MSA-I3.md) | merged 2026-11-18, built 2026-11-17 |  |
 | MSA-I4 | [four operations lowered](../notes/multi-store/MSA-I4-four-operations-lowered.md). No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. [Validation Pack](../validation/MSA-I4.md) | merged 2026-11-18, built 2026-11-17 |  |
 | MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount defined once. `LatticeShared`, ten claims gated, and the ledger's `Agreement.amounts_agree` fails the build when the two amounts drift. [Validation Pack](../validation/MSA-I5a.md) | verified 2026-11-20, built 2026-11-19 |  |
-| MSA-I5 | the prover spike | building 2026-11-23 | MSA-I5a |
+| MSA-I5 | the prover spike. `spikes/multi-store-model/`, a session on `LatticeShared` with the neutral IR of guarded commands, its `exec`, and eleven laws proved and gated. The interpreter exported to Scala replays 17 histories of the persistence behaviour tests with the same state as Oxigraph after each of 25 commands, at 0.22 of Oxigraph's time warm and 5.4 times on the first round. [Validation Pack](../validation/MSA-I5.md) | built 2026-11-23 | MSA-I5a |
 | MSA-I6 | `tools/models/multi-store-protocols`. TLA+ models A, X1 to X4, 28 configurations. Five catalogue rows keep their guarantee with a stated requirement, and the serialised writer never gives atomic visibility. Probes and trace validation not run. [Validation Pack](../validation/MSA-I6.md) | built 2026-11-18 |  |
 | MSA-I7 | the ledger benchmark with a PostgreSQL arm | planned | the ledger's LG-2 |
 | MSA-I8 | one ledger family in PostgreSQL behind the port | planned | MSA-I5, MSA-I6, MSA-I7, MSA-I10, MSA-I14 |
@@ -130,3 +130,4 @@ C1 to C3 of MSA-I2 are decided. A pass is one request that moves a ledger's revi
 - 2026-11-23: MSA-F15 marked building, the first of lane A, and MSA-I5 marked building, the first of lane B.
 - 2026-11-23: MSA-F15 built. Its first test failed before the fix and passes after. Its second passed on the unchanged code and caught a probe that reused a claimed transaction id, so TD-171 needs no change to the attempt's id. Its `CodecTest` case caught the macOS probe's break on MSA-F14, which the two earlier tests miss. Point 5 as written broke MSA-F9's verified F9-T1, a resend completing its own creation, so a row the command's own first step wrote is excepted, and the pack asks the maintainer to choose between that, point 5 as written, and MSA-I14's guard. `check:config-studio` passes with 159 pytest, 259 JUnit and 121 browser tests. The pack proposes TD-168 as paid and TD-171 closed.
 - 2026-11-23: the mirror serves `com.apicatalog:titanium-rdfc` 2.0.0 with its dependencies, fetched through Maven on machine S. MSA-F16 still waits on PDD-24 (a).
+- 2026-11-23: MSA-I5 built. Eleven laws proved, none resisting beyond proof engineering. `mise run check:proofs -- multi-store-model` gates 11 claims, and `check:proofs` alone still builds only the layers. `mise run check:multi-store-model-replay` passes within ten times on the first and later rounds, the Scala side on Java 21.0.9 and Scala 3.3.4, the RDF side on pyoxigraph 0.5.13. Three questions for the maintainer are in the pack: an append with an empty rows slot, a field read from a resource no parameter names, and whether the replay task belongs under `benchmark/`.

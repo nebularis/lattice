@@ -1,0 +1,13 @@
+{
+  "subject": "MM3",
+  "statedAs": "Laws.every_value_is_read_before_any_write",
+  "statementDigest": "sha256:85e52c983c5c8943f5a22bb8bccda39da779c19ad1b4bc79241038eacc6793fd",
+  "method": "Proof",
+  "scope": "EveryWellFormedCommand",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

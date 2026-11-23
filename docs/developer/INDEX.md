@@ -50,7 +50,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
 | mtp-execution | unit |  | merged 2026-09-20 |  | [status](status/mtp-execution.md) |
-| multi-store-architecture | unit | MSA | building 2026-11-23 | MSA-I2 | [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md), 26 Validation Packs |
+| multi-store-architecture | unit | MSA | built 2026-11-23 | MSA-I2 | [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md), 26 Validation Packs |
 | multi-store-conformance | unit | MSC | merged 2026-10-29 |  | [plan](plans/multi-store-conformance.md), [status](status/multi-store-conformance.md), 5 Validation Packs |
 | normative-rule-substrate | multi-slice unit | NRS | blocked | NRS-2 | [plan](plans/normative-rule-substrate.md), [status](status/normative-rule-substrate.md) |
 | ontology-remediation | phase | OR | built 2026-10-28 | OR-0 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |
@@ -454,7 +454,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | MSA-I3 | the classification. 27 of 30 dimensions stable as they stand, 3 split by value, and resolution's reasoning filter makes semantic selection read a capability. Validation Pack | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I4 | four operations lowered. No construct belongs to one dialect, every resource has a relational counterpart, three implicit choices and the event's logical key found. Validation Pack | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount defined once. `LatticeShared`, ten claims gated, and the ledger's `Agreement.amounts_agree` fails the build wh | multi-store-architecture | verified 2026-11-20 |  | docs/developer/status/multi-store-architecture.md#position |
-| MSA-I5 | the prover spike | multi-store-architecture | building 2026-11-23 | MSA-I5a | docs/developer/status/multi-store-architecture.md#position |
+| MSA-I5 | the prover spike. `spikes/multi-store-model/`, a session on `LatticeShared` with the neutral IR of guarded commands, its `exec`, and eleven laws proved and gated. The interpreter exported to | multi-store-architecture | built 2026-11-23 | MSA-I5a | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I6 | `tools/models/multi-store-protocols`. TLA+ models A, X1 to X4, 28 configurations. Five catalogue rows keep their guarantee with a stated requirement, and the serialised writer never gives at | multi-store-architecture | built 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I7 | the ledger benchmark with a PostgreSQL arm | multi-store-architecture | planned | the ledger's LG-2 | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I8 | one ledger family in PostgreSQL behind the port | multi-store-architecture | planned | MSA-I5, MSA-I6, MSA-I7, MSA-I10, MSA-I14 | docs/developer/status/multi-store-architecture.md#position |

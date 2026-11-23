@@ -1,0 +1,13 @@
+{
+  "subject": "MM11",
+  "statedAs": "Laws.from_nothing_a_rows_receipts_are_its_positions_one_to_its_sequence",
+  "statementDigest": "sha256:aa279e10ce68c5f38d4ab92244f27790c103f37ce37c5b100218dbbde6bdc00f",
+  "method": "Proof",
+  "scope": "EveryHistory",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

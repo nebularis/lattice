@@ -1,0 +1,13 @@
+{
+  "subject": "MM9",
+  "statedAs": "Laws.the_patch_log_holds_the_delta_as_requested",
+  "statementDigest": "sha256:d35c2af4ea5feeb7d6de1f2cab699f9d5fed261a8c0c88a4cad11eaf279e1c6e",
+  "method": "Proof",
+  "scope": "EveryState",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

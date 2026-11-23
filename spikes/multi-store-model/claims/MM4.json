@@ -1,0 +1,13 @@
+{
+  "subject": "MM4",
+  "statedAs": "Laws.an_asserted_fact_is_present_whatever_is_retracted",
+  "statementDigest": "sha256:c5b4206f22175bcc2a86975515c2fddf5daf56e3f7ea20030b9a389efaed1e92",
+  "method": "Proof",
+  "scope": "EveryWellFormedCommand",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

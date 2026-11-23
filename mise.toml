@@ -965,5 +965,10 @@ run = "python spikes/formal-prover/env/smoke.py"
 # Isabelle installed first, by bootstrap:formal-native-isabelle or already on PATH.
 
 [tasks."check:proofs"]
-description = "Build every tools/proofs/<layer>/ Isabelle session natively and run the proof gate (ADR-A-FM2). Pass a layer name to build only that one"
+description = "Build every tools/proofs/<layer>/ Isabelle session natively and run the proof gate (ADR-A-FM2). Pass a layer name to build only that one, or a spike session's name, multi-store-model, to build and gate that spike"
 run = "python tools/proofs/check.py"
+
+[tasks."check:multi-store-model-replay"]
+depends = ["bootstrap:persistence", "bootstrap:testing-oxigraph"]
+description = "Replay the persistence behaviour tests' histories of the four operations through the interpreter exported to Scala from spikes/multi-store-model and through the RDF realisation on Oxigraph, compare the state after every command, and report both times with each engine's version (MSA-I5, ADR-A124). Builds and gates the session first, and needs Isabelle as check:proofs does. Run on demand, not part of check. Fails on a wrong result, never on time. MULTI_STORE_REPLAY_ROUNDS sets the rounds, 200 by default"
+run = "python tools/proofs/multi_store_replay.py"

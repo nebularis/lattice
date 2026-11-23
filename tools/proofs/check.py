@@ -19,11 +19,16 @@ each with `isabelle build` on the native route (spikes/formal-prover/env/driver.
 native-Isabelle plumbing; no image route exists for Isabelle in this programme, see the
 formal-methods status record), then runs gate.py against that layer's directory.
 
+A spike's session named in SPIKE_SESSIONS is built and gated the same way, from its directory
+under the spikes root, only when it is named, since a spike is not a layer: for example
+`python tools/proofs/check.py multi-store-model`.
+
 Usage: python tools/proofs/check.py [layer ...]   (default: every layer with a ROOT file)
 """
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -35,6 +40,8 @@ DRIVER = REPO_ROOT / "spikes" / "formal-prover" / "env" / "driver.py"
 BASE = HERE / "base"
 SHARED = HERE / "shared"
 NOT_LAYERS = (BASE, SHARED)
+# Spike sessions built and gated when named, never by default. Each imports the shared session.
+SPIKE_SESSIONS = ("multi-store-model",)
 SESSION_RE = re.compile(r"^session\s+(\S+)\s*(?:\(.*\))?\s*(?:in\s+\S+\s*)?=", re.MULTILINE)
 # Each session's ROOT states its own build timeout, a layer's narrow so a looping proof fails fast
 # and the prelude's wide for its first build from source. A `-o timeout=` here would change every
@@ -45,10 +52,23 @@ def session_names(root_file: Path) -> list[str]:
     return SESSION_RE.findall(root_file.read_text(encoding="utf-8"))
 
 
+def spike_dir(name: str) -> Path:
+    sys.path.insert(0, str(HERE.parent))
+    from lattice_repo_catalogue import load
+
+    catalogue = load()
+    return catalogue.root / catalogue.area("spikes") / name
+
+
 def layers(selected: list[str]) -> list[Path]:
     if selected:
-        return [HERE / name for name in selected if HERE / name not in NOT_LAYERS]
+        return [spike_dir(name) if name in SPIKE_SESSIONS else HERE / name for name in selected if HERE / name not in NOT_LAYERS]
     return sorted(p.parent for p in HERE.glob("*/ROOT") if p.parent not in NOT_LAYERS)
+
+
+def build_dir_arg(layer_dir: Path) -> str:
+    """The layer's directory as `-d` takes it from tools/proofs, a name for a layer and a relative POSIX path for a spike."""
+    return layer_dir.name if layer_dir.parent == HERE else Path(os.path.relpath(layer_dir, HERE)).as_posix()
 
 
 def build(directory: Path, session: str, dirs: list[str], save_heap: bool = False) -> bool:
@@ -97,7 +117,7 @@ def main(argv: list[str]) -> int:
             continue
         built = True
         for session in session_names(root_file):
-            built = build(layer_dir, session, ["base", "shared", layer_dir.name]) and built
+            built = build(layer_dir, session, ["base", "shared", build_dir_arg(layer_dir)]) and built
         if not built:
             # The gate reads the claim records, which still say passed, so it would report a pass the build just refuted.
             print(f"-- gate: {layer_dir.name} --\nGATE: fail, a session of {layer_dir.name} did not build, so no claim of it is proved", flush=True)

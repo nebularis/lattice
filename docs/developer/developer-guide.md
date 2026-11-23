@@ -86,7 +86,7 @@ A commit that touches none of these runs the deny-list alone, in well under a se
 | Family | Does | Run |
 |---|---|---|
 | `bootstrap:*` | Installs one package's dependencies (`pip install -e`, `yarn install`, …). `bootstrap:python` installs every Python package in one pip resolve | Once per clone, again after a dependency changes |
-| `check:*` | Validates one package or gate (tests, shape conformance, catalog/version checks) | Before every commit touching that package; `mise run check` runs all of them |
+| `check:*` | Validates one package or gate (tests, shape conformance, catalog/version checks) | Before every commit touching that package. `mise run check` runs all of them |
 | `build:*` | Regenerates a derived artefact (the ontology catalog, release rows, the MORK Teaching Pack, Persistence's compiled examples, minting vectors) | When the source it derives from changes |
 | `clean:*` | Removes build output and caches | When something looks stale |
 | `topology:*` | Checks the repository's own structure against ADR-A77 | Rarely, mostly for the topology migration itself |
@@ -100,8 +100,9 @@ because their toolchain is large, native, or otherwise too heavy to run on every
 |---|---|---|
 | `check:formal-network` | network access | probes whether track D's prover sources are reachable at all, not a correctness check |
 | `check:formal-smoke` | Docker, or a native Rocq/Isabelle install | confirms a prover toolchain runs end to end, minutes to build |
-| `check:proofs` | a native Isabelle install | builds every `tools/proofs/<layer>/` Isabelle session and runs the proof gate (ADR-A-FM2) |
-| `check:minting-tables` | network access (Unicode Character Database) | regenerates pinned tables and diffs them; only needed when Unicode itself updates |
+| `check:proofs` | a native Isabelle install | builds every `tools/proofs/<layer>/` Isabelle session and runs the proof gate (ADR-A-FM2). Named `multi-store-model`, it builds and gates that spike's session instead |
+| `check:multi-store-model-replay` | a native Isabelle install | builds the multi-store model, exports its interpreter to Scala, and replays the persistence behaviour tests' histories through it and on Oxigraph, comparing the state after every command and reporting both times |
+| `check:minting-tables` | network access (Unicode Character Database) | regenerates pinned tables and diffs them, and is needed only when Unicode itself updates |
 
 Everything else, including the formal-methods reference semantics (`check:reference-eligibility`)
 and the formal-artefact freshness check (`check:formal-freshness`, §4), **is** in `check`, because

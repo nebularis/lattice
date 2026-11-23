@@ -1,0 +1,13 @@
+{
+  "subject": "MM5",
+  "statedAs": "Laws.a_resend_is_answered_duplicate_before_any_conflict, an_append_sent_again_is_answered_duplicate, a_claim_written_again_by_its_owner_changes_nothing",
+  "statementDigest": "sha256:0c9915038004ca0cd2545cfeaaacf703d93b2549eae8fb6c84a1bd58a08e2936",
+  "method": "Proof",
+  "scope": "TheFourCommands",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}
