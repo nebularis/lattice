@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-S2 for the maintainer, who decides TD-259 (which rule keeps a promotion), whether TD-260 and TD-261 are this unit's, and the provenance of LegalRuleML samples for SVA-D1. SVA-X4 is ready. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** paused after SVA-X4 for the maintainer, who says which slice comes next. Ready with no design question: SVA-S2b, SVA-S2a and SVA-S2c. SVA-P2, SVA-S1 and SVA-M2a each open with one. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
