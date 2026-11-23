@@ -11,7 +11,7 @@
 | Your branch | `spi/worktree-s`, cut from the merge of `docs/placement-vehicles-structure` into `spi/multi-store-architecture`. Fetch it and work on it alone |
 | What it holds | your second bundle, the ledger's branch as of 2026-11-19, both halves of this brief and every text they name |
 | What you never do | commit on `spi/multi-store-architecture` or on `docs/placement-vehicles-structure`. The first is a merging point, and the ledger session keeps working on the second |
-| From 2026-11-23 | your branch is `spi/worktree-s2`, cut as the [handover of 2026-11-23](machine-s-handover-2026-11-23.md) says. `spi/worktree-s` is merged and closed |
+| From 2026-11-23 | your branch is `spi/worktree-s2`, which the maintainer cuts and brings to machine S, as the [handover of 2026-11-23](machine-s-handover-2026-11-23.md) says. `spi/worktree-s` is merged and closed |
 | A decision you need midweek | arrives as a merge of `spi/multi-store-architecture` into your branch, which the maintainer brings you. Merge it, never rebase |
 
 **Two bundles, of `spi/worktree-s`.**
@@ -96,7 +96,7 @@ The probes run on MSA-I13's fixture. The trace validation waits for MSA-I5's exp
 
 ### 4.5 MSA-I10, MSA-I7 and MSA-I8
 
-They name the ledger's records, so each starts from the reworked vocabulary and never from the one it replaces.
+They name the ledger's records, so each starts from the reworked vocabulary and never from the one it replaces. From 2026-11-23 that vocabulary includes LG-30 and LG-29, as the [ledger's note](ledger-to-multi-store-2026-11-23.md) sets out, and the [handover](machine-s-handover-2026-11-23.md) says which of the three are released.
 
 - **MSA-I10** is written after LG-28, on the account definition as a versioned thing. It also answers the sketch's MSA-Q19. The studio's unit, on a branch you do not hold, gives each write access of a compiled profile one place, a graph or a family of graphs with its role, linked from the access, which keeps only logical facts. We have asked that unit for a general class of place above its graph place. So write each family's relational layout in a form a compiled profile could state as a place beside a graph place: the table, its key columns, and which logical resource and key part each column holds. The layout comes from the mapping, never from lowered SQL. Say in the pack what a relational place needs that a graph place's role and name template do not give, and add no term to `ontology/persistence` for it.
 - **MSA-I7** needs LG-27, for the ledger node and its revision. Build the PostgreSQL arm beside the benchmark's existing backends and show it correct on machine S, against the same expected results the other backends are checked against. Its figures are run elsewhere, so the benchmark has to run on macOS from one command, which the pack gives. Report no figure of your own as the result.
