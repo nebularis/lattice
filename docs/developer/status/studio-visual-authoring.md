@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-23. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-23. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** the maintainer answers SVA-Q24 to SVA-Q30 of the [projection backend sketch](../sketches/projection-backend.md), then its slices are planned. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** the maintainer says when SVA-S2e starts. The projection slices run SVA-S2e, SVA-S2f, then SVA-S2g, SVA-S2h and SVA-S2i, then SVA-S2c. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -59,8 +59,13 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2 | the surface simulation executor | built 2026-11-23, building 2026-11-23 | SVA-P3 |
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | built 2026-11-23, building 2026-11-23 | SVA-S2 |
 | SVA-S2b | the first instance of a class names its contracts | built 2026-11-23, building 2026-11-23 | SVA-S2 |
-| SVA-S2d | a sketch of a projection backend | building 2026-11-23 | SVA-S2 |
-| SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2d |
+| SVA-S2d | a sketch of a projection backend | built 2026-11-23, building 2026-11-23 | SVA-S2 |
+| SVA-S2e | the projection expression vocabulary and the lowering of a derivation | planned | SVA-S2d |
+| SVA-S2f | `mork_rdf` compiles a derivation | planned | SVA-S2e |
+| SVA-S2g | graph construction projections | planned | SVA-S2f |
+| SVA-S2h | join projections | planned | SVA-S2f |
+| SVA-S2i | expansion projections | planned | SVA-S2f |
+| SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2g, SVA-S2h, SVA-S2i |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
@@ -236,3 +241,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-23: the maintainer decided that the studio's own promotions stay on the single-graph fill, preferring correctness, since a published version's rows must not follow a draft that reuses its concept IRIs. For projections the maintainer chose a projection backend built in this unit, its design first, planned as SVA-S2d before SVA-S2c.
 - 2026-11-23: SVA-S2d started.
 - 2026-11-23: SVA-S2d's sketch written, [projection backend](../sketches/projection-backend.md), with SVA-Q24 to SVA-Q30 for the maintainer. A derivation's operation is stated nowhere today, MORK has no arithmetic, and `mork_rdf` has no rule to write onto the carrier itself, so each is a question.
+- 2026-11-23: the maintainer answered SVA-Q24 to SVA-Q30. The operation is stated in the contract and carried across by the lowering, the vocabulary holds rounding and a choice on a comparison now as well as the arithmetic, MORK gains typed value expressions, a derived value lands on the carrier itself, every projection kind is built in this unit, and a step's projection part is a second run of the Python worker. Planned SVA-S2e to SVA-S2i before SVA-S2c.
+- 2026-11-23: SVA-S2d built: the projection backend sketch with its questions answered and its slices planned.
