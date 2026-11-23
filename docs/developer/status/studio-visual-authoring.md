@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-23. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-23. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -59,7 +59,8 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2 | the surface simulation executor | built 2026-11-23, building 2026-11-23 | SVA-P3 |
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | built 2026-11-23, building 2026-11-23 | SVA-S2 |
 | SVA-S2b | the first instance of a class names its contracts | built 2026-11-23, building 2026-11-23 | SVA-S2 |
-| SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2 |
+| SVA-S2d | a sketch of a projection backend | building 2026-11-23 | SVA-S2 |
+| SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2d |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
@@ -232,3 +233,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-23: SVA-S2c started.
 - 2026-11-23: SVA-S2c stopped before changing anything. A projection lowers to a bare `mork:DataMapping` holding its role bindings and no path mappings or expressions, as its own note says, and no backend compiles it: `mork_rdf` reports a projection mapping as another backend's and compiles no query from it, and the surface compiler emits no SPARQL for one. So no compiled form exists for a step to run, on any engine. Set back to planned, and put to the maintainer, who decides whether a projection backend is built in this unit.
 - 2026-11-23: SVA-S2a built, [Validation Pack](../validation/SVA-S2a.md). A promotion's fill reads each hop in the graph that holds it and matches subclasses, and a write also refills every source its change reaches, found by a reach query along the read path, in the same request, in the writer and the simulator. The facility samples keep their borrowers in their own graphs. The studio's own six promotions stay on the single-graph fill, since each reads one family. Also fixed, from earlier slices: STD-338 named files where the index wants a governed quantum, and CAP-100's claim was over 200 characters.
+- 2026-11-23: the maintainer decided that the studio's own promotions stay on the single-graph fill, preferring correctness, since a published version's rows must not follow a draft that reuses its concept IRIs. For projections the maintainer chose a projection backend built in this unit, its design first, planned as SVA-S2d before SVA-S2c.
+- 2026-11-23: SVA-S2d started.
