@@ -299,8 +299,27 @@ Instrument and Wording each declare an `Amendment`, for the act and for the chan
 | (a) | an account names the version in force for its owner at the first position of its period, and at the first position of all where its definition states no period. A supersession states the period its effective position falls in, where its definitions state a recurrence, and reaches the accounts of that period. An account of a later period opens under the later version and needs no record. An account of an earlier period is never reached |
 | (b) | an account names the version in force when it is first drawn on. An account first drawn on after a supersession opens under the later version, and a draw backdated onto it is never held to the earlier one, which is the fault E2 of section 3 shows |
 | (c) | a supersession names each account it reaches. This is option (a) of LG-Q52, which the maintainer decided against |
+| (d) | an account names its definition's identity and no version, and every version, the first too, reaches an owner by a supersession. One mechanism, and nothing to choose when an account is minted. Every read of a balance then makes the lookup, where under (a) an account whose terms never changed reads its version in one hop. Every owner needs a supersession before its first draw in each period, about 20 triples for a tree of 15 definitions, and `ldg:ofDefinition`'s range moves from a version to an identity, which changes what LG-28 built |
 
-*Leaning (a).* It is what LG-Q52's option (c) described, a record with its period, carried to the account that states no period. One supersession then holds the versions of one period, so a pass that changes terms under two recurrences writes two. LG-29 is built on (a) while this waits, and a different answer changes one entry and one law.
+**The four accounts a supersession meets.** A version is in force from a position in this year.
+
+| Account | Under (a) | Under (b) |
+|---|---|---|
+| last year's, which a loss reported late still draws on | names last year's version and is not reached | not reached only if something else says so, since nothing on the record names a period |
+| this year's, open before the supersession | names the first version and is reached | the same |
+| this year's, first drawn on after the supersession | names the first version and is reached, so a draw backdated onto it is held to the first version | names the later version, and a draw backdated onto it is never held to the first |
+| next year's | names the later version, and needs no record | the same |
+
+**What (a) costs.**
+
+- **One lookup when an account is minted,** for the version in force at the start of its period, where (b) uses the version the evaluation already holds. It is the lookup LG-32 measured at 0.1 to 0.3 ms on Oxigraph, paid once in an account's life.
+- **One triple on the supersession,** its period key, and a law that holds it to the recurrence.
+- **A change of terms is written once for each period whose accounts it changes.** A pass that changes terms under two recurrences writes two supersessions. A change in force from a position in last year, recorded this year, writes one for last year's accounts and one for this year's, since this year's accounts were opened under the earlier version. Each is 5 triples and one for each version.
+- **An account's version is no longer the one its first draw saw.** A reader who wants the terms a draw was decided under reads the supersessions, never `ldg:ofDefinition` alone.
+
+**What (a) gives.** The same facts recorded in another order give the same `ldg:ofDefinition`, where under (b) it depends on whether an account's first draw was recorded before or after the supersession. The accounts a supersession reaches are found by an equality of period keys, which the records hold, and never by comparing a position with the bounds of a period, which they do not.
+
+*Leaning (a).* It is what LG-Q52's option (c) described, a record with its period, carried to the account that states no period. LG-29 is built on (a) while this waits, and a different answer changes one entry and one law under (b), and the range of `ldg:ofDefinition` and every account under (d).
 
 ## 5. What LG-29, LG-34 and LG-35 build
 
