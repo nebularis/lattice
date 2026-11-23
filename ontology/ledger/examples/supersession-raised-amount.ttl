@@ -1,0 +1,150 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. An amount raised in the middle of a history. An aggregate states 10
+# and a section part of it states 6, each with a second version linked from the
+# first by fnd:supersededBy. The aggregate's second version states 15. The
+# section's second version states 6 again and names the aggregate's second
+# version as its parent, since a version names its parent by version. One
+# account of each names its first version, a definition's identity being what
+# identifies an account. A first pass draws 4 at the section's account. A second
+# pass writes one supersession, in force from position 2, which names both
+# second versions and reaches both accounts. The accounts keep their postings.
+# No account is opened for a later version, and the supersession is the only
+# record the second pass writes.
+#
+# | Position | Record                                   | Section (stated 6) | Aggregate (stated 10, then 15) |
+# |----------|------------------------------------------|--------------------|--------------------------------|
+# | start    |                                          | 6                  | 10                             |
+# | 1        | a debit of 4 at the section's account    | 6 - 4 -> 2         | 10 - 4 -> 6                    |
+# | 2        | a supersession, in force from position 2 | 6 - 4 -> 2         | 15 - 4 -> 11                   |
+#
+# The posting records the running balance of its own account, the section's,
+# which is 2 under the first versions. No other posting is written, so no running
+# balance is asked anything of the later versions. The aggregate's balance of 6,
+# then 11, is derived from its subtree and is not posted.
+#
+# The ledger's first pass records revision 1 and the second revision 2, so the
+# ledger is at 2. The second pass writes no posting, and its one record is the
+# supersession, which names the pass and the owner.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/supersession-raised-amount/> .
+@prefix pass: <https://example.org/lattice/ledger/supersession-raised-amount/ledger-holder/pass/> .
+@base <https://example.org/lattice/ledger/supersession-raised-amount/> .
+
+# ==== The owner and the value space ============================================
+
+ex:holder a fnd:PersistentIdentity ; rdfs:comment "The owner of both accounts." .
+ex:Holder a owl:Class ; rdfs:comment "The kind of owner these accounts admit." .
+ex:holder a ex:Holder .
+
+ex:units a qnt:ValueSpace ;
+    fnd:hasIdentity ex:units-identity ;
+    qnt:spaceKey "ledger-supersession-raised-amount-units" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:granularityFloor ex:units-floor ; qnt:spaceHash "ledger-supersession-raised-amount-units-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-identity a fnd:PersistentIdentity .
+ex:units-floor a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "1"^^xsd:decimal .
+ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
+ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
+
+# ==== The merge policy and the ledger profile ==================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
+ex:ledger-profile a ldg:LedgerProfile ;
+    fnd:hasIdentity ex:ledger-profile-identity .
+ex:ledger-profile-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The ledger profile the deployment gives this example's ledger." .
+
+# ==== The configuration: an aggregate and a section, each in two versions ======
+# Each version has the identity of its definition and its stated amount minted
+# under its IRI. A version names its parent by version.
+
+ex:aggregate-1 a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:aggregate-identity ;
+    ldg:statedAmount <aggregate-1/stated-amount> ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
+    fnd:supersededBy ex:aggregate-2 ;
+    rdfs:comment "The first version of the aggregate, stated at 10." .
+<aggregate-1/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "10"^^xsd:decimal .
+
+ex:aggregate-2 a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:aggregate-identity ;
+    ldg:statedAmount <aggregate-2/stated-amount> ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
+    rdfs:comment "The second version of the aggregate, stated at 15." .
+<aggregate-2/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "15"^^xsd:decimal .
+ex:aggregate-identity a fnd:PersistentIdentity .
+
+ex:section-1 a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:section-identity ;
+    ldg:statedAmount <section-1/stated-amount> ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
+    ldg:partOf ex:aggregate-1 ;
+    fnd:supersededBy ex:section-2 ;
+    rdfs:comment "The first version of the section, stated at 6 and part of the aggregate's first version." .
+<section-1/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "6"^^xsd:decimal .
+
+ex:section-2 a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:section-identity ;
+    ldg:statedAmount <section-2/stated-amount> ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:Holder ; ldg:mergePolicy ex:refused-when-exceeded ;
+    ldg:partOf ex:aggregate-2 ;
+    rdfs:comment "The second version of the section, stated at 6 and part of the aggregate's second version." .
+<section-2/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "6"^^xsd:decimal .
+ex:section-identity a fnd:PersistentIdentity .
+
+# ==== Position 1: a debit of 4 at the section's account =======================
+
+ex:draw-1-proposal rdfs:comment "A draw of 4 on the section." .
+ex:draw-1-request a ldg:Request ;
+    ldg:forProposal ex:draw-1-proposal ;
+    ldg:requestedValue "4"^^xsd:decimal ; ldg:grantedValue "4"^^xsd:decimal .
+ex:draw-1-merge a ldg:MergeRecord ;
+    ldg:onAccount ex:account-section ;
+    ldg:inPass pass:draw-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:availableBefore "6"^^xsd:decimal ;
+    ldg:request ex:draw-1-request .
+ex:draw-1-posting a ldg:Posting ;
+    ldg:onAccount ex:account-section ;
+    ldg:inPass pass:draw-1 ; ldg:effectivePosition "1"^^xsd:nonNegativeInteger ;
+    ldg:recordedPosition "1"^^xsd:nonNegativeInteger ; ldg:microPosition "0"^^xsd:nonNegativeInteger ;
+    ldg:direction ldg:Debit ; ldg:amountValue "4"^^xsd:decimal ;
+    ldg:runningBalance "2"^^xsd:decimal ;
+    prov:wasDerivedFrom ex:draw-1-merge , ex:draw-1-request ;
+    rdfs:comment "The section holds 6, so 4 is granted and 2 is left." .
+
+# ==== Position 2: a supersession from position 2 ==============================
+
+ex:supersession-1 a ldg:Supersession ;
+    ldg:forOwner ex:holder ;
+    ldg:inPass pass:supersession-2 ; ldg:effectivePosition "2"^^xsd:nonNegativeInteger ;
+    ldg:supersedingVersion ex:aggregate-2 , ex:section-2 ;
+    rdfs:comment "The second versions of the aggregate and the section are in force for the holder from position 2. It states no period, since neither version states a period recurrence." .
+
+# ==== The ledger, the account instances and the passes ========================
+
+ex:ledger-holder a ldg:Ledger ;
+    ldg:forOwner ex:holder ; ldg:ledgerProfile ex:ledger-profile ;
+    ldg:revision "2"^^xsd:nonNegativeInteger .
+ex:account-aggregate a ldg:Account ;
+    ldg:ofDefinition ex:aggregate-1 ; ldg:forOwner ex:holder ;
+    rdfs:comment "Opened under the aggregate's first version. The supersession reaches it, and no account is opened for the second version." .
+ex:account-section a ldg:Account ;
+    ldg:ofDefinition ex:section-1 ; ldg:forOwner ex:holder ;
+    ldg:partOfAccount ex:account-aggregate ;
+    rdfs:comment "Opened under the section's first version, and part of the aggregate's account." .
+pass:draw-1 a ldg:Pass ; ldg:passPosition "1"^^xsd:nonNegativeInteger ; ldg:passRevision "1"^^xsd:nonNegativeInteger .
+pass:supersession-2 a ldg:Pass ; ldg:passPosition "2"^^xsd:nonNegativeInteger ; ldg:passRevision "2"^^xsd:nonNegativeInteger .

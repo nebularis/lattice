@@ -106,7 +106,7 @@ ldg:RanksNotDistinct a skos:Concept ;
     skos:inScheme ldg:RefusalReasons .
 
 ldg:RefusalReasons a skos:ConceptScheme ;
-    rdfs:comment "Why a merge, or a credit refused alone, granted nothing." .
+    rdfs:comment "Why a merge or a credit refused alone granted nothing, or why a supersession took no effect." .
 
 ldg:Refuse a skos:Concept ;
     rdfs:comment "Where proposals together exceed availability, the whole merge is refused: no request is granted, a reason is recorded, and no posting is written." .
@@ -129,6 +129,10 @@ ldg:SettledToNearest a skos:Concept ;
 
 ldg:ShownOnly a skos:Concept ;
     rdfs:comment "The rounding method governs only how a share is shown. The split is the shares rounded down, with the units short allocated as the residual allocation says." .
+
+ldg:StatedBelowDrawn a skos:Concept ;
+    rdfs:comment "A later version states less than is drawn on an account it reaches, and is not admitted." ;
+    skos:inScheme ldg:RefusalReasons .
 
 ldg:TieWithoutRule a skos:Concept ;
     rdfs:comment "A tie arises among requests of one rank, and the policy declares no rule for one." ;

@@ -523,19 +523,24 @@ ldg:OwnerKindAdmittedShape a sh:NodeShape ;
 ldg:AccountNaturalKeyShape a sh:NodeShape ;
         sh:targetNode ldg:Account ;
         sh:sparql [
-                sh:message "No two account instances may share a definition, an owner, a key and a period." ;
+                sh:message "No two account instances may share a definition's identity, an owner, a key and a period." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
                         SELECT $this ?value WHERE {
                                 ?value a $this ; ldg:ofDefinition ?definition ; ldg:forOwner ?owner .
+                                ?definition fnd:hasIdentity ?identity .
                                 FILTER EXISTS {
-                                        ?definition ^ldg:ofDefinition ?other .
-                                        FILTER (?other != ?value)
-                                        FILTER EXISTS { ?other ldg:forOwner ?owner }
-                                        FILTER NOT EXISTS { ?value ldg:accountKey ?key . FILTER NOT EXISTS { ?other ldg:accountKey ?key } }
-                                        FILTER NOT EXISTS { ?other ldg:accountKey ?otherKey . FILTER NOT EXISTS { ?value ldg:accountKey ?otherKey } }
-                                        FILTER NOT EXISTS { ?value ldg:periodKey ?period . FILTER NOT EXISTS { ?other ldg:periodKey ?period } }
-                                        FILTER NOT EXISTS { ?other ldg:periodKey ?otherPeriod . FILTER NOT EXISTS { ?value ldg:periodKey ?otherPeriod } }
+                                        ?identity ^fnd:hasIdentity ?otherDefinition .
+                                        FILTER EXISTS {
+                                                ?otherDefinition ^ldg:ofDefinition ?other .
+                                                FILTER (?other != ?value)
+                                                FILTER EXISTS { ?other ldg:forOwner ?owner }
+                                                FILTER NOT EXISTS { ?value ldg:accountKey ?key . FILTER NOT EXISTS { ?other ldg:accountKey ?key } }
+                                                FILTER NOT EXISTS { ?other ldg:accountKey ?otherKey . FILTER NOT EXISTS { ?value ldg:accountKey ?otherKey } }
+                                                FILTER NOT EXISTS { ?value ldg:periodKey ?period . FILTER NOT EXISTS { ?other ldg:periodKey ?period } }
+                                                FILTER NOT EXISTS { ?other ldg:periodKey ?otherPeriod . FILTER NOT EXISTS { ?value ldg:periodKey ?otherPeriod } }
+                                        }
                                 }
                         }
                 """
@@ -620,7 +625,7 @@ ldg:RecordedOrderFollowsPassesShape a sh:NodeShape ;
         ] .
 
 ldg:NotForwardDatedShape a sh:NodeShape ;
-        sh:targetNode ldg:Posting , ldg:MergeRecord ;
+        sh:targetNode ldg:Posting , ldg:MergeRecord , ldg:Supersession ;
         sh:sparql [
                 sh:message "A record must not be effective later than the pass that recorded it." ;
                 sh:select """
@@ -649,14 +654,14 @@ ldg:OneLedgerPerOwnerShape a sh:NodeShape ;
 ldg:PassWritesOneLedgerShape a sh:NodeShape ;
         sh:targetNode ldg:Pass ;
         sh:sparql [
-                sh:message "A pass must write at least one record, every record on an account of one owner, and that owner must have a ledger." ;
+                sh:message "A pass must write at least one record, every record on an account of one owner or, for a supersession, of its owner, and that owner must have a ledger." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
                                 {
                                         SELECT $this ?value (COUNT(DISTINCT ?owner) AS ?owners) (SAMPLE(?owner) AS ?anOwner) WHERE {
                                                 ?value a $this .
-                                                OPTIONAL { ?record ldg:inPass ?value . ?record ldg:onAccount ?account . ?account ldg:forOwner ?owner }
+                                                OPTIONAL { ?record ldg:inPass ?value . ?record (ldg:onAccount/ldg:forOwner|ldg:forOwner) ?owner }
                                         } GROUP BY $this ?value
                                 }
                                 FILTER (?owners != 1 || NOT EXISTS { ?ledger ldg:forOwner ?anOwner ; a ldg:Ledger })
@@ -676,14 +681,13 @@ ldg:PassRevisionsInOrderShape a sh:NodeShape ;
                                                 {
                                                         SELECT $this ?value ?owner ?at ?revision WHERE {
                                                                 ?value a $this ; ldg:passPosition ?at ; ldg:passRevision ?revision .
-                                                                ?record ldg:inPass ?value . ?record ldg:onAccount ?account . ?account ldg:forOwner ?owner .
+                                                                ?record ldg:inPass ?value . ?record (ldg:onAccount/ldg:forOwner|ldg:forOwner) ?owner .
                                                         } GROUP BY $this ?value ?owner ?at ?revision
                                                 }
                                                 {
                                                         SELECT DISTINCT ?other ?owner ?otherAt ?otherRevision WHERE {
                                                                 ?other ldg:passPosition ?otherAt ; ldg:passRevision ?otherRevision .
-                                                                ?otherRecord ldg:inPass ?other . ?otherRecord ldg:onAccount ?otherAccount .
-                                                                ?otherAccount ldg:forOwner ?owner .
+                                                                ?otherRecord ldg:inPass ?other . ?otherRecord (ldg:onAccount/ldg:forOwner|ldg:forOwner) ?owner .
                                                         }
                                                 }
                                                 BIND (IF(?other != ?value && (?otherRevision = ?revision || (?otherAt < ?at && ?otherRevision > ?revision)), 1, 0) AS ?clash)
@@ -706,11 +710,54 @@ ldg:LedgerAtItsLatestPassShape a sh:NodeShape ;
                                 {
                                         SELECT $this ?value ?revision (MAX(?passRevision) AS ?latest) WHERE {
                                                 ?value a $this ; ldg:forOwner ?owner ; ldg:revision ?revision .
-                                                ?account ldg:forOwner ?owner ; a ldg:Account .
-                                                ?record ldg:onAccount ?account ; ldg:inPass/ldg:passRevision ?passRevision .
+                                                {
+                                                        ?account ldg:forOwner ?owner ; a ldg:Account .
+                                                        ?record ldg:onAccount ?account ; ldg:inPass/ldg:passRevision ?passRevision .
+                                                } UNION {
+                                                        ?record a ldg:Supersession ; ldg:forOwner ?owner ; ldg:inPass/ldg:passRevision ?passRevision .
+                                                }
                                         } GROUP BY $this ?value ?revision
                                 }
                                 FILTER (?revision != ?latest)
+                        }
+                """
+        ] .
+
+ldg:SupersessionNamesOneVersionOfEachDefinitionShape a sh:NodeShape ;
+        sh:targetNode ldg:Supersession ;
+        sh:sparql [
+                sh:message "A supersession must name no two later versions of one account definition, so none shares a definition's identity with another." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this .
+                                FILTER EXISTS {
+                                        ?value ldg:supersedingVersion ?one , ?other .
+                                        ?one fnd:hasIdentity ?identity .
+                                        ?other fnd:hasIdentity ?identity .
+                                        FILTER (?one != ?other)
+                                }
+                        }
+                """
+        ] .
+
+ldg:SupersessionPeriodFromRecurrenceShape a sh:NodeShape ;
+        sh:targetNode ldg:Supersession ;
+        sh:sparql [
+                sh:message "A supersession must state a period key, a bin of the recurrence, where a later version it names states a period recurrence, and no period key where none of them does." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        ?value a $this ; ldg:supersedingVersion ?version .
+                                        ?version ldg:periodRecurrence ?recurrence .
+                                        FILTER NOT EXISTS { ?value ldg:periodKey ?bin . ?bin qnt:generatedByRecurrence ?recurrence }
+                                } UNION {
+                                        ?value a $this ; ldg:periodKey ?unwanted .
+                                        FILTER NOT EXISTS { ?value ldg:supersedingVersion/ldg:periodRecurrence ?any }
+                                }
                         }
                 """
         ] .

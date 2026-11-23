@@ -88,11 +88,13 @@ A key dimension derives one account per key value, on the first draw that names 
 
 A credit carries a kind, a concept of `ldg:CreditKinds`, which an applied module fills, such as a recovery, a reinstatement or a repayment. An account definition names the kinds that restore it with `ldg:restoredBy`, and accepts every kind where it names none. A credit is posted to an account that accepts its kind, and is applied there up to the account's room below its ceiling. Each ancestor that accepts the kind takes the least of the amount applied and its own room, and where it takes less, the difference is a `ldg:Cut` at that ancestor. So an account's balance is its stated amount, less the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it. Each posting records that balance for the account it is on, as `ldg:runningBalance`, and a credit records the amount offered beside the amount applied.
 
-An account definition is versioned, since every balance folds against it. It has a persistent identity, and a change of what it states is a new version beside the old. Its stated amount and its credit ceiling are minted under it, and its parent, its merge policy, its unit of account, its period recurrence and the edition of the credit kinds it names are each named by version, so nothing a past balance folded against changes under it.
+An account definition is versioned, since every balance folds against it. It has a persistent identity, and a change of what it states is a new version beside the old. Its stated amount and its credit ceiling are minted under it, and its parent, its merge policy, its unit of account, its period recurrence and the edition of the credit kinds it names are each named by version, so nothing a past balance folded against changes under it. An account is identified by its definition's identity, so it keeps its postings under a later version, and it names the version in force for its owner at the first position of its period. A later version reaches an account only through a supersession.
+
+A pass that changes the terms of accounts writes an `ldg:Supersession` for each period its change falls in. It names the owner, the pass, the effective position the versions are in force from and each later version that comes into force there, and it reaches the accounts of that owner whose definition has a version among them, in the period it names, or with no period where it names none. An account keeps its postings under the later version. A supersession the ledger refuses states its reason and takes no effect.
 
 A merge records every request it decides, as an `ldg:Request` that carries what was asked, its rank and its place where the policy orders requests, its purpose, and what it was granted where the merge granted. A refused merge keeps its requests with no granted value and states one reason, a concept of `ldg:RefusalReasons`. A credit refused because its account does not accept its kind is recorded the same way, with one request. A rule may leave part of the amount unplaced where the policy allows residuals, and the merge record then states the residual, which goes to the account the policy names, if it names one.
 
-The accounts of one owner form one ledger, an `ldg:Ledger` that names the `ldg:LedgerProfile` the deployment gave it and holds its revision. A ledger has one writer at a time. Each pass, one evaluation's write of records, is written as one request that moves the revision by one, and records the revision it moved the ledger to. A pass's IRI is derived from its ledger and a key the caller gives for the evaluation, so the same evaluation written twice is one node. The profile says whether a credit ceiling above a stated amount is admitted, and holds the closing recurrence. At each close a checkpoint is written for each account that moved, with its balance, the debits and the credits it accepts at the amount offered.
+The accounts of one owner form one ledger, an `ldg:Ledger` that names the `ldg:LedgerProfile` the deployment gave it and holds its revision. A ledger has one writer at a time. Each pass, one evaluation's write of records, is written as one request that moves the revision by one, and records the revision it moved the ledger to. A pass's IRI is derived from its ledger and a key the caller gives for the evaluation, so the same evaluation written twice is one node. The profile says whether a credit ceiling above a stated amount is admitted and whether a later version that states less than is drawn is, and holds the closing recurrence. At each close a checkpoint is written for each account that moved, with its balance, the debits and the credits it accepts at the amount offered.
 
 The class diagram below is generated from section 6.
 
@@ -109,6 +111,7 @@ classDiagram
     }
     class AccountDefinition {
         admitsOwnerKind, at least one
+        admitsStatedBelowDrawn, at most one
         creditCeiling, at most one
         creditKindsEdition, at most one
         keyDimension, at most one
@@ -142,6 +145,7 @@ classDiagram
     }
     class LedgerProfile {
         admitsCeilingAboveStated, at most one
+        admitsStatedBelowDrawn, at most one
         closingRecurrence, at most one
     }
     class MergePolicy {
@@ -181,6 +185,7 @@ classDiagram
         microPosition, exactly one
         offeredValue, at most one
         onAccount, exactly one
+        overdrawnValue, at most one
         recordedPosition, exactly one
         runningBalance, exactly one
     }
@@ -197,11 +202,18 @@ classDiagram
         requestedValue, exactly one
         unitOrderPlace, at most one
     }
+    class Supersession {
+        effectivePosition, exactly one
+        forOwner, exactly one
+        inPass, exactly one
+        periodKey, at most one
+        refusalReason, at most one
+        supersedingVersion, at least one
+    }
     class ValueSpace
     class Versioned
     Account --> Account : partOfAccount
     Account --> AccountDefinition : ofDefinition
-    Account --> RecurrenceBin : periodKey
     AccountDefinition --> AccountDefinition : partOf
     AccountDefinition --> Class : admitsOwnerKind
     AccountDefinition --> Concept : countsPurpose
@@ -218,6 +230,7 @@ classDiagram
     DerivedArtefact <|-- Checkpoint
     DerivedArtefact <|-- MergeRecord
     DerivedArtefact <|-- Posting
+    DerivedArtefact <|-- Supersession
     Ledger --> LedgerProfile : ledgerProfile
     LedgerProfile --> Recurrence : closingRecurrence
     MergePolicy --> AccountDefinition : residualAccount
@@ -228,18 +241,21 @@ classDiagram
     MergePolicy --> Concept : roundingDifference
     MergePolicy --> Concept : roundingMethod
     MergePolicy --> Concept : unitOrderCriterion
-    MergeRecord --> Concept : refusalReason
     MergeRecord --> Request : request
     Posting --> Concept : creditKind
     Posting --> Concept : direction
+    Supersession --> AccountDefinition : supersedingVersion
     Versioned <|-- AccountDefinition
     Versioned <|-- LedgerProfile
     Versioned <|-- MergePolicy
+    class DatatypeProperty_admitsStatedBelowDrawn["Datatype Property - admitsStatedBelowDrawn"]
     class DatatypeProperty_effectivePosition["Datatype Property - effectivePosition"]
     class ObjectProperty_forOwner["Object Property - forOwner"]
     class ObjectProperty_forPurpose["Object Property - forPurpose"]
     class ObjectProperty_inPass["Object Property - inPass"]
     class ObjectProperty_onAccount["Object Property - onAccount"]
+    class ObjectProperty_periodKey["Object Property - periodKey"]
+    class ObjectProperty_refusalReason["Object Property - refusalReason"]
 ```
 
 <!-- end -->
@@ -249,7 +265,7 @@ classDiagram
 ### 5.1 Design decisions
 
 - **Configuration and records, in two documents.** Ledger states its configuration: the tree, owner kinds, merge rules and their parameters, the period recurrence, keys, purposes, the kinds of credit that restore an account, credit ceiling, and the ledger profile a deployment authors ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md)). Its runtime document states the records: the ledger of each owner, account instances, passes, postings with their running balances, cuts, merge records with their requests, and checkpoints with their totals. Computing them is the evaluator's, and Ledger checks what was recorded against its laws (section 7.3).
-- **An account instance is named.** An account is a node with a minted IRI, identified by its definition, its owner, its key and its period, which stay its natural key ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-10-27). A posting names that node rather than repeating the four values. An instance states the instance it is part of, so a fold over a subtree follows one edge.
+- **An account instance is named.** An account is a node with a minted IRI, identified by its definition's identity, its owner, its key and its period, which stay its natural key ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-10-27, and its addendum of 2026-11-23). A posting names that node rather than repeating the four values. The account names the version of its definition in force for its owner at the first position of its period, and keeps its postings under a later version. An instance states the instance it is part of, so a fold over a subtree follows one edge.
 - **A period is an account, not a reset.** Where a definition states `ldg:periodRecurrence`, one account is derived per period, its period key the recurrence bin the effective position falls in, computed at write and never supplied by a draw. One recurrence holds along a path, and a keyed child's instance is part of its parent's under the same bin. Nothing resets, so `ldg:resetRecurrence` is deprecated.
 - **Two orderings.** A posting carries an effective position, where the fact sits in the arrangement and comparable across accounts, and a recorded position with a micro-position, where it sits in its own account's append-only sequence. The pass that wrote it carries the position at which it was recorded, on the effective axis, and a posting is never effective later than its pass. Running balances, closes and checkpoints follow the recorded axis, so a reading as of an effective position folds the postings. A position is a natural number on its axis, so the effective and the recorded position are typed `xsd:nonNegativeInteger`, as the shared formal statement of positions that this layer's proofs and the multi-store model use defines one.
 - **A draw arrives in its account's unit.** The ledger never converts. A request in another value space is converted before it reaches the ledger, where the conversion is recorded with its rate, the rate's source and its date, and the draw is then made in the account's unit. A posting may cite that record by `prov:wasDerivedFrom`, as it cites a merge record, so the conversion stays traceable and the ledger states no term for it ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-09).
@@ -268,14 +284,15 @@ classDiagram
 - **A ledger is a node, one for each owner.** The accounts of one owner are the unit a write must see unchanged, since a draw reads every account on its path and the law that none falls below zero spans them. That unit is an `ldg:Ledger`, minted from its owner, which one writer at a time writes and which holds the revision that writer moves. The revision is the one fact of a ledger that changes in place, so it sits on a node the ledger owns, and an account reaches its ledger through its owner and states nothing more ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its third addendum of 2026-11-16 and its addendum of 2026-11-18).
 - **A ledger profile is the deployment's, and holds the closing recurrence.** A profile is one of the rules a deployment sets for every ledger it runs, a versioned node each ledger names by an edge that bears meaning. It says whether a credit ceiling above a stated amount is admitted, which is not admitted where it is unstated, and a definition with such a ceiling is refused at design time unless some profile in the same data admits it, and holds the settings that tune cost and change no meaning, the closing recurrence first. A close therefore belongs to a ledger, and no account definition states one ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-11-16).
 - **A pass moves its ledger's revision once, and is named from its ledger and its evaluation.** A pass is evaluated from one revision of a ledger and written as one request, which the writer accepts only while the ledger is at that revision, and which moves the revision by one. The pass records the revision it moved the ledger to, one triple a pass, so the replay order the writer is held to is in the records. An owner with no ledger is read as revision 0, so the first pass of a ledger records revision 1, and a later pass records a greater one. A pass's IRI is derived from its ledger and a key the caller gives for the evaluation, so the same evaluation written twice is one node, a runtime that stopped after its request finds whether the pass was written, and the ledger names no term of the layer that gave the key. A pass therefore states no edge to its ledger, which is the ledger of the owner of the accounts its records are on ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-18 and its second addendum of 2026-11-19).
-- **A pass's position is the later of two.** It is the later of the position of the stimulus the pass was evaluated for and the position of its ledger's latest pass at the revision it was evaluated from, so a pass is never recorded before one already in its ledger. The evaluation reads that latest pass's position with the revision, and the request carries it. A record keeps its stimulus's position as its effective position, so a posting is never effective later than its pass and may be effective earlier ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum proposed 2026-11-20).
+- **A pass's position is the later of two.** It is the later of the position of the stimulus the pass was evaluated for and the position of its ledger's latest pass at the revision it was evaluated from, so a pass is never recorded before one already in its ledger. The evaluation reads that latest pass's position with the revision, and the request carries it. A record keeps its stimulus's position as its effective position, so a posting is never effective later than its pass and may be effective earlier ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-20).
 - **A checkpoint is written for an account that moved, and carries two totals.** An account moved when a posting recorded since its last checkpoint changes its balance, its debits or the credits it accepts at the amount offered, so a credit cut in full at an account still moves it. An account that did not move is read from its last checkpoint. Beside the balance, a checkpoint states the debits and the accepted credits offered recorded by its close, so a reading of the flows by an effective day starts from the checkpoint at the last close before the day, as a reading of the recorded amounts does ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-11-16 and its addendum of 2026-11-19).
-- **A refusal states one of seven reasons.** The reasons are the concepts of `ldg:RefusalReasons`, each named for the condition that held: six refuse a merge, and the seventh refuses a credit posted to an account that does not accept its kind ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its second and fourth addenda of 2026-11-16).
-- **An account definition is versioned, and nothing it names changes under it.** Every balance folds against the definition its account names, so `ldg:AccountDefinition` is a `fnd:Versioned`, with one persistent identity, and a change of its amount, ceiling, parent, policy, unit, period or kinds is a new version beside the old, never an edit. Its stated amount and its credit ceiling are parts of a version, minted under it, so no quantity is shared between definitions. Its parent, its merge policy, its unit of account, its period recurrence and the edition of its credit kinds are versioned things it names by version. Those edges, its amounts and the kinds that restore it bear meaning (`fnd:meaningBearing`), so Foundation's check warns where one leads to a node that is neither versioned, minted under the definition nor a published term, and a Persistence profile owns or pins it. A new version of a parent or a policy therefore reaches a definition only through a new version of the definition ([ADR-A142](../../docs/architecture/decisions/ADR-A142-meaning-bearing-edges.md), decisions 1 and 5).
+- **A refusal states one of eight reasons.** The reasons are the concepts of `ldg:RefusalReasons`, each named for the condition that held: six refuse a merge, one refuses a credit posted to an account that does not accept its kind, and one refuses a supersession whose later version states less than is drawn ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its second and fourth addenda of 2026-11-16, and its addendum of 2026-11-23).
+- **An account definition is versioned, and nothing it names changes under it.** Every balance folds against a version of the definition its account is identified by, so `ldg:AccountDefinition` is a `fnd:Versioned`, with one persistent identity, and a change of its amount, ceiling, parent, policy, unit, period or kinds is a new version beside the old, never an edit. Versions of one definition keep its unit of account, period recurrence, key dimension, counted purposes and parent, each of which says which account a posting belongs to or what an amount means, and a version that changes one is refused. Its stated amount and its credit ceiling are parts of a version, minted under it, so no quantity is shared between definitions. Its parent, its merge policy, its unit of account, its period recurrence and the edition of its credit kinds are versioned things it names by version. Those edges, its amounts and the kinds that restore it bear meaning (`fnd:meaningBearing`), so Foundation's check warns where one leads to a node that is neither versioned, minted under the definition nor a published term, and a Persistence profile owns or pins it. A new version of a parent or a policy therefore reaches a definition only through a new version of the definition ([ADR-A142](../../docs/architecture/decisions/ADR-A142-meaning-bearing-edges.md), decisions 1 and 5).
+- **A later version reaches an account by a supersession, a record a pass writes.** A supersession names the owner, the effective position its versions are in force from and each later version that comes into force there, one version for each definition whose terms change, and it is one record for the pass. It reaches the accounts of that owner whose definition has a version among them, in the period it names where its definitions state a recurrence, so an account of a later period opens under the later version and an account of an earlier period is never reached. A pass that changes terms under two recurrences writes two. Writing a version of a definition reaches no account, and the pass moves the ledger's revision as any pass does ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-23). A later version that states less than is drawn is admitted only where the version and the ledger's profile each say so, with `ldg:admitsStatedBelowDrawn`, and the account is then over by `ldg:overdrawnValue`. The laws that read a balance against the version in force are not yet stated (section 13).
 - **A definition pins the edition of the credit kinds it names.** An applied module publishes its kinds of credit in editions, each a versioned scheme whose concepts are kinds of `ldg:CreditKinds`. A definition that names the kinds that restore it names, with `ldg:creditKindsEdition`, the edition they were resolved against, and each kind it names is a concept of that edition, so a historical read uses the kinds as they were. That is one reference for each version of a definition, rather than one for each credit ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its first addendum of 2026-11-16).
 - **Three edges of a definition bear no meaning of their own.** An owner kind is a class, which the ontology that declares it versions by its release, and a purpose and a key are concepts a record names and the ledger compares by IRI. So `ldg:admitsOwnerKind`, `ldg:countsPurpose` and `ldg:keyDimension` are not marked, and whether the edition of a purpose's or a key's scheme is pinned as the credit kinds' is, is open (section 13).
 - **Every concept scheme is declared now**, including `ldg:PostingDirections`, which only the runtime terms use. A concept scheme is a freestanding declaration, independent of which class first points at it.
-- **Thirteen constraints** (no cycle, matching units, extensive additivity, a proportional rule's rounding and residual, a stated rounding difference, a stated source for a unit over, a residual account only beside the permission to leave a residual, a credit ceiling at or above the stated amount, a credit ceiling above the stated amount only where a profile admits it, a discrete unit of account's granularity floor, a key dimension's type, a closing recurrence only on a ledger profile, the kinds a definition names pinned in their edition) are SHACL-SPARQL, in section 7. Cardinalities are generated structural shapes from section 6's Restrictions table. The runtime laws are SHACL-SPARQL too, in section 7.3, each citing the theorem of section 10 it checks on one dataset.
+- **Fourteen constraints** (no cycle, matching units, extensive additivity, a proportional rule's rounding and residual, a stated rounding difference, a stated source for a unit over, a residual account only beside the permission to leave a residual, a credit ceiling at or above the stated amount, a credit ceiling above the stated amount only where a profile admits it, a discrete unit of account's granularity floor, a key dimension's type, a closing recurrence only on a ledger profile, the kinds a definition names pinned in their edition, versions of one definition keeping the account's place) are SHACL-SPARQL, in section 7. Cardinalities are generated structural shapes from section 6's Restrictions table. The runtime laws are SHACL-SPARQL too, in section 7.3, each citing the theorem of section 10 it checks on one dataset.
 
 ### 5.2 Worked reading
 
@@ -289,7 +306,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** An amount consumed and restored, as the terms state it.
 
-**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against, the kinds of credit that restore it or a credit ceiling only where the terms need them. A definition is versioned. Give it one persistent identity, mint its stated amount and its credit ceiling under its IRI, and name its parent, its policy, its unit of account, its period recurrence and the edition of the kinds that restore it by version. A change of any of them is a new version, which an account reaches only where it names it, so a past balance still folds against the version it was settled under.
+**Utility.** Declare one of these for each amount a contract states as a limit, commitment, quota or budget: a software licence's seat pool, a facility's commitment, a grant's budget, an aggregate or a sublimit. State its amount, its unit of account, the kinds of owner it admits and its merge policy always, and state a parent, a period recurrence, a key dimension, purposes it counts against, the kinds of credit that restore it or a credit ceiling only where the terms need them. A definition is versioned. Give it one persistent identity, mint its stated amount and its credit ceiling under its IRI, and name its parent, its policy, its unit of account, its period recurrence and the edition of the kinds that restore it by version. A change of any of them is a new version, which an account reaches by a supersession. Versions of one definition keep its unit of account, its period recurrence, its key dimension, the purposes it counts and its parent, since each says which account a posting belongs to or what an amount means, and a change of one is another definition.
 
 **Subclass of.** `fnd:Versioned`
 
@@ -307,6 +324,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 | `ldg:creditCeiling` | max 1 |  |  |
 | `ldg:periodRecurrence` | max 1 |  |  |
 | `ldg:creditKindsEdition` | max 1 |  |  |
+| `ldg:admitsStatedBelowDrawn` | max 1 |  |  |
 
 #### `ldg:MergePolicy`
 
@@ -336,7 +354,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 **Definition.** The rules a deployment sets for every ledger it runs.
 
-**Utility.** Author one for each set of rules a deployment states, and name it from every ledger it governs. It says whether a credit ceiling above a stated amount is admitted, and holds the settings that tune cost and change no meaning, the closing recurrence among them. A profile is versioned. A change of its rules is a new version, and a ledger names the version that governs it.
+**Utility.** Author one for each set of rules a deployment states, and name it from every ledger it governs. It says whether a credit ceiling above a stated amount is admitted and whether a later version of an account definition that states less than is drawn is, and holds the settings that tune cost and change no meaning, the closing recurrence among them. A profile is versioned. A change of its rules is a new version, and a ledger names the version that governs it.
 
 **Subclass of.** `fnd:Versioned`
 
@@ -346,6 +364,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 |---|---|---|---|
 | `ldg:closingRecurrence` | max 1 |  |  |
 | `ldg:admitsCeilingAboveStated` | max 1 |  |  |
+| `ldg:admitsStatedBelowDrawn` | max 1 |  |  |
 
 <!-- start: {"output-file": "spec/ledger-runtime.ttl"} -->
 
@@ -365,9 +384,9 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 
 #### `ldg:Account`
 
-**Definition.** One account instance: an account definition held by one owner, for one key value and one period where the definition states them.
+**Definition.** One account instance: an account definition, by its identity, held by one owner, for one key value and one period where the definition states them.
 
-**Utility.** Mint one the first time a draw names its definition, owner, key and period, and name it from every posting, cut, merge record and checkpoint on it. The four values stay its natural key, so an adopter holding them still resolves it. State the instance it is part of where its definition is part of another.
+**Utility.** Mint one the first time a draw names its definition, owner, key and period, and name it from every posting, cut, merge record and checkpoint on it. The definition's identity, the owner, the key and the period are its natural key, so an adopter holding them still resolves it, and the account keeps its postings under later versions of its definition. It names one version of the definition, and a later version reaches it by a supersession. State the instance it is part of where its definition is part of another.
 
 **Restrictions.**
 
@@ -412,6 +431,7 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 | `ldg:direction` | exactly 1 |  |  |
 | `ldg:amountValue` | exactly 1 |  |  |
 | `ldg:runningBalance` | exactly 1 |  |  |
+| `ldg:overdrawnValue` | max 1 |  |  |
 | `ldg:creditKind` | max 1 |  |  |
 | `ldg:offeredValue` | max 1 |  |  |
 | `ldg:forPurpose` | max 1 |  |  |
@@ -486,6 +506,25 @@ A 10,000,000 aggregate has a section of 6,000,000 with a sublimit of 1,000,000, 
 | `ldg:balanceValue` | exactly 1 |  |  |
 | `ldg:debitsTotal` | exactly 1 |  |  |
 | `ldg:creditsOfferedTotal` | exactly 1 |  |  |
+
+#### `ldg:Supersession`
+
+**Definition.** The record that later versions of account definitions are in force for one owner from one position.
+
+**Subclass of.** `fnd:DerivedArtefact`
+
+**Utility.** A pass writes one for each period its change of terms falls in. Name the owner, the pass, the effective position the versions are in force from, and each later version that comes into force there. It reaches the accounts of that owner whose definition has a version among them, in the period it names, or with no period where it names none. An account keeps its postings under the later version. A supersession the ledger refuses states its reason and takes no effect.
+
+**Restrictions.**
+
+| Property | Values | Asserted in | Message |
+|---|---|---|---|
+| `ldg:forOwner` | exactly 1 |  |  |
+| `ldg:inPass` | exactly 1 |  |  |
+| `ldg:effectivePosition` | exactly 1 |  |  |
+| `ldg:supersedingVersion` | min 1 |  |  |
+| `ldg:periodKey` | max 1 |  |  |
+| `ldg:refusalReason` | max 1 |  |  |
 
 <!-- end -->
 
@@ -780,7 +819,9 @@ erodes with the rest. State one value per purpose this account counts.
 
 #### `ldg:ofDefinition`
 
-**Definition.** The account definition an account instance holds.
+**Definition.** The version of its account definition that an account instance opens under.
+
+**Utility.** Name the version in force for the account's owner at the first position of the account's period, and at the first position of all where its definition states no period. It is stated once and never rewritten. A later version reaches the account by a supersession, and the account keeps its postings under it. The account is identified by the identity of the version named, never by the version.
 
 **Domain.** `ldg:Account`
 
@@ -790,11 +831,11 @@ erodes with the rest. State one value per purpose this account counts.
 
 #### `ldg:forOwner`
 
-**Definition.** The owner of an account instance or of a ledger.
+**Definition.** The owner of an account instance, of a ledger or of a supersession.
 
-**Utility.** Any persistent identity whose kind the definition admits, so the account outlives a new version of what owns it. An owner has at most one ledger, and every account it owns is in it.
+**Utility.** Any persistent identity whose kind the definition admits, so the account outlives a new version of what owns it. An owner has at most one ledger, and every account it owns is in it. On a supersession it is the owner whose accounts the later versions reach.
 
-**Domain.** `ldg:Account or ldg:Ledger`
+**Domain.** `ldg:Account or ldg:Ledger or ldg:Supersession`
 
 **Range.** `fnd:PersistentIdentity`
 
@@ -812,11 +853,11 @@ erodes with the rest. State one value per purpose this account counts.
 
 #### `ldg:periodKey`
 
-**Definition.** The period of an account instance, where its definition states a period recurrence.
+**Definition.** The period of an account instance or of a supersession, where the definition or its later versions state a period recurrence.
 
-**Utility.** The bin of the definition's `ldg:periodRecurrence` that the effective position of the draw which derived the account falls in. Computed at write, never supplied by a draw.
+**Utility.** The bin of the definition's `ldg:periodRecurrence` that the effective position of the draw which derived the account falls in. Computed at write, never supplied by a draw. On a supersession, the bin of its later versions' `ldg:periodRecurrence` that its effective position falls in, so it reaches the accounts of that period, and none where no later version states a recurrence.
 
-**Domain.** `ldg:Account`
+**Domain.** `ldg:Account or ldg:Supersession`
 
 **Range.** `qnt:RecurrenceBin`
 
@@ -848,7 +889,9 @@ erodes with the rest. State one value per purpose this account counts.
 
 **Definition.** The pass that wrote a record.
 
-**Domain.** `ldg:Posting or ldg:MergeRecord`
+**Utility.** On a supersession, the pass that wrote it, which moves the ledger's revision as any pass does.
+
+**Domain.** `ldg:Posting or ldg:MergeRecord or ldg:Supersession`
 
 **Range.** `ldg:Pass`
 
@@ -928,13 +971,23 @@ erodes with the rest. State one value per purpose this account counts.
 
 **Characteristics.** functional
 
+#### `ldg:supersedingVersion`
+
+**Definition.** A later version of an account definition that a supersession brings into force.
+
+**Utility.** Name a version, never a definition's identity, one for each definition whose terms change at the supersession's position. Its definition's identity is that of the version an account names, so the supersession reaches the accounts of that identity.
+
+**Domain.** `ldg:Supersession`
+
+**Range.** `ldg:AccountDefinition`
+
 #### `ldg:refusalReason`
 
-**Definition.** Why a merge, or a credit refused alone, granted nothing.
+**Definition.** Why a merge or a credit refused alone granted nothing, or why a supersession took no effect.
 
-**Utility.** A concept of `ldg:RefusalReasons`. State one on a refused merge, and none on a merge that granted.
+**Utility.** A concept of `ldg:RefusalReasons`. State one on a refused merge, and none on a merge that granted. On a supersession, state one where the ledger refused it, and none on one that took effect.
 
-**Domain.** `ldg:MergeRecord`
+**Domain.** `ldg:MergeRecord or ldg:Supersession`
 
 **Range.** `skos:Concept`
 
@@ -944,7 +997,7 @@ erodes with the rest. State one value per purpose this account counts.
 
 ### 6.3 Datatype Properties
 
-The configuration declares four, a permission and two guards of a merge policy, and a ledger profile's admission of a ceiling above a stated amount. In the runtime document a posting's effective and recorded positions, a request's rank and place, and the revisions of a ledger and a pass are natural numbers, a posting's other positions whole numbers, and amounts decimals in the account's unit of account.
+The configuration declares five, a permission and two guards of a merge policy, and the admission of a ceiling above a stated amount and of a later version that states less than is drawn. In the runtime document a posting's effective and recorded positions, a request's rank and place, and the revisions of a ledger and a pass are natural numbers, a posting's other positions whole numbers, and amounts decimals in the account's unit of account.
 
 #### `ldg:allowsResiduals`
 
@@ -994,6 +1047,18 @@ The configuration declares four, a permission and two guards of a merge policy, 
 
 **Characteristics.** functional
 
+#### `ldg:admitsStatedBelowDrawn`
+
+**Definition.** Whether a later version of an account definition that states less than is drawn is admitted.
+
+**Utility.** On a later version of a definition, state true where the terms allow the amount to fall below what is drawn. On a ledger profile, state true where the deployment admits such versions. It is admitted only where both say so, and unstated or false it is not. It is a part of a version and leads to no node, so it is not marked as bearing meaning, as an edge to a node is.
+
+**Domain.** `ldg:AccountDefinition or ldg:LedgerProfile`
+
+**Range.** `xsd:boolean`
+
+**Characteristics.** functional
+
 <!-- start: {"output-file": "spec/ledger-runtime.ttl"} -->
 
 #### `ldg:revision`
@@ -1036,9 +1101,9 @@ The configuration declares four, a permission and two guards of a merge policy, 
 
 **Definition.** Where a fact sits in the arrangement the accounts describe.
 
-**Utility.** Supplied by the domain and comparable across accounts. Never later than the position of the pass that recorded the fact.
+**Utility.** Supplied by the domain and comparable across accounts. Never later than the position of the pass that recorded the fact. On a supersession, the position its later versions are in force from.
 
-**Domain.** `ldg:Posting or ldg:MergeRecord`
+**Domain.** `ldg:Posting or ldg:MergeRecord or ldg:Supersession`
 
 **Range.** `xsd:nonNegativeInteger`
 
@@ -1097,6 +1162,18 @@ The configuration declares four, a permission and two guards of a merge policy, 
 **Definition.** The balance of a posting's account after the posting, its subtree included.
 
 **Utility.** Written by the account's writer, which holds the balances along the path. It is the account's stated amount, less the debits in its subtree, plus the credits it accepts at the amount applied, less the cuts recorded at it, over the postings up to this one in recorded order.
+
+**Domain.** `ldg:Posting`
+
+**Range.** `xsd:decimal`
+
+**Characteristics.** functional
+
+#### `ldg:overdrawnValue`
+
+**Definition.** What a posting's account is drawn beyond its stated amount after the posting.
+
+**Utility.** State it only where a later version that states less than is drawn was admitted and the account is still over. The running balance is then zero. It is never below zero.
 
 **Domain.** `ldg:Posting`
 
@@ -1268,7 +1345,7 @@ The merge rules, posting directions, rounding methods, residual allocations, rou
 | `ldg:ExcessRecoveries` | `skos:ConceptScheme` | Where a unit over is taken from. |
 | `ldg:OrderCriteria` | `skos:ConceptScheme` | What requests are ordered by, for their rank and for the placing of single units. |
 | `ldg:CreditKinds` | `skos:ConceptScheme` | The kinds of credit, which an account names to say what restores it. |
-| `ldg:RefusalReasons` | `skos:ConceptScheme` | Why a merge, or a credit refused alone, granted nothing. |
+| `ldg:RefusalReasons` | `skos:ConceptScheme` | Why a merge or a credit refused alone granted nothing, or why a supersession took no effect. |
 
 **`ldg:MergeRules`.**
 
@@ -1326,6 +1403,7 @@ The merge rules, posting directions, rounding methods, residual allocations, rou
 | `ldg:MixedPurposes` | `skos:Concept` | The requests do not agree on purpose, and the policy requires that they do. | `ldg:RefusalReasons` |
 | `ldg:CrossingSets` | `skos:Concept` | Two sets of requests, each limited by the accounts its requests reach, overlap with neither inside the other. | `ldg:RefusalReasons` |
 | `ldg:KindNotAccepted` | `skos:Concept` | A credit is posted to an account that does not accept its kind. | `ldg:RefusalReasons` |
+| `ldg:StatedBelowDrawn` | `skos:Concept` | A later version states less than is drawn on an account it reaches, and is not admitted. | `ldg:RefusalReasons` |
 
 ### 6.5 Disjointness and Keys
 
@@ -1333,7 +1411,7 @@ The runtime document's classes are pairwise disjoint, and disjoint from the acco
 
 <!-- start: {"output-file": "spec/ledger-runtime.ttl"} -->
 
-**All disjoint.** `ldg:AccountDefinition`, `ldg:Ledger`, `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Request`, `ldg:Checkpoint`
+**All disjoint.** `ldg:AccountDefinition`, `ldg:Ledger`, `ldg:Account`, `ldg:Pass`, `ldg:Posting`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Request`, `ldg:Checkpoint`, `ldg:Supersession`
 
 <!-- end -->
 
@@ -1351,17 +1429,18 @@ ldg:resetRecurrence owl:deprecated true .
 
 | Term | Kind | Summary |
 |---|---|---|
-| `ldg:Account` | Class | Disjoint with `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:accountKey` max 1, `ldg:forOwner` exactly 1, `ldg:ofDefinition` exactly 1, `ldg:partOfAccount` max 1, `ldg:periodKey` max 1. |
-| `ldg:AccountDefinition` | Class | Subclass of `fnd:Versioned`. Disjoint with `ldg:Account`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:admitsOwnerKind` min 1, `ldg:creditCeiling` max 1, `ldg:creditKindsEdition` max 1, `ldg:keyDimension` max 1, `ldg:mergePolicy` exactly 1, `ldg:partOf` max 1, `ldg:periodRecurrence` max 1, `ldg:resetRecurrence` max 1, `ldg:statedAmount` exactly 1, `ldg:unitOfAccount` exactly 1. |
-| `ldg:Checkpoint` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:balanceValue` exactly 1, `ldg:closePosition` exactly 1, `ldg:creditsOfferedTotal` exactly 1, `ldg:debitsTotal` exactly 1, `ldg:onAccount` exactly 1. |
-| `ldg:Cut` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:cutAt` exactly 1, `ldg:cutOf` exactly 1, `ldg:cutValue` exactly 1. |
-| `ldg:Ledger` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:forOwner` exactly 1, `ldg:ledgerProfile` exactly 1, `ldg:revision` exactly 1. |
-| `ldg:LedgerProfile` | Class | Subclass of `fnd:Versioned`. Restrictions `ldg:admitsCeilingAboveStated` max 1, `ldg:closingRecurrence` max 1. |
+| `ldg:Account` | Class | Disjoint with `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`, `ldg:Supersession`. Restrictions `ldg:accountKey` max 1, `ldg:forOwner` exactly 1, `ldg:ofDefinition` exactly 1, `ldg:partOfAccount` max 1, `ldg:periodKey` max 1. |
+| `ldg:AccountDefinition` | Class | Subclass of `fnd:Versioned`. Disjoint with `ldg:Account`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`, `ldg:Supersession`. Restrictions `ldg:admitsOwnerKind` min 1, `ldg:admitsStatedBelowDrawn` max 1, `ldg:creditCeiling` max 1, `ldg:creditKindsEdition` max 1, `ldg:keyDimension` max 1, `ldg:mergePolicy` exactly 1, `ldg:partOf` max 1, `ldg:periodRecurrence` max 1, `ldg:resetRecurrence` max 1, `ldg:statedAmount` exactly 1, `ldg:unitOfAccount` exactly 1. |
+| `ldg:Checkpoint` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`, `ldg:Supersession`. Restrictions `ldg:balanceValue` exactly 1, `ldg:closePosition` exactly 1, `ldg:creditsOfferedTotal` exactly 1, `ldg:debitsTotal` exactly 1, `ldg:onAccount` exactly 1. |
+| `ldg:Cut` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`, `ldg:Supersession`. Restrictions `ldg:cutAt` exactly 1, `ldg:cutOf` exactly 1, `ldg:cutValue` exactly 1. |
+| `ldg:Ledger` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`, `ldg:Supersession`. Restrictions `ldg:forOwner` exactly 1, `ldg:ledgerProfile` exactly 1, `ldg:revision` exactly 1. |
+| `ldg:LedgerProfile` | Class | Subclass of `fnd:Versioned`. Restrictions `ldg:admitsCeilingAboveStated` max 1, `ldg:admitsStatedBelowDrawn` max 1, `ldg:closingRecurrence` max 1. |
 | `ldg:MergePolicy` | Class | Subclass of `fnd:Versioned`. Restrictions `ldg:allowsResiduals` max 1, `ldg:excessRecovery` max 1, `ldg:mergeRule` exactly 1, `ldg:rankCriterion` max 1, `ldg:requiresDistinctRanks` max 1, `ldg:requiresSamePurpose` max 1, `ldg:residualAccount` max 1, `ldg:residualAllocation` max 1, `ldg:roundingDifference` max 1, `ldg:roundingMethod` max 1, `ldg:unitOrderCriterion` max 1. |
-| `ldg:MergeRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:availableBefore` max 1, `ldg:effectivePosition` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:refusalReason` max 1, `ldg:request` min 1, `ldg:residualValue` max 1. |
-| `ldg:Pass` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:passPosition` exactly 1, `ldg:passRevision` exactly 1. |
-| `ldg:Posting` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Request`. Restrictions `ldg:amountValue` exactly 1, `ldg:creditKind` max 1, `ldg:direction` exactly 1, `ldg:effectivePosition` exactly 1, `ldg:forPurpose` max 1, `ldg:inPass` exactly 1, `ldg:microPosition` exactly 1, `ldg:offeredValue` max 1, `ldg:onAccount` exactly 1, `ldg:recordedPosition` exactly 1, `ldg:runningBalance` exactly 1. |
-| `ldg:Request` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`. Restrictions `ldg:forProposal` exactly 1, `ldg:forPurpose` max 1, `ldg:grantedValue` max 1, `ldg:proportionDenominator` max 1, `ldg:proportionNumerator` max 1, `ldg:rank` max 1, `ldg:requestedValue` exactly 1, `ldg:unitOrderPlace` max 1. |
+| `ldg:MergeRecord` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`, `ldg:Supersession`. Restrictions `ldg:availableBefore` max 1, `ldg:effectivePosition` exactly 1, `ldg:inPass` exactly 1, `ldg:onAccount` exactly 1, `ldg:refusalReason` max 1, `ldg:request` min 1, `ldg:residualValue` max 1. |
+| `ldg:Pass` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Posting`, `ldg:Request`, `ldg:Supersession`. Restrictions `ldg:passPosition` exactly 1, `ldg:passRevision` exactly 1. |
+| `ldg:Posting` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Request`, `ldg:Supersession`. Restrictions `ldg:amountValue` exactly 1, `ldg:creditKind` max 1, `ldg:direction` exactly 1, `ldg:effectivePosition` exactly 1, `ldg:forPurpose` max 1, `ldg:inPass` exactly 1, `ldg:microPosition` exactly 1, `ldg:offeredValue` max 1, `ldg:onAccount` exactly 1, `ldg:overdrawnValue` max 1, `ldg:recordedPosition` exactly 1, `ldg:runningBalance` exactly 1. |
+| `ldg:Request` | Class | Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Supersession`. Restrictions `ldg:forProposal` exactly 1, `ldg:forPurpose` max 1, `ldg:grantedValue` max 1, `ldg:proportionDenominator` max 1, `ldg:proportionNumerator` max 1, `ldg:rank` max 1, `ldg:requestedValue` exactly 1, `ldg:unitOrderPlace` max 1. |
+| `ldg:Supersession` | Class | Subclass of `fnd:DerivedArtefact`. Disjoint with `ldg:Account`, `ldg:AccountDefinition`, `ldg:Checkpoint`, `ldg:Cut`, `ldg:Ledger`, `ldg:MergeRecord`, `ldg:Pass`, `ldg:Posting`, `ldg:Request`. Restrictions `ldg:effectivePosition` exactly 1, `ldg:forOwner` exactly 1, `ldg:inPass` exactly 1, `ldg:periodKey` max 1, `ldg:refusalReason` max 1, `ldg:supersedingVersion` min 1. |
 | `ldg:accountKey` | Object property | Domain `ldg:Account`. Range `skos:Concept` or `qnt:Value`. Functional. |
 | `ldg:admitsOwnerKind` | Object property | Domain `ldg:AccountDefinition`. Range `rdfs:Class`. |
 | `ldg:closingRecurrence` | Object property | Domain `ldg:LedgerProfile`. Range `qnt:Recurrence`. Functional. |
@@ -1373,10 +1452,10 @@ ldg:resetRecurrence owl:deprecated true .
 | `ldg:cutOf` | Object property | Domain `ldg:Cut`. Range `ldg:Posting`. Functional. |
 | `ldg:direction` | Object property | Domain `ldg:Posting`. Range `skos:Concept`. Functional. |
 | `ldg:excessRecovery` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
-| `ldg:forOwner` | Object property | Domain `ldg:Account` or `ldg:Ledger`. Range `fnd:PersistentIdentity`. Functional. |
+| `ldg:forOwner` | Object property | Domain `ldg:Account` or `ldg:Ledger` or `ldg:Supersession`. Range `fnd:PersistentIdentity`. Functional. |
 | `ldg:forProposal` | Object property | Domain `ldg:Request`. Functional. |
 | `ldg:forPurpose` | Object property | Domain `ldg:Posting` or `ldg:Request`. Range `skos:Concept`. Functional. |
-| `ldg:inPass` | Object property | Domain `ldg:Posting` or `ldg:MergeRecord`. Range `ldg:Pass`. Functional. |
+| `ldg:inPass` | Object property | Domain `ldg:Posting` or `ldg:MergeRecord` or `ldg:Supersession`. Range `ldg:Pass`. Functional. |
 | `ldg:keyDimension` | Object property | Domain `ldg:AccountDefinition`. Range `skos:ConceptScheme` or `qnt:ValueSpace`. Functional. |
 | `ldg:ledgerProfile` | Object property | Domain `ldg:Ledger`. Range `ldg:LedgerProfile`. Functional. |
 | `ldg:mergePolicy` | Object property | Domain `ldg:AccountDefinition`. Range `ldg:MergePolicy`. Functional. |
@@ -1385,10 +1464,10 @@ ldg:resetRecurrence owl:deprecated true .
 | `ldg:onAccount` | Object property | Domain `ldg:Posting` or `ldg:MergeRecord` or `ldg:Checkpoint`. Range `ldg:Account`. Functional. |
 | `ldg:partOf` | Object property | Domain `ldg:AccountDefinition`. Range `ldg:AccountDefinition`. Functional. |
 | `ldg:partOfAccount` | Object property | Domain `ldg:Account`. Range `ldg:Account`. Functional. |
-| `ldg:periodKey` | Object property | Domain `ldg:Account`. Range `qnt:RecurrenceBin`. Functional. |
+| `ldg:periodKey` | Object property | Domain `ldg:Account` or `ldg:Supersession`. Range `qnt:RecurrenceBin`. Functional. |
 | `ldg:periodRecurrence` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Recurrence`. Functional. |
 | `ldg:rankCriterion` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
-| `ldg:refusalReason` | Object property | Domain `ldg:MergeRecord`. Range `skos:Concept`. Functional. |
+| `ldg:refusalReason` | Object property | Domain `ldg:MergeRecord` or `ldg:Supersession`. Range `skos:Concept`. Functional. |
 | `ldg:request` | Object property | Domain `ldg:MergeRecord`. Range `ldg:Request`. |
 | `ldg:resetRecurrence` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Recurrence`. Functional. |
 | `ldg:residualAccount` | Object property | Domain `ldg:MergePolicy`. Range `ldg:AccountDefinition`. Functional. |
@@ -1397,9 +1476,11 @@ ldg:resetRecurrence owl:deprecated true .
 | `ldg:roundingDifference` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:roundingMethod` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:statedAmount` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:Quantity`. Functional. |
+| `ldg:supersedingVersion` | Object property | Domain `ldg:Supersession`. Range `ldg:AccountDefinition`. |
 | `ldg:unitOfAccount` | Object property | Domain `ldg:AccountDefinition`. Range `qnt:ValueSpace`. Functional. |
 | `ldg:unitOrderCriterion` | Object property | Domain `ldg:MergePolicy`. Range `skos:Concept`. Functional. |
 | `ldg:admitsCeilingAboveStated` | Datatype property | Domain `ldg:LedgerProfile`. Range `xsd:boolean`. Functional. |
+| `ldg:admitsStatedBelowDrawn` | Datatype property | Domain `ldg:AccountDefinition` or `ldg:LedgerProfile`. Range `xsd:boolean`. Functional. |
 | `ldg:allowsResiduals` | Datatype property | Domain `ldg:MergePolicy`. Range `xsd:boolean`. Functional. |
 | `ldg:amountValue` | Datatype property | Domain `ldg:Posting`. Range `xsd:decimal`. Functional. |
 | `ldg:availableBefore` | Datatype property | Domain `ldg:MergeRecord`. Range `xsd:decimal`. Functional. |
@@ -1408,10 +1489,11 @@ ldg:resetRecurrence owl:deprecated true .
 | `ldg:creditsOfferedTotal` | Datatype property | Domain `ldg:Checkpoint`. Range `xsd:decimal`. Functional. |
 | `ldg:cutValue` | Datatype property | Domain `ldg:Cut`. Range `xsd:decimal`. Functional. |
 | `ldg:debitsTotal` | Datatype property | Domain `ldg:Checkpoint`. Range `xsd:decimal`. Functional. |
-| `ldg:effectivePosition` | Datatype property | Domain `ldg:Posting` or `ldg:MergeRecord`. Range `xsd:nonNegativeInteger`. Functional. |
+| `ldg:effectivePosition` | Datatype property | Domain `ldg:Posting` or `ldg:MergeRecord` or `ldg:Supersession`. Range `xsd:nonNegativeInteger`. Functional. |
 | `ldg:grantedValue` | Datatype property | Domain `ldg:Request`. Range `xsd:decimal`. Functional. |
 | `ldg:microPosition` | Datatype property | Domain `ldg:Posting`. Range `xsd:nonNegativeInteger`. Functional. |
 | `ldg:offeredValue` | Datatype property | Domain `ldg:Posting`. Range `xsd:decimal`. Functional. |
+| `ldg:overdrawnValue` | Datatype property | Domain `ldg:Posting`. Range `xsd:decimal`. Functional. |
 | `ldg:passPosition` | Datatype property | Domain `ldg:Pass`. Range `xsd:nonNegativeInteger`. Functional. |
 | `ldg:passRevision` | Datatype property | Domain `ldg:Pass`. Range `xsd:nonNegativeInteger`. Functional. |
 | `ldg:proportionDenominator` | Datatype property | Domain `ldg:Request`. Range `xsd:integer`. Functional. |
@@ -1452,6 +1534,7 @@ ldg:resetRecurrence owl:deprecated true .
 | `ldg:RoundingMethods` | Individual | Type `skos:ConceptScheme`. |
 | `ldg:SettledToNearest` | Individual | Type `skos:Concept`. |
 | `ldg:ShownOnly` | Individual | Type `skos:Concept`. |
+| `ldg:StatedBelowDrawn` | Individual | Type `skos:Concept`. |
 | `ldg:TieWithoutRule` | Individual | Type `skos:Concept`. |
 | `ldg:ToFirstInOrder` | Individual | Type `skos:Concept`. |
 | `ldg:TowardZero` | Individual | Type `skos:Concept`. |
@@ -1467,7 +1550,7 @@ ldg:resetRecurrence owl:deprecated true .
 
 ### 7.2 Constraints
 
-`shapes/constraints.ttl` holds thirteen SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, rounding half-even or half-up beside a residual allocation only where the policy states how the difference is settled, a policy that settles to the nearest stating where a unit over is taken from, a residual account named only by a policy that allows residuals, a credit ceiling not below the stated amount, a credit ceiling above the stated amount only where some ledger profile in the data admits it, a unit of account on a discrete value space that states a granularity floor, a key dimension that is a concept scheme or a value space, a closing recurrence stated by a ledger profile and never by an account definition, and a definition that names the kinds that restore it pinning an edition each of them is a concept of. Rounding to the nearest can round the shares to more than the amount, which no residual rule takes back, so it is refused beside a residual rule unless the policy says how the difference is settled, with `ldg:roundingDifference`. Each targets its class as one node, `ldg:AccountDefinition` or `ldg:MergePolicy`, and reads every instance in one query, as the runtime laws of section 7.3 do, so a validator that runs a constraint once per focus node runs each once rather than once per instance. A violation's `sh:value` names the definition or the policy.
+`shapes/constraints.ttl` holds fourteen SHACL-SPARQL constraints, for no cycle through `ldg:partOf`, a child's unit of account equal to its parent's, a unit of account that is extensive with `qnt:Sum` and `qnt:Difference` capabilities, a proportional rule with a rounding method and a residual allocation, rounding half-even or half-up beside a residual allocation only where the policy states how the difference is settled, a policy that settles to the nearest stating where a unit over is taken from, a residual account named only by a policy that allows residuals, a credit ceiling not below the stated amount, a credit ceiling above the stated amount only where some ledger profile in the data admits it, a unit of account on a discrete value space that states a granularity floor, a key dimension that is a concept scheme or a value space, a closing recurrence stated by a ledger profile and never by an account definition, a definition that names the kinds that restore it pinning an edition each of them is a concept of, and versions of one definition keeping the unit of account, period recurrence, key dimension, counted purposes and parent that say which account a posting belongs to. Rounding to the nearest can round the shares to more than the amount, which no residual rule takes back, so it is refused beside a residual rule unless the policy says how the difference is settled, with `ldg:roundingDifference`. Each targets its class as one node, `ldg:AccountDefinition` or `ldg:MergePolicy`, and reads every instance in one query, as the runtime laws of section 7.3 do, so a validator that runs a constraint once per focus node runs each once rather than once per instance. A violation's `sh:value` names the definition or the policy.
 
 Whether a definition is versioned, and whether what its edges that bear meaning lead to is versioned, minted under it or a published term, is Foundation's to check, with `fnd:VersionedShape` and `fnd:MeaningBearingEdgeShape`, which read the marks of section 6.2. Validate a definition with Foundation's shapes as well as these, and with the ledger's ontology in the data graph.
 
@@ -1480,7 +1563,8 @@ Whether a definition is versioned, and whether what its edges that bear meaning 
 # ledger profile admits it, a discrete unit of account states a granularity floor,
 # a key dimension is typed,
 # a closing recurrence is a ledger profile's, and the kinds a definition
-# names are concepts of the edition it pins.
+# names are concepts of the edition it pins, and versions of one definition keep
+# the account's place.
 # Each targets the class as one node and reads every definition in one query,
 # so a validator runs each once rather than once per definition.
 
@@ -1694,6 +1778,38 @@ ldg:RestoringKindsInTheirEditionShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+ldg:VersionsKeepTheAccountsPlaceShape a sh:NodeShape ;
+	sh:targetNode ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "Versions of one account definition must keep its unit of account, period recurrence, key dimension, counted purposes and parent, since each says which account a posting belongs to or what an amount means." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this ?value WHERE {
+				?value a $this ; fnd:hasIdentity ?identity .
+				FILTER EXISTS {
+					?identity ^fnd:hasIdentity ?other .
+					FILTER (?other != ?value)
+					FILTER (
+						((EXISTS { ?value ldg:unitOfAccount ?unit } || EXISTS { ?other ldg:unitOfAccount ?otherUnit })
+							&& NOT EXISTS { ?value ldg:unitOfAccount ?unitHeld . ?other ldg:unitOfAccount ?unitMatched .
+								FILTER (?unitHeld = ?unitMatched || EXISTS { ?unitHeld fnd:hasIdentity ?unitIdentity . ?unitMatched fnd:hasIdentity ?unitIdentity }) })
+						|| ((EXISTS { ?value ldg:periodRecurrence ?recurrence } || EXISTS { ?other ldg:periodRecurrence ?otherRecurrence })
+							&& NOT EXISTS { ?value ldg:periodRecurrence ?recurrenceHeld . ?other ldg:periodRecurrence ?recurrenceMatched .
+								FILTER (?recurrenceHeld = ?recurrenceMatched || EXISTS { ?recurrenceHeld fnd:hasIdentity ?recurrenceIdentity . ?recurrenceMatched fnd:hasIdentity ?recurrenceIdentity }) })
+						|| ((EXISTS { ?value ldg:keyDimension ?dimension } || EXISTS { ?other ldg:keyDimension ?otherDimension })
+							&& NOT EXISTS { ?value ldg:keyDimension ?dimensionHeld . ?other ldg:keyDimension ?dimensionHeld })
+						|| EXISTS { ?value ldg:countsPurpose ?purpose . FILTER NOT EXISTS { ?other ldg:countsPurpose ?purpose } }
+						|| EXISTS { ?other ldg:countsPurpose ?otherPurpose . FILTER NOT EXISTS { ?value ldg:countsPurpose ?otherPurpose } }
+						|| ((EXISTS { ?value ldg:partOf ?parent } || EXISTS { ?other ldg:partOf ?otherParent })
+							&& NOT EXISTS { ?value ldg:partOf ?parentHeld . ?other ldg:partOf ?parentMatched .
+								FILTER EXISTS { ?parentHeld fnd:hasIdentity ?parentIdentity . ?parentMatched fnd:hasIdentity ?parentIdentity } })
+					)
+				}
+			}
+		"""
+	] .
 ```
 -->
 
@@ -1724,16 +1840,18 @@ ldg:RestoringKindsInTheirEditionShape a sh:NodeShape ;
 | `ldg:DrawInItsAccountsUnitShape` | a draw reads no quantity in another unit than its account's stated amount, and one that does is Undetermined with no permitted conversion, in Quantification's words | |
 | `ldg:DrawRepresentableShape` | a draw's amount is a decimal, a value of its space's datatype, and on a discrete space a whole multiple of the granularity floor where one is stated, and one that is not is refused, never rounded, Undetermined with Quantification's `qnt:OutsideDeclaredSpace` | |
 | `ldg:OwnerKindAdmittedShape` | an account's owner is of a kind its definition admits | |
-| `ldg:AccountNaturalKeyShape` | no two account instances share a definition, owner, key and period | |
+| `ldg:AccountNaturalKeyShape` | no two account instances share a definition's identity, an owner, a key and a period, so two accounts that name two versions of one definition are reported | |
 | `ldg:PeriodKeyFromRecurrenceShape` | an account has a period key exactly where its definition states a period recurrence, a bin of that recurrence | |
 | `ldg:PartOfAccountFollowsDefinitionShape` | an instance is part of the instance of its definition's parent, under the same period key | |
 | `ldg:PostingNaturalKeyShape` | no two postings on one account share a recorded position and a micro-position | |
 | `ldg:RecordedOrderFollowsPassesShape` | an account's recorded order never runs against the order of the passes that wrote it | |
-| `ldg:NotForwardDatedShape` | no posting or merge is effective later than the pass that recorded it | |
+| `ldg:NotForwardDatedShape` | no posting, merge or supersession is effective later than the pass that recorded it | |
 | `ldg:OneLedgerPerOwnerShape` | no two ledgers share an owner | |
-| `ldg:PassWritesOneLedgerShape` | a pass writes at least one record, every record on an account of one owner, and that owner has a ledger | |
+| `ldg:PassWritesOneLedgerShape` | a pass writes at least one record, every record on an account of one owner or, for a supersession, of its owner, and that owner has a ledger | |
 | `ldg:PassRevisionsInOrderShape` | no two passes of one ledger record one revision, a pass at a later position records a greater one, the least a ledger's passes record is 1, and each revision above it follows one a pass of it recorded | |
 | `ldg:LedgerAtItsLatestPassShape` | a ledger's revision is the greatest revision its passes record | |
+| `ldg:SupersessionNamesOneVersionOfEachDefinitionShape` | no two superseding versions of one supersession share a definition's identity | |
+| `ldg:SupersessionPeriodFromRecurrenceShape` | a supersession whose superseding version states a period recurrence states a period key that is a bin of it, and one whose versions state none states no period key | |
 
 A draw is a debit posting, and a request on a merge, which states what was asked and what was granted. Its amount is a literal, in its account's unit of account and in the unit its account's stated amount is in, so the only thing a draw can bring in another value space or unit is a quantity it read, named in its `prov:wasDerivedFrom`. A draw that read one has taken an amount the ledger would have to convert, or a proportion it would have to resolve, and the ledger does neither. A record made before the ledger, such as a conversion or the resolution of a proportion, is not a quantity, so a draw may cite one. An amount is representable where it is a decimal, a value of the datatype the space declares, `xsd:decimal` where it declares none, and, on a discrete space that states a granularity floor, a whole multiple of the floor. So 33% of 10 licences, 3.3, is refused on a space of whole licences, and a count beyond `xsd:int` on a space whose datatype is `xsd:int`. Each refusal carries the reason Quantification gives for the same comparison. A value on another space, or not among the values its space declares, is `qnt:OutsideDeclaredSpace`. Quantification has no term for a unit with no permitted conversion, so that shape's message uses its words.
 
@@ -2268,19 +2386,24 @@ ldg:OwnerKindAdmittedShape a sh:NodeShape ;
 ldg:AccountNaturalKeyShape a sh:NodeShape ;
         sh:targetNode ldg:Account ;
         sh:sparql [
-                sh:message "No two account instances may share a definition, an owner, a key and a period." ;
+                sh:message "No two account instances may share a definition's identity, an owner, a key and a period." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
                         SELECT $this ?value WHERE {
                                 ?value a $this ; ldg:ofDefinition ?definition ; ldg:forOwner ?owner .
+                                ?definition fnd:hasIdentity ?identity .
                                 FILTER EXISTS {
-                                        ?definition ^ldg:ofDefinition ?other .
-                                        FILTER (?other != ?value)
-                                        FILTER EXISTS { ?other ldg:forOwner ?owner }
-                                        FILTER NOT EXISTS { ?value ldg:accountKey ?key . FILTER NOT EXISTS { ?other ldg:accountKey ?key } }
-                                        FILTER NOT EXISTS { ?other ldg:accountKey ?otherKey . FILTER NOT EXISTS { ?value ldg:accountKey ?otherKey } }
-                                        FILTER NOT EXISTS { ?value ldg:periodKey ?period . FILTER NOT EXISTS { ?other ldg:periodKey ?period } }
-                                        FILTER NOT EXISTS { ?other ldg:periodKey ?otherPeriod . FILTER NOT EXISTS { ?value ldg:periodKey ?otherPeriod } }
+                                        ?identity ^fnd:hasIdentity ?otherDefinition .
+                                        FILTER EXISTS {
+                                                ?otherDefinition ^ldg:ofDefinition ?other .
+                                                FILTER (?other != ?value)
+                                                FILTER EXISTS { ?other ldg:forOwner ?owner }
+                                                FILTER NOT EXISTS { ?value ldg:accountKey ?key . FILTER NOT EXISTS { ?other ldg:accountKey ?key } }
+                                                FILTER NOT EXISTS { ?other ldg:accountKey ?otherKey . FILTER NOT EXISTS { ?value ldg:accountKey ?otherKey } }
+                                                FILTER NOT EXISTS { ?value ldg:periodKey ?period . FILTER NOT EXISTS { ?other ldg:periodKey ?period } }
+                                                FILTER NOT EXISTS { ?other ldg:periodKey ?otherPeriod . FILTER NOT EXISTS { ?value ldg:periodKey ?otherPeriod } }
+                                        }
                                 }
                         }
                 """
@@ -2365,7 +2488,7 @@ ldg:RecordedOrderFollowsPassesShape a sh:NodeShape ;
         ] .
 
 ldg:NotForwardDatedShape a sh:NodeShape ;
-        sh:targetNode ldg:Posting , ldg:MergeRecord ;
+        sh:targetNode ldg:Posting , ldg:MergeRecord , ldg:Supersession ;
         sh:sparql [
                 sh:message "A record must not be effective later than the pass that recorded it." ;
                 sh:select """
@@ -2394,14 +2517,14 @@ ldg:OneLedgerPerOwnerShape a sh:NodeShape ;
 ldg:PassWritesOneLedgerShape a sh:NodeShape ;
         sh:targetNode ldg:Pass ;
         sh:sparql [
-                sh:message "A pass must write at least one record, every record on an account of one owner, and that owner must have a ledger." ;
+                sh:message "A pass must write at least one record, every record on an account of one owner or, for a supersession, of its owner, and that owner must have a ledger." ;
                 sh:select """
                         PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
                         SELECT $this ?value WHERE {
                                 {
                                         SELECT $this ?value (COUNT(DISTINCT ?owner) AS ?owners) (SAMPLE(?owner) AS ?anOwner) WHERE {
                                                 ?value a $this .
-                                                OPTIONAL { ?record ldg:inPass ?value . ?record ldg:onAccount ?account . ?account ldg:forOwner ?owner }
+                                                OPTIONAL { ?record ldg:inPass ?value . ?record (ldg:onAccount/ldg:forOwner|ldg:forOwner) ?owner }
                                         } GROUP BY $this ?value
                                 }
                                 FILTER (?owners != 1 || NOT EXISTS { ?ledger ldg:forOwner ?anOwner ; a ldg:Ledger })
@@ -2421,14 +2544,13 @@ ldg:PassRevisionsInOrderShape a sh:NodeShape ;
                                                 {
                                                         SELECT $this ?value ?owner ?at ?revision WHERE {
                                                                 ?value a $this ; ldg:passPosition ?at ; ldg:passRevision ?revision .
-                                                                ?record ldg:inPass ?value . ?record ldg:onAccount ?account . ?account ldg:forOwner ?owner .
+                                                                ?record ldg:inPass ?value . ?record (ldg:onAccount/ldg:forOwner|ldg:forOwner) ?owner .
                                                         } GROUP BY $this ?value ?owner ?at ?revision
                                                 }
                                                 {
                                                         SELECT DISTINCT ?other ?owner ?otherAt ?otherRevision WHERE {
                                                                 ?other ldg:passPosition ?otherAt ; ldg:passRevision ?otherRevision .
-                                                                ?otherRecord ldg:inPass ?other . ?otherRecord ldg:onAccount ?otherAccount .
-                                                                ?otherAccount ldg:forOwner ?owner .
+                                                                ?otherRecord ldg:inPass ?other . ?otherRecord (ldg:onAccount/ldg:forOwner|ldg:forOwner) ?owner .
                                                         }
                                                 }
                                                 BIND (IF(?other != ?value && (?otherRevision = ?revision || (?otherAt < ?at && ?otherRevision > ?revision)), 1, 0) AS ?clash)
@@ -2451,11 +2573,54 @@ ldg:LedgerAtItsLatestPassShape a sh:NodeShape ;
                                 {
                                         SELECT $this ?value ?revision (MAX(?passRevision) AS ?latest) WHERE {
                                                 ?value a $this ; ldg:forOwner ?owner ; ldg:revision ?revision .
-                                                ?account ldg:forOwner ?owner ; a ldg:Account .
-                                                ?record ldg:onAccount ?account ; ldg:inPass/ldg:passRevision ?passRevision .
+                                                {
+                                                        ?account ldg:forOwner ?owner ; a ldg:Account .
+                                                        ?record ldg:onAccount ?account ; ldg:inPass/ldg:passRevision ?passRevision .
+                                                } UNION {
+                                                        ?record a ldg:Supersession ; ldg:forOwner ?owner ; ldg:inPass/ldg:passRevision ?passRevision .
+                                                }
                                         } GROUP BY $this ?value ?revision
                                 }
                                 FILTER (?revision != ?latest)
+                        }
+                """
+        ] .
+
+ldg:SupersessionNamesOneVersionOfEachDefinitionShape a sh:NodeShape ;
+        sh:targetNode ldg:Supersession ;
+        sh:sparql [
+                sh:message "A supersession must name no two later versions of one account definition, so none shares a definition's identity with another." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+                        SELECT $this ?value WHERE {
+                                ?value a $this .
+                                FILTER EXISTS {
+                                        ?value ldg:supersedingVersion ?one , ?other .
+                                        ?one fnd:hasIdentity ?identity .
+                                        ?other fnd:hasIdentity ?identity .
+                                        FILTER (?one != ?other)
+                                }
+                        }
+                """
+        ] .
+
+ldg:SupersessionPeriodFromRecurrenceShape a sh:NodeShape ;
+        sh:targetNode ldg:Supersession ;
+        sh:sparql [
+                sh:message "A supersession must state a period key, a bin of the recurrence, where a later version it names states a period recurrence, and no period key where none of them does." ;
+                sh:select """
+                        PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+                        PREFIX qnt: <https://www.nebularis.org/neuro-semantic/lattice/quantification#>
+                        SELECT $this ?value WHERE {
+                                {
+                                        ?value a $this ; ldg:supersedingVersion ?version .
+                                        ?version ldg:periodRecurrence ?recurrence .
+                                        FILTER NOT EXISTS { ?value ldg:periodKey ?bin . ?bin qnt:generatedByRecurrence ?recurrence }
+                                } UNION {
+                                        ?value a $this ; ldg:periodKey ?unwanted .
+                                        FILTER NOT EXISTS { ?value ldg:supersedingVersion/ldg:periodRecurrence ?any }
+                                }
                         }
                 """
         ] .
@@ -2464,11 +2629,11 @@ ldg:LedgerAtItsLatestPassShape a sh:NodeShape ;
 
 ## 8. Examples
 
-The examples in [`examples/`](examples/) are seven accepted arrangements (licensing, lending, grants, delegated authority, insurance, a credit cut at a parent, and requests of no use in part) a policy that rounds to the nearest and settles the difference, and twelve refusals (cycle, unit mismatch, overdraw under `ldg:Refuse`, a credit posted to an account that does not accept its kind, an unrounded proportional rule, an intensive unit of account, rounding to the nearest beside a residual allocation with no difference stated, a difference settled with no excess recovery stated, an account definition that names no merge policy, a merge policy with no merge rule, a credit ceiling above the stated amount that no ledger profile admits, a discrete unit of account with no granularity floor), validated against the structural shapes and the constraints of section 7, and two draws the runtime laws refuse (a draw that read an amount in another unit or another value space, and a draw of an amount its space cannot represent). §5.2 walks through one of them.
+The examples in [`examples/`](examples/) are eight accepted arrangements (licensing, lending, grants, delegated authority, insurance, a credit cut at a parent, requests of no use in part, and an amount raised by a supersession) a policy that rounds to the nearest and settles the difference, and thirteen refusals (cycle, unit mismatch, overdraw under `ldg:Refuse`, a credit posted to an account that does not accept its kind, an unrounded proportional rule, an intensive unit of account, rounding to the nearest beside a residual allocation with no difference stated, a difference settled with no excess recovery stated, an account definition that names no merge policy, a merge policy with no merge rule, a credit ceiling above the stated amount that no ledger profile admits, a discrete unit of account with no granularity floor, a second version of a sublimit under a section of another identity), validated against the structural shapes and the constraints of section 7, and two draws the runtime laws refuse (a draw that read an amount in another unit or another value space, and a draw of an amount its space cannot represent). §5.2 walks through one of them.
 
 Every discrete unit of account in an example states its granularity floor, except in the refusal for a discrete unit that states none. Every example's configuration is versioned as Foundation asks. Its tests run `fnd:MeaningBearingEdgeShape` on it, and `fnd:VersionedShape` on its account definitions, merge policies and ledger profiles, and neither finds anything. Each of those, and each value space and recurrence an edge that bears meaning leads to, has one persistent identity. Each definition's stated amount and credit ceiling are minted under its IRI, written relative to the example's base, so a ceiling equal to the stated amount is a quantity of its own. Each example with a credit declares an edition of its kinds, a versioned scheme with an identity, and each kind is a concept of that edition and of `ldg:CreditKinds`, defined by the edition. A definition that names the kinds that restore it pins that edition.
 
-The accepted examples other than the policy that rounds to the nearest, which holds no records, and the two refusals that are recorded, the overdraw and the credit, carry their records too: the owner's ledger, the account instances, the passes, and the postings with their running balances, cuts and merge records with their requests each position writes, which the runtime laws of section 7.3 check. Each owner's ledger names the example's ledger profile and states the revision its last pass recorded. Each pass is named from the ledger and a key for its evaluation, under a prefix that holds the ledger's IRI, and records the revision it moved the ledger to, one more than the pass before it. A refused merge is a record its pass writes, so that pass moves the revision as any other does. Each example with a credit gives it a kind of its own, a member of `ldg:CreditKinds` and of the example's edition, in the example's namespace. The licensing example keeps one account per site and licence year, with no reset credit. The example of a credit cut at a parent is the case of a cut at an ancestor: a parent and a child each stated at 10, a debit of 5 at the child, a credit of 4 at the parent, then a credit of 4 at the child, which is applied at 4 and cut by 3 at the parent, whose balance is then 10. With no cut the sum would be 13, above the parent's ceiling. A last credit of 1 at the child is cut in full at the parent. Its profile closes the ledger after positions 3 and 4, and both accounts have a checkpoint at both closes with their balances and totals. The parent's balance is 10 at both, and it still moved, since its credits offered rose from 8 to 9. The example of requests of no use in part has requests of 5 and 4, ranked in that order, share 7 each whole or not at all: the first is granted 5 and the second 0, and the merge states a residual of 2, which its policy allows and sends to a residual account. The refused overdraw keeps both its requests with no granted value and states `ldg:ExceedsAvailable`. The refused credit is a merge record with one request and `ldg:KindNotAccepted`, and no posting.
+The accepted examples other than the policy that rounds to the nearest, which holds no records, and the two refusals that are recorded, the overdraw and the credit, carry their records too: the owner's ledger, the account instances, the passes, and the postings with their running balances, cuts and merge records with their requests each position writes, which the runtime laws of section 7.3 check. Each owner's ledger names the example's ledger profile and states the revision its last pass recorded. Each pass is named from the ledger and a key for its evaluation, under a prefix that holds the ledger's IRI, and records the revision it moved the ledger to, one more than the pass before it. A refused merge is a record its pass writes, so that pass moves the revision as any other does. Each example with a credit gives it a kind of its own, a member of `ldg:CreditKinds` and of the example's edition, in the example's namespace. The licensing example keeps one account per site and licence year, with no reset credit. The example of a credit cut at a parent is the case of a cut at an ancestor: a parent and a child each stated at 10, a debit of 5 at the child, a credit of 4 at the parent, then a credit of 4 at the child, which is applied at 4 and cut by 3 at the parent, whose balance is then 10. With no cut the sum would be 13, above the parent's ceiling. A last credit of 1 at the child is cut in full at the parent. Its profile closes the ledger after positions 3 and 4, and both accounts have a checkpoint at both closes with their balances and totals. The parent's balance is 10 at both, and it still moved, since its credits offered rose from 8 to 9. The example of requests of no use in part has requests of 5 and 4, ranked in that order, share 7 each whole or not at all: the first is granted 5 and the second 0, and the merge states a residual of 2, which its policy allows and sends to a residual account. The refused overdraw keeps both its requests with no granted value and states `ldg:ExceedsAvailable`. The refused credit is a merge record with one request and `ldg:KindNotAccepted`, and no posting. The example of an amount raised by a supersession is an aggregate stated at 10 and a section under it stated at 6, each with a second version linked from the first by `fnd:supersededBy`. The aggregate's second version states 15, and the section's states 6 and names the aggregate's second version as its parent. One account of each names its first version. A first pass draws 4 at the section's account, whose running balance is 2, and a second pass at revision 2 writes one supersession, in force from position 2, which names both second versions and is the only record of that pass. The accounts keep their postings, and the aggregate's balance, derived from its subtree, is 6 under its first version and 11 under its second. The refusal of a second version of a sublimit under a section of another identity is the case of a change of parent, which a version may not make.
 
 The two refused draws carry records too, whole except for the draws the runtime laws refuse. In the draw in another unit, a sterling facility takes a first draw asked for in euros, converted before the ledger and citing its conversion record, which conforms. A second draw cites the euros it was asked for, with no conversion record, and a third cites a sum in dollars, a value space of its own, and the laws refuse the two. In the unrepresentable draw, a pool of 10 licences, on a discrete space whose granularity floor is one licence, takes a draw of half the pool, resolved to 5 before the ledger, which conforms, and a draw of 33%, resolved to 3.3, which the laws refuse with its request.
 
@@ -2961,9 +3126,16 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
   - changes meaning. `ldg:passPosition`, `ldg:closePosition` and `ldg:microPosition` have the range `xsd:nonNegativeInteger`, as `ldg:effectivePosition` and `ldg:recordedPosition` do. A document that states a negative one states a value outside the range, and a value typed `xsd:integer` should be typed `xsd:nonNegativeInteger`.
   - changes meaning. `ldg:CrossingLimits` is now `ldg:CrossingSets`, since its definition speaks of sets of requests. A document that names the old term names one the ledger no longer declares. To move it, name `ldg:CrossingSets`.
   - may invalidate. The first pass of a ledger records revision 1, since an owner with no ledger is read as revision 0 and a pass moves it by one ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-18). `ldg:PassRevisionsInOrderShape` also refuses a ledger whose least pass revision is not 1, and the definitions of `ldg:Ledger`, `ldg:Pass`, `ldg:revision` and `ldg:passRevision` say so. To move a document, renumber the revisions of a ledger's passes from 1.
-  - changes meaning. A pass's position is the later of the position of the stimulus it was evaluated for and the position of its ledger's latest pass at the revision it was evaluated from, and a record keeps its stimulus's position as its effective position ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum proposed 2026-11-20). The definitions of `ldg:Pass` and `ldg:passPosition` say so, and no shape reads it.
+  - changes meaning. A pass's position is the later of the position of the stimulus it was evaluated for and the position of its ledger's latest pass at the revision it was evaluated from, and a record keeps its stimulus's position as its effective position ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-20). The definitions of `ldg:Pass` and `ldg:passPosition` say so, and no shape reads it.
   - may invalidate. The constraint `ldg:CreditCeilingAboveStatedAdmittedShape` is new. An account definition whose `ldg:creditCeiling` is above its `ldg:statedAmount` no longer conforms unless some `ldg:LedgerProfile` in the same data states `ldg:admitsCeilingAboveStated` true. To move a document, state it on the profile the owner's ledger names, or lower the ceiling.
   - may invalidate. The constraint `ldg:DiscreteUnitStatesAFloorShape` is new. An account definition whose `ldg:unitOfAccount` is a value space with `qnt:densityKind` `qnt:Discrete` and no `qnt:granularityFloor` no longer conforms. To move a document, state the floor on the space.
+  - no effect. New terms for a later version of an account definition ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-23): `ldg:Supersession`, a derived artefact disjoint with the other runtime classes, is the record a pass writes that later versions are in force for one owner from one position, with `ldg:forOwner`, `ldg:inPass` and `ldg:effectivePosition` exactly one, `ldg:supersedingVersion`, at least one, and `ldg:periodKey` and `ldg:refusalReason`, each at most one. `ldg:supersedingVersion` names a version, and like `ldg:ofDefinition` it is not marked as bearing meaning. `ldg:forOwner`, `ldg:inPass`, `ldg:effectivePosition`, `ldg:periodKey` and `ldg:refusalReason` have `ldg:Supersession` in their domains.
+  - no effect. New terms for the admission of a version below what is drawn and for an account that is over. `ldg:admitsStatedBelowDrawn`, a boolean on an account definition or a ledger profile, at most one, and `ldg:overdrawnValue`, a decimal on a posting, at most one. No shape reads either beyond its cardinality, and neither is marked as bearing meaning, since a literal leads to no node.
+  - no effect. `ldg:StatedBelowDrawn`, the eighth concept of `ldg:RefusalReasons`, with six reasons for a merge, one for a credit and one for a supersession. `ldg:RefusalReasons` and `ldg:refusalReason` say a supersession may state one.
+  - changes meaning. An account is identified by its definition's identity, its owner, its key and its period, and no longer by the version of its definition ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-23). `ldg:Account`'s and `ldg:ofDefinition`'s entries say `ldg:ofDefinition` names the version in force for the owner at the first position of the account's period, and that a later version reaches the account by a supersession. `ldg:AccountDefinition`'s utility no longer says an account reaches a later version only where it names it.
+  - may invalidate. `ldg:AccountNaturalKeyShape` reports two accounts that share a definition's identity, an owner, a key and a period, so two accounts that name two versions of one definition, which it did not, are reported now. To move a document, keep one account for the owner under the version in force at the first position of its period, and bring a later version to it with a supersession.
+  - may invalidate. The constraint `ldg:VersionsKeepTheAccountsPlaceShape` is new. Two versions of one identity that differ in the unit of account, the period recurrence, the key dimension, the purposes they count or the parent, compared by identity where a node has one, no longer conform. They may still differ in the stated amount, the credit ceiling, the kinds that restore them with their edition, the merge policy, the owner kinds and `ldg:admitsStatedBelowDrawn`. To move a document, state a change of one of the five as another definition.
+  - may invalidate. The runtime laws for a supersession are new. `ldg:SupersessionNamesOneVersionOfEachDefinitionShape` reports a supersession that names two versions of one identity, and `ldg:SupersessionPeriodFromRecurrenceShape` one whose period key is not a bin of a recurrence a version states, or that states a period key where none does. `ldg:NotForwardDatedShape` also reports a supersession effective later than its pass. `ldg:PassWritesOneLedgerShape`, `ldg:PassRevisionsInOrderShape` and `ldg:LedgerAtItsLatestPassShape` count a supersession's owner as they count the owner of the account of a posting, so a pass that writes only a supersession is a pass with a record.
 - **0.22.0**.
   - changes meaning. What an account declares for a merge moves to a merge policy ([ADR-A131](../../docs/architecture/decisions/ADR-A131-ledger-layer.md), its addendum of 2026-11-17). `ldg:mergeRule`, `ldg:roundingMethod` and `ldg:residualAllocation` have the domain `ldg:MergePolicy`, a new versioned class, and an account definition names its policy with the new `ldg:mergePolicy`, exactly one. A definition that states the three properties itself no longer conforms. To move it, state them on a policy and name the policy from the definition. `ldg:ProportionalNeedsRoundingShape` and `ldg:NearestRoundingStatesTheDifferenceShape` now target the policy.
   - no effect. New on a merge policy, each at most one: `ldg:rankCriterion` and `ldg:unitOrderCriterion`, whose values are concepts of the new scheme `ldg:OrderCriteria` that an applied module fills, and the booleans `ldg:allowsResiduals`, `ldg:requiresDistinctRanks` and `ldg:requiresSamePurpose`.
@@ -2990,7 +3162,7 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 
 - **A purpose under a shared ancestor.** A draw naming a purpose writes a posting at the purpose-counting account too, and an ancestor of both would fold the draw twice. No example has such an ancestor, and the rule that prevents the double count is not yet decided.
 - **A close is not checked to write every account that moved.** The law of section 7.3 refuses a checkpoint for an account that did not move, and nothing yet refuses a close that leaves out one that did, since the records name a close only by its checkpoints.
-- **Which version of a definition an account folds against after a new version is written.** An account names the version of its definition it was derived under, and that version is part of its natural key. How a later version reaches an account that already has postings, whether as the same account from a stated position or as a new one, is not yet decided, and no example writes a second version.
+- **The laws that hold a balance to the version in force are not yet stated.** A supersession and the version an account names are records, and the laws of a balance still read the stated amount of the version an account names. How a balance is read against a later version, the bound a version that has ended holds for what took effect before it, the refusal of a later version that states less than is drawn, and what an account is over by are not yet laws. Nothing yet reads `ldg:admitsStatedBelowDrawn` or `ldg:overdrawnValue`, and `ldg:StatedBelowDrawn` is declared and never stated by a record the shapes check.
 - **The edition of a purpose's or a key's scheme is not pinned.** A definition pins the edition of the credit kinds it names. A purpose it counts and the key dimension it states are concepts or schemes of their own, and whether a version of a definition pins their editions too is not yet decided.
 - **A credit's amount is not checked for representability.** The shapes of section 7.3 hold a draw to its account's value space, unit and representable amounts, and no shape yet holds a credit, a cut or a residual to them.
 - **Persistence's record families** for postings, cuts and merge records, append-only, are not yet declared. The storage shape they take is not yet measured.

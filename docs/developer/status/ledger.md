@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** building 2026-11-23. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** built 2026-11-23. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-19
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md), [LG-23](../validation/LG-23.md), [LG-11](../validation/LG-11.md), [LG-25](../validation/LG-25.md), [LG-26](../validation/LG-26.md), [LG-27](../validation/LG-27.md), [LG-28](../validation/LG-28.md), [LG-12](../validation/LG-12.md)
@@ -102,7 +102,9 @@ The rework built on machine S, LG-11, LG-25 to LG-28 and LG-12, was read against
 
 No break showed the implementation wrong. Three showed a law, a removal or a boundary that no test holds, and LG-30 adds a test for each and runs the three probes again. Our recommendation to the maintainer is that LG-26, LG-27, LG-28 and LG-12 can be verified, LG-28 with the note that LG-29 changes its account key, and that LG-11, LG-25 and LG-32 wait for LG-30's tests.
 
-**2026-11-23, two addenda accepted.** The maintainer accepted the wording of ADR-A131's addendum of 2026-11-20, on a pass's position, and of its addendum of 2026-11-23, on a supersession. Both were drafted as Proposed. The layer's README still cites each as proposed, and is brought into line with LG-29.
+**2026-11-23, LG-29 built.** Built by a subagent and reviewed here, with its [pack](../validation/LG-29.md). `ldg:Supersession` is declared with `ldg:supersedingVersion`, and names its owner, its pass, its effective position, its period where its definitions state one, and each later version. An account is identified by its definition's identity, `ldg:ofDefinition` names the version it opens under, and `ldg:AccountNaturalKeyShape` reads the identity. `ldg:admitsStatedBelowDrawn`, `ldg:overdrawnValue` and the eighth reason `ldg:StatedBelowDrawn` are declared, and no law reads them yet. `ldg:VersionsKeepTheAccountsPlaceShape` enforces STD-338, which makes fourteen constraints. Two laws of a supersession's own shape are new, and four laws of a pass count a supersession as a record. There are 24 examples, one of a raised amount and one refusal. The ledger's 196 tests, the literate check and the ledger's proof gate pass. The review found the account-key law twelve times slower on Oxigraph as first built, 21 s against 1.7 s on a pass of 5,000 postings, and brought it back by nesting its second lookup, which TD-178 now also records. The slice is built on the leaning for LG-Q57, which is not answered.
+
+**2026-11-23, two addenda accepted.** The maintainer accepted the wording of ADR-A131's addendum of 2026-11-20, on a pass's position, and of its addendum of 2026-11-23, on a supersession. Both were drafted as Proposed. The layer's README cites each as accepted since LG-29.
 
 **2026-11-23, LG-29 marked building.** It declares all five terms of the addendum of 2026-11-23, so that no record's shape changes after it. LG-Q57 asks which version an account opens under and which accounts a supersession reaches, and the slice is built on its leaning, (a), while the maintainer's answer waits.
 
@@ -240,7 +242,7 @@ Results sections. In short:
 | LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part. [Validation Pack](../validation/LG-26.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 | LG-25 |
 | LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation. [Validation Pack](../validation/LG-27.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 | LG-25 |
 | LG-28 | the account definition as a versioned thing, with the scheme edition it pins. [Validation Pack](../validation/LG-28.md) | built 2026-11-19, building 2026-11-19, briefed 2026-11-19 | LG-26, LG-27 |
-| LG-29 | the record and the key of an account under a later version of its definition. [Sketch](../sketches/ledger-definition-versions-in-force.md) | building 2026-11-23, briefed | LG-28 |
+| LG-29 | the record and the key of an account under a later version of its definition. [Sketch](../sketches/ledger-definition-versions-in-force.md), [Validation Pack](../validation/LG-29.md) | built 2026-11-23, building 2026-11-23, briefed | LG-28 |
 | LG-30 | the corrections the review of 2026-11-20 found and the maintainer accepted, and the tests the probes of 2026-11-23 found missing. [Validation Pack](../validation/LG-30.md) | built 2026-11-23, building 2026-11-23 | LG-28 |
 | LG-31 | a credit held to the rule a draw is held to | planned | LG-12 |
 | LG-32 | a benchmark of a balance read under each way of writing a supersession, for LG-Q52. [Validation Pack](../validation/LG-32.md) | built 2026-11-23, building 2026-11-23 |  |

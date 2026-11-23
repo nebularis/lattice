@@ -1,0 +1,77 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Premise. Refused. A sublimit has two versions. The first is part of one
+# section, and the second, linked from it by fnd:supersededBy, is part of
+# another section, which is a definition of its own with its own identity. A
+# version of a definition may raise or lower an amount, but it may not move the
+# definition under another parent, since the parent says which accounts a draw
+# on it reaches. A later version of the same section as the parent would not be
+# a change.
+
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix qnt:  <https://www.nebularis.org/neuro-semantic/lattice/quantification#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/ledger/refusal-version-changes-parent/> .
+@base <https://example.org/lattice/ledger/refusal-version-changes-parent/> .
+
+ex:OwnerKind a owl:Class .
+
+ex:units a qnt:ValueSpace ;
+    fnd:hasIdentity ex:units-identity ;
+    qnt:spaceKey "ledger-refusal-version-changes-parent-units" ; qnt:orderKind qnt:TotalOrder ;
+    qnt:densityKind qnt:Discrete ; qnt:granularityFloor ex:units-floor ; qnt:spaceHash "ledger-refusal-version-changes-parent-units-v1" ;
+    qnt:additivity qnt:Extensive ;
+    qnt:hasOperationCapability ex:units-sum , ex:units-difference .
+ex:units-identity a fnd:PersistentIdentity .
+ex:units-floor a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "1"^^xsd:decimal .
+ex:units-sum a qnt:OperationCapability ; qnt:operationKind qnt:Sum ; qnt:resultSpace ex:units .
+ex:units-difference a qnt:OperationCapability ; qnt:operationKind qnt:Difference ; qnt:resultSpace ex:units .
+
+# ==== The merge policy =========================================================
+
+ex:refused-when-exceeded a ldg:MergePolicy ;
+    fnd:hasIdentity ex:refused-when-exceeded-identity ;
+    ldg:mergeRule ldg:Refuse .
+ex:refused-when-exceeded-identity a fnd:PersistentIdentity ;
+    rdfs:comment "The merge policy these terms state." .
+
+# ==== Two sections, each a definition of its own ===============================
+
+ex:section-a a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:section-a-identity ;
+    ldg:statedAmount <section-a/stated-amount> ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
+    rdfs:comment "The first section, stated at 100." .
+<section-a/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
+ex:section-a-identity a fnd:PersistentIdentity .
+
+ex:section-b a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:section-b-identity ;
+    ldg:statedAmount <section-b/stated-amount> ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
+    rdfs:comment "The second section, stated at 100, of an identity of its own." .
+<section-b/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "100"^^xsd:decimal .
+ex:section-b-identity a fnd:PersistentIdentity .
+
+# ==== A sublimit, and its second version, which changes its parent ============
+
+ex:sublimit-1 a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:sublimit-identity ;
+    ldg:statedAmount <sublimit-1/stated-amount> ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
+    ldg:partOf ex:section-a ;
+    fnd:supersededBy ex:sublimit-2 ;
+    rdfs:comment "The first version, stated at 30 and part of the first section." .
+<sublimit-1/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "30"^^xsd:decimal .
+ex:sublimit-identity a fnd:PersistentIdentity .
+
+ex:sublimit-2 a ldg:AccountDefinition ;
+    fnd:hasIdentity ex:sublimit-identity ;
+    ldg:statedAmount <sublimit-2/stated-amount> ; ldg:unitOfAccount ex:units ;
+    ldg:admitsOwnerKind ex:OwnerKind ; ldg:mergePolicy ex:refused-when-exceeded ;
+    ldg:partOf ex:section-b ;
+    rdfs:comment "Refused. The second version, stated at 40, is part of the second section, a different definition from the first version's parent." .
+<sublimit-2/stated-amount> a qnt:Quantity ; qnt:onSpace ex:units ; qnt:numericValue "40"^^xsd:decimal .

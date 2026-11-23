@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
-"""Ledger LG-1, LG-2, LG-12, LG-25, LG-26, LG-27 and LG-28: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
-and LG-2 "in detail" tables and the Validation Packs of LG-12 and LG-25 to LG-28. Validates LG-0's examples, configuration and runtime records, against
+"""Ledger LG-1, LG-2, LG-12, LG-25, LG-26, LG-27, LG-28 and LG-29: the configuration document and the runtime document (ADR-A131). Row IDs are the plan's LG-1
+and LG-2 "in detail" tables and the Validation Packs of LG-12 and LG-25 to LG-29. Validates LG-0's examples, configuration and runtime records, against
 the structural shapes, the SHACL-SPARQL constraints and the runtime laws, and against Foundation's two shapes for a versioned thing
 (ADR-A142), checks the import guard holds, the spec names no term
 of Party, Eligibility, Wording, Instrument or Behaviour, the cycle shape finishes on a generated tree, each runtime law refuses a
@@ -70,7 +70,7 @@ def _cached_graphs(request: pytest.FixtureRequest, graph_cache, validated) -> No
 
 
 ACCEPTED = ["licence-seats", "revolving-facility", "research-grant", "authority-aggregate", "insurance-aggregate",
-            "credit-cut-at-parent", "whole-or-nothing"]
+            "credit-cut-at-parent", "whole-or-nothing", "supersession-raised-amount"]
 REFUSALS = {
     "refusal-cycle": "NoCycleThroughPartOfShape",
     "refusal-unit": "ChildUnitMatchesParentShape",
@@ -80,6 +80,7 @@ REFUSALS = {
     "refusal-settled-without-excess": "SettledToNearestStatesTheExcessShape",
     "refusal-ceiling-above-stated": "CreditCeilingAboveStatedAdmittedShape",
     "refusal-discrete-without-floor": "DiscreteUnitStatesAFloorShape",
+    "refusal-version-changes-parent": "VersionsKeepTheAccountsPlaceShape",
 }
 
 
@@ -634,6 +635,74 @@ def _kind_outside_the_edition(g: Graph) -> None:
     g.remove((ex.recovery, SKOS.inScheme, ex["credit-kinds-edition-1"]))
 
 
+def _supersession_graph(g: Graph, *triples: tuple[object, URIRef, object]) -> None:
+    """Adds triples to the supersession example, a subject given as a string being a node of the example."""
+    ex = _ex("supersession-raised-amount")
+
+    def node(term: object) -> object:
+        return term if isinstance(term, (URIRef, Literal)) else ex[term]
+
+    for s, p, o in triples:
+        g.add((node(s), p, node(o)))
+
+
+def _supersession_names_two_versions(g: Graph) -> None:
+    """The aggregate's first version beside its second, two versions of one identity."""
+    _supersession_graph(g, ("supersession-1", LDG.supersedingVersion, "aggregate-1"))
+
+
+def _period_recurrence_stated(g: Graph, *versions: str) -> None:
+    """A yearly recurrence stated by each of `versions`, which the supersession's first version did not state."""
+    _supersession_graph(g, ("year", RDF.type, QNT.Recurrence), ("year", FND.hasIdentity, "year-identity"),
+                        ("year-identity", RDF.type, FND.PersistentIdentity))
+    for version in versions:
+        _supersession_graph(g, (version, LDG.periodRecurrence, "year"))
+
+
+def _recurrence_without_a_period_key(g: Graph) -> None:
+    """The aggregate's second version states a recurrence and the supersession no period key."""
+    _period_recurrence_stated(g, "aggregate-2")
+
+
+def _period_key_without_a_recurrence(g: Graph) -> None:
+    """A bin on the supersession though no version it names states a recurrence."""
+    _period_recurrence_stated(g)
+    _supersession_graph(g, ("year-2028", RDF.type, QNT.RecurrenceBin), ("year-2028", QNT.generatedByRecurrence, "year"),
+                        ("supersession-1", LDG.periodKey, "year-2028"))
+
+
+def _supersession_forward_dated(g: Graph) -> None:
+    g.set((_ex("supersession-raised-amount")["supersession-1"], LDG.effectivePosition, _position(3)))
+
+
+def _supersession_for_an_owner_with_no_ledger(g: Graph) -> None:
+    """The one record of the second pass is a supersession for an owner that has no ledger."""
+    ex = _ex("supersession-raised-amount")
+    g.add((ex.other, RDF.type, FND.PersistentIdentity))
+    g.set((ex["supersession-1"], LDG.forOwner, ex.other))
+
+
+def _supersession_in_a_pass_of_another_owner(g: Graph) -> None:
+    """A second supersession, for another owner, in the first pass, which writes a posting on the holder's account."""
+    ex = _ex("supersession-raised-amount")
+    _supersession_graph(g, ("other-supersession", RDF.type, LDG.Supersession), ("other-supersession", LDG.forOwner, "other"),
+                        ("other-supersession", LDG.effectivePosition, _position(1)),
+                        ("other-supersession", LDG.inPass, _pass("supersession-raised-amount", "draw-1")),
+                        ("other-supersession", LDG.supersedingVersion, "aggregate-2"), ("other", RDF.type, FND.PersistentIdentity))
+
+
+def _supersession_pass_revision_repeated(g: Graph) -> None:
+    """The second pass records the first pass's revision, with the ledger at it."""
+    _pass_revision("supersession-raised-amount", "supersession-2", 1)(g)
+    _ledger_revision("supersession-raised-amount", "holder", 1)(g)
+
+
+def _account_of_a_later_version(g: Graph) -> None:
+    """A second account of the aggregate's identity for the holder, which opened under the later version."""
+    _supersession_graph(g, ("account-aggregate-later", RDF.type, LDG.Account), ("account-aggregate-later", LDG.ofDefinition, "aggregate-2"),
+                        ("account-aggregate-later", LDG.forOwner, "holder"))
+
+
 MUTATIONS = {
     "a running balance one minor unit off": ("research-grant", _running_balance_off, "RunningBalanceShape"),
     "LG2-05 a credit above the ceiling": ("research-grant", _credit_above_ceiling, "CreditCeilingShape"),
@@ -658,6 +727,21 @@ MUTATIONS = {
     "an instance not part of its parent's": (
         "research-grant", _parent_instance_missing, "PartOfAccountFollowsDefinitionShape"),
     "two accounts with one natural key": ("research-grant", _account_key_shared, "AccountNaturalKeyShape"),
+    "two accounts of two versions of one definition": (
+        "supersession-raised-amount", _account_of_a_later_version, "AccountNaturalKeyShape"),
+    "a supersession naming two versions of one definition": (
+        "supersession-raised-amount", _supersession_names_two_versions, "SupersessionNamesOneVersionOfEachDefinitionShape"),
+    "a supersession with no period key where a version states a recurrence": (
+        "supersession-raised-amount", _recurrence_without_a_period_key, "SupersessionPeriodFromRecurrenceShape"),
+    "a supersession with a period key where no version states a recurrence": (
+        "supersession-raised-amount", _period_key_without_a_recurrence, "SupersessionPeriodFromRecurrenceShape"),
+    "a forward-dated supersession": ("supersession-raised-amount", _supersession_forward_dated, "NotForwardDatedShape"),
+    "a pass whose one record is a supersession for an owner with no ledger": (
+        "supersession-raised-amount", _supersession_for_an_owner_with_no_ledger, "PassWritesOneLedgerShape"),
+    "a pass that writes a supersession for another owner": (
+        "supersession-raised-amount", _supersession_in_a_pass_of_another_owner, "PassWritesOneLedgerShape"),
+    "a pass of a supersession at a revision already recorded": (
+        "supersession-raised-amount", _supersession_pass_revision_repeated, "PassRevisionsInOrderShape"),
     "a refused merge granting a request": ("refusal-overdraw", _refused_with_a_granted_value, "RefusedMergeShape"),
     "a refused merge stating a residual": ("refusal-overdraw", _refused_with_a_residual, "RefusedMergeShape"),
     "a refusal whose reason is of no scheme": ("refusal-overdraw", _refused_for_a_reason_of_no_scheme, "RefusedMergeShape"),
@@ -944,12 +1028,13 @@ def test_a_merge_record_holds_at_least_one_request() -> None:
     assert paths == {str(LDG.request)}
 
 
-def test_the_grant_is_retired_and_the_seven_reasons_are_one_scheme() -> None:
-    """No `ldg:Grant` or `ldg:grant` is declared (LG-Q38), and `ldg:RefusalReasons` holds seven reasons (LG-Q31)."""
+def test_the_grant_is_retired_and_the_eight_reasons_are_one_scheme() -> None:
+    """No `ldg:Grant` or `ldg:grant` is declared (LG-Q38), and `ldg:RefusalReasons` holds eight reasons, six for a merge, one for a
+    credit and one for a supersession (LG-Q31, LG-Q56)."""
     assert (LDG.Grant, None, None) not in MODEL and (LDG.grant, None, None) not in MODEL
     reasons = set(MODEL.subjects(SKOS.inScheme, LDG.RefusalReasons))
     assert reasons == {LDG.ExceedsAvailable, LDG.RanksNotDistinct, LDG.TieWithoutRule, LDG.ResidualNotPermitted,
-                       LDG.MixedPurposes, LDG.CrossingSets, LDG.KindNotAccepted}
+                       LDG.MixedPurposes, LDG.CrossingSets, LDG.KindNotAccepted, LDG.StatedBelowDrawn}
     assert all((reason, RDF.type, SKOS.Concept) in MODEL for reason in reasons)
 
 
@@ -991,7 +1076,7 @@ def test_the_account_definition_is_versioned_and_its_edges_bear_meaning() -> Non
 def test_foundation_finds_every_example_versioned_and_its_parts_pinned(name: str) -> None:
     """Every example, accepted or refused: each versioned thing has one identity, and no edge that bears meaning leads to a node that
     is neither versioned, minted under its subject nor a published term, so Foundation's check warns on no quantity (LG-Q40 (a))."""
-    assert len(EXAMPLES) == 22
+    assert len(EXAMPLES) == 24
     g = MODEL + _example(name)
     assert _foundation_findings(g) == set()
     definitions = list(g.subjects(RDF.type, LDG.AccountDefinition))
@@ -1072,6 +1157,195 @@ def test_a_definition_pins_at_most_one_edition() -> None:
     paths = {str(report.value(r, SH.resultPath)) for r in report.subjects(SH.resultSeverity, SH.Violation)
              if report.value(r, SH.sourceConstraintComponent) == SH.MaxCountConstraintComponent}
     assert paths == {str(LDG.creditKindsEdition)}
+
+
+# ---- LG-29: a later version of a definition keeps the account's place, and a supersession brings it into force
+
+SUPERSESSION = "supersession-raised-amount"
+
+
+def _second_unit(g: Graph) -> None:
+    """The aggregate's second version in a unit of account of another identity."""
+    _supersession_graph(g, ("units-2", RDF.type, QNT.ValueSpace), ("units-2", FND.hasIdentity, "units-2-identity"),
+                        ("units-2-identity", RDF.type, FND.PersistentIdentity))
+    g.set((_ex(SUPERSESSION)["aggregate-2"], LDG.unitOfAccount, _ex(SUPERSESSION)["units-2"]))
+
+
+def _unit_with_no_identity(g: Graph) -> None:
+    """The aggregate's second version in a unit of account that has no identity, another node than the first version's."""
+    _supersession_graph(g, ("units-3", RDF.type, QNT.ValueSpace))
+    g.set((_ex(SUPERSESSION)["aggregate-2"], LDG.unitOfAccount, _ex(SUPERSESSION)["units-3"]))
+
+
+def _recurrence_on_one_version(g: Graph) -> None:
+    _period_recurrence_stated(g, "aggregate-2")
+
+
+def _second_recurrence(g: Graph) -> None:
+    """A recurrence on each version, of two identities."""
+    _period_recurrence_stated(g, "aggregate-1")
+    _supersession_graph(g, ("quarter", RDF.type, QNT.Recurrence), ("quarter", FND.hasIdentity, "quarter-identity"),
+                        ("quarter-identity", RDF.type, FND.PersistentIdentity), ("aggregate-2", LDG.periodRecurrence, "quarter"))
+
+
+def _key_dimension_on_one_version(g: Graph) -> None:
+    _supersession_graph(g, ("sites", RDF.type, SKOS.ConceptScheme), ("section-2", LDG.keyDimension, "sites"))
+
+
+def _other_key_dimension(g: Graph) -> None:
+    _supersession_graph(g, ("sites", RDF.type, SKOS.ConceptScheme), ("regions", RDF.type, SKOS.ConceptScheme),
+                        ("section-1", LDG.keyDimension, "sites"), ("section-2", LDG.keyDimension, "regions"))
+
+
+def _purpose_on_one_version(g: Graph) -> None:
+    _supersession_graph(g, ("flood", RDF.type, SKOS.Concept), ("aggregate-2", LDG.countsPurpose, "flood"))
+
+
+def _other_purposes(g: Graph) -> None:
+    """Each version counts a purpose the other does not."""
+    _supersession_graph(g, ("flood", RDF.type, SKOS.Concept), ("wind", RDF.type, SKOS.Concept),
+                        ("aggregate-1", LDG.countsPurpose, "flood"), ("aggregate-2", LDG.countsPurpose, "wind"))
+
+
+def _parent_dropped(g: Graph) -> None:
+    g.remove((_ex(SUPERSESSION)["section-2"], LDG.partOf, None))
+
+
+def _parent_of_another_identity(g: Graph) -> None:
+    """The section's second version part of a second aggregate of another identity."""
+    ex = _ex(SUPERSESSION)
+    _supersession_graph(g, ("aggregate-3", RDF.type, LDG.AccountDefinition), ("aggregate-3", FND.hasIdentity, "aggregate-3-identity"),
+                        ("aggregate-3-identity", RDF.type, FND.PersistentIdentity), ("aggregate-3", LDG.unitOfAccount, "units"))
+    g.set((ex["section-2"], LDG.partOf, ex["aggregate-3"]))
+
+
+VERSION_CHANGES = {
+    "the unit of account": _second_unit,
+    "a unit of account with no identity": _unit_with_no_identity,
+    "a period recurrence stated by one version only": _recurrence_on_one_version,
+    "another period recurrence": _second_recurrence,
+    "a key dimension stated by one version only": _key_dimension_on_one_version,
+    "another key dimension": _other_key_dimension,
+    "a purpose counted by one version only": _purpose_on_one_version,
+    "other purposes counted": _other_purposes,
+    "a parent dropped": _parent_dropped,
+    "a parent of another identity": _parent_of_another_identity,
+}
+
+
+@pytest.mark.parametrize("case", VERSION_CHANGES)
+def test_a_version_that_changes_the_accounts_place_is_refused(case: str) -> None:
+    """Two versions of one identity that differ in the unit of account, the period recurrence, the key dimension, the purposes they
+    count or the parent are reported, each version from its own side."""
+    g = MODEL + _example(SUPERSESSION)
+    VERSION_CHANGES[case](g)
+    _, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    hit = {str(report.value(r, SH.value)) for r in report.subjects(SH.resultSeverity, SH.Violation)
+           if str(report.value(r, SH.sourceShape)).endswith("#VersionsKeepTheAccountsPlaceShape")}
+    assert len(hit) == 2 and hit <= {str(_ex(SUPERSESSION)[v]) for v in ("aggregate-1", "aggregate-2", "section-1", "section-2")}, hit
+
+
+def _differences_that_are_allowed(g: Graph) -> None:
+    """The aggregate's second version differs in what bounds or arbitrates later postings: its amount, a credit ceiling, the kinds that
+    restore it with their edition, a merge policy of another identity, another kind of owner, and the admission of a stated amount
+    below what is drawn."""
+    ex = _ex(SUPERSESSION)
+    _supersession_graph(
+        g, ("aggregate-2/credit-ceiling", RDF.type, QNT.Quantity), ("aggregate-2/credit-ceiling", QNT.onSpace, "units"),
+        ("aggregate-2/credit-ceiling", QNT.numericValue, _decimal("15")), ("aggregate-2", LDG.creditCeiling, "aggregate-2/credit-ceiling"),
+        ("edition-1", RDF.type, SKOS.ConceptScheme), ("edition-1", FND.hasIdentity, "edition-identity"),
+        ("edition-identity", RDF.type, FND.PersistentIdentity), ("recovery", RDF.type, SKOS.Concept),
+        ("recovery", SKOS.inScheme, LDG.CreditKinds), ("recovery", SKOS.inScheme, "edition-1"),
+        ("aggregate-2", LDG.restoredBy, "recovery"), ("aggregate-2", LDG.creditKindsEdition, "edition-1"),
+        ("policy-2", RDF.type, LDG.MergePolicy), ("policy-2", FND.hasIdentity, "policy-2-identity"),
+        ("policy-2-identity", RDF.type, FND.PersistentIdentity), ("policy-2", LDG.mergeRule, LDG.Refuse),
+        ("aggregate-2", LDG.admitsOwnerKind, "Partner"), ("Partner", RDF.type, OWL.Class))
+    g.set((ex["aggregate-2"], LDG.mergePolicy, ex["policy-2"]))
+    g.set((ex["aggregate-2"], LDG.admitsStatedBelowDrawn, Literal(True)))
+
+
+def test_versions_may_differ_in_what_bounds_or_arbitrates_later_postings() -> None:
+    """The example's own versions differ in the stated amount, and a later version of the parent is no change of parent. Nothing the
+    constraint does not read is reported when it also differs in a ceiling, its kinds, its merge policy, its owner kinds and its
+    admission."""
+    g = MODEL + _example(SUPERSESSION)
+    _differences_that_are_allowed(g)
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert conforms, _violating_shapes(report)
+    _agree(g, report)
+
+
+def test_a_supersession_is_a_record_a_pass_writes() -> None:
+    """The supersession of the example names its owner, its pass, its effective position and both later versions, which are of two
+    identities, and the pass that writes only it is a pass with a record of a ledger at its revision."""
+    g = _example(SUPERSESSION)
+    ex = _ex(SUPERSESSION)
+    record = ex["supersession-1"]
+    assert set(g.objects(record, LDG.supersedingVersion)) == {ex["aggregate-2"], ex["section-2"]}
+    assert {g.value(v, FND.hasIdentity) for v in g.objects(record, LDG.supersedingVersion)} == {
+        ex["aggregate-identity"], ex["section-identity"]}
+    assert (g.value(record, LDG.forOwner), g.value(record, LDG.effectivePosition)) == (ex.holder, _position(2))
+    assert g.value(record, LDG.inPass) == _pass(SUPERSESSION, "supersession-2")
+    assert [g.value(a, LDG.ofDefinition) for a in (ex["account-aggregate"], ex["account-section"])] == [ex["aggregate-1"], ex["section-1"]]
+    assert list(g.subjects(LDG.inPass, _pass(SUPERSESSION, "supersession-2"))) == [record]
+    assert g.value(record, LDG.periodKey) is None
+
+
+def test_the_supersession_and_its_terms_are_declared() -> None:
+    """`ldg:Supersession` is a derived artefact disjoint with the other runtime classes, with the restrictions of its terms, the three
+    properties it shares have it in their domain, and the admission and the overdrawn value are functional with the ranges named."""
+    assert (LDG.Supersession, RDFS.subClassOf, FND.DerivedArtefact) in MODEL
+    restricted = {(MODEL.value(r, OWL.onProperty), MODEL.value(r, OWL.cardinality) or MODEL.value(r, OWL.minCardinality)
+                   or MODEL.value(r, OWL.maxCardinality), (r, OWL.cardinality, None) in MODEL, (r, OWL.minCardinality, None) in MODEL)
+                  for r in MODEL.objects(LDG.Supersession, RDFS.subClassOf) if isinstance(r, BNode)}
+    assert restricted == {(LDG.forOwner, _position(1), True, False), (LDG.inPass, _position(1), True, False),
+                          (LDG.effectivePosition, _position(1), True, False), (LDG.supersedingVersion, _position(1), False, True),
+                          (LDG.periodKey, _position(1), False, False), (LDG.refusalReason, _position(1), False, False)}
+    disjoint = {c for axiom in MODEL.subjects(RDF.type, OWL.AllDisjointClasses) for c in MODEL.items(MODEL.value(axiom, OWL.members))}
+    assert LDG.Supersession in disjoint
+    assert (MODEL.value(LDG.supersedingVersion, RDFS.domain), MODEL.value(LDG.supersedingVersion, RDFS.range)) == (
+        LDG.Supersession, LDG.AccountDefinition)
+    assert (LDG.supersedingVersion, RDF.type, OWL.FunctionalProperty) not in MODEL
+    for prop in (LDG.forOwner, LDG.inPass, LDG.effectivePosition, LDG.periodKey, LDG.refusalReason):
+        union = MODEL.value(prop, RDFS.domain)
+        assert LDG.Supersession in set(MODEL.items(MODEL.value(union, OWL.unionOf))), prop
+    for prop, domain in ((LDG.admitsStatedBelowDrawn, {LDG.AccountDefinition, LDG.LedgerProfile}), (LDG.overdrawnValue, {LDG.Posting})):
+        union = MODEL.value(prop, RDFS.domain)
+        found = set(MODEL.items(MODEL.value(union, OWL.unionOf))) if isinstance(union, BNode) else {union}
+        assert found == domain, prop
+        assert (prop, RDF.type, OWL.FunctionalProperty) in MODEL
+    assert MODEL.value(LDG.admitsStatedBelowDrawn, RDFS.range) == XSD.boolean
+    assert MODEL.value(LDG.overdrawnValue, RDFS.range) == XSD.decimal
+    assert (LDG.admitsStatedBelowDrawn, FND.meaningBearing, None) not in MODEL
+    for cls in (LDG.AccountDefinition, LDG.LedgerProfile, LDG.Posting):
+        prop = LDG.overdrawnValue if cls == LDG.Posting else LDG.admitsStatedBelowDrawn
+        assert any(MODEL.value(r, OWL.onProperty) == prop and (r, OWL.maxCardinality, None) in MODEL
+                   for r in MODEL.objects(cls, RDFS.subClassOf) if isinstance(r, BNode)), (cls, prop)
+    assert MODEL.value(LDG.StatedBelowDrawn, SKOS.inScheme) == LDG.RefusalReasons
+
+
+@pytest.mark.parametrize("subject,prop", [("supersession-1", LDG.supersedingVersion), ("supersession-1", LDG.effectivePosition),
+                                          ("supersession-1", LDG.forOwner), ("supersession-1", LDG.inPass)])
+def test_a_supersession_missing_what_it_must_state_is_refused(subject: str, prop: URIRef) -> None:
+    g = MODEL + _example(SUPERSESSION)
+    g.remove((_ex(SUPERSESSION)[subject], prop, None))
+    conforms, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    assert not conforms
+    paths = {str(report.value(r, SH.resultPath)) for r in report.subjects(SH.resultSeverity, SH.Violation)
+             if report.value(r, SH.sourceConstraintComponent) == SH.MinCountConstraintComponent}
+    assert paths == {str(prop)}
+
+
+def test_a_supersession_states_a_period_key_where_its_versions_state_a_recurrence() -> None:
+    """Both later versions state a yearly recurrence and the supersession states the bin of it its position falls in. The two
+    supersession shapes find nothing, though the versions now differ from the first in a recurrence, which another constraint reports."""
+    g = MODEL + _example(SUPERSESSION)
+    _period_recurrence_stated(g, "aggregate-2", "section-2")
+    _supersession_graph(g, ("year-2028", RDF.type, QNT.RecurrenceBin), ("year-2028", QNT.generatedByRecurrence, "year"),
+                        ("supersession-1", LDG.periodKey, "year-2028"))
+    _, report, _ = validate(g, shacl_graph=SHAPES, inference="none", advanced=True)
+    found = {s.rsplit("#", 1)[-1] for s in _violating_shapes(report)}
+    assert not {name for name in found if name.startswith("Supersession")}, found
 
 
 # ---- LG-12: which draws an account accepts (LG-Q20 (a), ADR-A131's second addendum of 2026-11-09)

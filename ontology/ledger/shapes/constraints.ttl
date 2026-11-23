@@ -7,7 +7,8 @@
 # ledger profile admits it, a discrete unit of account states a granularity floor,
 # a key dimension is typed,
 # a closing recurrence is a ledger profile's, and the kinds a definition
-# names are concepts of the edition it pins.
+# names are concepts of the edition it pins, and versions of one definition keep
+# the account's place.
 # Each targets the class as one node and reads every definition in one query,
 # so a validator runs each once rather than once per definition.
 
@@ -218,6 +219,38 @@ ldg:RestoringKindsInTheirEditionShape a sh:NodeShape ;
 					ldg:restoredBy ?kind .
 				OPTIONAL { ?value ldg:creditKindsEdition ?edition }
 				FILTER (!BOUND(?edition) || NOT EXISTS { ?kind skos:inScheme ?edition })
+			}
+		"""
+	] .
+
+ldg:VersionsKeepTheAccountsPlaceShape a sh:NodeShape ;
+	sh:targetNode ldg:AccountDefinition ;
+	sh:sparql [
+		sh:message "Versions of one account definition must keep its unit of account, period recurrence, key dimension, counted purposes and parent, since each says which account a posting belongs to or what an amount means." ;
+		sh:select """
+			PREFIX ldg: <https://www.nebularis.org/neuro-semantic/lattice/ledger#>
+			PREFIX fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#>
+			SELECT $this ?value WHERE {
+				?value a $this ; fnd:hasIdentity ?identity .
+				FILTER EXISTS {
+					?identity ^fnd:hasIdentity ?other .
+					FILTER (?other != ?value)
+					FILTER (
+						((EXISTS { ?value ldg:unitOfAccount ?unit } || EXISTS { ?other ldg:unitOfAccount ?otherUnit })
+							&& NOT EXISTS { ?value ldg:unitOfAccount ?unitHeld . ?other ldg:unitOfAccount ?unitMatched .
+								FILTER (?unitHeld = ?unitMatched || EXISTS { ?unitHeld fnd:hasIdentity ?unitIdentity . ?unitMatched fnd:hasIdentity ?unitIdentity }) })
+						|| ((EXISTS { ?value ldg:periodRecurrence ?recurrence } || EXISTS { ?other ldg:periodRecurrence ?otherRecurrence })
+							&& NOT EXISTS { ?value ldg:periodRecurrence ?recurrenceHeld . ?other ldg:periodRecurrence ?recurrenceMatched .
+								FILTER (?recurrenceHeld = ?recurrenceMatched || EXISTS { ?recurrenceHeld fnd:hasIdentity ?recurrenceIdentity . ?recurrenceMatched fnd:hasIdentity ?recurrenceIdentity }) })
+						|| ((EXISTS { ?value ldg:keyDimension ?dimension } || EXISTS { ?other ldg:keyDimension ?otherDimension })
+							&& NOT EXISTS { ?value ldg:keyDimension ?dimensionHeld . ?other ldg:keyDimension ?dimensionHeld })
+						|| EXISTS { ?value ldg:countsPurpose ?purpose . FILTER NOT EXISTS { ?other ldg:countsPurpose ?purpose } }
+						|| EXISTS { ?other ldg:countsPurpose ?otherPurpose . FILTER NOT EXISTS { ?value ldg:countsPurpose ?otherPurpose } }
+						|| ((EXISTS { ?value ldg:partOf ?parent } || EXISTS { ?other ldg:partOf ?otherParent })
+							&& NOT EXISTS { ?value ldg:partOf ?parentHeld . ?other ldg:partOf ?parentMatched .
+								FILTER EXISTS { ?parentHeld fnd:hasIdentity ?parentIdentity . ?parentMatched fnd:hasIdentity ?parentIdentity } })
+					)
+				}
 			}
 		"""
 	] .
