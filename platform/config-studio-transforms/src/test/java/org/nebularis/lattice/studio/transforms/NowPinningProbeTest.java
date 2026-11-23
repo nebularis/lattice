@@ -23,7 +23,7 @@ import org.apache.jena.update.UpdateFactory;
 import org.junit.jupiter.api.Test;
 
 /**
- * Probe for the clock the generated persistence writes read (TD-171, slice SVA-P3). A SPARQL Update runs over an in-memory Jena dataset
+ * Probe for the clock the generated persistence writes read (TD-256, slice SVA-P3). A SPARQL Update runs over an in-memory Jena dataset
  * with a time set in advance in the execution's context and in the dataset's context, and the test records that {@code NOW()} ignores
  * it. Jena's {@code Context.setCurrentDateTime} overwrites {@code ARQConstants.sysCurrentTime} unconditionally, in
  * {@code UpdateProcessorBase}, {@code UpdateEngineBase} and again in {@code QueryExecDataset.init} for the WHERE of each operation, so

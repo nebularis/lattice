@@ -27,7 +27,7 @@ After a write, one read on the writer classifies its outcome, specified once in 
 - Three points go beyond section 15.2 of the patterns guide, which has four rows. The epoch read follows the guard in force, since a template without the dataset guard guards on the row's epoch (TD-118). `AlreadyExists`, `KeyClaimHeld` and `NotApplied` are added, each defined by its guard.
 - 42 vectors under `confirmationChecks` in `contracts/persistence/vectors.json`, decided by `verify-vectors.py` with its own code and by both libraries, cover every outcome and cause, the dataset-guarded and row-level forms of each kind of write, a claim in another graph or for another transaction, a claim with two digests or none, and the order of the rules.
 - `lattice_persistence.confirm` in Python and `Confirmation.run` in Java. `PersistenceStep` calls the Java read, and its own classification is gone. A composite create over a root whose data exists, with no version row, is now `AlreadyExists` where the simulator said `NotApplied`. The run contract's outcome paragraph cites the library's read.
-- TD-173 is closed and its row removed.
+- The debt row on the confirmation read is closed and its row removed.
 
 ## Tests
 

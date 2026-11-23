@@ -559,6 +559,6 @@ Nothing in the registers rests on it.
 
 Recorded in the domain on 2026-11-19, after `v0.1.0`, so it has no tagged link yet. `mise run graph:ask -- read TSD-76` prints it from the domain's clone.
 
-**What it means for LATTICE.** The generated persistence writes read `NOW()` for the month of the receipt and event graphs and for stored times, so on Jena they cannot be replayed at a stated time, and the operations of one request record times milliseconds apart (TD-171). The studio's simulator replaces each `NOW()` in the parsed update with the step's stated time and shows the update as it ran (SVA-P3). `NowPinningProbeTest` in `platform/config-studio-transforms` runs the probe, so a Jena that starts honouring a stated time fails there.
+**What it means for LATTICE.** The generated persistence writes read `NOW()` for the month of the receipt and event graphs and for stored times, so on Jena they cannot be replayed at a stated time, and the operations of one request record times milliseconds apart (TD-256). The studio's simulator replaces each `NOW()` in the parsed update with the step's stated time and shows the update as it ran (SVA-P3). `NowPinningProbeTest` in `platform/config-studio-transforms` runs the probe, so a Jena that starts honouring a stated time fails there.
 
-TD-171 rests on it.
+TD-256 rests on it.

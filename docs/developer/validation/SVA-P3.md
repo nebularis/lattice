@@ -44,8 +44,8 @@ A persistence step is a function of its request. The run worker reads the finish
 
 ## Left open
 
-- The caller library has no confirmation read that classifies an outcome, so `PersistenceStep.confirm` classifies it from the claim and the guards' graphs, after section 15.2 of the patterns guide, with two classifications of its own, `AlreadyExists` and `NotApplied`. TD-173.
-- The generated writes still read `NOW()`, TD-171. The simulator shows the update with the time it replaced.
+- The caller library has no confirmation read that classifies an outcome, so `PersistenceStep.confirm` classifies it from the claim and the guards' graphs, after section 15.2 of the patterns guide, with two classifications of its own, `AlreadyExists` and `NotApplied`. the debt row on the confirmation read, since closed.
+- The generated writes still read `NOW()`, TD-256. The simulator shows the update with the time it replaced.
 
 **Follow-up, 2026-11-20.** P3-T11's fixture created its workspace with the facility sample's name, which the service records and does not fill parts from, so the persistence part was empty and its compile was refused. It now creates the workspace with the facility baseline and saves the persistence part, as the app does. With Erlang on the path, the runs' real-stack suite gave 11 passed in 188 s, P3-T11 among them, and the liveness suite 5 passed.
 

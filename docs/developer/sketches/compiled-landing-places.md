@@ -145,7 +145,7 @@ Answered by the maintainer on 2026-11-18:
 
 Answered (b) by the maintainer on 2026-11-18. The direction is a value of the logical key, and the access is where the logical facts live. It keeps the role set the IR's, and a reader asking "the removed triples of a patch" asks the access, then its place.
 
-An observation, not a question: the receipt's month bucket is named from `NOW()` in the generated SPARQL, which PRI-56 forbids in an identity. It is the compiler's behaviour today and is unchanged here. Stating `{month}` as the month of the transaction time says what it should be, and whether the generated query takes it from the transaction time is a question for the persistence unit, recorded as TD-171.
+An observation, not a question: the receipt's month bucket is named from `NOW()` in the generated SPARQL, which PRI-56 forbids in an identity. It is the compiler's behaviour today and is unchanged here. Stating `{month}` as the month of the transaction time says what it should be, and whether the generated query takes it from the transaction time is a question for the persistence unit, recorded as TD-256.
 
 ## 5. Slices
 

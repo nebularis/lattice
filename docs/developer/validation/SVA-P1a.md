@@ -47,7 +47,7 @@ The persistence, conformance and library runs were run twice, by the delegated d
 ## Left for the merge
 
 - The persistence module's minor version and its shapes, `mise run version:bump -- --layer-target persistence --increment minor --with-shapes`.
-- The month graphs are still named from `NOW()` in the generated SPARQL, TD-171. The template states `{month}` as the month of the transaction time, which is what the generated query should take.
+- The month graphs are still named from `NOW()` in the generated SPARQL, TD-256. The template states `{month}` as the month of the transaction time, which is what the generated query should take.
 
 ## Placement
 

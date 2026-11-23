@@ -13,7 +13,7 @@ The persistence canvas draws only what the latest finished persistence compilati
 - The worker no longer writes `landing-places.json`. `config_studio_landing.py`, its tests and `contracts/config-studio/landing-places.schema.json` are deleted, and the contract's README, the app's README and the studio's architecture page say the canvas reads `compiled-profile.ttl`. The `check:config-studio` task names the new fixture test in place of the deleted one.
 - `apps/config-studio/src/persistence/landing.ts` reads the Turtle with `Graph.parse` of `@lattice/authoring-domain` and builds the model the lenses draw, every list sorted. `PersistenceCanvas.tsx` changes only what it loads. `PlaceKind` loses `derived-rows`, which the surface compiler writes and a persistence profile never states.
 - A data graph written by a `dal:AppendVersion` operation is a version, which replaces the worker's test of a builder's name. A key claim's label is its constraint's local name. The profiles are the winners and the scopes those they won through.
-- The rule that names a job's artefacts is restated in the browser as `artefactPath` and `groupOf`, with a comment naming where the job writes them, and held by a test against the 24 paths the facility job holds (TD-170).
+- The rule that names a job's artefacts is restated in the browser as `artefactPath` and `groupOf`, with a comment naming where the job writes them, and held by a test against the 24 paths the facility job holds (TD-255).
 - The facility fixture is the compiled profile the facility job gives, `e2e/fixtures/compiled-profile-facility.ttl`, with its artefact paths beside it, both checked by `workers/tests/test_config_studio_compiled_fixture.py`.
 - The templates the canvas shows are the compiled profile's, `urn:g:txlog/{month}` and `urn:g:borrower/{root}`, and one journey's expected text changed with them.
 
@@ -39,7 +39,7 @@ The persistence canvas draws only what the latest finished persistence compilati
 | `mise exec -- python -m pytest tools/test_config_studio_contract.py tools/test_config_studio_stage.py -q` | 45 passed |
 | `tsc --noEmit` in `apps/config-studio` | exit 0, nothing printed |
 | `vitest run` in `apps/config-studio` | 30 files, 503 tests passed |
-| the Playwright journeys on the fake service, all 67 | 66 passed and 1 failed in a full run. The failure, "a handle moves with the arrow keys, Home and End, and a collapsed column takes no focus on Tab", touches nothing this slice changed and passed three times of three alone. Recorded as TD-172 |
+| the Playwright journeys on the fake service, all 67 | 66 passed and 1 failed in a full run. The failure, "a handle moves with the arrow keys, Home and End, and a collapsed column takes no focus on Tab", touches nothing this slice changed and passed three times of three alone. Recorded as TD-257 |
 | `mise run check:identifiers` | passed, 0 unresolved, run by the delegated developer |
 | `mise run check:catalogue` | agrees with the tree, run by the delegated developer |
 
