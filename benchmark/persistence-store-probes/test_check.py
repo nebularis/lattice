@@ -49,9 +49,9 @@ def test_bs4_the_check_does_not_fail_on_time(monkeypatch):
 def test_bs5_the_report_names_its_run_and_is_written_where_asked(tmp_path):
     report = check.run(quick=True, engine_classes=[check.RdflibEngine])
     check.write(report, tmp_path)
-    text = (tmp_path / "report.md").read_text()
+    text = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert text.startswith("Run: ") and "rdflib" in text.splitlines()[0] and "bind-optional" in text
-    assert json.loads((tmp_path / "report.json").read_text())["run"] == report.run_record
+    assert json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))["run"] == report.run_record
 
 
 def test_bs6_an_absent_jena_is_a_noted_skip_and_not_a_failure():

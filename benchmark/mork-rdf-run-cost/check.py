@@ -106,7 +106,7 @@ def main() -> int:
     results = []
     for n in sizes():
         for mode in ("memory", "streamed"):
-            child = subprocess.run([sys.executable, __file__, str(n), mode], capture_output=True, text=True, check=True)
+            child = subprocess.run([sys.executable, __file__, str(n), mode], capture_output=True, text=True, encoding="utf-8", check=True)
             results.append(json.loads(child.stdout.strip().splitlines()[-1]))
             print(results[-1])
     errors = [e for m in results for e in verify(m)]

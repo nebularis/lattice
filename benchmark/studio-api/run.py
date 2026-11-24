@@ -117,7 +117,7 @@ def scenario(client: Client) -> Samples:
 
 
 def dirty(checkout: Path) -> bool:
-    return bool(subprocess.run(["git", "-C", str(checkout), "status", "--porcelain"], capture_output=True, text=True).stdout.strip())
+    return bool(subprocess.run(["git", "-C", str(checkout), "status", "--porcelain"], capture_output=True, text=True, encoding="utf-8").stdout.strip())
 
 
 def main(argv: List[str] | None = None) -> int:

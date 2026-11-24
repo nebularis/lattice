@@ -658,7 +658,7 @@ def p1_kept(engine_class, rows: str) -> bool:
 
 def _child(arguments: list, seed: int | None = None) -> str:
     env = {**os.environ, **({"PYTHONHASHSEED": str(seed)} if seed is not None else {})}
-    return subprocess.run([sys.executable, str(Path(__file__).resolve()), *arguments], env=env, capture_output=True, text=True, check=True).stdout.strip()
+    return subprocess.run([sys.executable, str(Path(__file__).resolve()), *arguments], env=env, capture_output=True, text=True, encoding="utf-8", check=True).stdout.strip()
 
 
 def p1(engine_class) -> dict:
@@ -812,7 +812,7 @@ def job(kind: str, engine_name: str, family_name: str, form: str, m: int) -> str
 def in_child(kind: str, engine_name: str, family_name: str, form: str, m: int, timeout: float) -> str:
     """One measurement in a child process with a wall-clock limit. Returns the cell, which is the milliseconds, `wrong: <reason>`, `error: <message>` or `did not finish: <reason>`."""
     try:
-        done = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--job", f"{kind}|{engine_name}|{family_name}|{form}|{m}"], capture_output=True, text=True, timeout=timeout)
+        done = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--job", f"{kind}|{engine_name}|{family_name}|{form}|{m}"], capture_output=True, text=True, encoding="utf-8", timeout=timeout)
     except subprocess.TimeoutExpired:
         return f"did not finish: no result within {timeout:.0f} s"
     for line in done.stdout.splitlines():

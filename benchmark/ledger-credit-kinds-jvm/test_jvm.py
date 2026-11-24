@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import locale
 import shutil
 import subprocess
 import sys
@@ -22,8 +23,9 @@ pytestmark = pytest.mark.skipif(shutil.which("mvn") is None or shutil.which("jav
 
 
 def run_java(directory: Path, report: Path) -> subprocess.CompletedProcess:
+    # Maven's JVM writes a pipe in its native encoding, the locale's (the ANSI code page on Windows), not UTF-8.
     return subprocess.run(["mvn", "-q", "-f", str(HERE / "pom.xml"), "compile", "exec:exec", f"-Dkinds.dir={directory}", f"-Dkinds.report={report}", "-Dkinds.forms=optional", f"-Dkinds.plans={directory / 'plans.txt'}"],
-                          capture_output=True, text=True, check=False, timeout=600)
+                          capture_output=True, text=True, encoding=locale.getencoding(), check=False, timeout=600)
 
 
 def test_jv1_the_java_run_passes_on_the_emitted_corpus_and_reads_the_jena_version(tmp_path):
