@@ -58,11 +58,17 @@ exec:arr-value a mork:DataMapping ; mork:mappingScheme exec:arr-scheme ; mork:ex
 Compiled, one query:
 
 ```sparql
-CONSTRUCT { ?s saas:annualRecurringRevenue ?arr }
-WHERE { ?s a saas:Subscription ; saas:hasMonthlyPrice ?p ; saas:hasBillingPeriodsPerYear ?n . BIND(?p * ?n AS ?arr) }
+BASE <https://example.org/out/>
+CONSTRUCT { ?f1 saas:annualRecurringRevenue ?value4 . }
+WHERE {
+  ?f1 rdf:type saas:Subscription .
+  ?f1 saas:hasMonthlyPrice ?v2 .
+  ?f1 saas:hasBillingPeriodsPerYear ?v3 .
+  BIND (xsd:decimal(?v2 * ?v3) AS ?value4)
+}
 ```
 
-The term names here are placeholders for the questions below, and none is declared.
+As `mork_rdf` writes it (SVA-S2f, built 2026-11-24), the prefixed names above stand for the full IRIs it writes, and it casts the product to the expression's result datatype. Beside it come one check for each operand the expression reads, naming a carrier that lacks it, and one naming a carrier whose expression is undefined, as a quotient by zero is.
 
 ## 3. Questions
 

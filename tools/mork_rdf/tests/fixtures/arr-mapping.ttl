@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# A derived annual figure, the product of two values a subscription holds, written on the subscription itself (README §7.8).
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix src:  <http://example.org/src#> .
+@prefix tgt:  <http://example.org/tgt#> .
+@prefix mm:   <http://example.org/mapping#> .
+
+mm:Arr a mork:MappingScheme ;
+    sh:declare [ sh:prefix "src" ; sh:namespace "http://example.org/src#"^^xsd:anyURI ] .
+
+src:Subscription a mork:Entity .
+mm:Concept_Subscription a mork:DataConcept ; mork:representedAs src:Subscription .
+
+mm:Map_Subscription a mork:DataMapping , mork:Datum ;
+    mork:mappingScheme mm:Arr ;
+    mork:mappingFor mm:Concept_Subscription ;
+    mork:identityRule mork:SourceNodeIdentity ;
+    mork:compositeNarrowerMapping mm:Map_Arr .
+
+mm:Map_Arr a mork:DataMapping ;
+    mork:mappingScheme mm:Arr ;
+    mork:exactRBoxMatch tgt:annualRecurringRevenue ;
+    mork:valueExpression mm:ArrValue .
+
+mm:ArrValue a mork:ProductExpression ;
+    mork:resultDatatype xsd:decimal ;
+    mork:leftOperand mm:ArrPrice ;
+    mork:rightOperand mm:ArrPeriods .
+
+mm:ArrPrice a mork:TypedRefExpression ;
+    mork:resultDatatype xsd:decimal ;
+    mork:dataRef "src:monthlyPrice" .
+
+mm:ArrPeriods a mork:TypedRefExpression ;
+    mork:resultDatatype xsd:integer ;
+    mork:dataRef "src:periodsPerYear" .

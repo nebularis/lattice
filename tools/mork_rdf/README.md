@@ -123,6 +123,8 @@ Each mapping node in force is classified by the case analysis of the MORK founda
 | lookup (Case 6) | `a mork:Lookup`, or `mork:referenceDataPath` | the R-Box property, its value the reference node whose `referenceDataPath` value equals the source value (§7.3) |
 | contextual datum (Case 4) | `mork:broaderApplicative`, or a deferred class, a parent and an R-Box match with no value | a target node per focus node, typed, and glued to its parent's target node by the R-Box match |
 | assertion from a datum | `a mork:Datum` with an R-Box match, a value, a parent and no T-Box match | the value on the parent's target node, as an assertion writes it |
+| derivation | `mork:valueExpression`, an R-Box match and a parent | the value expression's value as the property on the parent's target node, which is the source node itself beneath a source-node datum (§7.8) |
+| source-node datum | `mork:identityRule mork:SourceNodeIdentity` | nothing itself. Its target node is the node it iterates, so the mappings beneath it write on that node, and no node is minted or typed (§6) |
 | datum (Case 2) | `a mork:Datum`, or `mork:deferredMapping` | a target node per focus node, typed with each `mork:exactTBoxMatch`, or the class it defers to (§7.5) |
 | class creation (Case 1a) | `mork:broadTBoxCategoryMatch` | a new class in the T-Box, `rdfs:subClassOf` each broad match |
 | property creation | a broad R-Box match, no parent, no value and no children | a new property in the T-Box, `rdfs:subPropertyOf` the broad match, with its domain and range axioms (§7.6) |
@@ -159,6 +161,7 @@ A datum's target node is formed by the first rule that applies.
 
 | Rule | Target node |
 |---|---|
+| `mork:identityRule mork:SourceNodeIdentity` | the focus node itself |
 | `mork:individualIRI` | that IRI, for every focus node |
 | an A-Box match on the datum | that individual, for every focus node |
 | `mork:identityTemplateMapping` to a template expression, or a template expression that `mork:resolvesIdentityFor` the datum | `IRI(expression)` (§7.4) |
@@ -167,6 +170,8 @@ A datum's target node is formed by the first rule that applies.
 | `mork:conceptName` and `mork:dataRef` | `base` + name + `/` + the value of the path, encoded |
 | `mork:conceptName` alone | `base` + name + `/` + the SHA-256 of the focus node's IRI |
 | none | `base` + the mapping's local name + `/` + the SHA-256 of the focus node's IRI |
+
+The source-node identity forms no IRI and binds no variable, so a datum that takes it writes onto the node as the source holds it, with no `BASE`-relative IRI, no identity pattern and no `IdentityUnbound` or `IdentityAmbiguous` check. It names no class to type the node with. MORK's shapes refuse a datum that states it beside another identity or a type, and a `mork:identityRule` other than `mork:SourceNodeIdentity` is refused (`IdentityRuleUnknown`).
 
 A value read inside a concatenation, an interpolation or a name template is encoded with `ENCODE_FOR_URI`, as RML encodes a template's references. A reference or a lookup that is the whole identity is taken as it is, as RML takes a column whose term type is IRI, since it is already an IRI.
 
@@ -240,7 +245,7 @@ MORK's template expression algebra (Foundations §3.9) compiles to SPARQL string
 | `mork:InterpolationExpression`, `templateString "…{p}…"`, `hasBinding` | `CONCAT` of the template's fixed text and each placeholder's binding |
 | `mork:LookupExpression`, `lookupScheme`, `lookupProperty`, `lookupSource` | `STR(?concept)`, for the concept of the scheme whose property equals the source expression |
 
-An expression missing an operand, a binding or a placeholder's binding is refused (`ExpressionIncomplete`), and a node that is not an expression (`ExpressionUnknown`).
+An expression missing an operand, a binding or a placeholder's binding is refused (`ExpressionIncomplete`), and a node that is not an expression (`ExpressionUnknown`). Template expressions evaluate to strings. A number is the value of a value expression (§7.8).
 
 ### 7.5 Deferred references
 
@@ -294,6 +299,44 @@ Any other SHACL feature, such as `sh:pattern`, a sequence path or a count beyond
 Guarded siblings on one path divide its nodes. When two or more datums share a path and all are guarded, a check names each node none of them admits (`Unguarded`).
 
 The tests take pySHACL as the oracle. For each of fifteen shapes over one fixture graph, one validation targets every node and the compiled guard runs over the same graph, and the two must agree node for node.
+
+### 7.8 Value expressions
+
+A `mork:valueExpression` on an assertion is a number computed from what the focus node holds, which MORK keeps apart from the template expressions so that its strings stay a monoid. The assertion writes the result property on its parent's target node. Beneath a source-node datum (§6) that is the carrier itself, so the derived value lands beside the values it was computed from and nothing is minted. One `CONSTRUCT` writes it, over the root's iteration and the pattern of each path the expression reads, the expression in a `BIND`.
+
+```sparql
+BASE <http://example.org/out/>
+CONSTRUCT { ?f1 <http://example.org/tgt#annualRecurringRevenue> ?value4 . }
+WHERE {
+  ?f1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/src#Subscription> .
+  ?f1 <http://example.org/src#monthlyPrice> ?v2 .
+  ?f1 <http://example.org/src#periodsPerYear> ?v3 .
+  BIND (<http://www.w3.org/2001/XMLSchema#decimal>(?v2 * ?v3) AS ?value4)
+}
+```
+
+That is a subscription's annual recurring revenue, the product of its monthly price and its periods per year. Each node compiles as follows, and the whole expression is cast to its root's `mork:resultDatatype` when that is `xsd:integer`, `xsd:decimal`, `xsd:float` or `xsd:double`.
+
+| Expression | SPARQL |
+|---|---|
+| `mork:TypedRefExpression`, `mork:dataRef` | the variable its path is bound to. A path two operands share is bound once. The value is not cast, so a value that is no number leaves the expression undefined |
+| `mork:TypedLiteralExpression`, `mork:typedValue` | the literal, written by rdflib with its datatype, so its text cannot end the string it is in (PRI-55) |
+| `mork:SumExpression`, `mork:DifferenceExpression`, `mork:ProductExpression`, `mork:QuotientExpression` | `(left + right)`, `-`, `*` and `/`, with SPARQL's numeric promotion. A quotient is a decimal at least, since SPARQL divides integers into a decimal |
+| `mork:RoundingExpression`, `mork:roundingScale` | at scale 0 `ROUND(x)`. At a positive scale `(ROUND(x * 10^scale) / 10^scale)`, and at a negative scale `(ROUND(x / 10^-scale) * 10^-scale)`, so 1250 at scale -2 is 1300 and a tie goes toward positive infinity as `ROUND` does. A scale beyond 18 places is refused (`ScaleOutOfRange`), since a power of ten past that does not fit an engine's integer |
+| `mork:ChoiceExpression` | `IF(left op right, whenTrue, whenFalse)`, with the six comparison operators as `<`, `<=`, `=`, `!=`, `>=` and `>`. Only the branch taken is evaluated, so a division by zero in the branch not taken does not undefine the value |
+
+**Where a value is undefined, nothing is written.** A `BIND` whose expression raises leaves its variable unbound, and a `CONSTRUCT` template with an unbound variable writes no triple. So a carrier missing an operand gets no value, a quotient by zero gets none, and a derived property is never half written. XPath divides a float or a double by zero to INF or NaN where it divides a decimal or an integer to an error, and a quotient is undefined at zero whatever its datatype, so a quotient whose datatype is float or double divides by `IF(divisor != 0, divisor, ?undefined)`, a variable no pattern binds. The divisor is then written twice, which is a cost only for a quotient nested in a divisor.
+
+Two checks report what was not written, each over the same iteration as the construct.
+
+| Code | A row means |
+|---|---|
+| `OperandMissing` | the focus node has no value at a path the expression reads. The value names the path, as the compiler wrote it, one check for each distinct path |
+| `ValueUndefined` | the focus node has every value, and the expression is still unbound, as for a quotient by zero or a value that is no number. The value names the property that was not written |
+
+A path that yields several values gives several results, one for each combination, and no check reports it.
+
+**What the engines do differently.** The compiled query gives Oxigraph and rdflib the same values on every case the tests cover, and two things differ. A decimal product keeps its operands' scale on rdflib and is canonical on Oxigraph, so 29.50 times 12 is `"354.00"` there and `"354"` here, the same value and two terms. A reader of a result compares values, never lexical forms, and a test that joins on the term does not. A double divided by zero is INF on Oxigraph and an error on rdflib, which the quotient's guard above removes. Nothing here is yet an entry in the record of store behaviour, which the maintainer adds the domain's findings to.
 
 ## 8. Templates
 
@@ -355,7 +398,10 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 | `Unclassified` | error | fits no case |
 | `NoIterator` | error | a root datum that names no source class |
 | `RootPathIgnored` | warning | a root's concept has a `mork:path` |
-| `ExpressionIncomplete`, `ExpressionUnknown` | error | a template expression that cannot be compiled |
+| `ExpressionIncomplete`, `ExpressionUnknown` | error | a template or value expression that cannot be compiled |
+| `DerivationIncomplete` | error | a `mork:valueExpression` with no R-Box match, no parent, or another value beside it (§7.8) |
+| `IdentityRuleUnknown` | error | a `mork:identityRule` other than `mork:SourceNodeIdentity` (§6) |
+| `ScaleOutOfRange` | error | a rounding to a scale that is no integer within 18 places of the point (§7.8) |
 | `DeferredOutcome` | error | a deferred reference to the outcome of a mapping that is off the chain and no named creation (§7.5) |
 | `DeferredUnresolved`, `DeferredTemplate` | error | a deferred reference that yields nothing, or a name template with no focus node to read |
 | `DeferredCycle` | error | mappings that read each other's output, so no stratum order exists |
@@ -390,6 +436,8 @@ Each check is a `SELECT` that the compiler emits beside the constructs, and the 
 | `LookupUnresolved` | a lookup | no reference node matches |
 | `LookupAmbiguous` | a lookup | several match, and each was asserted |
 | `TermKind` | an assertion whose property the target vocabulary types | a literal for an object property, or an IRI for a datatype property |
+| `OperandMissing` | a derivation, for each path its expression reads | the focus node lacks the value, so the property was not written (§7.8) |
+| `ValueUndefined` | a derivation | the focus node has every value and the expression is undefined for them, so the property was not written (§7.8) |
 | `Unguarded` | guarded datums sharing a path | a node of the path that no guard admits |
 | `Uncovered` | the scheme, when a declared `mork:Entity` has no compiled root iterating it | a source node of that class, from which nothing was made |
 
@@ -537,6 +585,7 @@ The run reports three focus nodes. `ex:dune-2` has no ISBN (`IdentityUnbound`). 
 - **Lookup comparisons.** A string and an integer code against an integer reference value, under each comparison and the lexical fallback.
 - **Deferred references.** A class made from data typing a node made from the same record, a lookup over the classes a creation made two strata earlier, and a context yielding its own name.
 - **Axioms.** Each form and combination over named classes, and a union at the closure and per-class restrictions over classes made from data.
+- **Derivations.** A subscription scheme compiles to the query of §7.8, and a sample of four gives each product as an exact decimal on Oxigraph and on rdflib, with the subscription missing its price and the one whose price is no number each reported and written nothing for. Each operation, rounding at a positive and a negative scale, each comparison of a choice either way, typed literals, promotion between integer, decimal and double, and a quotient by zero of each datatype give their expected value or write nothing on both engines. A literal with a quote and a brace in it reaches the query escaped. The two differences of §7.8 are pinned, so an engine that changes fails there.
 - **Guards.** Each of fifteen shapes admits exactly the nodes pySHACL says conform, an unsupported feature refuses its mapping, guarded siblings divide their path, and a node no guard admits is reported.
 - **Validation.** Validating against the closed specification finds what full inference finds, on five mapping graphs, one of which breaks a shape.
 - **The skolem rule.** The vectors give exactly their expected triples, one name is re-derived by hand from §12.2, names do not depend on the triples' order, survive an unrelated addition and change with their own description, identical siblings stay two, and each irregular component is reported.
@@ -574,6 +623,7 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-23 | Blank nodes are named by the skolem rule of §12.2, version 1, the source-local deterministic pattern for tree nodes and component-scoped canonical labels for the rest (ADR-A147, Proposed) | identities that survive unrelated changes to a source, which whole-source canonical labels do not |
 | MR-24 | A guard is a SHACL node shape named by `mork:appliesWhen`, compiled for a closed subset of SHACL with pySHACL as the oracle, and refused beyond it (decided 2026-10-29) | a guard tests the source's shape, which SHACL is the standard for, and no expression language is added to MORK |
 | MR-25 | MORK's specification is closed under RDFS once, and each mapping graph's own entailments are added to it for validation, unless it states schema (2026-10-29) | the closure was nearly all of a compile's time, and the findings are the same |
+| MR-26 | A derived value is written on the node a source-node datum iterates, one `CONSTRUCT` per derivation, its result cast to the root's datatype and its references not cast. Where a value is undefined nothing is written and a check says why, and a quotient of floats or doubles is guarded since XPath does not raise at zero (proposed 2026-11-24) | a derived property is never half written, and a reference read without a cast reports a value that is no number instead of changing it |
 
 ## 18. Open questions
 

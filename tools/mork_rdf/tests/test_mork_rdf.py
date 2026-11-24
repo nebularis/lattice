@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import random
 from datetime import datetime, timezone
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -767,3 +768,224 @@ def test_a_concept_placed_by_mork_representation_scheme_in_another_format_is_lef
         mm:A a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:J ; mork:dataRef "loanId" ; mork:exactTBoxMatch tgt:Other .""", format="turtle")
     compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
     assert ("OtherBackend", MM + "A") in {(f.code, f.mapping) for f in compiled.findings} and not compiled.errors
+
+
+# --- derived values (§7.8) -------------------------------------------------------------------------------------------
+
+XSD_NS = "http://www.w3.org/2001/XMLSchema#"
+ARR_QUERY = f"""BASE <{BASE}>
+CONSTRUCT {{ ?f1 <{TGT}annualRecurringRevenue> ?value4 . }}
+WHERE {{
+  ?f1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <{SRC}Subscription> .
+  ?f1 <{SRC}monthlyPrice> ?v2 .
+  ?f1 <{SRC}periodsPerYear> ?v3 .
+  BIND (<{XSD_NS}decimal>(?v2 * ?v3) AS ?value4)
+}}"""
+
+
+def evaluate(engine: str, compiled, source: Graph) -> tuple[set, set]:
+    """What the constructs write and the checks report on one engine, as (subject, property, value, datatype) and
+    (code, focus, value). Oxigraph is the runner, and rdflib runs the same query text. A plain literal and an
+    `xsd:string` one are the same term in RDF 1.1, which rdflib parses apart, so both read as `xsd:string`."""
+    if engine == "oxigraph":
+        out = run(compiled, source)
+        written = {(str(s), str(p), o.toPython(), str(o.datatype or XSD_NS + "string")) for s, p, o in out.graph}
+        return written, {(f.code, f.focus, f.value) for f in out.findings}
+    dataset = Dataset()
+    for t in source:
+        dataset.default_graph.add(t)
+    written = {(str(s), str(p), o.toPython(), str(o.datatype or XSD_NS + "string")) for q in compiled.constructs for s, p, o in dataset.query(q.text)}
+    rows = {(q.code, str(row["focus"]), None if row["value"] is None else str(row["value"])) for q in compiled.checks for row in dataset.query(q.text)}
+    return written, rows
+
+
+ENGINES = ["oxigraph", "rdflib"]
+
+
+def test_a_derivation_compiles_to_one_construct_writing_on_the_carrier():
+    compiled = compile_scheme(parse("arr-mapping.ttl"), "http://example.org/mapping#Arr", base=BASE, at=AT)
+    assert not compiled.findings
+    (construct,) = compiled.constructs
+    assert " ".join(construct.text.split()) == " ".join(ARR_QUERY.split())
+    assert [q.code for q in compiled.checks] == ["OperandMissing", "OperandMissing", "ValueUndefined"]
+    assert len(compiled.queries) == 4 and construct.path[-1] == MM + "Map_Arr"
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_the_sample_of_subscriptions_gives_the_products_and_names_what_could_not_be_written(engine):
+    compiled = compile_scheme(parse("arr-mapping.ttl"), "http://example.org/mapping#Arr", base=BASE, at=AT)
+    written, reported = evaluate(engine, compiled, parse("arr-source.ttl"))
+    arr = TGT + "annualRecurringRevenue"
+    assert written == {(REC + "monthly", arr, Decimal("354.00"), XSD_NS + "decimal"),
+                       (REC + "quarterly", arr, Decimal("400.40"), XSD_NS + "decimal")}
+    assert reported == {("OperandMissing", REC + "nameless", f"<{SRC}monthlyPrice>"),
+                        ("ValueUndefined", REC + "text", arr)}
+
+
+def test_the_dry_run_gives_each_finding_its_message():
+    compiled = compile_scheme(parse("arr-mapping.ttl"), "http://example.org/mapping#Arr", base=BASE, at=AT)
+    findings = {f.code: f for f in run(compiled, parse("arr-source.ttl")).findings}
+    assert "lacks a value" in findings["OperandMissing"].message and "undefined" in findings["ValueUndefined"].message
+
+
+def test_a_derivation_is_the_same_for_any_order_of_the_mapping_graph():
+    mapping = parse("arr-mapping.ttl")
+    first = compile_scheme(mapping, "http://example.org/mapping#Arr", base=BASE, at=AT)
+    triples = list(mapping)
+    for seed in range(3):
+        random.Random(seed).shuffle(triples)
+        shuffled = Graph()
+        for t in triples:
+            shuffled.add(t)
+        assert compile_scheme(shuffled, "http://example.org/mapping#Arr", base=BASE, at=AT).text() == first.text()
+
+
+VALUES_HEAD = f"""@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <{XSD_NS}> .
+@prefix mm: <{MM}> . @prefix src: <{SRC}> . @prefix tgt: <{TGT}> .
+mm:S a mork:MappingScheme ; sh:declare [ sh:prefix "src" ; sh:namespace "{SRC}"^^xsd:anyURI ] .
+src:Thing a mork:Entity . mm:C a mork:DataConcept ; mork:representedAs src:Thing .
+mm:Root a mork:Datum ; mork:mappingScheme mm:S ; mork:mappingFor mm:C ; mork:identityRule mork:SourceNodeIdentity ;
+    mork:compositeNarrowerMapping mm:A .
+mm:A a mork:DataMapping ; mork:mappingScheme mm:S ; mork:exactRBoxMatch tgt:value ; mork:valueExpression mm:X .
+""" + "".join(f'mm:r{name} a mork:TypedRefExpression ; mork:resultDatatype xsd:{datatype} ; mork:dataRef "src:{path}" .\n'
+              for name, path, datatype in (("A", "a", "decimal"), ("B", "b", "integer"), ("E", "e", "integer"), ("Z", "z", "integer"),
+                                           ("F", "f", "decimal"), ("G", "g", "decimal"), ("H", "h", "decimal"), ("HN", "hn", "decimal"),
+                                           ("I", "i", "integer"), ("D", "d", "double"), ("DZ", "dz", "double")))
+
+VALUES_SOURCE = f"""<{REC}x> a <{SRC}Thing> ; <{SRC}a> "7.5"^^<{XSD_NS}decimal> ; <{SRC}b> 2 ; <{SRC}e> 4 ; <{SRC}z> 0 ;
+    <{SRC}f> "2.675"^^<{XSD_NS}decimal> ; <{SRC}g> "-2.675"^^<{XSD_NS}decimal> ; <{SRC}h> "1250"^^<{XSD_NS}decimal> ;
+    <{SRC}hn> "-1250"^^<{XSD_NS}decimal> ; <{SRC}i> 1250 ; <{SRC}d> "7.5e0"^^<{XSD_NS}double> ; <{SRC}dz> "0.0e0"^^<{XSD_NS}double> ."""
+
+
+def arithmetic(kind: str, left: str, right: str, datatype: str = "decimal") -> str:
+    return f"mm:X a mork:{kind}Expression ; mork:resultDatatype xsd:{datatype} ; mork:leftOperand mm:r{left} ; mork:rightOperand mm:r{right} ."
+
+
+def rounding(operand: str, scale: int, datatype: str = "decimal") -> str:
+    return f"mm:X a mork:RoundingExpression ; mork:resultDatatype xsd:{datatype} ; mork:roundedOperand mm:r{operand} ; mork:roundingScale {scale} ."
+
+
+def choice(operator: str) -> str:
+    return (f"mm:X a mork:ChoiceExpression ; mork:resultDatatype xsd:decimal ; mork:comparisonOperator mork:{operator} ; "
+            "mork:comparedLeft mm:rB ; mork:comparedRight mm:rE ; mork:whenTrue mm:rA ; mork:whenFalse mm:rF .")
+
+
+D, I_, DEC = "double", "integer", "decimal"
+OPERATIONS = [
+    ("sum, an integer promoted to a decimal", arithmetic("Sum", "A", "B"), Decimal("9.5"), DEC),
+    ("difference", arithmetic("Difference", "A", "B"), Decimal("5.5"), DEC),
+    ("product", arithmetic("Product", "A", "B"), Decimal("15"), DEC),
+    ("product of integers stays an integer", arithmetic("Product", "B", "E", I_), 8, I_),
+    ("product of a decimal and a double is a double", arithmetic("Product", "A", "D", D), 56.25, D),
+    ("quotient", arithmetic("Quotient", "A", "B"), Decimal("3.75"), DEC),
+    ("quotient of integers is a decimal", arithmetic("Quotient", "B", "E"), Decimal("0.5"), DEC),
+    ("quotient of a double by an integer", arithmetic("Quotient", "D", "E", D), 1.875, D),
+    ("rounding to hundredths, a tie going up", rounding("F", 2), Decimal("2.68"), DEC),
+    ("rounding to hundredths, a negative tie going toward positive infinity", rounding("G", 2), Decimal("-2.67"), DEC),
+    ("rounding to hundreds", rounding("H", -2), Decimal("1300"), DEC),
+    ("rounding a negative number to hundreds, a tie going up", rounding("HN", -2), Decimal("-1200"), DEC),
+    ("rounding an integer to hundreds", rounding("I", -2, I_), 1300, I_),
+    ("rounding an integer to hundredths leaves it", rounding("I", 2, I_), 1250, I_),
+    ("rounding to a whole number", rounding("F", 0), Decimal("3"), DEC),
+    ("typed literal decimal", 'mm:X a mork:TypedLiteralExpression ; mork:resultDatatype xsd:decimal ; mork:typedValue "2.5"^^xsd:decimal .', Decimal("2.5"), DEC),
+    ("sum with a typed literal", 'mm:X a mork:SumExpression ; mork:resultDatatype xsd:decimal ; mork:leftOperand mm:rA ; mork:rightOperand mm:L . '
+     'mm:L a mork:TypedLiteralExpression ; mork:resultDatatype xsd:decimal ; mork:typedValue "1.5"^^xsd:decimal .', Decimal("9.0"), DEC),
+    ("sum of an integer and a typed integer literal", 'mm:X a mork:SumExpression ; mork:resultDatatype xsd:integer ; mork:leftOperand mm:rB ; mork:rightOperand mm:L . '
+     'mm:L a mork:TypedLiteralExpression ; mork:resultDatatype xsd:integer ; mork:typedValue 3 .', 5, I_),
+    ("a rounded quotient", 'mm:X a mork:RoundingExpression ; mork:resultDatatype xsd:decimal ; mork:roundedOperand mm:Q ; mork:roundingScale 1 . '
+     + arithmetic("Quotient", "A", "E").replace("mm:X", "mm:Q"), Decimal("1.9"), DEC),
+    ("a choice, less than, true", choice("LessThan"), Decimal("7.5"), DEC),
+    ("a choice, less than or equal, true", choice("LessThanOrEqual"), Decimal("7.5"), DEC),
+    ("a choice, equal to, false", choice("EqualTo"), Decimal("2.675"), DEC),
+    ("a choice, not equal to, true", choice("NotEqualTo"), Decimal("7.5"), DEC),
+    ("a choice, greater than or equal, false", choice("GreaterThanOrEqual"), Decimal("2.675"), DEC),
+    ("a choice, greater than, false", choice("GreaterThan"), Decimal("2.675"), DEC),
+    ("quotient by zero, an integer divisor", arithmetic("Quotient", "A", "Z"), None, None),
+    ("quotient of integers by zero", arithmetic("Quotient", "B", "Z"), None, None),
+    ("quotient of doubles by zero, which XPath divides to INF", arithmetic("Quotient", "D", "DZ", D), None, None),
+    ("a choice whose branch divides by zero, taken", 'mm:X a mork:ChoiceExpression ; mork:resultDatatype xsd:decimal ; mork:comparisonOperator mork:LessThan ; '
+     'mork:comparedLeft mm:rB ; mork:comparedRight mm:rE ; mork:whenTrue mm:Q ; mork:whenFalse mm:rF . ' + arithmetic("Quotient", "A", "Z").replace("mm:X", "mm:Q"), None, None),
+    ("a choice whose branch divides by zero, not taken", 'mm:X a mork:ChoiceExpression ; mork:resultDatatype xsd:decimal ; mork:comparisonOperator mork:GreaterThan ; '
+     'mork:comparedLeft mm:rB ; mork:comparedRight mm:rE ; mork:whenTrue mm:Q ; mork:whenFalse mm:rF . ' + arithmetic("Quotient", "A", "Z").replace("mm:X", "mm:Q"), Decimal("2.675"), DEC),
+]
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+@pytest.mark.parametrize("body, value, datatype", [o[1:] for o in OPERATIONS], ids=[o[0] for o in OPERATIONS])
+def test_each_operation_gives_its_value_on_each_engine(engine, body, value, datatype):
+    g = Graph().parse(data=VALUES_HEAD + body, format="turtle")
+    compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
+    assert not compiled.errors and not [f for f in compiled.findings if f.severity is not Severity.INFO]
+    written, reported = evaluate(engine, compiled, Graph().parse(data=VALUES_SOURCE, format="turtle"))
+    if value is None:
+        assert not written and {(code, focus) for code, focus, _ in reported} == {("ValueUndefined", REC + "x")}
+    else:
+        assert written == {(REC + "x", TGT + "value", value, XSD_NS + datatype)} and not reported
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_a_literal_reaches_the_query_escaped_and_is_written_as_it_was_stated(engine):
+    """A value in the mapping is written by rdflib, which escapes it, so a quote in it cannot end the string (PRI-55)."""
+    text = '1"} . ?s ?p ?o . DROP ALL #'
+    escaped = text.replace('"', '\\"')
+    body = f'mm:X a mork:TypedLiteralExpression ; mork:resultDatatype xsd:string ; mork:typedValue "{escaped}"^^xsd:string .'
+    compiled = compile_scheme(Graph().parse(data=VALUES_HEAD + body, format="turtle"), MM + "S", base=BASE, at=AT)
+    assert not compiled.errors
+    (construct,) = compiled.constructs
+    assert f'"{escaped}"' in construct.text
+    written, _ = evaluate(engine, compiled, Graph().parse(data=VALUES_SOURCE, format="turtle"))
+    assert written == {(REC + "x", TGT + "value", text, XSD_NS + "string")}
+
+
+@pytest.mark.parametrize("body, expected", [
+    ("mm:X a mork:SumExpression ; mork:resultDatatype xsd:decimal ; mork:leftOperand mm:rA .", ("ExpressionIncomplete", "A")),
+    ("mm:X a mork:Expression .", ("ExpressionUnknown", "A")),
+    (rounding("F", 19), ("ScaleOutOfRange", "A")),
+    ("mm:X a mork:ChoiceExpression ; mork:resultDatatype xsd:decimal ; mork:comparisonOperator mork:Between ; mork:comparedLeft mm:rB ; mork:comparedRight mm:rE ; mork:whenTrue mm:rA ; mork:whenFalse mm:rF .", ("ExpressionUnknown", "A")),
+])
+def test_a_value_expression_the_compiler_cannot_honour_is_refused_by_name(body, expected):
+    compiled = compile_scheme(Graph().parse(data=VALUES_HEAD + body, format="turtle"), MM + "S", base=BASE, at=AT)
+    assert expected in {(f.code, (f.mapping or "").rsplit("#", 1)[-1]) for f in compiled.findings if f.severity is not Severity.INFO}
+    assert not compiled.constructs
+
+
+@pytest.mark.parametrize("extra, expected", [
+    ('mm:A mork:dataRef "src:a" .', ("DerivationIncomplete", "A")),
+    ("mm:A mork:inverseRBoxMatch tgt:value .", ("NotCompiled", "A")),
+    ("mm:Root mork:identityRule mork:Nothing .", ("IdentityRuleUnknown", "Root")),
+])
+def test_a_derivation_that_is_not_one_is_refused_by_name(extra, expected):
+    body = arithmetic("Sum", "A", "B")
+    head = VALUES_HEAD.replace("mork:exactRBoxMatch tgt:value ;", "mork:exactRBoxMatch tgt:value ;" if "inverse" not in extra else "")
+    compiled = compile_scheme(Graph().parse(data=head + body + extra, format="turtle"), MM + "S", base=BASE, at=AT)
+    assert expected in {(f.code, (f.mapping or "").rsplit("#", 1)[-1]) for f in compiled.findings if f.severity is not Severity.INFO}
+
+
+def test_a_guard_on_a_derivation_keeps_it_to_the_nodes_the_guard_admits():
+    body = arithmetic("Sum", "A", "B") + """ mm:A mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path src:b ; sh:minCount 1 ; sh:in ( 2 ) ] ] ."""
+    compiled = compile_scheme(Graph().parse(data=VALUES_HEAD + body, format="turtle"), MM + "S", base=BASE, at=AT)
+    other = f'<{REC}y> a <{SRC}Thing> ; <{SRC}a> "1.5"^^<{XSD_NS}decimal> ; <{SRC}b> 3 .'
+    written, _ = evaluate("oxigraph", compiled, Graph().parse(data=VALUES_SOURCE + "\n" + other, format="turtle"))
+    assert {s for s, *_ in written} == {REC + "x"}
+
+
+def test_the_engines_differ_where_the_compiler_does_not_hide_it():
+    """What the two engines do with arithmetic that the compiled query meets (README §7.8). The compiler guards the
+    first, and a reader of a result compares values, never lexical forms, for the second. A change in either engine
+    fails here."""
+    import pyoxigraph as ox
+
+    def both(expression: str):
+        query = f"SELECT ?r WHERE {{ BIND ({expression} AS ?r) }}"
+        (first,) = ox.Store().query(query)
+        second = list(Graph().query(query))
+        return first["r"], (second[0][0] if second else None)
+
+    # a decimal product keeps the scale of its operands on rdflib, and is canonical on Oxigraph
+    oxigraph, rdflib = both(f'"29.50"^^<{XSD_NS}decimal> * 12')
+    assert (oxigraph.value, str(rdflib)) == ("354", "354.00") and Decimal(oxigraph.value) == rdflib.toPython()
+    # a double divided by zero is INF on Oxigraph, and an error on rdflib, so the compiler states the divisor's test
+    oxigraph, rdflib = both(f'"7.5e0"^^<{XSD_NS}double> / "0.0e0"^^<{XSD_NS}double>')
+    assert oxigraph is not None and oxigraph.value == "INF" and rdflib is None

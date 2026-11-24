@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# Four subscriptions. One lacks its price, and one has a price that is no number (README §7.8).
+
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix src: <http://example.org/src#> .
+@prefix rec: <http://example.org/records/> .
+
+rec:monthly a src:Subscription ; src:monthlyPrice "29.50"^^xsd:decimal ; src:periodsPerYear 12 .
+rec:quarterly a src:Subscription ; src:monthlyPrice "100.10"^^xsd:decimal ; src:periodsPerYear 4 .
+rec:nameless a src:Subscription ; src:periodsPerYear 12 .
+rec:text a src:Subscription ; src:monthlyPrice "free" ; src:periodsPerYear 12 .

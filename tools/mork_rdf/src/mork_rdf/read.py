@@ -27,6 +27,8 @@ class Kind(Enum):
     CLASS_CREATION = "new-class"       # a new class beneath a broader one (Case 1a)
     PROPERTY_CREATION = "new-property"  # a new property beneath a broader one, with its domain and range axioms
     CONTEXT = "context"                # a deferred context, which names what another mapping yields and writes nothing
+    SOURCE_NODE = "source-node"        # a datum whose target node is the node it iterates, so nothing is minted or typed (§6)
+    DERIVATION = "derivation"          # a property whose value is a value expression over what the focus node holds (§7.8)
 
 
 @dataclass(frozen=True)
@@ -66,6 +68,8 @@ class Spec:
     axiom_forms: tuple[URIRef, ...] = ()    # mork:axiomForm, GlobalAxioms when unset
     combination: URIRef = MORK.UnionOfClasses
     guard: Optional[object] = None          # mork:appliesWhen, a SHACL node shape its focus nodes conform to (§7.7)
+    identity_rule: Optional[URIRef] = None  # mork:identityRule, the rule that gives the datum its identity without a template
+    value: Optional[URIRef] = None          # mork:valueExpression, the root of a typed value expression (§7.8)
 
     @property
     def parent(self) -> Optional[URIRef]:
@@ -320,6 +324,8 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             axiom_forms=_iris(g, node, MORK.axiomForm) or (MORK.GlobalAxioms,),
             combination=_iri(g, node, MORK.classCombination) or MORK.UnionOfClasses,
             guard=_one(g, node, MORK.appliesWhen),
+            identity_rule=_iri(g, node, MORK.identityRule),
+            value=_iri(g, node, MORK.valueExpression),
         )
 
     # --- templates (§8) ----------------------------------------------------------------------------------------------
@@ -394,6 +400,8 @@ def _merge(g: Graph, instance: Spec, template: Spec, specs: dict) -> Spec:
         domains=pick(instance.domains, template.domains),
         ranges=pick(instance.ranges, template.ranges),
         guard=pick(instance.guard, template.guard),
+        identity_rule=pick(instance.identity_rule, template.identity_rule),
+        value=pick(instance.value, template.value),
     )
 
 
@@ -416,6 +424,14 @@ def _classify(g: Graph, spec: Spec, specs: dict) -> tuple[Kind, Optional[Finding
         return Kind.ASSERTION, Finding("AxiomsOnExistingProperty", node, "domain and range axioms are made only for a property the mapping creates with a broad R-Box match, never for an existing one")
     if (spec.node, RDF.type, MORK.DeferredContext) in g and not (s.tbox or s.rbox or s.abox):
         return Kind.CONTEXT, None
+    if spec.identity_rule is not None:
+        if spec.identity_rule != MORK.SourceNodeIdentity:
+            return Kind.SOURCE_NODE, Finding("IdentityRuleUnknown", node, f"{spec.identity_rule.n3()} is not an identity rule the compiler knows. It knows mork:SourceNodeIdentity")
+        return Kind.SOURCE_NODE, None
+    if spec.value is not None:
+        if rbox is None or spec.parent is None or has_value:
+            return Kind.DERIVATION, Finding("DerivationIncomplete", node, "a derived value is written on its parent's target node by an R-Box match, and takes no other value: no mork:dataRef, mork:dataInline or A-Box match")
+        return Kind.DERIVATION, None
     applicative = _iri(g, spec.node, MORK.broaderApplicative)
     if applicative is not None or (spec.deferred is not None and spec.parent is not None and rbox is not None and not has_value):
         if rbox is None:

@@ -14,7 +14,7 @@ from typing import Optional
 
 import pyoxigraph as ox
 from rdflib import Graph, Literal, URIRef
-from rdflib.namespace import OWL, RDF, RDFS
+from rdflib.namespace import OWL, RDF, RDFS, XSD
 
 from . import paths
 from .guards import GuardError, compile_guard
@@ -22,6 +22,12 @@ from .model import (MORK, REFERENCE_GRAPH, SKOS, CompiledMapping, CompiledQuery,
 from .read import Kind, Reading, Spec, Yielded, _named, effective_confidence, iter_roots, read, resolve
 
 _PLACEHOLDER = re.compile(r"\$\{([^}]+)\}|\{\$([^}]+)\}")
+
+_ARITHMETIC = {MORK.SumExpression: "+", MORK.DifferenceExpression: "-", MORK.ProductExpression: "*", MORK.QuotientExpression: "/"}
+_COMPARISON = {MORK.LessThan: "<", MORK.LessThanOrEqual: "<=", MORK.EqualTo: "=", MORK.NotEqualTo: "!=",
+               MORK.GreaterThanOrEqual: ">=", MORK.GreaterThan: ">"}
+_NUMERIC = (XSD.integer, XSD.decimal, XSD.float, XSD.double)
+_MAX_SCALE = 18  # a power of ten that still fits the engines' integers
 
 
 def _term(value) -> str:
@@ -201,6 +207,9 @@ class _Compiler:
 
     def identity(self, spec: Spec, frame: _Frame) -> None:
         """Sets the frame's target: a constant individual, or a variable bound from the identity rules of README §6."""
+        if spec.identity_rule == MORK.SourceNodeIdentity:
+            frame.target = frame.focus  # the node itself, so nothing is minted, bound or typed
+            return
         if spec.individual_iri is not None:
             frame.target = _term(spec.individual_iri)
             return
@@ -335,7 +344,7 @@ class _Compiler:
                     self._property(spec)
                 elif spec.kind in (Kind.CLASS_REFERENCE, Kind.CONTEXT):
                     continue
-                elif spec.kind is Kind.DATUM:
+                elif spec.kind in (Kind.DATUM, Kind.SOURCE_NODE):
                     frame = self.root_frame(spec)
                     self.datum([frame])
                 elif spec.kind is Kind.CORRESPONDENCE:
@@ -375,7 +384,7 @@ class _Compiler:
     def coverage(self) -> None:
         """A check naming each source node typed with a declared `mork:Entity` that no compiled root iterates, because
         its root is absent, dropped or refused (§10.3)."""
-        iterated = {s for spec in iter_roots(self.r.specs) if spec.kind in (Kind.DATUM, Kind.CLASS_CREATION) for s in spec.sources}
+        iterated = {s for spec in iter_roots(self.r.specs) if spec.kind in (Kind.DATUM, Kind.SOURCE_NODE, Kind.CLASS_CREATION) for s in spec.sources}
         uncovered = sorted((e for e in self.g.subjects(RDF.type, MORK.Entity) if isinstance(e, URIRef) and e not in iterated), key=str)
         if uncovered:
             text = (f"{self.prologue}SELECT DISTINCT ?focus ?value\nWHERE {{\n  VALUES ?value {{ {' '.join(_term(e) for e in uncovered)} }}\n"
@@ -434,7 +443,7 @@ class _Compiler:
 
         groups: dict = {}
         for child in (self.r.specs[c] for c in spec.children if c in self.r.specs):
-            if child.kind in (Kind.DATUM, Kind.CONTEXTUAL):
+            if child.kind in (Kind.DATUM, Kind.SOURCE_NODE, Kind.CONTEXTUAL):
                 groups.setdefault(path_of(child), []).append(child)
         for path_text, siblings in sorted(groups.items(), key=lambda kv: str(kv[0])):
             if len(siblings) < 2 or any(s_.guard is None for s_ in siblings):
@@ -453,10 +462,12 @@ class _Compiler:
 
     def child(self, chain: list[_Frame], spec: Spec) -> None:
         try:
-            if spec.kind in (Kind.CONTEXTUAL, Kind.DATUM):
+            if spec.kind in (Kind.CONTEXTUAL, Kind.DATUM, Kind.SOURCE_NODE):
                 self.datum(chain + [self.child_frame(spec, chain[-1])])
             elif spec.kind is Kind.ASSERTION:
                 self.assertion(chain, spec)
+            elif spec.kind is Kind.DERIVATION:
+                self.derivation(chain, spec)
             elif spec.kind is Kind.LOOKUP:
                 self.lookup(chain, spec)
             elif spec.kind is Kind.CLASS_CREATION:
@@ -578,6 +589,99 @@ class _Compiler:
                 self.findings.append(Finding("BroadMatch", str(spec.node), "asserts a broader individual than the source names", Severity.WARNING))
         triple = f"{value} {prop} {parent.target} ." if inverse else f"{parent.target} {prop} {value} ."
         self.construct(chain, [triple], patterns, node=spec)
+
+    # --- derived values (§7.8) ---------------------------------------------------------------------------------------
+
+    def value_expression(self, node, focus: str, patterns: list, bound: dict) -> str:
+        """A typed value expression as a SPARQL expression. Each distinct path it reads is bound once, its pattern
+        appended to `patterns` and its variable kept in `bound`, so an operand the focus node lacks leaves the whole
+        expression unbound. The value is cast to the node's result datatype when that is a numeric one."""
+        text, wrapped = self._value(node, focus, patterns, bound)
+        datatype = next(iter(sorted(self.g.objects(node, MORK.resultDatatype), key=str)), None)
+        if datatype in _NUMERIC:
+            return f"{_term(datatype)}({text[1:-1] if wrapped else text})"
+        return text
+
+    def _value(self, node, focus: str, patterns: list, bound: dict) -> tuple[str, bool]:
+        """The expression and whether it is an arithmetic one, written in parentheses."""
+        g = self.g
+        types = set(g.objects(node, RDF.type))
+
+        def one(prop):
+            value = next(iter(sorted(g.objects(node, prop), key=str)), None)
+            if value is None:
+                raise _Refusal("ExpressionIncomplete", f"{node.n3()} is missing {prop.n3()}")
+            return value
+
+        def operand(prop) -> str:
+            text, wrapped = self._value(one(prop), focus, patterns, bound)
+            return text
+
+        if MORK.TypedRefExpression in types:
+            text = str(one(MORK.dataRef))
+            try:
+                written = paths.write(paths.parse(text, self.r.prefixes))
+            except paths.PathError as error:
+                raise _Refusal("BadPath", str(error)) from error
+            if written not in bound:
+                bound[written] = self.var("v")
+                patterns.append(f"{focus} {written} {bound[written]} .")
+            return bound[written], False
+        if MORK.TypedLiteralExpression in types:
+            value = one(MORK.typedValue)
+            if not isinstance(value, Literal):
+                raise _Refusal("ExpressionIncomplete", f"{node.n3()} has a mork:typedValue that is not a literal")
+            return _term(value), False
+        for kind, symbol in _ARITHMETIC.items():
+            if kind in types:
+                left, right = operand(MORK.leftOperand), operand(MORK.rightOperand)
+                datatype = next(iter(g.objects(node, MORK.resultDatatype)), None)
+                if kind == MORK.QuotientExpression and datatype in (XSD.float, XSD.double):
+                    # XPath divides a float or a double by zero to INF or NaN, and a quotient is undefined there
+                    right = f"IF({right} != 0, {right}, ?undefined)"
+                return f"({left} {symbol} {right})", True
+        if MORK.RoundingExpression in types:
+            scale = one(MORK.roundingScale)
+            try:
+                places = int(scale.toPython()) if isinstance(scale, Literal) else None
+            except (TypeError, ValueError):
+                places = None
+            if places is None or abs(places) > _MAX_SCALE:
+                raise _Refusal("ScaleOutOfRange", f"{node.n3()} rounds to a scale that is not an integer within {_MAX_SCALE} places of the point")
+            inner = operand(MORK.roundedOperand)
+            if places == 0:
+                return f"ROUND({inner})", False
+            factor = 10 ** abs(places)
+            if places > 0:
+                return f"(ROUND({inner} * {factor}) / {factor})", True
+            return f"(ROUND({inner} / {factor}) * {factor})", True
+        if MORK.ChoiceExpression in types:
+            comparison = one(MORK.comparisonOperator)
+            if comparison not in _COMPARISON:
+                raise _Refusal("ExpressionUnknown", f"{comparison.n3()} is not a comparison operator the compiler knows")
+            return (f"IF({operand(MORK.comparedLeft)} {_COMPARISON[comparison]} {operand(MORK.comparedRight)}, "
+                    f"{operand(MORK.whenTrue)}, {operand(MORK.whenFalse)})"), False
+        raise _Refusal("ExpressionUnknown", f"{node.n3()} is not a value expression the compiler knows")
+
+    def derivation(self, chain: list[_Frame], spec: Spec) -> None:
+        """A property whose value is a value expression over what the parent's focus node holds (README §7.8). One
+        CONSTRUCT writes it, and the checks name each focus node it could not write for."""
+        parent = chain[-1]
+        if "inverse" in spec.strata.rbox and "exact" not in spec.strata.rbox:
+            raise _Refusal("NotCompiled", "a derived value is a literal and cannot be the subject of an inverse match")
+        prop = self._property(spec)
+        guarded = self.guard(spec, parent.focus)
+        patterns, bound = list(guarded), {}
+        expression = self.value_expression(spec.value, parent.focus, patterns, bound)
+        result = self.var("value")
+        patterns.append(f"BIND ({expression} AS {result})")
+        self.construct(chain, [f"{parent.target} {prop} {result} ."], patterns, node=spec)
+        for written in bound:
+            absent = f"FILTER NOT EXISTS {{ {parent.focus} {written} ?any }}"
+            self.check(chain, "OperandMissing", f"({parent.focus} AS ?focus) ({_string(written)} AS ?value)",
+                       self.where(chain, guarded + [absent]), node=spec)
+        self.check(chain, "ValueUndefined", f"({parent.focus} AS ?focus) ({prop} AS ?value)",
+                   self.where(chain, patterns + [f"FILTER (!BOUND({result}))"]), node=spec)
 
     def lookup(self, chain: list[_Frame], spec: Spec) -> None:
         """A property whose value is the reference node matching the value `mork:dataRef` reads (README §7.3). The
