@@ -2,7 +2,7 @@
 
 # `tools/models/multi-store-protocols/`
 
-TLA+ models of the protocols behind rows of the multi-store catalogue (sketch section 4.2). They are design-time evidence for the formal-methods track H plan's FMH-5, protocol model A, for MSA-I6, models X1 to X4 and X1 with receipts only, and for MSA-I14, model X5 of the studio's writers. They are not shipped code and not a proof. TLC checks every state of a small finite instance, so a result holds for the stated constants only.
+TLA+ models of the protocols behind rows of the multi-store catalogue (sketch section 4.2). They are design-time evidence for the formal-methods track H plan's FMH-5, protocol model A, for MSA-I6, models X1 to X4, X1 with receipts only, Protocol A in one ledger, a pass over two ledgers and X2's audit, and for MSA-I14, model X5 of the studio's writers. They are not shipped code and not a proof. TLC checks every state of a small finite instance, so a result holds for the stated constants only.
 
 ## Models
 
@@ -100,7 +100,7 @@ What the model abstracts away.
 - S commits at consecutive positions one at a time, and the order of positions is the order of commits. A late-arriving commit is the subject of `X3_ReceiptRelay.tla` and is not modelled here.
 - The evidence is one value. A real read set has several triples and several stores.
 - R is a set. A decision is never rejected or retried.
-- The audit is conservative. Whether it flags a decision whose evidence is correct, for instance when the value changes and changes back, was not checked.
+- The audit is conservative, and flags a decision whose evidence is correct. Where S changes the value and changes it back between the position read at and `p`, the decision carries the value S held at `p` and is flagged all the same, as TLC printed for `X2A_FlaggedIsStale` under `X2_AuditFlags.tla`.
 - Each position has one core, so two cores never race for the same decision.
 
 ### `X3_ReceiptRelay.tla`
@@ -229,6 +229,88 @@ What the model abstracts away. Where the code leaves a choice, the model makes t
 
 The model terminates, so TLC is run with `-deadlock`.
 
+### `PA_PassRevision.tla`
+
+Protocol A in one ledger, a second model of what the plain Python model of [`tools/models/ledger-pass-revision/`](../ledger-pass-revision/README.md) checks. It was written from ADR-A131's second addendum of 2026-11-19, its addendum of 2026-11-20 and Behaviour's example `ordered-draws.ttl`, and run, before that model was read. A pass is every record one evaluation writes. It is written as one request that names the revision of the ledger it was evaluated from, and the writer writes it only while the ledger is at that revision. Where the ledger has moved, the writer writes nothing and answers with the revision it found, and the evaluation is made again from that revision. The request moves the revision once.
+
+One owner's ledger holds a seat bundle and an alert quota. An activation's pass makes, in this order, a draw of one seat while the bundle has one, a draw of one alert when the bundle as that draw left it is below 2, and a move of the licence to overage when the bundle as the draws left it is empty. The move is a record of the pass. From overage an activation makes nothing and writes no pass. A credit's pass restores seats, and is cut at the bundle's stated amount. Actor A is an activation and actor O a credit or a second activation. An actor may stop while it holds a plan and lose it. It then looks for its own pass by its name, and evaluates again from the latest revision where it finds none.
+
+| Constant | Meaning |
+|---|---|
+| `Protocols` | `OnRead` is Protocol A. `OnLatest` writes the request on whatever revision is latest, each draw applied by the ledger's own arithmetic, so a draw that no longer fits is refused as a record, and nothing evaluates the pass again. `PerPosting` makes each posting a request of its own, guarded on the revision the previous one returned and the first on the revision read. A refused posting returns the revision found, and the transitions not yet written are evaluated again from it. After a stop, the transitions whose records are found are left out and the rest evaluated again from the latest revision. |
+| `Rules` | `Stimulus` gives a pass its stimulus's position. `LaterOf` gives it the later of that and the position of the ledger's latest pass at the revision it was evaluated from. |
+| `Others` | What actor O is, `Credit` or `Activation`. |
+| `Modes` | `Concurrent` lets the actors interleave freely. `OneAfterAnother` lets an actor evaluate only while the other is not in the middle of a pass. |
+| `MaxStops`, `StopActors` | The most stops in a behaviour, and the actors that may stop. |
+| `Bundles`, `Quotas`, `Orders` | The starting balances, and the order of the two stimuli's positions, `AFirst` (A at 1, O at 2), `OFirst` or `Same` (both at 1). |
+| `Stated`, `CreditSeats` | The bundle's stated amount, at which a credit is cut, and the seats a credit restores. |
+| `Licences` | `One`, both activations of one licence, or `PerActor`, O's activation of a licence of its own on the same accounts. |
+| `AlertNeedsQuota` | Whether the alert's guard also asks for a unit in the quota. Where it does not, an alert drawn from an empty quota is refused and the refusal is a record of the pass. |
+
+Each of `Protocols`, `Rules`, `Others` and `Modes` is a set chosen from in the initial state, so one run covers several variants, as the census configurations do. Each step is a function of the state, so the outcomes reachable with no stop are computed inside the model, which O2 needs. The properties are numbered as the Python model numbers its checks.
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `SerialOutcomes` (O1) | invariant | Once both actors are done, the bundle, the quota, the licences' states and each actor's records are those that the two evaluations give made whole one after the other, in one order or the other. | holds with `OnRead` |
+| `StopSafe` (O2) | invariant | Once both actors are done in a behaviour with a stop, the outcome is one that some behaviour with no stop reaches from the same starting state. | holds |
+| `PassOrder` (O3) | invariant | The ledger's passes, in the order of the revisions they moved it to, are in the order of their positions. | holds with `OnRead` and `LaterOf` |
+| `NotBeforeStimulus` (O4) | invariant | No pass takes a position before its stimulus's. | holds |
+| `Census` | invariant | Always holds, and prints one line for each state where both actors are done, naming the variant, the starting cell, the stops taken, whether O1 to O4 hold there, and the outcome. The cells a variant breaks are counted from those lines. | holds |
+
+What the model abstracts away.
+
+- Two actors, one evaluation each, and at most one stop. The writer takes a request in one step.
+- The records of a pass are a set, so their order within the pass is not compared.
+- Behaviour's records are not modelled apart from the ledger's. The move to overage is a record of the pass, written in its one request, so no step falls between a pass and the state change.
+- A pass is found by its name, which the model takes to be its actor. How a key is formed is not modelled.
+- Under `OnLatest` the writer applies a stale plan by the ledger's arithmetic. A writer that refuses such a request whole where it would overdraw, and has it evaluated again, is another reading of writing on the latest revision, and is the one the Python model takes.
+- The census only prints. TLC checks nothing in it, and the counts are read from its output.
+
+The model terminates, so TLC is run with `-deadlock`.
+
+### `X6_PassTwoLedgers.tla`
+
+A pass over two ledgers, the ledger's case of the named saga row, starting from X1's torn read and torn crash with two ledgers in place of two stores. A claim on a contract erodes the programme's aggregate. The contract's account is in the contract's ledger C and the aggregate in the programme's ledger P, which belong to different owners, so the claim's evaluation writes a pass to each and each ledger takes a request of its own, guarded as in `PA_PassRevision.tla` on the revision that ledger was read at. A claim is paid one unit where the contract's account and the aggregate each have one. It reads C, then P in a later step, decides, and writes C first and P second. A claim that is not paid writes nothing. A claim whose C pass is written and that is then not paid writes a compensating pass on C, which restores what it drew. Two claims, E1 and E2, on the same contract. A pass takes the later of its claim's stimulus's position and the position of its ledger's latest pass at the revision it names.
+
+| Constant | Meaning |
+|---|---|
+| `RefusalReturnsRevision` | The first gap. `TRUE` closes it. A refused request returns the revision the ledger was at, and the decision is made again with that ledger read as of it and the other ledger as of the revision the decision held. `FALSE` leaves it open. A refusal returns nothing, the decision is made again from the revisions held, so the request names the same revision again, and after `Retries` such refusals the claim gives up. |
+| `RecordStart` | The second gap. `TRUE` closes it. The C pass records the revisions of both ledgers its decision was evaluated from, and a replay after a stop decides again from them. `FALSE` leaves it open. A replay finds the passes it wrote by their names, and evaluates from the latest revision of each ledger. |
+| `Retries` | How many refusals with no revision a claim takes again before it gives up. |
+| `MaxStops` | The most stops in a behaviour. A claim may stop once it has read C, and loses what it held in memory. |
+| `WithReader` | Whether one reader reads C and later P, as X1's reader reads A and then B. |
+| `Contracts`, `Aggregates`, `Orders` | The starting balances, and the order of the claims' stimulus positions, `E1First`, `E2First` or `Same`. |
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `SerialClaims` | invariant | Once both claims are done, the contract's account, the aggregate and the claims paid are those that the two claims give evaluated whole one after the other, in one order or the other. | holds with both gaps closed |
+| `NoHalfClaim` | invariant | Once both claims are done, each is drawn in both ledgers or in neither, a compensation counted. | fails with the first gap open |
+| `NoStrandedHalf` | invariant | A claim that has stopped and not started again is drawn in both ledgers or in neither. X1's torn crash. | fails |
+| `NoTornRead` | invariant | The reader saw each claim in both ledgers or in neither. X1's torn read. | fails |
+| `PassOrderEach` | invariant | Each ledger's passes are in the order of their positions. | holds |
+| `NotBeforeStimulus` | invariant | No pass takes a position before its claim's stimulus's. | holds |
+| `OnePosition` | invariant | A claim's draw takes one position in both ledgers. | fails |
+| `TypeOK` | invariant | Each variable stays in its range, and a claim's net draw on each ledger is 0 or 1. | holds |
+
+What the model abstracts away.
+
+- Two claims of one unit on one contract under one programme. A claim on another contract and a third writer are not modelled. With two claims on one contract a compensation follows a refusal on P, which only the other claim's P pass causes, so no claim decides from a draw that is later compensated.
+- The order of the two passes is fixed, C then P.
+- The compensation is a pass that restores the draw, and its request names the latest revision of C the claim knows. No text decides whether a compensation is a pass of the same evaluation or of another, or what it records.
+- The start is recorded when the C pass is written. A claim that stops before that has written nothing, and evaluates from the latest revisions.
+- A decision reads the two balances only. Positions do not enter it.
+- Liveness is not checked. Every behaviour ends, since writes and refusals are bounded.
+
+The model terminates, so TLC is run with `-deadlock`.
+
+### `X2_AuditFlags.tla`
+
+X2's audit, settled by a run. The module extends `X2_EvidenceAcrossStores.tla` and changes nothing in it. It adds one invariant. `AuditFindsStale` says the audit flags every stale decision, and this one says every decision it flags is stale, so the two together would make the audit exact.
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `FlaggedIsStale` | invariant | Once S has reached `p`, a decision the audit flags carries a value that differs from what S held at `p`. | fails where a value can change and change back between the read and `p` |
+
 ## Configurations
 
 | File | Model | Parameters | Checks | Expected |
@@ -283,6 +365,24 @@ The model terminates, so TLC is run with `-deadlock`.
 | `X5_FencedAnswerAny.cfg` | X5 | `FencedAnswer`, otherwise as `X5_WholeAny.cfg` | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
 | `X5_FencedAnswerStream.cfg` | X5 | `FencedAnswer`, otherwise as `X5_WholeStream.cfg` | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
 | `X5_FencedAnswerStream3.cfg` | X5 | as `X5_FencedAnswerStream.cfg` with three writers and two crashes | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
+| `PA_OnRead.cfg` | Protocol A | `OnRead`, `LaterOf`, a credit of one seat or a second activation of the same licence, `Concurrent`, one stop of either actor, the bundle at 0 to 3 and stated at 3, the quota at 0 to 2, every order of the stimuli | `TypeOK`, O1, O2, O3, O4 | no error |
+| `PA_OnReadAligned.cfg` | Protocol A | `OnRead`, `LaterOf`, the Python model's instance: the bundle at 0, 1 or 2, the quota at 1 or 3, a credit of 3 seats that no ceiling cuts, a second activation of a licence of its own, the quota in the alert's guard, one stop of A | `TypeOK`, O1, O2, O3, O4 | no error |
+| `PA_OnLatestO1.cfg` | Protocol A | `OnLatest`, otherwise as `PA_OnRead.cfg` | O1 | violated |
+| `PA_OnLatestO3.cfg` | Protocol A | as `PA_OnLatestO1.cfg` | O3 | violated |
+| `PA_PerPostingO1.cfg` | Protocol A | `PerPosting`, otherwise as `PA_OnRead.cfg` | O1 | violated |
+| `PA_StimulusO3.cfg` | Protocol A | `OnRead`, `Stimulus`, `OneAfterAnother`, no stop, the cells of `PA_OnRead.cfg` | O3 | violated |
+| `PA_Census.cfg` | Protocol A | every protocol, rule, second actor and mode, otherwise as `PA_OnRead.cfg` | `TypeOK`, `Census` | no error, and the census printed |
+| `PA_CensusAligned.cfg` | Protocol A | every protocol, rule, second actor and mode on the instance of `PA_OnReadAligned.cfg` | `TypeOK`, `Census` | no error, and the census printed |
+| `X6_Closed.cfg` | X6 | both gaps closed, two claims on one contract, one stop, the contract's account and the aggregate each at 0, 1 or 2, every order of the stimuli | `TypeOK`, `SerialClaims`, `NoHalfClaim`, `PassOrderEach`, `NotBeforeStimulus` | no error |
+| `X6_ClosedTorn.cfg` | X6 | as `X6_Closed.cfg` with the reader | `NoTornRead` | violated |
+| `X6_ClosedTornCrash.cfg` | X6 | as `X6_Closed.cfg` | `NoStrandedHalf` | violated |
+| `X6_ClosedPositions.cfg` | X6 | as `X6_Closed.cfg` | `OnePosition` | violated |
+| `X6_RefusalOpen.cfg` | X6 | the first gap open, `Retries=1`, otherwise as `X6_Closed.cfg` | `SerialClaims` | violated |
+| `X6_RefusalOpenHalf.cfg` | X6 | as `X6_RefusalOpen.cfg` | `NoHalfClaim` | violated |
+| `X6_StartOpen.cfg` | X6 | the second gap open, otherwise as `X6_Closed.cfg` | `SerialClaims` | violated |
+| `X6_StartOpenHalf.cfg` | X6 | as `X6_StartOpen.cfg` | `TypeOK`, `NoHalfClaim`, `PassOrderEach`, `NotBeforeStimulus` | no error |
+| `X2A_FlaggedIsStale.cfg` | X2 with `FlaggedIsStale` | the constants of `X2_BestKnownAudit.cfg`, `MaxPos=3` and two values, so a value can change and change back | `FlaggedIsStale` | violated |
+| `X2A_FlaggedIsStaleOneStep.cfg` | X2 with `FlaggedIsStale` | `BestKnown`, `MaxPos=1`, a decision at 1 only, so no value can change back | `TypeOK`, `FlaggedIsStale`, `AuditFindsStale` | no error |
 
 The configurations above are the base tier. The wide tier takes each configuration of X1 to X4 that is expected to find no error and steps its instance up one constant at a time, to at most four commands and, in X1, a window of three. A command is a command of the stream in X1, a position of the source and a decision in X2, a receipt of a stream in X3 and a write of a writer in X4. X3 and X4 have no window, so their second step adds a third stream or a third writer. Each checks what its base configuration checks.
 
@@ -339,17 +439,17 @@ On Windows, in PowerShell, the variable is set with `$env:TLA2TOOLS_JAR = '<path
 - It runs TLC with `-deadlock`, since every model terminates, in a copy of this directory under `.build/formal/tlc/multi-store-protocols/<configuration>/`, where TLC writes its states, any trace, its temporary files and its GC log.
 - It prints, for each configuration, the verdict, the distinct and generated states, the depth, TLC's time, the wall time and the peak heap, then one line of totals. Where the distinct states differ from the manifest's, the line says so. A configuration fails only where TLC's verdict differs from the manifest's. A skip, a stop and a run that runs out of heap are reported and do not fail.
 
-A pass of the base tier prints the runner's tests, `24 passed`, then a line with the heap budget, then for each of the 50 configurations a `RUN` line and a `PASS` line. Twenty-four `PASS` lines read "no error" and twenty-six name the property violated, each as the manifest expects. It ends with the line below and exits 0.
+A pass of the base tier prints the runner's tests, `24 passed`, then a line with the heap budget, then for each of the 68 configurations a `RUN` line and a `PASS` line. Thirty-one `PASS` lines read "no error" and thirty-seven name the property violated, each as the manifest expects. It ends with the line below and exits 0.
 
 ```text
-models: 50 as expected, 0 failed, 0 skipped, 0 stopped
+models: 68 as expected, 0 failed, 0 skipped, 0 stopped
 ```
 
 On a machine of 8 GB the budget is at most 2 GB, which every base configuration fits, the largest heap given being 320 MB. The wide tier on such a machine skips each configuration whose heap exceeds the budget, with both figures, and exits 0 unless a verdict differs.
 
 The peak heap is read from the GC log. The young generation is fixed at 16 MB, so a collection runs at least every 16 MB allocated, and the peak is the largest heap in use before a collection that the log printed. The true peak is at most 16 MB above it.
 
-The module for a `ModelA_*.cfg` is `ModelA_GuardedCas.tla`, for an `X1_*.cfg` is `X1_SerialisedApply.tla`, for an `X1R_*.cfg` is `X1_ReceiptsOnly.tla`, for an `X2_*.cfg` is `X2_EvidenceAcrossStores.tla`, for an `X3_*.cfg` is `X3_ReceiptRelay.tla`, for an `X4_*.cfg` is `X4_AuthorityCutover.tla` and for an `X5_*.cfg` is `X5_WholeCommand.tla`. TLC run by hand in this directory writes `states/` and any trace file here, and `.gitignore` excludes them.
+The module for a `ModelA_*.cfg` is `ModelA_GuardedCas.tla`, for an `X1_*.cfg` is `X1_SerialisedApply.tla`, for an `X1R_*.cfg` is `X1_ReceiptsOnly.tla`, for an `X2_*.cfg` is `X2_EvidenceAcrossStores.tla`, for an `X3_*.cfg` is `X3_ReceiptRelay.tla`, for an `X4_*.cfg` is `X4_AuthorityCutover.tla`, for an `X5_*.cfg` is `X5_WholeCommand.tla`, for a `PA_*.cfg` is `PA_PassRevision.tla`, for an `X6_*.cfg` is `X6_PassTwoLedgers.tla` and for an `X2A_*.cfg` is `X2_AuditFlags.tla`. TLC run by hand in this directory writes `states/` and any trace file here, and `.gitignore` excludes them.
 
 ## Results
 
@@ -443,13 +543,62 @@ The wide tier was run through `mise run check:models-multi-store` on 2026-11-24,
 | `X4_FencedTimeouts_P4` | no error | 32,168 | 7,903 | 27 | 01s | 2.2 s | 72 MB |
 | `X4_FencedTimeouts_W3` | no error | 195,904 | 33,797 | 25 | 06s | 6.7 s | 209 MB |
 
+The `PA_*`, `X6_*` and `X2A_*` configurations were run through `mise run check:models-multi-store` on 2026-11-24, with TLC 2.19 and TLA+ tools 1.7.4 on Java 25.0.2, one at a time under a heap of 2,048 MB given by `--heap-mb`, on 8 workers where no error was expected and one where a counterexample was. Another session ran its own JVMs on the machine at the time, so the times are those of a shared machine. Every one fits the base tier's budget, the largest peak 59 MB.
+
+| Configuration | Result | States generated | Distinct states | Depth | TLC time | Wall time | Peak heap | Counterexample |
+|---|---|---|---|---|---|---|---|---|
+| `PA_OnRead` | no error | 2,664 | 1,764 | 7 | 01s | 3.1 s | 29 MB | none |
+| `PA_OnReadAligned` | no error | 1,224 | 900 | 7 | 01s | 2.3 s | 28 MB | none |
+| `PA_OnLatestO1` | `SerialOutcomes` violated | 1,662 | 1,234 | 5 | 03s | 4.9 s | 23 MB | The bundle at 0 and the quota at 0, two activations of one licence. Both read revision 0 and plan a refused alert and a move to overage. A's pass is written. O's is written on revision 1 as it was evaluated, and records a second move of a licence already on overage. Made one after the other, the second activation finds the licence on overage and writes nothing. |
+| `PA_OnLatestO3` | `PassOrder` violated | 1,232 | 941 | 5 | 01s | 2.7 s | 15 MB | The bundle at 0 and the quota at 0, A's stimulus at 1 and a credit's at 2. Both read revision 0, where no pass is, and the credit is written at position 2. A's pass is written after it at position 1, the later of its stimulus's and the latest position it read. |
+| `PA_PerPostingO1` | `SerialOutcomes` violated | 5,394 | 3,480 | 7 | 01s | 2.7 s | 28 MB | The bundle at 0 and the quota at 0, two activations of one licence. O reads and posts its refused alert. A reads revision 1 and posts its refused alert, then its move. O's move names revision 1, is refused, and is evaluated again from revision 3, where the licence is on overage, so O writes nothing more. O has a refused alert and no move, which no order of the two gives. |
+| `PA_StimulusO3` | `PassOrder` violated | 505 | 505 | 5 | 00s | 1.6 s | 15 MB | The bundle at 0 and the quota at 0, A's stimulus at 1 and a credit's at 2, one after the other. The credit's pass is written at position 2, then A's at position 1. |
+| `PA_Census` | no error, the census printed | 45,414 | 31,098 | 13 | 01s | 2.6 s | 59 MB | none |
+| `PA_CensusAligned` | no error, the census printed | 21,012 | 15,976 | 14 | 01s | 2.9 s | 47 MB | none |
+| `X6_Closed` | no error | 8,745 | 4,950 | 15 | 01s | 1.6 s | 28 MB | none |
+| `X6_ClosedTorn` | `NoTornRead` violated | 2,788 | 1,406 | 6 | 00s | 1.4 s | 23 MB | The contract's account and the aggregate at 1. E1 reads both and writes its C pass. The reader reads C, which holds E1's draw, and then P, which does not. |
+| `X6_ClosedTornCrash` | `NoStrandedHalf` violated | 687 | 435 | 5 | 00s | 1.3 s | 15 MB | E1 reads both ledgers, writes its C pass and stops before its P pass. |
+| `X6_ClosedPositions` | `OnePosition` violated | 2,878 | 1,655 | 8 | 00s | 1.3 s | 27 MB | The contract's account at 2 and the aggregate at 1, E1's stimulus at 1 and E2's at 2. E2's C pass is written at position 2, then E1's at position 2, the later of its stimulus's and C's latest pass's. E1's P pass is written at position 1, since P has no pass. E1's draw is at 2 in C and at 1 in P. |
+| `X6_RefusalOpen` | `SerialClaims` violated | 5,805 | 3,367 | 10 | 00s | 1.4 s | 28 MB | The contract's account and the aggregate at 2. E1 reads both ledgers and decides to pay. E2 reads C at revision 0. E1 writes both passes. E2 reads P at revision 1 and decides to pay. Its C pass names revision 0 and is refused. With no revision returned it names 0 again, is refused again and gives up. One claim is paid where one after the other both are. No stop is involved. |
+| `X6_RefusalOpenHalf` | `NoHalfClaim` violated | 6,935 | 4,055 | 11 | 01s | 1.6 s | 28 MB | The contract's account at 2 and the aggregate at 1. E1 reads both at revision 0. E1 writes its C pass. E2 reads C at revision 1 and P at revision 0, and decides to pay. E1 writes its P pass, which empties the aggregate. E2 writes its C pass. Its P pass names revision 0 and is refused twice, and E2 gives up. E2 is drawn on the contract and not on the aggregate, and nothing compensates it. |
+| `X6_StartOpen` | `SerialClaims` violated | 8,957 | 5,195 | 13 | 00s | 1.4 s | 28 MB | The contract's account and the aggregate at 1. E1 reads both, decides to pay, writes its C pass and stops. With no start recorded it reads C at its latest revision, where its own draw leaves the contract's account at 0, decides not to pay, and compensates its draw. E2 reads C before the compensation, finds 0, and decides not to pay. No claim is paid where one after the other one is. |
+| `X6_StartOpenHalf` | no error | 13,911 | 8,256 | 20 | 01s | 1.7 s | 31 MB | none |
+| `X2A_FlaggedIsStale` | `FlaggedIsStale` violated | 453 | 361 | 5 | 00s | 1.6 s | 15 MB | The core for position 2 reads "a" at position 0. S commits "b" at position 1 and "a" at position 2. The core commits the decision with "a" read at 0. S held "a" at 2, so the evidence is correct, and the audit flags it, since S changed at position 1. |
+| `X2A_FlaggedIsStaleOneStep` | no error | 15 | 13 | 4 | 00s | 1.7 s | 15 MB | none |
+
+The census lines were counted by starting cell. A revision cell is a starting balance with what O is, and a position cell is one with the order of the stimuli as well. "A stop allowed" counts every behaviour of the run, those with no stop among them, as the Python model's "with one crash" does.
+
+| Instance | Protocol | O1 fails, no stop | O1 fails, a stop allowed | O2 fails | Outcomes no order gives, no stop |
+|---|---|---|---|---|---|
+| `PA_Census`, 24 revision cells | `OnRead` | 0 | 0 | 0 | 0 |
+| | `OnLatest` | 12 | 12 | 0 | 17 |
+| | `PerPosting` | 9 | 9 | 0 | 38 |
+| `PA_CensusAligned`, 12 revision cells | `OnRead` | 0 | 0 | 0 | 0 |
+| | `OnLatest` | 5 | 5 | 0 | 9 |
+| | `PerPosting` | 7 | 7 | 0 | 9 |
+
+| Instance | Protocol | Rule | O3 fails, one after another | O3 fails, no stop | O3 fails, a stop allowed | O4 fails |
+|---|---|---|---|---|---|---|
+| `PA_Census`, 72 position cells | `OnRead` | `Stimulus` | 36 | 36 | 36 | 0 |
+| | `OnRead` | `LaterOf` | 0 | 0 | 0 | 0 |
+| | `OnLatest` | `Stimulus` | 36 | 48 | 48 | 0 |
+| | `OnLatest` | `LaterOf` | 0 | 48 | 48 | 0 |
+| | `PerPosting` | `Stimulus` | 36 | 48 | 48 | 0 |
+| | `PerPosting` | `LaterOf` | 0 | 0 | 0 | 0 |
+| `PA_CensusAligned`, 36 position cells | `OnRead` | `Stimulus` | 24 | 24 | 24 | 0 |
+| | `OnRead` | `LaterOf` | 0 | 0 | 0 | 0 |
+| | `OnLatest` | `Stimulus` | 24 | 24 | 24 | 0 |
+| | `OnLatest` | `LaterOf` | 0 | 24 | 24 | 0 |
+| | `PerPosting` | `Stimulus` | 24 | 24 | 24 | 0 |
+| | `PerPosting` | `LaterOf` | 0 | 0 | 0 | 0 |
+
 ## What the results say
 
 - The guard in each store, and the offset stored as applied, give a row that is ordered, applies each command at most once in effect, and applies every confirmed command eventually, for up to three incarnations including a zombie that keeps acting. The zombie's late applies are answered `Duplicate`.
 - The row does not give atomic visibility. A reader of two stores sees them at different versions in every configuration, with no crash needed, because the two applies are separate steps. A crash between them leaves A ahead until a successor replays, which is why the catalogue row reads ordered and eventually applied and a read that must be correct reads one store or waits on a watermark.
 - Storing the highest received offset loses commands. A command received but not applied is skipped after a crash and the commands after it are rejected by the guard, so the stores stop short of the stream. The safety properties still hold in that run, so the guard turns the defect into a missing command and never into a wrong one.
 - Taking the guard out of the stores breaks at-most-once in effect as soon as a second writer acts on the same command, which is the reason a store with no guard cannot take the row.
-- A decision that reads the watermark first and then the value as of `p` carries evidence that equals what the source held at `p`, and the evaluation waits. If the source stalls, the evaluation never completes, which is the cost of the row. The best known read never waits and completes in every configuration run, but its evidence can differ from what the source held at `p`. In the configurations run the audit found every such decision, because the read set records the position read at. The audit also flags a decision whose evidence is stale and one whose evidence is not, so it is a trigger for review and not a verdict.
+- A decision that reads the watermark first and then the value as of `p` carries evidence that equals what the source held at `p`, and the evaluation waits. If the source stalls, the evaluation never completes, which is the cost of the row. The best known read never waits and completes in every configuration run, but its evidence can differ from what the source held at `p`. In the configurations run the audit found every such decision, because the read set records the position read at. TLC also printed a decision that the audit flags and whose evidence is correct. The core for position 2 read "a" at position 0, S committed "b" at 1 and "a" at 2, and the decision carries "a", which S held at 2. So the audit is a trigger for review and not a verdict. With S one position past the start and a decision at that position only, where no value can change back, TLC found no flagged decision whose evidence was correct.
 - A relay that publishes by one global commit position skips a receipt that commits after a later position has been published, and a restart does not repair it. The skip breaks order within a stream, since a later receipt of the stream can be published first. A relay that tracks the next seq of each stream publishes every receipt in order in the configurations run, and a restart makes it publish some receipts twice, so the consumer has to be idempotent.
 - Copying and then flipping the authority loses a write that the old authority acknowledges between the copy and the flip. Fencing the old authority before the copy loses none in the configurations run. A writer that times out and resends can have the same write acknowledged by both stores without a fence. With the fence it is acknowledged once in the configurations run, and every write is acknowledged in the end.
 - Stores that keep a receipt for each command and no row for the partition keep every property of X1 with offsets stored as applied, for one writer at a time and for up to three incarnations including a zombie. TLC printed the same counts as for X1 with the guard, so in those configurations the partition's row refused nothing that the receipts did not answer.
@@ -459,3 +608,11 @@ The wide tier was run through `mise run check:models-multi-store` on 2026-11-24,
 - One guard over every row a command writes reaches only states that whole commands give, in both deliveries in the configurations run, and its answers disagree by the same trace as the design as built.
 - One guard with the epoch in every request also reaches only such states in the configurations run, and its answers still disagree. The writer that lost the partition answers a command its own check refuses without sending a request, so the epoch never reaches that answer. Answering such a command from one read of its rows, the epoch and its receipt removes the disagreement in the configurations run, for two writers in either delivery and for three writers in stream order.
 - In the wide tier TLC printed "Model checking completed. No error has been found." for every configuration it finished. So the serialised writer kept S1, S2, `AThenB` and L1 with four commands and a window of three, with and without a zombie, over 279,119 distinct states. The watermark read kept its evidence and completed, and the audit of the best known read flagged every stale decision, with S reaching position 4 and a decision at each of positions 1 to 4. The relay by each stream's next seq kept order and published every receipt with four receipts in a stream, or three streams, and with a restart and three receipts in a stream. The fenced cutover kept every acknowledged write, acknowledged none twice and acknowledged every write, with four writes for each writer or three writers, with and without timeouts, and the naive cutover without timeouts acknowledged no write twice. Each holds for the constants run and no others. With a restart and four receipts in a stream, or a restart and three streams of two receipts, TLC was stopped at 30 minutes with its heap of 8 GB full and no error printed by then, after more than 15 million distinct states. Nothing is concluded for those two instances, since TLC had not reached every state.
+- A pass written as one request on the revision it was evaluated from kept every outcome one that the two evaluations give made one after the other, with a stop and without, and every outcome with a stop one that a behaviour without a stop reaches. With the later of the stimulus's position and the latest pass's, read with the revision, the passes stayed in the order of their positions and none fell before its stimulus. TLC printed "No error has been found" for `PA_OnRead` on this model's own instance and for `PA_OnReadAligned` on the Python model's, and the census found no cell in which `OnRead` with `LaterOf` broke O1 to O4. These are the Python model's conclusions for its protocol A, reached by a second model written without reading it.
+- Written on whatever revision is latest, a pass broke O1 with a second activation and never with a credit, in 12 of 12 starting balances on this model's instance and 5 of 6 on the Python model's. The stale pass is written as it was evaluated, so it can record what the state no longer allows, for example a move of a licence already on overage. Its position, read before another pass landed, fell behind that pass's in every cell where the stimuli's positions differ, 48 of 72 and 24 of 36.
+- Each posting a request of its own broke O1 in 9 cells on this model's instance and 7 on the Python model's, the same 7 cells in which the Python model's three variants of a posting written alone break it. A refused posting evaluated again from the revision found leaves the pass's earlier postings written, so a pass ends with part of what it evaluated, for example a refused alert and no move.
+- A pass at its stimulus's position broke the order of positions with the actors one after another, in 36 of 72 cells and 24 of 36, which by our count are the cells where both write a pass and the stimuli's positions differ.
+- In the census no variant broke O2 or O4. A stop in this model falls only while an actor holds a plan, and a pass's records, the move to overage among them, are written in its one request, so a stop never falls between a pass and what it records.
+- Over two ledgers, with the refusal returning the revision it found and the C pass recording the revisions its decision started from, every outcome was one that the two claims give evaluated whole one after the other, each claim ended in both ledgers or in neither, and each ledger's passes kept the order of their positions, with one stop. TLC printed "No error has been found" for `X6_Closed`. What it does not give is what X1's row does not give. A reader of C and then P sees a claim in one ledger and not the other, and a claim stopped between its passes leaves C ahead until it starts again. A claim's two passes also take different positions, since each takes the later of its stimulus's and its own ledger's latest pass's.
+- Returning the revision found is what lets a refused claim go on. With the refusal returning nothing, the claim names the revision it already held, is refused again, and gives up, with no stop needed. TLC printed a claim not paid where one after the other both are, and a claim drawn on the contract and not on the aggregate, which nothing compensates.
+- Recording the start is what keeps a replay's decision the one it wrote under. With no start recorded, a claim that stopped after its C pass read its own draw as the contract's account being empty, decided not to pay and compensated a claim that one after the other is paid. Each claim still ended in both ledgers or in neither, since the replay compensated what it had drawn. TLC printed "No error has been found" for `X6_StartOpenHalf`, so in these constants the second gap costs a wrong decision and never a half claim.

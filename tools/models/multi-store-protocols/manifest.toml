@@ -11,7 +11,8 @@
 #               violation prints no depth, and a depth found with several workers can differ by one or two between runs.
 #               Each configuration was measured on its own, with nothing else heavy running, through `--heap-mb`: a base
 #               one under a heap of 2,048 MB and a wide one under 4,096 MB, with 16 workers where no error is expected and
-#               one where a property is expected to be violated
+#               one where a property is expected to be violated. The configurations of PA, X6 and X2A were measured the
+#               same way with 8 workers in place of 16, while another session ran its own JVMs on the machine
 # limit         machine S stopped the run at its limit of 30 minutes or 8 GB of heap, so it has no verdict and is skipped
 #               unless `--heap-mb` is given
 
@@ -66,6 +67,24 @@ configuration = [
   { name = "X5_FencedAnswerAny", module = "X5_WholeCommand", config = "X5_FencedAnswerAny.cfg", tier = "base", expect = "no error", distinct = 7083, depth = 29, tlc_time = "00s", wall_s = 1.6, peak_heap_mb = 30 },
   { name = "X5_FencedAnswerStream", module = "X5_WholeCommand", config = "X5_FencedAnswerStream.cfg", tier = "base", expect = "no error", distinct = 540, depth = 24, tlc_time = "00s", wall_s = 1.2, peak_heap_mb = 18 },
   { name = "X5_FencedAnswerStream3", module = "X5_WholeCommand", config = "X5_FencedAnswerStream3.cfg", tier = "base", expect = "no error", distinct = 14597, depth = 35, tlc_time = "00s", wall_s = 1.3, peak_heap_mb = 33 },
+  { name = "PA_OnRead", module = "PA_PassRevision", config = "PA_OnRead.cfg", tier = "base", expect = "no error", distinct = 1764, depth = 7, tlc_time = "01s", wall_s = 3.1, peak_heap_mb = 29 },
+  { name = "PA_OnReadAligned", module = "PA_PassRevision", config = "PA_OnReadAligned.cfg", tier = "base", expect = "no error", distinct = 900, depth = 7, tlc_time = "01s", wall_s = 2.3, peak_heap_mb = 28 },
+  { name = "PA_OnLatestO1", module = "PA_PassRevision", config = "PA_OnLatestO1.cfg", tier = "base", expect = "violated", property = "SerialOutcomes", kind = "invariant", distinct = 1234, depth = 5, tlc_time = "03s", wall_s = 4.9, peak_heap_mb = 23 },
+  { name = "PA_OnLatestO3", module = "PA_PassRevision", config = "PA_OnLatestO3.cfg", tier = "base", expect = "violated", property = "PassOrder", kind = "invariant", distinct = 941, depth = 5, tlc_time = "01s", wall_s = 2.7, peak_heap_mb = 15 },
+  { name = "PA_PerPostingO1", module = "PA_PassRevision", config = "PA_PerPostingO1.cfg", tier = "base", expect = "violated", property = "SerialOutcomes", kind = "invariant", distinct = 3480, depth = 7, tlc_time = "01s", wall_s = 2.7, peak_heap_mb = 28 },
+  { name = "PA_StimulusO3", module = "PA_PassRevision", config = "PA_StimulusO3.cfg", tier = "base", expect = "violated", property = "PassOrder", kind = "invariant", distinct = 505, depth = 5, tlc_time = "00s", wall_s = 1.6, peak_heap_mb = 15 },
+  { name = "PA_Census", module = "PA_PassRevision", config = "PA_Census.cfg", tier = "base", expect = "no error", distinct = 31098, depth = 13, tlc_time = "01s", wall_s = 2.6, peak_heap_mb = 59 },
+  { name = "PA_CensusAligned", module = "PA_PassRevision", config = "PA_CensusAligned.cfg", tier = "base", expect = "no error", distinct = 15976, depth = 14, tlc_time = "01s", wall_s = 2.9, peak_heap_mb = 47 },
+  { name = "X6_Closed", module = "X6_PassTwoLedgers", config = "X6_Closed.cfg", tier = "base", expect = "no error", distinct = 4950, depth = 15, tlc_time = "01s", wall_s = 1.6, peak_heap_mb = 28 },
+  { name = "X6_ClosedTorn", module = "X6_PassTwoLedgers", config = "X6_ClosedTorn.cfg", tier = "base", expect = "violated", property = "NoTornRead", kind = "invariant", distinct = 1406, depth = 6, tlc_time = "00s", wall_s = 1.4, peak_heap_mb = 23 },
+  { name = "X6_ClosedTornCrash", module = "X6_PassTwoLedgers", config = "X6_ClosedTornCrash.cfg", tier = "base", expect = "violated", property = "NoStrandedHalf", kind = "invariant", distinct = 435, depth = 5, tlc_time = "00s", wall_s = 1.3, peak_heap_mb = 15 },
+  { name = "X6_ClosedPositions", module = "X6_PassTwoLedgers", config = "X6_ClosedPositions.cfg", tier = "base", expect = "violated", property = "OnePosition", kind = "invariant", distinct = 1655, depth = 8, tlc_time = "00s", wall_s = 1.3, peak_heap_mb = 27 },
+  { name = "X6_RefusalOpen", module = "X6_PassTwoLedgers", config = "X6_RefusalOpen.cfg", tier = "base", expect = "violated", property = "SerialClaims", kind = "invariant", distinct = 3367, depth = 10, tlc_time = "00s", wall_s = 1.4, peak_heap_mb = 28 },
+  { name = "X6_RefusalOpenHalf", module = "X6_PassTwoLedgers", config = "X6_RefusalOpenHalf.cfg", tier = "base", expect = "violated", property = "NoHalfClaim", kind = "invariant", distinct = 4055, depth = 11, tlc_time = "01s", wall_s = 1.6, peak_heap_mb = 28 },
+  { name = "X6_StartOpen", module = "X6_PassTwoLedgers", config = "X6_StartOpen.cfg", tier = "base", expect = "violated", property = "SerialClaims", kind = "invariant", distinct = 5195, depth = 13, tlc_time = "00s", wall_s = 1.4, peak_heap_mb = 28 },
+  { name = "X6_StartOpenHalf", module = "X6_PassTwoLedgers", config = "X6_StartOpenHalf.cfg", tier = "base", expect = "no error", distinct = 8256, depth = 20, tlc_time = "01s", wall_s = 1.7, peak_heap_mb = 31 },
+  { name = "X2A_FlaggedIsStale", module = "X2_AuditFlags", config = "X2A_FlaggedIsStale.cfg", tier = "base", expect = "violated", property = "FlaggedIsStale", kind = "invariant", distinct = 361, depth = 5, tlc_time = "00s", wall_s = 1.6, peak_heap_mb = 15 },
+  { name = "X2A_FlaggedIsStaleOneStep", module = "X2_AuditFlags", config = "X2A_FlaggedIsStaleOneStep.cfg", tier = "base", expect = "no error", distinct = 13, depth = 4, tlc_time = "00s", wall_s = 1.7, peak_heap_mb = 15 },
   { name = "X1_Applied_K4W2", module = "X1_SerialisedApply", config = "X1_Applied_K4W2.cfg", tier = "wide", expect = "no error", distinct = 3381, depth = 30, tlc_time = "00s", wall_s = 1.5, peak_heap_mb = 40 },
   { name = "X1_Applied_K4W3", module = "X1_SerialisedApply", config = "X1_Applied_K4W3.cfg", tier = "wide", expect = "no error", distinct = 5092, depth = 32, tlc_time = "01s", wall_s = 1.7, peak_heap_mb = 47 },
   { name = "X1_AppliedZombie2_K4W2", module = "X1_SerialisedApply", config = "X1_AppliedZombie2_K4W2.cfg", tier = "wide", expect = "no error", distinct = 174940, depth = 50, tlc_time = "23s", wall_s = 24.4, peak_heap_mb = 724 },
