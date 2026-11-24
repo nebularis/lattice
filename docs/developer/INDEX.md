@@ -50,7 +50,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
 | mtp-execution | unit |  | merged 2026-09-20 |  | [status](status/mtp-execution.md) |
-| multi-store-architecture | unit | MSA | building 2026-11-23 | MSA-I2 | [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md), 26 Validation Packs |
+| multi-store-architecture | unit | MSA | building 2026-11-23 | MSA-I2 | [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md), 28 Validation Packs |
 | multi-store-conformance | unit | MSC | merged 2026-10-29 |  | [plan](plans/multi-store-conformance.md), [status](status/multi-store-conformance.md), 5 Validation Packs |
 | normative-rule-substrate | multi-slice unit | NRS | blocked | NRS-2 | [plan](plans/normative-rule-substrate.md), [status](status/normative-rule-substrate.md) |
 | ontology-remediation | phase | OR | built 2026-10-28 | OR-0 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |
@@ -456,7 +456,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | MSA-I5a | the shared proof session, `tools/proofs/shared/`, with a position and an amount defined once. `LatticeShared`, ten claims gated, and the ledger's `Agreement.amounts_agree` fails the build wh | multi-store-architecture | verified 2026-11-20 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I5 | the prover spike. `spikes/multi-store-model/`, a session on `LatticeShared` with the neutral IR of guarded commands, its `exec`, and eleven laws proved and gated. The interpreter exported to | multi-store-architecture | built 2026-11-23 | MSA-I5a | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I6 | `tools/models/multi-store-protocols`. TLA+ models A, X1 to X4, 28 configurations. Five catalogue rows keep their guarantee with a stated requirement, and the serialised writer never gives at | multi-store-architecture | built 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
-| MSA-I7 | the ledger benchmark with a PostgreSQL arm | multi-store-architecture | building 2026-11-23 | the ledger's LG-2 | docs/developer/status/multi-store-architecture.md#position |
+| MSA-I7 | the ledger benchmark with a PostgreSQL arm. `benchmark/ledger-supersession-read` holds the per-version and per-pass forms in a relational layout of its own on the fixture's server, each read | multi-store-architecture | built 2026-11-23 | the ledger's LG-2 | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I8 | one ledger family in PostgreSQL behind the port | multi-store-architecture | planned | MSA-I5, MSA-I6, MSA-I7, MSA-I10, MSA-I14 | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I9 | `spikes/multi-store-stream-probes`. A single active consumer is no fence (a cut consumer applied 6 writes after takeover), no deduplication without named producers, and the client's `storeOf | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I10 | two families in one mapping vocabulary | multi-store-architecture | planned | MSA-I1, the ledger's LG-2 | docs/developer/status/multi-store-architecture.md#position |
