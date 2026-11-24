@@ -68,7 +68,7 @@ def differences(path: str, at_ref: Optional[str], in_tree: Optional[str]) -> Lis
 
 
 def _at_ref(root: Path, ref: str, path: str) -> Optional[str]:
-    result = subprocess.run(["git", "show", f"{ref}:{path}"], cwd=root, capture_output=True, text=True)
+    result = subprocess.run(["git", "show", f"{ref}:{path}"], cwd=root, capture_output=True, text=True, encoding="utf-8")
     return result.stdout if result.returncode == 0 else None
 
 

@@ -214,6 +214,6 @@ def run(command: str, *iris: str, graphs: Iterable[Graph]):
             except _ServerUnavailable:
                 pass
         output = subprocess.run(
-            ["java", *jvm_options(), "--sun-misc-unsafe-memory-access=allow", "-jar", str(JAR), command, *iris, str(path)], capture_output=True, text=True, check=True, timeout=TIMEOUT
+            ["java", *jvm_options(), "--sun-misc-unsafe-memory-access=allow", "-jar", str(JAR), command, *iris, str(path)], capture_output=True, text=True, encoding="utf-8", check=True, timeout=TIMEOUT
         ).stdout
     return json.loads(output.strip().splitlines()[-1])["result"]

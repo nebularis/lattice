@@ -46,9 +46,9 @@ def tree(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     (tmp_path / "ontology/a/spec").mkdir(parents=True)
     (tmp_path / "ontology/b/spec").mkdir(parents=True)
-    (tmp_path / "ontology/a/spec/a.ttl").write_text(ontology("https://example.org/a", ("https://example.org/b/1.0.0",)))
+    (tmp_path / "ontology/a/spec/a.ttl").write_text(ontology("https://example.org/a", ("https://example.org/b/1.0.0",)), encoding="utf-8")
     (tmp_path / "ontology/b/spec/b.ttl").write_text(
-        ontology("https://example.org/b", body="<https://example.org/b#Term> a owl:Class .\n")
+        ontology("https://example.org/b", body="<https://example.org/b#Term> a owl:Class .\n"), encoding="utf-8"
     )
     write(tmp_path)
     return tmp_path
@@ -67,8 +67,8 @@ def test_fixture_tree_is_consistent_and_its_closure_loads(tree: Path) -> None:
 
 def test_removed_entry_is_reported(tree: Path) -> None:
     catalog = tree / "ontology/catalog-v001.xml"
-    text = catalog.read_text()
-    catalog.write_text("\n".join(line for line in text.splitlines() if "b/1.0.0" not in line) + "\n")
+    text = catalog.read_text(encoding="utf-8")
+    catalog.write_text("\n".join(line for line in text.splitlines() if "b/1.0.0" not in line) + "\n", encoding="utf-8", newline="\n")
     problems, _ = check(tree)
     assert any("differs from a fresh generation" in p for p in problems)
     with pytest.raises(CatalogError):
@@ -77,27 +77,27 @@ def test_removed_entry_is_reported(tree: Path) -> None:
 
 def test_entry_pointing_at_the_wrong_file_is_reported(tree: Path) -> None:
     catalog = tree / "ontology/catalog-v001.xml"
-    catalog.write_text(catalog.read_text().replace('uri="b/spec/b.ttl"', 'uri="a/spec/a.ttl"'))
+    catalog.write_text(catalog.read_text(encoding="utf-8").replace('uri="b/spec/b.ttl"', 'uri="a/spec/a.ttl"'), encoding="utf-8", newline="\n")
     problems, _ = check(tree)
     assert any("which does not declare it" in p for p in problems)
 
 
 def test_hand_edited_stub_is_reported_as_drift(tree: Path) -> None:
     stub = tree / "ontology/a/spec/catalog-v001.xml"
-    stub.write_text(stub.read_text().replace("../../catalog-v001.xml", "../catalog-v001.xml"))
+    stub.write_text(stub.read_text(encoding="utf-8").replace("../../catalog-v001.xml", "../catalog-v001.xml"), encoding="utf-8", newline="\n")
     problems, _ = check(tree)
     assert problems == ["ontology/a/spec/catalog-v001.xml: differs from a fresh generation, run: python tools/ontology_catalog.py write"]
 
 
 def test_unresolved_import_is_reported(tree: Path) -> None:
-    (tree / "ontology/a/spec/a.ttl").write_text(ontology("https://example.org/a", ("https://example.org/missing",)))
+    (tree / "ontology/a/spec/a.ttl").write_text(ontology("https://example.org/a", ("https://example.org/missing",)), encoding="utf-8")
     write(tree)
     problems, _ = check(tree)
     assert problems == ["ontology/a/spec/a.ttl: imports https://example.org/missing, which no document under ontology/ declares"]
 
 
 def test_iri_declared_twice_is_refused(tree: Path) -> None:
-    (tree / "ontology/b/spec/copy.ttl").write_text(ontology("https://example.org/b"))
+    (tree / "ontology/b/spec/copy.ttl").write_text(ontology("https://example.org/b"), encoding="utf-8")
     with pytest.raises(CatalogError):
         scan(tree).declared()
 
@@ -110,11 +110,11 @@ def test_stale_known_defect_is_reported(tree: Path, monkeypatch: pytest.MonkeyPa
 
 
 def test_ignored_build_output_is_not_catalogued(tree: Path) -> None:
-    (tree / ".gitignore").write_text("**/execution/*\n")
+    (tree / ".gitignore").write_text("**/execution/*\n", encoding="utf-8")
     (tree / "ontology/b/execution").mkdir()
-    (tree / "ontology/b/execution/generated.ttl").write_text(ontology("https://example.org/generated", ("https://example.org/gone",)))
+    (tree / "ontology/b/execution/generated.ttl").write_text(ontology("https://example.org/generated", ("https://example.org/gone",)), encoding="utf-8")
     assert check(tree) == ([], [])
-    assert "generated" not in (tree / "ontology/catalog-v001.xml").read_text()
+    assert "generated" not in (tree / "ontology/catalog-v001.xml").read_text(encoding="utf-8")
 
 
 def test_generation_is_deterministic() -> None:
@@ -132,14 +132,15 @@ def test_behaviour_closure_reaches_every_layer_below_it() -> None:
 
 def test_applied_ontology_chains_to_lattice_catalog(tmp_path: Path) -> None:
     eligibility = version_iri("ontology/eligibility/spec/eligibility.ttl")
-    (tmp_path / "applied.ttl").write_text(ontology("https://example.org/applied", (eligibility,)))
+    (tmp_path / "applied.ttl").write_text(ontology("https://example.org/applied", (eligibility,)), encoding="utf-8")
     relative = Path(os.path.relpath(ROOT_CATALOG, tmp_path)).as_posix()
     (tmp_path / "catalog-v001.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">\n'
         '    <uri name="https://example.org/applied/1.0.0" uri="applied.ttl"/>\n'
         f'    <nextCatalog catalog="{relative}"/>\n'
-        "</catalog>\n"
+        "</catalog>\n",
+        encoding="utf-8",
     )
     graph = closure(Catalog(tmp_path / "catalog-v001.xml"), "https://example.org/applied/1.0.0")
     assert (Namespace(f"{LATTICE}eligibility#").Condition, RDF.type, OWL.Class) in graph

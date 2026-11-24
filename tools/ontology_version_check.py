@@ -66,7 +66,7 @@ def repository_files(root: Path, suffix: str) -> list[Path]:
     built it, so no check may depend on it."""
     result = subprocess.run(
         ["git", "ls-files", "--cached", "--others", "--exclude-standard", "--", ONTOLOGY_ROOT],
-        cwd=root, capture_output=True, text=True, check=True,
+        cwd=root, capture_output=True, text=True, encoding="utf-8", check=True,
     )
     paths = {root / line for line in result.stdout.splitlines() if line.endswith(suffix)}
     return sorted(path for path in paths if path.exists())
@@ -210,7 +210,7 @@ def check_unversioned(root: Path) -> list[str]:
 
 
 def git_lines(root: Path, *args: str) -> list[str]:
-    result = subprocess.run(["git", *args], cwd=root, capture_output=True, text=True, check=True)
+    result = subprocess.run(["git", *args], cwd=root, capture_output=True, text=True, encoding="utf-8", check=True)
     return result.stdout.splitlines()
 
 

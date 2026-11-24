@@ -65,7 +65,7 @@ def next_version(current: str, increment: Optional[str], new: Optional[str]) -> 
 def module_files(root: Path, module: lattice_repo_catalogue.Module) -> list[Path]:
     """The module's own Turtle and Markdown, as git lists them, its tests left out as they assert history."""
     listed = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "--", module.path.as_posix()],
-                            cwd=root, capture_output=True, text=True, check=True).stdout.splitlines()
+                            cwd=root, capture_output=True, text=True, encoding="utf-8", check=True).stdout.splitlines()
     return [root / p for p in listed if Path(p).suffix in (".ttl", ".md") and "/test/" not in f"/{p}" and (root / p).is_file()]
 
 
@@ -100,7 +100,7 @@ def bump_spec(root: Path, module: lattice_repo_catalogue.Module, increment: Opti
     log.append(f"{module.name}: {len(versions)} spec document(s) {current} -> {version}")
     elsewhere = subprocess.run(["git", "grep", "-l", "-E", "(" + "|".join(re.escape(b) for b in versions) + f")/{re.escape(current)}\\b", "--",
                                 ":!" + module.path.as_posix(), ":!*catalog-v001.xml", ":!docs/architecture/ontology-releases.md"],
-                               cwd=root, capture_output=True, text=True).stdout.split()
+                               cwd=root, capture_output=True, text=True, encoding="utf-8").stdout.split()
     if elsewhere:
         log.append(f"still pinned at {current}, each pin its own module's choice: {', '.join(elsewhere)}")
     return version

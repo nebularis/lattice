@@ -572,8 +572,8 @@ def _skolemised(text: str, seed: int | None = None):
 @pytest.mark.parametrize("name", ["tree", "irregular"])
 def test_each_skolem_vector_gives_exactly_its_expected_triples(name):
     """The vectors pin the rule. A change to any IRI they hold is a change of rule, and needs a new version."""
-    got, _ = _skolemised((VECTORS / f"{name}.ttl").read_text())
-    expected = {line for line in (VECTORS / f"{name}.expected.nt").read_text().splitlines() if line}
+    got, _ = _skolemised((VECTORS / f"{name}.ttl").read_text(encoding="utf-8"))
+    expected = {line for line in (VECTORS / f"{name}.expected.nt").read_text(encoding="utf-8").splitlines() if line}
     assert got == expected
 
 
@@ -587,13 +587,13 @@ def test_a_tree_node_is_named_as_the_rule_says():
     author = sha("\n".join(sorted([f"<{s}address> _:{address}", f'<{s}name> "Frank Herbert"'])))
     author_name = sha(f"v1\n<http://example.org/records/dune>\n<{s}author>\n{author}")
     address_name = sha(f"v1\n<urn:mork-rdf:skolem:v1:{author_name}>\n<{s}address>\n{address}")
-    got, _ = _skolemised((VECTORS / "tree.ttl").read_text())
+    got, _ = _skolemised((VECTORS / "tree.ttl").read_text(encoding="utf-8"))
     assert f'<urn:mork-rdf:skolem:v1:{author_name}> <{s}name> "Frank Herbert" .' in got
     assert f'<urn:mork-rdf:skolem:v1:{address_name}> <{s}city> "Tacoma" .' in got
 
 
 def test_skolem_names_do_not_depend_on_the_order_of_the_triples():
-    text = (VECTORS / "tree.ttl").read_text() + (VECTORS / "irregular.ttl").read_text().split("@prefix s: <http://example.org/src#> .")[1]
+    text = (VECTORS / "tree.ttl").read_text(encoding="utf-8") + (VECTORS / "irregular.ttl").read_text(encoding="utf-8").split("@prefix s: <http://example.org/src#> .")[1]
     first, _ = _skolemised(text, 0)
     assert all(_skolemised(text, seed)[0] == first for seed in (1, 2, 3))
 
@@ -609,9 +609,9 @@ def test_a_skolem_name_survives_unrelated_additions_and_changes_with_its_own_des
 
 
 def test_identical_siblings_stay_distinct_and_irregular_components_are_reported():
-    got, components = _skolemised((VECTORS / "tree.ttl").read_text())
+    got, components = _skolemised((VECTORS / "tree.ttl").read_text(encoding="utf-8"))
     assert len({t.split()[0] for t in got if '"Anon"' in t}) == 2
-    _, components = _skolemised((VECTORS / "irregular.ttl").read_text())
+    _, components = _skolemised((VECTORS / "irregular.ttl").read_text(encoding="utf-8"))
     assert sorted(n for _, n in components) == [1, 1, 2]  # the shared node, the orphan, and the cycle of two
 
 

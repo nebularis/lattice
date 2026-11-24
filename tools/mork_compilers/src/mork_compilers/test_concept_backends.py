@@ -254,7 +254,7 @@ class CliTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             declarations = Path(directory) / "editions.ttl"
-            declarations.write_text(EDITIONS)
+            declarations.write_text(EDITIONS, encoding="utf-8")
             out = Path(directory) / "out.ttl"
             base = ["compile-condition", "--declarations", str(declarations), "--condition", str(EX["engineering-benefit"])]
             self.assertEqual(main(base + ["--out", str(out)]), 2)  # bindings, no instant

@@ -7,6 +7,7 @@ never its host name or its user (ADR-A124 decision 5)."""
 from __future__ import annotations
 
 import json
+import locale
 import os
 import platform
 import re
@@ -73,7 +74,7 @@ def measure(name: str, unit: str, repeats: Sequence[float]) -> Dict[str, Any]:
 
 def _run(argv: List[str]) -> str:
     try:
-        return subprocess.run(argv, capture_output=True, text=True, timeout=10).stdout.strip()
+        return subprocess.run(argv, capture_output=True, text=True, encoding="utf-8", timeout=10).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return ""
 
@@ -83,7 +84,7 @@ def _processor_model() -> str:
         return _run(["sysctl", "-n", "machdep.cpu.brand_string"]) or platform.processor()
     cpuinfo = Path("/proc/cpuinfo")
     if cpuinfo.is_file():
-        for line in cpuinfo.read_text(errors="replace").splitlines():
+        for line in cpuinfo.read_text(encoding="utf-8", errors="replace").splitlines():
             if line.lower().startswith("model name"):
                 return line.partition(":")[2].strip()
     return platform.processor()
@@ -95,13 +96,14 @@ def _memory_bytes() -> Optional[int]:
         return int(text) if text.isdigit() else None
     meminfo = Path("/proc/meminfo")
     if meminfo.is_file():
-        match = re.search(r"MemTotal:\s+(\d+) kB", meminfo.read_text(errors="replace"))
+        match = re.search(r"MemTotal:\s+(\d+) kB", meminfo.read_text(encoding="utf-8", errors="replace"))
         return int(match.group(1)) * 1024 if match else None
     return None
 
 
 def _java() -> Optional[str]:
-    match = re.search(r'version "([^"]+)"', subprocess.run(["java", "-version"], capture_output=True, text=True, timeout=10).stderr) if _on_path("java") else None
+    # The JVM writes standard error in its native encoding, the locale's (the ANSI code page on Windows), not UTF-8.
+    match = re.search(r'version "([^"]+)"', subprocess.run(["java", "-version"], capture_output=True, text=True, encoding=locale.getencoding(), timeout=10).stderr) if _on_path("java") else None
     return match.group(1) if match else None
 
 

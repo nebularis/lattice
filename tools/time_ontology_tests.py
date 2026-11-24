@@ -89,7 +89,8 @@ def timed(cmd):
     """(seconds, completed process or None when it hung, stdout so far)."""
     start = time.perf_counter()
     try:
-        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=args.timeout)
+        # A Python child writes its pipe in the locale's encoding on Windows unless UTF-8 mode is on, and only the summary is read.
+        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=args.timeout)
         return time.perf_counter() - start, proc, proc.stdout
     except subprocess.TimeoutExpired as hung:
         # a reasoner call can block on a network fetch with no timeout of its own (TD-31)
@@ -192,7 +193,7 @@ def sample_memory(root_pid, stop, peaks):
                 pending.extend(children[pid])
         else:
             try:
-                listing = subprocess.run(["ps", "-axo", "pid=,ppid=,rss=,comm="], capture_output=True, text=True, timeout=10).stdout
+                listing = subprocess.run(["ps", "-axo", "pid=,ppid=,rss=,comm="], capture_output=True, text=True, encoding="utf-8", timeout=10).stdout
             except (OSError, subprocess.SubprocessError):
                 return
             rows, children = {}, collections.defaultdict(list)
@@ -221,13 +222,13 @@ def system_memory():
     machine that is short of it."""
     try:
         if sys.platform == "darwin":
-            pressure = subprocess.run(["memory_pressure"], capture_output=True, text=True, timeout=10).stdout
+            pressure = subprocess.run(["memory_pressure"], capture_output=True, text=True, encoding="utf-8", timeout=10).stdout
             free = re.search(r"free percentage: (\d+)%", pressure)
-            swap = subprocess.run(["sysctl", "-n", "vm.swapusage"], capture_output=True, text=True, timeout=10).stdout.strip()
+            swap = subprocess.run(["sysctl", "-n", "vm.swapusage"], capture_output=True, text=True, encoding="utf-8", timeout=10).stdout.strip()
             used = re.search(r"used = ([\d.]+M)", swap)
             return f"{free.group(1)}% of memory free, {used.group(1) if used else '?'} swapped out"
         if sys.platform.startswith("linux"):
-            info = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in Path("/proc/meminfo").read_text().splitlines())}
+            info = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines())}
             return f"{info['MemAvailable'] / 1024 ** 2:.1f} GB of {info['MemTotal'] / 1024 ** 2:.1f} GB available, {(info['SwapTotal'] - info['SwapFree']) / 1024:.0f} MB swapped out"
         if sys.platform == "win32":
             import mem_check
@@ -246,7 +247,8 @@ def streamed(cmd):
     at every tenth of the run, from the percentage pytest puts on each result."""
     start = time.perf_counter()
     peaks = {"tree": 0, "python": 0, "jvm_count": 0, "jvm_total": 0}
-    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    # As in `timed`, the child's pipe may be in the locale's encoding, and only pytest's progress and summary are read.
+    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", bufsize=1)
     hung = threading.Event()
     stop = threading.Event()
     # daemon, so that an interrupted run is not held open until the timeout

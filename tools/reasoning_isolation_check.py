@@ -55,7 +55,7 @@ def check(root: Path) -> list[str]:
             if artifact.endswith("-testkit") and dep.findtext(f"{POM}scope") != "test":
                 problems.append(f"{relative_posix}: depends on {artifact} outside test scope")
     for project in files(root, "pyproject.toml"):
-        data = tomllib.loads(project.read_text())
+        data = tomllib.loads(project.read_text(encoding="utf-8"))
         declared = list(data.get("project", {}).get("dependencies", []))
         for extra in data.get("project", {}).get("optional-dependencies", {}).values():
             declared += extra

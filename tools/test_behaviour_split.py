@@ -96,7 +96,7 @@ def test_c10_02_names_no_instrument_term() -> None:
     files = [p for p in LAYER.rglob("*") if p.suffix in {".ttl", ".md"}]
     files.append(ROOT / "test" / "conformance" / "cases" / "behaviour-bp1-transition.ttl")
     for path in files:
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         assert "lattice/instrument" not in text and "ins:" not in text, path.relative_to(ROOT)
         if path.parent.name in {"examples", "test", "cases"}:
             assert "bhv:InstrumentTarget" not in text, path.relative_to(ROOT)
@@ -180,7 +180,7 @@ def test_c10_12_instrument_target_is_deprecated() -> None:
 
 
 def test_c10_13_every_changed_version_has_a_release_row() -> None:
-    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
+    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("behaviour-v0.8.0", "behaviour-runtime-v0.8.0", "behaviour-vocab-v0.8.0", "behaviour-shapes-v0.2.0",
                 "behaviour-projection-v0.2.0", "applied-capacity-execution-v0.8.0"):
         assert f"| {tag} |" in register, tag

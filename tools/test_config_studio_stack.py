@@ -81,7 +81,7 @@ def test_workspaces_live_in_the_platform_data_folder_unless_told_otherwise() -> 
 
 def test_the_compose_files_fuseki_configuration_is_the_stacks() -> None:
     root = lattice_repo_catalogue.find_root(None)
-    mounted = (root / "deployment" / "compose" / "config-studio" / "fuseki-studio.ttl").read_text()
+    mounted = (root / "deployment" / "compose" / "config-studio" / "fuseki-studio.ttl").read_text(encoding="utf-8")
     assert stack.FUSEKI_CONFIG.replace("{location}", "/data") in mounted
 
 
@@ -98,8 +98,8 @@ def test_the_broker_has_one_user_with_a_password_made_once_and_kept_private(tmp_
     assert studio.broker_credentials() == (password, secret), "made once for the stack"
     assert stack.Stack.broker_credentials(_stack(tmp_path / "other"))[0] != password, "and once for each stack"
     folder = tmp_path / "infra" / "broker"
-    assert (folder / "amqp-uri").read_text() == f"amqp://studio:{password}@127.0.0.1:{stack.RABBITMQ_PORT}/%2F"
-    assert (folder / "stream-uri").read_text().startswith(f"rabbitmq-stream://studio:{password}@127.0.0.1:")
+    assert (folder / "amqp-uri").read_text(encoding="utf-8") == f"amqp://studio:{password}@127.0.0.1:{stack.RABBITMQ_PORT}/%2F"
+    assert (folder / "stream-uri").read_text(encoding="utf-8").startswith(f"rabbitmq-stream://studio:{password}@127.0.0.1:")
     if not stack.WINDOWS:
         assert all((folder / f).stat().st_mode & 0o077 == 0 for f in ("password", "secret", "amqp-uri", "stream-uri"))
     env = {**studio.service_env(), **studio.writer_env()}
@@ -137,11 +137,11 @@ def test_docker_desktop_is_told_apart_from_docker_engine_on_linux_only(monkeypat
 
 def test_the_compose_broker_publishes_on_loopback_alone_and_never_has_guest() -> None:
     root = lattice_repo_catalogue.find_root(None) / "deployment" / "compose" / "config-studio"
-    text = "\n".join((root / f).read_text() for f in ("docker-compose.yml", "docker-compose.desktop.yml", "docker-compose.host-network.yml"))
+    text = "\n".join((root / f).read_text(encoding="utf-8") for f in ("docker-compose.yml", "docker-compose.desktop.yml", "docker-compose.host-network.yml"))
     assert "guest" not in text and "loopback_users" not in text
-    ports = [line.strip() for line in (root / "docker-compose.desktop.yml").read_text().splitlines() if line.strip().startswith('- "')]
+    ports = [line.strip() for line in (root / "docker-compose.desktop.yml").read_text(encoding="utf-8").splitlines() if line.strip().startswith('- "')]
     assert ports and all(p.startswith('- "127.0.0.1:') for p in ports)
-    assert "network_mode: host" in (root / "docker-compose.host-network.yml").read_text()
+    assert "network_mode: host" in (root / "docker-compose.host-network.yml").read_text(encoding="utf-8")
 
 
 def test_a_process_that_ended_on_its_own_is_reported_with_the_last_line_of_its_log(tmp_path: Path) -> None:

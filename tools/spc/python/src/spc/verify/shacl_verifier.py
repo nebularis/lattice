@@ -64,6 +64,7 @@ def verify_shacl(
                 ],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 timeout=120,
             )
 

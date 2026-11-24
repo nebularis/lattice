@@ -81,6 +81,6 @@ def test_literate_extraction_matches_committed_turtle() -> None:
     result = subprocess.run(
         [sys.executable, str(ROOT / "tools" / "literate_extract.py"),
          str(V_RIG / "README.md"), "--layer", "v-rig", "--root", str(ROOT), "--check"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8",
     )
     assert result.returncode == 0, result.stdout + result.stderr

@@ -72,7 +72,7 @@ def test_c10a_04_the_order_table_matches_the_architecture_diagram() -> None:
 
 
 def test_c10a_05_check_runs_the_guard() -> None:
-    tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
+    tasks = tomllib.loads((ROOT / "mise.toml").read_text(encoding="utf-8"))["tasks"]
     assert "check:import-guard" in tasks["check"]["depends"]
     assert "import_guard.py" in tasks["check:import-guard"]["run"]
 

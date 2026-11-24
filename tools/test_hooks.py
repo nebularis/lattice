@@ -17,7 +17,7 @@ import hooks  # noqa: E402
 
 
 def sh(cwd: Path, *args: str, env: dict | None = None, check: bool = True) -> subprocess.CompletedProcess:
-    return subprocess.run(list(args), cwd=cwd, capture_output=True, text=True, check=check, env=env)
+    return subprocess.run(list(args), cwd=cwd, capture_output=True, text=True, encoding="utf-8", check=check, env=env)
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def repo(tmp_path: Path) -> Path:
     (tmp_path / "tools").mkdir()
     for name in ("hooks.py", "deny_terms.py"):
         shutil.copy(TOOLS / name, tmp_path / "tools" / name)
-    (tmp_path / "README.md").write_text("A file.\n")
+    (tmp_path / "README.md").write_text("A file.\n", encoding="utf-8")
     sh(tmp_path, "git", "add", ".")
     sh(tmp_path, "git", "commit", "-q", "--no-verify", "-m", "start")
     return tmp_path
@@ -71,8 +71,8 @@ def test_gh1_04_a_merge_only_check_waits_for_a_merge(repo: Path) -> None:
 
 
 def test_gh1_05_staged_files_and_added_lines(repo: Path) -> None:
-    (repo / "README.md").write_text("A file.\nA second line.\n")
-    (repo / "new.md").write_text("New.\n")
+    (repo / "README.md").write_text("A file.\nA second line.\n", encoding="utf-8")
+    (repo / "new.md").write_text("New.\n", encoding="utf-8")
     sh(repo, "git", "add", ".")
     assert set(hooks.staged_files(repo)) == {"README.md", "new.md"}
     change = hooks.Change(repo, hooks.staged_files(repo), False)
@@ -81,7 +81,7 @@ def test_gh1_05_staged_files_and_added_lines(repo: Path) -> None:
 
 def branch_with_change(repo: Path) -> None:
     sh(repo, "git", "checkout", "-q", "-b", "feature")
-    (repo / "f.md").write_text("Feature.\n")
+    (repo / "f.md").write_text("Feature.\n", encoding="utf-8")
     sh(repo, "git", "add", ".")
     sh(repo, "git", "commit", "-q", "--no-verify", "-m", "feature")
 
@@ -124,13 +124,13 @@ def test_gh1_09_install_writes_every_hook(repo: Path) -> None:
 
 def test_gh1_10_install_replaces_the_old_hook_and_refuses_a_foreign_one(repo: Path) -> None:
     directory = repo / ".git" / "hooks"
-    (directory / "pre-commit").write_text("#!/bin/sh\n# lattice deny-terms hook\nexec python3 tools/deny_terms.py\n")
-    (directory / "pre-merge-commit").write_text("#!/bin/sh\necho mine\n")
+    (directory / "pre-commit").write_text("#!/bin/sh\n# lattice deny-terms hook\nexec python3 tools/deny_terms.py\n", encoding="utf-8", newline="\n")
+    (directory / "pre-merge-commit").write_text("#!/bin/sh\necho mine\n", encoding="utf-8", newline="\n")
     with pytest.raises(SystemExit, match="was not installed by this task"):
         hooks.install(repo)
     lines = hooks.install(repo, bootstrap=True)
-    assert hooks.HOOK_MARK in (directory / "pre-commit").read_text()
-    assert (directory / "pre-merge-commit").read_text() == "#!/bin/sh\necho mine\n"
+    assert hooks.HOOK_MARK in (directory / "pre-commit").read_text(encoding="utf-8")
+    assert (directory / "pre-merge-commit").read_text(encoding="utf-8") == "#!/bin/sh\necho mine\n"
     assert any("was not installed by this task" in line for line in lines)
 
 
@@ -140,14 +140,14 @@ def test_gh1_11_install_under_bootstrap_outside_git(tmp_path: Path) -> None:
 
 def test_gh1_12_the_installed_hook_refuses_a_denied_term(repo: Path, tmp_path_factory) -> None:
     deny = tmp_path_factory.mktemp("deny") / "deny-terms"
-    deny.write_text("forbidden-word\n")
+    deny.write_text("forbidden-word\n", encoding="utf-8")
     hooks.install(repo)
     # Without mise on the path, the hook starts the dispatcher with the first Python that runs, as on a bare checkout.
     path = os.pathsep.join(d for d in os.environ.get("PATH", "").split(os.pathsep)
                            if d and not shutil.which("mise", path=d))
     env = {**os.environ, "PATH": path, "LATTICE_DENY_TERMS": str(deny)}
     env.pop("LATTICE_HOOKS_SKIP", None)
-    (repo / "README.md").write_text("A forbidden-word here.\n")
+    (repo / "README.md").write_text("A forbidden-word here.\n", encoding="utf-8")
     sh(repo, "git", "add", "README.md")
     refused = sh(repo, "git", "commit", "-q", "-m", "x", env=env, check=False)
     assert refused.returncode != 0
@@ -180,9 +180,9 @@ def test_gh2_01_each_change_triggers_its_checks() -> None:
 
 def test_gh2_02_links_judges_only_the_touched_files(tmp_path: Path) -> None:
     (tmp_path / "docs" / "_includes").mkdir(parents=True)
-    (tmp_path / "good.md").write_text("[here](good.md)\n")
-    (tmp_path / "bad.md").write_text("[gone](missing.md) and [web](https://example.org)\n")
-    (tmp_path / "docs" / "_includes" / "copy.md").write_text("[gone](missing.md)\n")
+    (tmp_path / "good.md").write_text("[here](good.md)\n", encoding="utf-8")
+    (tmp_path / "bad.md").write_text("[gone](missing.md) and [web](https://example.org)\n", encoding="utf-8")
+    (tmp_path / "docs" / "_includes" / "copy.md").write_text("[gone](missing.md)\n", encoding="utf-8")
     change = hooks.Change(tmp_path, ("good.md", "bad.md", "docs/_includes/copy.md"), False)
     assert hooks.links(change, list(change.files)) == ["broken link in bad.md: missing.md"]
 
@@ -231,7 +231,7 @@ def test_gh2_07_a_tool_that_cannot_run_warns(tmp_path: Path) -> None:
 
 def test_gh3_10_writing_blocks_at_a_commit_and_wrapping_warns(repo: Path) -> None:
     shutil.copy(TOOLS / "writing_rules.py", repo / "tools")
-    (repo / "README.md").write_text("A file.\n\nOne clause; another.\nA wrapped\nparagraph.\n")
+    (repo / "README.md").write_text("A file.\n\nOne clause; another.\nA wrapped\nparagraph.\n", encoding="utf-8")
     sh(repo, "git", "add", "README.md")
     change = hooks.Change(repo, hooks.staged_files(repo), False)
     registry = [c for c in hooks.checks() if c.name in ("writing", "wrapping")]
@@ -322,12 +322,12 @@ def work_repo(repo: Path, tmp_path_factory, monkeypatch) -> Path:
                       encoding="utf-8")
     monkeypatch.setenv("VYVID_CONFIG", str(config))
     (repo / "docs" / "developer" / "status").mkdir(parents=True)
-    (repo / "docs" / "developer" / "INDEX.md").write_text("# Index\n")
+    (repo / "docs" / "developer" / "INDEX.md").write_text("# Index\n", encoding="utf-8")
     return repo
 
 
 def record(root: Path, text: str = RECORD) -> str:
-    (root / "docs" / "developer" / "status" / "alpha.md").write_text(text)
+    (root / "docs" / "developer" / "status" / "alpha.md").write_text(text, encoding="utf-8")
     return "docs/developer/status/alpha.md"
 
 
@@ -424,21 +424,21 @@ def commit_all(root: Path) -> None:
 def test_wb4_08_post_merge_regenerates_the_registers_and_never_fails(work_repo: Path, monkeypatch, capsys) -> None:
     record(work_repo)
     roadmap = work_repo / "docs" / "developer" / "ROADMAP.md"
-    roadmap.write_text("# Roadmap\n")
+    roadmap.write_text("# Roadmap\n", encoding="utf-8")
     commit_all(work_repo)
     assert hooks.post_merge(work_repo) == 0
     out = capsys.readouterr().out
     assert "INDEX.md region regenerated" in out and "ROADMAP.md regions regenerated" in out
     assert build(work_repo, "--check").returncode == 0
-    assert "<!-- BEGIN GENERATED work-board-glance" in roadmap.read_text()
-    assert "<!-- BEGIN GENERATED work-board-branches" in roadmap.read_text()
+    assert "<!-- BEGIN GENERATED work-board-glance" in roadmap.read_text(encoding="utf-8")
+    assert "<!-- BEGIN GENERATED work-board-branches" in roadmap.read_text(encoding="utf-8")
     sh(work_repo, "git", "checkout", "-q", "-b", "feature")
-    roadmap.write_text("# Roadmap\n")
-    (work_repo / "docs" / "developer" / "INDEX.md").write_text("# Index\n")
+    roadmap.write_text("# Roadmap\n", encoding="utf-8")
+    (work_repo / "docs" / "developer" / "INDEX.md").write_text("# Index\n", encoding="utf-8")
     assert hooks.post_merge(work_repo) == 0
     out = capsys.readouterr().out
     assert "INDEX.md region regenerated" in out and "ROADMAP.md" not in out
-    assert roadmap.read_text() == "# Roadmap\n"
+    assert roadmap.read_text(encoding="utf-8") == "# Roadmap\n"
     assert build(work_repo, "--check").returncode == 0
     without_vyd(monkeypatch)
     assert hooks.post_merge(work_repo) == 0
@@ -467,7 +467,7 @@ def test_vm5_01_the_skills_check_skips_with_a_note_where_vyd_is_absent(monkeypat
 def test_vm5_02_the_skills_check_passes_on_this_checkout() -> None:
     if shutil.which("vyd") is None:
         pytest.skip("vyd is not installed")
-    config = subprocess.run(["vyd", "config"], capture_output=True, text=True, timeout=60, cwd=ROOT).stdout
+    config = subprocess.run(["vyd", "config"], capture_output=True, text=True, encoding="utf-8", timeout=60, cwd=ROOT).stdout
     if "is not trusted" in config or "projects: none" in config:
         pytest.skip("the binding is not trusted here, run `vyd trust` in the checkout")
     change = hooks.Change(ROOT, (".claude/skills/lattice-lifecycle/SKILL.md",), False)
@@ -531,16 +531,16 @@ def test_vm2_03_a_vyd_that_did_not_run_skips_with_its_reason(vyd_repo: Path, mon
 def test_vm2_04_the_identifiers_check_fails_a_mention_nothing_defines_where_vyd_is_present(vyd_repo: Path) -> None:
     if shutil.which("vyd") is None:
         pytest.skip("vyd is not installed")
-    (vyd_repo / "vyvid.toml").write_text(PROBE_PROJECT)
+    (vyd_repo / "vyvid.toml").write_text(PROBE_PROJECT, encoding="utf-8")
     (vyd_repo / "docs").mkdir()
     standards = vyd_repo / "docs" / "standards.md"
-    standards.write_text("# Standards\n\n| ID | Claim |\n|---|---|\n| STD-01 | **A rule.** |\n\nSee STD-99.\n")
+    standards.write_text("# Standards\n\n| ID | Claim |\n|---|---|\n| STD-01 | **A rule.** |\n\nSee STD-99.\n", encoding="utf-8")
     sh(vyd_repo, "git", "add", ".")
     sh(vyd_repo, "git", "commit", "-q", "--no-verify", "-m", "probe")
     check = hooks.vyd("check", "identifiers")
     change = hooks.Change(vyd_repo, ("docs/standards.md",), False)
     assert any("STD-99" in line for line in check(change, []))
-    standards.write_text("# Standards\n\n| ID | Claim |\n|---|---|\n| STD-01 | **A rule.** |\n\nSee STD-01.\n")
+    standards.write_text("# Standards\n\n| ID | Claim |\n|---|---|\n| STD-01 | **A rule.** |\n\nSee STD-01.\n", encoding="utf-8")
     assert check(change, []) == []
 
 
@@ -548,8 +548,8 @@ def test_gh1_install_writes_the_repositorys_own_hooks_whatever_core_hookspath_sa
     """A user may point core.hooksPath at shims of their own, which run the repository's hooks from its own folder. The
     installer writes there, so it never overwrites a shim, and the dispatcher still runs."""
     shims = tmp_path_factory.mktemp("shims")
-    (shims / "pre-commit").write_text("#!/bin/sh\nexit 0\n")
+    (shims / "pre-commit").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8", newline="\n")
     sh(repo, "git", "config", "core.hooksPath", str(shims))
     assert hooks.hooks_dir(repo) == (repo / ".git" / "hooks").resolve() or hooks.hooks_dir(repo) == repo / ".git" / "hooks"
     hooks.install(repo)
-    assert (repo / ".git" / "hooks" / "pre-commit").is_file() and (shims / "pre-commit").read_text() == "#!/bin/sh\nexit 0\n"
+    assert (repo / ".git" / "hooks" / "pre-commit").is_file() and (shims / "pre-commit").read_text(encoding="utf-8") == "#!/bin/sh\nexit 0\n"

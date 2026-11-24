@@ -100,7 +100,7 @@ def test_c6_01_version_and_imports() -> None:
     assert set(spec.objects(ontology, OWL.imports)) == {URIRef(LATTICE + v) for v in (
         f"{m}/{RELEASE}" for m in (
             "foundation", "vocabulary", "quantification", "party", "eligibility", "wording", "behaviour"))}
-    assert "behaviour-runtime" not in SPEC.read_text()
+    assert "behaviour-runtime" not in SPEC.read_text(encoding="utf-8")
 
 
 def test_c6_01_import_guard_passes() -> None:
@@ -216,7 +216,7 @@ def test_c6_08_unions_named_once_with_explicit_members() -> None:
 
 def test_c6_09_every_property_states_subject_and_value() -> None:
     spec = _graph(SPEC)
-    text = SPEC.read_text()
+    text = SPEC.read_text(encoding="utf-8")
     for prop in set(spec.subjects(RDF.type, OWL.ObjectProperty)) | set(spec.subjects(RDF.type, OWL.DatatypeProperty)):
         utility = str(spec.value(prop, URIRef(LATTICE + "foundation#utility")))
         assert "Subject:" in utility and "Value:" in utility, prop
@@ -254,7 +254,7 @@ def test_c6_11_vocab() -> None:
 def test_c6_12_supersession_across_identities() -> None:
     data = _graph(ROOT / "test" / "gate4" / "instrument-supersession-identity-mismatch.ttl")
     assert _reported(data, "/old-version", "same instrument")
-    query = (ROOT / "test" / "gate4" / "queries" / "instrument-supersession-identity-mismatch.rq").read_text()
+    query = (ROOT / "test" / "gate4" / "queries" / "instrument-supersession-identity-mismatch.rq").read_text(encoding="utf-8")
     assert len(list(data.query(query))) == 1
 
 
@@ -272,7 +272,7 @@ def test_c6_13_second_expression_conforms_except_to_the_optional_shape() -> None
 
 def test_c6_14_readme_is_the_source_and_releases_are_recorded() -> None:
     assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
-    readme = (LAYER / "README.md").read_text()
+    readme = (LAYER / "README.md").read_text(encoding="utf-8")
     assert "0.9.0 (breaking, CCS C6" in readme and "Shapes 0.2.0\n  (breaking)" in readme
     assert not (LAYER / "shapes" / ".version").exists()
     assert not (LAYER / "projection").exists()

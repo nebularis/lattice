@@ -473,7 +473,7 @@ def _subdirectories(root: Path, directory: Path) -> set:
     try:
         listed = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--",
                                  directory.relative_to(root).as_posix()],
-                                cwd=root, capture_output=True, text=True, check=True).stdout
+                                cwd=root, capture_output=True, text=True, encoding="utf-8", check=True).stdout
     except (OSError, subprocess.CalledProcessError):
         return {p.name for p in directory.iterdir() if p.is_dir() and not p.name.startswith(".")}
     names = (Path(f).relative_to(directory.relative_to(root)).parts for f in listed.split("\0") if f)

@@ -66,7 +66,7 @@ def test_a_resolved_finding_disappears_from_a_diff_by_id(graph):
         copy = Path(directory) / "rig"
         shutil.copytree(MINI_RIG, copy)
         document = copy / "documents" / "xs1-001.md"
-        document.write_text(document.read_text().replace(", subject to Condition 5.3 of the Underlying Policy", ""))
+        document.write_text(document.read_text(encoding="utf-8").replace(", subject to Condition 5.3 of the Underlying Policy", ""), encoding="utf-8")
         after_graph = _complete(read_rig(copy))
     after = {str(f) for f in after_graph.subjects(RDF.type, VRIG.Finding)}
     gone = before - after
@@ -92,7 +92,7 @@ def test_report_renders_every_finding_sorted_by_document_and_locator(graph):
 def test_report_is_byte_stable_and_names_no_body_text(graph):
     assert report.render(graph, INFO) == report.render(_complete(read_rig(MINI_RIG)), INFO)
     text = report.render(graph, INFO)
-    body_lines = [l.strip() for d in (MINI_RIG / "documents").glob("*.md") for l in d.read_text().splitlines()
+    body_lines = [l.strip() for d in (MINI_RIG / "documents").glob("*.md") for l in d.read_text(encoding="utf-8").splitlines()
                   if len(l.strip()) > 30 and not l.startswith(("#", "|", "---"))]
     for line in body_lines:
         assert line not in text

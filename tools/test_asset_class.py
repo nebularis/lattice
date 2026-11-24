@@ -77,7 +77,7 @@ def test_asc2_01_the_readme_is_the_source_of_the_documents() -> None:
     result = subprocess.run(
         [sys.executable, "tools/literate_extract.py", "ontology/applied/asset-class/README.md",
          "--layer", "applied/asset-class", "--root", ".", "--check"],
-        cwd=ROOT, capture_output=True, text=True,
+        cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
     )
     assert result.returncode == 0, result.stdout + result.stderr
 

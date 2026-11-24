@@ -38,7 +38,7 @@ def built() -> Built:
     note and finding the build printed."""
     if shutil.which("vyd") is None:
         pytest.skip("vyd is not installed, run `mise run bootstrap`")
-    done = subprocess.run(["vyd", "build"], cwd=ROOT, capture_output=True, text=True)
+    done = subprocess.run(["vyd", "build"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
     assert done.returncode == 0, done.stderr[-500:]
     output = done.stdout + done.stderr
     path = done.stdout.strip().splitlines()[-1].split(" at ", 1)[1]
@@ -393,7 +393,7 @@ KNOWN_WHOLE_FILE: frozenset[str] = frozenset()
 
 
 def tracked(*patterns: str) -> list[Path]:
-    listing = subprocess.run(["git", "-C", str(ROOT), "ls-files", "-z", *patterns], capture_output=True, text=True, check=True)
+    listing = subprocess.run(["git", "-C", str(ROOT), "ls-files", "-z", *patterns], capture_output=True, text=True, encoding="utf-8", check=True)
     return [ROOT / p for p in listing.stdout.split("\0") if p and (ROOT / p).exists()]
 
 

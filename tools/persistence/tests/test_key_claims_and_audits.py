@@ -534,7 +534,7 @@ def test_h2_5_t45_group_concat_keeps_the_stores_scan_order_whatever_the_hash_see
     seen = set()
     for seed in range(6):
         env = {**os.environ, "PYTHONHASHSEED": str(seed), "PERSISTENCE_ENGINES": "rdflib"}
-        seen.add(subprocess.run([sys.executable, "-c", script], env=env, capture_output=True, text=True, check=True).stdout.strip())
+        seen.add(subprocess.run([sys.executable, "-c", script], env=env, capture_output=True, text=True, encoding="utf-8", check=True).stdout.strip())
     assert seen == {"urn:o:5 urn:o:3 urn:o:6 urn:o:1 urn:o:4 urn:o:2"}
 
 

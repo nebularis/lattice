@@ -24,7 +24,7 @@ def pinned(text: str) -> str:
 
 def _mise(*args: str, run=subprocess.run):
     env = {**os.environ, "MISE_DISABLE_TOOLS": DISABLED}
-    return run(["mise", *args], env=env, capture_output=True, text=True)
+    return run(["mise", *args], env=env, capture_output=True, text=True, encoding="utf-8")
 
 
 def find(version: str, which=shutil.which, run=subprocess.run) -> Path | None:

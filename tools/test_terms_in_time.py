@@ -229,7 +229,7 @@ def test_c7b_12_context_roles_and_ending() -> None:
 
 def test_c7b_13_instrument_readme_and_releases() -> None:
     assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
-    readme = (LAYER / "README.md").read_text()
+    readme = (LAYER / "README.md").read_text(encoding="utf-8")
     assert "0.11.0 (CCS C7b" in readme and "Shapes 0.4.0 (additive" in readme and "0.12.0 (breaking, CCS C7c" in readme
     assert not (LAYER / "shapes" / ".version").exists()
 
@@ -240,14 +240,14 @@ def test_c7b_15_quantification_readme_is_the_source() -> None:
     spec = _graph(QLAYER / "spec" / "quantification.ttl")
     assert spec.value(URIRef("https://www.nebularis.org/neuro-semantic/quantification"), OWL.versionIRI) == \
         URIRef(LATTICE + f"quantification/{RELEASE}")
-    assert "**0.7.0** (additive, CCS C7b" in (QLAYER / "README.md").read_text()
+    assert "**0.7.0** (additive, CCS C7b" in (QLAYER / "README.md").read_text(encoding="utf-8")
     assert not (QLAYER / "shapes" / ".version").exists()
 
 
 # ---- C7b-16: Quantification's shapes ----------------------------------------
 
 def test_c7b_16_context_value_and_offset_shapes() -> None:
-    source = (QLAYER / "examples" / "context-anchor.ttl").read_text()
+    source = (QLAYER / "examples" / "context-anchor.ttl").read_text(encoding="utf-8")
     both = source.replace("qnt:offsetKind qnt:Absolute ;", 'qnt:offsetKind qnt:Absolute ; qnt:lowerOffset "1"^^xsd:decimal ;')
     assert any("never both" in m for _, m in _messages(_graph(both), QSHAPES))
     no_role = source.replace("    qnt:contextRole ex:renewal .", "    .")

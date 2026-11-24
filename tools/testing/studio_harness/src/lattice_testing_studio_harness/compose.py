@@ -122,7 +122,7 @@ class ComposeStudio(Studio):
         argv = ["docker", "compose", "-p", self.run_id, "-f", str(self.file), *args]
         if check:
             return _checked(argv, self.run_dir, timeout)
-        return subprocess.run(argv, cwd=self.run_dir, capture_output=True, text=True)
+        return subprocess.run(argv, cwd=self.run_dir, capture_output=True, text=True, encoding="utf-8")
 
     def start(self) -> None:
         self.run_dir.mkdir(parents=True)
@@ -204,7 +204,7 @@ class ComposeStudio(Studio):
 
     def leftovers(self) -> List[str]:
         """The containers of this run's project that still exist, running or not."""
-        out = subprocess.run(["docker", "ps", "-a", "--filter", f"label=com.docker.compose.project={self.run_id}", "--format", "{{.Names}}"], capture_output=True, text=True).stdout
+        out = subprocess.run(["docker", "ps", "-a", "--filter", f"label=com.docker.compose.project={self.run_id}", "--format", "{{.Names}}"], capture_output=True, text=True, encoding="utf-8").stdout
         return out.split()
 
 
@@ -217,7 +217,7 @@ def _link(source: Path, target: Path) -> None:
 
 def _checked(argv: List[str], cwd: Path, timeout: Optional[float]) -> subprocess.CompletedProcess:
     try:
-        done = subprocess.run(argv, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+        done = subprocess.run(argv, cwd=cwd, capture_output=True, text=True, encoding="utf-8", timeout=timeout)
     except subprocess.TimeoutExpired:
         raise HarnessError(f"{' '.join(argv[:6])} did not finish within {timeout:.0f} s") from None
     if done.returncode != 0:

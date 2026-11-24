@@ -170,7 +170,7 @@ class Stack:
 
     def pid(self, name: str) -> Optional[int]:
         try:
-            pid = int(self._pid_file(name).read_text().strip())
+            pid = int(self._pid_file(name).read_text(encoding="utf-8").strip())
         except (OSError, ValueError):
             return None
         return pid if alive(pid) else None
@@ -219,7 +219,7 @@ class Stack:
                 break
             time.sleep(0.5)
         log = self.run / f"{name}.log"
-        tail = log.read_text(errors="replace").splitlines()[-20:] if log.exists() else []
+        tail = log.read_text(encoding="utf-8", errors="replace").splitlines()[-20:] if log.exists() else []
         raise SystemExit(f"{name} did not listen on 127.0.0.1:{port}. Last lines of {log}:\n" + "\n".join(tail))
 
     # --- infrastructure --------------------------------------------------------------------------
@@ -313,7 +313,7 @@ class Stack:
     def ctl(self, *args: str) -> subprocess.CompletedProcess:
         ctl = self.rabbitmq_home() / "sbin" / ("rabbitmqctl.bat" if WINDOWS else "rabbitmqctl")
         return subprocess.run(command([str(ctl), "-n", self.rabbitmq_node, *args]), env={**os.environ, **self.rabbitmq_env()},
-                              capture_output=True, text=True, check=True)
+                              capture_output=True, text=True, encoding="utf-8", check=True)
 
     def broker_users(self) -> List[str]:
         return [u["user"] for u in json.loads(self.ctl("list_users", "--silent", "--formatter", "json").stdout or "[]")]
@@ -440,7 +440,7 @@ class Stack:
                 print(f"{name}: stopped")
         marker = self.run / "docker"
         if marker.exists():
-            files = [line for line in marker.read_text().splitlines() if line.strip()]
+            files = [line for line in marker.read_text(encoding="utf-8").splitlines() if line.strip()]
             run(["docker", "compose", *[a for f in files for a in ("-f", f)], "down", "--timeout", "60"], self.root)
             marker.unlink()
             print("docker: Fuseki and RabbitMQ stopped")
@@ -501,7 +501,7 @@ def docker_engine_on_linux() -> bool:
     on any platform, which forwards `host.docker.internal` there."""
     if not sys.platform.startswith("linux"):
         return False
-    out = subprocess.run(["docker", "info", "--format", "{{.OperatingSystem}}"], capture_output=True, text=True, check=False).stdout
+    out = subprocess.run(["docker", "info", "--format", "{{.OperatingSystem}}"], capture_output=True, text=True, encoding="utf-8", check=False).stdout
     return "Docker Desktop" not in out
 
 
@@ -525,7 +525,8 @@ def alive(pid: int) -> bool:
     # ponytail: trusts the pid file, so a pid the OS has reused since is taken for ours. Record the
     # process start time with the pid if that ever bites.
     if WINDOWS:
-        listing = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True).stdout
+        # tasklist writes in the console's OEM code page, not UTF-8, so its output is decoded as such.
+        listing = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True, encoding="oem").stdout
         return str(pid) in listing
     try:
         # Reaps the process if it is this script's own exited child, which would otherwise linger as a zombie.

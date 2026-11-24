@@ -94,7 +94,7 @@ def test_f1_01_spec_version_comments_and_layer() -> None:
     for name in NEW_PROPERTIES:
         utility = str(spec.value(FND[name], FND.utility))
         assert utility.startswith("Subject:") and "Value:" in utility, name
-    text = SPEC.read_text()
+    text = SPEC.read_text(encoding="utf-8")
     for layer in ("vocabulary", "quantification", "party", "eligibility", "wording", "behaviour", "instrument", "persistence"):
         assert f"lattice/{layer}" not in text, layer
     assert (FND.externalKey, OWL.propertyChainAxiom, None) in spec  # G2
@@ -291,12 +291,12 @@ def test_f1_10_nothing_pins_foundation_0_3_0() -> None:
 def test_f1_11_readme_is_the_source_and_releases_are_recorded() -> None:
     assert literate_extract.main([str(FOUNDATION / "README.md"), "--layer", "foundation", "--root", str(ROOT),
                                   "--check"]) == 0
-    assert "**0.4.0** (additive, CCS F1" in (FOUNDATION / "README.md").read_text()
-    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
+    assert "**0.4.0** (additive, CCS F1" in (FOUNDATION / "README.md").read_text(encoding="utf-8")
+    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("foundation-v0.4.0", "foundation-shapes-v0.2.0", "persistent-foundation-v0.1.0", "persistence-shapes-v0.2.0",
                 "instrument-v0.8.0", "surface-v0.6.0", "mork-v0.5.0"):
         assert f"| {tag} |" in register, tag
-    assert "persistent-foundation" in (PERSISTENCE / "README.md").read_text()
+    assert "persistent-foundation" in (PERSISTENCE / "README.md").read_text(encoding="utf-8")
 
 
 # ---- F1-15: the Surface promotions ------------------------------------------

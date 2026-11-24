@@ -154,12 +154,12 @@ class ProcessStudio(Studio):
         log = self.stack.run / f"{name}.log"
         deadline = time.monotonic() + READY_TIMEOUT
         while time.monotonic() < deadline:
-            if log.exists() and text in log.read_text(errors="replace"):
+            if log.exists() and text in log.read_text(encoding="utf-8", errors="replace"):
                 return
             if self.stack.pid(name) is None:
                 break
             time.sleep(0.3)
-        tail = "\n".join(log.read_text(errors="replace").splitlines()[-20:]) if log.exists() else ""
+        tail = "\n".join(log.read_text(encoding="utf-8", errors="replace").splitlines()[-20:]) if log.exists() else ""
         raise HarnessError(f"{name} did not report '{text}'. Last lines of {log}:\n{tail}")
 
     def _wait_health(self) -> None:
@@ -184,7 +184,7 @@ class ProcessStudio(Studio):
             for name in [n for n in self.pids if n.startswith("worker-")]:
                 if self.stack.pid(name) is None:
                     log = self.stack.run / f"{name}.log"
-                    raise HarnessError(f"{name} stopped. Last lines of {log}:\n" + "\n".join(log.read_text(errors="replace").splitlines()[-20:]))
+                    raise HarnessError(f"{name} stopped. Last lines of {log}:\n" + "\n".join(log.read_text(encoding="utf-8", errors="replace").splitlines()[-20:]))
             time.sleep(0.5)
         if any(wants.values()):
             raise HarnessError(f"fewer workers than {wants} consume their queues")
@@ -217,12 +217,12 @@ class ProcessStudio(Studio):
     def log(self, name: str) -> str:
         """The log of a process of the run, such as `worker-1`, `service` or `writer-1`."""
         path = self.stack.run / f"{name}.log"
-        return path.read_text(errors="replace") if path.exists() else ""
+        return path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""
 
     def broker_log(self) -> str:
         """What the run's RabbitMQ node logged, which names a connection it closed for missed heartbeats."""
         folder = self.stack.infra / "rabbitmq" / "log"
-        return "\n".join(p.read_text(errors="replace") for p in sorted(folder.glob("*.log"))) if folder.exists() else ""
+        return "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in sorted(folder.glob("*.log"))) if folder.exists() else ""
 
     def amqp_uri(self, **parameters: str) -> str:
         """The broker's URI for a client of the run, with query `parameters` such as `heartbeat=2`."""
@@ -233,7 +233,7 @@ class ProcessStudio(Studio):
         """The output of `rabbitmqctl` against the run's node."""
         ctl = self.stack.rabbitmq_home() / "sbin" / ("rabbitmqctl.bat" if stack_module.WINDOWS else "rabbitmqctl")
         return subprocess.run(stack_module.command([str(ctl), "-n", self.stack.rabbitmq_node, *args]),
-                              env={**os.environ, **self.stack.rabbitmq_env()}, capture_output=True, text=True).stdout
+                              env={**os.environ, **self.stack.rabbitmq_env()}, capture_output=True, text=True, encoding="utf-8").stdout
 
     def consumers(self, queue: str) -> int:
         return queue_consumers(self.ctl("list_queues", "name", "consumers", "--formatter", "csv", "--silent"), queue)

@@ -104,13 +104,13 @@ class RMLExecutor:
             ]
 
             proc = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=60)
+                cmd, capture_output=True, text=True, encoding="utf-8", timeout=60)
 
             if proc.returncode != 0:
                 raise RuntimeError(
                     f"RMLMapper failed: {proc.stderr}")
 
-            with open(output_path) as f:
+            with open(output_path, encoding="utf-8") as f:
                 return f.read()
         finally:
             Path(input_path).unlink(missing_ok=True)

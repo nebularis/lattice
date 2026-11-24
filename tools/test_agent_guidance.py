@@ -37,9 +37,9 @@ def copy_of_guidance(tmp_path: Path) -> Path:
 
 def test_drift_a_missing_skill_and_a_wrong_name_are_reported(copy_of_guidance: Path) -> None:
     root = copy_of_guidance
-    (root / ".github/copilot-instructions.md").write_text("edited by hand\n")
+    (root / ".github/copilot-instructions.md").write_text("edited by hand\n", encoding="utf-8")
     skill = root / ".claude/skills/lattice-design/SKILL.md"
-    skill.write_text(skill.read_text().replace("name: lattice-design", "name: design"))
+    skill.write_text(skill.read_text(encoding="utf-8").replace("name: lattice-design", "name: design"), encoding="utf-8")
     (root / ".claude/skills/lattice-extra").mkdir()
     problems = "\n".join(agent_guidance.check(root))
     assert "drifted from AGENTS.md" in problems
@@ -103,14 +103,14 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     for args in (["init", "-q"], ["config", "user.email", "t@example.org"], ["config", "user.name", "t"]):
         subprocess.run(["git", *args], cwd=work, check=True)
     deny = tmp_path / "deny-terms"
-    deny.write_text("# personal\nforbidden\\s+word\n!data/*.py\n")
+    deny.write_text("# personal\nforbidden\\s+word\n!data/*.py\n", encoding="utf-8")
     monkeypatch.setenv("LATTICE_DENY_TERMS", str(deny))
     return work
 
 
 def stage(repo: Path, path: str, text: str) -> None:
     (repo / path).parent.mkdir(parents=True, exist_ok=True)
-    (repo / path).write_text(text)
+    (repo / path).write_text(text, encoding="utf-8")
     subprocess.run(["git", "add", path], cwd=repo, check=True)
 
 
@@ -145,8 +145,8 @@ def test_no_list_passes(repo: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: P
 
 def test_the_hook_is_ours_or_refused(repo: Path) -> None:
     hook = Path(deny_terms.install_hook(repo))
-    assert deny_terms.HOOK_MARK in hook.read_text()
+    assert deny_terms.HOOK_MARK in hook.read_text(encoding="utf-8")
     deny_terms.install_hook(repo)
-    hook.write_text("#!/bin/sh\necho someone else's hook\n")
+    hook.write_text("#!/bin/sh\necho someone else's hook\n", encoding="utf-8", newline="\n")
     with pytest.raises(SystemExit):
         deny_terms.install_hook(repo)

@@ -248,7 +248,7 @@ def test_c11a_14_the_occasion_states_with_live() -> None:
 def test_c11a_15_readme_blocks_and_release_notes() -> None:
     assert literate_extract.main([str(LAYER / "README.md"), "--layer", "behaviour", "--root", str(ROOT),
                                   "--check"]) == 0
-    readme = (LAYER / "README.md").read_text()
+    readme = (LAYER / "README.md").read_text(encoding="utf-8")
     assert "behaviour-vocab` 0.10.0 (breaking)" in readme and "Shapes 0.4.0 (breaking)" in readme
     for name in NESTED:
         assert f"examples/{name}.ttl" in readme, name
@@ -258,7 +258,7 @@ def test_c11a_15_versions_and_release_rows() -> None:
     config, runtime = _graph(CONFIG), _graph(RUNTIME)
     assert config.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour"), OWL.versionIRI) == URIRef(LATTICE + f"behaviour/{RELEASE}")
     assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + f"behaviour/{RELEASE}")}
-    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
+    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("behaviour-v0.10.0", "behaviour-runtime-v0.10.0", "behaviour-vocab-v0.10.0", "behaviour-shapes-v0.4.0",
                 "applied-capacity-execution-v0.10.0"):
         assert f"| {tag} |" in register, tag

@@ -67,7 +67,7 @@ def documents() -> list[Path]:
     out = subprocess.run(["git", "ls-files", "--", "ontology/*/spec/*.ttl", "ontology/*/vocab/*.ttl",
                           "ontology/applied/*/spec/*.ttl", "ontology/applied/*/vocab/*.ttl",
                           "ontology/applied/*/*/spec/*.ttl", "ontology/applied/*/*/vocab/*.ttl"],
-                         cwd=ROOT, capture_output=True, text=True, check=True).stdout
+                         cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True).stdout
     return sorted({ROOT / line for line in out.splitlines() if line.strip()})
 
 

@@ -122,7 +122,7 @@ def test_h1_5_t6_the_stable_labels_keep_the_profile_a_valid_graph_instantiate_re
 
     out = _compile("composite-property-boundary-shacl.ttl")
     profile = tmp_path / "p.ttl"
-    profile.write_text(out.serialize(format="turtle"))
+    profile.write_text(out.serialize(format="turtle"), encoding="utf-8")
     reread = Graph().parse(profile, format="turtle")
     written = instantiate_to_directory(reread, tmp_path / "sparql")
     assert {p.name for p in written} >= {"cas-replace.rq", "gap-scan-audit.rq"}

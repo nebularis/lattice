@@ -27,7 +27,7 @@ class ProcessLEParser:
 
     def parse_file(self, path: str) -> ast.Protocol:
         """Parse a ProcessLE source file."""
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return self.parse(f.read())
 
     # --- Visitor methods ---

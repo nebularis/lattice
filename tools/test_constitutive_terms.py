@@ -273,7 +273,7 @@ def test_c7c_11_a_silent_group_conforms_and_the_readme_says_undetermined() -> No
                                           (FW_EX["lot-3-suppliers"], PTY.hasCompositionRule, PTY.EachForWhole)))
     assert _results(data) == []
     assert "with no acting rule is silent, and the relations it reaches are Undetermined (CC-D10)" in \
-        (LAYER / "README.md").read_text()
+        (LAYER / "README.md").read_text(encoding="utf-8")
 
 
 # ---- C7c-12 to C7c-14: classification, ending a section, precedence ---------
@@ -302,10 +302,10 @@ def test_c7c_14_prevails_over_between_relations_is_reported() -> None:
 
 def test_c7c_15_readme_is_the_source_and_releases_are_recorded() -> None:
     assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
-    readme = (LAYER / "README.md").read_text()
+    readme = (LAYER / "README.md").read_text(encoding="utf-8")
     assert "0.12.0 (breaking, CCS C7c" in readme and "Shapes 0.5.0" in readme
     assert not (LAYER / "shapes" / ".version").exists()
-    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
+    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("instrument-v0.12.0", "instrument-shapes-v0.5.0", "instrument-vocab-v0.12.0", "party-v0.8.0",
                 "party-vocab-v0.8.0", "eligibility-v0.10.0", "behaviour-v0.13.0", "wording-v0.6.0"):
         assert tag in register, tag
