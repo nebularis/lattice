@@ -490,6 +490,10 @@ depends = ["bootstrap:testing-oxigraph"]
 description = "Measure what a record of a change of terms adds to the read of a balance, by holding the same history four ways (a record for each account, the same with the account's balance, a record for each later version, one record a pass) and reading the stated amount in force, a leaf's balance now and as of earlier revisions, an ancestor's balance and every stated amount in one query, on Oxigraph, and on Jena and rdflib where their test-support packages are installed (ADR-A124, LG-32, LG-Q52). The PostgreSQL arm holds the two forms the layer built in a relational layout of its own, decoded from the same triples, on the PostgreSQL test fixture's server, and is skipped with the reason where the server is absent (MSA-I7). Run on demand, not part of check. Fails on a wrong value or a wrong stored count, never on time. LEDGER_SUPERSESSION_MAX caps the events, LEDGER_SUPERSESSION_QUICK=1 runs the smallest size, LEDGER_SUPERSESSION_ENGINES picks the engines, LEDGER_SUPERSESSION_REPS sets the repetitions. Jena runs when its test kit jar is built (mise run bootstrap:sparql-testkit). The PostgreSQL fixture is installed as the first step and not as a dependency, so its pip never runs beside the Oxigraph package's"
 run = [{ task = "bootstrap:testing-postgres" }, "python -m pytest benchmark/ledger-supersession-read -q -p no:cacheprovider", "python benchmark/ledger-supersession-read/check.py"]
 
+[tasks."check:store-isolation-probes"]
+description = "Probe the store behaviours the multi-store protocol models assume (a guarded write under two and four writers, a command delivered twice, a request that fails, two requests over two rows, a read beside a commit, a write seen after its reply, positions taken before commit, a fence, the version a refusal returns, write skew), with clients interleaved on purpose, on PostgreSQL under each isolation level through the PostgreSQL test fixture, and on Fuseki over TDB2 by HTTP and TDB2 in process at Jena 5.1.0 and 6.2.0 (ADR-A124, MSA-I6). Run on demand, not part of check. Fails where a store does other than what is recorded of it, never on time. An arm whose server or tool is absent is skipped with the reason. STORE_ISOLATION_QUICK=1 runs fewer repetitions, STORE_ISOLATION_ARMS picks postgresql or jena, STORE_ISOLATION_JENA_VERSIONS the Jena versions. The PostgreSQL fixture is installed as the first step and not as a dependency, as check:ledger-supersession-read does"
+run = [{ task = "bootstrap:testing-postgres" }, "python -m pytest benchmark/store-isolation-probes -q -p no:cacheprovider", "python benchmark/store-isolation-probes/check.py"]
+
 [tasks."check:vocabulary"]
 description = "Run the Vocabulary scoped/temporal binding conformance package (SHACL fixtures, resolver, determinism, consumer boundary; ADR-A85)"
 run = "python -m pytest tools/vocabulary/tests -q"
@@ -976,6 +980,15 @@ run = "python tools/models/check_tlc.py"
 [tasks."check:models-multi-store-runner"]
 description = "Test the TLC runner's sizing and verdict, tools/models/check_tlc.py, without Java or TLC (MSA-I6). check:models-multi-store runs it first"
 run = "python -m pytest tools/models/test_check_tlc.py -q"
+
+[tasks."check:models-multi-store-traces"]
+depends = ["check:models-multi-store-traces-runner"]
+description = "Hold the protocol models A to D of tools/models/multi-store-protocols to the Isabelle model of spikes/multi-store-model by trace validation (MSA-I6, MSA-Q17). TLC dumps the state graph of each configuration the manifest marks with trace, every behaviour's store steps are run as the IR's commands through the interpreter exported to Scala, and each step's outcome and the state after it are compared. Builds and gates the session first. Takes configuration names or patterns. Needs TLA2TOOLS_JAR and Isabelle, and says what it skipped without either. Fails where a configuration marked agree disagrees or one marked differ does not. Run on demand, not part of check"
+run = "python tools/models/trace_validation.py"
+
+[tasks."check:models-multi-store-traces-runner"]
+description = "Test the trace validation's reading of TLC's dump, its counts and its tree of IR commands, tools/models/trace_validation.py, without Java, TLC or Isabelle (MSA-I6). check:models-multi-store-traces runs it first"
+run = "python -m pytest tools/models/test_trace_validation.py -q"
 
 [tasks."check:multi-store-model-replay"]
 depends = ["bootstrap:persistence", "bootstrap:testing-oxigraph"]

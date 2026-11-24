@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<!-- NB: This module has been produced using GenAI -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.nebularis.lattice.benchmark</groupId>
+  <artifactId>store-isolation-probes</artifactId>
+  <version>0.1.0</version>
+  <packaging>jar</packaging>
+  <name>Isolation probes on Fuseki and TDB2</name>
+  <description>The Jena arm of benchmark/store-isolation-probes: what Fuseki over TDB2, driven by concurrent HTTP clients, and TDB2 called in process do with the store behaviours the multi-store protocol models assume (ADR-A124). check.py runs it and judges its results.</description>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- 5.1.0 is the platform's Jena. check.py also runs 6.2.0, the Fuseki the studio's stack runs. -->
+    <jena.version>5.1.0</jena.version>
+    <isolation.out>${project.build.directory}/results.json</isolation.out>
+    <isolation.reps>20</isolation.reps>
+    <isolation.stress>40</isolation.stress>
+    <exec.mainClass>org.nebularis.lattice.benchmark.isolation.IsolationProbes</exec.mainClass>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-tdb2</artifactId>
+      <version>${jena.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-fuseki-main</artifactId>
+      <version>${jena.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+      <version>2.0.16</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <!-- One build directory for each Jena version, so a run of one never uses classes compiled against the other. -->
+    <directory>${project.basedir}/target/jena-${jena.version}</directory>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.1</version>
+        <configuration>
+          <executable>java</executable>
+          <arguments>
+            <argument>-Xmx1g</argument>
+            <argument>-Disolation.out=${isolation.out}</argument>
+            <argument>-Disolation.reps=${isolation.reps}</argument>
+            <argument>-Disolation.stress=${isolation.stress}</argument>
+            <argument>-classpath</argument>
+            <classpath/>
+            <argument>${exec.mainClass}</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

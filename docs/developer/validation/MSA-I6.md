@@ -489,3 +489,421 @@ Every command was run on machine S from the repository's root, each output captu
 - **One position for a pass over two ledgers (MSAI6-06).** (a) Each ledger gives its pass the later of the stimulus's position and that ledger's latest pass's, as modelled, and the two passes may differ. (b) The evaluation reads both ledgers' latest passes with their revisions and gives both passes the later of all three. (c) No rule until a reading by position across ledgers needs one. We do not lean.
 - **The reading of the first gap open.** The model reads a refusal that returns nothing as the claim naming the revision it already held. A claim that reads the ledger again instead would not need the returned revision, at the cost of a read and of a further refusal where another write lands in between. Should the port's contract say the refusal returns the revision, as the plan records, or only that the claim must not name a revision it was refused at?
 - **The census configurations in the base tier.** `PA_Census` and `PA_CensusAligned` never fail, and their counts are read from TLC's output by a script we did not commit. (a) Keep them as they are, and the README's tables as their record. (b) Commit the count script beside the runner, with a test. (c) Move them out of the manifest. We lean to (a) for this slice, and it is your decision.
+
+## Models B to D and the trace validation, 2026-11-24
+
+**Brief:** [machine S brief of 2026-11-19](../notes/machine-s-brief-2026-11-19-multi-store.md), section 4.4, "The trace validation waits for MSA-I5's exported interpreter", and section 7. The [sketch](../sketches/multi-store-architecture.md)'s section 6 row for MSA-I6, sections 4.6 and 4.14 and MSA-Q17. The [track H plan](../plans/formal-methods-track-h.md)'s row FMH-5, protocol models A to D. The guards are those of [`tools/persistence`](../../../tools/persistence/README.md)'s builders and the [MSA-I4 note](../notes/multi-store/MSA-I4-four-operations-lowered.md), and the IR is MSA-I5's, [`spikes/multi-store-model/`](../../../spikes/multi-store-model/README.md).
+**Machine:** machine S, Windows 11, 16 logical cores, 64 GB installed, TLC 2.19 of 08 August 2024 on Java 25.0.2 through mise, as TLC and `java -version` printed, the jar named by `TLA2TOOLS_JAR`, and Isabelle2025-2 named by `FMX_ISABELLE` for the session, its export and its Scala. At most 8 TLC workers, `PYTHON_CPU_COUNT=8`, since another session ran isolation probes on PostgreSQL and Fuseki, with Maven and Jena JVMs, while these runs were made. **Placement:** T0, public. Protocol models and a check, nothing domain-specific.
+**Status:** built 2026-11-24, not verified. What this pack reported before stands. FMH-5's models B to D and the trace validation, which its deliberate non-coverage lists, are built here.
+
+### Invariant
+
+Under a store that serialises its writers, each of the four operations takes the same steps in the protocol models as in the IR's `exec`, in every behaviour TLC finds for the instances run, step for step, outcome for outcome and state for state where both hold the state. Under a store that evaluates on a snapshot, the same holds only where the store's conflict detection makes racing writers write a statement in common, and never across a bump of the dataset epoch.
+
+### What changed
+
+- `tools/models/multi-store-protocols/ModelB_AppendForm.tla`, new. The append form under the dataset guard, as `append-event-dataset-guard` is generated, with four isolation levels, a bump of the dataset epoch, a resend and aborted commits sent again. Invariants `OnePerPosition`, `NoLostAppend`, `FencedAppends`.
+- `tools/models/multi-store-protocols/ModelC_CreateRace.tla`, new. The first write raced, as `create-if-absent` is generated, or, with `FirstWrite = "PreCreatedRow"`, as a guarded replace of a row created at seq 0. Invariants `OneFirstWrite`, `OneHead`.
+- `tools/models/multi-store-protocols/ModelD_KeyClaim.tla`, new. Owners racing for one claim, as `key-claim-write` is generated, and, with `Sentinel`, the patterns guide's P3 counter added. Invariant `OneOwner`.
+- 18 configurations, new, all in the `base` tier, each listed below.
+- `tools/models/multi-store-protocols/manifest.toml`, an entry for each, a `trace` key on the 18 configurations the trace validation runs, Model A's two among them, and the header's lines for both.
+- `tools/models/trace_validation.py`, new. The trace validation, every text call given its encoding.
+- `tools/models/TraceReplay.scala`, new. The driver that runs a tree of IR steps through the exported interpreter. It is compiled with the generated Scala and the spike's `replay/Replay.scala`, whose command values, parameters and reading of a state it reuses, and computes nothing the model computes.
+- `tools/models/test_trace_validation.py`, new. 8 tests of the dump's reading, the counts, the tree and model B's and D's reading of a step and a state, which need neither Java, TLC nor Isabelle.
+- `tools/models/test_check_tlc.py`, the count of `base` entries the manifest test expects, from 68 to 86. No other test changed.
+- `mise.toml`, the tasks `check:models-multi-store-traces` and `check:models-multi-store-traces-runner`, which runs the 8 tests and which the first depends on.
+- The models' [README](../../../tools/models/multi-store-protocols/README.md), the three modules, the stores they share, their configurations, results and conclusions, the Running section's counts, and a section on the trace validation. [`tools/models/README.md`](../../../tools/models/README.md), its line for the directory.
+
+No existing `.tla` module, no Isabelle theory, no spike file and nothing under `tools/persistence`, `tools/proofs`, `ontology/`, `benchmark/` or `platform/` changed. The trace validation needed no new export, since `Export.thy` already exports `exec_literal` and the four commands. The runner and `check:models-multi-store` are unchanged.
+
+**How the stores are modelled.** Each writer sends one request, its guards in the IR's order. `Atomic` evaluates and writes in one step. The three snapshot levels evaluate the guards and compute the writes in one step and commit them in a later one. Each records the statements a committed transaction deleted and inserted, as a pair of a kind and a value. `SnapshotInsertWW` aborts a commit where a transaction committed since its snapshot wrote a statement it writes, an identical insert counting as a write. `SnapshotDeleteWW` aborts only where both deleted a statement. `SnapshotNoWW` never aborts. These are the cases of TSD-Q4, which asks whether inserting an identical statement conflicts. TSD-73 found Oxigraph on disk losing guarded writes, which `SnapshotNoWW` stands for, and TSD-74 found Jena serialising its writers, which `Atomic` stands for, and two writes of an identical statement not conflicting there. The isolation probes of this slice, run by another session, say which store takes which level.
+
+### The configurations
+
+Each was run through the runner under `--heap-mb 2048`, one at a time, on 8 workers where no error was expected and one where a counterexample was. Diameter is TLC's "depth of the complete state graph search", and for a counterexample the depth when it stopped. The figures are those of the last run, made after the last change to the modules. The last two changes stated the commit's conflict check so that TLC evaluates it as one value rather than generating a successor twice, which lowered the generated counts and left every distinct-state count as before.
+
+| Configuration | Verdict | Distinct states | Generated | Diameter | Peak heap | TLC time | Wall time |
+|---|---|---|---|---|---|---|---|
+| `ModelB_Atomic` | no error | 2,652 | 5,301 | 14 | 28 MB | 00s | 1.3 s |
+| `ModelB_SnapshotDeleteWW` | no error | 7,179 | 17,686 | 25 | 29 MB | 00s | 1.4 s |
+| `ModelB_SnapshotDeleteWWBump` | `FencedAppends` violated | 33 | 40 | 5 | 18 MB | 00s | 1.2 s |
+| `ModelB_SnapshotInsertWWBump` | `FencedAppends` violated | 33 | 40 | 5 | 18 MB | 00s | 1.2 s |
+| `ModelB_SnapshotNoWW` | `OnePerPosition` violated | 19 | 25 | 7 | 18 MB | 00s | 1.2 s |
+| `ModelB_SnapshotNoWWLost` | `NoLostAppend` violated | 19 | 25 | 7 | 18 MB | 00s | 1.5 s |
+| `ModelC_Atomic` | no error | 37 | 64 | 6 | 18 MB | 00s | 1.3 s |
+| `ModelC_SnapshotInsertWW` | no error | 596 | 1,306 | 14 | 18 MB | 00s | 1.4 s |
+| `ModelC_SnapshotDeleteWW` | `OneFirstWrite` violated | 12 | 13 | 5 | 15 MB | 00s | 1.2 s |
+| `ModelC_SnapshotDeleteWWHead` | `OneHead` violated | 12 | 13 | 5 | 15 MB | 00s | 1.2 s |
+| `ModelC_PreCreatedAtomic` | no error | 37 | 64 | 6 | 18 MB | 00s | 1.2 s |
+| `ModelC_PreCreatedDeleteWW` | no error | 596 | 1,306 | 14 | 18 MB | 00s | 1.3 s |
+| `ModelC_PreCreatedNoWW` | `OneFirstWrite` violated | 12 | 13 | 5 | 15 MB | 00s | 1.2 s |
+| `ModelD_Atomic` | no error | 37 | 64 | 6 | 18 MB | 00s | 1.3 s |
+| `ModelD_SnapshotInsertWW` | no error | 692 | 1,474 | 14 | 18 MB | 00s | 1.2 s |
+| `ModelD_SnapshotDeleteWW` | `OneOwner` violated | 12 | 13 | 5 | 15 MB | 00s | 1.1 s |
+| `ModelD_SentinelDeleteWW` | no error | 692 | 1,474 | 14 | 17 MB | 00s | 1.2 s |
+| `ModelD_SentinelNoWW` | `OneOwner` violated | 12 | 13 | 5 | 15 MB | 00s | 1.2 s |
+
+Every one fits the base tier's budget of 2 GB, the largest peak 29 MB under a heap of 2,048 MB, and the runner gives each 256 MB. The README's results table has each counterexample.
+
+### The trace validation
+
+**Method.** We chose the smallest form we could show sound. TLC dumps each configuration's whole state graph with each step's action, `-dump dot,actionlabels`, with every invariant but `TypeOK` taken out so that a configuration that violates one is still explored in full. The check reads each step. A store request is the IR's command, `delta_replace` for model A and for model C's row created beforehand, `append_event` for B, `create_if_absent` for C and `key_claim_write` for D, with the parameters the step's writer sent and the outcome the model gave it. It walks the product of the graph and a tree of the IR steps met so far, so every step of every behaviour is a step of the product, and each is checked once for each IR state that reaches it. The tree is run through the exported interpreter in one call of `isabelle scala`, the generated code as generated. After each step the outcome and the state are compared, each state read into the lines both hold. The behaviours are counted from the graph, not enumerated.
+
+**Counts.** 18 configurations, 2,672 nodes of the tree run through the interpreter, each a seed, an IR command or the bump. Every behaviour of every configuration was checked through the product, from 6 behaviours in the smallest to 363,363,336 behaviours of 8,275,348,368 steps in `ModelB_SnapshotDeleteWW`, there by 9,880 checks over 23,001 steps of the product.
+
+| Configuration | Expected | Result | Behaviours | Their steps | Of them store steps | Checks | The IR's outcomes over the checks |
+|---|---|---|---|---|---|---|---|
+| `ModelA_Atomic` | agree | every step agrees | 90 | 540 | 270 | 79 | `Applied` 42, `Conflict Stale` 36 |
+| `ModelA_SnapshotNoWWDetect` | differ | 60 outcomes and 12 states differ | 1,680 | 15,120 | 5,040 | 202 | `Applied` 81, `Conflict Stale` 120 |
+| `ModelB_Atomic` | agree | every step agrees | 278,418 | 3,571,950 | 1,925,184 | 4,737 | `Applied` 681, `Duplicate` 1,689, `Refused EpochMismatch` 1,704 |
+| `ModelB_SnapshotDeleteWW` | agree | every step agrees | 363,363,336 | 8,275,348,368 | 2,180,180,016 | 9,880 | `Applied` 1,215, `Duplicate` 8,664 |
+| `ModelB_SnapshotDeleteWWBump` | differ | 18 outcomes and 10 states differ | 164 | 1,300 | 492 | 108 | `Applied` 34, `Refused EpochMismatch` 48 |
+| `ModelB_SnapshotInsertWWBump` | differ | 18 outcomes and 10 states differ | 164 | 1,300 | 492 | 108 | `Applied` 34, `Refused EpochMismatch` 48 |
+| `ModelB_SnapshotNoWW` | differ | 2 states differ | 20 | 120 | 40 | 11 | `Applied` 10 |
+| `ModelC_Atomic` | agree | every step agrees | 36 | 180 | 144 | 61 | `Applied` 3, `Conflict Exists` 42, `Duplicate` 15 |
+| `ModelC_SnapshotInsertWW` | agree | every step agrees | 37,590 | 472,710 | 150,360 | 532 | `Applied` 12, `Conflict Exists` 360, `Duplicate` 159 |
+| `ModelC_SnapshotDeleteWW` | differ | 2 outcomes differ | 6 | 24 | 12 | 9 | `Applied` 4, `Conflict Exists` 4 |
+| `ModelC_PreCreatedAtomic` | agree | every step agrees | 36 | 180 | 144 | 61 | `Applied` 3, `Conflict Stale` 42, `Duplicate` 15 |
+| `ModelC_PreCreatedDeleteWW` | agree | every step agrees | 37,590 | 472,710 | 150,360 | 532 | `Applied` 12, `Conflict Stale` 360, `Duplicate` 159 |
+| `ModelC_PreCreatedNoWW` | differ | 2 outcomes differ | 6 | 24 | 12 | 9 | `Applied` 4, `Conflict Stale` 4 |
+| `ModelD_Atomic` | agree | every step agrees | 36 | 180 | 144 | 61 | `Applied` 18, `Conflict HeldByOther` 42 |
+| `ModelD_SnapshotInsertWW` | agree | every step agrees | 37,590 | 472,710 | 150,360 | 688 | `Applied` 171, `Conflict HeldByOther` 516 |
+| `ModelD_SnapshotDeleteWW` | differ | 2 outcomes differ | 6 | 24 | 12 | 9 | `Applied` 4, `Conflict HeldByOther` 4 |
+| `ModelD_SentinelDeleteWW` | agree | every step agrees | 37,590 | 472,710 | 150,360 | 688 | `Applied` 171, `Conflict HeldByOther` 516 |
+| `ModelD_SentinelNoWW` | differ | 2 outcomes differ | 6 | 24 | 12 | 9 | `Applied` 4, `Conflict HeldByOther` 4 |
+
+The configurations marked to differ are the check's negative controls. Each is a store weaker than the IR's atomic step, and in each the check found the step where the model's store and `exec` part, the shortest behaviour to it printed. In the nine marked to agree no step differs, and every outcome the IR names among the four operations was compared, `Applied`, `Duplicate`, `Conflict Exists`, `Conflict Stale`, `Conflict HeldByOther` and `Refused EpochMismatch`. No disagreement was found where agreement was expected, so the trace validation reports no defect in either the models or the Isabelle model.
+
+**What the evidence says for MSA-Q17.**
+
+- **Steps with no IR command.** A client's read, a store's evaluation against a snapshot, a store's aborted commit and a writer's resend change no store state, and the check asserts that they do not. The bump of the dataset epoch changes the store and the IR has no command for it, so `TraceReplay.scala` writes the new epoch into the IR's state as the entry the append's guard reads. That is the one place the driver edits a state.
+- **An outcome the IR lacks.** An aborted commit is sent again, and a writer that gives up is answered `Aborted`, which is not one of the IR's four outcomes. No step compared has it, since an abort writes nothing and is not an IR step.
+- **Fields the IR's state lacks.** The models hold two heads on a row, two receipts at one position and two owners of a claim, which an RDF store that misses a conflict writes. The IR keys a receipt by its target, epoch and sequence and holds one head and one owner, so such a state shows in the comparison as a line the model holds and the IR does not. Every disagreement of model C and D is of this kind.
+- **Fields the models lack.** The IR holds a row's head and tombstone flag, a receipt's revision and previous head, a claim's revision and digest, the patch log and the aggregate's facts, which models A to D abstract away and the comparison leaves out.
+- **What one declared state model would give.** The comparison reads both states into one set of lines, the row's sequence and epoch, receipts by position and transaction, the claims, the events, the dataset epoch and the claim's owners, written by hand in `trace_validation.py` for each model. Option (a) of MSA-Q17 would generate those types into both. The runs say the generated types would need a collection where the IR has a single field, if the protocol models are to state what a weak store writes, and that the transitions would still differ, since the IR has no step between a snapshot and a commit.
+
+**Findings.**
+
+- **MSAI6-07, the dataset guard does not fence a write already evaluated.** On a snapshot store an append evaluated against the epoch before a bump commits after it with the old epoch, whether the store detects a statement both delete or an identical insert as well, since the append writes no statement the bump writes. TLC printed "Invariant FencedAppends is violated" for both, and the trace validation found the IR refusing the same commit, `Refused EpochMismatch`. A store that serialises its writers refused every such append. This is what STD-315, quiescing writers at a bump, is for, now shown by a run.
+- **MSAI6-08, the create and the key claim race where an identical insert is no conflict.** `create-if-absent` and `key-claim-write` delete nothing, so on a snapshot store that detects only a statement both delete two creates both commit and two owners claim one key. Where an identical insert is a conflict, the shared statements collide and one writer is aborted and then refused. A row created beforehand at seq 0, `dal:firstWrite dal:PreCreatedRow`, and the sentinel of PAT-05 give racing writers a statement both delete, and with them the weaker detection suffices. So FMH-5's capability field for whether inserting an identical statement is a write-write conflict decides whether these two operations are safe, on a store that does not serialise its writers.
+- **MSAI6-09, the append's position on a store with no conflict detection.** Two appends from one snapshot both answer `Applied`, and the model puts both at position 1 where the IR, computing the next position at the commit, puts the second at 2. The outcomes agree and the states differ, so a check of outcomes alone would not have found this store wrong for the append.
+
+### Tests
+
+| ID | Given / When / Then | Level | Pass criterion | Kind |
+|---|---|---|---|---|
+| I6B-T1 `ModelB_Atomic` | Given three appenders on a serialising store, a bump and a resend, when TLC explores every state, then one receipt per position, a row counting its appends and every append at the epoch in force | L2 | "No error has been found" | positive |
+| I6B-T2 `ModelB_SnapshotDeleteWW` | as I6B-T1 on a snapshot store detecting a statement both delete, with no bump | L2 | "No error has been found" | positive |
+| I6B-T3 `ModelB_SnapshotDeleteWWBump`, `ModelB_SnapshotInsertWWBump` | Given a snapshot store and a bump, then an append lands after the bump with the old epoch | L2 | "Invariant FencedAppends is violated" | negative |
+| I6B-T4 `ModelB_SnapshotNoWW`, `ModelB_SnapshotNoWWLost` | Given a snapshot store with no conflict detection, then two appends take one position and the row loses one | L2 | "Invariant OnePerPosition is violated", "Invariant NoLostAppend is violated" | negative |
+| I6C-T1 `ModelC_Atomic`, `ModelC_PreCreatedAtomic` | Given three writers creating one root on a serialising store, in either form, then one first write and one head | L2 | "No error has been found" | positive |
+| I6C-T2 `ModelC_SnapshotInsertWW`, `ModelC_PreCreatedDeleteWW` | as I6C-T1 on a snapshot store where an identical insert conflicts, or with the row created beforehand where only a statement both delete does | L2 | "No error has been found" | positive |
+| I6C-T3 `ModelC_SnapshotDeleteWW`, `ModelC_SnapshotDeleteWWHead`, `ModelC_PreCreatedNoWW` | Given a create on a store detecting only shared deletes, or the row created beforehand on a store detecting nothing, then two first writes and two heads | L2 | "Invariant OneFirstWrite is violated", "Invariant OneHead is violated" | negative |
+| I6D-T1 `ModelD_Atomic`, `ModelD_SnapshotInsertWW`, `ModelD_SentinelDeleteWW` | Given three owners claiming one key on a serialising store, on a store where an identical insert conflicts, or with the sentinel where only shared deletes do, then one owner | L2 | "No error has been found" | positive |
+| I6D-T2 `ModelD_SnapshotDeleteWW`, `ModelD_SentinelNoWW` | Given the claim on a store detecting only shared deletes, or with the sentinel on one detecting nothing, then two owners | L2 | "Invariant OneOwner is violated" | negative |
+| I6T-T1 | Given the 9 configurations marked to agree, when every behaviour TLC finds is run through the exported interpreter, then every step's outcome and state agree | L3 | each `PASS` "every step agrees, expected to agree" | positive |
+| I6T-T2 | Given the 9 configurations marked to differ, then the check finds a step where the model and the IR part, and prints the shortest behaviour to it | L3 | each `PASS` "disagrees, ..., expected to differ" | negative |
+| I6T-T3 | Given `TLA2TOOLS_JAR` unset, or no Isabelle from `FMX_ISABELLE`, the formal root or the path, then the check says what it skipped and exits 0 | L1 | "SKIP: TLA2TOOLS_JAR is not set, so no trace was checked. Set it to the TLA+ tools jar", "SKIP: no Isabelle was found from FMX_ISABELLE, the formal root or the path, so no trace was checked. Run `mise run bootstrap:formal-native-isabelle`, or set FMX_ISABELLE", exit 0 | negative |
+| I6T-T4 | `tools/models/test_trace_validation.py`, 8 tests: TLC's values and states are read, the dump gives its states, initial state and each step once, behaviours and their steps are counted, the trace configuration keeps `TypeOK` alone, the tree shares a prefix and writes a parent first, and model B and D read a step and a state as the IR does | L0 | "8 passed" | positive |
+
+### One command
+
+From the repository's root, with `TLA2TOOLS_JAR` naming the TLA+ tools jar, and for the trace validation Isabelle installed as `check:proofs` needs it, by `mise run bootstrap:formal-native-isabelle` or with `FMX_ISABELLE` naming it. On macOS and Linux:
+
+```bash
+mise run check:models-multi-store -- "ModelB_*" "ModelC_*" "ModelD_*"   # models B to D, among the base tier's 86
+mise run check:models-multi-store-traces                                   # the trace validation, 18 configurations
+mise run check:models-multi-store-traces -- "ModelB_*"                     # one model's
+```
+
+On Windows, in PowerShell, the separator is quoted, as in `mise run check:models-multi-store-traces '--' "ModelB_*"`. A pass of the first prints "models: 18 as expected, 0 failed, 0 skipped, 0 stopped". A pass of the second prints "8 passed", the session's gate, "GATE: pass", a `PASS` line for each configuration, and "traces: 18 as expected, 0 failed, 2,672 interpreter steps". It builds the session if it is not built, which takes Isabelle's time, and runs on demand, not as part of `check`.
+
+### What was run, in full
+
+Every command was run on machine S from the repository's root, each output captured to a file and read in full. `PYTHONUTF8=1`, `TLA2TOOLS_JAR`, `FMX_ISABELLE` and `PYTHON_CPU_COUNT=8` were set in the shell.
+
+| Command | Result |
+|---|---|
+| TLC by hand on the 18 configurations of models B to D, `-workers 1`, in a scratch directory under the temporary directory, while the modules were written | the verdicts in the table above |
+| `mise exec '--' python tools/models/check_tlc.py "ModelB_*" "ModelC_*" "ModelD_*" --heap-mb 2048`, four times | the first, in a terminal another session shared, stopped after `ModelB_SnapshotNoWW` with exit 1 and no message, and that configuration then passed alone. The other three ran in a terminal of our own, each "models: 18 as expected, 0 failed, 0 skipped, 0 stopped", the last after the last change to the modules and its figures those above. Between them the generated counts fell, as the two changes took out successors TLC generated twice, and the distinct counts did not change |
+| `mise exec '--' python -m pytest tools/models/test_trace_validation.py -q -p no:cacheprovider` | "8 passed in 0.10s" |
+| `mise exec '--' python tools/models/trace_validation.py`, twice while the modules changed | "traces: 18 as expected, 0 failed, 2,672 interpreter steps", each time with the same counts |
+| `mise run check:models-multi-store-traces`, after the last change | "8 passed in 0.11s", "GATE: pass" for `multi-store-model` with MM1 to MM11 passed, "isabelle export: exit 0", "isabelle scalac: exit 0", "TraceReplay: exit 0", a `PASS` line for each of the 18 configurations, "traces: 18 as expected, 0 failed, 2,672 interpreter steps", "Finished in 211.53s" |
+| `mise exec '--' python tools/models/trace_validation.py ModelA_Atomic` with `TLA2TOOLS_JAR` unset, then with `FMX_ISABELLE` and `LATTICE_FORMAL_ROOT` naming no directory, I6T-T3 | the two `SKIP` lines of I6T-T3, each exit 0 |
+| `mise run check:models-multi-store-runner` | "24 passed in 0.39s" |
+| `mise run check:models-multi-store`, the base tier | "24 passed in 0.36s", then "models: 86 as expected, 0 failed, 0 skipped, 0 stopped", "Finished in 138.01s". Of the 86 `PASS` lines 40 read "no error" and 46 name a violation, and none says the distinct states differ from the manifest's. Each of models B to D was given 256 MB, its peak at most 22 MB |
+| `mise run check:portability` | "portability: 0 problem(s)", then its tests "25 passed in 4.26s", exit 0 |
+| `mise run check:catalogue` | "repository catalogue: 22 module(s) and 19 tool package(s) agree with the tree. Bypass scan: 13 known file(s)", exit 0 |
+| `mise run graph:ask '--' gap ...` twice, and `mise run graph:ask '--' misses --near` | two gaps recorded, as the index report says |
+| `mise exec '--' python tools/writing_rules.py docs/developer/validation/MSA-I6.md tools/models/multi-store-protocols/README.md tools/models/README.md`, last | "writing rules: 0 failure(s), 0 warning(s)" |
+
+### Deliberate non-coverage
+
+- **The isolation probes on PostgreSQL and Fuseki.** Run by another session in this slice, which reports them. The models here take each isolation level as a constant, and the probes say which store has which.
+- **Trace validation of X1 to X6 and Protocol A.** Their steps are not commands of the IR, which states the four operations only. A model of the studio's writers, a relay or a pass is held to Isabelle once the IR states those operations.
+- **Model A parametrised by boundary strategy, model C covering the composite create, and the capability-record extension,** which FMH-5's row also names. Not built. Model C covers the named-graph create and the first write of a row created beforehand.
+- **Wider instances of models B to D.** Not run. All 18 are in the base tier, the largest at 7,179 distinct states, and three writers is the most any has.
+- **A store that loses a commit it acknowledged, a writer that crashes, and the dataset guard's absence.** Not modelled. X1 has crashes, and the bump is the only failure of the epoch modelled.
+- **Liveness.** Not checked in models B to D. Every behaviour ends, since sends and retries are bounded.
+- **One state model declared once, MSA-Q17's option (a).** Not built. The trace validation is the evidence its question asks for, above.
+- **The run on macOS and on Linux.** The one command above is what to run there.
+
+### Doc delta
+
+- The models' README and `tools/models/README.md`, as above.
+- For the coordinator. FMH-5's models B to D are built, and the trace validation holds models A to D to MSA-I5's exported interpreter, with every step of every behaviour agreeing where the store serialises its writers and where the store's conflict detection makes racing writers share a statement, and disagreeing, as expected, on every weaker store. Three findings, MSAI6-07 to MSAI6-09, and the evidence for MSA-Q17 are above.
+
+### Index report
+
+- `find inserting an identical statement is a write-write conflict on a snapshot store, create race` answered PAT-05 at 0.81, TSD-Q4 of the triple-stores domain at 0.71 and PAT-21 at 0.69. `find two concurrent claims of one key on a store without write-write conflict detection both commit, duplicate audit` answered TSD-Q4 at 0.79, PAT-04 and ADR-A48 at 0.78, PAT-05 at 0.77 and PAT-03 at 0.75. These carried model D's sentinel and the isolation levels.
+- `find append event dataset epoch guard concurrent append and epoch bump write skew` answered ADR-A123 at 0.75, OR-Q15 and STD-315 at 0.71, which states MSAI6-07's case as a practice.
+- `find trace validation of a model checker trace replayed through the exported interpreter` answered weakly, MSA-Q16 at 0.76 and ADR-A-FM1 and MSA-Q17 at 0.74. Gap recorded against MSA-Q17, pointing at `tools/models/multi-store-protocols/README.md:561`, the section on the trace validation. A capability entry for the check, or an edge from MSA-Q17 to it, would carry it.
+- Gap recorded against PAT-05, that models C and D show the create and the key claim racing where an identical insert is no conflict and a row created beforehand or the sentinel restoring them, pointing at `tools/models/multi-store-protocols/README.md:823`. An edge from PAT-05 and TSD-Q4 to model C and D's configurations would carry it.
+- `mise run graph:ask -- misses --near` lists none of this part's queries among the near misses, each having answered at 0.74 or above, and lists the two gaps above among the gaps recorded by reading.
+
+### For the maintainer
+
+- **MSA-Q17, one state model.** (a) Declare the closed datatypes once and generate them into Isabelle and TLA+, as the sketch leans, with the comparison of this check reading both. (b) Keep each written by hand, with this check as what holds them together. (c) Widen the IR's state so that it can hold what a weak store writes, two heads, two receipts at one position, two owners, so that the comparison needs no projection. The runs say (a) needs a collection where the IR has a single field, or a projection as here. We lean to (a) with this check kept, and it is your decision.
+- **The bump of the dataset epoch has no IR command.** (a) Add one to the IR, which is a change to the theories and a law to prove of it. (b) Keep it outside the IR, written into the state by the driver as here. We lean to (b) until the IR states the epoch authority's operations.
+- **An aborted commit has no IR outcome.** The models send the request again and answer `Aborted` when they give up. (a) The port retries an abort inside the adapter and never returns it. (b) The port's outcomes gain one for a write whose fate is unknown, which the caller confirms, as the persistence README's fourth obligation says of a transport failure. We lean to (b), since a confirmation read already classifies an unknown outcome, and it is your decision.
+- **MSAI6-08, the create and the key claim on a store where an identical insert is no conflict.** (a) The capability record states whether inserting an identical statement conflicts, and the compiler selects `dal:PreCreatedRow` and a sentinel for the claim where it does not. (b) Such a store is refused for families that create by insert or claim keys, unless it serialises its writers. (c) Keep the generated operations, and rely on the claim's duplicate audit. We do not lean, since the isolation probes may show which stores this concerns.
+- **The trace validation in `check`.** It needs Isabelle and takes about three and a half minutes here. (a) Keep it on demand, as `check:multi-store-model-replay` is. (b) Run it in the formal-methods freshness check when a model or a theory changes. We lean to (a).
+
+## The isolation probes on PostgreSQL and Fuseki, 2026-11-24
+
+**Brief:** [machine S brief of 2026-11-19](../notes/machine-s-brief-2026-11-19-multi-store.md), section 4.4, "The probes run on MSA-I13's fixture", and section 4.9, the fixture at PostgreSQL 16.15. The [sketch](../sketches/multi-store-architecture.md)'s section 6, MSA-I6's row, "Each grounded by isolation probes on PostgreSQL and Fuseki", and sections 4.2, 4.3, 4.5 and 4.9.
+**Machine:** machine S, Windows 11, 16 logical cores, 64 GB installed. PostgreSQL 16.15 from the PostgreSQL test fixture, psycopg 3.3.6, Python 3.14.7. Apache Jena 5.1.0 and 6.2.0, Fuseki main and TDB2 from Maven, on Java 25.0.2, all through mise. Docker was not started. **Placement:** T0, public. Store probes, nothing domain-specific.
+**Status:** built 2026-11-24, not verified.
+
+### Invariant
+
+Every assumption a protocol model makes of a store has a probe on PostgreSQL and on Fuseki over TDB2, with the clients interleaved on purpose, and every probe's row says whether the store did what the model assumes, at each isolation level PostgreSQL offers and at each Jena version. A form that breaks the assumption on purpose, a control, shows the anomaly in every repetition, so a row that shows none means what it says.
+
+### What changed
+
+- `benchmark/store-isolation-probes/`, new, a benchmark under ADR-A124.
+  - `check.py`, the eleven assumptions, the expected answer of every row, the PostgreSQL probes, the run of the Jena arm, the verdict and the report. Every text call names its encoding.
+  - `test_check.py`, 13 tests: the expectations against the probes and against the rows the Java arm writes, the verdict, the reading of the Jena results, the skip of the Jena arm without Maven, and three PostgreSQL probes on the fixture's server, which skip where it is absent.
+  - `pom.xml` and `src/main/java/org/nebularis/lattice/benchmark/isolation/IsolationProbes.java`, the Jena arm, a standalone Maven project outside the platform reactor, as the other JVM benchmarks are. It starts Fuseki main over a TDB2 dataset in a temporary directory on a free loopback port, drives it with concurrent HTTP clients, runs two probes on TDB2 in process, and writes what it observed to `target/jena-<version>/results.json`. It judges nothing.
+  - `README.md`, the assumptions, the forms, how the clients are interleaved, the pass criterion and the one command.
+- `mise.toml`, the task `check:store-isolation-probes`. It installs the PostgreSQL fixture as its first step, as `check:ledger-supersession-read` does, then runs the tests, then both arms. It is not a dependency of `check`.
+
+The reports, `report.md` and `report.json`, and `target/` are git-ignored by the existing `benchmark/*/report.*` and `**/target/` lines.
+
+**Where the probes live.** `benchmark/`, beside `persistence-store-probes`, and not `spikes/`. ADR-A124 makes `benchmark/` the home of checks that measure and run on demand, each with a `check:<area>-<topic>` task, and the brief asks for one command. A spike has no maintained task. The probes count how often an anomaly appears, which is a measurement, and fail only where a store does other than what is recorded of it, never on time. `mise run check:catalogue` passes with the new directory, since a benchmark's subdirectory needs no catalogue row. PRI-59 says store isolation is verified "with the conformance suite", and whether these probes should move into one is a question below.
+
+**Fuseki without Docker.** The Jena arm runs Fuseki main, `org.apache.jena:jena-fuseki-main`, in its own JVM over `TDB2Factory.connectDataset`, as `benchmark/persistence-replace-forms-jvm` already does. Fuseki main serves the same engine as the Fuseki server jar the studio's stack downloads, without its user interface. Maven resolved Jena 5.1.0 and 6.2.0 from the configured repository. Since each HTTP request is one transaction, the two probes that need a transaction held open, ISO-04 and ISO-06, also run on TDB2 called in process, the transaction engine Fuseki serves. `tools/testing/jena` was not used, since its engine is an in-memory dataset behind one request at a time on standard input, which can neither hold TDB2 nor take two clients at once.
+
+**How the clients are interleaved.** On PostgreSQL one thread drives every connection step by step, each in autocommit with its transactions begun and ended by the probe. A statement that has to wait on another transaction's lock runs on a thread of its own, and the next step is taken once `pg_stat_activity` shows it waiting on a lock, never after a sleep. On Fuseki two clients that must act at the same moment meet at a `CyclicBarrier` and then send, and a step that must follow another is taken once the first has had its reply. In process, transactions on two threads are held apart by barriers. Every repetition writes under keys or IRIs of its own.
+
+### The assumptions, the probes and their results
+
+Each probe states one assumption of a model. The models and configurations named are those whose conclusions rest on it. Every PostgreSQL row ran 50 repetitions on PostgreSQL 16.15, and every Jena row 20 at each of Jena 5.1.0 and 6.2.0, except ISO-02, one run of four writers, and ISO-08's position computed in the request, 5 runs of four clients. A cell gives the repetitions that showed the anomaly. **Bold** marks a row where a store does not keep the assumption in a form a realisation could use.
+
+| Probe | Assumption | Rests on it |
+|---|---|---|
+| ISO-01 | A guarded compare-and-set request is one atomic step. Of two writers that read one version, one applies and the other changes nothing | `ModelA_Atomic`, X1's guard (`X1_Applied*`), X5's per-step guards, `PA_OnRead*`, `X6_Closed` |
+| ISO-02 | The same, for four writers looping to a target | `ModelA_Atomic` with three writers, `X1_AppliedZombie*` |
+| ISO-03 | A store answers a command that has a receipt and applies any other in one step | `X1R_Applied`, `X1R_AppliedZombie2`, X1's `Duplicate`, X5's receipts and claims |
+| ISO-04 | A request is applied all or nothing, and no reader sees a request that is later rolled back | Model A's atomic step, `X5_Whole*`, `X5_Fenced*`, `PA_*` |
+| ISO-05 | Two requests that write the same two rows are each applied whole | X5, `PA_OnRead*` |
+| ISO-06 | One read of one store sees a request's effects together or not at all. Two reads may see two states | `X1_Torn*`, X5's plan read in one step, X2's `ReadSetTrue` |
+| ISO-07 | A write whose reply has come is seen by the next read from any client | X1's `Duplicate`, X5's read of the receipt, X3's relay |
+| ISO-08 | A relay that has published every position up to its mark never finds a lower one committed later | `X2_Watermark*`, `X3_ByPosition*`, `X3_PerStream*` |
+| ISO-09 | A fenced store refuses every write that commits after the fence | `X4_Fenced`, `X4_FencedTimeouts` and their wide instances |
+| ISO-10 | A refused guarded write can return the version it found, which differs from the one it expected | `X6_Closed`, `X6_StartOpen*`, `PA_OnRead*` |
+| ISO-11 | A check of another row and a write made on it are not interleaved with another writer's | `ModelA_Atomic` against `ModelA_SnapshotNoWWDetect`, the catalogue's single-store transaction row |
+
+**PostgreSQL 16.15, 50 repetitions a row.**
+
+| Probe | Form | Read committed | Repeatable read | Serializable | Outcome where the anomaly does not appear |
+|---|---|---|---|---|---|
+| ISO-01 | guarded | 0 | 0 | 0 | the second refused by its guard (read committed), by a serialization failure (the others) |
+| ISO-01 | unguarded, a control at read committed | 50 | 0 | 0 | a serialization failure |
+| ISO-02 | guarded, four writers to 200 | 0 | | 0 | one marker at each version, 594 races lost at read committed and 600 at serializable |
+| ISO-03 | **receipt checked by an earlier read** | **50** | **50** | 0 | a serialization failure |
+| ISO-03 | receipt with a unique key | 0 | 0 | 0 | a unique violation, at serializable a serialization failure |
+| ISO-03 | receipt inserted first, `ON CONFLICT DO NOTHING` | 0 | 0 | 0 | the second wrote nothing at read committed, a serialization failure at the others |
+| ISO-04 | a reader during a transaction that fails on a division by zero | 0 | | | read uncommitted 0, nothing seen and nothing left |
+| ISO-05 | two transactions over rows a and b in opposite orders, each step guarded | 0 | 0 | 0 | one applied both steps, the other ended by a deadlock |
+| ISO-06 | **two reads in one transaction** | **50** | 0 | 0 | the two reads agree |
+| ISO-06 | two reads in two transactions, a control | 50 | | | |
+| ISO-07 | a new transaction | 0 | | | seen |
+| ISO-07 | a transaction begun before the commit | 0 | 50 | 50 | seen at read committed. Not seen at the others, as their snapshot is documented to do |
+| ISO-08 | **a position from a sequence** | **50** | | **50** | |
+| ISO-08 | a position from a counter row the transaction locks | 0 | | | no lower position appeared |
+| ISO-09 | **the fence read in the write's transaction** | **50** | **50** | 0 | refused by a serialization failure |
+| ISO-09 | the fence row read `FOR SHARE` | 0 | | | the fence waited for the write, and the copy held it |
+| ISO-10 | **one statement, the version from its snapshot** | **50** | 0 | 0 | refused by a serialization failure |
+| ISO-10 | a locking read before the guard | 0 | | | refused, version 1 returned |
+| ISO-10 | the version read by a later statement | 0 | | | refused, version 1 returned |
+| ISO-11 | the check by an earlier read | 50 | 50 | 0 | one taken off, the other refused by a serialization failure |
+| ISO-11 | the check in the write's statement | 50 | 50 | 0 | the same |
+
+**Fuseki over TDB2 by HTTP, and TDB2 in process, 20 repetitions a row, the same at Jena 5.1.0 and 6.2.0.**
+
+| Probe | Store | Form | 5.1.0 | 6.2.0 | Outcome where the anomaly does not appear |
+|---|---|---|---|---|---|
+| ISO-01 | Fuseki | guarded | 0 | 0 | one applied, the other wrote nothing |
+| ISO-01 | Fuseki | unguarded, a control | 20 | 20 | |
+| ISO-02 | Fuseki | guarded, four clients to 40 | 0 | 0 | one marker at each version, 120 races lost at each version |
+| ISO-03 | Fuseki | receipt checked by an earlier read, a control | 20 | 20 | |
+| ISO-03 | Fuseki | receipt checked in the request | 0 | 0 | applied once |
+| ISO-04 | Fuseki | a reader polling while a request of 20,000 triples runs and fails on `CLEAR GRAPH` of a graph that holds nothing | 0 | 0 | HTTP 500 at 5.1.0 and 400 at 6.2.0, nothing left, none of 13,877 reads at 5.1.0 and 5,226 at 6.2.0 saw the marker |
+| ISO-04 | TDB2 | a read transaction during a write transaction that aborts | 0 | 0 | nothing seen, during or after |
+| ISO-05 | Fuseki | two requests over rows a and b in opposite orders, each step guarded | 0 | 0 | one applied both steps, the other neither |
+| ISO-06 | Fuseki | one query, beside ten requests that each move the version and add its receipt | 0 | 0 | every read saw the version and its receipt together, 1,362 reads at 5.1.0 and 800 at 6.2.0 |
+| ISO-06 | Fuseki | **two queries**, a control | **20** | **20** | |
+| ISO-06 | TDB2 | one read transaction across another thread's commit | 0 | 0 | the two reads agree |
+| ISO-06 | TDB2 | two read transactions, a control | 20 | 20 | |
+| ISO-07 | Fuseki | a new request from another client | 0 | 0 | seen |
+| ISO-08 | Fuseki | a position computed in the request, four clients of five receipts | 0 | 0 | positions 1 to 20, no gap seen in 669 reads at 5.1.0 and 448 at 6.2.0 by a reader polling beside them |
+| ISO-08 | Fuseki | a position taken by a request of its own, a control | 20 | 20 | |
+| ISO-09 | Fuseki | the fence checked by an earlier read, a control | 20 | 20 | |
+| ISO-09 | Fuseki | the fence checked in the write's request | 0 | 0 | refused |
+| ISO-10 | Fuseki | the version read after the refusal | 0 | 0 | version 1 read |
+| ISO-11 | Fuseki | the check by an earlier read, a control | 20 | 20 | |
+| ISO-11 | Fuseki | the check in the request | 0 | 0 | one left on |
+
+**What holds.** On both stores a guard on the row a request writes is one atomic step at every level and version, ISO-01 and ISO-02, so the store side of Model A, X1's guard, Protocol A's pass and each pass of X6 is grounded. A request is all or nothing and no reader saw one that rolled back, ISO-04. A write is seen by the next request, ISO-07. On Fuseki every check made inside the request holds, whether of a receipt, a fence, another row or a position, since TDB2 applies one write transaction at a time, TSD-62 and TSD-74, and the same check made by an earlier query fails every time. On PostgreSQL the same checks hold only in the forms the findings below name.
+
+### Findings
+
+- **MSAI6-10, a receipt checked by a read on PostgreSQL.** X1 with receipts only and X5's claims take "a command with a receipt is answered, any other applied" to be one step. On PostgreSQL a transaction that reads that no receipt exists and then writes the effect and the receipt applied a command delivered twice by two writers in 50 of 50 repetitions at read committed and at repeatable read, since the two inserts touch no common row. It held with a unique key on the receipt's command id, with the receipt inserted first by `ON CONFLICT DO NOTHING`, and at serializable. It weakens `X1R_AppliedZombie2`, where a zombie delivers a command its successor delivers, and X5's configurations with two writers, on a PostgreSQL realisation that checks a receipt or a claim by a read. On Fuseki the check in the request held, 0 of 20 at each version.
+- **MSAI6-11, a fence read without a lock on PostgreSQL.** X4's fenced store refuses a write in the step it would apply it. On PostgreSQL a write whose transaction read the fence unset, before the migrator set it and copied, was acknowledged and missing from the copy in 50 of 50 at read committed and at repeatable read. It held where the write's transaction read the fence row `FOR SHARE`, so the fence waited for the write, and at serializable, where the write was refused by a serialization failure. It weakens `X4_Fenced`, `X4_FencedTimeouts` and their six wide instances on a PostgreSQL realisation that reads the fence without a lock below serializable. On Fuseki the fence checked in the write's request held, 0 of 20.
+- **MSAI6-12, the revision a refusal returns on PostgreSQL.** X6 with its first gap closed and Protocol A's writer take a refusal to return the revision found. On PostgreSQL at read committed a guarded `UPDATE` in a `WITH` clause, with the version read beside it in the same statement, waited for the other writer's commit and was refused, and returned version 0, the version it expected, in 50 of 50, since the read beside it uses the statement's snapshot. A writer that names the version returned is refused again, which is the first gap open for one more round. A locking read before the guard and a read by a later statement returned version 1, and at repeatable read and serializable the statement was refused by a serialization failure, after which the version is read in a new transaction. It weakens `X6_Closed`, `X6_ClosedTorn`, `X6_ClosedTornCrash`, `X6_ClosedPositions`, `X6_StartOpen`, `X6_StartOpenHalf`, `PA_OnRead` and `PA_OnReadAligned` on a PostgreSQL realisation that returns the version from the guarded statement's own snapshot. On Fuseki an update returns nothing, and the version read after the refusal was 1, 0 of 20.
+- **MSAI6-13, positions committed out of order on PostgreSQL.** X2 takes the source to commit at consecutive positions one at a time, in the order of the positions, and leaves late arrival to X3. On PostgreSQL two transactions that took positions from a sequence committed out of order, so a position below the highest already committed appeared afterwards, in 50 of 50 at read committed and at serializable. A position from a counter row the transaction locks did not, 0 of 50. It weakens `X2_Watermark`, `X2_WatermarkStalled`, `X2_Watermark_P4` and `X2_Watermark_P4D4`, where the watermark is the highest committed position, on a PostgreSQL source whose writers take positions from a sequence. It confirms that X3's skip by commit position is reachable there. On Fuseki a position computed in the request kept the order, 0 of 5 runs, and one taken by a request of its own did not, 20 of 20.
+- **MSAI6-14, a plan read in several queries.** X5 says "The plan's reads are one step, although the writer makes several." Two queries to Fuseki saw two committed states in 20 of 20 at each version, as did two statements in one read committed transaction on PostgreSQL in 50 of 50, so the studio's writer as built can plan from a state that never existed. One query to Fuseki saw one state in every one of 1,362 reads at 5.1.0 and 800 at 6.2.0, and one transaction at repeatable read or serializable did on PostgreSQL. It weakens every X5 configuration's reading of the design as built. Whether the guards of the request then refuse what a plan from two states would write is not checked by any probe or model.
+
+**Seen and not findings.**
+
+- **ISO-05 on PostgreSQL.** Two requests over the same two rows in opposite orders ended one by a deadlock in every repetition at every level. Each request was whole, so the assumption holds, but the writer receives an error that is neither an application nor a guard's refusal. No X5 instance has two commands that write the same two rows, so no configuration reaches it. A PostgreSQL writer orders its row writes by key or treats a deadlock as a refusal to plan again, which MSA-I8's realisation states.
+- **ISO-07 on PostgreSQL.** A transaction at repeatable read or serializable begun before a commit does not see it, as documented. A writer that reads a receipt back reads it in its own request's transaction or in a new one.
+- **ISO-11.** A check of another row inside the write's statement does not stop write skew on PostgreSQL below serializable, 50 of 50, while the same check in a SPARQL request does on Fuseki. No configuration guards on a row its request does not write, apart from the fence and the receipt, which MSAI6-10 and MSAI6-11 cover. The capability record of a store states the level at which such a guard holds.
+- **`CREATE GRAPH` on TDB2.** A first form of ISO-04 failed its request with `CREATE GRAPH` of the graph its own insert had just filled, without `SILENT`. Fuseki at 5.1.0 and 6.2.0 answered HTTP 204 and kept all 20,001 triples, in 20 of 20, where the specification has `CREATE` of an existing graph fail. The probe was changed to `CLEAR GRAPH` of a graph that holds nothing, which fails as TSD-50 records. This is a candidate finding for the domain, not probed on its own.
+
+### Store findings
+
+- **A finding for the triple-stores domain, not yet filed.** Fuseki over TDB2 keeps a guarded update, a check in the request and a position computed in the request when HTTP clients send at once, and a TDB2 read transaction does not see a commit made after it began. It answers what TSD-74 left unprobed, a guarded update over HTTP to Fuseki, and the HTTP half of TSD-Q4 for Fuseki. A new store finding is recorded in the domain under the domain's identifiers, and `docs/architecture/triple-store-discovery.md` keeps only what the domain holds, so the record is not changed here. The finding in the domain's shape is the appendix at the end of this pack, filed in the domain off machine S, where TSD-Q4's row gains it as a partial answer.
+- **PostgreSQL.** No register records how PostgreSQL behaves, and the triple-store record holds triple stores only. MSAI6-10 to MSAI6-13 and the seen items above are PostgreSQL behaviour that MSA-I8's realisation needs. A gap is recorded against PRI-59. Where they go is a question below.
+
+### Tests
+
+| ID | Given / When / Then | Level | Pass criterion | Kind |
+|---|---|---|---|---|
+| I6S-T1 | Given each PostgreSQL probe, form and level, when two or three connections are interleaved as the probe states, 50 times, then the anomaly appears in no repetition or in every one, as `EXPECTED` says | L3 | `PASS` on each of the 48 PostgreSQL rows | positive and negative |
+| I6S-T2 | Given each Fuseki and TDB2 probe and form at Jena 5.1.0 and 6.2.0, when the clients are interleaved, 20 times, then the same | L3 | `PASS` on each of the 20 rows at each version | positive and negative |
+| I6S-T3 | Given a control at each store, when it runs, then the anomaly appears every time, so the interleaving happened | L3 | the control rows show m of m | negative |
+| I6S-T4 | Given a polling or racing probe, when no read ran beside the writes or no race was lost, then the row fails | L0 | `test_a_probe_that_never_ran_beside_another_client_fails` | negative |
+| I6S-T5 | `test_check.py`, 13 tests: every expected row has an assumption and a runner, the Java arm writes exactly the expected Jena rows, the verdict, a missing row listed, the Jena results read, the Jena arm skipped without Maven, and ISO-01, ISO-10 and ISO-11 on the fixture's server | L0, L3 | "13 passed" | positive and negative |
+| I6S-T6 | Given no PostgreSQL server or no Maven, when the task runs, then that arm is skipped with the reason and the run exits 0 | L1 | `SKIP postgresql: needs ...` or `SKIP fuseki and tdb2: needs mvn ...` | authored, not run |
+
+### One command
+
+From the repository's root, on Windows, macOS and Linux:
+
+```bash
+mise run check:store-isolation-probes
+STORE_ISOLATION_QUICK=1 mise run check:store-isolation-probes    # 10 repetitions on PostgreSQL and 5 on Jena
+```
+
+On Windows, in PowerShell, a variable is set first, as in `$env:STORE_ISOLATION_QUICK = '1'`. A pass prints the tests' "13 passed", a line for each PostgreSQL row as it runs, then a `PASS` line for each of the 48 PostgreSQL rows and the 20 rows at each Jena version, and ends with the line below and exit 0. Where the PostgreSQL server or Maven is absent, that arm prints a `SKIP` line with the reason and the count of skipped arms rises, still exit 0.
+
+```text
+isolation probes: 88 as expected, 0 failed, 0 skipped, <seconds> s
+```
+
+### What was run, in full
+
+Every command was run on machine S from the repository's root, each output captured to a file and read in full. `PYTHONUTF8=1`, `PIP_CONSTRAINT` and `PIP_BUILD_CONSTRAINT` were set in the shell.
+
+| Command | Result |
+|---|---|
+| `mise run work:here` | one session, ours |
+| `mise exec '--' mvn -q dependency:get '-Dartifact=org.apache.jena:jena-fuseki-main:6.2.0'` | exit 0, Jena 6.2.0 resolved from the configured repository |
+| `mise exec '--' mvn -q -f benchmark/store-isolation-probes/pom.xml compile "-Djena.version=<v>"`, for 5.1.0 and 6.2.0 | exit 0 each, nothing printed |
+| `mise exec '--' python benchmark/store-isolation-probes/check.py` with `STORE_ISOLATION_QUICK=1`, `STORE_ISOLATION_ARMS=jena` and `STORE_ISOLATION_JENA_VERSIONS=5.1.0`, a first trial | "isolation probes: 20 as expected, 0 failed, 0 skipped, 16.5 s" |
+| the same with `STORE_ISOLATION_ARMS=postgresql`, three trials | the first two, through a PowerShell pipe, printed nothing after ISO-01, as the environment note says. The third, redirected by `cmd`, printed "isolation probes: 48 as expected, 0 failed, 0 skipped, 16.1 s", with 0 races lost in both ISO-02 rows, since the four writers had not started together. The writers now meet at a barrier first, and a racing row with no race lost fails |
+| `mise exec '--' python -m pytest benchmark/store-isolation-probes -q -p no:cacheprovider -rs` | "13 passed, 1 warning in 19.41s", "lattice: PostgreSQL tests ran on server version 16.15". The warning is pytest's "Unknown config option: cache_dir", which every run here prints |
+| `mise run check:store-isolation-probes` with the trial's `STORE_ISOLATION_QUICK=1` and `STORE_ISOLATION_ARMS=postgresql` left set by mistake | "13 passed", "isolation probes: 48 as expected, 0 failed, 0 skipped, 14.3 s". Not a run of record |
+| `mise run check:store-isolation-probes`, in full, with ISO-04's request failing on `LOAD <urn:iso:no-such-document>` | "isolation probes: 88 as expected, 0 failed, 0 skipped, 140.9 s". ISO-04 on Fuseki answered HTTP 500 at 5.1.0 and 400 at 6.2.0. ISO-04 was changed so that its request fails on an operation that can only fail when it runs |
+| the Jena arm alone, in a sync terminal shared with another session | stopped by a `KeyboardInterrupt` in `subprocess.communicate`, no result |
+| the Jena arm alone, twice, with ISO-04's request failing on `CREATE GRAPH` of the graph it had filled | "isolation probes: 38 as expected, 2 failed, 0 skipped, 138.7 s". Both ISO-04 Fuseki rows read "HTTP 204, 20001 triples left (20)", with 42 and 29 reads that saw the marker, since the request had not failed. ISO-04 was changed to `CLEAR GRAPH` of a graph that holds nothing |
+| the Jena arm alone with `STORE_ISOLATION_QUICK=1` | "isolation probes: 40 as expected, 0 failed, 0 skipped, 40.5 s", ISO-04 "refused with HTTP 500, nothing left" at 5.1.0 and "HTTP 400" at 6.2.0 |
+| `mise run check:store-isolation-probes`, the run of record, nothing set but `PYTHONUTF8` and the pip constraints | the fixture's bootstrap, "13 passed, 1 warning in 16.15s", a line for each of the 46 PostgreSQL rows that repeat, 88 `PASS` lines, "isolation probes: 88 as expected, 0 failed, 0 skipped, 137.7 s", exit 0. The report's first line reads "Run 2026-11-24: Python 3.14.7 on Windows AMD64. postgresql 16.15, psycopg 3.3.6, jena 5.1.0 jena-tdb2-5.1.0.jar, jena-fuseki-main-5.1.0.jar, java 25.0.2, 52.8 s, jena 6.2.0 jena-tdb2-6.2.0.jar, jena-fuseki-main-6.2.0.jar, java 25.0.2, 43.0 s." The tables above are from this run |
+| `mise run check:portability` | "portability: 0 problem(s)", then "25 passed in 2.94s", exit 0 |
+| `mise run check:catalogue` | "repository catalogue: 22 module(s) and 19 tool package(s) agree with the tree. Bypass scan: 13 known file(s)", exit 0 |
+| `mise exec '--' python tools/writing_rules.py benchmark/store-isolation-probes/README.md .local/msa-i6-probes-section.md` | "writing rules: 0 failure(s), 0 warning(s)" |
+| `mise exec '--' python tools/writing_rules.py docs/architecture/triple-store-discovery.md` | "writing rules: 0 failure(s), 0 warning(s)" |
+| `mise run graph:ask '--' find ...` four times, `read` of TSD-62, TSD-66, TSD-74, TSD-73, TSD-Q4, TSD-Q13, TSD-44 and TSD-50, `gap` once, `misses --near` | as the index report says. A `read` of the new finding's row answered nothing, since the domain does not hold it |
+
+### Deliberate non-coverage
+
+- **The run on macOS and on Linux.** Not possible on machine S. The one command above is what to run there. The Jena arm resolves Jena from Maven on its first run at each version.
+- **The skip of each arm.** Authored, and the Maven skip has a test. The run without the PostgreSQL server installed was not made, since the server is installed in this checkout.
+- **Fuseki server jar.** Fuseki main was probed in its own JVM, not the `jena-fuseki-server` jar the studio's stack downloads, which adds a user interface over the same engine.
+- **A crash of the store, a network partition, and more than four clients.** The probes are about isolation. Durability across a crash is TSD-66's abandoned request and the studio's own tests.
+- **Oxigraph, rdflib and RDF4J.** TSD-73 and TSD-74 cover Oxigraph and Jena in process, and the brief names PostgreSQL and Fuseki.
+- **PostgreSQL's `SELECT ... FOR UPDATE SKIP LOCKED`, advisory locks and `NOWAIT`.** No model's step needs them.
+- **Trace validation and models B to D.** Other parts of MSA-I6. Models B to D, the append form, the create race and the key claim, appeared in the tree while this was built. Their store assumptions, write-write detection on a delete, on an insert and on a sentinel, are not probed here beyond what ISO-01, ISO-02 and ISO-11 show, that TDB2 applies one write transaction at a time and that PostgreSQL detects a write-write conflict on a row below serializable only where both write the same row.
+
+### Doc delta
+
+- `benchmark/store-isolation-probes/README.md`, new.
+- For the coordinator. On both stores a guarded write on the row it writes is one atomic step, so the store side of Model A, X1's guard, Protocol A and X6 is grounded. On Fuseki every check inside a request holds and every check made by an earlier query fails. On PostgreSQL a receipt checked by a read, a fence read without a lock, a refusal's version read from its statement's snapshot and positions from a sequence each break a model's assumption below serializable, MSAI6-10 to MSAI6-13, and each has a form that holds. Several reads see several states on both stores, which X5's abstraction of the plan's reads does not allow for, MSAI6-14.
+
+### Index report
+
+- `find isolation concurrent writers transaction atomic update --kind discovery` answered TSD-44, TSD-Q4, TSD-Q13, TSD-73, TSD-62, TSD-74 and TSD-66, each read in full. TSD-74 says a guarded update over HTTP to Fuseki is not probed, which the finding for the domain now answers.
+- `find CREATE GRAPH of a graph that already exists without SILENT succeeds on Jena TDB2 --kind discovery` answered TSD-69 at 0.75 and TSD-50 at 0.74, which records `CREATE GRAPH` of a new graph and not of an existing one.
+- `find where a finding about how PostgreSQL behaves under concurrent transactions is recorded` answered weakly, PAT-25, ADR-A33 and TSD-Q4 at 0.72. Gap recorded against PRI-59, pointing at `benchmark/store-isolation-probes/check.py:85`. A register for relational store findings, or a column of the triple-store record for a store that is not a triple store, would carry it.
+- `find a probe of store isolation with concurrent clients run on demand, benchmark or spike` answered MEC-81 at 0.74, ADR-A124 at 0.72 and PRI-59 at 0.71, and settled the placement.
+- `mise run graph:ask '--' misses --near` lists two reads of the new finding's row among the misses, and the gap against PRI-59.
+
+### For the maintainer
+
+- **Where PostgreSQL store findings are recorded.** (a) A record beside the triple-store record, for example `docs/architecture/relational-store-discovery.md`, with its own identifiers and an entry in `vyvid.toml`. (b) The domain's record widened to stores that are not triple stores, under TSD identifiers. (c) The probes' README and MSA-I8's pack only. We lean to (a), since MSA-I8 and MSA-I10 realise families in SQL, and it is your decision.
+- **The Fuseki finding in the domain.** It is filed in the triple-stores domain off machine S, from the appendix, and LATTICE's record gains its pointer once the domain is pinned at a version that holds it, as for TSD-75.
+- **A benchmark or a conformance suite.** PRI-59 verifies isolation "with the conformance suite", and the probing skill puts a probe of behaviour into a tool's tests marked `conformance` and a probe of cost into a benchmark. These probes count anomalies and fail where a store changes, which is both. (a) Keep them a benchmark run on demand. (b) Move the expectations into a `check:store-isolation-conformance` task under a test-support package. We lean to (a), since they start a server and a JVM and run for minutes, and it is your decision.
+- **The realisation rules the findings imply.** For MSA-I8, on PostgreSQL: a receipt or claim with a unique key or inserted first, a fence row read `FOR SHARE` or a fence checked under serializable, the revision of a refusal read by a locking read or a later statement, and positions from a counter row the transaction locks, or a relay that follows each stream. Should these be stated as rules of the relational realisation, with each probe's row as its evidence, or left to MSA-I8's design?
+- **The plan's reads in X5 (MSAI6-14).** (a) Model the plan's reads as several steps, with another writer's commit between them, and run X5 again. (b) Read the plan in one query on Fuseki and one transaction at repeatable read on PostgreSQL, so the abstraction holds. (c) Leave the abstraction, since the guards of the request refuse what a stale plan writes, which no probe or model has shown. We do not lean.
+
+### Environment
+
+- **A PowerShell pipe lost the probes' output.** Two first runs of the PostgreSQL arm through `mise exec '--' python ... 2>&1 | Out-File` stopped printing after ISO-01, and one ended with exit 1 and no traceback. The same run with its output redirected by `cmd /c "... > file 2>&1"` printed every row. A sync terminal shared with another session also sent an interruption to one Jena run (`KeyboardInterrupt` in `subprocess.communicate`). Every run of record was made in a terminal of our own with `cmd /c` redirection.
+
+## Appendix: a finding proposed for the triple-stores domain
+
+### Fuseki over TDB2 keeps a guarded update, a check in the request and a position computed in the request when HTTP clients send at once, and a TDB2 read transaction does not see a commit made after it began
+
+**Evidence:** Observed on Apache Jena 5.1.0 and 6.2.0, Fuseki main in its own JVM over TDB2 on disk in a temporary directory, driven over HTTP/1.1 by Java clients, and TDB2 called in process, on Java 25.0.2 on a 16-core x86-64 machine running Windows 11, 2026-11-24. Not read from Jena's source. Jena documents a dataset's transactions as multiple readers and a single writer, which TSD-62 and TSD-74 rest on. Not measured: the Fuseki server jar, Linux, macOS, and more than four clients.
+
+**Context.** A multi-store protocol model takes a guarded write, a check of a receipt, of a fence or of another row, and the position a write takes to be one step of the store. TSD-74 found that Jena called in process makes a second write transaction wait, and left a guarded update over HTTP to Fuseki unprobed.
+
+**How we found it.** Each probe ran 20 times at each version, with every repetition under IRIs of its own. Two clients that must act at the same moment met at a barrier and then sent, and a step that must follow another was taken once the first had its reply.
+
+1. *A guarded update from two clients.* Both read the version `N`, then sent at once `DELETE { c v N } INSERT { c v N+1 . m_i at N+1 } WHERE { c v N }`, each with its own marker.
+2. *The same from four clients looping to a version of 40,* each confirming its marker, as TSD-74's probe does in process.
+3. *A check of a triple the request does not write,* made in the request's `WHERE` and, as a control, by an earlier query: a receipt (`FILTER NOT EXISTS`), a fence, and another row (`a on true` taken off only where `b on true`).
+4. *A position computed in the request,* `INSERT { r pos ?n } WHERE { { SELECT ((COALESCE(MAX(?q), 0) + 1) AS ?n) WHERE { OPTIONAL { ?x pos ?q } } } }`, from four clients of five receipts each, with a fifth client reading every position as often as it could. As a control, a position taken by a request of its own before the insert.
+5. *A read beside a write.* One query reading a version and the highest receipt while another client made ten requests that each move the version and add its receipt, and as a control two queries with one such request between them.
+6. *A request that fails,* `INSERT DATA` of a marker and 20,000 triples into a graph `; CLEAR GRAPH <absent>`, while another client read the marker as often as it could.
+7. *In process,* a read transaction on one thread across a write transaction on another that commits, and one during a write transaction that aborts, held apart by barriers.
+
+**What the store does.** The same at 5.1.0 and 6.2.0.
+
+| Probe | Result |
+|---|---|
+| 1, guarded | one applied and the other wrote nothing, 20 of 20. Without the guard both applied, 20 of 20 |
+| 2, four clients | one marker at each of 40 versions, none with two, 120 races lost |
+| 3, check in the request | held, 20 of 20 for each of the three. By an earlier query, failed 20 of 20 for each |
+| 4, position in the request | positions 1 to 20, and no read saw a gap below the highest position in 669 reads at 5.1.0 and 448 at 6.2.0. Taken by a request of its own, a lower position appeared after a higher one, 20 of 20 |
+| 5, read beside a write | one query never saw the version apart from its receipt, in 1,362 reads at 5.1.0 and 800 at 6.2.0. Two queries saw them apart, 20 of 20 |
+| 6, a request that fails | HTTP 500 at 5.1.0 and HTTP 400 at 6.2.0, nothing left, and none of 13,877 reads at 5.1.0 and 5,226 at 6.2.0 saw the marker |
+| 7, in process | the read transaction kept the state it began with across the commit, and saw nothing of the aborted write, during or after, 20 of 20 |
+
+**Why.** Fuseki runs each update request as one write transaction on the dataset, and TDB2 admits one write transaction at a time (TSD-74), so a request's `WHERE` is evaluated on the result of every request committed before it, and a stale guard or a check that has become false matches nothing. A query runs in a read transaction on the last committed state and does not wait for a writer (TSD-62), so one query sees one state and two queries may see two. A position computed in the request is the highest committed plus one, and commits are one at a time, so positions commit in their order. We did not read the source.
+
+**What it means for a project.** A guarded update, a check of another triple, a receipt or a fence, and a position computed from what is stored are safe over HTTP to Fuseki on TDB2 when they are in the request they guard, and unsafe when an earlier query makes them. Several queries are several states. Fuseki 6.2.0 answers an update that fails when it runs with HTTP 400 where 5.1.0 answered 500, so a client that tells a refused request from a server fault by its status reads the two versions differently. This answers the HTTP half of TSD-Q4 for Fuseki on TDB2.
+
+**Reproduce it.** `mise run check:store-isolation-probes` in LATTICE, or `STORE_ISOLATION_ARMS=jena` for this half. Its Maven project starts Fuseki main over a TDB2 dataset on a free port and runs every probe above. A store that keeps these prints 0 for each form in the request and the repetitions for each control.

@@ -2,7 +2,7 @@
 
 # `tools/models/multi-store-protocols/`
 
-TLA+ models of the protocols behind rows of the multi-store catalogue (sketch section 4.2). They are design-time evidence for the formal-methods track H plan's FMH-5, protocol model A, for MSA-I6, models X1 to X4, X1 with receipts only, Protocol A in one ledger, a pass over two ledgers and X2's audit, and for MSA-I14, model X5 of the studio's writers. They are not shipped code and not a proof. TLC checks every state of a small finite instance, so a result holds for the stated constants only.
+TLA+ models of the protocols behind rows of the multi-store catalogue (sketch section 4.2). They are design-time evidence for the formal-methods track H plan's FMH-5, protocol models A to D, for MSA-I6, models X1 to X4, X1 with receipts only, Protocol A in one ledger, a pass over two ledgers, X2's audit and the trace validation that holds models A to D to the Isabelle model of [`spikes/multi-store-model/`](../../../spikes/multi-store-model/README.md), and for MSA-I14, model X5 of the studio's writers. They are not shipped code and not a proof. TLC checks every state of a small finite instance, so a result holds for the stated constants only.
 
 ## Models
 
@@ -23,6 +23,95 @@ What the model abstracts away.
 - There is one target, so the receipt key is the new version alone.
 - The payload is the writer's identity. Its content and the aggregate's triples are not modelled.
 - Failures of the store and of the writer are not modelled. Model A is about isolation only.
+
+### The stores of models B, C and D
+
+Models B, C and D share one reading of a store, wider than model A's. Each writer sends one request, whose guards are evaluated in the order the multi-store model's IR gives them, so the first that fails decides the outcome. The constant `Isolation` selects what the store makes of the request.
+
+| Value | Meaning |
+|---|---|
+| `Atomic` | The guards and the writes are one atomic step, as a store that serialises its writers gives. |
+| `SnapshotInsertWW` | The guards are evaluated against a snapshot in one step, and the writes, computed from the snapshot, commit in a later step. The store aborts the commit where a transaction that committed since the snapshot wrote a statement this one writes, and inserting a statement identical to another's counts as writing it. |
+| `SnapshotDeleteWW` | As `SnapshotInsertWW`, except that only a statement both transactions delete is a conflict. Inserting an identical statement is not. |
+| `SnapshotNoWW` | As `SnapshotInsertWW`, with no conflict detected, so every commit writes what its snapshot computed. |
+
+Each model records, for each committed transaction, the statements it deleted and inserted, each a pair of a kind and a value, so the store can compare them. A request whose guards failed writes nothing and is never aborted. An aborted commit writes nothing, and its writer sends the same request again, up to `Retries` times, as a caller does with a failure it cannot classify, and is then answered `Aborted`. With `Resend`, a writer whose request was applied may send the identical request once more, as after a lost reply.
+
+What the three abstract away, beyond what each says below.
+
+- A statement is a kind and a value. The graph and the subject are left out, since each model has one row, one stream or one claim.
+- A store with snapshots evaluates its guards and computes its writes in one step and commits them in one step. What a store does between the two is not modelled.
+- An abort is the only failure. A store that loses a commit it acknowledged, and a writer that crashes, are not modelled.
+- A writer sends one request. Two requests of one writer at once are not modelled.
+
+### `ModelB_AppendForm.tla`
+
+The append form, an event appended to a stream under the dataset guard, as the persistence compiler generates `append-event-dataset-guard`. Each writer reads the dataset epoch, then sends one request meaning "if the dataset epoch is the one I read, and my transaction has no claim, set the stream's row to its sequence plus one under my epoch, and write my claim, the receipt at that position and my event". It is answered `Refused EpochMismatch` where the epoch differs, then `Duplicate` where the claim exists. The request names no expected sequence, and the store computes the next one. An append deletes the row's epoch, sequence and head statements and inserts their successors, its claim, its receipt and its event. With `Bump`, the dataset epoch is bumped once while writers are live, a transaction of its own that deletes the old epoch statement and inserts the new.
+
+| Constant | Meaning |
+|---|---|
+| `Writers` | The writers, each with a transaction id of its own. |
+| `Isolation` | As above. |
+| `Bump` | Whether the dataset epoch is bumped once. |
+| `Resend`, `Retries` | As above. |
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `OnePerPosition` | invariant | No two applied appends take one position, so the stream has one receipt for each position. | fails with `SnapshotNoWW` |
+| `NoLostAppend` | invariant | The row's sequence counts the applied appends. | fails with `SnapshotNoWW` |
+| `FencedAppends` | invariant | Every applied append carries the dataset epoch in force when it applied, so no write sent before a bump lands after it. | fails on every snapshot store with a bump |
+| `TypeOK` | invariant | Each variable stays in its range. | holds |
+
+What the model abstracts away.
+
+- The stream's row exists from the start and is never tombstoned, so the IR's two guards on it always hold. The row is created by `bootstrap-version-row`, which is not modelled.
+- Each append carries one event. The event's rows and their order within an append are not modelled.
+- The bump is atomic and happens once. Restoring a dataset, and a writer that reads the epoch again after a refusal, are not modelled.
+
+### `ModelC_CreateRace.tla`
+
+The first write of an aggregate, raced by writers that each write it under a transaction id and a revision of their own. The constant `FirstWrite` selects the operation, as `dal:firstWrite` does.
+
+| `FirstWrite` | Meaning |
+|---|---|
+| `AbsentRow` | `create-if-absent`. "If my transaction has no claim and the root has no version row, write the row at seq 1 with my revision as its head, my claim, the receipt and the payload." Answered `Duplicate`, then `Conflict Exists`. It deletes nothing, and inserts the row's type, epoch and seq statements, which every writer's create inserts alike, beside a head of its own. |
+| `PreCreatedRow` | The row was created at seq 0 when the id was allocated, and the first write is a guarded replace expecting seq 0. Answered `Duplicate`, then `Conflict Missing`, then `Conflict Stale`. It deletes the row's seq 0 statement. |
+
+The row holds a set of heads, since an RDF row can hold two.
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `OneFirstWrite` | invariant | At most one first write is applied, so the aggregate has one receipt at seq 1 and one creator. | fails with `AbsentRow` and `SnapshotDeleteWW`, and with either form and `SnapshotNoWW` |
+| `OneHead` | invariant | The row has at most one head. | fails where `OneFirstWrite` does |
+| `TypeOK` | invariant | Each variable stays in its range. | holds |
+
+What the model abstracts away.
+
+- One root. The payload is the writer's identity, and the aggregate's triples are not compared.
+- A first write is the only write. A replace after it, and a tombstone, are not modelled.
+- The dataset guard is not modelled. Model B has it.
+
+### `ModelD_KeyClaim.tla`
+
+The key claim, owners racing for one claim node, as the persistence compiler generates `key-claim-write`. Each owner sends one request meaning "if the claim is held by no owner but me, insert the claim's type, its constraint and me as its owner". It is answered `Conflict HeldByOther` where another owner holds it. The request has no transaction claim, so an owner that sends it again is applied again and changes nothing. The claim's type and constraint are the same statements whoever inserts them, and the owner differs. With `Sentinel`, each claim also rewrites one pre-created counter statement, deleting its value and inserting the next, so racing claims delete a statement in common. That is the patterns guide's P3, which the generated `key-claim-write` does not do.
+
+| Constant | Meaning |
+|---|---|
+| `Owners` | The owners racing for the claim, one request each. |
+| `Isolation` | As above. |
+| `Sentinel` | Whether a claim also rewrites the counter statement. |
+| `Resend`, `Retries` | As above. |
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `OneOwner` | invariant | The claim names at most one owner, so the key is unique. | fails with `SnapshotDeleteWW` without the sentinel, and with `SnapshotNoWW` |
+| `TypeOK` | invariant | Each variable stays in its range. | holds |
+
+What the model abstracts away.
+
+- One claim and one constraint. The claim's write is its own request. The pattern that writes the claim and the payload in one request is not modelled.
+- The counter is one statement. Sharding counters by the key's hash, and the false conflicts between keys that share a shard, are not modelled.
+- A claim's retirement, its quarantine and the audit that finds a claim with two owners are not modelled.
 
 ### `X1_SerialisedApply.tla`
 
@@ -383,6 +472,24 @@ X2's audit, settled by a run. The module extends `X2_EvidenceAcrossStores.tla` a
 | `X6_StartOpenHalf.cfg` | X6 | as `X6_StartOpen.cfg` | `TypeOK`, `NoHalfClaim`, `PassOrderEach`, `NotBeforeStimulus` | no error |
 | `X2A_FlaggedIsStale.cfg` | X2 with `FlaggedIsStale` | the constants of `X2_BestKnownAudit.cfg`, `MaxPos=3` and two values, so a value can change and change back | `FlaggedIsStale` | violated |
 | `X2A_FlaggedIsStaleOneStep.cfg` | X2 with `FlaggedIsStale` | `BestKnown`, `MaxPos=1`, a decision at 1 only, so no value can change back | `TypeOK`, `FlaggedIsStale`, `AuditFindsStale` | no error |
+| `ModelB_Atomic.cfg` | B | `Atomic`, three writers, a bump, a resend | `TypeOK`, `OnePerPosition`, `NoLostAppend`, `FencedAppends` | no error |
+| `ModelB_SnapshotDeleteWW.cfg` | B | `SnapshotDeleteWW`, three writers, no bump, a resend, `Retries=2` | the same | no error |
+| `ModelB_SnapshotDeleteWWBump.cfg` | B | `SnapshotDeleteWW`, two writers, a bump, no resend, `Retries=1` | `TypeOK`, `FencedAppends` | `FencedAppends` violated |
+| `ModelB_SnapshotInsertWWBump.cfg` | B | `SnapshotInsertWW`, otherwise as `ModelB_SnapshotDeleteWWBump.cfg` | `TypeOK`, `FencedAppends` | `FencedAppends` violated |
+| `ModelB_SnapshotNoWW.cfg` | B | `SnapshotNoWW`, two writers, no bump, no resend | `TypeOK`, `OnePerPosition` | `OnePerPosition` violated |
+| `ModelB_SnapshotNoWWLost.cfg` | B | as `ModelB_SnapshotNoWW.cfg` | `TypeOK`, `NoLostAppend` | `NoLostAppend` violated |
+| `ModelC_Atomic.cfg` | C | `AbsentRow`, `Atomic`, three writers, a resend | `TypeOK`, `OneFirstWrite`, `OneHead` | no error |
+| `ModelC_SnapshotInsertWW.cfg` | C | `AbsentRow`, `SnapshotInsertWW`, three writers, a resend, `Retries=2` | the same | no error |
+| `ModelC_SnapshotDeleteWW.cfg` | C | `AbsentRow`, `SnapshotDeleteWW`, two writers, no resend, `Retries=1` | `TypeOK`, `OneFirstWrite` | `OneFirstWrite` violated |
+| `ModelC_SnapshotDeleteWWHead.cfg` | C | as `ModelC_SnapshotDeleteWW.cfg` | `TypeOK`, `OneHead` | `OneHead` violated |
+| `ModelC_PreCreatedAtomic.cfg` | C | `PreCreatedRow`, `Atomic`, three writers, a resend | `TypeOK`, `OneFirstWrite`, `OneHead` | no error |
+| `ModelC_PreCreatedDeleteWW.cfg` | C | `PreCreatedRow`, `SnapshotDeleteWW`, three writers, a resend, `Retries=2` | the same | no error |
+| `ModelC_PreCreatedNoWW.cfg` | C | `PreCreatedRow`, `SnapshotNoWW`, two writers, no resend | `TypeOK`, `OneFirstWrite` | `OneFirstWrite` violated |
+| `ModelD_Atomic.cfg` | D | `Atomic`, three owners, no sentinel, a resend | `TypeOK`, `OneOwner` | no error |
+| `ModelD_SnapshotInsertWW.cfg` | D | `SnapshotInsertWW`, three owners, no sentinel, a resend, `Retries=2` | the same | no error |
+| `ModelD_SnapshotDeleteWW.cfg` | D | `SnapshotDeleteWW`, two owners, no sentinel, no resend, `Retries=1` | the same | `OneOwner` violated |
+| `ModelD_SentinelDeleteWW.cfg` | D | `SnapshotDeleteWW`, three owners, the sentinel, a resend, `Retries=2` | the same | no error |
+| `ModelD_SentinelNoWW.cfg` | D | `SnapshotNoWW`, two owners, the sentinel, no resend | the same | `OneOwner` violated |
 
 The configurations above are the base tier. The wide tier takes each configuration of X1 to X4 that is expected to find no error and steps its instance up one constant at a time, to at most four commands and, in X1, a window of three. A command is a command of the stream in X1, a position of the source and a decision in X2, a receipt of a stream in X3 and a write of a writer in X4. X3 and X4 have no window, so their second step adds a third stream or a third writer. Each checks what its base configuration checks.
 
@@ -439,17 +546,55 @@ On Windows, in PowerShell, the variable is set with `$env:TLA2TOOLS_JAR = '<path
 - It runs TLC with `-deadlock`, since every model terminates, in a copy of this directory under `.build/formal/tlc/multi-store-protocols/<configuration>/`, where TLC writes its states, any trace, its temporary files and its GC log.
 - It prints, for each configuration, the verdict, the distinct and generated states, the depth, TLC's time, the wall time and the peak heap, then one line of totals. Where the distinct states differ from the manifest's, the line says so. A configuration fails only where TLC's verdict differs from the manifest's. A skip, a stop and a run that runs out of heap are reported and do not fail.
 
-A pass of the base tier prints the runner's tests, `24 passed`, then a line with the heap budget, then for each of the 68 configurations a `RUN` line and a `PASS` line. Thirty-one `PASS` lines read "no error" and thirty-seven name the property violated, each as the manifest expects. It ends with the line below and exits 0.
+A pass of the base tier prints the runner's tests, `24 passed`, then a line with the heap budget, then for each of the 86 configurations a `RUN` line and a `PASS` line. Forty `PASS` lines read "no error" and forty-six name the property violated, each as the manifest expects. It ends with the line below and exits 0.
 
 ```text
-models: 68 as expected, 0 failed, 0 skipped, 0 stopped
+models: 86 as expected, 0 failed, 0 skipped, 0 stopped
 ```
 
 On a machine of 8 GB the budget is at most 2 GB, which every base configuration fits, the largest heap given being 320 MB. The wide tier on such a machine skips each configuration whose heap exceeds the budget, with both figures, and exits 0 unless a verdict differs.
 
 The peak heap is read from the GC log. The young generation is fixed at 16 MB, so a collection runs at least every 16 MB allocated, and the peak is the largest heap in use before a collection that the log printed. The true peak is at most 16 MB above it.
 
-The module for a `ModelA_*.cfg` is `ModelA_GuardedCas.tla`, for an `X1_*.cfg` is `X1_SerialisedApply.tla`, for an `X1R_*.cfg` is `X1_ReceiptsOnly.tla`, for an `X2_*.cfg` is `X2_EvidenceAcrossStores.tla`, for an `X3_*.cfg` is `X3_ReceiptRelay.tla`, for an `X4_*.cfg` is `X4_AuthorityCutover.tla`, for an `X5_*.cfg` is `X5_WholeCommand.tla`, for a `PA_*.cfg` is `PA_PassRevision.tla`, for an `X6_*.cfg` is `X6_PassTwoLedgers.tla` and for an `X2A_*.cfg` is `X2_AuditFlags.tla`. TLC run by hand in this directory writes `states/` and any trace file here, and `.gitignore` excludes them.
+The module for a `ModelA_*.cfg` is `ModelA_GuardedCas.tla`, for a `ModelB_*.cfg` is `ModelB_AppendForm.tla`, for a `ModelC_*.cfg` is `ModelC_CreateRace.tla`, for a `ModelD_*.cfg` is `ModelD_KeyClaim.tla`, for an `X1_*.cfg` is `X1_SerialisedApply.tla`, for an `X1R_*.cfg` is `X1_ReceiptsOnly.tla`, for an `X2_*.cfg` is `X2_EvidenceAcrossStores.tla`, for an `X3_*.cfg` is `X3_ReceiptRelay.tla`, for an `X4_*.cfg` is `X4_AuthorityCutover.tla`, for an `X5_*.cfg` is `X5_WholeCommand.tla`, for a `PA_*.cfg` is `PA_PassRevision.tla`, for an `X6_*.cfg` is `X6_PassTwoLedgers.tla` and for an `X2A_*.cfg` is `X2_AuditFlags.tla`. TLC run by hand in this directory writes `states/` and any trace file here, and `.gitignore` excludes them.
+
+## Trace validation
+
+Models A to D and the multi-store model of [`spikes/multi-store-model/`](../../../spikes/multi-store-model/README.md) describe the same four operations. The multi-store model states each as a command of its IR, run by `exec` in one atomic step, and models A to D state each as a store's steps under an isolation level. The transitions are written apart, in TLA+ and in Isabelle. Trace validation holds them together. Every behaviour TLC finds for a configuration is run, step by step, through the interpreter Isabelle exports to Scala, and each step's outcome and the state after it must be the same in both.
+
+| Model | The IR's command | Parameters the model gives |
+|---|---|---|
+| A | `delta_replace` with an empty delta | the target, epoch 1, the writer's expected sequence, and a revision, transaction id and digest of the writer's own |
+| B | `append_event` | the stream, the epoch the writer read, a revision base, the writer's transaction id and digest, and one event row |
+| C with `AbsentRow` | `create_if_absent` | the root, epoch 1, the writer's revision, transaction id and digest, and one payload fact |
+| C with `PreCreatedRow` | `delta_replace` expecting seq 0 | as for `AbsentRow`, the payload fact asserted |
+| D | `key_claim_write`, its constraint `k1` | the claim and the owner |
+
+`mise run check:models-multi-store-traces`, which is [`tools/models/trace_validation.py`](../trace_validation.py), does the following.
+
+1. The task first runs the check's own tests, `mise run check:models-multi-store-traces-runner`, which need neither Java, TLC nor Isabelle. The check finds TLC in the jar `TLA2TOOLS_JAR` names, Java as the runner does, and Isabelle as the formal-methods driver does. Where one is missing it says what it skipped and exits 0.
+2. For each configuration the manifest marks with `trace`, it runs TLC with every invariant but `TypeOK` taken out, so that the whole state graph is explored, and has TLC dump the graph with each step's action, `-dump dot,actionlabels`, under `.build/formal/tlc-traces/<configuration>/`.
+3. It reads each step of the graph. A step that is one request to the store is the IR's command, with the parameters above and the outcome the model gives it. A step with no IR command must leave the store as it was. These are a client's read, a store's evaluation against a snapshot, a store's aborted commit and a writer's resend. The bump of the dataset epoch changes the store and has no IR command, so the driver writes the new epoch into the IR's state as the entry the append's guard reads.
+4. It walks the product of the state graph and a tree of the IR commands met so far, breadth first from each initial state, so a step reached by many behaviours with the same IR state before it is checked once. Every step of every behaviour is a step of this product, so checking every step of the product checks every step of every behaviour. The behaviours themselves are counted from the graph, not enumerated.
+5. It builds and gates the session `MultiStoreModel`, exports its Scala, compiles it as generated with the spike's driver `replay/Replay.scala` and with [`TraceReplay.scala`](../TraceReplay.scala), and runs the tree through the interpreter in one call, under `.build/formal/multi-store-traces/`.
+6. It compares, after every step, the outcome the model gives with the IR's, and the state the model holds with the IR's, each read into the lines both hold: the row's sequence, and its epoch and head where the model has them, the receipts with their position and transaction, the transaction claims, the events, the dataset epoch and the claim's owners. It prints the shortest behaviour that reaches the first disagreement of each kind.
+
+A configuration marked `agree` fails where any step disagrees, and one marked `differ`, a store weaker than the IR's atomic step, fails where none does. A pass prints the runner's tests, `8 passed`, then the session's gate, then for each configuration a `PASS` line and ends with the line below.
+
+```text
+traces: 18 as expected, 0 failed, 2,672 interpreter steps
+```
+
+What the IR's state and the models' states hold differs, and only what both hold is compared.
+
+| Model | The IR holds and the model does not | The model holds and the IR does not |
+|---|---|---|
+| A | the head, the transaction claim, the receipt's revision and previous head, the patch log and the aggregate's facts | each writer's program counter, the value it read and whether its snapshot's guard held |
+| B | the row's head, the receipt's revision and previous head, the claim's revision and digest | the dataset epoch in force when an append applied, the statements each transaction wrote, and each writer's state |
+| C | the row's epoch and tombstone flag, the receipt's revision and previous head, the claim's revision and digest, the patch log and the aggregate's facts | a second head on the row and a second receipt at seq 1, which an RDF store can hold and the IR's keyed entries cannot, the statements each transaction wrote, and each writer's state |
+| D | nothing beyond the claim's constraint and owner | a second owner on the claim, which an RDF store can hold and the IR's one owner field cannot, the sentinel's counter, the statements each transaction wrote, and each owner's state |
+
+The IR has no outcome for an aborted commit, which a model answers `Aborted` once its writer gives up, and no command for the bump of the dataset epoch.
 
 ## Results
 
@@ -592,6 +737,63 @@ The census lines were counted by starting cell. A revision cell is a starting ba
 | | `PerPosting` | `Stimulus` | 24 | 24 | 24 | 0 |
 | | `PerPosting` | `LaterOf` | 0 | 0 | 0 | 0 |
 
+The configurations of models B, C and D were run through `mise run check:models-multi-store` on 2026-11-24, with TLC 2.19 and TLA+ tools 1.7.4 on Java 25.0.2, under a heap of 2,048 MB given by `--heap-mb`, on 8 workers where no error was expected and one where a counterexample was. Another session ran its own JVMs on the machine at the time. Every one fits the base tier's budget, the largest peak 29 MB. Each counterexample is the trace TLC printed with one worker.
+
+| Configuration | Result | States generated | Distinct states | Depth | TLC time | Wall time | Peak heap | Counterexample |
+|---|---|---|---|---|---|---|---|---|
+| `ModelB_Atomic` | no error | 5,301 | 2,652 | 14 | 00s | 1.3 s | 28 MB | none |
+| `ModelB_SnapshotDeleteWW` | no error | 17,686 | 7,179 | 25 | 00s | 1.4 s | 29 MB | none |
+| `ModelB_SnapshotDeleteWWBump` | `FencedAppends` violated | 40 | 33 | 5 | 00s | 1.2 s | 18 MB | A writer reads the dataset epoch 1 and its append is evaluated against a snapshot. The epoch is bumped to 2. The append commits, since it wrote no statement the bump wrote, and lands with epoch 1 after the bump. |
+| `ModelB_SnapshotInsertWWBump` | `FencedAppends` violated | 40 | 33 | 5 | 00s | 1.2 s | 18 MB | The same trace as `ModelB_SnapshotDeleteWWBump`. |
+| `ModelB_SnapshotNoWW` | `OnePerPosition` violated | 25 | 19 | 7 | 00s | 1.2 s | 18 MB | Both writers read the epoch, and both appends are evaluated against a snapshot where the row is at 0. Both commit, and both take position 1. |
+| `ModelB_SnapshotNoWWLost` | `NoLostAppend` violated | 25 | 19 | 7 | 00s | 1.5 s | 18 MB | The same trace. The row is at 1 after two appends. |
+| `ModelC_Atomic` | no error | 64 | 37 | 6 | 00s | 1.3 s | 18 MB | none |
+| `ModelC_SnapshotInsertWW` | no error | 1,306 | 596 | 14 | 00s | 1.4 s | 18 MB | none |
+| `ModelC_SnapshotDeleteWW` | `OneFirstWrite` violated | 13 | 12 | 5 | 00s | 1.2 s | 15 MB | Both creates are evaluated against a snapshot with no row. Both commit, since neither deletes a statement. The row has two first writes. |
+| `ModelC_SnapshotDeleteWWHead` | `OneHead` violated | 13 | 12 | 5 | 00s | 1.2 s | 15 MB | The same trace. The row has two heads. |
+| `ModelC_PreCreatedAtomic` | no error | 64 | 37 | 6 | 00s | 1.2 s | 18 MB | none |
+| `ModelC_PreCreatedDeleteWW` | no error | 1,306 | 596 | 14 | 00s | 1.3 s | 18 MB | none |
+| `ModelC_PreCreatedNoWW` | `OneFirstWrite` violated | 13 | 12 | 5 | 00s | 1.2 s | 15 MB | Both first writes are evaluated against a snapshot with the row at 0. Both delete seq 0 and commit, and no conflict is detected. |
+| `ModelD_Atomic` | no error | 64 | 37 | 6 | 00s | 1.3 s | 18 MB | none |
+| `ModelD_SnapshotInsertWW` | no error | 1,474 | 692 | 14 | 00s | 1.2 s | 18 MB | none |
+| `ModelD_SnapshotDeleteWW` | `OneOwner` violated | 13 | 12 | 5 | 00s | 1.1 s | 15 MB | Both claims are evaluated against a snapshot with no owner. Both commit, since neither deletes a statement. The claim names two owners. |
+| `ModelD_SentinelDeleteWW` | no error | 1,474 | 692 | 14 | 00s | 1.2 s | 17 MB | none |
+| `ModelD_SentinelNoWW` | `OneOwner` violated | 13 | 12 | 5 | 00s | 1.2 s | 15 MB | Both claims are evaluated against a snapshot with no owner and the counter at 0. Both delete it and commit, and no conflict is detected. |
+
+The trace validation was run with `mise run check:models-multi-store-traces` on 2026-11-24, the interpreter compiled and run by Isabelle's `isabelle scalac` and `isabelle scala`, with TLC 2.19 dumping each graph on one worker. A behaviour runs from an initial state to a state with no successor, and its count and its steps are counted from the graph. The checks are the steps of the product of the graph and the IR's states, each checked once, and the pairs are its states. The tree the interpreter ran had 2,672 nodes over the 18 configurations.
+
+| Configuration | Expected | Result | Behaviours | Their steps | Of them store steps | Checks | Pairs | The IR's outcomes over the checks |
+|---|---|---|---|---|---|---|---|---|
+| `ModelA_Atomic` | agree | every step agrees | 90 | 540 | 270 | 79 | 107 | `Applied` 42, `Conflict Stale` 36 |
+| `ModelA_SnapshotNoWWDetect` | differ | 60 outcomes and 12 states differ | 1,680 | 15,120 | 5,040 | 202 | 327 | `Applied` 81, `Conflict Stale` 120 |
+| `ModelB_Atomic` | agree | every step agrees | 278,418 | 3,571,950 | 1,925,184 | 4,737 | 5,567 | `Applied` 681, `Duplicate` 1,689, `Refused EpochMismatch` 1,704 |
+| `ModelB_SnapshotDeleteWW` | agree | every step agrees | 363,363,336 | 8,275,348,368 | 2,180,180,016 | 9,880 | 11,235 | `Applied` 1,215, `Duplicate` 8,664 |
+| `ModelB_SnapshotDeleteWWBump` | differ | 18 outcomes and 10 states differ | 164 | 1,300 | 492 | 108 | 177 | `Applied` 34, `Refused EpochMismatch` 48 |
+| `ModelB_SnapshotInsertWWBump` | differ | 18 outcomes and 10 states differ | 164 | 1,300 | 492 | 108 | 177 | `Applied` 34, `Refused EpochMismatch` 48 |
+| `ModelB_SnapshotNoWW` | differ | 2 states differ | 20 | 120 | 40 | 11 | 21 | `Applied` 10 |
+| `ModelC_Atomic` | agree | every step agrees | 36 | 180 | 144 | 61 | 64 | `Applied` 3, `Conflict Exists` 42, `Duplicate` 15 |
+| `ModelC_SnapshotInsertWW` | agree | every step agrees | 37,590 | 472,710 | 150,360 | 532 | 752 | `Applied` 12, `Conflict Exists` 360, `Duplicate` 159 |
+| `ModelC_SnapshotDeleteWW` | differ | 2 outcomes differ | 6 | 24 | 12 | 9 | 14 | `Applied` 4, `Conflict Exists` 4 |
+| `ModelC_PreCreatedAtomic` | agree | every step agrees | 36 | 180 | 144 | 61 | 64 | `Applied` 3, `Conflict Stale` 42, `Duplicate` 15 |
+| `ModelC_PreCreatedDeleteWW` | agree | every step agrees | 37,590 | 472,710 | 150,360 | 532 | 752 | `Applied` 12, `Conflict Stale` 360, `Duplicate` 159 |
+| `ModelC_PreCreatedNoWW` | differ | 2 outcomes differ | 6 | 24 | 12 | 9 | 14 | `Applied` 4, `Conflict Stale` 4 |
+| `ModelD_Atomic` | agree | every step agrees | 36 | 180 | 144 | 61 | 64 | `Applied` 18, `Conflict HeldByOther` 42 |
+| `ModelD_SnapshotInsertWW` | agree | every step agrees | 37,590 | 472,710 | 150,360 | 688 | 872 | `Applied` 171, `Conflict HeldByOther` 516 |
+| `ModelD_SnapshotDeleteWW` | differ | 2 outcomes differ | 6 | 24 | 12 | 9 | 14 | `Applied` 4, `Conflict HeldByOther` 4 |
+| `ModelD_SentinelDeleteWW` | agree | every step agrees | 37,590 | 472,710 | 150,360 | 688 | 872 | `Applied` 171, `Conflict HeldByOther` 516 |
+| `ModelD_SentinelNoWW` | differ | 2 outcomes differ | 6 | 24 | 12 | 9 | 14 | `Applied` 4, `Conflict HeldByOther` 4 |
+
+The first disagreement of each kind, as the check printed it.
+
+| Configuration | The shortest behaviour | What differs |
+|---|---|---|
+| `ModelA_SnapshotNoWWDetect` | w1 reads and is evaluated, w2 reads and is evaluated, w1 commits, w2 commits | the model applies w2's write, the IR answers `Conflict Stale`, and the model holds a second receipt at 1 |
+| `ModelB_SnapshotDeleteWWBump` | w1 reads the epoch and is evaluated, the bump, w1 commits | the model applies the append, the IR answers `Refused EpochMismatch`, and the model's row, receipt, claim and event are ones the IR does not write |
+| `ModelB_SnapshotNoWW` | w1 reads and is evaluated, w2 reads and is evaluated, w1 commits, w2 commits | both answer `Applied`, and the model puts w2's append at position 1 where the IR puts it at 2, so the row is at 1 in the model and at 2 in the IR |
+| `ModelC_SnapshotDeleteWW` | w1 and w2 are evaluated, w1 commits, w2 commits | the model applies w2's create, the IR answers `Conflict Exists`, and the model holds w2's head, receipt and claim |
+| `ModelC_PreCreatedNoWW` | as above | the model applies w2's first write, the IR answers `Conflict Stale` |
+| `ModelD_SnapshotDeleteWW`, `ModelD_SentinelNoWW` | o1 and o2 are evaluated, o1 commits, o2 commits | the model applies o2's claim, the IR answers `Conflict HeldByOther`, and the model's claim names o2 as well |
+
 ## What the results say
 
 - The guard in each store, and the offset stored as applied, give a row that is ordered, applies each command at most once in effect, and applies every confirmed command eventually, for up to three incarnations including a zombie that keeps acting. The zombie's late applies are answered `Duplicate`.
@@ -616,3 +818,10 @@ The census lines were counted by starting cell. A revision cell is a starting ba
 - Over two ledgers, with the refusal returning the revision it found and the C pass recording the revisions its decision started from, every outcome was one that the two claims give evaluated whole one after the other, each claim ended in both ledgers or in neither, and each ledger's passes kept the order of their positions, with one stop. TLC printed "No error has been found" for `X6_Closed`. What it does not give is what X1's row does not give. A reader of C and then P sees a claim in one ledger and not the other, and a claim stopped between its passes leaves C ahead until it starts again. A claim's two passes also take different positions, since each takes the later of its stimulus's and its own ledger's latest pass's.
 - Returning the revision found is what lets a refused claim go on. With the refusal returning nothing, the claim names the revision it already held, is refused again, and gives up, with no stop needed. TLC printed a claim not paid where one after the other both are, and a claim drawn on the contract and not on the aggregate, which nothing compensates.
 - Recording the start is what keeps a replay's decision the one it wrote under. With no start recorded, a claim that stopped after its C pass read its own draw as the contract's account being empty, decided not to pay and compensated a claim that one after the other is paid. Each claim still ended in both ledgers or in neither, since the replay compensated what it had drawn. TLC printed "No error has been found" for `X6_StartOpenHalf`, so in these constants the second gap costs a wrong decision and never a half claim.
+- An append whose store computes the next position keeps one receipt for each position and a row that counts its appends on a store that serialises its writers, and on a snapshot store that detects a statement both transactions delete, since two appends from one snapshot delete the same sequence statement and one of them is aborted and sent again. TLC printed "No error has been found" for `ModelB_Atomic` with three writers, a bump and a resend, and for `ModelB_SnapshotDeleteWW` with three writers and a resend. A snapshot store that detects no conflict gives two appends one position and loses one from the row's count.
+- The dataset guard does not fence a write already evaluated on a snapshot store. An append evaluated against the epoch before a bump commits after it, with the old epoch, on a store that detects a statement both delete and on one where inserting an identical statement also conflicts, since the append writes no statement the bump writes. A store that serialises its writers refused every such append in `ModelB_Atomic`. This is the case the persistence README's sixth obligation, to quiesce writers at a bump, is there for.
+- A create that inserts its row races on a snapshot store that detects only a statement both delete, since a create deletes nothing. Two creates of one root both commit, and the row holds two first writes and two heads. Where inserting an identical statement is a conflict, the row's shared type, epoch and seq statements collide, one create is aborted, and on its next send it is answered `Conflict Exists`, so TLC printed "No error has been found" for `ModelC_SnapshotInsertWW`. A row created beforehand at seq 0 makes the first write delete the seq 0 statement, so a store that detects only a statement both delete aborts one of two first writes, and `ModelC_PreCreatedDeleteWW` printed no error. On a store that detects no conflict, the row created beforehand does not help.
+- A key claim deletes nothing either, and its owner differs from writer to writer, so on a snapshot store that detects only a statement both delete two owners claim one key. Where inserting an identical statement is a conflict, the claim's shared type and constraint statements collide and one owner is aborted and then refused. The sentinel counter of the patterns guide gives racing claims a statement both delete, and with it `ModelD_SentinelDeleteWW` printed no error. On a store that detects no conflict, the sentinel does not help.
+- In every configuration marked to agree, each step of each behaviour TLC found gave the same outcome and the same state in the model and in the interpreter exported from the Isabelle model, for the four operations under a store that serialises its writers, for the append under a snapshot store that detects a statement both delete, for the create and the claim where inserting an identical statement is a conflict, and for the first write of a row created beforehand and the claim with a sentinel where only a statement both delete is. So in those configurations the store's steps are steps of the IR's `exec`, every outcome compared among them, `Applied`, `Duplicate`, `Conflict Exists`, `Conflict Stale`, `Conflict HeldByOther` and `Refused EpochMismatch`.
+- In every configuration marked to differ, the first disagreement is the step where the model's store commits what its snapshot computed and the IR, run on the state at that step, refuses it or computes it again. For the append on a store with no conflict detection the outcomes agree and the states differ, since the IR computes the next position from the state at the commit and the model from the snapshot. Each store whose traces are not traces of `exec` is one under which TLC found a property violated in the configurations above.
+- The models need, and the IR's state lacks, a way to hold two heads, two receipts at one position and two owners of a claim, which is what an RDF store that misses a conflict writes. The IR keys a receipt by its target, epoch and sequence and holds one head and one owner, so such a state shows in the comparison as a line the model holds and the IR does not. The IR has no command for the bump of the dataset epoch, which the driver writes into the IR's state, and no outcome for an aborted commit. Each holds for the constants run and no others.
