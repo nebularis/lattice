@@ -6,7 +6,7 @@
 The models' manifest, ``manifest.toml`` beside them, states for each configuration its module, its ``.cfg``, its tier, the
 verdict expected of TLC and the peak heap and time measured on machine S. This runner:
 
-1. Finds TLC in the tools jar ``TLA2TOOLS_JAR`` names, and Java on the path ``mise`` gives a task, then through
+1. Finds TLC in the tools jar ``TLA2TOOLS_JAR`` names, or the one ``mise run bootstrap:tla-tools`` installed, and Java on the path ``mise`` gives a task, then through
    ``mise where java``. Where either, or ``mem_check``, is missing it says what it skipped and exits 0.
 2. Reads physical memory from the operating system and the memory available from ``mem_check`` (STD-151), on Windows,
    macOS and Linux, each within a Linux cgroup's limit where one is set. The budget is a quarter of physical memory, never
@@ -368,10 +368,14 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {r.configuration.name:28} {r.configuration.tier:5} SKIP {r.text}")
         return 0
 
-    jar = os.environ.get("TLA2TOOLS_JAR")
-    if not jar or not Path(jar).is_file():
-        print(f"SKIP: TLA2TOOLS_JAR {'names no file' if jar else 'is not set'}, so no configuration was checked. Set it to the TLA+ tools jar")
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import tla_tools  # noqa: E402
+
+    found, reason = tla_tools.jar()
+    if found is None:
+        print(f"SKIP: {reason}, so no configuration was checked")
         return 0
+    jar = str(found)
     java = find_java()
     if java is None:
         print("SKIP: no java on the path or from `mise where java`, so no configuration was checked. Run through mise")

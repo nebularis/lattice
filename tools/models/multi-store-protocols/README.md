@@ -523,7 +523,7 @@ The configurations above are the base tier. The wide tier takes each configurati
 
 ## Running
 
-TLC comes from the TLA+ tools jar, which is installed locally and never committed. `TLA2TOOLS_JAR` names it. One command runs the models on Windows, macOS and Linux, from the repository's root. On macOS and Linux:
+TLC comes from the TLA+ tools jar, which is installed locally and never committed. `mise run bootstrap:tla-tools` installs the pinned release beside the native Isabelle, and `TLA2TOOLS_JAR`, where set, names another jar and wins. One command runs the models on Windows, macOS and Linux, from the repository's root. On macOS and Linux:
 
 ```bash
 export TLA2TOOLS_JAR=/path/to/tla2tools.jar

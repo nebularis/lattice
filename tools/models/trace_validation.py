@@ -9,7 +9,7 @@ beforehand, the first replace) and D the key claim write. Each model's store ste
 check runs every behaviour TLC finds for a configuration through the interpreter Isabelle exports, and compares each step's outcome and the
 state after it.
 
-1. Finds TLC in the jar ``TLA2TOOLS_JAR`` names, Java as the models' runner does, and Isabelle as the formal-methods driver does. Where one is
+1. Finds TLC in the jar ``TLA2TOOLS_JAR`` names, or the one ``mise run bootstrap:tla-tools`` installed, Java as the models' runner does, and Isabelle as the formal-methods driver does. Where one is
    missing it says what it skipped and exits 0.
 2. Builds and gates the session MultiStoreModel, exports its Scala, and compiles it, as generated, with the spike's driver
    ``replay/Replay.scala`` and this check's ``TraceReplay.scala``, under ``.build/formal/multi-store-traces/``.
@@ -683,11 +683,14 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit(f"no configuration marked with trace matches {args.selectors}")
     print(f"traces: {len(entries)} configuration(s) of multi-store-protocols, each held to the exported interpreter", flush=True)
 
-    jar = os.environ.get("TLA2TOOLS_JAR")
-    if not jar or not Path(jar).is_file():
-        print(f"SKIP: TLA2TOOLS_JAR {'names no file' if jar else 'is not set'}, so no trace was checked. Set it to the TLA+ tools jar")
-        return 0
     sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import tla_tools  # noqa: E402
+
+    found, reason = tla_tools.jar()
+    if found is None:
+        print(f"SKIP: {reason}, so no trace was checked")
+        return 0
+    jar = str(found)
     from check_tlc import find_java  # noqa: E402
 
     java = find_java()

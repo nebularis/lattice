@@ -972,6 +972,10 @@ run = "python spikes/formal-prover/env/smoke.py"
 description = "Build every tools/proofs/<layer>/ Isabelle session natively and run the proof gate (ADR-A-FM2). Pass a layer name to build only that one, or a spike session's name, multi-store-model, to build and gate that spike"
 run = "python tools/proofs/check.py"
 
+[tasks."bootstrap:tla-tools"]
+description = "Install the TLA+ tools jar the models' checks run TLC from, at the release and SHA-256 pinned in tools/models/tla_tools.py, under LATTICE_FORMAL_ROOT beside the native Isabelle (MSA-I6). On demand, never part of bootstrap. TLA2TOOLS_JAR, where set, names another jar and wins"
+run = "python tools/models/tla_tools.py"
+
 [tasks."check:models-multi-store"]
 depends = ["check:models-multi-store-runner"]
 description = "Check the TLA+ models of tools/models/multi-store-protocols with TLC, each run's heap sized from the manifest and bounded by a quarter of physical memory, what mem_check reads as available and LATTICE_MODELS_MAX_HEAP_MB (MSA-I6). Takes configuration names, a tier (base, the default, wide or all) or a pattern, and --jobs, --heap-mb, --max-minutes and --list. Needs TLA2TOOLS_JAR and mem_check, which bootstrap installs, and says what it skipped without either. Fails only where TLC's verdict differs from the manifest's. Runs the runner's own tests first. Run on demand, not part of check"
@@ -979,7 +983,7 @@ run = "python tools/models/check_tlc.py"
 
 [tasks."check:models-multi-store-runner"]
 description = "Test the TLC runner's sizing and verdict, tools/models/check_tlc.py, without Java or TLC (MSA-I6). check:models-multi-store runs it first"
-run = "python -m pytest tools/models/test_check_tlc.py -q"
+run = "python -m pytest tools/models/test_check_tlc.py tools/models/test_tla_tools.py -q"
 
 [tasks."check:models-multi-store-traces"]
 depends = ["check:models-multi-store-traces-runner"]
