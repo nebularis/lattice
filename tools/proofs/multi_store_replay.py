@@ -44,6 +44,10 @@ def rel(path: Path) -> str:
     return Path(os.path.relpath(path, PROOFS)).as_posix()
 
 
+# On Windows the driver hands the command to a shell, which needs the pattern quoted. Elsewhere it runs Isabelle directly,
+# where the quotes would be part of the pattern and match nothing.
+EXPORTED = "'*:code/**'" if os.name == "nt" else "*:code/**"
+
 def isabelle(*args: str) -> subprocess.CompletedProcess:
     command = [sys.executable, str(DRIVER), "--route", "native", "--workdir", str(PROOFS), "isabelle", *args]
     return subprocess.run(command, cwd=ROOT, capture_output=True, encoding="utf-8", errors="replace")
@@ -79,7 +83,7 @@ def main() -> int:
 
     export = OUT / "export"
     step("isabelle export", isabelle("export", "-d", "base", "-d", "shared", "-d", rel(SPIKE), "-n", "-O", rel(export),
-                                     "-x", "'*:code/**'", SESSION))
+                                     "-x", EXPORTED, SESSION))
     generated = export / f"{SESSION}.Export" / "code" / "multi_store_model.scala"
     if not generated.is_file():
         raise SystemExit(f"no generated Scala at {generated}")

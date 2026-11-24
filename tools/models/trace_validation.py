@@ -599,7 +599,7 @@ def build_interpreter() -> Path:
         raise SystemExit("the session did not build or its gate failed")
     export = OUT / "export"
     replay.step("isabelle export", replay.isabelle("export", "-d", "base", "-d", "shared", "-d", replay.rel(replay.SPIKE), "-n", "-O",
-                                                   replay.rel(export), "-x", "'*:code/**'", replay.SESSION))
+                                                   replay.rel(export), "-x", replay.EXPORTED, replay.SESSION))
     generated = export / f"{replay.SESSION}.Export" / "code" / "multi_store_model.scala"
     if not generated.is_file():
         raise SystemExit(f"no generated Scala at {generated.relative_to(ROOT).as_posix()}")
