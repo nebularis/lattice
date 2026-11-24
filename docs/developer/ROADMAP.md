@@ -27,32 +27,32 @@
 
 <!-- BEGIN GENERATED work-board-glance. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Built from the status records on 25 branches, the units' own state from this tree, the newest board day 2026-11-23.
+Built from the status records on 26 branches, the units' own state from this tree, the newest board day 2026-11-24.
 
 | Unit | Kind | State | Next | Slices | Moved on |
 |---|---|---|---|---|---|
 | [applied-insurance-reference](plans/applied-insurance-reference.md) | epic | built 2026-11-02 | AIR-3.3 | 55 planned, 10 built, 5 merged |  |
-| [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-11-02 | AOR-1 | 11 merged, 7 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
+| [applied-ontology-readiness](plans/applied-ontology-readiness.md) | unit | built 2026-11-02 | AOR-1 | 11 merged, 7 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
 | [asset-class](plans/asset-class.md) | unit | built 2026-11-08 | ASC-1 | 3 built |  |
-| [component-administration](plans/component-administration.md) | unit | planned | ADM-0 | 3 planned | docs/placement-vehicles-structure, spi/multi-store-architecture |
-| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | merged 2026-11-02 | CCS-9b.3 | 21 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged | docs/placement-vehicles-structure, realign/config-authoring-studio, spi/multi-store-architecture, spi/worktree-s |
+| [component-administration](plans/component-administration.md) | unit | planned | ADM-0 | 3 planned | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s2 |
+| [computable-contract-substrate](plans/computable-contract-substrate.md) | multi-slice unit | merged 2026-11-02 | CCS-9b.3 | 21 merged, 14 planned, 7 blocked, 5 briefed, 4 tagged | docs/placement-vehicles-structure, realign/config-authoring-studio, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
 | [documentation-link-repair](plans/documentation-link-repair.md) | unit | planned |  | no board |  |
 | [eligibility-compiler](plans/eligibility-compiler.md) | unit | built 2026-09-25 |  | no board |  |
 | [ensemble](plans/ensemble.md) | unit | briefed | ES-0 | 8 planned, 2 briefed |  |
 | [formal-methods-track-b](plans/formal-methods-track-b.md) | phase | building 2026-10-09 · built 2026-10-09 on realign/config-authoring-studio | FMB-1 | 5 built, 1 planned, 1 building |  |
 | [formal-methods-track-c](plans/formal-methods-track-c.md) | phase | built 2026-10-27 | FMC-1 | 4 built, 3 planned |  |
 | [formal-methods-track-e](plans/formal-methods-track-e.md) | phase | built 2026-11-09 | FME-1.0 | 5 planned, 3 built, 1 merged, 1 dropped |  |
-| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-02 | FMH-2.12 | 34 merged, 11 planned, 8 built, 1 briefed | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
+| [formal-methods-track-h](plans/formal-methods-track-h.md) | phase | built 2026-11-02 | FMH-2.12 | 34 merged, 11 planned, 8 built, 1 briefed | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
 | [formal-methods](plans/formal-methods.md) | epic | built 2026-11-02 | FM-D0 | 8 built, 1 merged, 1 planned | ccs-trunk, realign/config-authoring-studio |
 | [git-hooks](plans/git-hooks.md) | unit | built 2026-11-18 | GH-0 | 7 built |  |
 | [identity-minting](plans/identity-minting.md) | unit | built 2026-09-24 | IM-0 | 4 built, 1 planned |  |
-| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-11-02 · verified 2026-10-17 on realign/config-authoring-studio | OD-8 | 17 merged, 6 planned, 1 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
+| [improved-ontology-documentation](plans/improved-ontology-documentation.md) | unit | built 2026-11-02 · verified 2026-10-17 on realign/config-authoring-studio | OD-8 | 17 merged, 6 planned, 1 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
-| [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-1 | 5 built, 4 briefed, 1 merged, 1 building | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
-| [ledger](plans/ledger.md) | unit | built 2026-11-23 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · merged 2026-11-18 on spi/worktree-s · verified 2026-11-16 on spi/sql-backend | LG-3 | 19 merged, 9 built, 5 planned, 2 briefed, 1 blocked | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
+| [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-1 | 5 built, 4 briefed, 1 merged, 1 building | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
+| [ledger](plans/ledger.md) | unit | built 2026-11-24 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · merged 2026-11-18 on spi/worktree-s · verified 2026-11-16 on spi/sql-backend | LG-3 | 19 merged, 8 verified, 5 planned, 2 briefed, 1 built, 1 blocked | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
-| [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-20 | MSA-I2 | 16 verified, 7 planned, 6 merged, 2 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
+| [multi-store-architecture](plans/multi-store-architecture.md) | unit | built 2026-11-20 | MSA-I2 | 16 verified, 6 built, 6 merged, 2 planned, 1 building | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
 | [ontology-semantic-versioning](plans/ontology-semantic-versioning.md) | unit | built 2026-11-03 |  | no board |  |
@@ -63,7 +63,7 @@ Built from the status records on 25 branches, the units' own state from this tre
 | phase-2-status | unit | planned |  | no board |  |
 | phase-3-status | unit | planned |  | no board |  |
 | phase-4-status | unit | planned |  | no board |  |
-| [projection-maintenance](plans/projection-maintenance.md) | multi-slice unit | built 2026-11-02 | PM-0 | 6 built, 2 planned |  |
+| [projection-maintenance](plans/projection-maintenance.md) | multi-slice unit | built 2026-11-02 | PM-0 | 6 built, 3 planned | claude/modest-ramanujan-cgvs0p |
 | [python-test-melting](plans/python-test-melting.md) | unit | built 2026-10-27 |  | no board |  |
 | rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 2 built, 1 planned |  |
 | [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | built 2026-10-31 | PB-1 | 17 built |  |
@@ -72,7 +72,7 @@ Built from the status records on 25 branches, the units' own state from this tre
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
-| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-12 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 | VM-9 | 9 merged, 4 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s |
+| [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-12 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 | VM-9 | 9 merged, 4 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
 | [word-authoring-poc](plans/word-authoring-poc.md) | multi-slice unit | built 2026-10-10 | WA-0 | 13 built |  |
 | [work-board](plans/work-board.md) | multi-slice unit | built 2026-11-04 | WB-0 | 11 built, 1 briefed |  |
@@ -345,8 +345,8 @@ gantt
     LG-0 examples :done, lg0, 2026-10-27, 2026-10-28
     LG-1 the configuration document :done, lg1, 2026-10-27, 2026-10-28
     LG-10 the residual rule published :done, lg10, 2026-11-09, 2026-11-16
-    LG-11 conversion leaves the ledger :lg11, 2026-11-19, 2026-11-20
-    LG-12 which draws an account :lg12, 2026-11-19, 2026-11-20
+    LG-11 conversion leaves the ledger :lg11, 2026-11-19, 2026-11-24
+    LG-12 which draws an account :lg12, 2026-11-19, 2026-11-24
     LG-13 the insurance example cap :done, lg13, 2026-11-10, 2026-11-16
     LG-14 a benchmark of the credit :done, lg14, 2026-11-11, 2026-11-16
     LG-15 LG-14 gaps closed native :done, lg15, 2026-11-11, 2026-11-16
@@ -360,10 +360,10 @@ gantt
     LG-22 LG-19 follow-ups rows named :done, lg22, 2026-11-15, 2026-11-16
     LG-23 the rounding difference :done, lg23, 2026-11-17, 2026-11-19
     LG-24 the merge policy node :done, lg24, 2026-11-17, 2026-11-18
-    LG-25 postings as decided :lg25, 2026-11-19, 2026-11-20
-    LG-26 merges as decided :lg26, 2026-11-19, 2026-11-20
-    LG-27 the ledger node :lg27, 2026-11-19, 2026-11-20
-    LG-28 the account definition as a :lg28, 2026-11-19, 2026-11-20
+    LG-25 postings as decided :lg25, 2026-11-19, 2026-11-24
+    LG-26 merges as decided :lg26, 2026-11-19, 2026-11-24
+    LG-27 the ledger node :lg27, 2026-11-19, 2026-11-24
+    LG-28 the account definition as a :lg28, 2026-11-19, 2026-11-24
     LG-29 the record and the key of an :lg29, 2026-11-23, 2026-11-24
     LG-30 the corrections the review of :lg30, 2026-11-23, 2026-11-24
     LG-32 a benchmark of a balance read :lg32, 2026-11-23, 2026-11-24
@@ -385,6 +385,7 @@ gantt
     MSA-F12 a reply built from an :msaf12, 2026-11-19, 2026-11-20
     MSA-F13 the Java topology refuses a :msaf13, 2026-11-19, 2026-11-20
     MSA-F14 a command digest separates :msaf14, 2026-11-19, 2026-11-20
+    MSA-F15 a creation under a document id :msaf15, 2026-11-23, 2026-11-24
     MSA-F2 a batch the store refuses for :msaf2, 2026-11-18, 2026-11-20
     MSA-F3 a command id resent with a :msaf3, 2026-11-18, 2026-11-20
     MSA-F4 the queue topology states each :msaf4, 2026-11-18, 2026-11-20
@@ -394,14 +395,18 @@ gantt
     MSA-F8 a failure of the stream :msaf8, 2026-11-18, 2026-11-20
     MSA-F9 a new document save that :msaf9, 2026-11-18, 2026-11-20
     MSA-I1 spikes multi-store-shape-cens :done, msai1, 2026-11-17, 2026-11-18
+    MSA-I10 two families in one mapping :msai10, 2026-11-24, 2026-11-25
     MSA-I11 the logical :done, msai11, 2026-11-17, 2026-11-18
     MSA-I12 spikes multi-store-emitted-to :done, msai12, 2026-11-17, 2026-11-18
     MSA-I13 a PostgreSQL test fixture :msai13, 2026-11-19, 2026-11-20
+    MSA-I14 a design for the studio :active, msai14, 2026-11-23, 2026-11-24
     MSA-I2 the read-set :msai2, 2026-11-18, 2026-11-19
     MSA-I3 the :done, msai3, 2026-11-17, 2026-11-18
     MSA-I4 four operations :done, msai4, 2026-11-17, 2026-11-18
+    MSA-I5 the prover spike. :msai5, 2026-11-23, 2026-11-24
     MSA-I5a the shared proof session :msai5a, 2026-11-19, 2026-11-20
-    MSA-I6 tools models multi-store-prot :msai6, 2026-11-18, 2026-11-19
+    MSA-I6 tools models multi-store-prot :msai6, 2026-11-18, 2026-11-24
+    MSA-I7 the ledger benchmark with a :msai7, 2026-11-23, 2026-11-24
     MSA-I9 spikes multi-store-stream-pro :done, msai9, 2026-11-17, 2026-11-18
 ```
 
@@ -875,7 +880,7 @@ Ensemble is proposed on `docs/placement-vehicles-structure`, with its sketch and
 
 **FME-0 and LG-8 were built on 2026-11-09**, on machine S, on `fm/prelude-and-ledger-proofs`. Track E's prelude, `LatticeBase` in `tools/proofs/base/`, imports the nineteen `HOL-Library` theories the layers' proofs reach for, and every layer session parents on it. Its first build took a minute and a half, and a run that finds it current takes seconds. On it the ledger proofs widen: order independence over multisets, the availability bound at every step of an allocation, largest-remainder rounding exact and lawful over whole units, and a rounded allocation across accounts that takes from each exactly what the exact one takes. LM1 waits on LG-Q11. LG-8 raised one finding for the maintainer: `ldg:ToFirstInOrder` can give a residual unit to a key of weight zero, so it is lawful only on positive weights.
 
-**Where the ledger is, 2026-11-20.** The target kernel is in the README and extracted (LG-9), its 51 laws are proved (LG-20), and the merge policy node (LG-24) and the rounding difference (LG-23) are declared, all on `main` in release 0.22.0 and verified. The rework of the vocabulary and the runtime records, LG-11, LG-25 to LG-28 and LG-12, is built on machine S, run again on macOS and reviewed on 2026-11-20. It is built as decided, and the maintainer answered its packs' questions that day, in the ledger's [status record](status/ledger.md). The review found that an account could never reach a later version of its definition. The maintainer decided that the same account folds against the version in force by position, briefed as LG-29 in a [sketch](sketches/ledger-definition-versions-in-force.md) with eleven worked histories. LG-Q51 is answered, the kernel gains an event, the record is named a supersession (LG-Q54), what versions may differ in is STD-338 (LG-Q50), and LG-Q48, LG-Q49 and LG-Q53 are answered. LG-Q52 and LG-Q55 are answered too, the first on the benchmark LG-32, and the whole rule is drafted as ADR-A131's addendum of 2026-11-23. The build is three slices, LG-35 for the kernel and its proofs, LG-29 for the record and the key, and LG-34 for the laws. It also found that no text says where a pass's position comes from, which is LG-Q47, answered on a [model](../../tools/models/ledger-pass-revision/README.md) and drafted as ADR-A131's addendum of 2026-11-20. LG-30 carries that and the review's corrections and LG-31 holds a credit to the rule a draw is held to. LG-3, Behaviour's migration, is briefed in a [sketch](sketches/behaviour-on-the-ledger.md) whose questions BHL-Q1 to BHL-Q7 are open. The paragraphs above are the record of how the layer was first built.
+**Where the ledger is, 2026-11-24.** The target kernel is in the README and extracted (LG-9), its 51 laws are proved (LG-20), and the merge policy node (LG-24) and the rounding difference (LG-23) are declared, all on `main` in release 0.22.0 and verified. The rework of the vocabulary and the runtime records, LG-11, LG-25 to LG-28 and LG-12, is built on machine S, run again on macOS and reviewed on 2026-11-20. It is built as decided, and the maintainer answered its packs' questions that day, in the ledger's [status record](status/ledger.md). The review found that an account could never reach a later version of its definition. The maintainer decided that the same account folds against the version in force by position, briefed as LG-29 in a [sketch](sketches/ledger-definition-versions-in-force.md) with eleven worked histories. LG-Q51 is answered, the kernel gains an event, the record is named a supersession (LG-Q54), what versions may differ in is STD-338 (LG-Q50), and LG-Q48, LG-Q49 and LG-Q53 are answered. LG-Q52 and LG-Q55 are answered too, the first on the benchmark LG-32, and the whole rule is drafted as ADR-A131's addendum of 2026-11-23. The maintainer verified LG-11, LG-25 to LG-28, LG-12, LG-30 and LG-32 on 2026-11-24 and answered LG-Q58 as (a), and the rule of LG-Q57 and LG-Q58 is drafted as ADR-A131's addendum of 2026-11-24, Proposed. The build is three slices, LG-35 for the kernel and its proofs, LG-29 for the record and the key, and LG-34 for the laws. It also found that no text says where a pass's position comes from, which is LG-Q47, answered on a [model](../../tools/models/ledger-pass-revision/README.md) and drafted as ADR-A131's addendum of 2026-11-20. LG-30 carries that and the review's corrections and LG-31 holds a credit to the rule a draw is held to. LG-3, Behaviour's migration, is briefed in a [sketch](sketches/behaviour-on-the-ledger.md) whose questions BHL-Q1 to BHL-Q7 are open. The paragraphs above are the record of how the layer was first built.
 
 | | Ensemble | Ledger |
 |---|---|---|
@@ -943,16 +948,17 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 54 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-23 | 110 | pushed | SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-D1, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P1c, SVA-P2, SVA-P3, SVA-P3a, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S2a, SVA-S2b, SVA-S2c, SVA-S3, SVA-U1, SVA-V1, SVA-X1, SVA-X2, SVA-X3, SVA-X4 |
-| `docs/placement-vehicles-structure` | 2026-11-23 | 123 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-24 | 137 | pushed | PM-5, SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-D1, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P1c, SVA-P2, SVA-P3, SVA-P3a, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S2a, SVA-S2b, SVA-S2c, SVA-S2d, SVA-S2e, SVA-S2f, SVA-S2g, SVA-S2h, SVA-S2i, SVA-S3, SVA-U1, SVA-V1, SVA-X1, SVA-X2, SVA-X3, SVA-X4 |
+| `docs/placement-vehicles-structure` | 2026-11-23 | 124 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 33 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 1 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 167 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
-| `spi/multi-store-architecture` | 2026-11-23 | 119 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
+| `spi/multi-store-architecture` | 2026-11-24 | 152 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I10, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5, MSA-I5a, MSA-I6, MSA-I7, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `spi/sql-backend` | 2026-11-17 | 3 | pushed | no mark |
 | `spi/worktree-s` | 2026-11-19 | 69 | pushed | AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-F1, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
+| `spi/worktree-s2` | 2026-11-23 | 125 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `tutorial/studio-guide` | 2026-11-10 | 2 | pushed | no mark |
 | `vyvid-migration` | 2026-11-05 | 34 | pushed | no mark |
 | `vyvid-quanta-builtin` | 2026-11-08 | 3 | pushed | no mark |
@@ -1014,7 +1020,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 34 Proposed decisions, 23 pending design decisions, 126 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 34 Proposed decisions, 23 pending design decisions, 124 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -1089,7 +1095,7 @@ Every row of [pending-design-decisions.md](pending-design-decisions.md), which l
 
 ## 10. The maintainer's queue
 
-In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-06. **Checked 2026-11-23.** Item 1's branch, `fix/studio-worker-heartbeat`, is no longer on the remote, and the two worktrees of item 6 are gone, so both look done but for the ours-merge on `ccs-trunk`. Item 9's branch is still on the remote. Items 12 and 13 come first for the two machines' work, and within item 12 the order we propose is the verdicts on the six rows, then LG-30 and LG-29, then LG-35 and LG-34.
+In the order that unblocks the most work, proposed by the agent at each handoff and ordered by the maintainer. Rewritten 2026-11-06. **Checked 2026-11-23.** Item 1's branch, `fix/studio-worker-heartbeat`, is no longer on the remote, and the two worktrees of item 6 are gone, so both look done but for the ours-merge on `ccs-trunk`. Item 9's branch is still on the remote. Items 12 and 13 come first for the two machines' work, and within item 12 the order we propose is the review of ADR-A131's addendum of 2026-11-24, then LG-35 and LG-34.
 
 1. **Verify and merge `fix/studio-worker-heartbeat`**, which keeps the studio worker alive through a job of minutes, so validation no longer shows Validating without end and a compilation or a proposal finishes. Run `mise run check:config-studio`, `mise run studio:liveness` and `mise run test:config-studio-browser`, and note that the studio's stack now starts a second worker for the long queue.
 2. **Finish `vyvid-migration` on `main`**, squash-merged 2026-11-06 (plan [vyvid-migration](plans/vyvid-migration.md)). In the main checkout run `vyd trust` and `mise run bootstrap`, and commit the regenerated regions. The addendum of 2026-11-06 on ADR-A152, accepted, has VM-1 reopened and verified for `bootstrap:vyvid` leaving an editable install alone. The index, the board and the skills are Вивід's, and the triple-store record lives in its domain at tag `v0.1.0`. Every other branch merges `main` in before any other work.
@@ -1102,7 +1108,7 @@ In the order that unblocks the most work, proposed by the agent at each handoff 
 9. **Delete `config_studio_GD`** on the remote, which holds nothing `main` lacks.
 10. **Accept the tutorial and bring it onto `main`.** Read it end to end (TUT4-05), merge `main` into `tutorial/guide`, and squash-merge it with the AI disclosure trailer. The Configuration Studio guide goes on in `tutorial/studio-guide` (plan `lattice-tutorial` §9).
 11. **Start OD-DOC4, the layer interactions record**, once the ledger's design is settled (the scenarios note ruled through, LG-Q23 decided, as it was on 2026-11-13, machine S's brief written). One maintained architecture document on how the layers work together at design time and at runtime, with two events traced end to end, [briefed](plans/improved-ontology-documentation.md) with its inputs, and kept current by STD-326.
-12. **The ledger, what waits on the maintainer**, refreshed 2026-11-20. The rework of the vocabulary is built and reviewed, and how each of its questions was settled is in the ledger's [status record](status/ledger.md). Eight things are left. Answer LG-Q58 of the [sketch on a later version of a definition](sketches/ledger-definition-versions-in-force.md), which definitions one supersession may name. LG-29 is built, and LG-Q57 is answered. ADR-A131's addenda of 2026-11-20 and 2026-11-23 were accepted on 2026-11-23. Give a verdict on LG-11, LG-25 to LG-28, LG-12, LG-30 and LG-32, each probed on 2026-11-23, with LG-30 built that day. LG-35, the kernel and its proofs, and LG-34 follow. Answer BHL-Q1 to BHL-Q7 of the [brief for LG-3](sketches/behaviour-on-the-ledger.md), which hold Behaviour's migration. Answer WPG-Q2, where the declared ceiling lives, in the [waterfall proofs sketch](sketches/waterfall-proofs-and-the-generality-gap.md). File the [drafted report](notes/upstream-sparql-engine-reports.md#oxigraph-on-disk-store-loses-concurrent-updates) on Oxigraph on disk, which loses guarded writes by a design choice of Oxigraph 0.5.0 (TSD-73, TD-162), and whose patch is built and tested on `v0.5.13` and on `main`. Read LG-22's figures, where a reading B that follows the account's policy (STD-336) is still owed in the benchmark. PDD-23, a read over a set of ledgers, waits in the [register](pending-design-decisions.md).
+12. **The ledger, what waits on the maintainer**, refreshed 2026-11-24. The rework of the vocabulary is built and reviewed, and how each of its questions was settled is in the ledger's [status record](status/ledger.md). Seven things are left. Review ADR-A131's addendum of 2026-11-24, drafted as Proposed for LG-Q57 and LG-Q58 of the [sketch on a later version of a definition](sketches/ledger-definition-versions-in-force.md). LG-29 is built, and LG-Q57 and LG-Q58 are answered. ADR-A131's addenda of 2026-11-20 and 2026-11-23 were accepted on 2026-11-23. LG-11, LG-25 to LG-28, LG-12, LG-30 and LG-32 were verified on 2026-11-24. LG-35, the kernel and its proofs, and LG-34 follow. Answer BHL-Q1 to BHL-Q7 of the [brief for LG-3](sketches/behaviour-on-the-ledger.md), which hold Behaviour's migration. Answer WPG-Q2, where the declared ceiling lives, in the [waterfall proofs sketch](sketches/waterfall-proofs-and-the-generality-gap.md). File the [drafted report](notes/upstream-sparql-engine-reports.md#oxigraph-on-disk-store-loses-concurrent-updates) on Oxigraph on disk, which loses guarded writes by a design choice of Oxigraph 0.5.0 (TSD-73, TD-162), and whose patch is built and tested on `v0.5.13` and on `main`. Read LG-22's figures, where a reading B that follows the account's policy (STD-336) is still owed in the benchmark. PDD-23, a read over a set of ledgers, waits in the [register](pending-design-decisions.md).
 13. **The multi-store architecture epic**, refreshed 2026-11-20 ([status](status/multi-store-architecture.md)). `docs/placement-vehicles-structure` is merged into `spi/multi-store-architecture`, which is a merging point from here. Machine S's second bundle is there, with MSA-F1 to MSA-F9, MSA-I2 reworked on the owner's ledger, and MSA-I6 in part. The fixes and the models are reviewed by reading, which planned MSA-F10 to MSA-F14, and wait on the maintainer's verdict. MSA-I14, a design that admits no inconsistent state, is urgent and comes before MSA-I8. What is left of the epic is MSA-I5a, MSA-I5, the rest of MSA-I6, MSA-I7, MSA-I8 and MSA-I10, of which the last three wait on the ledger's rework. Machine S builds them and the rework on `spi/worktree-s`. Its bundles are imported there, that branch is merged into `spi/multi-store-architecture`, and the ledger's branch is merged in after it. What waits on the maintainer is a verdict on each fix, the addendum to ADR-A149's decision 13 that MSA-F7's Validation Pack drafts, and MSA-I2's candidate R6 (PDD-23).
 
 ## 11. Completed units

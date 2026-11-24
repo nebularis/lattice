@@ -331,6 +331,8 @@ Instrument and Wording each declare an `Amendment`, for the act and for the chan
 
 *Leaning (a).* The reason we gave for one tree, a home in a root's unit, does not survive a keyed root, and (c) brings back a record for each account where a root is keyed. What (b) adds beyond (a) is a restriction with no law that needs it. One gap that the question exposed is closed whatever the answer. A supersession with a period key that also named a version stating no recurrence would have reached none of that version's accounts, and `ldg:SupersessionPeriodFromRecurrenceShape` now refuses it. Where a supersession is stored is then a question for the record families Persistence has yet to declare for the ledger, and the multi-store unit's.
 
+**Answered 2026-11-24, (a).** Decided by the maintainer. A supersession names later versions of any definitions of one owner whose versions state one recurrence, or none, which is what LG-29 built. Its rule and LG-Q57's are promoted in ADR-A131's addendum of 2026-11-24, drafted as Proposed.
+
 ## 5. What LG-29, LG-34 and LG-35 build
 
 The work is three slices, since one of 350k tokens across the vocabulary, the laws and the proofs is more than a review can hold. The kernel goes first, since a proof may still refute a detail of the rule and the laws cite its theorems.

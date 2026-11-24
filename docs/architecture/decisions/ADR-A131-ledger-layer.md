@@ -608,6 +608,37 @@ The case of a unit short in the second addendum of 2026-11-16, members with a ba
 
 **Releases.** The supersession, the account's identification by its definition's identity, the two bounds and the eighth reason change published meaning, a minor release of the substrate at major version zero, made with the change to the layer's documents that states them.
 
+## Addendum (2026-11-24): an account opens under the version in force at the start of its period, and a supersession holds the versions of one period
+
+**Status of this addendum:** Proposed 2026-11-24, for the maintainer's review. The maintainer decided the first two rules on 2026-11-23 and the third on 2026-11-24, from four kinds of account worked under each option and from the size of each record. Decision 8 says new evaluation semantics come by an addendum with conformance cases, and the cases are at its end.
+
+**Narrows the addendum of 2026-11-23.** That addendum has a supersession reach the accounts of its owner whose definition has a version among those it names. It reaches those of them that are in its period. The addendum also left open which version an account opens under, which this one states.
+
+**An account opens under the version in force at the start of its period.** `ldg:ofDefinition` names the version in force for the account's owner at the first position of the account's period, and at the first position of all where its definition states no period. It is stated once, when the account is minted, and is never rewritten. The same facts recorded in another order then give the same account, where a rule that took the version an account's first draw saw would depend on whether that draw was recorded before or after a supersession.
+
+**A supersession holds the versions of one period.** Where the definitions it names state a period recurrence, a supersession states the period its effective position falls in, as `ldg:periodKey`, and reaches the accounts of that period. An account of a later period opens under the later version and needs no record. An account of an earlier period is never reached, so a draw recorded late against an earlier period is held to that period's terms. A supersession that states a period names no version that states no recurrence. The accounts a supersession reaches are found by an equality of period keys, which the records hold, and never by comparing a position with the bounds of a period.
+
+**A change of terms is written once for each period whose accounts it changes.** A pass that changes terms under two recurrences writes two supersessions. A change in force from a position in an earlier period, recorded in a later one, writes one for each period, since the later period's accounts opened under the earlier version.
+
+**A supersession names later versions of any definitions of one owner.** They need not be under one root definition. A supersession is on no account, and names its owner as a ledger does. Two narrower forms were weighed and not taken, a supersession held to one tree and a supersession on the tree's root account. Neither gives it one place among a root's records where the root is keyed, since a keyed root has an account for each key value, and the second writes a record for each of them.
+
+**The terms a draw was decided under** are read from the supersessions, never from `ldg:ofDefinition` alone, since an account's version is the one its period opened under.
+
+**The cost.** One lookup when an account is minted, 0.1 to 0.3 ms on Oxigraph, paid once in an account's life. One statement more on a supersession, for its period, so five and one for each later version. A change to a tree of 14 definitions and to a separate definition of one is 20 statements in one record, where a record held to one tree would make it 25 in two. A raise of a quota keyed by 1,000 sites is 6 statements, where a record on each root account would make it 5,000.
+
+**Conformance cases.** One definition with a yearly period, whose first version states 10 and whose later version states 15 and is in force from position 150. Positions 0 to 99 are last year, 100 to 199 this year and 200 to 299 next year. A draw is written as its amount and its effective position, and the steps are in the order they are recorded.
+
+| Case | Given | Result |
+|---|---|---|
+| last year's account | 8 at 50, the version of 15 from 150, then 4 at 60 | refused. Last year's account is not reached, and 12 would be drawn of 10 |
+| this year's account, open before the supersession | 8 at 120, the version of 15 from 150, then 4 at 160 | granted. 12 is drawn of 15 |
+| this year's account, first drawn on after the supersession | the version of 15 from 150, then 12 at 120 | refused. The account opens under the first version, and before 150, 12 would be drawn of 10 |
+| next year's account | the version of 15 from 150, then 12 at 220 | granted. The account opens under the later version, and no supersession names its period |
+
+**What this does not decide.** Where a supersession is stored in a partitioned store, which waits on the record families the ledger has yet to declare for persistence.
+
+**Releases.** None of its own. The layer's documents state both rules with the change the addendum of 2026-11-23 names.
+
 ## Provenance
 
 **Unit:** [`ledger`](../../developer/plans/ledger.md)
@@ -656,3 +687,5 @@ The maintainer published this ADR on 2026-10-26, once the README of its first sl
 **The addendum of 2026-11-20.** LG-Q47 of the [Ledger plan](../../developer/plans/ledger.md), raised by the review of the vocabulary's rework, which found that the layer holds a ledger's passes to one order of position and revision and that no text says who gives a pass its position. The maintainer decided on 2026-11-20, on the model, for the later of the two read with the revision. The correction to the layer's documents is a slice of its own.
 
 **The addendum of 2026-11-23.** LG-Q48 to LG-Q55 of the [sketch on an account under a later version of its definition](../../developer/sketches/ledger-definition-versions-in-force.md). The review of the vocabulary's rework found that an account could never reach a later version of its definition, since an account named one version and that version was part of its key, where the [sketch on accounts from instruments](../../developer/sketches/ledger-accounts-from-instruments.md) had agreed on 2026-11-12 that a posting folds against the definition in force when it took effect. The maintainer decided on 2026-11-20 for the same account under the version in force, and answered what that left between then and 2026-11-23, the last of it on a benchmark built as LG-32. What versions may differ in is also STD-338. The maintainer accepted the wording of both addenda on 2026-11-23.
+
+**The addendum of 2026-11-24.** LG-Q57 and LG-Q58 of the [sketch on an account under a later version of its definition](../../developer/sketches/ledger-definition-versions-in-force.md). The addendum of 2026-11-23 left open which version an account opens under, and building the record met it. The maintainer decided on 2026-11-23 for the version in force at the start of the account's period, with the supersession stating its period, and on 2026-11-24 that a supersession may name any definitions of one owner, after a narrowing to one tree was found not to survive a tree whose root is keyed. The conformance cases are worked by hand from the two bounds of the addendum of 2026-11-23, and no model computes them yet.

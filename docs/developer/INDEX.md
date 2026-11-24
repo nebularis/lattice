@@ -45,7 +45,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | iri-patterns-post-3866b21-remediation | unit |  | merged 2026-09-23 |  | [status](status/iri-patterns-post-3866b21-remediation.md) |
 | knowledge-index | unit |  | building 2026-10-26 |  | [status](status/knowledge-index.md) |
 | lattice-tutorial | multi-slice unit |  | building 2026-11-06 | TUT-1 | [plan](plans/lattice-tutorial.md), [status](status/lattice-tutorial.md) |
-| ledger | unit | LG | built 2026-11-23 | LG-3 | [plan](plans/ledger.md), [status](status/ledger.md), 27 Validation Packs |
+| ledger | unit | LG | built 2026-11-24 | LG-3 | [plan](plans/ledger.md), [status](status/ledger.md), 27 Validation Packs |
 | llm-training-mtp | unit |  | merged 2026-09-20 |  | [status](status/llm-training-mtp.md) |
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
@@ -424,8 +424,8 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-8 | the proofs widened on HOL-Library, LO1 over multisets, LR3 to LR5, LC3 for every step, LM1 | ledger | merged 2026-11-16 |  | docs/developer/status/ledger.md#board |
 | LG-9 | the target kernel in the README and the 19 claims proved again on it, restated 2026-11-15 in place of the second widening | ledger | merged 2026-11-18 |  | docs/developer/status/ledger.md#board |
 | LG-10 | the residual rule's published definition corrected, one unit at a time to the first proposals in order | ledger | merged 2026-11-16 |  | docs/developer/status/ledger.md#board |
-| LG-11 | conversion leaves the ledger, the conversion terms removed. Validation Pack | ledger | built 2026-11-19 |  | docs/developer/status/ledger.md#board |
-| LG-12 | which draws an account accepts, a shape for compatibility and representability. Validation Pack | ledger | built 2026-11-19 | LG-11 | docs/developer/status/ledger.md#board |
+| LG-11 | conversion leaves the ledger, the conversion terms removed. Validation Pack | ledger | verified 2026-11-24 |  | docs/developer/status/ledger.md#board |
+| LG-12 | which draws an account accepts, a shape for compatibility and representability. Validation Pack | ledger | verified 2026-11-24 | LG-11 | docs/developer/status/ledger.md#board |
 | LG-13 | the insurance example's cap named for what it is, annual-cap | ledger | merged 2026-11-16 |  | docs/developer/status/ledger.md#board |
 | LG-14 | a benchmark of the credit kinds' read cost on every backend | ledger | merged 2026-11-16 |  | docs/developer/status/ledger.md#board |
 | LG-15 | LG-14's gaps closed: native Jena on TDB2, checkpoints, the drawn account's clamp, the loop timed apart, the shortcut | ledger | merged 2026-11-16 |  | docs/developer/status/ledger.md#board |
@@ -438,14 +438,14 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-22 | LG-19's follow-ups: rows named by the share they hold, request lists that continue the preload's stream, a refused request measured, two probes for the unexplained results, and current figur | ledger | merged 2026-11-16 | LG-19 | docs/developer/status/ledger.md#board |
 | LG-23 | the rounding difference declared, its mapping to the kernel stated once, each way of giving and taking a unit proved to settle to the nearest, and cases that hold it | ledger | merged 2026-11-18 |  | docs/developer/status/ledger.md#board |
 | LG-24 | the merge policy node, what an account declares for a merge moved to a policy the account definition refers to | ledger | merged 2026-11-18 |  | docs/developer/status/ledger.md#board |
-| LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed. Validation Pack | ledger | built 2026-11-19 | LG-11 | docs/developer/status/ledger.md#board |
-| LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part. Validation Pack | ledger | built 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
-| LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation. Validation Pack | ledger | built 2026-11-19 | LG-25 | docs/developer/status/ledger.md#board |
-| LG-28 | the account definition as a versioned thing, with the scheme edition it pins. Validation Pack | ledger | built 2026-11-19 | LG-26, LG-27 | docs/developer/status/ledger.md#board |
+| LG-25 | postings as decided, with the credit kind, the amount offered, the cut and the running balance, and the balance record removed. Validation Pack | ledger | verified 2026-11-24 | LG-11 | docs/developer/status/ledger.md#board |
+| LG-26 | merges as decided, with the request, the residual and its account, the seven reasons and the rule for requests of no use in part. Validation Pack | ledger | verified 2026-11-24 | LG-25 | docs/developer/status/ledger.md#board |
+| LG-27 | the ledger node, its profile and revision, the checkpoint's two totals, and a pass named from its ledger and its evaluation. Validation Pack | ledger | verified 2026-11-24 | LG-25 | docs/developer/status/ledger.md#board |
+| LG-28 | the account definition as a versioned thing, with the scheme edition it pins. Validation Pack | ledger | verified 2026-11-24 | LG-26, LG-27 | docs/developer/status/ledger.md#board |
 | LG-29 | the record and the key of an account under a later version of its definition. Sketch, Validation Pack | ledger | built 2026-11-23 | LG-28 | docs/developer/status/ledger.md#board |
-| LG-30 | the corrections the review of 2026-11-20 found and the maintainer accepted, and the tests the probes of 2026-11-23 found missing. Validation Pack | ledger | built 2026-11-23 | LG-28 | docs/developer/status/ledger.md#board |
+| LG-30 | the corrections the review of 2026-11-20 found and the maintainer accepted, and the tests the probes of 2026-11-23 found missing. Validation Pack | ledger | verified 2026-11-24 | LG-28 | docs/developer/status/ledger.md#board |
 | LG-31 | a credit held to the rule a draw is held to | ledger | planned | LG-12 | docs/developer/status/ledger.md#board |
-| LG-32 | a benchmark of a balance read under each way of writing a supersession, for LG-Q52. Validation Pack | ledger | built 2026-11-23 |  | docs/developer/status/ledger.md#board |
+| LG-32 | a benchmark of a balance read under each way of writing a supersession, for LG-Q52. Validation Pack | ledger | verified 2026-11-24 |  | docs/developer/status/ledger.md#board |
 | LG-33 | the form of a query for absence, a probe and a finding for TD-178, taken at the end of the unit | ledger | planned |  | docs/developer/status/ledger.md#board |
 | LG-34 | the laws and the examples of an account under a later version | ledger | briefed | LG-29, LG-35 | docs/developer/status/ledger.md#board |
 | LG-35 | the kernel and its proofs for a supersession | ledger | briefed | LG-28 | docs/developer/status/ledger.md#board |
