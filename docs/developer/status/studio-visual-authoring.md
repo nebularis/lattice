@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-24. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-24. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -63,7 +63,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2e | the projection expression vocabulary and the lowering of a derivation | built 2026-11-24, building 2026-11-23 | SVA-S2d |
 | SVA-S2f | `mork_rdf` compiles a derivation | built 2026-11-24, building 2026-11-24 | SVA-S2e |
 | SVA-S2g | graph construction projections | built 2026-11-24 | SVA-S2f |
-| SVA-S2h | join projections | planned | SVA-S2f |
+| SVA-S2h | join projections | building 2026-11-24 | SVA-S2f |
 | SVA-S2i | expansion projections | planned | SVA-S2f |
 | SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2g, SVA-S2h, SVA-S2i |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
@@ -257,3 +257,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-24: SVA-S2g built, [Validation Pack](../validation/SVA-S2g.md). A graph construction states its node on its result-target binding, lowers into a scheme `mork_rdf` compiles with its existing cases, and an instance the guard excludes contributes nothing, which two new checks and a mapping review finding report. The addenda to ADR-A18 and ADR-A23 for this kind are Proposed, with ADR-A41's, and wait for the maintainer to accept together at the pause after SVA-S2g.
 - 2026-11-24: reviewed SVA-S2g and re-ran its checks. Recorded TD-263, since the disagreement check compares terms and TSD-77 makes equal numbers differ as terms. The Surface README's 24 semicolons in prose are older than this unit, 25 at its base, and are left for the maintainer to say whether this unit tidies them.
 - 2026-11-24: the maintainer accepted the addenda to ADR-A18 (derivations and graph constructions carried across by the lowering, and a scheme naming its contract), ADR-A23 (`mork_rdf` compiles both) and ADR-A41 (a keyed construction takes the mapping review), and asked that the Surface README's semicolons in prose be tidied now. SVA-S2h comes next, with a pause after it.
+- 2026-11-24: SVA-S2h started, after the Surface README's prose is tidied.
