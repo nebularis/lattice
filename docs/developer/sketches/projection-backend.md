@@ -3,7 +3,7 @@
 # Sketch: a projection backend, from a Surface projection contract to queries a step runs
 
 **Unit:** `studio-visual-authoring` (SVA), slice SVA-S2d, raised on 2026-11-23 when the maintainer chose that projections are built in this unit, design first
-**Status:** sketch. SVA-Q24 to SVA-Q30 answered by the maintainer on 2026-11-23. SVA-Q31 to SVA-Q35, raised by SVA-S2g on 2026-11-24, answered by the maintainer on 2026-11-24. No question is open. SVA-S2g built the graph construction case on 2026-11-24
+**Status:** sketch. SVA-Q24 to SVA-Q30 answered by the maintainer on 2026-11-23. SVA-Q31 to SVA-Q35, raised by SVA-S2g on 2026-11-24, answered by the maintainer on 2026-11-24. SVA-S2g built the graph construction case on 2026-11-24. SVA-S2h wrote the join case on 2026-11-24 and paused at SVA-Q36 to SVA-Q41, which are open
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md), slices SVA-S2d and SVA-S2c
 **Builds on:** ADR-A16, ADR-A17, ADR-A18, ADR-A19, ADR-A20, ADR-A23 and ADR-A41 (all Accepted), ADR-A154 with its addendum of 2026-11-20, and `tools/mork_rdf`
 
@@ -149,6 +149,65 @@ WHERE {
 
 What the example gives, over three orders where two name one supplier, is two supplier nodes and three links, each node typed and carrying its code, and the name on the first.
 
+### 2.3 Join, the case and where it stops (SVA-S2h, 2026-11-24)
+
+A join projection combines evidence from more than one carrier, which is the one thing Surface's README says of it. In its simplest generic form each instance of a carrier names, by a value, an instance of a second carrier, and the projection relates the two. For example, each `ex:Order` with an `ex:customerCode` is related to the `ex:Customer` whose `ex:code` is that value.
+
+What exists, read on 2026-11-24:
+
+| What the join needs | What the contract has |
+|---|---|
+| the second carrier | `srf:bindsCarrier` on an evidence binding. The lowering reads it today as a dependency on another contract whose own carrier is that class, which is a different meaning from naming the class a join reaches |
+| the property of each carrier that relates them, and that the relation is equality | nothing. An evidence binding names the property it reads, and no term pairs one on the contract's carrier with one on the second carrier |
+| what is written | the result-target binding's property, which a derivation reads as the value's property and a construction as the link |
+| what an instance with no match writes, and what one with several matches writes | nothing. P2 asks a join for at least one evidence binding and says no more |
+| the review | ADR-A41, which asks a join for a mapping review and, as its addendum says, records it as a finding |
+
+What `mork_rdf` compiles today fits part of the output. A root datum iterating the first carrier, a source-node identity (SVA-S2e), a guard on required evidence and the reports of an excluded instance and an ambiguous identity (SVA-S2g) all carry over. The mapping review finding is SVA-S2g's `MappingReview`, raised for a join where it is raised for a keyed construction. A lookup (Case 6, the `mork_rdf` README section 7.3) is already a join of one kind. It writes, on the instance, the R-Box property with the reference node whose stated property equals the source value as its value, compares by cast, reports `LookupUnresolved` where none matches and `LookupAmbiguous` where several do, and asserts each. What a lookup does not do is read the second carrier from the source graph. It reads only the reference graph, so source data cannot add codes to a lookup (README section 13). A datum that stands for an instance of a second class of the world, reached from the first instance by equality of two values and not by a path, has no case, since a source-node identity takes the node a datum iterates and a contextual datum is glued to its parent by a property and mints its own node. The sketch does not settle whether the join is a lookup over reference data, a new term, or a lookup widened (SVA-Q40).
+
+So the case pauses at SVA-Q36 to SVA-Q41 in section 3. Nothing is built, and the contract, the scheme and the query below are what the leanings give, as placeholders for the maintainer to answer. None of the Surface or MORK terms marked as placeholders exists yet.
+
+**The example on the leanings.** An order names its customer by a code, and a customer has a code and a region. No personal value is spelled into an identifier, since a code is a code a customer is known by and a join links existing nodes and mints none. Each order is linked to the customer whose code it names. The contract states what relates the two carriers and that the result is a link, and it states that a code names at most one customer, so an order with no customer or with several writes no link and is reported:
+
+```turtle
+ex:oc-code a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:customerCode .
+ex:oc-match a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsCarrier ex:Customer ; srf:bindsProperty ex:code .
+ex:oc-link a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ; srf:bindsProperty ex:placedFor ;
+    srf:joinedAs [ a srf:JoinedInstance ;                        # placeholder
+        srf:joinLeft ex:oc-code ; srf:joinRight ex:oc-match ;     # placeholders, equality of the two values
+        srf:joinMatches srf:AtMostOne ] .                         # placeholder
+```
+
+Lowered, in MORK, abridged, with the root a source-node datum over the first carrier as in section 2.2 and a datum beneath it for the second carrier that takes that carrier's node as its identity, guarded by the required evidence, and states the condition. `mork:joinsOn` is a placeholder, the choice (b) of SVA-Q40.
+
+```turtle
+exec:scheme_root a mork:DataMapping, mork:Datum ; mork:mappingScheme exec:scheme ; mork:mappingFor exec:scheme_carrier ;
+    mork:identityRule mork:SourceNodeIdentity ; mork:compositeNarrowerMapping exec:scheme_match .
+exec:scheme_match a mork:DataMapping ; mork:mappingScheme exec:scheme ; mork:broaderApplicative exec:scheme_root ;
+    mork:mappingFor ex:Customer ; mork:identityRule mork:SourceNodeIdentity ;      # the matched instance is the node
+    mork:inverseRBoxMatch ex:placedFor ;                                           # the link, from the order to it
+    mork:appliesWhen exec:scheme_guard ; mork:joinsOn exec:scheme_condition .      # placeholder
+exec:scheme_condition mork:parentRef "<.../customerCode>" ; mork:ownRef "<.../code>" .   # placeholder
+```
+
+Compiled, one query on the leanings. The second carrier's instance is a variable beside the first, the two values meet in one pattern, and the link is the only triple written. The check for a customer count other than one is a second query that counts matches and is not shown:
+
+```sparql
+BASE <https://example.org/lattice/surface/order-customer/out/>
+CONSTRUCT { ?f1 ex:placedFor ?f3 . }
+WHERE {
+  ?f1 rdf:type ex:Order .
+  ?f1 ex:customerCode ?v2 .
+  ?f3 rdf:type ex:Customer .
+  ?f3 ex:code ?v4 .
+  FILTER (?v2 = ?v4)
+}
+```
+
+The comparison of the two values is MORK's lookup comparison, a cast to a stated datatype and a join of the same RDF term by default (MR-17), and not SPARQL's value equality, which the two engines treat differently across integer-derived datatypes (TSD-64). A contract that joins numbers or mixed datatypes states how.
+
+What the example gives, over three orders where two name one customer and one names none, is two links, and the order with no customer reported. A join with a customer count above one, with the contract stating no limit, gives a link for each.
+
 ## 3. Questions
 
 **SVA-Q24. Where is a derivation's operation stated?** (a) In the contract, an expression on the result-target binding over the evidence bindings. (b) In MORK alone, added by hand to the lowered mapping. (c) As an approved template the backend policy names, a reviewed query fragment with its parameters bound by the roles. (b) breaks ADR-A18's deterministic lowering and leaves the contract without its meaning. (c) uses `srf:approvedTemplate`, which exists, but holds query text where the contract states meaning. Leaning (a). **Answered 2026-11-23, (a).**
@@ -174,6 +233,18 @@ What the example gives, over three orders where two name one supplier, is two su
 **SVA-Q34. Which decisions change?** Leaning, as for SVA-Q30: an addendum to ADR-A18 that replaces item 4 for this kind (a graph construction lowers into a scheme whose constructed node is a contextual datum), an addendum to ADR-A23, new laws in the Surface register beside P6 to P9, and minor versions of the Surface and, if (c) of SVA-Q31 needs a term, the MORK module, each released by `mise run version:bump` at the merge. The amendment to ADR-A18 is the maintainer's to decide. **Answered 2026-11-24, as leaned, with the laws named.** One construction on the result-target binding of a graph construction and no other kind. A constructed node states a class, an identity and at least one written value. Each written value names an evidence binding of the same contract. A key binding is required evidence. A run-time check for a keyed node's disagreement. A sentence on how P1, signature scope, reads for a node typed with an authored class. And an addendum to ADR-A18 and ADR-A23 for this kind.
 
 **SVA-Q35. Does a keyed construction take ADR-A41's mapping review?** ADR-A41 asks a mapping review of a join and names none for graph construction. A construction by key merges instances, as a join relates them. (a) A keyed construction takes the mapping review, recorded as a finding as a join's is, and a construction for each instance takes none. (b) Neither takes one. (c) Both take one. Leaning (a), since the merge is where a reviewer's judgement is needed. **Answered 2026-11-24, (a).** A keyed construction takes ADR-A41's mapping review, recorded as a finding the way a join's will be, and a construction for each instance takes none.
+
+**SVA-Q36. What relates the joined instances?** (a) The contract states it, a closed condition on the join statement that pairs an evidence binding on the contract's carrier with one on the second carrier, and the relation is equality of the two values, one pair or several for a composite key. (b) The existing terms alone, with the pairing taken from the order of the evidence bindings or from `srf:bindsCarrier` on one of them. (c) A path already in the graph that reaches the second instance, which is a read path and so a promotion, not a join. (b) leaves the meaning implicit, which SVA-Q32 and SVA-Q33 refused for identity and for missing evidence, and it needs `srf:bindsCarrier` to mean both a dependency on another contract (the lowering reads it so today) and the class a join reaches. (c) needs no join. Leaning (a), equality only, with an operator or a range added when a contract needs one. It adds Surface terms, laws and shapes, among them that both bindings bind a property of the datatype the other states and that the second binding names a carrier other than the contract's own.
+
+**SVA-Q37. What does a join write?** (a) A link from each instance to the matched instance, and nothing copied, the result-target binding's property being the link as it is for a construction. (b) A value read from the matched instance, written on the instance as a derivation writes its value. (c) Both, the link and the values. (a) writes structure the graph can already be read through, so a value from the matched instance reaches the first by a promotion over the link, and nothing goes stale. (b) copies a value and leaves a stale copy where the second carrier changes, and it needs the second carrier's value stated as evidence. (c) is two meanings in one statement. Leaning (a), with values reached through the link by a read path. A join that must write a value would then be a derivation over joined evidence, which is a later case.
+
+**SVA-Q38. What does an instance with no match write?** (a) Nothing, and a check names the instance, as SVA-Q33 reads for a missing required value, so a join on required evidence is whole or not at all, which a lookup does today with `LookupUnresolved`, reporting the value and writing nothing. (b) The instance's other values and no link, as a candidate-evidence binding writes what it finds. (c) A link to a minted placeholder node. Leaning (a) for a join on required evidence and (b) for one on candidate evidence, so the two evidence role kinds keep the meaning they have in the other kinds. (c) writes a node that no source states.
+
+**SVA-Q39. What does an instance with several matches write?** (a) A link for each match, the contract stating no limit, and a check reports an instance with several for the review, which a lookup does today with `LookupAmbiguous`. (b) The contract states how many instances a value names, at most one or any number, a closed choice as SVA-Q32's identity is. Under at most one an instance with several matches writes no link and is reported by name, with each match. Under any number it writes a link for each. (c) One chosen by a stated order, such as the lowest IRI. (a) leaves the cardinality, which is meaning, to a report after the fact. (c) discards a match, which no source asked for. Leaning (b), so the choice is never implicit, with at most one the default a contract is read as when the join is by a key the second carrier's vocabulary states unique. It adds a closed individual pair and a check, `JoinAmbiguous`, beside `InstanceExcluded`. Whether a contract that states at most one is checked against the second carrier's own declaration, where one exists, is part of the question.
+
+**SVA-Q40. Where do the second carrier's instances come from, and how does MORK carry the join?** (a) MORK's lookup as it is, the second carrier's instances supplied as reference data in the reference graph. No MORK term, case or check is added, `LookupUnresolved` and `LookupAmbiguous` report none and several, and a link is written for each match. It covers a join to reference data and not a join of two classes of the world, since a lookup is built never to read source data, so that source data cannot add codes (the `mork_rdf` README, section 13). (b) A new MORK term states the join condition on a contextual datum that takes the second class's node from the source graph as its identity, so a mapping states a node reached by equality and the compiler writes the two patterns and the comparison. It adds a MORK term and a compiler case with a shape for each, and widens what source data can reach, which a lookup refuses. (c) The lookup widened, a stated option letting its reference nodes be read from the source graph, which adds a term as (b) does and puts both cases in one mapping kind, with the lookup's checks and its comparison. Leaning (b), since the kind's meaning is evidence from more than one carrier of the world, (a) is the special case already compiled, and (c) changes what a lookup promises. It is the maintainer's to decide, since it adds a mapping case.
+
+**SVA-Q41. Which decisions change?** Leaning, as for SVA-Q34: an addendum to ADR-A18 that replaces item 4 of the addendum of 2026-11-23 for this kind (a join lowers into a scheme whose second datum is guarded and states the condition), an addendum to ADR-A23 (`mork_rdf` compiles join projections, with `JoinAmbiguous` and the `MappingReview` finding ADR-A41 asks for), new laws in the Surface register beside P10 to P13, and minor versions of the Surface and MORK modules for their new terms, each released by `mise run version:bump` at the merge. ADR-A41 needs no addendum, since it already asks a join for a mapping review and its addendum says how it is recorded. The amendments to ADR-A18 and ADR-A23 are the maintainer's to decide.
 
 ## 4. Slices
 

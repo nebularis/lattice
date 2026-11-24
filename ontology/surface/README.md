@@ -128,7 +128,7 @@ For an example of this kind of shape, see `ontology/surface/examples/employment-
 
 #### Projection
 
-Promotion restates one value; indexing restates a value as a retrieval symbol. Neither covers intent that needs new graph structure, a computed value, evidence combined across more than one carrier, or one relation expanding into several — the case `ProjectionContract` exists for (ADR-A17). Consider annualising a subscription's recurring revenue: the value is not reachable by any single read path, because it is computed from two of the carrier's own properties rather than read off the end of a chain.
+Promotion restates one value, and indexing restates a value as a retrieval symbol. Neither covers intent that needs new graph structure, a computed value, evidence combined across more than one carrier, or one relation expanding into several — the case `ProjectionContract` exists for (ADR-A17). Consider annualising a subscription's recurring revenue: the value is not reachable by any single read path, because it is computed from two of the carrier's own properties rather than read off the end of a chain.
 
 ```turtle-example
 @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
@@ -256,7 +256,7 @@ The practical consequence of all this living on the profile rather than being an
 This is the part that decides how much a consumer is allowed to trust a generated surface, and it is worth internalising before wiring anything downstream to one:
 
 - **Conservativity is why an index is free to regenerate or discard.** An index mints only its own terms, so adding one entails nothing new about source terms and removing one loses no authored fact (`srf:X1`). That property, not the performance win, is what licenses treating a generated index as disposable cache.
-- **Promotion is the one case that isn't automatically conservative.** `srf:signatureScope` records which situation a given surface is in: `LocalSignature` when a promotion restates onto a property minted in the contract's own target namespace, `SourceSignature` when it restates onto a property a consuming layer already declares (as in the subscription-currency example above). A `SourceSignature` promotion's assertions are indistinguishable from authored facts once emitted — which is exactly why two laws constrain it rather than leaving it implicit: a promotion reaching the authored signature must declare `ExactSource` or `CrosswalkExact` fidelity and must be `Materialised`, never `DefinitionOnly` (`srf:X6`); and separately, any promotion that is lossy — `DerivedSource` or `CrosswalkInexact` — may not target an authored property at all, only a property in its own generated namespace (`srf:X5`, `srf:X6` again from the other direction).
+- **Promotion is the one case that isn't automatically conservative.** `srf:signatureScope` records which situation a given surface is in: `LocalSignature` when a promotion restates onto a property minted in the contract's own target namespace, and `SourceSignature` when it restates onto a property a consuming layer already declares (as in the subscription-currency example above). A `SourceSignature` promotion's assertions are indistinguishable from authored facts once emitted — which is exactly why two laws constrain it rather than leaving it implicit. A promotion reaching the authored signature must declare `ExactSource` or `CrosswalkExact` fidelity and must be `Materialised`, never `DefinitionOnly` (`srf:X6`). Separately, any promotion that is lossy — `DerivedSource` or `CrosswalkInexact` — may not target an authored property at all, only a property in its own generated namespace (`srf:X5`, `srf:X6` again from the other direction).
 - **A projection reads its scope from what it writes.** A derivation writes a value on the carrier, and a graph construction writes a node of the class it states. Where that class, or the property it links or writes, is minted in the contract's own target namespace, the projection is local-signature and conservative as an index is (`srf:P1`). Where it is a class an authored vocabulary declares, as `ex:Supplier` is, the constructed nodes and what is written on them reach the authored signature and are indistinguishable from authored facts once emitted, so the projection is source-signature and composes under the same rule as `srf:X1` and `srf:X6`.
 - **Authority is capped below authoritative, always.** A surface declares `Advisory` or `CachedReproducible` and nothing higher (`srf:S9`) — an index that outranked the declaration it was built from would invert the derivation order. A lossy promotion is capped specifically at `Advisory` (`srf:X5`). If an external store is genuinely the system of record and accepts writes back, that relationship is a synchronisation contract, not a surface — Surface only ever restates, never originates.
 
@@ -264,10 +264,10 @@ This is the part that decides how much a consumer is allowed to trust a generate
 
 Nothing in the derived-record tier is asserted by hand — a `srf:GeneratedSurface`, `srf:GeneratedSymbol`, or `srf:ReadSetEntry` without a proper record is unaccounted for and fails governance. In practice, this is the mechanism that answers "is this surface still good, and how much do I need to redo if not":
 
-- Every generation run records what it **read**, not just what it produced: one `srf:ReadSetEntry` per input, each carrying the hash of that input's canonical content at read time. A surface is stale exactly when any entry's current hash no longer matches the recorded one — that single comparison decides staleness; nothing needs to be classified first.
-- Once staleness is known, *how much* to recompute is a smaller question, and the answer depends on what moved: a change to bound scheme membership recomputes that contract's symbol inventory (plus closure, if declared); a change to the carrier instance graph recomputes materialised memberships for the changed instances only, and nothing at all under `DefinitionOnly`; a change to the scheme contract's binding or required governance state, or to the profile identity, forces regeneration of the whole contract or the whole profile's estate respectively. Keeping definitions and materialised assertions in separate emitted modules is precisely what lets an instance-graph change skip the definitional module entirely.
-- `srf:semanticContentHash` (the canonical, meaning-bearing inputs) and `srf:artefactHash` (the emitted bytes) serve different jobs: matching semantic content hash plus matching profile identity is what licenses reusing an existing surface instead of regenerating it; an artefact hash that changes while both of those hold steady is a generator defect, not a source change.
-- Laws don't all get discharged the same way, and knowing which register a law sits in (`srf:lawRegister`) tells you what evidence to expect: a `SemanticLaw` (conservativity, index faithfulness, closure soundness, promotion fidelity, promotion signature discipline) is argued formally and tested as a property, never discharged by inspecting one run; a `StaticConstraint` is checked by the SHACL shapes in §10 over the contract or record graph; a `RuntimeConformance` law (determinism, ontology/surface/source parity, invalidation minimality, materialisation idempotence, closure well-foundedness) is discharged only by an actually executed run, recorded as a `srf:LawDischarge` — never by argument alone.
+- Every generation run records what it **read**, not just what it produced: one `srf:ReadSetEntry` per input, each carrying the hash of that input's canonical content at read time. A surface is stale exactly when any entry's current hash no longer matches the recorded one. That single comparison decides staleness, and nothing needs to be classified first.
+- Once staleness is known, *how much* to recompute is a smaller question, and the answer depends on what moved. A change to bound scheme membership recomputes that contract's symbol inventory (plus closure, if declared). A change to the carrier instance graph recomputes materialised memberships for the changed instances only, and nothing at all under `DefinitionOnly`. A change to the scheme contract's binding or required governance state, or to the profile identity, forces regeneration of the whole contract or the whole profile's estate respectively. Keeping definitions and materialised assertions in separate emitted modules is precisely what lets an instance-graph change skip the definitional module entirely.
+- `srf:semanticContentHash` (the canonical, meaning-bearing inputs) and `srf:artefactHash` (the emitted bytes) serve different jobs. Matching semantic content hash plus matching profile identity is what licenses reusing an existing surface instead of regenerating it, and an artefact hash that changes while both of those hold steady is a generator defect, not a source change.
+- Laws don't all get discharged the same way, and knowing which register a law sits in (`srf:lawRegister`) tells you what evidence to expect. A `SemanticLaw` (conservativity, index faithfulness, closure soundness, promotion fidelity, promotion signature discipline) is argued formally and tested as a property, never discharged by inspecting one run. A `StaticConstraint` is checked by the SHACL shapes in §10 over the contract or record graph. A `RuntimeConformance` law (determinism, ontology/surface/source parity, invalidation minimality, materialisation idempotence, closure well-foundedness) is discharged only by an actually executed run, recorded as a `srf:LawDischarge` — never by argument alone.
 
 #### A practical checklist for authoring a contract
 
@@ -277,18 +277,18 @@ Nothing in the derived-record tier is asserted by hand — a `srf:GeneratedSurfa
 4. **For a promotion:** pick `srf:promotesTo` (an existing property, ideally), state `srf:sourceFidelity` honestly, and name `srf:viaMatchRelation` if and only if the path crosses a mapping relation.
 5. **For an index:** pick a `srf:ValuePopulation` (prefer `ContractBoundPopulation`), pick one or more `srf:indexForm` values against the guidance above, and declare `srf:closureBasis` if and only if `ClosureRelation` is one of them.
 6. **Pick a `srf:namingPolicy`** and check it stays injective over the actual population — `DigestLocalName` if it might not.
-7. **Point at a `srf:surfaceProfile`.** Don't invent a new one per contract; reuse the deployment's profile unless there's a real reason to fork it (a fork is a new version and an estate-wide regeneration, so it's not a casual choice).
+7. **Point at a `srf:surfaceProfile`.** Don't invent a new one per contract. Reuse the deployment's profile unless there's a real reason to fork it. A fork is a new version and an estate-wide regeneration, so it's not a casual choice.
 8. **Let the SHACL shapes in §10 do the rest.** They catch the mechanical mistakes below before generation ever runs.
 
 #### Common pitfalls
 
-- **Declaring both `srf:readProperty` and `srf:hasPathStep`, or neither.** Caught by `srf:ReadPathFormExclusiveShape`; pick exactly one form.
+- **Declaring both `srf:readProperty` and `srf:hasPathStep`, or neither.** Caught by `srf:ReadPathFormExclusiveShape`, so pick exactly one form.
 - **A `ClosureRelation` with no `closureBasis`, or a `closureBasis` with no `ClosureRelation`.** The two are required together (`srf:S3`), never one without the other.
 - **Choosing `NominalClass`/`MembershipAssertion` for a population that's actually open-ended.** This is what the population budget is for — if the count is unbounded or grows without a ceiling, it belongs in a `DirectProperty` promotion, not a per-value index.
-- **Promoting a lossy value onto an authored property.** A `DerivedSource` or `CrosswalkInexact` promotion may only mint its own property in its own namespace; pointing `srf:promotesTo` at a property the domain already declares requires exact or crosswalk-exact fidelity.
+- **Promoting a lossy value onto an authored property.** A `DerivedSource` or `CrosswalkInexact` promotion may only mint its own property in its own namespace, and pointing `srf:promotesTo` at a property the domain already declares requires exact or crosswalk-exact fidelity.
 - **Promoting onto a property no layer declares.** Outside its target namespace a promotion restates onto a property an authored layer declares, so the compiler refuses one whose property the source graph does not declare as a property. Compile against the layer that declares it, or promote into the target namespace.
 - **Assuming `LocalNameFromValue` is safe by default.** It's injective only until two schemes or namespaces collide on a local name — which happens exactly when a deployment grows to use more than one scheme for the same dimension. `QualifiedLocalName` or `DigestLocalName` avoid the failure mode outright.
-- **Treating a generated surface as evidence for a decision.** A surface accelerates a lookup; it is never itself the evidence for an admissibility decision or an execution record, and reaching an answer through a surface is a realisation-profile fact recorded on the decision, not a change in what the decision rests on (§12).
+- **Treating a generated surface as evidence for a decision.** A surface accelerates a lookup, and it is never itself the evidence for an admissibility decision or an execution record, and reaching an answer through a surface is a realisation-profile fact recorded on the decision, not a change in what the decision rests on (§12).
 
 ## 2. Namespace and Prefixes
 
@@ -348,7 +348,7 @@ shapes = ["shapes/structural.ttl", "shapes/constraints.ttl"]
 
 **Naming is part of the profile, not the compiler.** Normalisation, prefixing, and digest fallback are declared, because a change to any of them changes every minted IRI in the estate and therefore *requires* a profile version bump.
 
-**Well-foundedness of a closure basis is a runtime claim, not a static one.** SPARQL cannot express a property path over a variable predicate, so no fixed SHACL shape can check acyclicity for an arbitrary declared basis. The generator checks it over the declared scope and discharges the law; a surface that has not discharged it is non-conformant.
+**Well-foundedness of a closure basis is a runtime claim, not a static one.** SPARQL cannot express a property path over a variable predicate, so no fixed SHACL shape can check acyclicity for an arbitrary declared basis. The generator checks it over the declared scope and discharges the law, and a surface that has not discharged it is non-conformant.
 
 **Projection lowers into MORK rather than emitting an artefact itself.** Promotion and indexing cover restatement of one already-reachable value. Graph construction, derivation, joins, and expansion are mapping-graph concerns MORK already owns, so a `ProjectionContract` declares intent and role bindings and hands the rest to MORK's mapping graph and staged compiler family (ADR-A17–ADR-A19), rather than Surface growing a second compiler for the same problem.
 
@@ -371,13 +371,13 @@ DERIVED RECORD   srf:GeneratedSurface · srf:GeneratedSymbol · srf:ReadSetEntry
                   with what authority, and which runtime laws were discharged?"
 ```
 
-The declaration tier is authored. The derived-record tier is generated alongside the symbols it describes and lives with them. Generated symbols and their records occupy projection and execution graph roles only; they never appear in `spec/`, `vocab/`, `shapes/`, or `projection/`.
+The declaration tier is authored. The derived-record tier is generated alongside the symbols it describes and lives with them. Generated symbols and their records occupy projection and execution graph roles only, and they never appear in `spec/`, `vocab/`, `shapes/`, or `projection/`.
 
 ## 6. Core Model
 
 ### 6.1 Ontology header and punned targets
 
-A contract must be able to name any class or property in the estate without importing the layer that declares it. Vocabulary's `voc:constrainsProperty` already establishes this device; Surface reuses it, which is why the layer sits low in the dependency order rather than above the layers whose terms it names.
+A contract must be able to name any class or property in the estate without importing the layer that declares it. Vocabulary's `voc:constrainsProperty` already establishes this device, and Surface reuses it, which is why the layer sits low in the dependency order rather than above the layers whose terms it names.
 
 ```turtle-spec
 @base <https://www.nebularis.org/neuro-semantic/surface> .
@@ -437,7 +437,7 @@ srf:PromotionContract a owl:Class ;
 
 **Definition.** A surface contract restating a carrier's values as symbols by which carriers can be retrieved.
 
-**Utility.** Use where retrieval by value is the hot operation. Declare the value population, one or more index forms, and a naming policy. Declare a closure basis where retrieval must also succeed for ancestors of the asserted value. `srf:closureScope` narrows the value set the closure is computed over; unset means the contract's own population.
+**Utility.** Use where retrieval by value is the hot operation. Declare the value population, one or more index forms, and a naming policy. Declare a closure basis where retrieval must also succeed for ancestors of the asserted value. `srf:closureScope` narrows the value set the closure is computed over, and unset means the contract's own population.
 
 ```turtle-spec
 srf:IndexContract a owl:Class ;
@@ -455,7 +455,7 @@ srf:IndexContract a owl:Class ;
 
 **Definition.** A surface contract restating mapping intent that requires graph construction, derivation, a join, or an expansion, lowered into MORK rather than emitted directly.
 
-**Utility.** Use where neither promotion's direct-property restatement nor indexing's population membership covers the intent — a computed value, a join across carriers, or one relation expanding into several. Declare a `srf:projectionKind`, at least one role binding naming what the projection reads and where it writes, and a backend policy. A projection contract never emits SPARQL, SHACL, or SWRL itself; it lowers into a MORK mapping graph (ADR-A18), which a separate compiler stage compiles (ADR-A19).
+**Utility.** Use where neither promotion's direct-property restatement nor indexing's population membership covers the intent — a computed value, a join across carriers, or one relation expanding into several. Declare a `srf:projectionKind`, at least one role binding naming what the projection reads and where it writes, and a backend policy. A projection contract never emits SPARQL, SHACL, or SWRL itself. It lowers into a MORK mapping graph (ADR-A18), which a separate compiler stage compiles (ADR-A19).
 
 ```turtle-spec
 srf:ProjectionContract a owl:Class ;
@@ -473,7 +473,7 @@ srf:ProjectionContract a owl:Class ;
 
 **Definition.** One positioned traversal within a read path, in a stated direction.
 
-**Utility.** Use where the value is not reachable by a single property. Add one step per hop with a zero-based `srf:stepIndex` in traversal order and an explicit `srf:stepDirection`. For a single-hop path use `srf:readProperty` instead; a contract declares one form or the other, never both.
+**Utility.** Use where the value is not reachable by a single property. Add one step per hop with a zero-based `srf:stepIndex` in traversal order and an explicit `srf:stepDirection`. For a single-hop path use `srf:readProperty` instead, since a contract declares one form or the other, never both.
 
 ```turtle-spec
 srf:PathStep a owl:Class ;
@@ -570,7 +570,7 @@ srf:generatedAttribute a owl:DatatypeProperty ;
 
 **Definition.** A recorded product of a generation run, traceable to its inputs, its profile, and its authority.
 
-**Utility.** Never assert one by hand. A derived artefact states what produced it and how far it may be trusted; a generated symbol without such a record is unaccounted for and fails governance.
+**Utility.** Never assert one by hand. A derived artefact states what produced it and how far it may be trusted, and a generated symbol without such a record is unaccounted for and fails governance.
 
 ```turtle-spec
 srf:DerivedArtefact a owl:Class ;
@@ -956,7 +956,7 @@ srf:EnumeratedPopulation owl:disjointWith srf:RangePartitionPopulation .
 
 **Definition.** One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class.
 
-**Utility.** Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline `srf:PathStep` applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well.
+**Utility.** Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline `srf:PathStep` applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role, and a join or derivation names candidate-evidence or required-evidence roles as well.
 
 ```turtle-spec
 srf:ProjectionRoleBinding a owl:Class ;
@@ -977,7 +977,7 @@ srf:ProjectionRoleBinding a owl:Class ;
 
 **Definition.** The declared backend eligibility and LLM-participation policy a projection contract lowers under.
 
-**Utility.** Name every backend a lowered mapping may target in `srf:allowedBackend`, or every backend it may not in `srf:deniedBackend`, never both for one backend. Set `srf:deterministicOnly` true to forbid LLM completion outright during lowering; set `srf:llmCompletionPolicy` to state what happens when it is false.
+**Utility.** Name every backend a lowered mapping may target in `srf:allowedBackend`, or every backend it may not in `srf:deniedBackend`, never both for one backend. Set `srf:deterministicOnly` true to forbid LLM completion outright during lowering, and set `srf:llmCompletionPolicy` to state what happens when it is false.
 
 ```turtle-spec
 srf:ProjectionBackendPolicy a owl:Class ;
@@ -1264,7 +1264,7 @@ A contract with key `k`, target namespace `N`, and carrier local name `C`, under
 | Term | Identifier |
 |---|---|
 | family class | `N` + `f(C)` + `_` + `f(k)` |
-| nominal class for value `v` | family class + `_` + `local(v)` under `LocalNameFromValue`; + `_` + prefix + `_` + `local(v)` under `QualifiedLocalName`; + `_` + digest(`v`) under `DigestLocalName` |
+| nominal class for value `v` | family class + `_` + `local(v)` under `LocalNameFromValue`, family class + `_` + prefix + `_` + `local(v)` under `QualifiedLocalName`, family class + `_` + digest(`v`) under `DigestLocalName` |
 | closure relation | `N` + `matches_` + `f(k)` |
 | surface record | `N` + `surface_` + `f(k)` |
 | symbol record (wrapper mode only) | minted term + `_symbol` |
@@ -2425,7 +2425,7 @@ srf:ConstructedKeyEvidenceShape a sh:NodeShape ;
 
 ## 11. Canonicalisation, identity, and invalidation
 
-A generation run records what it read, not merely what it produced. Each `srf:ReadSetEntry` names one input and the hash of that input's canonical content at the time it was read. A surface is stale exactly when any entry's current hash differs from the recorded one. That is the whole rule; no change needs to be classified for staleness to be decided.
+A generation run records what it read, not merely what it produced. Each `srf:ReadSetEntry` names one input and the hash of that input's canonical content at the time it was read. A surface is stale exactly when any entry's current hash differs from the recorded one. That is the whole rule, and no change needs to be classified for staleness to be decided.
 
 Change classification survives as the impact-scoping question — how much to recompute once staleness is known:
 
@@ -2433,14 +2433,14 @@ Change classification survives as the impact-scoping question — how much to re
 |---|---|
 | Bound scheme membership | symbol inventory for that contract, and closure where a closure form is declared |
 | Closure basis subgraph | closure symbols and the assertions depending on them |
-| Carrier instance graph | materialised memberships and matches for the changed instances only; nothing at all under `DefinitionOnly` |
+| Carrier instance graph | materialised memberships and matches for the changed instances only, and nothing at all under `DefinitionOnly` |
 | Scheme contract binding or required governance state | the whole contract |
 | Profile identity | every surface on that profile, with a version bump |
 | Canonicalisation version | the whole estate, rehashed |
 
 Separating definitions from materialised assertions into different emitted modules is what lets the third row avoid touching a definitional module at all.
 
-`srf:semanticContentHash` covers the canonical, meaning-bearing inputs; `srf:artefactHash` covers the emitted bytes. Reuse of an existing surface requires both a matching semantic content hash and a matching profile identity; an artefact hash that changes while both of those hold is a generator defect, not a source change.
+`srf:semanticContentHash` covers the canonical, meaning-bearing inputs, and `srf:artefactHash` covers the emitted bytes. Reuse of an existing surface requires both a matching semantic content hash and a matching profile identity, and an artefact hash that changes while both of those hold is a generator defect, not a source change.
 
 ## 12. Conformance
 
@@ -2448,7 +2448,7 @@ A generated surface is **projection-conformant (L7)** when every static constrai
 
 Two consequences hold regardless:
 
-- A conformant surface does not raise the conformance level of the graph it indexes. A surface over an analysis-ready graph does not make that graph operationally evaluable. Surfaces accelerate; they do not admit.
+- A conformant surface does not raise the conformance level of the graph it indexes. A surface over an analysis-ready graph does not make that graph operationally evaluable. Surfaces accelerate, and they do not admit.
 - A surface is never the evidence for an admissibility decision or an execution record. Those cite declarations. That an implementation reached the answer through a surface is a realisation-profile fact recorded on the decision, not a change in what the decision rests on.
 
 ## 13. Worked Examples
