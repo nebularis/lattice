@@ -447,7 +447,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | LG-31 | a credit held to the rule a draw is held to | ledger | planned | LG-12 | docs/developer/status/ledger.md#board |
 | LG-32 | a benchmark of a balance read under each way of writing a supersession, for LG-Q52. Validation Pack | ledger | verified 2026-11-24 |  | docs/developer/status/ledger.md#board |
 | LG-33 | the form of a query for absence, a probe and a finding for TD-178, taken at the end of the unit | ledger | planned |  | docs/developer/status/ledger.md#board |
-| LG-34 | the laws and the examples of an account under a later version | ledger | briefed | LG-29, LG-35 | docs/developer/status/ledger.md#board |
+| LG-34 | the laws and the examples of an account under a later version, and the four conformance cases of ADR-A131's addendum of 2026-11-24 as examples with tests | ledger | briefed | LG-29, LG-35 | docs/developer/status/ledger.md#board |
 | LG-35 | the kernel and its proofs for a supersession | ledger | briefed | LG-28 | docs/developer/status/ledger.md#board |
 | MSA-I1 | `spikes/multi-store-shape-census`. 505 node shapes, none closed and bounded, so 0% of sample subjects against the proposed 80%. 134 fail only on closure and reach 43.4% of subjects. Validati | multi-store-architecture | merged 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |
 | MSA-I2 | the read-set census, reworked on the owner's ledger. The falsifier does not fire: the ledger's reads across accounts are inside one ledger, and the one firm read from outside, a guard on a b | multi-store-architecture | built 2026-11-18 |  | docs/developer/status/multi-store-architecture.md#position |

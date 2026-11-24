@@ -102,5 +102,5 @@ The maintainer asked for an adversarial probe on each slice of the first bundle'
 
 - **LG-Q58 is answered as (a), as LG-29 built it.** The mapping of a supersession is no longer held. A supersession stays on no account, with `ldg:forOwner` and, where its definitions state a recurrence, `ldg:periodKey`.
 - **LG-11, LG-25 to LG-28, LG-12, LG-30 and LG-32 are verified** by the maintainer.
-- **ADR-A131 has an addendum of 2026-11-24, Proposed,** for LG-Q57 and LG-Q58. It changes no term.
+- **ADR-A131 has an addendum of 2026-11-24, accepted by the maintainer that day,** for LG-Q57 and LG-Q58. It changes no term.
 - **Give one pytest run the paths under one `conftest.py` only** (STD-339). A run given `tools/test_ledger.py` and a benchmark folder together fails at collection.

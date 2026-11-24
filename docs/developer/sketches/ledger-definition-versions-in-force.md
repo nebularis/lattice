@@ -331,7 +331,7 @@ Instrument and Wording each declare an `Amendment`, for the act and for the chan
 
 *Leaning (a).* The reason we gave for one tree, a home in a root's unit, does not survive a keyed root, and (c) brings back a record for each account where a root is keyed. What (b) adds beyond (a) is a restriction with no law that needs it. One gap that the question exposed is closed whatever the answer. A supersession with a period key that also named a version stating no recurrence would have reached none of that version's accounts, and `ldg:SupersessionPeriodFromRecurrenceShape` now refuses it. Where a supersession is stored is then a question for the record families Persistence has yet to declare for the ledger, and the multi-store unit's.
 
-**Answered 2026-11-24, (a).** Decided by the maintainer. A supersession names later versions of any definitions of one owner whose versions state one recurrence, or none, which is what LG-29 built. Its rule and LG-Q57's are promoted in ADR-A131's addendum of 2026-11-24, drafted as Proposed.
+**Answered 2026-11-24, (a).** Decided by the maintainer. A supersession names later versions of any definitions of one owner whose versions state one recurrence, or none, which is what LG-29 built. Its rule and LG-Q57's are promoted in ADR-A131's addendum of 2026-11-24, which the maintainer accepted that day.
 
 ## 5. What LG-29, LG-34 and LG-35 build
 
@@ -339,7 +339,7 @@ The work is three slices, since one of 350k tokens across the vocabulary, the la
 
 - **LG-35, the kernel and its proofs.** A supersession as an event of the kernel, the two invariants I1 and I2 as theorems, and the 24 lemmas of `Credits.thy` and `Readings.thy` carried through the new case. It works through a credit cut at a ceiling under a version that has ended, which the model leaves out. 150k tokens.
 - **LG-29, the record and the key,** built 2026-11-23 on the leaning for LG-Q57. `ldg:Supersession` and `ldg:supersedingVersion`, the names of LG-Q56, the account's natural key on the definition's identity, `ldg:ofDefinition`'s entry saying which version it names, and the constraint that enforces STD-338. 120k tokens.
-- **LG-34, the laws and the examples.** The running balance and the checkpoint read the stated amount in force by the posting's pass or the close. A law for I2. The refusal of a version below what is drawn and the account that is over where it is admitted. Examples for E2, E3, E6, E8 and E10 of section 3. 130k tokens.
+- **LG-34, the laws and the examples.** The running balance and the checkpoint read the stated amount in force by the posting's pass or the close. A law for I2. The refusal of a version below what is drawn and the account that is over where it is admitted. Examples for E2, E3, E6, E8 and E10 of section 3. The four conformance cases of ADR-A131's addendum of 2026-11-24, each as an example with a test that computes its result, since they are worked by hand there. 140k tokens.
 
 ## 6. What this leaves out
 
