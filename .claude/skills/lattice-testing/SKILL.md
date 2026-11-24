@@ -116,3 +116,8 @@ Put one helper in the suite's shared `tools/conftest.py` that replaces a `git gr
 ## Guard "supplied or defaulted" at the entry point
 
 When a library function requires a parameter explicitly, the only place it can be silently defaulted, such as a `--now` flag defaulting to the wall clock, is the CLI's own argument handling.
+
+## One folder with a conftest for each pytest run
+**Give one pytest run the paths under one `conftest.py` only (STD-339).** pytest imports every `conftest.py` it meets under the one module name `conftest`, and the last one loaded is the one a test's `from conftest import ...` finds. Given `tools/test_ledger.py` and then `benchmark/ledger-supersession-read`, the benchmark's `conftest.py` loaded last and the ledger's tests failed at collection with `ImportError: cannot import name 'repo_files' from 'conftest'`, naming the benchmark's file. In the other order the run passed, only because the benchmark's tests import nothing from `conftest` by name. Seen on pytest 9.1.1, 2026-11-24.
+
+Run each such folder with a command of its own, in a Validation Pack and in a mise task, as two folders that each hold a `check.py` already are. Ten folders hold a `conftest.py`, under `tools`, `benchmark`, `packages` and `test`, and nearly forty test modules import a helper from one by name.

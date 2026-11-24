@@ -50,3 +50,9 @@ Problems met while developing LATTICE, kept for the next agent who meets them.
 ## JVM libraries
 
 - **networknt's JSON Schema validator** can preload a set of schemas by `$id`, with no network fetch, through `JsonSchemaFactory.builder(…).schemaLoaders(l -> l.schemas(map))`.
+
+## Several sessions in one checkout
+
+- **A check that reads every file in the tree reads another session's unfinished one.** An untracked file that does not parse yet fails a commit that never touched it. Move it aside for the commit and put it back, or have the check read tracked files only, and never skip the check.
+- **Do not query a derived index while another process rebuilds it.** The answer may be empty or an error that reads as corruption. Rebuild once the other process has finished, and ask again before treating an empty answer as an absence.
+- **Work taken over from a session that stopped part way is measured again.** Its uncommitted files may not compile, and a figure it reported is not evidence until the session that commits has run it.
