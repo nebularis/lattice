@@ -100,9 +100,9 @@ sequenceDiagram
 
 **(b) One guard for each command, receipt first.** The command's first operation inserts its receipt. Its guard is the conjunction of every condition the command's steps have today, each row at the revision the plan read or absent, and the absence of the receipt itself. Every later operation of the command, the log drops and the clears included, runs only where that receipt exists. The steps keep their own guards as a second line. A command refused whole wrote nothing, so the writer reads again and plans it again. This is the form the job commands already have, with the guard widened from a precondition to every row.
 
-**(c) The port's unit.** Wait for the logical port. A command becomes one `Unit`, lowered on SPARQL to operations that share one `WHERE` and on SQL to a transaction with a savepoint (MSA-I11 section 5).
+**(c) The port's unit.** Wait for the logical port. A command becomes one `Unit`, lowered on SPARQL to a receipt written first under the joint guard of the unit's operations, each of which then requires the receipt, and on SQL to a transaction with a savepoint (MSA-I11 section 5). The operations cannot share one `WHERE`, since two of the four generated operations end theirs with a sweep of the stored graph and two sweeps multiply.
 
-(b) and (c) state the same rule. (b) is a lowering of it that today's generated operations nearly allow, and (c) is where the studio ends up. The same deletion under (b).
+(b) and (c) state the same rule and, on SPARQL, the same lowering. (b) builds it in the writer, and (c) has the persistence compiler emit it and is where the studio ends up. The same deletion under (b).
 
 ```mermaid
 sequenceDiagram

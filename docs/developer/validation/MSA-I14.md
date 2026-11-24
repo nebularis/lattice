@@ -184,3 +184,129 @@ Every configuration fits a heap of 2 GB, so all 22 are in the base tier.
 - **Is a second writer's answer within the requirement?** Every design asked for answers a command as not applied after another writer applied it, in stream order. Which reply the service keeps when two arrive for one command is not modelled. If the requirement covers every reply sent, the fence alone does not meet it, and the variant `FencedAnswer` does in these configurations. If only the first reply counts, `AnswersAgree` is stronger than the requirement.
 - **A refusal after three losses, then an application.** `AnswersAgree` counts a command answered "send again" after its retries and applied later by another delivery as a disagreement. Is that what the requirement means by an answer that does not account for a row?
 - **The abstractions where the code left a choice,** listed in the README. A batch of one command, the plan's reads as one step, and the later tombstone as one step. Each could hide an interleaving the writer has. Are they acceptable for the note, or should a wider model drop one?
+
+## Addendum of 2026-11-24, model X7
+
+Written on macOS, after the maintainer asked for what X5 leaves out before MSA-Q22 and MSA-Q23 are decided. `X7_WorkspaceBatch.tla` is a module of its own, so X5's measured configurations stand unchanged.
+
+**Invariant.** R2, a command answered as applied was applied and one answered as not applied was not, then or later (`AnswersAgree`). R4, the commands take effect in the order the partition gives them (`PartitionOrder`). No command takes effect twice (`AppliedOnce`).
+
+**What it adds to X5.** A creation, a deletion of the workspace, a command with no expected revision, a batch of up to two commands planned together, a sender's resend of the first command, a deletion that clears the workspace's receipts as built, spares its batch's or keeps them all, and a variant with no token whose planning read takes the batch's receipts.
+
+| ID | Given, when, then | Level | Invariant | Pass criterion | Kind |
+|---|---|---|---|---|---|
+| I14-T23 `X7_ClearedBatch` | Given receipts cleared by a deletion as built, one writer and a creation and the deletion in one batch, when TLC explores every behaviour, then the creation is answered as not applied although applied | L2 | `AnswersAgree`, TD-172 | "Invariant AnswersAgree is violated" | negative |
+| I14-T24 `X7_SpareBatch` | as I14-T23 with the batch's receipts spared | L2 | `AnswersAgree` | "No error has been found" | positive |
+| I14-T25 `X7_SpareResend` | as I14-T24 with a resend of the creation after the deletion and one crash | L2 | `AnswersAgree`, MSA-Q23 (a) | "Invariant AnswersAgree is violated" | negative |
+| I14-T26 `X7_SpareResendToken` | as I14-T25 with the token and its read, a command between, three writers and two crashes | L2 | `AnswersAgree`, MSA-Q23 (a) | "Invariant AnswersAgree is violated" | negative |
+| I14-T27 `X7_ClearedRedelivery` | Given receipts cleared, the token and its read, batches of one, three writers and two crashes and no resend, then a redelivery after the deletion answers a command as not applied | L2 | `AnswersAgree` | "Invariant AnswersAgree is violated" | negative |
+| I14-T28 `X7_KeptResend` | as I14-T25 with every receipt kept | L2 | `AnswersAgree`, `PartitionOrder`, MSA-Q23 (b) | "No error has been found" | positive |
+| I14-T29 `X7_OrderNoToken` | Given no token, three commands with no expected revision, three writers, two crashes and one more plan of a refused batch | L2 | `PartitionOrder`, `AnswersAgree`, MSA-Q22 (a) | "No error has been found" | positive |
+| I14-T30 `X7_OrderNoTokenNoRetry` | as I14-T29 with a refused batch never planned again | L2 | `PartitionOrder` | "Invariant PartitionOrder is violated" | negative |
+| I14-T31 `X7_OrderTokenNoRetry` | as I14-T30 with the token | L2 | `PartitionOrder`, `AnswersAgree`, MSA-Q22 (b) | "No error has been found" | positive |
+| I14-T32 `X7_OrderNoTokenCreate` | as I14-T29 with a creation, a command, a deletion and a resend, three plans | L2 | `PartitionOrder` | "No error has been found" | positive |
+| I14-T33 `X7_AnswersNoToken` | as I14-T32, checking the answers | L2 | `AnswersAgree` | "Invariant AnswersAgree is violated" | negative |
+| I14-T34 `X7_AnswersToken` | as I14-T33 with the token in the request alone | L2 | `AnswersAgree` | "Invariant AnswersAgree is violated" | negative |
+| I14-T35 `X7_AnswersRead` | as I14-T33 with no token and a planning read that takes the receipts, one more plan | L2 | `AnswersAgree`, `PartitionOrder`, MSA-Q22 (c) | "No error has been found" | positive |
+| I14-T36 `X7_AnswersReadNoRetry` | as I14-T35 on three commands with no expected revision, a refused batch never planned again | L2 | both | "No error has been found" | positive |
+| I14-T37 `X7_All` | Given the token with its read and every receipt kept, a creation, a command, a deletion and a resend, three writers and two crashes | L2 | both, MSA-Q22 (b) with MSA-Q23 (b) | "No error has been found" | positive |
+
+**One command.**
+
+```bash
+mise run check:models-multi-store -- "X7_*"
+```
+
+A pass ends `models: 15 as expected, 0 failed, 0 skipped, 0 stopped`. The figures of each run are in the models' README.
+
+**What the results say, for these constants only.**
+
+- **MSA-Q23.** Receipts cleared as built answer a creation as not applied in the batch that deletes its workspace, with one writer, which is TD-172. They also answer a redelivered command so with the token. Sparing the batch closes TD-172's case and leaves a sender's resend answered both ways. Keeping every receipt shows no error.
+- **MSA-Q22.** With each writer taking the stream in order from the stored offset, the order held with no token wherever a refused batch is planned again at least once. It broke with no token where a refused batch is answered at once, and held there with the token. So in this delivery the token is not what keeps the order. The answers disagreed with no token and with the token in the request alone, as in X5, and agreed where the planning read takes the receipts, with the token or without.
+
+**Deliberate non-coverage.** The workspace is one aggregate, so a creation or a deletion over a part and the description in a batch is not modelled, and X5 stays the evidence on a command over two aggregates. A delivery outside the stream's order is not modelled here. A command refused by its own check and applicable later, for example one sent before its workspace's creation, is in no script. Retention of receipts, the patch log (TD-180), jobs (TD-181), promotions and the broker are not modelled, and liveness is not checked. Not run on Windows.
+
+**For the maintainer.** MSA-Q22 has a third option the note did not have, (c) of the sketch. Whether it replaces the token rests on the question above of which delivery the design must meet.
+
+## Addendum of 2026-11-24, the cases left unmodelled
+
+Written on macOS, after the maintainer asked for the cases the addendum on model X7 lists as not covered. Two changes to existing modules and two new modules, so the configurations measured before stand, each of the fifteen of `X7_*` and of `X5_*` giving the same distinct states with the new constants set. `X7_WorkspaceBatch.tla` gains `Delivery`, a script `SetCreate` and a fair specification. `X5_WholeCommand.tla` gains the guard `WholeAnswer`, the patch log's variable and the invariant `LogKept`, and a fair specification. `X8_BatchParts.tla` is X7 with a part beside the description. `X9_JobUpdate.tla` is the rule that a succeeded job stays succeeded, written from `Writer.jobUpdate` in `platform/config-studio-core`.
+
+**Invariant.** As in the addendum above, and in addition that a live, listed document keeps its patch log (`LogKept`), that the description and the part are both absent, live or gone (`WholeCommands` in X8), that no save of the part takes effect after the deletion (`NoSaveAfterDel`), that a job once succeeded is never failed (`SucceededStays`), and that where the last writer to start stays alive every command is eventually answered (`EventuallyAnswered`, a temporal property run under weak fairness on each writer's actions but its crash).
+
+| ID | Given, when, then | Level | Invariant | Pass criterion | Kind |
+|---|---|---|---|---|---|
+| I14-T38 `X7_AnyWholeAnswer` | Given a start from any position of the stream, a creation, a change and a deletion with a resend, no token and a planning read that takes the receipts, two writers and one crash, when TLC explores every behaviour, then a change answered as not applied by a writer that took it alone applies in the batch of the writer that took the creation with it | L2 | `AnswersAgree` | "Invariant AnswersAgree is violated" | negative |
+| I14-T39 `X7_AnyFencedAnswer` | as I14-T38 with the token and its read | L2 | `AnswersAgree`, MSA-Q22 (b) | "Invariant AnswersAgree is violated" | negative |
+| I14-T40 `X7_AnyWhole` | as I14-T38 with no planning read of receipts | L2 | `AnswersAgree` | "Invariant AnswersAgree is violated" | negative |
+| I14-T41 `X7_AnyFencedAnswerOrder` | as I14-T39, checking the order | L2 | `PartitionOrder` | "No error has been found" | positive |
+| I14-T42 `X7_AnyFencedAnswerOrderSets` | Given the token and its read, a start from any position, three changes that carry no expected revision on a live workspace, two writers and one crash, then the changes take effect out of the stream's order | L2 | `PartitionOrder`, MSA-Q22 | "Invariant PartitionOrder is violated" | negative |
+| I14-T43 `X7_RefusedThenApplies` | Given a change sent before its workspace's creation, then the creation, then the change again under its first id, no token, one writer and no crash, then the change is answered as not applied and then applies | L2 | `AnswersAgree` | "Invariant AnswersAgree is violated" | negative |
+| I14-T44 `X7_RefusedThenAppliesToken` | as I14-T43 with the token and its read | L2 | `AnswersAgree` | "Invariant AnswersAgree is violated" | negative |
+| I14-T45 `X7_RefusedThenAppliesBatch` | as I14-T43 with the three deliveries in one batch | L2 | `AnswersAgree` | "Invariant AnswersAgree is violated" | negative |
+| I14-T46 `X7_LiveWholeAnswer` | Given the planning read that takes the receipts, a creation, a change and a deletion with a resend, two writers in stream order and one crash, weak fairness on each writer's actions but its crash, then where the last writer to start stays alive every command is answered | L2 | `EventuallyAnswered` | "No error has been found" | positive |
+| I14-T47 `X7_LiveFencedAnswer` | as I14-T46 with the token | L2 | `EventuallyAnswered` | "No error has been found" | positive |
+| I14-T48 `X5_BuiltLog` | Given the design as built, each writer taking the stream in order, both saves and the deletion, two writers and one crash, then a live, listed document keeps its patch log | L2 | `LogKept`, TD-180 | "No error has been found" | positive |
+| I14-T49 `X5_BuiltLogAny` | as I14-T48 with each writer taking every command in any order, then a deletion planned before both saves applied drops the log of a live document | L2 | `LogKept`, TD-180 | "Invariant LogKept is violated" | negative |
+| I14-T50 `X5_WholeLog` | as I14-T48 with one guard over every row a command writes, the log removed only with the command's receipt | L2 | `LogKept` | "No error has been found" | positive |
+| I14-T51 `X5_WholeAnswerStream` | Given one guard and no epoch, a command refused by its own check answered from a read that also reads its receipt, both saves and the deletion in stream order, two writers and one crash | L2 | `WholeCommands`, `AnswersAgree`, `LogKept` | "No error has been found" | positive |
+| I14-T52 `X5_WholeAnswerAny` | as I14-T51 with every command taken in any order | L2 | `WholeCommands`, `AnswersAgree`, `LogKept` | "No error has been found" | positive |
+| I14-T53 `X5_WholeAnswerAny3` | as I14-T52 with three writers and two crashes | L2 | `WholeCommands`, `AnswersAgree`, `LogKept` | "No error has been found" | positive |
+| I14-T54 `X5_LiveWholeAnswer` | Given the guard of I14-T51, weak fairness on each writer's actions but its crash, then where the last writer to start stays alive every command is finished | L2 | `EventuallyAnswered` | "No error has been found" | positive |
+| I14-T55 `X5_LiveFencedAnswer` | as I14-T54 with the epoch and its read | L2 | `EventuallyAnswered` | "No error has been found" | positive |
+| I14-T56 `X8_ClearedBatch` | Given a workspace of a description and a part, a creation, a save of the part and a deletion in one batch, receipts cleared as built and one writer, then the creation and the save are answered as not applied although applied | L2 | `AnswersAgree`, TD-172 | "Invariant AnswersAgree is violated" | negative |
+| I14-T57 `X8_SpareBatch` | as I14-T56 with the batch's receipts spared | L2 | `AnswersAgree` | "No error has been found" | positive |
+| I14-T58 `X8_KeptResend` | as I14-T56 with every receipt kept, a resend of the creation and one crash | L2 | `AnswersAgree`, `PartitionOrder`, `WholeCommands` | "No error has been found" | positive |
+| I14-T59 `X8_OrderNoToken` | Given a change, a save of the part and a change on a live workspace, no token, three writers, two crashes and one more plan of a refused batch | L2 | `PartitionOrder`, `AnswersAgree`, `WholeCommands` | "No error has been found" | positive |
+| I14-T60 `X8_OrderNoTokenNoRetry` | as I14-T59 with a refused batch never planned again, which reaches the same states since no command is refused for a stale revision | L2 | `PartitionOrder` | "No error has been found" | positive |
+| I14-T61 `X8_OrderTokenNoRetry` | as I14-T60 with the token | L2 | `PartitionOrder` | "No error has been found" | positive |
+| I14-T62 `X8_AnswersNoToken` | Given a creation, a change, a save of the part and a deletion, a resend, no token, two writers and one crash, then a writer answers from a read another writer's request outdates | L2 | `AnswersAgree` | "Invariant AnswersAgree is violated" | negative |
+| I14-T63 `X8_AnswersRead` | as I14-T62 with a planning read that takes the receipts | L2 | `AnswersAgree`, `PartitionOrder` | "No error has been found" | positive |
+| I14-T64 `X8_AnyWholeAnswer` | as I14-T63 with a start from any position, then a command refused by its own check applies later | L2 | `AnswersAgree` | "Invariant AnswersAgree is violated" | negative |
+| I14-T65 `X8_AnyOrder` | Given a start from any position, a change, a save of the part and a change on a live workspace, no token, two writers and one crash, then the commands take effect out of the stream's order | L2 | `PartitionOrder` | "Invariant PartitionOrder is violated" | negative |
+| I14-T66 `X8_AnySaveAfterDel` | Given a start from any position, a creation, a save of the part and a deletion, no token, two writers and one crash, then no save of the part takes effect after the deletion and every command is whole | L2 | `NoSaveAfterDel`, `WholeCommands` | "No error has been found" | positive |
+| I14-T67 `X8_All` | Given the token with its read, a creation, a change, a save of the part and a deletion with a resend, every receipt kept, three writers and two crashes | L2 | `AnswersAgree`, `PartitionOrder`, `WholeCommands` | "No error has been found" | positive |
+| I14-T68 `X8_AllRead` | as I14-T67 with no token and the planning read of receipts | L2 | `AnswersAgree`, `PartitionOrder`, `WholeCommands` | "No error has been found" | positive |
+| I14-T69 `X9_ReadAny` | Given the rule decided from the job as read, as `jobUpdate` does, an update to succeeded and one to failed in any order, two writers and one crash, then a job that succeeded is failed | L2 | `SucceededStays`, TD-181 | "Invariant SucceededStays is violated" | negative |
+| I14-T70 `X9_ReadAnyOneWriter` | as I14-T69 with one writer | L2 | `SucceededStays` | "No error has been found" | positive |
+| I14-T71 `X9_ReadStream` | as I14-T69 with each writer taking the stream in order | L2 | `SucceededStays` | "No error has been found" | positive |
+| I14-T72 `X9_ReadStreamFailFirst` | as I14-T71 with the update to failed first | L2 | `SucceededStays` | "No error has been found" | positive |
+| I14-T73 `X9_GuardAny` | as I14-T69 with the condition in the request's guard | L2 | `SucceededStays`, TD-181 | "No error has been found" | positive |
+| I14-T74 `X9_GuardStream` | as I14-T71 with the condition in the request's guard | L2 | `SucceededStays` | "No error has been found" | positive |
+
+**One command.**
+
+```bash
+mise run check:models-multi-store -- "X5_*" "X7_*" "X8_*" "X9_*"
+```
+
+A pass ends `models: 67 as expected, 0 failed, 0 skipped, 0 stopped`. The runner's own tests, run first, pass with the base tier's count at 140. The figures of each run are in the models' README. The runs of this addendum were made one at a time by pattern, `X5_*`, `X7_*`, `X8_*` and `X9_*`, each ending with every configuration as expected.
+
+**What the results say, for these constants only.** Five results differ from what the brief for this work expected, and the models are not changed to meet them.
+
+- **A command refused by its own check applies later, with or without a token.** With each writer starting at any position of the stream, `X7_AnyWholeAnswer` and `X7_AnyFencedAnswer` printed `AnswersAgree` violated where the brief expected no error. A writer takes a change alone before the creation it waits on, answers it as not applied and writes no receipt. The writer that takes the creation applies the change in its batch. In stream order it needs a resend of the refused command, which `X7_RefusedThenApplies` and `X7_RefusedThenAppliesToken` printed with one writer and no crash, and `X7_RefusedThenAppliesBatch` printed with the three deliveries in one batch. The planning read of receipts and the token do not close it, since the answer was true of the read it was given from. The design records nothing for a refused command, and this is that gap. `X8_AnyWholeAnswer` printed the same with a part.
+- **The token gives no order where delivery has none, but only where commands can be taken in more than one order.** `X7_AnyFencedAnswerOrder` printed no error where the brief expected a violation, since a creation, a change and a deletion each apply only after the one before. `X7_AnyFencedAnswerOrderSets` is added, with three changes that carry no expected revision, and printed `PartitionOrder` violated.
+- **The log is not lost in stream order as built.** `X5_BuiltLog` printed no error where the brief expected a violation, since under stream order no writer plans a deletion from a read that two saves then outdate. With each writer taking every command in any order, the brief's own fallback, `X5_BuiltLogAny` printed `LogKept` violated with two writers. A deletion's request fails both guards and still drops the log of a live, listed document (TD-180). The configuration with three writers was not needed. Under one guard the log is removed only with the receipt and `LogKept` held.
+- **The rule that a succeeded job stays so held in stream order.** `X9_ReadStream` and `X9_ReadStreamFailFirst` printed no error where the brief expected a violation with two writers. Each update has a receipt of its own, so a writer that reaches the update to failed after the update to succeeded was applied reads a job that has succeeded and drops it. `X9_ReadAny` printed `SucceededStays` violated with two writers that do not share one order, and `X9_ReadAnyOneWriter` held with one, so a second writer is what breaks it. `X9_GuardAny` and `X9_GuardStream` held, so the condition in the request's guard is enough. The comment on `jobUpdate` says the check cannot race because a workspace's writes are applied in order, and these runs say that holds as far as delivery keeps that order.
+- **A second aggregate changed nothing in stream order.** Every command in X8 writes all its aggregates in one guarded step, so `WholeCommands` held in every configuration. A save of the part planned before the deletion was refused after it, as `NoSaveAfterDel` said, and `X8_AnySaveAfterDel` held. Under stream order no command was refused for a stale revision, so `Retries=0` and `Retries=1` reached the same states (`X8_OrderNoTokenNoRetry` and `X8_OrderNoToken`). The order broke under any position (`X8_AnyOrder`).
+- **Liveness.** Under weak fairness on each writer's actions but its crash, every command was answered where the last writer stayed alive, for `WholeAnswer` and `FencedAnswer` in X5 and in X7, with two writers and one crash in stream order. The same property under the specification with no fairness was violated. In X5 an answer is a command finished, since the model has no variable for the reply apart from the offset.
+
+**Deliberate non-coverage.** Delivery is a starting position and a contiguous batch, so a reordering inside a batch is not modelled. `X8` plans one state for the workspace, so a part created or deleted alone, further parts and content are not. The per-step guards over two aggregates in a batch are not modelled in X8, and X5 stays the evidence on them. The record the design would keep for a refused command, and the sweep for TD-167, are not modelled. A job's results, owner, events and the rebuild job that deletes itself are not modelled in X9. The three-writer instance of `X5_BuiltLogAny` and of X9 were not run. Retention of receipts, promotions and the broker are not modelled. Liveness is checked for two writers and one crash in stream order and not for three writers or for `Any`. Not run on Windows.
+
+**For the maintainer.** The first result above bears on MSA-Q23. A record for a command its own check refused, kept as a receipt of a refusal and read by the same read that reads the receipts, is the option that would close it, and none of the three of the note records one. That is a design decision and is not made here.
+
+## Addendum of 2026-11-24, the two store behaviours a unit written receipt first relies on
+
+A unit lowered to SPARQL writes its receipt first, under the joint guard of every row it writes, and each of its operations then requires the receipt (the design note's section 5). Two probes, kept as conformance tests in `tools/persistence/tests/test_store_probes.py`.
+
+| Test | Given, when, then | Level | Result on rdflib 7.6.0, Oxigraph 0.5.13 and Jena ARQ in memory |
+|---|---|---|---|
+| I14-P1 | a request of a receipt and two operations that require it. With every row as planned all three apply, and with one row moved none does | L4 | passed on each |
+| I14-P2 | the receipt's guard as a list of rows and revisions and a list of rows to create, over four states of the store. The receipt is written only where every row is as planned | L4 | passed on each |
+| I14-P2, at size | thirty listed rows among a thousand others | L4 | passed on each |
+
+**The one command.** `mise run check:persistence-conformance`, which runs them with every other conformance test. They were run alone on 2026-11-24 on macOS, 21 passed.
+
+**Cost, observed once and not a benchmark.** Thirty listed rows among 5,000 others took 0.01 s on Oxigraph, 0.11 s on Jena and 31.5 s on rdflib.
+
+**Not covered.** Fuseki over TDB2 and Oxigraph on disk were not run, the generated operations were not used, and no finding is recorded in the store discovery record yet.

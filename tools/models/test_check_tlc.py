@@ -182,4 +182,4 @@ def test_the_manifest_has_one_entry_for_each_configuration():
     assert sorted(c.config for c in entries) == sorted(p.name for p in models.glob("*.cfg"))
     assert all((models / f"{c.module}.tla").is_file() for c in entries)
     assert all(c.peak_heap_mb is not None or c.limit for c in entries)
-    assert sum(c.tier == "base" for c in entries) == 88
+    assert sum(c.tier == "base" for c in entries) == 140

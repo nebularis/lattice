@@ -341,3 +341,88 @@ def test_tsd_34_a_variable_used_inside_a_sub_select_takes_the_caller_value_on_ea
             ds.graph(U("urn:g")).add((U(f"urn:{s}"), U("urn:p"), U(f"urn:m{m}")))
     rows = ds.query("SELECT ?m WHERE { GRAPH <urn:g> { { SELECT ?m WHERE { $v <urn:p> ?m } } } }", initBindings={"v": U("urn:a")})
     assert len(rows if isinstance(rows, list) else list(rows)) == 3
+
+
+# ---- MSA-I14: what a unit written receipt first relies on ----------------------------------------------------------------
+#
+# A unit of several operations is lowered to a receipt written first, under the joint guard of every row the unit writes,
+# and to operations that each require that receipt (MSA-I14 section 5). Two behaviours carry it. A later operation of one
+# request sees what an earlier one wrote, and a guard can say "every one of these rows is at its revision" for a list
+# whose length is not known when the text is generated.
+
+_YES = U("urn:yes")
+_RECEIPT = (U("urn:unit"), U("urn:p"), U("urn:receipt"))
+
+
+def _rows(ds, rows: dict[str, int], others: int = 0) -> None:
+    listed = " ".join(f"<urn:{name}> <urn:seq> {seq} ." for name, seq in rows.items())
+    filler = " ".join(f"<urn:other/{n}> <urn:seq> {n} ." for n in range(others))
+    ds.update(f"INSERT DATA {{ GRAPH <urn:m> {{ {listed} {filler} }} }}")
+
+
+def _step(name: str, seq: int) -> str:
+    """One operation of a unit: its own row guard, and the unit's receipt."""
+    return (
+        f"DELETE {{ GRAPH <urn:m> {{ <urn:{name}> <urn:seq> {seq} }} }} "
+        f"INSERT {{ GRAPH <urn:m> {{ <urn:{name}> <urn:seq> {seq + 1} ; <urn:done> <urn:yes> }} }} "
+        f"WHERE {{ GRAPH <urn:r> {{ <urn:unit> <urn:p> <urn:receipt> }} GRAPH <urn:m> {{ <urn:{name}> <urn:seq> {seq} }} }}"
+    )
+
+
+def _receipt(guard: str) -> str:
+    return (
+        "INSERT { GRAPH <urn:r> { <urn:unit> <urn:p> <urn:receipt> } } "
+        f"WHERE {{ {guard} FILTER NOT EXISTS {{ GRAPH <urn:r> {{ <urn:unit> ?p ?o }} }} }}"
+    )
+
+
+def _done(ds, name: str) -> bool:
+    return (U(f"urn:{name}"), U("urn:done"), _YES) in ds.graph(U("urn:m"))
+
+
+@pytest.mark.conformance
+@engines.each_engine
+@pytest.mark.parametrize("b_at", [4, 5], ids=["rows as planned", "one row moved"])
+def test_msa_i14_p1_a_later_operation_of_one_request_sees_the_receipt_an_earlier_one_wrote_on_each_engine(b_at):
+    ds = engines.dataset()
+    _rows(ds, {"a": 1, "b": b_at})
+    joint = "GRAPH <urn:m> { <urn:a> <urn:seq> 1 . <urn:b> <urn:seq> 4 }"
+    ds.update(" ; ".join([_receipt(joint), _step("a", 1), _step("b", 4)]))
+    whole = b_at == 4
+    assert (_RECEIPT in ds.graph(U("urn:r"))) is whole
+    assert _done(ds, "a") is whole and _done(ds, "b") is whole
+
+
+_FOR_ALL = (
+    "FILTER NOT EXISTS {{ VALUES (?root ?seq) {{ {at} }} FILTER NOT EXISTS {{ GRAPH <urn:m> {{ ?root <urn:seq> ?seq }} }} }} "
+    "FILTER NOT EXISTS {{ VALUES ?new {{ {absent} }} GRAPH <urn:m> {{ ?new <urn:seq> ?any }} }}"
+)
+
+
+@pytest.mark.conformance
+@engines.each_engine
+@pytest.mark.parametrize(
+    "stored, whole",
+    [({"a": 1, "b": 4}, True), ({"a": 1, "b": 5}, False), ({"a": 1}, False), ({"a": 1, "b": 4, "c": 1}, False)],
+    ids=["every row as planned", "one row moved", "one row missing", "a row to create exists"],
+)
+def test_msa_i14_p2_a_guard_over_a_list_of_rows_holds_only_where_every_row_is_as_planned_on_each_engine(stored, whole):
+    ds = engines.dataset()
+    _rows(ds, stored)
+    guard = _FOR_ALL.format(at="(<urn:a> 1) (<urn:b> 4)", absent="<urn:c>")
+    ds.update(" ; ".join([_receipt(guard), _step("a", 1), _step("b", 4)]))
+    assert (_RECEIPT in ds.graph(U("urn:r"))) is whole
+    assert _done(ds, "a") is whole and _done(ds, "b") is whole
+
+
+@pytest.mark.conformance
+@engines.each_engine
+def test_msa_i14_p2_the_guard_over_a_list_holds_for_thirty_rows_among_a_thousand_on_each_engine():
+    """Correctness at the size of a workspace's deletion. It does not judge cost. Among 5,000 other rows on 2026-11-24 the
+    update took 0.01 s on Oxigraph, 0.11 s on Jena and 31.5 s on rdflib, which scans for each listed row (TSD-75)."""
+    ds = engines.dataset()
+    rows = {f"row/{n}": n + 1 for n in range(30)}
+    _rows(ds, rows, others=1000)
+    at = " ".join(f"(<urn:{name}> {seq})" for name, seq in rows.items())
+    ds.update(_receipt(_FOR_ALL.format(at=at, absent="<urn:c>")))
+    assert _RECEIPT in ds.graph(U("urn:r"))

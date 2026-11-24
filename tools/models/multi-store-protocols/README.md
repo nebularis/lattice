@@ -2,7 +2,7 @@
 
 # `tools/models/multi-store-protocols/`
 
-TLA+ models of the protocols behind rows of the multi-store catalogue (sketch section 4.2). They are design-time evidence for the formal-methods track H plan's FMH-5, protocol models A to D, for MSA-I6, models X1 to X4, X1 with receipts only, Protocol A in one ledger, a pass over two ledgers, X2's audit and the trace validation that holds models A to D to the Isabelle model of [`spikes/multi-store-model/`](../../../spikes/multi-store-model/README.md), and for MSA-I14, model X5 of the studio's writers. They are not shipped code and not a proof. TLC checks every state of a small finite instance, so a result holds for the stated constants only.
+TLA+ models of the protocols behind rows of the multi-store catalogue (sketch section 4.2). They are design-time evidence for the formal-methods track H plan's FMH-5, protocol models A to D, for MSA-I6, models X1 to X4, X1 with receipts only, Protocol A in one ledger, a pass over two ledgers, X2's audit and the trace validation that holds models A to D to the Isabelle model of [`spikes/multi-store-model/`](../../../spikes/multi-store-model/README.md), and for MSA-I14, models X5, X7, X8 and X9 of the studio's writers. They are not shipped code and not a proof. TLC checks every state of a small finite instance, so a result holds for the stated constants only.
 
 ## Models
 
@@ -285,6 +285,7 @@ Every step of a request is guarded on its row's revision and on its transaction 
 | `Whole` | One guard over every row the command writes, so the request applies every step and the receipt, or nothing. A refused command is planned again from its receipt on, up to `Retries` times, and is then answered as not applied. |
 | `Fenced` | `Whole`, and every request carries the writer's epoch. A writer sets the partition's epoch when it starts, and the store refuses a request whose epoch is not the partition's, after which the writer stops without answering. |
 | `FencedAnswer` | `Fenced`, and a command refused by its own check, which sends no request, is answered from the same read as its rows, which also reads the epoch and the receipt. A writer that reads another epoch stops without answering, and one that reads the receipt answers from it. A variant beyond the two designs asked for, added after `Fenced`'s run. |
+| `WholeAnswer` | `FencedAnswer` with no epoch anywhere. A command refused by its own check is answered from the same read as its rows, which also reads the command's receipt, and a command that has one is answered from it. A request carries no epoch. |
 
 | Constant | Meaning |
 |---|---|
@@ -301,7 +302,9 @@ Properties.
 | Name | Kind | Statement | Expected |
 |---|---|---|---|
 | `WholeCommands` | invariant | The description's revision and listing, the document's revision and liveness and the set of receipts equal what some sequence of distinct commands gives, each applied whole from the start as one writer alone applies it. So no command has a receipt while part of it is not applied, and no row has moved that no receipt accounts for. | fails with `PerStep` under `Any`, holds otherwise |
-| `AnswersAgree` | invariant | No command answered as not applied has a receipt, then or later. | fails under `Stream` unless `FencedAnswer`. Checked under `Any` with `FencedAnswer` only |
+| `AnswersAgree` | invariant | No command answered as not applied has a receipt, then or later. | fails under `Stream` unless `FencedAnswer` or `WholeAnswer`. Checked under `Any` with `FencedAnswer` and `WholeAnswer` only, where it holds |
+| `LogKept` | invariant | A document that the description lists and that is live keeps its patch log. | fails with `PerStep` under `Any`, holds under `Stream` and under every other guard |
+| `EventuallyAnswered` | temporal | Where the last writer to start stays alive, every command on the stream is finished by some writer, which is where this model has it answered, since a writer replies and then stores the offset and the model has no variable for the reply apart from it. Run under `FairSpec`, which adds weak fairness on each writer's actions but its crash, with `Stream` only. | holds with `WholeAnswer` and `FencedAnswer` |
 | `TypeOK` | invariant | Each variable stays in its range. | holds |
 
 What the model abstracts away. Where the code leaves a choice, the model makes the one stated here.
@@ -314,7 +317,8 @@ What the model abstracts away. Where the code leaves a choice, the model makes t
 - Content is not modelled. A row is its revision and, for the document, whether it is live. A receipt is the command's id, and a second delivery that writes it again leaves the same receipt.
 - A writer answers once for each delivery. Which answer the sender keeps when two writers answer one command is not modelled, so `AnswersAgree` counts any answer that disagrees.
 - Under `Fenced` and `FencedAnswer` a writer sets the epoch in the step it starts.
-- The patch log, the promotions kept in the same request, jobs, events and the broker are not modelled. Liveness is not checked.
+- The document's patch log is one variable that is true at the start. A deletion's request removes it with no condition under `PerStep`, whatever its guards do (TD-180), and under every other guard only where the command's receipt is written. A deletion answered from its receipt, or planned again, does not drop it a second time. The log's content is not modelled.
+- The promotions kept in the same request, jobs, events and the broker are not modelled. Liveness is checked only for `WholeAnswer` and `FencedAnswer` under `Stream`, by `EventuallyAnswered`.
 
 The model terminates, so TLC is run with `-deadlock`.
 
@@ -392,6 +396,117 @@ What the model abstracts away.
 
 The model terminates, so TLC is run with `-deadlock`.
 
+### `X7_WorkspaceBatch.tla`
+
+Writers of the studio on one partition taking batches of commands on one workspace, and whether the answers agree with what was applied and the commands take effect in the partition's order (MSA-I14, MSA-Q22 and MSA-Q23). It adds to X5 a creation, a deletion of the workspace, a batch of several commands planned together, a sender's resend, and what a deletion does to the workspace's receipts.
+
+The workspace is one aggregate, its description, with a version row. `Create` applies where the workspace has no row. `Set` stands for a command that carries no expected revision, a change of access for example, and applies where the workspace is live. `DelWs` tombstones the workspace where it is live. The stream is one of the scripts named by `Script`.
+
+A writer takes up to `BatchMax` commands in stream order, reads their receipts, reads the row and plans each command in turn against the state the commands before it in the batch leave. A command with a receipt is skipped, one its own check refuses is answered as not applied, and the rest go in one request, each guarded on the revision it was planned from and on having no receipt. The store applies the request in one step. The writer reads the batch's receipts back, and a command with none is planned again, up to `Retries` times, and is then answered as not applied. Then it stores the offset.
+
+| `Guard` | Meaning |
+|---|---|
+| `Whole` | No token. |
+| `WholeAnswer` | No token, and the read a batch is planned from also reads the batch's receipts. |
+| `Fenced` | Every request carries the writer's epoch, and the store refuses one that is not the partition's, after which the writer stops without answering. |
+| `FencedAnswer` | `Fenced`, and the read a batch is planned from also reads the epoch and the receipts, so a writer that lost the partition stops without answering. |
+
+| `Receipts` | Meaning |
+|---|---|
+| `Cleared` | As built. A deletion of the workspace removes every receipt of the workspace and then writes its own. |
+| `SpareBatch` | A deletion leaves the receipts of the commands in its own batch. |
+| `Kept` | A deletion removes no receipt. |
+
+| Constant | Meaning |
+|---|---|
+| `Guard`, `Receipts` | As above. |
+| `Delivery` | Where a writer that starts takes the stream from. `Stream` is the position after the stored offset, as X1's. `Any` is any position in the stream, which stands for a broker that redelivers from an offset the store did not give. Batches stay contiguous. |
+| `Script` | The commands on the stream. `CreateDel` is a creation and a deletion, `CreateSetDel` a creation, a change and a deletion, `Sets` three changes, and `SetCreate` a change and then a creation, which with no workspace at the start and a resend is a change, a creation and the change again under its first id. |
+| `Resend` | Whether the stream ends with a second delivery of command 1 under the same id, as a sender that did not hear the answer sends it. |
+| `Live0` | Whether the workspace is live at the start. Otherwise it has no row. |
+| `BatchMax` | The most commands in a batch. |
+| `NWriters` | How many writers start, one after another. Each may start while the one before is alive. |
+| `MaxCrashes` | The most crashes in a behaviour. |
+| `Retries` | How many times a batch with a command refused is planned again. |
+
+Properties.
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `TypeOK` | invariant | Each variable stays in its range. | holds |
+| `AppliedOnce` | invariant | No command takes effect twice. | holds wherever it is checked |
+| `AnswersAgree` | invariant | A command answered as applied was applied, and one answered as not applied was not, then or later, so no command is answered both ways. | fails where a deletion clears the receipt of a command that is then delivered again, `Cleared` and `SpareBatch` with a resend, where a writer answers from a read another writer's request has since outdated, `Whole` and `Fenced`, and where a command refused by its own check applies later, which a stream out of order (`Any`) and a resend of a refused command both give, under every guard. Holds under `WholeAnswer` and `FencedAnswer` with `Kept` and `Stream` |
+| `PartitionOrder` | invariant | The commands take effect in the order the partition gives them. | fails with `Whole`, three writers and `Retries=0`, and under `Any` with commands that carry no expected revision, token or none. Holds with `Retries=1` or more, or with `Fenced`, under `Stream`, and under `Any` where each command applies only after the one before it |
+| `EventuallyAnswered` | temporal | Where the last writer to start stays alive, every command on the stream is answered by someone, as applied or not, `saidYes` and `saidNo` together covering the stream. Run under `FairSpec`, which adds weak fairness on each writer's actions but its crash, with `Stream` only. | holds with `WholeAnswer` and `FencedAnswer` |
+
+What the model abstracts away. Where the code leaves a choice, the model makes the one stated here.
+
+- One workspace of one aggregate, so every command is whole under any guard. X5 is where a command over two aggregates is checked.
+- `Set` stands for any command that carries no expected revision.
+- Delivery is the stream's order from the stored offset, as X1's, the last writer's stored offset winning, or under `Any` a start at any position, with the batch contiguous from there. A writer taking from a position does not skip a command it has not been given, so a stream out of order is a starting position and not a reordering inside a batch.
+- The read of receipts and the planning read are two steps, except under `WholeAnswer` and `FencedAnswer`, where the planning read takes the receipts too. The request and the read of receipts after it are one step.
+- A batch refused in part is planned again whole.
+- Retention of receipts is not modelled, so `Kept` keeps them for good.
+- A resend is one more delivery of command 1 at the end of the stream.
+- A command refused by its own check keeps no record. The design records nothing for it, so a resend of it, or a later delivery of it from another position, is planned afresh and can apply.
+- Parts and documents are the subject of `X8_BatchParts.tla`. The patch log, jobs, promotions and the broker are not modelled. Liveness is checked only by `EventuallyAnswered`, for `WholeAnswer` and `FencedAnswer` under `Stream`.
+- Which answer a sender keeps when two writers answer one command is not modelled, so `AnswersAgree` counts any answer that disagrees.
+
+The model terminates, so TLC is run with `-deadlock`.
+
+### `X8_BatchParts.tla`
+
+X7 with a second aggregate. The workspace has its description and one part, each with a row state of absent, live or gone, and a revision. Writers, phases, batches, planning from one read, receipts, `Receipts`, `Resend`, `Delivery` and the guards `Whole`, `WholeAnswer`, `Fenced` and `FencedAnswer` are X7's. The per-step guards of the code as built are X5's and are not modelled here.
+
+| Command | Writes | Applies where |
+|---|---|---|
+| `Create` | the part and the description | neither has a row |
+| `Set` | the description alone | the workspace is live |
+| `SavePart` | the part alone | the workspace and the part are live. It carries no expected revision, so its guard is the part's revision as the plan read it |
+| `DelWs` | tombstones the description and the part | the workspace is live |
+
+One guard for each command applies it where every aggregate it writes is at the revision the plan gave it and the command has no receipt, and it then writes all its aggregates and its receipt in the one step. A plan tracks each aggregate's revision through the batch. The scripts are `CreateSaveDel`, `CreateSetSaveDel` and `SetSave`, a change, a save of the part and a change on a live workspace.
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `TypeOK` | invariant | Each variable stays in its range. | holds |
+| `WholeCommands` | invariant | The description and the part are both absent, both live or both gone. | holds, by construction, since every command writes all its aggregates in one guarded step |
+| `AppliedOnce` | invariant | As in X7. | holds |
+| `AnswersAgree` | invariant | As in X7. | as X7 |
+| `PartitionOrder` | invariant | As in X7. | holds under `Stream`. Fails under `Any` |
+| `NoSaveAfterDel` | invariant | No save of the part takes effect after the deletion, since the deletion moves the part's revision and a save planned before it is refused. | holds |
+
+What the model abstracts away.
+
+- The description and the part are created and tombstoned together, so a plan tracks one state for the workspace. A part created or deleted alone is not modelled.
+- `SavePart` and `Set` stand for any command that writes one aggregate. Content, the patch log and further parts are not modelled.
+- Liveness is not checked. The model terminates, so TLC is run with `-deadlock`.
+
+### `X9_JobUpdate.tla`
+
+The rule that a job which succeeded stays succeeded, and where it is decided (MSA-I14, TD-181). The module's header says what it was read from, `Writer.jobUpdate` in `platform/config-studio-core`, which drops an update that would move a job it read as succeeded to failed, with no receipt, and otherwise sends a request whose receipt is guarded on the job's owner alone and whose every other operation is conditional on that receipt. Nothing in the request tests the job's status.
+
+One job has a status of queued, running, succeeded or failed and starts as running. The stream holds two updates, one to succeeded and one to failed. A writer handles one command at a time, reads the update's receipt, reads the job and plans the update, sends one request that the store applies in one step, and stores the offset. Writers start one after another, may take over and may crash, as in X5.
+
+| Constant | Meaning |
+|---|---|
+| `Rule` | `Read` is the design as built. The writer drops the update from the job as it read it, and the request carries no condition on the status. `Guard` puts the condition in the request's guard as well. |
+| `Delivery` | `Stream` or `Any`, as in X5. |
+| `Order` | `SucceedFirst` or `FailFirst`, the order of the two updates on the stream. |
+| `NWriters`, `MaxCrashes` | As in X5. |
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `TypeOK` | invariant | Each variable stays in its range. | holds |
+| `SucceededStays` | invariant | A ghost variable records the job once it has succeeded. A job that was ever succeeded is never failed. | fails with `Read` under `Any` and two writers. Holds with one writer, under `Stream`, and under `Guard` |
+
+What the model abstracts away.
+
+- A job's results, its owner, its graphs and its events are not modelled, and an update is its target status alone. The owner's guard always holds.
+- A dropped update gets no receipt, as built, so a resend of it is planned again and dropped again.
+- The service's own update of a job that could not be handed over, and the rebuild job that deletes itself on success, are not modelled.
+- Liveness is not checked.
+
 ### `X2_AuditFlags.tla`
 
 X2's audit, settled by a run. The module extends `X2_EvidenceAcrossStores.tla` and changes nothing in it. It adds one invariant. `AuditFindsStale` says the audit flags every stale decision, and this one says every decision it flags is stale, so the two together would make the audit exact.
@@ -456,6 +571,14 @@ X2's audit, settled by a run. The module extends `X2_EvidenceAcrossStores.tla` a
 | `X5_FencedAnswerAny.cfg` | X5 | `FencedAnswer`, otherwise as `X5_WholeAny.cfg` | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
 | `X5_FencedAnswerStream.cfg` | X5 | `FencedAnswer`, otherwise as `X5_WholeStream.cfg` | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
 | `X5_FencedAnswerStream3.cfg` | X5 | as `X5_FencedAnswerStream.cfg` with three writers and two crashes | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
+| `X5_BuiltLog.cfg` | X5 | `PerStep`, `Stream`, both saves then the deletion, two writers, one crash | `LogKept` | no error |
+| `X5_BuiltLogAny.cfg` | X5 | as `X5_BuiltLog.cfg` with `Any` | `LogKept` | violated |
+| `X5_WholeLog.cfg` | X5 | `Whole`, otherwise as `X5_BuiltLog.cfg`, `Retries=3` | `LogKept` | no error |
+| `X5_WholeAnswerStream.cfg` | X5 | `WholeAnswer`, `Stream`, both saves then the deletion, two writers, one crash, `Retries=2` | `TypeOK`, `WholeCommands`, `AnswersAgree`, `LogKept` | no error |
+| `X5_WholeAnswerAny.cfg` | X5 | as `X5_WholeAnswerStream.cfg` with `Any` | `TypeOK`, `WholeCommands`, `AnswersAgree`, `LogKept` | no error |
+| `X5_WholeAnswerAny3.cfg` | X5 | as `X5_WholeAnswerAny.cfg` with three writers and two crashes | `TypeOK`, `WholeCommands`, `AnswersAgree`, `LogKept` | no error |
+| `X5_LiveWholeAnswer.cfg` | X5 | `WholeAnswer`, `Stream`, `FairSpec`, two writers, one crash, `Retries=2` | `TypeOK`, `EventuallyAnswered` | no error |
+| `X5_LiveFencedAnswer.cfg` | X5 | as `X5_LiveWholeAnswer.cfg` with `FencedAnswer` | `TypeOK`, `EventuallyAnswered` | no error |
 | `PA_OnRead.cfg` | Protocol A | `OnRead`, `LaterOf`, a credit of one seat or a second activation of the same licence, `Concurrent`, one stop of either actor, the bundle at 0 to 3 and stated at 3, the quota at 0 to 2, every order of the stimuli | `TypeOK`, O1, O2, O3, O4 | no error |
 | `PA_OnReadAligned.cfg` | Protocol A | `OnRead`, `LaterOf`, the Python model's instance: the bundle at 0, 1 or 2, the quota at 1 or 3, a credit of 3 seats that no ceiling cuts, a second activation of a licence of its own, the quota in the alert's guard, one stop of A | `TypeOK`, O1, O2, O3, O4 | no error |
 | `PA_OnLatestO1.cfg` | Protocol A | `OnLatest`, otherwise as `PA_OnRead.cfg` | O1 | violated |
@@ -472,6 +595,50 @@ X2's audit, settled by a run. The module extends `X2_EvidenceAcrossStores.tla` a
 | `X6_RefusalOpenHalf.cfg` | X6 | as `X6_RefusalOpen.cfg` | `NoHalfClaim` | violated |
 | `X6_StartOpen.cfg` | X6 | the second gap open, otherwise as `X6_Closed.cfg` | `SerialClaims` | violated |
 | `X6_StartOpenHalf.cfg` | X6 | as `X6_StartOpen.cfg` | `TypeOK`, `NoHalfClaim`, `PassOrderEach`, `NotBeforeStimulus` | no error |
+| `X7_ClearedBatch.cfg` | X7 | `Whole`, `Cleared`, `CreateDel`, no resend, `BatchMax=2`, one writer, no crash, `Retries=3` | `TypeOK`, `AppliedOnce`, `AnswersAgree` | violated |
+| `X7_SpareBatch.cfg` | X7 | as `X7_ClearedBatch.cfg` with `SpareBatch` | `TypeOK`, `AppliedOnce`, `AnswersAgree` | no error |
+| `X7_SpareResend.cfg` | X7 | as `X7_SpareBatch.cfg` with a resend and one crash | `TypeOK`, `AppliedOnce`, `AnswersAgree` | violated |
+| `X7_SpareResendToken.cfg` | X7 | `FencedAnswer`, `SpareBatch`, `CreateSetDel`, a resend, `BatchMax=2`, three writers, two crashes, `Retries=3` | `TypeOK`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | violated |
+| `X7_ClearedRedelivery.cfg` | X7 | `FencedAnswer`, `Cleared`, `CreateSetDel`, no resend, `BatchMax=1`, three writers, two crashes, `Retries=3` | `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | violated |
+| `X7_KeptResend.cfg` | X7 | `Whole`, `Kept`, `CreateDel`, a resend, `BatchMax=2`, one writer, one crash, `Retries=3` | `TypeOK`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X7_OrderNoToken.cfg` | X7 | `Whole`, `Kept`, `Sets`, the workspace live at the start, `BatchMax=2`, three writers, two crashes, `Retries=1` | `TypeOK`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X7_OrderNoTokenNoRetry.cfg` | X7 | as `X7_OrderNoToken.cfg` with `Retries=0` | `TypeOK`, `AppliedOnce`, `PartitionOrder` | violated |
+| `X7_OrderTokenNoRetry.cfg` | X7 | as `X7_OrderNoTokenNoRetry.cfg` with `Fenced` | `TypeOK`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X7_OrderNoTokenCreate.cfg` | X7 | `Whole`, `Kept`, `CreateSetDel`, a resend, `BatchMax=2`, three writers, two crashes, `Retries=3` | `TypeOK`, `AppliedOnce`, `PartitionOrder` | no error |
+| `X7_AnswersNoToken.cfg` | X7 | as `X7_OrderNoTokenCreate.cfg` | `AnswersAgree` | violated |
+| `X7_AnswersToken.cfg` | X7 | as `X7_AnswersNoToken.cfg` with `Fenced` | `AnswersAgree` | violated |
+| `X7_AnswersRead.cfg` | X7 | as `X7_AnswersNoToken.cfg` with `WholeAnswer` and `Retries=1` | `TypeOK`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X7_AnswersReadNoRetry.cfg` | X7 | `WholeAnswer`, `Kept`, `Sets`, the workspace live at the start, `BatchMax=2`, three writers, two crashes, `Retries=0` | `TypeOK`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X7_All.cfg` | X7 | `FencedAnswer`, `Kept`, `CreateSetDel`, a resend, `BatchMax=2`, three writers, two crashes, `Retries=3` | `TypeOK`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X7_AnyWholeAnswer.cfg` | X7 | `WholeAnswer`, `Any`, `CreateSetDel`, `Kept`, a resend, `BatchMax=2`, two writers, one crash, `Retries=2` | `TypeOK`, `AppliedOnce`, `AnswersAgree` | violated |
+| `X7_AnyFencedAnswer.cfg` | X7 | as `X7_AnyWholeAnswer.cfg` with `FencedAnswer` | `TypeOK`, `AppliedOnce`, `AnswersAgree` | violated |
+| `X7_AnyWhole.cfg` | X7 | as `X7_AnyWholeAnswer.cfg` with `Whole` | `TypeOK`, `AppliedOnce`, `AnswersAgree` | violated |
+| `X7_AnyFencedAnswerOrder.cfg` | X7 | as `X7_AnyWholeAnswer.cfg` with `FencedAnswer` | `TypeOK`, `AppliedOnce`, `PartitionOrder` | no error |
+| `X7_AnyFencedAnswerOrderSets.cfg` | X7 | `FencedAnswer`, `Any`, `Sets`, the workspace live at the start, no resend, `BatchMax=2`, two writers, one crash, `Retries=2` | `TypeOK`, `AppliedOnce`, `PartitionOrder` | violated |
+| `X7_RefusedThenApplies.cfg` | X7 | `WholeAnswer`, `Stream`, `SetCreate`, `Kept`, a resend, no workspace at the start, `BatchMax=1`, one writer, no crash, `Retries=2` | `TypeOK`, `AppliedOnce`, `AnswersAgree` | violated |
+| `X7_RefusedThenAppliesToken.cfg` | X7 | as `X7_RefusedThenApplies.cfg` with `FencedAnswer` | `TypeOK`, `AppliedOnce`, `AnswersAgree` | violated |
+| `X7_RefusedThenAppliesBatch.cfg` | X7 | as `X7_RefusedThenApplies.cfg` with `BatchMax=3` | `TypeOK`, `AppliedOnce`, `AnswersAgree` | violated |
+| `X7_LiveWholeAnswer.cfg` | X7 | `WholeAnswer`, `Stream`, `FairSpec`, `CreateSetDel`, `Kept`, a resend, `BatchMax=2`, two writers, one crash, `Retries=2` | `TypeOK`, `EventuallyAnswered` | no error |
+| `X7_LiveFencedAnswer.cfg` | X7 | as `X7_LiveWholeAnswer.cfg` with `FencedAnswer` | `TypeOK`, `EventuallyAnswered` | no error |
+| `X8_ClearedBatch.cfg` | X8 | `Whole`, `Cleared`, `CreateSaveDel`, no resend, `BatchMax=3`, one writer, no crash, `Retries=3` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `AnswersAgree` | violated |
+| `X8_SpareBatch.cfg` | X8 | as `X8_ClearedBatch.cfg` with `SpareBatch` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `AnswersAgree` | no error |
+| `X8_KeptResend.cfg` | X8 | `Whole`, `Kept`, `CreateSaveDel`, a resend, `BatchMax=3`, one writer, one crash, `Retries=3` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X8_OrderNoToken.cfg` | X8 | `Whole`, `Kept`, `SetSave`, the workspace live at the start, `BatchMax=2`, three writers, two crashes, `Retries=1` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X8_OrderNoTokenNoRetry.cfg` | X8 | as `X8_OrderNoToken.cfg` with `Retries=0` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X8_OrderTokenNoRetry.cfg` | X8 | as `X8_OrderNoTokenNoRetry.cfg` with `Fenced` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X8_AnswersNoToken.cfg` | X8 | `Whole`, `Kept`, `CreateSetSaveDel`, a resend, `BatchMax=2`, two writers, one crash, `Retries=3` | `AnswersAgree` | violated |
+| `X8_AnswersRead.cfg` | X8 | as `X8_AnswersNoToken.cfg` with `WholeAnswer` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X8_AnyWholeAnswer.cfg` | X8 | as `X8_AnswersRead.cfg` with `Any` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | violated |
+| `X8_AnyOrder.cfg` | X8 | `Whole`, `Any`, `Kept`, `SetSave`, the workspace live at the start, no resend, `BatchMax=2`, two writers, one crash, `Retries=1` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `PartitionOrder` | violated |
+| `X8_AnySaveAfterDel.cfg` | X8 | `Whole`, `Any`, `Kept`, `CreateSaveDel`, no resend, `BatchMax=2`, two writers, one crash, `Retries=2` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `NoSaveAfterDel` | no error |
+| `X8_All.cfg` | X8 | `FencedAnswer`, `Kept`, `CreateSetSaveDel`, a resend, `BatchMax=2`, three writers, two crashes, `Retries=3` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X8_AllRead.cfg` | X8 | as `X8_All.cfg` with `WholeAnswer` | `TypeOK`, `WholeCommands`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | no error |
+| `X9_ReadAny.cfg` | X9 | `Read`, `Any`, the update to succeeded first, two writers, one crash | `TypeOK`, `SucceededStays` | violated |
+| `X9_ReadAnyOneWriter.cfg` | X9 | as `X9_ReadAny.cfg` with one writer | `TypeOK`, `SucceededStays` | no error |
+| `X9_ReadStream.cfg` | X9 | `Read`, `Stream`, the update to succeeded first, two writers, one crash | `TypeOK`, `SucceededStays` | no error |
+| `X9_ReadStreamFailFirst.cfg` | X9 | as `X9_ReadStream.cfg` with the update to failed first | `TypeOK`, `SucceededStays` | no error |
+| `X9_GuardAny.cfg` | X9 | as `X9_ReadAny.cfg` with `Guard` | `TypeOK`, `SucceededStays` | no error |
+| `X9_GuardStream.cfg` | X9 | as `X9_ReadStream.cfg` with `Guard` | `TypeOK`, `SucceededStays` | no error |
 | `X2A_FlaggedIsStale.cfg` | X2 with `FlaggedIsStale` | the constants of `X2_BestKnownAudit.cfg`, `MaxPos=3` and two values, so a value can change and change back | `FlaggedIsStale` | violated |
 | `X2A_FlaggedIsStaleOneStep.cfg` | X2 with `FlaggedIsStale` | `BestKnown`, `MaxPos=1`, a decision at 1 only, so no value can change back | `TypeOK`, `FlaggedIsStale`, `AuditFindsStale` | no error |
 | `ModelB_Atomic.cfg` | B | `Atomic`, three writers, a bump, a resend | `TypeOK`, `OnePerPosition`, `NoLostAppend`, `FencedAppends` | no error |
@@ -551,17 +718,17 @@ On Windows, in PowerShell, the variable is set with `$env:TLA2TOOLS_JAR = '<path
 - It runs TLC with `-deadlock`, since every model terminates, in a copy of this directory under `.build/formal/tlc/multi-store-protocols/<configuration>/`, where TLC writes its states, any trace, its temporary files and its GC log.
 - It prints, for each configuration, the verdict, the distinct and generated states, the depth, TLC's time, the wall time and the peak heap, then one line of totals. Where the distinct states differ from the manifest's, the line says so. A configuration fails only where TLC's verdict differs from the manifest's. A skip, a stop and a run that runs out of heap are reported and do not fail.
 
-A pass of the base tier prints the runner's tests, `27 passed`, then a line with the heap budget, then for each of the 88 configurations a `RUN` line and a `PASS` line. Forty-one `PASS` lines read "no error" and forty-seven name the property violated, each as the manifest expects. It ends with the line below and exits 0.
+A pass of the base tier prints the runner's tests, `27 passed`, then a line with the heap budget, then for each of the 140 configurations a `RUN` line and a `PASS` line. Seventy-three `PASS` lines read "no error" and sixty-seven name the property violated, each as the manifest expects. It ends with the line below and exits 0.
 
 ```text
-models: 88 as expected, 0 failed, 0 skipped, 0 stopped
+models: 140 as expected, 0 failed, 0 skipped, 0 stopped
 ```
 
-On a machine of 8 GB the budget is at most 2 GB, which every base configuration fits, the largest heap given being 320 MB. The wide tier on such a machine skips each configuration whose heap exceeds the budget, with both figures, and exits 0 unless a verdict differs.
+On a machine of 8 GB the budget is at most 2 GB, which every base configuration fits, the largest heap given being 576 MB. The wide tier on such a machine skips each configuration whose heap exceeds the budget, with both figures, and exits 0 unless a verdict differs.
 
 The peak heap is read from the GC log. The young generation is fixed at 16 MB, so a collection runs at least every 16 MB allocated, and the peak is the largest heap in use before a collection that the log printed. The true peak is at most 16 MB above it.
 
-The module for a `ModelA_*.cfg` is `ModelA_GuardedCas.tla`, for a `ModelB_*.cfg` is `ModelB_AppendForm.tla`, for a `ModelC_*.cfg` is `ModelC_CreateRace.tla`, for a `ModelD_*.cfg` is `ModelD_KeyClaim.tla`, for an `X1_*.cfg` is `X1_SerialisedApply.tla`, for an `X1R_*.cfg` is `X1_ReceiptsOnly.tla`, for an `X2_*.cfg` is `X2_EvidenceAcrossStores.tla`, for an `X3_*.cfg` is `X3_ReceiptRelay.tla`, for an `X4_*.cfg` is `X4_AuthorityCutover.tla`, for an `X5_*.cfg` is `X5_WholeCommand.tla`, for a `PA_*.cfg` is `PA_PassRevision.tla`, for an `X6_*.cfg` is `X6_PassTwoLedgers.tla` and for an `X2A_*.cfg` is `X2_AuditFlags.tla`. TLC run by hand in this directory writes `states/` and any trace file here, and `.gitignore` excludes them.
+The module for a `ModelA_*.cfg` is `ModelA_GuardedCas.tla`, for a `ModelB_*.cfg` is `ModelB_AppendForm.tla`, for a `ModelC_*.cfg` is `ModelC_CreateRace.tla`, for a `ModelD_*.cfg` is `ModelD_KeyClaim.tla`, for an `X1_*.cfg` is `X1_SerialisedApply.tla`, for an `X1R_*.cfg` is `X1_ReceiptsOnly.tla`, for an `X2_*.cfg` is `X2_EvidenceAcrossStores.tla`, for an `X3_*.cfg` is `X3_ReceiptRelay.tla`, for an `X4_*.cfg` is `X4_AuthorityCutover.tla`, for an `X5_*.cfg` is `X5_WholeCommand.tla`, for an `X7_*.cfg` is `X7_WorkspaceBatch.tla`, for an `X8_*.cfg` is `X8_BatchParts.tla`, for an `X9_*.cfg` is `X9_JobUpdate.tla`, for a `PA_*.cfg` is `PA_PassRevision.tla`, for an `X6_*.cfg` is `X6_PassTwoLedgers.tla` and for an `X2A_*.cfg` is `X2_AuditFlags.tla`. TLC run by hand in this directory writes `states/` and any trace file here, and `.gitignore` excludes them.
 
 ## Trace validation
 
@@ -664,6 +831,16 @@ The `X1R_*` and `X5_*` configurations were run with TLC 2.19 and TLA+ tools 1.7.
 | `X5_FencedAnswerAny` | no error | 18,789 | 7,083 | 29 | 00s | 2.4 s | 30 MB | none |
 | `X5_FencedAnswerStream` | no error | 1,299 | 540 | 24 | 00s | 2.2 s | 18 MB | none |
 | `X5_FencedAnswerStream3` | no error | 55,386 | 14,597 | 35 | 01s | 2.7 s | 33 MB | none |
+| `X5_BuiltLog` | no error | 3,535 | 1,344 | 31 | 00s | 0.7 s | 19 MB | none |
+| `X5_BuiltLogAny` | `LogKept` violated | 7,357 | 2,978 | 16 | 00s | 0.7 s | 21 MB | Writer 1 plans the save of the document and writer 2 starts, takes the deletion and plans it at revisions 1 and 1. Writer 1 applies its save and then the save of the description. Writer 2's request then fails both guards, so it applies no step and writes no receipt, and its log drops, which carry no guard, remove the document's patch log. The description lists a live document that has no history. |
+| `X5_WholeLog` | no error | 3,020 | 1,181 | 30 | 00s | 0.7 s | 19 MB | none |
+| `X5_WholeAnswerStream` | no error | 1,758 | 668 | 24 | 00s | 0.7 s | 19 MB | none |
+| `X5_WholeAnswerAny` | no error | 32,040 | 10,714 | 29 | 00s | 1.1 s | 22 MB | none |
+| `X5_WholeAnswerAny3` | no error | 7,277,352 | 1,412,168 | 41 | 10s | 11.0 s | 249 MB | none |
+| `X5_LiveWholeAnswer` | no error | 1,758 | 668 | 24 | 00s | 0.9 s | 21 MB | none |
+| `X5_LiveFencedAnswer` | no error | 1,299 | 540 | 24 | 00s | 0.8 s | 21 MB | none |
+
+The `X5_*` configurations with `Log`, `WholeAnswer` or `Live` in their names were run through `mise run check:models-multi-store` on macOS on 2026-11-24, one at a time under a heap of 256 MB given by `--heap-mb`, on 8 workers where no error was expected and one where a counterexample was. The module's variable `haslog` and its guard `WholeAnswer` left the distinct states of the fifteen configurations above unchanged. The two `Live` configurations run `FairSpec` and check `EventuallyAnswered`, and TLC printed "Temporal properties were violated" for `X5_LiveFencedAnswer` and `X7_LiveFencedAnswer` with `Spec` in place of `FairSpec`, so the property is not vacuous.
 
 The wide tier was run through `mise run check:models-multi-store` on 2026-11-24, with TLC 2.19 and TLA+ tools 1.7.4 on Java 25.0.2, one configuration at a time with nothing else heavy running, on 16 workers, under a heap of 4,096 MB given by `--heap-mb` and stopped at 30 minutes. The two configurations that reached the limit ran under a heap of 8,192 MB, machine S's other limit. The depth is TLC's depth of the complete state graph search, and with 16 workers it can differ by one or two between runs while the counts do not. The peak heap is the one read under the heap given, and [`manifest.toml`](manifest.toml) holds these figures and the base tier's.
 
@@ -722,6 +899,63 @@ The `PA_*`, `X6_*` and `X2A_*` configurations were run through `mise run check:m
 | `X6_StartOpenHalf` | no error | 13,911 | 8,256 | 20 | 01s | 1.7 s | 31 MB | none |
 | `X2A_FlaggedIsStale` | `FlaggedIsStale` violated | 453 | 361 | 5 | 00s | 1.6 s | 15 MB | The core for position 2 reads "a" at position 0. S commits "b" at position 1 and "a" at position 2. The core commits the decision with "a" read at 0. S held "a" at 2, so the evidence is correct, and the audit flags it, since S changed at position 1. |
 | `X2A_FlaggedIsStaleOneStep` | no error | 15 | 13 | 4 | 00s | 1.7 s | 15 MB | none |
+
+The `X7_*` configurations were run through `mise run check:models-multi-store` on macOS on 2026-11-24, with TLC 2.19 and TLA+ tools 1.7.4 on Java 25.0.2, one at a time under a heap of 256 MB given by `--heap-mb`, on 8 workers where no error was expected and one where a counterexample was. The larger ones filled the heap, so their peak says what was enough and not what is needed. Every one fits the base tier's budget.
+
+| Configuration | Result | States generated | Distinct states | Depth | TLC time | Wall time | Peak heap | Counterexample |
+|---|---|---|---|---|---|---|---|---|
+| `X7_ClearedBatch` | `AnswersAgree` violated | 15 | 14 | 8 | 00s | 0.8 s | 15 MB | The creation and the deletion are one batch. The request applies both, and the deletion clears the creation's receipt and writes its own. The writer reads the receipts back, finds none for the creation and plans again, where the creation is refused since the workspace is gone, and answers it as not applied. |
+| `X7_SpareBatch` | no error | 18 | 17 | 12 | 00s | 0.6 s | 15 MB | none |
+| `X7_SpareResend` | `AnswersAgree` violated | 56 | 43 | 15 | 00s | 0.7 s | 15 MB | One writer applies the creation as a batch of its own. It then takes the deletion alone, which writes its own receipt and removes the creation's. The resend of the creation finds no receipt and a workspace that is gone, and is answered as not applied. |
+| `X7_SpareResendToken` | `AnswersAgree` violated | 43,089 | 15,926 | 15 | 00s | 1.0 s | 26 MB | One writer applies the creation, then the change and the deletion in one batch, which clears the creation's receipt. The resend of the creation finds no receipt and the workspace gone, and is answered as not applied. The token does not refuse it, since the writer still holds the partition. |
+| `X7_ClearedRedelivery` | `AnswersAgree` violated | 52,182 | 17,085 | 25 | 00s | 1.1 s | 28 MB | Writer 1 applies the creation. Writer 2 starts, skips the creation for its receipt, applies the change and stores offset 2, and writer 1 then stores its older offset 1 over it. Writer 2 applies the deletion, which clears the receipts of the creation and the change. Writer 3 starts from offset 1, takes the change again, finds no receipt and a workspace that is gone, and answers it as not applied. |
+| `X7_KeptResend` | no error | 50 | 37 | 12 | 00s | 0.7 s | 15 MB | none |
+| `X7_OrderNoToken` | no error | 1,676,375 | 359,623 | 34 | 04s | 4.7 s | 251 MB | none |
+| `X7_OrderNoTokenNoRetry` | `PartitionOrder` violated | 559,000 | 156,912 | 21 | 03s | 3.7 s | 223 MB | Writer 1 plans command 1 and writer 2 starts. Writer 2 reads the receipts for commands 1 and 2, and writer 1 then applies command 1. Writer 2's request for command 2 is refused, and with no retry it answers it as not applied and applies command 3. Writer 1, which took command 2 after storing offset 1, plans it against the row as it now is and applies it after command 3. |
+| `X7_OrderTokenNoRetry` | no error | 539,388 | 143,062 | 32 | 01s | 2.1 s | 239 MB | none |
+| `X7_OrderNoTokenCreate` | no error | 7,059,098 | 1,582,014 | 39 | 14s | 15.1 s | 253 MB | none |
+| `X7_AnswersNoToken` | `AnswersAgree` violated | 2,441 | 957 | 10 | 00s | 0.9 s | 18 MB | Writer 1 plans the creation and writer 2 starts and reads the receipts, which hold none. Writer 1's request applies the creation. Writer 2 then plans, finds the workspace live and answers the creation as not applied, which it was. |
+| `X7_AnswersToken` | `AnswersAgree` violated | 2,618 | 1,044 | 10 | 00s | 0.7 s | 18 MB | Writer 1 reads the receipts, writer 2 starts and applies the creation. Writer 1, which has lost the partition, then plans, finds the workspace live and answers the creation as not applied. It sends no request, so the epoch never refuses it. |
+| `X7_AnswersRead` | no error | 2,076,001 | 448,546 | 35 | 04s | 4.8 s | 252 MB | none |
+| `X7_AnswersReadNoRetry` | no error | 852,472 | 187,513 | 31 | 02s | 2.9 s | 251 MB | none |
+| `X7_All` | no error | 698,887 | 198,338 | 32 | 02s | 2.4 s | 245 MB | none |
+| `X7_AnyWholeAnswer` | `AnswersAgree` violated | 5,368 | 2,579 | 10 | 00s | 0.8 s | 21 MB | Writer 1 takes the creation and the change as one batch and plans them. Writer 2 starts, takes the change alone from position 2, finds no workspace and answers it as not applied, with no receipt. Writer 1's request applies the creation and the change. The change is answered both ways. |
+| `X7_AnyFencedAnswer` | `AnswersAgree` violated | 6,164 | 3,110 | 10 | 00s | 0.8 s | 21 MB | Writer 1 starts at position 2, takes the change alone, finds no workspace and answers it as not applied. Writer 2 starts, which sets the epoch to 2, takes the creation and the change and applies both. The change is answered both ways. The epoch refused nothing, since writer 1 answered before writer 2 started and sent no request. |
+| `X7_AnyWhole` | `AnswersAgree` violated | 5,054 | 2,409 | 10 | 00s | 0.8 s | 21 MB | Writer 1 takes the creation and plans it. Writer 2 starts, takes the same creation and reads its receipt, which does not yet exist. Writer 1's request applies the creation. Writer 2 then plans, finds the workspace live and answers the creation as not applied. |
+| `X7_AnyFencedAnswerOrder` | no error | 30,309 | 13,258 | 24 | 00s | 1.0 s | 23 MB | none |
+| `X7_AnyFencedAnswerOrderSets` | `PartitionOrder` violated | 4,354 | 2,130 | 11 | 00s | 0.9 s | 21 MB | Writer 1 starts at position 2 and applies the second change. Writer 2 starts, which sets the epoch to 2, takes position 1 and applies it after. The changes carry no expected revision, so nothing refuses the later one. The token leaves one writer sending requests and gives no order to what that writer is given. |
+| `X7_RefusedThenApplies` | `AnswersAgree` violated | 15 | 15 | 15 | 00s | 0.6 s | 15 MB | One writer takes the change alone, finds no workspace and answers it as not applied, with no receipt. It applies the creation. The resend of the change, under its first id, finds no receipt and a live workspace and applies. Command 1 is answered not applied and then applied, and takes effect after command 2. |
+| `X7_RefusedThenAppliesToken` | `AnswersAgree` violated | 15 | 15 | 15 | 00s | 0.6 s | 15 MB | The same trace. The token is the writer's own, so nothing refuses it. |
+| `X7_RefusedThenAppliesBatch` | `AnswersAgree` violated | 14 | 14 | 6 | 00s | 0.6 s | 15 MB | One writer takes all three positions as one batch. It plans the change as refused, the creation, and the resend of the change, which finds no receipt and a workspace the creation leaves live, so it plans it to apply. The request applies the creation and the change. Command 1 is answered not applied and applied. |
+| `X7_LiveWholeAnswer` | no error | 12,109 | 4,400 | 24 | 01s | 1.6 s | 29 MB | none |
+| `X7_LiveFencedAnswer` | no error | 7,192 | 3,136 | 24 | 00s | 1.0 s | 22 MB | none |
+
+The `X8_*` and `X9_*` configurations were run the same way, on macOS on 2026-11-24, one at a time under a heap of 256 MB, on 8 workers where no error was expected and one where a counterexample was. The larger ones filled the heap, so their peak says what was enough and not what is needed. Every one fits the base tier's budget.
+
+| Configuration | Result | States generated | Distinct states | Depth | TLC time | Wall time | Peak heap | Counterexample |
+|---|---|---|---|---|---|---|---|---|
+| `X8_ClearedBatch` | `AnswersAgree` violated | 24 | 21 | 8 | 00s | 0.8 s | 15 MB | The creation, the save of the part and the deletion are one batch. The request applies all three and the deletion clears the receipts of the other two. The writer reads the receipts back and finds only the deletion's, plans the other two again, where the workspace is gone, and answers them as not applied. |
+| `X8_SpareBatch` | no error | 35 | 31 | 12 | 00s | 0.6 s | 15 MB | none |
+| `X8_KeptResend` | no error | 89 | 63 | 12 | 00s | 0.6 s | 15 MB | none |
+| `X8_OrderNoToken` | no error | 1,178,807 | 256,511 | 31 | 03s | 3.9 s | 250 MB | none |
+| `X8_OrderNoTokenNoRetry` | no error | 1,178,807 | 256,511 | 31 | 03s | 3.9 s | 250 MB | none |
+| `X8_OrderTokenNoRetry` | no error | 539,388 | 143,062 | 32 | 02s | 2.5 s | 240 MB | none |
+| `X8_AnyOrder` | `PartitionOrder` violated | 3,640 | 1,755 | 11 | 00s | 0.9 s | 20 MB | Writer 1 takes the first change and plans it. Writer 2 starts at position 2, takes the save of the part and applies it. Writer 1 then applies the change. The two commands write different aggregates, so neither guard refuses the other, and the commands take effect in the order of the writers' requests and not of the stream. |
+| `X8_AnySaveAfterDel` | no error | 19,071 | 7,660 | 29 | 00s | 0.9 s | 22 MB | none |
+| `X8_AnswersNoToken` | `AnswersAgree` violated | 470 | 257 | 10 | 00s | 0.7 s | 15 MB | Writer 1 plans the creation. Writer 2 starts and reads the receipts, which hold none. Writer 1's request applies the creation. Writer 2 then plans, finds the workspace live and answers the creation as not applied. |
+| `X8_AnswersRead` | no error | 21,440 | 7,739 | 27 | 00s | 1.2 s | 22 MB | none |
+| `X8_AnyWholeAnswer` | `AnswersAgree` violated | 8,739 | 4,220 | 10 | 00s | 0.8 s | 21 MB | The trace of `X7_AnyWholeAnswer`. The change is answered as not applied by a writer that took it alone, and applies in the batch of the writer that took the creation with it. |
+| `X8_All` | no error | 1,419,409 | 402,080 | 37 | 03s | 3.9 s | 252 MB | none |
+| `X8_AllRead` | no error | 4,941,047 | 1,062,388 | 39 | 10s | 10.9 s | 253 MB | none |
+
+| Configuration | Result | States generated | Distinct states | Depth | TLC time | Wall time | Peak heap | Counterexample |
+|---|---|---|---|---|---|---|---|---|
+| `X9_ReadAny` | `SucceededStays` violated | 531 | 235 | 11 | 00s | 0.6 s | 15 MB | Writer 1 takes the update to succeeded and plans it, reading the job as running. Writer 2 starts, takes the update to failed and reads the job as running. Writer 1's request sets the job to succeeded. Writer 2's request carries no condition on the status and sets it to failed. |
+| `X9_ReadAnyOneWriter` | no error | 41 | 29 | 13 | 00s | 0.6 s | 15 MB | none |
+| `X9_ReadStream` | no error | 613 | 237 | 19 | 00s | 0.7 s | 15 MB | none |
+| `X9_ReadStreamFailFirst` | no error | 807 | 320 | 19 | 00s | 0.6 s | 15 MB | none |
+| `X9_GuardAny` | no error | 2,645 | 963 | 21 | 00s | 0.6 s | 15 MB | none |
+| `X9_GuardStream` | no error | 613 | 237 | 19 | 00s | 0.6 s | 15 MB | none |
 
 The census lines were counted by starting cell. A revision cell is a starting balance with what O is, and a position cell is one with the order of the stimuli as well. "A stop allowed" counts every behaviour of the run, those with no stop among them, as the Python model's "with one crash" does.
 
@@ -821,6 +1055,13 @@ The first disagreement of each kind, as the check printed it.
 - The answers as built disagree even in stream order. A writer that read no receipt plans after another writer applied the command, and answers a save stale although it was applied.
 - One guard over every row a command writes reaches only states that whole commands give, in both deliveries in the configurations run, and its answers disagree by the same trace as the design as built.
 - One guard with the epoch in every request also reaches only such states in the configurations run, and its answers still disagree. The writer that lost the partition answers a command its own check refuses without sending a request, so the epoch never reaches that answer. Answering such a command from one read of its rows, the epoch and its receipt removes the disagreement in the configurations run, for two writers in either delivery and for three writers in stream order.
+- Under `Any`, a command refused by its own check can apply later, under every guard. A writer that takes a change alone before the creation it waits on answers it as not applied and writes no receipt, and the writer that takes the creation applies the change in its batch. The planning read that takes the receipts, and the epoch, do not help, since the answer was given from a read that was true when it was made. `X7_AnyWholeAnswer`, `X7_AnyFencedAnswer` and `X8_AnyWholeAnswer` printed it. In stream order it needs a resend of the refused command, which `X7_RefusedThenApplies` and `X7_RefusedThenAppliesToken` printed with one writer and no crash, and `X7_RefusedThenAppliesBatch` printed in one batch. So the design's record of no answer for a refused command is the gap, and no token or planning read closes it.
+- Under `Any`, with each command applying only after the one before it, the order held under `FencedAnswer` and it broke with commands that carry no expected revision, token or none. `X7_AnyFencedAnswerOrder` printed no error and `X7_AnyFencedAnswerOrderSets` printed the violation, so the token gives no order where delivery has none.
+- Under `WholeAnswer`, X5's answers agreed and every state was one that whole commands give, for two writers in either delivery and for three writers with two crashes under `Any`. The epoch is not what removes the disagreement there, the read of the receipt is.
+- A deletion's unguarded log drops (TD-180) left a live, listed document with no patch log under `PerStep` with two writers that do not share one order. Where each writer takes the stream in order from the stored offset, `X5_BuiltLog` printed no error, since no deletion is planned from a read that two saves then outdate. Under one guard the log is removed only with the command's receipt, and `LogKept` held.
+- With a second aggregate, `Create`, `DelWs` and the commands that write one aggregate each applied whole, `WholeCommands` held in every configuration, and a save of the part planned before the deletion was refused after it, as `NoSaveAfterDel` said. Under `Stream` the commands that write different aggregates never conflicted, so no batch was planned again and `Retries=0` and `Retries=1` reached the same states. The order broke under `Any`.
+- A rule decided from a read, as `jobUpdate` does, let a job that succeeded be failed when two writers do not share one order, and it held with one writer and with each writer taking the stream in order. Each update has a receipt of its own, so a writer that reaches the update to failed after the update to succeeded was applied reads a job that has succeeded. Putting the condition in the request's guard held under `Any`. We read the run as showing that the comment on `jobUpdate`, that writes are applied in order, holds only as far as delivery keeps that order.
+- Where the last writer to start stays alive, every command was answered, under weak fairness on each writer's actions but its crash, for `WholeAnswer` and `FencedAnswer` in X5 and X7, with two writers and one crash in stream order. The same property with no fairness was violated.
 - In the wide tier TLC printed "Model checking completed. No error has been found." for every configuration it finished. So the serialised writer kept S1, S2, `AThenB` and L1 with four commands and a window of three, with and without a zombie, over 279,119 distinct states. The watermark read kept its evidence and completed, and the audit of the best known read flagged every stale decision, with S reaching position 4 and a decision at each of positions 1 to 4. The relay by each stream's next seq kept order and published every receipt with four receipts in a stream, or three streams, and with a restart and three receipts in a stream. With a restart and no position taken it did so with four receipts in a stream and with three streams, over 1,840,645 and 1,002,485 distinct states, where the same instances with positions reached machine S's limit with no verdict. The fenced cutover kept every acknowledged write, acknowledged none twice and acknowledged every write, with four writes for each writer or three writers, with and without timeouts, and the naive cutover without timeouts acknowledged no write twice. Each holds for the constants run and no others. With a restart and four receipts in a stream, or a restart and three streams of two receipts, TLC was stopped at 30 minutes with its heap of 8 GB full and no error printed by then, after more than 15 million distinct states. Nothing is concluded for those two instances, since TLC had not reached every state.
 - A pass written as one request on the revision it was evaluated from kept every outcome one that the two evaluations give made one after the other, with a stop and without, and every outcome with a stop one that a behaviour without a stop reaches. With the later of the stimulus's position and the latest pass's, read with the revision, the passes stayed in the order of their positions and none fell before its stimulus. TLC printed "No error has been found" for `PA_OnRead` on this model's own instance and for `PA_OnReadAligned` on the Python model's, and the census found no cell in which `OnRead` with `LaterOf` broke O1 to O4. These are the Python model's conclusions for its protocol A, reached by a second model written without reading it.
 - Written on whatever revision is latest, a pass broke O1 with a second activation and never with a credit, in 12 of 12 starting balances on this model's instance and 5 of 6 on the Python model's. The stale pass is written as it was evaluated, so it can record what the state no longer allows, for example a move of a licence already on overage. Its position, read before another pass landed, fell behind that pass's in every cell where the stimuli's positions differ, 48 of 72 and 24 of 36.

@@ -39,6 +39,15 @@
 (*            command's receipt. A writer that reads another epoch stops   *)
 (*            without answering, and one that reads the receipt answers    *)
 (*            from it.                                                     *)
+(*   WholeAnswer  as FencedAnswer with no epoch anywhere. A command refused  *)
+(*            by its own check is answered from the same read as its rows, *)
+(*            which also reads the command's receipt, and one that has a   *)
+(*            receipt is answered from it.                                 *)
+(*                                                                         *)
+(* The document's patch log is a graph that exists at the start. Under     *)
+(* PerStep a deletion's request removes it with no condition, whatever its *)
+(* guards do (TD-180). Under every other guard the request removes it only *)
+(* where the command's receipt is written.                                 *)
 (*                                                                         *)
 (* Delivery selects how the writers meet the commands.                     *)
 (*   Stream   as in X1. Each writer takes the stream in order from the     *)
@@ -56,7 +65,7 @@
 EXTENDS Naturals, Sequences, FiniteSets
 
 CONSTANTS
-    Guard,       \* "PerStep", "Whole", "Fenced" or "FencedAnswer"
+    Guard,       \* "PerStep", "Whole", "Fenced", "FencedAnswer" or "WholeAnswer"
     Delivery,    \* "Stream" or "Any"
     Saves,       \* the saves on the stream, a non-empty subset of {"SaveDoc", "SaveDesc"}
     DelFirst,    \* BOOLEAN, the deletion is first on the stream, else last
@@ -64,7 +73,7 @@ CONSTANTS
     MaxCrashes,  \* the most crashes in a behaviour
     Retries      \* how many times a refused command is planned again, all but PerStep
 
-ASSUME Guard \in {"PerStep", "Whole", "Fenced", "FencedAnswer"}
+ASSUME Guard \in {"PerStep", "Whole", "Fenced", "FencedAnswer", "WholeAnswer"}
 ASSUME Delivery \in {"Stream", "Any"}
 ASSUME Saves \subseteq {"SaveDoc", "SaveDesc"} /\ Saves # {}
 ASSUME DelFirst \in BOOLEAN
@@ -101,6 +110,7 @@ VARIABLES
     claims,   \* the transactions that have a claim, as <<command, step>>
     rcpt,     \* the commands that have a receipt
     rwrote,   \* the deletions whose receipt names the document's graph
+    haslog,   \* whether the document's patch log exists
     epoch,    \* the partition's epoch, read under Fenced and FencedAnswer only
     stored,   \* the stored offset, read by Stream only
     alive,    \* per writer
@@ -113,7 +123,7 @@ VARIABLES
     crashes,  \* how many crashes have happened
     saidNo   \* the commands answered as not applied, by any writer at any time
 
-store == <<dseq, listed, docseq, live, claims, rcpt, rwrote, epoch, stored>>
+store == <<dseq, listed, docseq, live, claims, rcpt, rwrote, haslog, epoch, stored>>
 wvars == <<alive, ph, fin, cur, rd, tries, started, crashes>>
 vars == <<store, wvars, saidNo>>
 
@@ -125,6 +135,7 @@ TypeOK ==
     /\ claims \subseteq (Cmd \X {1, 2})
     /\ rcpt \subseteq Cmd
     /\ rwrote \subseteq Cmd
+    /\ haslog \in BOOLEAN
     /\ epoch \in 0..NWriters
     /\ stored \in 0..K
     /\ alive \in [Writers -> BOOLEAN]
@@ -144,6 +155,7 @@ Init ==
     /\ claims = {}
     /\ rcpt = {}
     /\ rwrote = {}
+    /\ haslog = TRUE
     /\ epoch = 0
     /\ stored = 0
     /\ alive = [w \in Writers |-> FALSE]
@@ -170,7 +182,7 @@ Start(w) ==
     /\ fin' = [fin EXCEPT ![w] = IF Delivery = "Stream" THEN 1..stored ELSE {}]
     /\ epoch' = w
     /\ started' = w
-    /\ UNCHANGED <<dseq, listed, docseq, live, claims, rcpt, rwrote, stored,
+    /\ UNCHANGED <<dseq, listed, docseq, live, claims, rcpt, rwrote, haslog, stored,
                    cur, rd, tries, crashes, saidNo>>
 
 \* The commands a writer may take next.
@@ -226,7 +238,7 @@ Plan(w) ==
                 THEN /\ alive' = [alive EXCEPT ![w] = FALSE]
                      /\ ph' = [ph EXCEPT ![w] = "fenced"]
                      /\ UNCHANGED <<rd, saidNo>>
-              ELSE IF Guard = "FencedAnswer" /\ cur[w] \in rcpt
+              ELSE IF Guard \in {"FencedAnswer", "WholeAnswer"} /\ cur[w] \in rcpt
                 THEN /\ ph' = [ph EXCEPT ![w] = "offset"]
                      /\ UNCHANGED <<alive, rd, saidNo>>
               ELSE /\ AnswerNo(w)
@@ -269,6 +281,8 @@ CommitPerStep(w) ==
     /\ claims' = claims1
     /\ rcpt' = IF receipted THEN rcpt \cup {c} ELSE rcpt
     /\ rwrote' = IF receipted /\ Name(c) = "Del" /\ r.r > 0 THEN rwrote \cup {c} ELSE rwrote
+    \* The log drops carry no guard, so a deletion's request removes the log.
+    /\ haslog' = IF Name(c) = "Del" THEN FALSE ELSE haslog
     \* A deletion whose receipt is present goes on to remove a row its
     \* tombstone lost, before it answers. Any other command answers now.
     /\ IF receipted
@@ -300,6 +314,8 @@ CommitWhole(w) ==
                    ELSE claims
     /\ rcpt' = IF ok THEN rcpt \cup {c} ELSE rcpt
     /\ UNCHANGED rwrote
+    \* The log drops are guarded on the receipt, which the request writes or not.
+    /\ haslog' = IF ok /\ Name(c) = "Del" THEN FALSE ELSE haslog
     \* The receipt read back decides the answer. A command refused whole is
     \* planned again from fresh reads, from its receipt on, while it may.
     /\ IF c \in rcpt'
@@ -321,7 +337,7 @@ Commit(w) ==
          \* which has lost the partition, stops without answering.
          THEN /\ alive' = [alive EXCEPT ![w] = FALSE]
               /\ ph' = [ph EXCEPT ![w] = "fenced"]
-              /\ UNCHANGED <<dseq, listed, docseq, live, claims, rcpt, rwrote, tries, saidNo>>
+              /\ UNCHANGED <<dseq, listed, docseq, live, claims, rcpt, rwrote, haslog, tries, saidNo>>
          ELSE /\ IF Guard = "PerStep" THEN CommitPerStep(w) ELSE CommitWhole(w)
               /\ UNCHANGED alive
     /\ UNCHANGED <<epoch, stored, fin, cur, rd, started, crashes>>
@@ -335,7 +351,7 @@ Finish(w) ==
     /\ docseq' = IF live THEN docseq + 1 ELSE docseq
     /\ live' = FALSE
     /\ ph' = [ph EXCEPT ![w] = "offset"]
-    /\ UNCHANGED <<dseq, listed, claims, rcpt, rwrote, epoch, stored,
+    /\ UNCHANGED <<dseq, listed, claims, rcpt, rwrote, haslog, epoch, stored,
                    alive, fin, cur, rd, tries, started, crashes, saidNo>>
 
 \* The writer has finished the command. Under Stream it stores the offset.
@@ -348,7 +364,7 @@ StoreOffset(w) ==
     /\ cur' = [cur EXCEPT ![w] = 0]
     /\ rd' = [rd EXCEPT ![w] = NoRead]
     /\ tries' = [tries EXCEPT ![w] = 0]
-    /\ UNCHANGED <<dseq, listed, docseq, live, claims, rcpt, rwrote, epoch,
+    /\ UNCHANGED <<dseq, listed, docseq, live, claims, rcpt, rwrote, haslog, epoch,
                    alive, started, crashes, saidNo>>
 
 \* A crash at any step. Nothing the writer held in memory survives.
@@ -375,6 +391,22 @@ Next ==
         \/ Crash(w)
 
 Spec == Init /\ [][Next]_vars
+
+(***************************************************************************)
+(* Liveness, for Delivery = "Stream". Weak fairness on each writer's        *)
+(* actions but its crash.                                                  *)
+(***************************************************************************)
+Fairness ==
+    \A w \in Writers :
+        /\ WF_vars(Start(w))
+        /\ WF_vars(Take(w))
+        /\ WF_vars(ReadReceipt(w))
+        /\ WF_vars(Plan(w))
+        /\ WF_vars(Commit(w))
+        /\ WF_vars(Finish(w))
+        /\ WF_vars(StoreOffset(w))
+
+FairSpec == Spec /\ Fairness
 
 (***************************************************************************)
 (* What whole commands give. A command applied whole from a state, as one *)
@@ -419,5 +451,21 @@ WholeCommands == Abs \in WholeStates
 \* No command answered as not applied has a receipt, then or later, so no
 \* answer disowns a row the command moved.
 AnswersAgree == saidNo \cap rcpt = {}
+
+\* Whether the last writer to start has not crashed since.
+LastStays == started = NWriters => alive[NWriters]
+
+\* Every command on the stream is finished by some writer, which is where the
+\* model has it answered. A writer replies and then stores the offset, and the
+\* model has no variable for the reply apart from the offset.
+Answered == Cmd = UNION {fin[w] : w \in Writers}
+
+\* Where the last writer to start stays alive, every command is eventually
+\* answered.
+EventuallyAnswered == []LastStays => <>Answered
+
+\* A document the description lists and that is live keeps its patch log, so a
+\* deletion that applied nothing to the document leaves its history.
+LogKept == (listed /\ live) => haslog
 
 =============================================================================
