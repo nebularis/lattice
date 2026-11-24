@@ -50,7 +50,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | mork-package-split | unit |  | merged 2026-09-20 |  | [status](status/mork-package-split.md) |
 | mork-transforms | multi-slice unit |  | built 2026-10-30 |  | [plan](plans/mork-transforms.md), [status](status/mork-transforms.md) |
 | mtp-execution | unit |  | merged 2026-09-20 |  | [status](status/mtp-execution.md) |
-| multi-store-architecture | unit | MSA | building 2026-11-23 | MSA-I2 | [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md), 28 Validation Packs |
+| multi-store-architecture | unit | MSA | building 2026-11-23 | MSA-I2 | [plan](plans/multi-store-architecture.md), [status](status/multi-store-architecture.md), 29 Validation Packs |
 | multi-store-conformance | unit | MSC | merged 2026-10-29 |  | [plan](plans/multi-store-conformance.md), [status](status/multi-store-conformance.md), 5 Validation Packs |
 | normative-rule-substrate | multi-slice unit | NRS | blocked | NRS-2 | [plan](plans/normative-rule-substrate.md), [status](status/normative-rule-substrate.md) |
 | ontology-remediation | phase | OR | built 2026-10-28 | OR-0 | [plan](plans/ontology-remediation.md), [status](status/ontology-remediation.md) |

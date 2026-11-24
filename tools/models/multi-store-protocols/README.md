@@ -284,25 +284,72 @@ The model terminates, so TLC is run with `-deadlock`.
 | `X5_FencedAnswerStream.cfg` | X5 | `FencedAnswer`, otherwise as `X5_WholeStream.cfg` | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
 | `X5_FencedAnswerStream3.cfg` | X5 | as `X5_FencedAnswerStream.cfg` with three writers and two crashes | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
 
+The configurations above are the base tier. The wide tier takes each configuration of X1 to X4 that is expected to find no error and steps its instance up one constant at a time, to at most four commands and, in X1, a window of three. A command is a command of the stream in X1, a position of the source and a decision in X2, a receipt of a stream in X3 and a write of a writer in X4. X3 and X4 have no window, so their second step adds a third stream or a third writer. Each checks what its base configuration checks.
+
+| File | Model | Parameters | Expected |
+|---|---|---|---|
+| `X1_Applied_K4W2.cfg` | X1 | as `X1_Applied.cfg` with `K=4` | no error |
+| `X1_Applied_K4W3.cfg` | X1 | as `X1_Applied.cfg` with `K=4`, `W=3` | no error |
+| `X1_AppliedZombie2_K4W2.cfg` | X1 | as `X1_AppliedZombie2.cfg` with `K=4` | no error |
+| `X1_AppliedZombie2_K4W3.cfg` | X1 | as `X1_AppliedZombie2.cfg` with `K=4`, `W=3` | no error |
+| `X2_Watermark_P4.cfg` | X2 | as `X2_Watermark.cfg` with `MaxPos=4` | no error |
+| `X2_Watermark_P4D4.cfg` | X2 | as `X2_Watermark.cfg` with `MaxPos=4` and decisions at 1 to 4 | no error |
+| `X2_BestKnownAudit_P4.cfg` | X2 | as `X2_BestKnownAudit.cfg` with `MaxPos=4` | no error |
+| `X2_BestKnownAudit_P4D4.cfg` | X2 | as `X2_BestKnownAudit.cfg` with `MaxPos=4` and decisions at 1 to 4 | no error |
+| `X2_BestKnownStalled_P4.cfg` | X2 | as `X2_BestKnownStalled.cfg` with `MaxPos=4` | no error |
+| `X2_BestKnownStalled_P4D4.cfg` | X2 | as `X2_BestKnownStalled.cfg` with `MaxPos=4` and decisions at 1 to 4 | no error |
+| `X3_PerStream_N3.cfg` | X3 | as `X3_PerStream.cfg` with `N=3` | no error |
+| `X3_PerStream_N4.cfg` | X3 | as `X3_PerStream.cfg` with `N=4` | no error |
+| `X3_PerStream_S3.cfg` | X3 | as `X3_PerStream.cfg` with three streams | no error |
+| `X3_PerStreamRestart_N3.cfg` | X3 | as `X3_PerStreamRestart.cfg` with `N=3` | no error |
+| `X3_PerStreamRestart_N4.cfg` | X3 | as `X3_PerStreamRestart.cfg` with `N=4` | no error |
+| `X3_PerStreamRestart_S3.cfg` | X3 | as `X3_PerStreamRestart.cfg` with three streams | no error |
+| `X4_NaiveSingle_P3.cfg` | X4 | as `X4_NaiveSingle.cfg` with `PerWriter=3` | no error |
+| `X4_NaiveSingle_P4.cfg` | X4 | as `X4_NaiveSingle.cfg` with `PerWriter=4` | no error |
+| `X4_NaiveSingle_W3.cfg` | X4 | as `X4_NaiveSingle.cfg` with three writers | no error |
+| `X4_Fenced_P3.cfg` | X4 | as `X4_Fenced.cfg` with `PerWriter=3` | no error |
+| `X4_Fenced_P4.cfg` | X4 | as `X4_Fenced.cfg` with `PerWriter=4` | no error |
+| `X4_Fenced_W3.cfg` | X4 | as `X4_Fenced.cfg` with three writers | no error |
+| `X4_FencedTimeouts_P3.cfg` | X4 | as `X4_FencedTimeouts.cfg` with `PerWriter=3` | no error |
+| `X4_FencedTimeouts_P4.cfg` | X4 | as `X4_FencedTimeouts.cfg` with `PerWriter=4` | no error |
+| `X4_FencedTimeouts_W3.cfg` | X4 | as `X4_FencedTimeouts.cfg` with three writers | no error |
+
 ## Running
 
-TLC comes from the TLA+ tools jar, which is installed locally and never committed. Set `TLA2TOOLS_JAR` to its path for the session and run TLC from this directory.
+TLC comes from the TLA+ tools jar, which is installed locally and never committed. `TLA2TOOLS_JAR` names it. One command runs the models on Windows, macOS and Linux, from the repository's root. On macOS and Linux:
 
-```powershell
-$env:TLA2TOOLS_JAR = '<path to tla2tools.jar>'
-$java = "$(mise where java)\bin\java.exe"
-& $java -XX:+UseParallelGC -cp $env:TLA2TOOLS_JAR tlc2.TLC -workers auto -deadlock -config X1_Applied.cfg X1_SerialisedApply.tla
+```bash
+export TLA2TOOLS_JAR=/path/to/tla2tools.jar
+mise run check:models-multi-store                                    # the base tier
+mise run check:models-multi-store -- X1_Applied                      # one configuration
+mise run check:models-multi-store -- "X5_*"                          # a pattern
+mise run check:models-multi-store -- wide                            # what of the wide tier fits the machine
+LATTICE_MODELS_MAX_HEAP_MB=2048 mise run check:models-multi-store    # the base tier within 2 GB
 ```
 
-The module for a `ModelA_*.cfg` is `ModelA_GuardedCas.tla`, for an `X1_*.cfg` is `X1_SerialisedApply.tla`, for an `X1R_*.cfg` is `X1_ReceiptsOnly.tla`, for an `X2_*.cfg` is `X2_EvidenceAcrossStores.tla`, for an `X3_*.cfg` is `X3_ReceiptRelay.tla`, for an `X4_*.cfg` is `X4_AuthorityCutover.tla` and for an `X5_*.cfg` is `X5_WholeCommand.tla`. TLC writes `states/` and any trace file into the directory, and `.gitignore` excludes them.
+On Windows, in PowerShell, the variable is set with `$env:TLA2TOOLS_JAR = '<path to tla2tools.jar>'` and the separator is quoted, as in `mise run check:models-multi-store '--' wide`, since `mise` is a PowerShell function there.
 
-The `X1R_*` and `X5_*` configurations were run under a heap of 2 GB, with the young generation fixed at 16 MB and each collection logged, so that the log gives the heap a run needs. In PowerShell the JVM options are quoted, since `mise` is a function there.
+[`manifest.toml`](manifest.toml) lists every configuration, with its module, its `.cfg`, its tier, the verdict expected of TLC, and the distinct states, depth, peak heap and time measured on machine S (Windows, 16 logical cores, 64 GB installed). The `base` tier runs within a heap budget of 2 GB. The `wide` tier is the larger instances of X1 to X4 below, some of which need more heap or more time. The runner, [`tools/models/check_tlc.py`](../check_tlc.py), does the following.
 
-```powershell
-mise exec '--' java '-Xmx2g' '-Xmn16m' '-XX:+UseParallelGC' '-Xlog:gc' -cp $env:TLA2TOOLS_JAR tlc2.TLC -workers 1 -deadlock -config X5_BuiltAnyDoc.cfg X5_WholeCommand.tla
+- It runs its own tests first, `mise run check:models-multi-store-runner`, which need neither Java nor TLC.
+- It finds Java on the path `mise` gives a task, and TLC in the jar. Where the jar or `mem_check` is missing, it says what it skipped and exits 0.
+- It reads physical memory from the operating system and the memory available from `mem_check`, within a Linux cgroup's limit where one is set. The heap budget is a quarter of physical memory, never above what is available. `LATTICE_MODELS_MAX_HEAP_MB` lowers it further, and never raises it.
+- It gives each run a heap of twice the configuration's peak and 64 MB more, and at least 256 MB, since the peak read under a large heap understates what a small heap needs. `X1_AppliedZombie2`, whose peak read 111 MB under 2 GB, ran out of a heap of 208 MB in TLC's liveness checking, ran out of 224 MB in one run of four and completed in the other three, and completed in 240 and 256 MB. A configuration whose heap exceeds the budget is skipped with both figures and never started. So is one whose peak the manifest does not state, and one that machine S stopped at its limit. `--heap-mb` gives every selected run one heap instead, to measure it, within the budget all the same.
+- It runs a configuration expected to find no error with as many TLC workers as the machine has cores, shared between the `--jobs`, and one expected to violate a property with one worker, so that its counts and its trace do not vary. Configurations run together never hold more heap than the budget. `--max-minutes` stops a run and reports it.
+- It runs TLC with `-deadlock`, since every model terminates, in a copy of this directory under `.build/formal/tlc/multi-store-protocols/<configuration>/`, where TLC writes its states, any trace, its temporary files and its GC log.
+- It prints, for each configuration, the verdict, the distinct and generated states, the depth, TLC's time, the wall time and the peak heap, then one line of totals. Where the distinct states differ from the manifest's, the line says so. A configuration fails only where TLC's verdict differs from the manifest's. A skip, a stop and a run that runs out of heap are reported and do not fail.
+
+A pass of the base tier prints the runner's tests, `24 passed`, then a line with the heap budget, then for each of the 50 configurations a `RUN` line and a `PASS` line. Twenty-four `PASS` lines read "no error" and twenty-six name the property violated, each as the manifest expects. It ends with the line below and exits 0.
+
+```text
+models: 50 as expected, 0 failed, 0 skipped, 0 stopped
 ```
 
-The peak heap below is the largest heap in use before a collection that the log printed. A collection runs at least every 16 MB allocated, so the true peak is at most 16 MB above it.
+On a machine of 8 GB the budget is at most 2 GB, which every base configuration fits, the largest heap given being 320 MB. The wide tier on such a machine skips each configuration whose heap exceeds the budget, with both figures, and exits 0 unless a verdict differs.
+
+The peak heap is read from the GC log. The young generation is fixed at 16 MB, so a collection runs at least every 16 MB allocated, and the peak is the largest heap in use before a collection that the log printed. The true peak is at most 16 MB above it.
+
+The module for a `ModelA_*.cfg` is `ModelA_GuardedCas.tla`, for an `X1_*.cfg` is `X1_SerialisedApply.tla`, for an `X1R_*.cfg` is `X1_ReceiptsOnly.tla`, for an `X2_*.cfg` is `X2_EvidenceAcrossStores.tla`, for an `X3_*.cfg` is `X3_ReceiptRelay.tla`, for an `X4_*.cfg` is `X4_AuthorityCutover.tla` and for an `X5_*.cfg` is `X5_WholeCommand.tla`. TLC run by hand in this directory writes `states/` and any trace file here, and `.gitignore` excludes them.
 
 ## Results
 
@@ -339,7 +386,7 @@ TLC 2.19 with TLA+ tools 1.7.4 on Java 25, 2026-11-18. The runs expected to find
 | `X4_Fenced` | no error | 740 | 331 | 14 | none |
 | `X4_FencedTimeouts` | no error | 4,536 | 1,171 | 18 | none |
 
-The `X1R_*` and `X5_*` configurations were run with TLC 2.19 and TLA+ tools 1.7.4 on Java 25.0.2, on 2026-11-24 by TLC's clock, each under a heap of 2 GB as the Running section shows, with `-workers auto` where no error was expected and `-workers 1` where a counterexample was. TLC's time is the "Finished in" figure, in whole seconds. The wall time includes the JVM's start. The peak heap is as the Running section defines it. Every one fits a heap of 2 GB, the largest at 114 MB.
+The `X1R_*` and `X5_*` configurations were run with TLC 2.19 and TLA+ tools 1.7.4 on Java 25.0.2, on 2026-11-24 by TLC's clock, each run by hand under `-Xmx2g -Xmn16m -XX:+UseParallelGC -Xlog:gc`, with `-workers auto` where no error was expected and `-workers 1` where a counterexample was. TLC's time is the "Finished in" figure, in whole seconds. The wall time includes the JVM's start. The peak heap is as the Running section defines it. Every one fits a heap of 2 GB, the largest at 114 MB.
 
 | Configuration | Result | States generated | Distinct states | Depth | TLC time | Wall time | Peak heap | Counterexample |
 |---|---|---|---|---|---|---|---|---|
@@ -366,6 +413,36 @@ The `X1R_*` and `X5_*` configurations were run with TLC 2.19 and TLA+ tools 1.7.
 | `X5_FencedAnswerStream` | no error | 1,299 | 540 | 24 | 00s | 2.2 s | 18 MB | none |
 | `X5_FencedAnswerStream3` | no error | 55,386 | 14,597 | 35 | 01s | 2.7 s | 33 MB | none |
 
+The wide tier was run through `mise run check:models-multi-store` on 2026-11-24, with TLC 2.19 and TLA+ tools 1.7.4 on Java 25.0.2, one configuration at a time with nothing else heavy running, on 16 workers, under a heap of 4,096 MB given by `--heap-mb` and stopped at 30 minutes. The two configurations that reached the limit ran under a heap of 8,192 MB, machine S's other limit. The depth is TLC's depth of the complete state graph search, and with 16 workers it can differ by one or two between runs while the counts do not. The peak heap is the one read under the heap given, and [`manifest.toml`](manifest.toml) holds these figures and the base tier's.
+
+| Configuration | Result | States generated | Distinct states | Depth | TLC time | Wall time | Peak heap |
+|---|---|---|---|---|---|---|---|
+| `X1_Applied_K4W2` | no error | 5,941 | 3,381 | 30 | 00s | 1.5 s | 40 MB |
+| `X1_Applied_K4W3` | no error | 9,052 | 5,092 | 32 | 01s | 1.7 s | 47 MB |
+| `X1_AppliedZombie2_K4W2` | no error | 791,227 | 174,940 | 50 | 23s | 24.4 s | 724 MB |
+| `X1_AppliedZombie2_K4W3` | no error | 1,329,535 | 279,119 | 51 | 40s | 41.2 s | 1,116 MB |
+| `X2_Watermark_P4` | no error | 1,867 | 691 | 11 | 00s | 1.6 s | 35 MB |
+| `X2_Watermark_P4D4` | no error | 4,459 | 1,555 | 13 | 00s | 1.7 s | 36 MB |
+| `X2_BestKnownAudit_P4` | no error | 62,387 | 28,777 | 11 | 01s | 2.1 s | 63 MB |
+| `X2_BestKnownAudit_P4D4` | no error | 779,759 | 297,679 | 13 | 13s | 14.0 s | 572 MB |
+| `X2_BestKnownStalled_P4` | no error | 62,387 | 28,777 | 11 | 01s | 1.9 s | 63 MB |
+| `X2_BestKnownStalled_P4D4` | no error | 779,759 | 297,679 | 13 | 13s | 14.0 s | 567 MB |
+| `X3_PerStream_N3` | no error | 56,051 | 23,151 | 20 | 02s | 2.9 s | 88 MB |
+| `X3_PerStream_N4` | no error | 1,098,505 | 424,131 | 26 | 51s | 51.6 s | 1,674 MB |
+| `X3_PerStream_S3` | no error | 971,581 | 392,848 | 20 | 38s | 39.2 s | 1,324 MB |
+| `X3_PerStreamRestart_N3` | no error | 2,971,163 | 1,454,319 | 27 | 02min 07s | 128.4 s | 3,084 MB |
+| `X3_PerStreamRestart_N4` | stopped at 30 minutes under a heap of 8,192 MB, no error printed by then | 33,918,649 | 15,204,162 found, 5,178,623 on the queue | 27 reached | not printed | 1,800.8 s | 8,128 MB |
+| `X3_PerStreamRestart_S3` | stopped at 30 minutes under a heap of 8,192 MB, no error printed by then | 47,624,388 | 24,348,504 found, 8,286,182 on the queue | 24 reached | not printed | 1,801.1 s | 8,190 MB |
+| `X4_NaiveSingle_P3` | no error | 6,390 | 3,009 | 17 | 00s | 1.1 s | 35 MB |
+| `X4_NaiveSingle_P4` | no error | 18,951 | 8,806 | 21 | 00s | 1.2 s | 37 MB |
+| `X4_NaiveSingle_W3` | no error | 55,341 | 18,430 | 18 | 00s | 1.2 s | 40 MB |
+| `X4_Fenced_P3` | no error | 1,856 | 823 | 18 | 00s | 1.3 s | 36 MB |
+| `X4_Fenced_P4` | no error | 3,792 | 1,687 | 22 | 00s | 1.4 s | 44 MB |
+| `X4_Fenced_W3` | no error | 14,332 | 4,471 | 19 | 01s | 1.8 s | 51 MB |
+| `X4_FencedTimeouts_P3` | no error | 13,745 | 3,436 | 22 | 01s | 1.7 s | 49 MB |
+| `X4_FencedTimeouts_P4` | no error | 32,168 | 7,903 | 27 | 01s | 2.2 s | 72 MB |
+| `X4_FencedTimeouts_W3` | no error | 195,904 | 33,797 | 25 | 06s | 6.7 s | 209 MB |
+
 ## What the results say
 
 - The guard in each store, and the offset stored as applied, give a row that is ordered, applies each command at most once in effect, and applies every confirmed command eventually, for up to three incarnations including a zombie that keeps acting. The zombie's late applies are answered `Duplicate`.
@@ -381,3 +458,4 @@ The `X1R_*` and `X5_*` configurations were run with TLC 2.19 and TLA+ tools 1.7.
 - The answers as built disagree even in stream order. A writer that read no receipt plans after another writer applied the command, and answers a save stale although it was applied.
 - One guard over every row a command writes reaches only states that whole commands give, in both deliveries in the configurations run, and its answers disagree by the same trace as the design as built.
 - One guard with the epoch in every request also reaches only such states in the configurations run, and its answers still disagree. The writer that lost the partition answers a command its own check refuses without sending a request, so the epoch never reaches that answer. Answering such a command from one read of its rows, the epoch and its receipt removes the disagreement in the configurations run, for two writers in either delivery and for three writers in stream order.
+- In the wide tier TLC printed "Model checking completed. No error has been found." for every configuration it finished. So the serialised writer kept S1, S2, `AThenB` and L1 with four commands and a window of three, with and without a zombie, over 279,119 distinct states. The watermark read kept its evidence and completed, and the audit of the best known read flagged every stale decision, with S reaching position 4 and a decision at each of positions 1 to 4. The relay by each stream's next seq kept order and published every receipt with four receipts in a stream, or three streams, and with a restart and three receipts in a stream. The fenced cutover kept every acknowledged write, acknowledged none twice and acknowledged every write, with four writes for each writer or three writers, with and without timeouts, and the naive cutover without timeouts acknowledged no write twice. Each holds for the constants run and no others. With a restart and four receipts in a stream, or a restart and three streams of two receipts, TLC was stopped at 30 minutes with its heap of 8 GB full and no error printed by then, after more than 15 million distinct states. Nothing is concluded for those two instances, since TLC had not reached every state.

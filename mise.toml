@@ -968,6 +968,15 @@ run = "python spikes/formal-prover/env/smoke.py"
 description = "Build every tools/proofs/<layer>/ Isabelle session natively and run the proof gate (ADR-A-FM2). Pass a layer name to build only that one, or a spike session's name, multi-store-model, to build and gate that spike"
 run = "python tools/proofs/check.py"
 
+[tasks."check:models-multi-store"]
+depends = ["check:models-multi-store-runner"]
+description = "Check the TLA+ models of tools/models/multi-store-protocols with TLC, each run's heap sized from the manifest and bounded by a quarter of physical memory, what mem_check reads as available and LATTICE_MODELS_MAX_HEAP_MB (MSA-I6). Takes configuration names, a tier (base, the default, wide or all) or a pattern, and --jobs, --heap-mb, --max-minutes and --list. Needs TLA2TOOLS_JAR and mem_check, which bootstrap installs, and says what it skipped without either. Fails only where TLC's verdict differs from the manifest's. Runs the runner's own tests first. Run on demand, not part of check"
+run = "python tools/models/check_tlc.py"
+
+[tasks."check:models-multi-store-runner"]
+description = "Test the TLC runner's sizing and verdict, tools/models/check_tlc.py, without Java or TLC (MSA-I6). check:models-multi-store runs it first"
+run = "python -m pytest tools/models/test_check_tlc.py -q"
+
 [tasks."check:multi-store-model-replay"]
 depends = ["bootstrap:persistence", "bootstrap:testing-oxigraph"]
 description = "Replay the persistence behaviour tests' histories of the four operations through the interpreter exported to Scala from spikes/multi-store-model and through the RDF realisation on Oxigraph, compare the state after every command, and report both times with each engine's version (MSA-I5, ADR-A124). Builds and gates the session first, and needs Isabelle as check:proofs does. Run on demand, not part of check. Fails on a wrong result, never on time. MULTI_STORE_REPLAY_ROUNDS sets the rounds, 200 by default"
