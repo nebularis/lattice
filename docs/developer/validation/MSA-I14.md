@@ -102,7 +102,13 @@ From `X5_BuiltStreamAnswers`, the answers in stream order.
 
 ## One command
 
-The models run from PowerShell for now, until another slice adds a runner for every platform. From the repository's root, with `TLA2TOOLS_JAR` naming the TLA+ tools jar:
+From the repository's root, on Windows, macOS and Linux, with `TLA2TOOLS_JAR` naming the TLA+ tools jar, through the runner MSA-I6 added on 2026-11-24, which reads each configuration's expected verdict from the manifest:
+
+```bash
+mise run check:models-multi-store -- "X1R_*" "X5_*"
+```
+
+In PowerShell quote the separator, `'--'`. The PowerShell lines the model was first run with are below.
 
 ```powershell
 Set-Location tools/models/multi-store-protocols
