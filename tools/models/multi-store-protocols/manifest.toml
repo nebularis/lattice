@@ -13,6 +13,9 @@
 #               one under a heap of 2,048 MB and a wide one under 4,096 MB, with 16 workers where no error is expected and
 #               one where a property is expected to be violated. The configurations of PA, X6, X2A and models B to D were
 #               measured the same way with 8 workers in place of 16, while another session ran its own JVMs on the machine
+#               The three configurations named `X3_PerStreamRestartUnplaced_*` were measured on macOS instead (8 cores, 8 GB installed),
+#               with 8 workers, the first and third under a heap of 1,152 MB and the second under 1,536 MB. Each filled the
+#               heap it was given, so its peak says what was enough and not what is needed
 # limit         machine S stopped the run at its limit of 30 minutes or 8 GB of heap, so it has no verdict and is skipped
 #               unless `--heap-mb` is given
 # trace         read by `mise run check:models-multi-store-traces` (tools/models/trace_validation.py), which holds the
@@ -122,6 +125,9 @@ configuration = [
   { name = "X3_PerStreamRestart_N3", module = "X3_ReceiptRelay", config = "X3_PerStreamRestart_N3.cfg", tier = "wide", expect = "no error", distinct = 1454319, depth = 27, tlc_time = "02min 07s", wall_s = 128.4, peak_heap_mb = 3084 },
   { name = "X3_PerStreamRestart_N4", module = "X3_ReceiptRelay", config = "X3_PerStreamRestart_N4.cfg", tier = "wide", expect = "no error", limit = "30 minutes on 16 workers under a heap of 8,192 MB, its peak 8,128 MB, with 15,204,162 distinct states found at depth 27 and 5,178,623 left on the queue" },
   { name = "X3_PerStreamRestart_S3", module = "X3_ReceiptRelay", config = "X3_PerStreamRestart_S3.cfg", tier = "wide", expect = "no error", limit = "30 minutes on 16 workers under a heap of 8,192 MB, its peak 8,190 MB, with 24,348,504 distinct states found at depth 24 and 8,286,182 left on the queue" },
+  { name = "X3_PerStreamRestartUnplaced_N3", module = "X3_ReceiptRelay", config = "X3_PerStreamRestartUnplaced_N3.cfg", tier = "wide", expect = "no error", distinct = 88941, depth = 27, tlc_time = "08s", wall_s = 9.6, peak_heap_mb = 983 },
+  { name = "X3_PerStreamRestartUnplaced_N4", module = "X3_ReceiptRelay", config = "X3_PerStreamRestartUnplaced_N4.cfg", tier = "wide", expect = "no error", distinct = 1840645, depth = 35, tlc_time = "06min 31s", wall_s = 392.4, peak_heap_mb = 1535 },
+  { name = "X3_PerStreamRestartUnplaced_S3", module = "X3_ReceiptRelay", config = "X3_PerStreamRestartUnplaced_S3.cfg", tier = "wide", expect = "no error", distinct = 1002485, depth = 27, tlc_time = "01min 31s", wall_s = 92.3, peak_heap_mb = 1150 },
   { name = "X4_NaiveSingle_P3", module = "X4_AuthorityCutover", config = "X4_NaiveSingle_P3.cfg", tier = "wide", expect = "no error", distinct = 3009, depth = 17, tlc_time = "00s", wall_s = 1.1, peak_heap_mb = 35 },
   { name = "X4_NaiveSingle_P4", module = "X4_AuthorityCutover", config = "X4_NaiveSingle_P4.cfg", tier = "wide", expect = "no error", distinct = 8806, depth = 21, tlc_time = "00s", wall_s = 1.2, peak_heap_mb = 37 },
   { name = "X4_NaiveSingle_W3", module = "X4_AuthorityCutover", config = "X4_NaiveSingle_W3.cfg", tier = "wide", expect = "no error", distinct = 18430, depth = 18, tlc_time = "00s", wall_s = 1.2, peak_heap_mb = 40 },

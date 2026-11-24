@@ -907,3 +907,27 @@ Every command was run on machine S from the repository's root, each output captu
 **What it means for a project.** A guarded update, a check of another triple, a receipt or a fence, and a position computed from what is stored are safe over HTTP to Fuseki on TDB2 when they are in the request they guard, and unsafe when an earlier query makes them. Several queries are several states. Fuseki 6.2.0 answers an update that fails when it runs with HTTP 400 where 5.1.0 answered 500, so a client that tells a refused request from a server fault by its status reads the two versions differently. This answers the HTTP half of TSD-Q4 for Fuseki on TDB2.
 
 **Reproduce it.** `mise run check:store-isolation-probes` in LATTICE, or `STORE_ISOLATION_ARMS=jena` for this half. Its Maven project starts Fuseki main over a TDB2 dataset on a free port and runs every probe above. A store that keeps these prints 0 for each form in the request and the repetitions for each control.
+
+## Addendum, 2026-11-24: the relay's restart with no position taken
+
+**What changed.** `X3_ReceiptRelay.tla` gains `BeginUnplaced`, `NextUnplaced`, `FairnessUnplaced` and `SpecUnplaced`, and no existing definition changed. Three wide configurations are new, `X3_PerStreamRestartUnplaced_N3`, `_N4` and `_S3`, each its namesake's constants, invariants and property under `SpecUnplaced`. The manifest has 28 wide configurations.
+
+**Why.** `X3_PerStreamRestart_N4` and `X3_PerStreamRestart_S3` have no verdict on any machine. The per-stream relay and R1 to R3 read neither `pos` nor `nextPos`, so the order in which positions were taken multiplies the states and changes no answer.
+
+| ID | Given, when, then | Level | Pass criterion | Kind |
+|---|---|---|---|---|
+| I6U-T1 | Given `SpecUnplaced` with a restart and three receipts in two streams, when TLC runs, then no error, as `X3_PerStreamRestart_N3` gives | L2 | `PASS`, no error, 88,941 distinct | positive |
+| I6U-T2 | The same with four receipts | L2 | `PASS`, no error, 1,840,645 distinct | positive |
+| I6U-T3 | The same with three streams of two receipts | L2 | `PASS`, no error, 1,002,485 distinct | positive |
+
+**One command.** `mise run check:models-multi-store -- 'X3_PerStreamRestartUnplaced_*'`, which gives the three heaps of 2,048, 3,136 and 2,368 MB, so a machine of 8 GB skips the second and third unless `--heap-mb 1536` is given and that much is free.
+
+**What was run, on macOS, 8 cores and 8 GB, TLA+ tools 1.7.4.**
+
+| Command | Result |
+|---|---|
+| `mise run check:models-multi-store -- 'X3_PerStreamRestartUnplaced_*' --heap-mb 1152` | `PASS` for `_N3`, 88941 distinct of 193535 generated, depth 27, TLC 08s, peak heap 983 MB. `STOP` for `_N4`, ran out of its heap at 868,135 distinct. `PASS` for `_S3`, 1002485 distinct of 2105380 generated, depth 27, TLC 01min 31s, peak heap 1150 MB. "models: 2 as expected, 0 failed, 0 skipped, 1 stopped" |
+| `mise run check:models-multi-store -- X3_PerStreamRestartUnplaced_N4 --heap-mb 1536` | `PASS`, no error, 1840645 distinct of 4332039 generated, depth 35, TLC 06min 31s, wall 392.4 s, peak heap 1535 MB. "models: 1 as expected, 0 failed, 0 skipped, 0 stopped" |
+| `mise run check:models-multi-store-runner` | 27 passed |
+
+**Deliberate non-coverage.** Nothing checks that `SpecUnplaced` and `Spec` agree for the per-stream relay (TD-184). The two instances with positions still have no verdict. The new configurations are not run on Windows, and of the other models only X3's were run again after the module changed, `mise run check:models-multi-store -- 'X3_*'` giving its six base configurations as expected.

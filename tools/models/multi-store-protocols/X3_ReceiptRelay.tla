@@ -149,6 +149,33 @@ Fairness ==
 Spec == Init /\ [][Next]_vars /\ Fairness
 
 (***************************************************************************)
+(* The same writers and the per-stream relay, with no position taken. The  *)
+(* per-stream relay and R1 to R3 read neither pos nor nextPos, so a        *)
+(* behaviour of SpecUnplaced is a behaviour of Spec with the two left at   *)
+(* their first values, and the order in which receipts of different        *)
+(* streams commit is still free. It has fewer states, since the order in   *)
+(* which positions were taken no longer tells two states apart. It is for  *)
+(* Relay = "PerStreamContiguous" only. The relay by position reads pos.    *)
+(***************************************************************************)
+BeginUnplaced(r) ==
+    /\ ph[r] = "new"
+    /\ IF r[2] = 1 THEN TRUE ELSE ph[<<r[1], r[2] - 1>>] = "committed"
+    /\ ph' = [ph EXCEPT ![r] = "begun"]
+    /\ UNCHANGED <<pos, nextPos, pub, rs, ckpt, restarts>>
+
+NextUnplaced ==
+    \/ \E r \in Receipts : BeginUnplaced(r) \/ Commit(r)
+    \/ \E s \in Streams : RelayPerStream(s)
+    \/ Checkpoint
+    \/ Restart
+
+FairnessUnplaced ==
+    /\ \A r \in Receipts : WF_vars(BeginUnplaced(r)) /\ WF_vars(Commit(r))
+    /\ \A s \in Streams : WF_vars(RelayPerStream(s))
+
+SpecUnplaced == Init /\ [][NextUnplaced]_vars /\ FairnessUnplaced
+
+(***************************************************************************)
 (* R1. Every committed receipt is eventually published.                    *)
 (***************************************************************************)
 AllPublished ==
