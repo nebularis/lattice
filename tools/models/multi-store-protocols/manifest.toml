@@ -14,7 +14,8 @@
 #               one where a property is expected to be violated. The configurations of PA, X6, X2A and models B to D were
 #               measured the same way with 8 workers in place of 16, while another session ran its own JVMs on the machine
 #               The three configurations named `X3_PerStreamRestartUnplaced_*` were measured on macOS instead (8 cores, 8 GB installed),
-#               with 8 workers, the first and third under a heap of 1,152 MB and the second under 1,536 MB. Each filled the
+#               with 8 workers, the first and third under a heap of 1,152 MB and the second under 1,536 MB, and the two
+#               named `X3_Unplaced*` there under 512 MB. Each filled the
 #               heap it was given, so its peak says what was enough and not what is needed
 # limit         machine S stopped the run at its limit of 30 minutes or 8 GB of heap, so it has no verdict and is skipped
 #               unless `--heap-mb` is given
@@ -46,6 +47,8 @@ configuration = [
   { name = "X3_PerStream", module = "X3_ReceiptRelay", config = "X3_PerStream.cfg", tier = "base", expect = "no error", distinct = 1143, depth = 14, tlc_time = "00s", wall_s = 1.3, peak_heap_mb = 28 },
   { name = "X3_PerStreamRestart", module = "X3_ReceiptRelay", config = "X3_PerStreamRestart.cfg", tier = "base", expect = "no error", distinct = 17863, depth = 19, tlc_time = "01s", wall_s = 2.0, peak_heap_mb = 51 },
   { name = "X3_PerStreamDuplicate", module = "X3_ReceiptRelay", config = "X3_PerStreamDuplicate.cfg", tier = "base", expect = "violated", property = "NoDuplicate", kind = "invariant", distinct = 50, depth = 6, tlc_time = "00s", wall_s = 1.0, peak_heap_mb = 15 },
+  { name = "X3_UnplacedRefines", module = "X3_Unplaced", config = "X3_UnplacedRefines.cfg", tier = "base", expect = "no error", distinct = 17863, depth = 19, tlc_time = "01s", wall_s = 1.8, peak_heap_mb = 34 },
+  { name = "X3_UnplacedByPosition", module = "X3_Unplaced", config = "X3_UnplacedByPosition.cfg", tier = "base", expect = "violated", property = "UnplacedSteps", kind = "action", distinct = 10, depth = 4, tlc_time = "00s", wall_s = 0.6, peak_heap_mb = 15 },
   { name = "X4_Naive", module = "X4_AuthorityCutover", config = "X4_Naive.cfg", tier = "base", expect = "violated", property = "NoLostWrite", kind = "invariant", distinct = 36, depth = 5, tlc_time = "00s", wall_s = 1.0, peak_heap_mb = 15 },
   { name = "X4_NaiveSingle", module = "X4_AuthorityCutover", config = "X4_NaiveSingle.cfg", tier = "base", expect = "no error", distinct = 782, depth = 13, tlc_time = "00s", wall_s = 1.0, peak_heap_mb = 17 },
   { name = "X4_NaiveTimeouts", module = "X4_AuthorityCutover", config = "X4_NaiveTimeouts.cfg", tier = "base", expect = "violated", property = "SingleAuthority", kind = "invariant", distinct = 442, depth = 9, tlc_time = "00s", wall_s = 1.0, peak_heap_mb = 17 },

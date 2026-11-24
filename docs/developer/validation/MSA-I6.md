@@ -930,4 +930,17 @@ Every command was run on machine S from the repository's root, each output captu
 | `mise run check:models-multi-store -- X3_PerStreamRestartUnplaced_N4 --heap-mb 1536` | `PASS`, no error, 1840645 distinct of 4332039 generated, depth 35, TLC 06min 31s, wall 392.4 s, peak heap 1535 MB. "models: 1 as expected, 0 failed, 0 skipped, 0 stopped" |
 | `mise run check:models-multi-store-runner` | 27 passed |
 
-**Deliberate non-coverage.** Nothing checks that `SpecUnplaced` and `Spec` agree for the per-stream relay (TD-184). The two instances with positions still have no verdict. The new configurations are not run on Windows, and of the other models only X3's were run again after the module changed, `mise run check:models-multi-store -- 'X3_*'` giving its six base configurations as expected.
+**Deliberate non-coverage.** That `SpecUnplaced` and `Spec` agree for the per-stream relay was unchecked when this was written, and the addendum below checks it. The two instances with positions still have no verdict. The new configurations are not run on Windows, and of the other models only X3's were run again after the module changed, `mise run check:models-multi-store -- 'X3_*'` giving its six base configurations as expected.
+
+## Addendum, 2026-11-24: the full relay model implements the one with no position
+
+**What changed.** `X3_Unplaced.tla` is new. It instantiates X3 with `pos` and `nextPos` at their first values and states `Refines`, which is `SpecUnplaced` of that instance, and `UnplacedSteps`, its step half. Two base configurations are new, and the base tier is 88.
+
+| ID | Given, when, then | Level | Pass criterion | Kind |
+|---|---|---|---|---|
+| I6U-T4 | Given `Spec` with the per-stream relay, two streams of two receipts and one restart, when TLC checks `Refines`, then no error | L2 | `PASS`, no error, 17,863 distinct | positive |
+| I6U-T5 | Given `Spec` with the relay by position, when TLC checks `UnplacedSteps`, then it is violated | L2 | `PASS`, action `UnplacedSteps` violated | negative |
+
+**One command.** `mise run check:models-multi-store -- 'X3_Unplaced*'`.
+
+**Deliberate non-coverage.** The refinement is checked at the base instance. That it holds at four receipts or three streams rests on the actions having the same shape at every size. `X3_PerStreamRestart_N4` and `X3_PerStreamRestart_S3` keep their `limit` and have no verdict of their own.

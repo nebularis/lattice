@@ -427,6 +427,8 @@ X2's audit, settled by a run. The module extends `X2_EvidenceAcrossStores.tla` a
 | `X3_PerStream.cfg` | X3 | `PerStreamContiguous`, two streams of two receipts, no restart | R1, R2, R3 | no error |
 | `X3_PerStreamRestart.cfg` | X3 | as `X3_PerStream.cfg` with `MaxRestarts=1` | R1, R2, R3 | no error |
 | `X3_PerStreamDuplicate.cfg` | X3 | as `X3_PerStreamRestart.cfg` | `NoDuplicate` | violated |
+| `X3_UnplacedRefines.cfg` | X3, through `X3_Unplaced.tla` | as `X3_PerStreamRestart.cfg` | `Refines`, that `Spec` implements `SpecUnplaced` with its positions hidden | no error |
+| `X3_UnplacedByPosition.cfg` | X3, through `X3_Unplaced.tla` | `ByCommitPosition`, two streams of two receipts, `MaxRestarts=1` | `UnplacedSteps`, the step half of `Refines` | violated |
 | `X4_Naive.cfg` | X4 | `Naive`, no timeouts, two writers of two writes | C1 | violated |
 | `X4_NaiveSingle.cfg` | X4 | as `X4_Naive.cfg` | C2 | no error |
 | `X4_NaiveTimeouts.cfg` | X4 | `Naive`, timeouts, two writers of two writes | C2 | violated |
@@ -549,10 +551,10 @@ On Windows, in PowerShell, the variable is set with `$env:TLA2TOOLS_JAR = '<path
 - It runs TLC with `-deadlock`, since every model terminates, in a copy of this directory under `.build/formal/tlc/multi-store-protocols/<configuration>/`, where TLC writes its states, any trace, its temporary files and its GC log.
 - It prints, for each configuration, the verdict, the distinct and generated states, the depth, TLC's time, the wall time and the peak heap, then one line of totals. Where the distinct states differ from the manifest's, the line says so. A configuration fails only where TLC's verdict differs from the manifest's. A skip, a stop and a run that runs out of heap are reported and do not fail.
 
-A pass of the base tier prints the runner's tests, `24 passed`, then a line with the heap budget, then for each of the 86 configurations a `RUN` line and a `PASS` line. Forty `PASS` lines read "no error" and forty-six name the property violated, each as the manifest expects. It ends with the line below and exits 0.
+A pass of the base tier prints the runner's tests, `27 passed`, then a line with the heap budget, then for each of the 88 configurations a `RUN` line and a `PASS` line. Forty-one `PASS` lines read "no error" and forty-seven name the property violated, each as the manifest expects. It ends with the line below and exits 0.
 
 ```text
-models: 86 as expected, 0 failed, 0 skipped, 0 stopped
+models: 88 as expected, 0 failed, 0 skipped, 0 stopped
 ```
 
 On a machine of 8 GB the budget is at most 2 GB, which every base configuration fits, the largest heap given being 320 MB. The wide tier on such a machine skips each configuration whose heap exceeds the budget, with both figures, and exits 0 unless a verdict differs.
@@ -628,6 +630,8 @@ TLC 2.19 with TLA+ tools 1.7.4 on Java 25, 2026-11-18. The runs expected to find
 | `X3_PerStream` | no error | 2,399 | 1,143 | 14 | none |
 | `X3_PerStreamRestart` | no error | 31,897 | 17,863 | 19 | none |
 | `X3_PerStreamDuplicate` | `NoDuplicate` violated | 68 | 50 | 6 | The receipt s1.1 commits and is published. The relay restarts to its checkpoint before it has checkpointed, and publishes s1.1 again. |
+| `X3_UnplacedRefines` | no error | 31,897 | 17,863 | 19 | none |
+| `X3_UnplacedByPosition` | `UnplacedSteps` violated | 10 | 10 | 4 | Receipts s1.1 and s2.1 begin and one commits. The relay by position publishes it, a step `SpecUnplaced` does not have. |
 | `X4_Naive` | `NoLostWrite` violated | 50 | 36 | 5 | Writer 1 sends write 1.1 to A. The migrator copies A, which is empty. A applies and acknowledges 1.1. The router flips to B, which does not hold 1.1. |
 | `X4_NaiveSingle` | no error | 1,607 | 782 | 13 | none |
 | `X4_NaiveTimeouts` | `SingleAuthority` violated | 1,013 | 442 | 9 | Writer 1 sends 1.1 to A and times out. The migrator copies and flips, and the writer refreshes and sends 1.1 to B. A then handles the first request and acknowledges. B handles the second request and acknowledges, so 1.1 is acknowledged by both stores. |
@@ -663,7 +667,7 @@ The `X1R_*` and `X5_*` configurations were run with TLC 2.19 and TLA+ tools 1.7.
 
 The wide tier was run through `mise run check:models-multi-store` on 2026-11-24, with TLC 2.19 and TLA+ tools 1.7.4 on Java 25.0.2, one configuration at a time with nothing else heavy running, on 16 workers, under a heap of 4,096 MB given by `--heap-mb` and stopped at 30 minutes. The two configurations that reached the limit ran under a heap of 8,192 MB, machine S's other limit. The depth is TLC's depth of the complete state graph search, and with 16 workers it can differ by one or two between runs while the counts do not. The peak heap is the one read under the heap given, and [`manifest.toml`](manifest.toml) holds these figures and the base tier's.
 
-The three `Unplaced` configurations were run the same day on macOS, 8 cores and 8 GB, on 8 workers, the first and third under a heap of 1,152 MB and the second under 1,536 MB, after it ran out of 1,152 MB. They check X3's `SpecUnplaced`, in which a writer begins a receipt without taking a position. The per-stream relay and the three properties read neither `pos` nor `nextPos`, so the order in which positions were taken tells no two of their states apart, and leaving it out takes three receipts in a stream from 1,454,319 distinct states to 88,941. That the two specifications agree for this relay is our reading of the module, supported by the same verdict at three receipts, and TLC has not checked it. The relay by position reads `pos` and has no such configuration.
+The three `Unplaced` configurations were run the same day on macOS, 8 cores and 8 GB, on 8 workers, the first and third under a heap of 1,152 MB and the second under 1,536 MB, after it ran out of 1,152 MB. They check X3's `SpecUnplaced`, in which a writer begins a receipt without taking a position. The per-stream relay and the three properties read neither `pos` nor `nextPos`, so the order in which positions were taken tells no two of their states apart, and leaving it out takes three receipts in a stream from 1,454,319 distinct states to 88,941. `X3_UnplacedRefines` checks at the base instance that every behaviour of `Spec` with this relay, its positions hidden, is a behaviour of `SpecUnplaced`, fairness included, so a property that reads no position holds of `Spec` where it holds of `SpecUnplaced`. That this carries to a larger instance rests on the actions having the same shape at every size, which TLC does not check. The relay by position reads `pos` and has no such configuration.
 
 | Configuration | Result | States generated | Distinct states | Depth | TLC time | Wall time | Peak heap |
 |---|---|---|---|---|---|---|---|
