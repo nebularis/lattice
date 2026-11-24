@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** the maintainer says when SVA-S2e starts. The projection slices run SVA-S2e, SVA-S2f, then SVA-S2g, SVA-S2h and SVA-S2i, then SVA-S2c. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** paused for the maintainer, who answers SVA-Q31 to SVA-Q34 of the [projection backend sketch](../sketches/projection-backend.md) before SVA-S2g is built, the five modelling choices SVA-S2e made, how SVA-S2f's engine differences reach the triple-stores domain, and the addenda to ADR-A18 and ADR-A23. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -248,3 +248,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-24: SVA-S2f started.
 - 2026-11-24: SVA-S2f built, [Validation Pack](../validation/SVA-S2f.md). `mork_rdf` compiles a derivation to one CONSTRUCT that writes on the carrier, with checks for a missing operand and an undefined result, and the lowered ARR contract runs to its values. Two engine differences it found wait for the maintainer to decide how they reach the triple-stores domain.
 - 2026-11-24: SVA-S2g started.
+- 2026-11-24: SVA-S2g stopped at its first step with nothing built. A graph construction contract cannot say what it writes with Surface's role kinds, which name the classes evidence is read from, allow one result binding, pair no evidence with a constructed property and state no identity for a node it mints. The case and SVA-Q31 to SVA-Q34 are in the projection backend sketch for the maintainer. `mork_rdf`'s existing cases look enough to compile it.
