@@ -865,7 +865,7 @@ def _parts(g: Graph, job: URIRef) -> dict[str, Graph]:
 
 
 def test_an_odrl_policy_gives_a_proposal_for_each_rule_and_the_prohibition_its_permission_excepts():
-    g, job = _import(ODRL_SAMPLE.read_text())
+    g, job = _import(ODRL_SAMPLE.read_text(encoding="utf-8"))
     assert g.value(job, CST.status) == CST.Succeeded, g.value(job, CST.failureMessage)
     parts = _parts(g, job)
     assert set(parts) == {"review.ttl", "eligibility.ttl", "quantification.ttl", "baseline.ttl", "vocabulary.ttl", "library.ttl"}
@@ -892,7 +892,7 @@ def test_an_odrl_policy_gives_a_proposal_for_each_rule_and_the_prohibition_its_p
 
 def test_an_odrl_import_into_a_picked_clause_proposes_every_term_on_it():
     clause = "https://example.org/lattice/studio/library/cl-1"
-    g, job = _import(ODRL_SAMPLE.read_text(), clause=clause)
+    g, job = _import(ODRL_SAMPLE.read_text(encoding="utf-8"), clause=clause)
     parts = _parts(g, job)
     assert "library.ttl" not in parts
     assert {str(o) for o in parts["review.ttl"].objects(None, CST.span)} == {clause}
@@ -901,18 +901,18 @@ def test_an_odrl_import_into_a_picked_clause_proposes_every_term_on_it():
 @pytest.mark.parametrize("change, message", [
     (dict(profile="http://example.org/other"), "not ODRL 2.2"),
     (dict(media="application/xml"), "not application/xml"),
-    (dict(content=ODRL_SAMPLE.read_text().replace("http://www.w3.org/ns/odrl.jsonld", "https://example.org/context.jsonld")), "remote context"),
+    (dict(content=ODRL_SAMPLE.read_text(encoding="utf-8").replace("http://www.w3.org/ns/odrl.jsonld", "https://example.org/context.jsonld")), "remote context"),
 ])
 def test_an_odrl_import_refuses_a_document_that_does_not_say_it_is_odrl(change, message):
-    arguments = dict(content=ODRL_SAMPLE.read_text())
+    arguments = dict(content=ODRL_SAMPLE.read_text(encoding="utf-8"))
     arguments.update(change)
     g, job = _import(**arguments)
     assert g.value(job, CST.status) == CST.Failed and message in str(g.value(job, CST.failureMessage))
 
 
 def test_the_same_policy_gives_the_same_proposals():
-    first, job = _import(ODRL_SAMPLE.read_text())
-    again, job2 = _import(ODRL_SAMPLE.read_text())
+    first, job = _import(ODRL_SAMPLE.read_text(encoding="utf-8"))
+    again, job2 = _import(ODRL_SAMPLE.read_text(encoding="utf-8"))
     strip = lambda g, j: artefacts(g, j)["review.ttl"][1].replace(str(j), "JOB")
     assert strip(first, job) == strip(again, job2)
 
@@ -927,7 +927,7 @@ def test_an_odrl_party_named_as_a_workspace_role_reuses_that_role():
     store.graphs[iri].add((job, CST.target, CST.OdrlProposer))
     doc = URIRef(f"{iri}:document")
     source = Graph()
-    for p, o in ((RDF.type, CST.ImportDocument), (CST.documentContent, Literal(ODRL_SAMPLE.read_text())),
+    for p, o in ((RDF.type, CST.ImportDocument), (CST.documentContent, Literal(ODRL_SAMPLE.read_text(encoding="utf-8"))),
                  (CST.documentMediaType, Literal("application/ld+json")), (DCTERMS.conformsTo, URIRef("http://www.w3.org/ns/odrl/2/"))):
         source.add((doc, p, o))
     store.graphs[f"{iri}:input"] = source
