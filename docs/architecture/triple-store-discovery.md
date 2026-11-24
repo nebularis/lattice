@@ -578,3 +578,11 @@ Recorded in the domain on 2026-11-24, after `v0.1.0`, so it has no tagged link y
 **What it means for LATTICE.** MORK makes a quotient by zero undefined, so `mork_rdf` divides a float or double only by a divisor that is not zero, which leaves the result unbound on both engines, and a check reports the instance.
 
 Nothing in the registers rests on it.
+
+### TSD-79. rdflib evaluates a sub-select with the outer query's bindings, where SPARQL evaluates it on its own
+
+Recorded in the domain on 2026-11-24, after `v0.1.0`, so it has no tagged link yet. `mise run graph:ask -- read TSD-79` prints it from the domain's clone.
+
+**What it means for LATTICE.** `mork_rdf`'s compiled join keeps an instance under at most one match with a grouped sub-select, whose variables are named apart from the outer query's, so it gives the specification's answer on rdflib and Oxigraph alike. A generated query with a sub-select names its own variables apart.
+
+Nothing in the registers rests on it.
