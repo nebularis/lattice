@@ -24,7 +24,7 @@ A measured read-only open of 24 ms is why the knowledge index has no server (TSD
 
 The four drivers are in the skill `lattice-ontology-modelling`: defensible history, storage, retrieval and throughput. Name each question with the slice's prefix (C9-Q1, MQ3).
 
-A question raised by a bold lead, `**LG-Q7. <question>**`, is promoted as `Answered 2026-10-19, (a), now MEC-nn.` (STD-283). The build reports an answer of that kind left unpromoted for 30 days.
+A question raised by a bold lead, `**LG-Q7. <question>**`, is promoted as `Answered 2026-10-19, (a), now MEC-nn.` (STD-283). The build reports an answer of that kind left unpromoted for 30 days, and `mise run check:knowledge` fails on it from then on.
 
 ## Decisions
 
