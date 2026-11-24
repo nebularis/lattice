@@ -37,6 +37,10 @@ mork:AnonymousElement a owl:Class ;
     rdfs:comment "Used to describe the Representation of an Entity that has no identifier, e.g., that is defined anonymously, such as an object within an array." ;
     rdfs:subClassOf [ a owl:Class ; owl:intersectionOf ( mork:CollectionElement [ a owl:Restriction ; owl:onProperty mork:identifier ; owl:hasValue "" ] ) ], mork:CollectionElement .
 
+mork:AnyNumberOfMatches a mork:JoinCardinality, owl:NamedIndividual ;
+    rdfs:label "any number of matches" ;
+    rdfs:comment "A parent node may find any number of nodes, and a link is written to each." .
+
 mork:ArithmeticExpression a owl:Class ;
     rdfs:label "arithmetic expression" ;
     rdfs:comment "An operation on two numeric operands, taken in order. The result datatype is the widest of the operands' under numeric promotion." ;
@@ -53,6 +57,10 @@ mork:Association a owl:Class ;
     skos:scopeNote "By convention, mork:Association does not collect individual members, but acts as a structural component." ;
     rdfs:subClassOf mork:Representation ;
     owl:disjointWith mork:Entity .
+
+mork:AtMostOneMatch a mork:JoinCardinality, owl:NamedIndividual ;
+    rdfs:label "at most one match" ;
+    rdfs:comment "A parent node finds at most one node. Where it finds several it writes no link and is reported with each." .
 
 mork:Attribute a owl:Class ;
     rdfs:label "attribute (representation)" ;
@@ -312,6 +320,15 @@ mork:IntersectionOfClasses a mork:ClassCombination, owl:NamedIndividual ;
     rdfs:comment "Several classes are combined with owl:intersectionOf." .
 
 mork:JSON a mork:SerializationFormat, owl:NamedIndividual .
+
+mork:JoinCardinality a owl:Class ;
+    rdfs:label "join cardinality" ;
+    rdfs:comment "How many nodes a join may find for one parent node. Its individuals are AtMostOneMatch and AnyNumberOfMatches." .
+
+mork:JoinCondition a owl:Class ;
+    rdfs:label "join condition" ;
+    rdfs:comment "One equality a join datum states, the value at parentRef from its parent's node equal to the value at ownRef from the node it finds. A datum with a composite key states one for each part of the key." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:ownRef ; owl:someValuesFrom xsd:string ], [ a owl:Restriction ; owl:onProperty mork:parentRef ; owl:someValuesFrom xsd:string ] .
 
 mork:LessThan a mork:ComparisonOperator, owl:NamedIndividual ;
     rdfs:label "less than" ;
@@ -1453,6 +1470,18 @@ mork:itemsConstrained a owl:DatatypeProperty ;
     rdfs:subPropertyOf owl:topDataProperty ;
     rdfs:range xsd:boolean .
 
+mork:joinCardinality a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "join cardinality" ;
+    rdfs:comment "How many nodes a join may find for one parent node, AtMostOneMatch or AnyNumberOfMatches. A join datum states one." ;
+    rdfs:domain mork:Datum ;
+    rdfs:range mork:JoinCardinality .
+
+mork:joinsOn a owl:ObjectProperty ;
+    rdfs:label "joins on" ;
+    rdfs:comment "A condition a join datum states. The datum takes, beneath its parent, each node of the class it iterates for which every one of its conditions holds. A datum that states one is a join." ;
+    rdfs:domain mork:Datum ;
+    rdfs:range mork:JoinCondition .
+
 mork:jurisdiction a owl:DatatypeProperty ;
     rdfs:label "jurisdiction" ;
     rdfs:comment "The jurisdiction applicable to a ConstraintScheme, ConstraintProvenance, or TargetingSpec." ;
@@ -1680,6 +1709,12 @@ mork:outputTokens a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain mork:ProposalRun ;
     rdfs:range xsd:nonNegativeInteger .
 
+mork:ownRef a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "own reference" ;
+    rdfs:comment "The path from the node a join datum finds to the value a join condition compares with the parent's. In a source of RDF it is a SPARQL 1.1 property path, as dataRef is." ;
+    rdfs:domain mork:JoinCondition ;
+    rdfs:range xsd:string .
+
 mork:paramBinding a owl:ObjectProperty ;
     rdfs:label "param binding" ;
     rdfs:comment "Links a QueryTemplate to one of its parameter bindings." ;
@@ -1702,6 +1737,12 @@ mork:paramValue a owl:DatatypeProperty ;
     rdfs:label "param value" ;
     rdfs:comment "The value of the parameter in a ParameterBinding." ;
     rdfs:domain mork:ParameterBinding .
+
+mork:parentRef a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "parent reference" ;
+    rdfs:comment "The path from the parent's node to the value a join condition compares. In a source of RDF it is a SPARQL 1.1 property path, as dataRef is." ;
+    rdfs:domain mork:JoinCondition ;
+    rdfs:range xsd:string .
 
 mork:partialMatch a owl:ObjectProperty ;
     rdfs:label "is partial match with" ;
@@ -1893,6 +1934,12 @@ mork:relatedProperty a owl:ObjectProperty ;
     rdfs:label "has related property" ;
     rdfs:comment "Used to relate DataConcept or Attribute individuals to object or datatype properties." ;
     rdfs:subPropertyOf skos:related .
+
+mork:reportsUnmatched a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "reports unmatched" ;
+    rdfs:comment "Whether a join reports a parent node that holds the values it compares and finds no node, which is so where the join is on required evidence. A join datum states it." ;
+    rdfs:domain mork:Datum ;
+    rdfs:range xsd:boolean .
 
 mork:representationOf a owl:ObjectProperty ;
     rdfs:label "is representation of" ;

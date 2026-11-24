@@ -493,7 +493,8 @@ srf:ProjectionRoleBinding a owl:Class ;
 		[ a owl:Restriction ; owl:onProperty srf:bindsCarrier ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:bindsDatatype ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:derivedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:constructedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+		[ a owl:Restriction ; owl:onProperty srf:constructedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:joinedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class." ;
 	fnd:utility "Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline srf:PathStep applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well." .
 
@@ -720,3 +721,44 @@ srf:fromBinding a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:WrittenValue ; rdfs:range srf:ProjectionRoleBinding ;
 	rdfs:comment "The candidate-evidence or required-evidence role binding of the same contract a written value is read from." ;
 	fnd:utility "A required-evidence binding gates the node, since an instance without it contributes nothing. A candidate-evidence binding writes what it finds (srf:P12)." .
+
+srf:JoinStatement a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:joinsOn ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:joinMatches ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The relation a join projection writes between an instance of its carrier and an instance of a second carrier, the equality of values that relates them and how many instances of the second carrier one instance may name." ;
+	fnd:utility "State it once, on the result-target role binding of a join with joinedAs, and name it by an IRI. Give it a joinsOn for each part of the key, at least one, and one joinMatches. The property the binding binds is the link, and where an authored vocabulary declares it the projection reaches the authored signature (srf:P1)." .
+
+srf:JoinPair a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:joinLeft ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:joinRight ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "One equality of a join statement, the evidence role binding that reads a value of the contract's own carrier and the one that reads the value of the second carrier it must equal." ;
+	fnd:utility "Name each pair by a blank node or an IRI, as srf:joinsOn takes it. A composite key is several pairs, and every one must hold." .
+
+srf:JoinCardinality a owl:Class ;
+	rdfs:comment "How many instances of the second carrier one instance of the contract's carrier may name. Its individuals are in the vocabulary." .
+
+srf:joinedAs a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:JoinStatement ;
+	rdfs:comment "The relation a join projection writes, stated on its result-target role binding, which binds the link from each instance to the instance it names." ;
+	fnd:utility "Set it on the result-target role binding of a join, once, and nowhere else (srf:P14). The property that binding binds is the link from the instance to the instance of the second carrier." .
+
+srf:joinsOn a owl:ObjectProperty ;
+	rdfs:domain srf:JoinStatement ; rdfs:range srf:JoinPair ;
+	rdfs:comment "An equality of values a join statement requires, and every one it names must hold." .
+
+srf:joinLeft a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:JoinPair ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "The candidate-evidence or required-evidence role binding of the same contract that reads a value of the contract's own carrier." ;
+	fnd:utility "It names no second carrier (srf:P16), and it is of the same evidence kind as the right binding and as every other binding of the statement (srf:P17)." .
+
+srf:joinRight a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:JoinPair ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "The candidate-evidence or required-evidence role binding of the same contract that reads a value of the second carrier, which it names with bindsCarrier." ;
+	fnd:utility "It names a carrier other than the contract's own, the same one in every pair of the statement (srf:P16), and states the datatype the left binding does, or neither states one (srf:P17)." .
+
+srf:joinMatches a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:JoinStatement ; rdfs:range srf:JoinCardinality ;
+	rdfs:comment "How many instances of the second carrier one instance may name." ;
+	fnd:utility "State it, never leave it implicit. AtMostOne says a value names at most one, so an instance with several matches writes no link and is reported with each. AnyNumber writes a link for each match." .

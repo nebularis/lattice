@@ -1313,6 +1313,7 @@ class ProjectionLoweringTests(unittest.TestCase):
             self.assertEqual(canonical.hash_graph(lower_projection(contract)), reference)
 
     def test_a_projection_of_another_kind_keeps_the_bare_mapping(self) -> None:
+        """An expansion states no statement yet, so it keeps the bare mapping a derivation, a construction and a join have left."""
         graph = Graph().parse(data=LoweringDependencyTests.SCENARIO, format="turtle")
         (contract,) = read_projection_contracts(graph)
         low = lower_projection(contract)
@@ -1435,7 +1436,7 @@ class LoweringDependencyTests(unittest.TestCase):
 
         ex:projection a srf:ProjectionContract ;
             srf:contractKey "eligibility-check" ; srf:carrier ex:Applicant ;
-            srf:projectionKind srf:JoinProjection ;
+            srf:projectionKind srf:ExpansionProjection ;
             srf:hasRoleBinding ex:subject, ex:evidence, ex:household-evidence, ex:target ;
             srf:targetNamespace "https://example.org/exec#"^^xsd:anyURI ;
             srf:realisationMode srf:Materialised ;
@@ -2012,6 +2013,544 @@ WHERE {{
                 graph.add(triple)
             self.assertEqual(self.compile(graph).text(), reference)
 
+
+
+ORDER_CUSTOMER = "https://example.org/lattice/surface/order-customer#"
+ORDER_CUSTOMER_EXAMPLE = "order-customer-join-projection.ttl"
+
+
+def join_graph() -> Graph:
+    return load(ORDER_CUSTOMER_EXAMPLE)
+
+
+def join_with(remove=(), add="") -> Graph:
+    """The order and customer example with some triples removed, given as (subject, predicate, object) local names with the
+    object a local name, a term or None for any, and some Turtle added."""
+    graph = join_graph()
+    for subject, predicate, obj in remove:
+        target = obj if obj is None or isinstance(obj, (URIRef, Literal)) else URIRef(ORDER_CUSTOMER + obj)
+        graph.remove((URIRef(ORDER_CUSTOMER + subject), predicate, target))
+    if add:
+        graph.parse(
+            data=f"""
+            @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+            @prefix ex: <{ORDER_CUSTOMER}> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            {add}
+            """,
+            format="turtle",
+        )
+    return graph
+
+
+def candidate_graph() -> Graph:
+    """The example on candidate evidence, both bindings of its one pair."""
+    return join_with(
+        remove=[("oc-code", SRF.roleKind, None), ("oc-match", SRF.roleKind, None)],
+        add="ex:oc-code srf:roleKind srf:CandidateEvidenceRole . ex:oc-match srf:roleKind srf:CandidateEvidenceRole .",
+    )
+
+
+def any_number_graph() -> Graph:
+    return join_with(remove=[("oc-join", SRF.joinMatches, None)], add="ex:oc-join srf:joinMatches srf:AnyNumber .")
+
+
+def typed_graph() -> Graph:
+    """The example comparing integer codes, both bindings stating the datatype."""
+    return join_with(add="ex:oc-code srf:bindsDatatype xsd:integer . ex:oc-match srf:bindsDatatype xsd:integer .")
+
+
+def two_pair_graph() -> Graph:
+    """The example joined on the code and a region, so a customer must hold both values the order names."""
+    return join_with(
+        add="""
+        ex:oc-region a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:customerRegion .
+        ex:oc-region-match a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ;
+            srf:bindsCarrier ex:Customer ; srf:bindsProperty ex:region .
+        ex:order-customer-projection srf:hasRoleBinding ex:oc-region , ex:oc-region-match .
+        ex:oc-join srf:joinsOn [ srf:joinLeft ex:oc-region ; srf:joinRight ex:oc-region-match ] .
+        """
+    )
+
+
+def join_contract(graph: Graph):
+    return read_projection_contracts(graph, only=ORDER_CUSTOMER + "order-customer-projection")[0]
+
+
+class JoinModelTests(unittest.TestCase):
+    """The analyser applies laws srf:P14 to srf:P17 as the shapes do."""
+
+    def test_the_example_parses_its_pair_its_count_and_its_link(self) -> None:
+        contract = join_contract(join_graph())
+        join = contract.join
+        self.assertIsNone(contract.expression)
+        self.assertIsNone(contract.construction)
+        self.assertEqual(join.iri, URIRef(ORDER_CUSTOMER + "oc-join"))
+        self.assertEqual([(p.left.iri, p.right.iri) for p in join.pairs], [(URIRef(ORDER_CUSTOMER + "oc-code"), URIRef(ORDER_CUSTOMER + "oc-match"))])
+        self.assertTrue(join.at_most_one)
+        self.assertTrue(join.required)
+        self.assertEqual(join.second_carrier, URIRef(ORDER_CUSTOMER + "Customer"))
+        self.assertEqual(join.link.binds_property, URIRef(ORDER_CUSTOMER + "placedFor"))
+
+    def test_a_join_on_candidate_evidence_is_not_required_and_a_count_of_any_number_is_not_at_most_one(self) -> None:
+        self.assertFalse(join_contract(candidate_graph()).join.required)
+        self.assertFalse(join_contract(any_number_graph()).join.at_most_one)
+
+    def test_pairs_are_read_in_the_order_of_the_properties_they_compare(self) -> None:
+        pairs = join_contract(two_pair_graph()).join.pairs
+        self.assertEqual([p.left.binds_property for p in pairs], [URIRef(ORDER_CUSTOMER + "customerCode"), URIRef(ORDER_CUSTOMER + "customerRegion")])
+
+    def test_the_statement_is_the_same_whatever_the_order_of_the_triples(self) -> None:
+        for build in (join_graph, two_pair_graph):
+            reference = join_contract(build()).join
+            triples = sorted(build())
+            for seed in range(5):
+                shuffled = list(triples)
+                random.Random(seed).shuffle(shuffled)
+                graph = Graph()
+                for triple in shuffled:
+                    graph.add(triple)
+                self.assertEqual(join_contract(graph).join, reference)
+
+    def refused(self, graph: Graph, law: str) -> None:
+        with self.assertRaisesRegex(ContractError, law):
+            read_projection_contracts(graph)
+
+    def test_a_join_with_no_statement_is_refused(self) -> None:
+        self.refused(join_with(remove=[("oc-link", SRF.joinedAs, None)]), "srf:P14")
+
+    def test_a_statement_on_a_binding_that_is_not_a_result_target_is_refused(self) -> None:
+        self.refused(join_with(add="ex:oc-code srf:joinedAs ex:oc-join ."), "srf:P14")
+
+    def test_a_statement_on_a_projection_of_another_kind_is_refused(self) -> None:
+        graph = join_with(remove=[("order-customer-projection", SRF.projectionKind, None)], add="ex:order-customer-projection srf:projectionKind srf:ExpansionProjection .")
+        self.refused(graph, "srf:P14")
+        self.refused(arr_with(add="ex:arr-target srf:joinedAs ex:arr-expression ."), "srf:P14")
+
+    def test_a_link_that_binds_no_property_is_refused(self) -> None:
+        self.refused(join_with(remove=[("oc-link", SRF.bindsProperty, None)]), "srf:P14")
+
+    def test_a_statement_that_is_not_a_join_statement_is_refused(self) -> None:
+        self.refused(join_with(remove=[("oc-join", RDF.type, SRF.JoinStatement)]), "srf:P14")
+
+    def test_a_statement_with_no_pair_is_refused(self) -> None:
+        self.refused(join_with(remove=[("oc-join", SRF.joinsOn, None)]), "srf:P15")
+
+    def test_a_statement_with_no_count_or_a_count_the_choice_does_not_name_is_refused(self) -> None:
+        self.refused(join_with(remove=[("oc-join", SRF.joinMatches, None)]), "srf:P15")
+        self.refused(join_with(remove=[("oc-join", SRF.joinMatches, None)], add="ex:oc-join srf:joinMatches ex:Elsewhere ."), "srf:P15")
+
+    def test_a_pair_with_no_left_or_no_right_is_refused(self) -> None:
+        for side in ("joinLeft", "joinRight"):
+            with self.subTest(side=side):
+                graph = join_with(remove=[("oc-join", SRF.joinsOn, None)], add=f"ex:oc-join srf:joinsOn [ srf:{side} ex:oc-code ] .")
+                self.refused(graph, "srf:P15")
+
+    def test_a_side_that_is_not_an_evidence_binding_is_refused(self) -> None:
+        for side, other in (("joinLeft", "oc-match"), ("joinRight", "oc-code")):
+            for source in ("oc-subject", "oc-link", "unknown"):
+                with self.subTest(side=side, source=source):
+                    graph = join_with(remove=[("oc-join", SRF.joinsOn, None)], add=f"ex:oc-join srf:joinsOn [ srf:{side} ex:{source} ; srf:{'joinRight' if side == 'joinLeft' else 'joinLeft'} ex:{other} ] .")
+                    self.refused(graph, "srf:P16")
+
+    def test_a_left_that_names_a_second_carrier_is_refused(self) -> None:
+        self.refused(join_with(add="ex:oc-code srf:bindsCarrier ex:Customer ."), "srf:P16")
+
+    def test_a_right_that_names_no_carrier_or_the_contracts_own_is_refused(self) -> None:
+        self.refused(join_with(remove=[("oc-match", SRF.bindsCarrier, None)]), "srf:P16")
+        self.refused(join_with(remove=[("oc-match", SRF.bindsCarrier, None)], add="ex:oc-match srf:bindsCarrier ex:Order ."), "srf:P16")
+
+    def test_right_bindings_that_name_two_carriers_are_refused(self) -> None:
+        graph = two_pair_graph()
+        graph.remove((URIRef(ORDER_CUSTOMER + "oc-region-match"), SRF.bindsCarrier, None))
+        graph.add((URIRef(ORDER_CUSTOMER + "oc-region-match"), SRF.bindsCarrier, URIRef(ORDER_CUSTOMER + "Elsewhere")))
+        self.refused(graph, "srf:P16")
+
+    def test_a_pair_of_two_evidence_kinds_or_a_statement_of_two_is_refused(self) -> None:
+        self.refused(join_with(remove=[("oc-match", SRF.roleKind, None)], add="ex:oc-match srf:roleKind srf:CandidateEvidenceRole ."), "srf:P17")
+        graph = two_pair_graph()
+        for name in ("oc-region", "oc-region-match"):
+            graph.remove((URIRef(ORDER_CUSTOMER + name), SRF.roleKind, None))
+            graph.add((URIRef(ORDER_CUSTOMER + name), SRF.roleKind, SRF.CandidateEvidenceRole))
+        self.refused(graph, "srf:P17")
+
+    def test_datatypes_the_pair_or_the_statement_state_differently_are_refused(self) -> None:
+        self.refused(join_with(add="ex:oc-code srf:bindsDatatype xsd:integer ."), "srf:P17")
+        self.refused(join_with(add="ex:oc-code srf:bindsDatatype xsd:integer . ex:oc-match srf:bindsDatatype xsd:string ."), "srf:P17")
+        graph = two_pair_graph()
+        for name in ("oc-region", "oc-region-match"):
+            graph.add((URIRef(ORDER_CUSTOMER + name), SRF.bindsDatatype, XSD.string))
+        self.refused(graph, "srf:P17")
+
+
+class JoinShapeTests(unittest.TestCase):
+    """The shapes of ontology/surface refuse what the analyser refuses, with no code beside them."""
+
+    def violations(self, graph: Graph) -> set:
+        return {name.rsplit("#", 1)[-1] for name in shape_violations(graph, SURFACE_SHAPES)}
+
+    def test_the_example_and_its_variants_conform(self) -> None:
+        for graph in (join_graph(), candidate_graph(), any_number_graph(), typed_graph(), two_pair_graph()):
+            self.assertEqual(self.violations(graph), set())
+
+    def test_a_join_with_no_statement_is_refused(self) -> None:
+        graph = join_with(remove=[("oc-link", SRF.joinedAs, None)])
+        self.assertIn("JoinRequiredShape", self.violations(graph))
+        self.assertIn("JoinStatementReachedShape", self.violations(graph))
+
+    def test_a_statement_on_a_binding_that_is_not_a_result_target_is_refused(self) -> None:
+        self.assertIn("JoinPlacementShape", self.violations(join_with(add="ex:oc-code srf:joinedAs ex:oc-join .")))
+        self.assertIn("JoinPlacementShape", self.violations(arr_with(add="ex:arr-target srf:joinedAs ex:arr-expression .")))
+
+    def test_a_statement_on_a_projection_of_another_kind_is_refused(self) -> None:
+        graph = join_with(remove=[("order-customer-projection", SRF.projectionKind, None)], add="ex:order-customer-projection srf:projectionKind srf:GraphConstructionProjection .")
+        self.assertIn("JoinPlacementShape", self.violations(graph))
+
+    def test_two_statements_on_one_binding_are_refused(self) -> None:
+        graph = join_with(add="ex:oc-link srf:joinedAs ex:oc-other . ex:oc-other a srf:JoinStatement .")
+        self.assertIn("ProjectionRoleBindingShape", self.violations(graph))
+
+    def test_a_link_that_binds_no_property_is_refused(self) -> None:
+        self.assertIn("JoinLinkPropertyRequiredShape", self.violations(join_with(remove=[("oc-link", SRF.bindsProperty, None)])))
+
+    def test_a_statement_that_is_no_join_statement_is_refused(self) -> None:
+        self.assertIn("JoinStatementTypedShape", self.violations(join_with(remove=[("oc-join", RDF.type, SRF.JoinStatement)])))
+
+    def test_a_statement_with_no_pair_or_no_count_is_refused(self) -> None:
+        for predicate in (SRF.joinsOn, SRF.joinMatches):
+            with self.subTest(predicate=predicate):
+                self.assertIn("JoinStatementShape", self.violations(join_with(remove=[("oc-join", predicate, None)])))
+
+    def test_a_count_the_choice_does_not_name_is_refused(self) -> None:
+        graph = join_with(remove=[("oc-join", SRF.joinMatches, None)], add="ex:oc-join srf:joinMatches ex:Elsewhere .")
+        self.assertIn("JoinStatementShape", self.violations(graph))
+
+    def test_a_pair_with_no_left_or_no_right_is_refused(self) -> None:
+        for side in ("joinLeft", "joinRight"):
+            with self.subTest(side=side):
+                graph = join_with(remove=[("oc-join", SRF.joinsOn, None)], add=f"ex:oc-join srf:joinsOn [ srf:{side} ex:oc-code ] .")
+                self.assertIn("JoinPairShape", self.violations(graph))
+
+    def test_a_side_that_is_not_an_evidence_binding_is_refused(self) -> None:
+        for source in ("oc-subject", "oc-link", "unknown"):
+            with self.subTest(source=source):
+                left = join_with(remove=[("oc-join", SRF.joinsOn, None)], add=f"ex:oc-join srf:joinsOn [ srf:joinLeft ex:{source} ; srf:joinRight ex:oc-match ] .")
+                self.assertIn("JoinLeftBindingShape", self.violations(left))
+                right = join_with(remove=[("oc-join", SRF.joinsOn, None)], add=f"ex:oc-join srf:joinsOn [ srf:joinLeft ex:oc-code ; srf:joinRight ex:{source} ] .")
+                self.assertIn("JoinRightBindingShape", self.violations(right))
+
+    def test_a_left_that_names_a_second_carrier_is_refused(self) -> None:
+        self.assertIn("JoinLeftBindingShape", self.violations(join_with(add="ex:oc-code srf:bindsCarrier ex:Customer .")))
+
+    def test_a_right_that_names_no_carrier_or_the_contracts_own_is_refused(self) -> None:
+        self.assertIn("JoinRightBindingShape", self.violations(join_with(remove=[("oc-match", SRF.bindsCarrier, None)])))
+        graph = join_with(remove=[("oc-match", SRF.bindsCarrier, None)], add="ex:oc-match srf:bindsCarrier ex:Order .")
+        self.assertIn("JoinRightBindingShape", self.violations(graph))
+
+    def test_right_bindings_that_name_two_carriers_are_refused(self) -> None:
+        graph = two_pair_graph()
+        graph.remove((URIRef(ORDER_CUSTOMER + "oc-region-match"), SRF.bindsCarrier, None))
+        graph.add((URIRef(ORDER_CUSTOMER + "oc-region-match"), SRF.bindsCarrier, URIRef(ORDER_CUSTOMER + "Elsewhere")))
+        self.assertIn("JoinSecondCarrierShape", self.violations(graph))
+
+    def test_a_pair_of_two_evidence_kinds_or_a_statement_of_two_is_refused(self) -> None:
+        graph = join_with(remove=[("oc-match", SRF.roleKind, None)], add="ex:oc-match srf:roleKind srf:CandidateEvidenceRole .")
+        self.assertIn("JoinEvidenceKindShape", self.violations(graph))
+        graph = two_pair_graph()
+        for name in ("oc-region", "oc-region-match"):
+            graph.remove((URIRef(ORDER_CUSTOMER + name), SRF.roleKind, None))
+            graph.add((URIRef(ORDER_CUSTOMER + name), SRF.roleKind, SRF.CandidateEvidenceRole))
+        self.assertIn("JoinEvidenceKindShape", self.violations(graph))
+
+    def test_datatypes_the_pair_or_the_statement_state_differently_are_refused(self) -> None:
+        self.assertIn("JoinDatatypeShape", self.violations(join_with(add="ex:oc-code srf:bindsDatatype xsd:integer .")))
+        self.assertIn("JoinDatatypeShape", self.violations(join_with(add="ex:oc-match srf:bindsDatatype xsd:integer .")))
+        self.assertIn("JoinDatatypeShape", self.violations(join_with(add="ex:oc-code srf:bindsDatatype xsd:integer . ex:oc-match srf:bindsDatatype xsd:string .")))
+        graph = two_pair_graph()
+        for name in ("oc-region", "oc-region-match"):
+            graph.add((URIRef(ORDER_CUSTOMER + name), SRF.bindsDatatype, XSD.string))
+        self.assertIn("JoinStatementDatatypeShape", self.violations(graph))
+
+    def test_the_laws_the_shapes_discharge_are_in_the_vocabulary(self) -> None:
+        vocabulary = parse_files([str(ROOT / "ontology" / "surface" / "vocab" / "surface-vocab.ttl")])
+        for law in ("P14", "P15", "P16", "P17"):
+            self.assertIn((SRF[law], RDF.type, SRF.Law), vocabulary)
+        for count in ("AtMostOne", "AnyNumber"):
+            self.assertIn((SRF[count], RDF.type, SRF.JoinCardinality), vocabulary)
+
+
+class JoinLoweringTests(unittest.TestCase):
+    """Surface-to-MORK lowering of a join (ADR-A18)."""
+
+    def lowered(self, graph: Graph):
+        contract = join_contract(graph)
+        return contract, lower_projection(contract)
+
+    def parts(self, low: Graph, contract):
+        root = lowered_head(contract)
+        (datum,) = low.objects(root, MORK.compositeNarrowerMapping)
+        return root, datum
+
+    def test_the_join_lowers_into_a_scheme_a_source_node_root_and_a_datum_that_takes_the_second_carriers_node(self) -> None:
+        contract, low = self.lowered(join_graph())
+        (scheme,) = set(low.subjects(RDF.type, MORK.MappingScheme))
+        root, datum = self.parts(low, contract)
+        self.assertEqual(low.value(root, MORK.identityRule), MORK.SourceNodeIdentity)
+        self.assertEqual(low.value(low.value(root, MORK.mappingFor), MORK.representedAs), URIRef(ORDER_CUSTOMER + "Order"))
+        self.assertEqual(low.value(datum, MORK.broaderApplicative), root)
+        self.assertEqual(low.value(datum, MORK.identityRule), MORK.SourceNodeIdentity)
+        self.assertEqual(low.value(low.value(datum, MORK.mappingFor), MORK.representedAs), URIRef(ORDER_CUSTOMER + "Customer"))
+        self.assertEqual(low.value(datum, MORK.inverseRBoxMatch), URIRef(ORDER_CUSTOMER + "placedFor"))
+        self.assertEqual(low.value(datum, MORK.mappingScheme), scheme)
+        self.assertEqual(set(low.objects(contract.iri, SRF.producesMapping)), {root})
+        # The datum takes a node and writes only the link, so it names no class to type it with and has nothing beneath it.
+        self.assertIsNone(low.value(datum, MORK.exactTBoxMatch))
+        self.assertEqual(set(low.objects(datum, MORK.compositeNarrowerMapping)), set())
+
+    def test_the_datum_states_each_condition_its_count_and_whether_an_unmatched_instance_is_reported(self) -> None:
+        contract, low = self.lowered(join_graph())
+        _, datum = self.parts(low, contract)
+        (condition,) = low.objects(datum, MORK.joinsOn)
+        self.assertIn((condition, RDF.type, MORK.JoinCondition), low)
+        self.assertEqual(low.value(condition, MORK.parentRef), Literal(f"<{ORDER_CUSTOMER}customerCode>"))
+        self.assertEqual(low.value(condition, MORK.ownRef), Literal(f"<{ORDER_CUSTOMER}code>"))
+        self.assertEqual(low.value(datum, MORK.joinCardinality), MORK.AtMostOneMatch)
+        self.assertEqual(low.value(datum, MORK.reportsUnmatched), Literal(True))
+
+    def test_a_count_of_any_number_and_a_join_on_candidate_evidence_are_stated_as_they_are(self) -> None:
+        _, any_low = self.lowered(any_number_graph())
+        _, candidate_low = self.lowered(candidate_graph())
+        for low, count, reported in ((any_low, MORK.AnyNumberOfMatches, True), (candidate_low, MORK.AtMostOneMatch, False)):
+            datum = next(low.subjects(MORK.joinCardinality, None))
+            self.assertEqual(low.value(datum, MORK.joinCardinality), count)
+            self.assertEqual(low.value(datum, MORK.reportsUnmatched), Literal(reported))
+
+    def test_the_guard_holds_the_required_evidence_of_the_instance_and_not_the_second_carriers(self) -> None:
+        contract, low = self.lowered(join_graph())
+        _, datum = self.parts(low, contract)
+        guard = low.value(datum, MORK.appliesWhen)
+        paths = {(low.value(c, SH.path), low.value(c, SH.minCount)) for c in low.objects(guard, SH.property)}
+        self.assertEqual(paths, {(URIRef(ORDER_CUSTOMER + "customerCode"), Literal(1))})
+
+    def test_a_join_on_candidate_evidence_is_guarded_by_no_value_it_compares(self) -> None:
+        contract, low = self.lowered(candidate_graph())
+        _, datum = self.parts(low, contract)
+        self.assertIsNone(low.value(datum, MORK.appliesWhen))
+        graph = join_with(add="ex:oc-channel a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:channel . ex:order-customer-projection srf:hasRoleBinding ex:oc-channel .")
+        _, low = self.lowered(graph)
+        guard = low.value(self.parts(low, join_contract(graph))[1], MORK.appliesWhen)
+        self.assertEqual({low.value(c, SH.path) for c in low.objects(guard, SH.property)}, {URIRef(ORDER_CUSTOMER + "customerCode"), URIRef(ORDER_CUSTOMER + "channel")})
+
+    def test_each_pair_is_a_condition_in_the_order_of_the_properties_compared(self) -> None:
+        contract, low = self.lowered(two_pair_graph())
+        _, datum = self.parts(low, contract)
+        conditions = [
+            (low.value(c, MORK.parentRef), low.value(c, MORK.ownRef))
+            for c in sorted(low.objects(datum, MORK.joinsOn))
+        ]
+        self.assertEqual(
+            conditions,
+            [
+                (Literal(f"<{ORDER_CUSTOMER}customerCode>"), Literal(f"<{ORDER_CUSTOMER}code>")),
+                (Literal(f"<{ORDER_CUSTOMER}customerRegion>"), Literal(f"<{ORDER_CUSTOMER}region>")),
+            ],
+        )
+
+    def test_values_are_compared_by_term_unless_the_bindings_state_a_datatype_which_they_are_cast_to(self) -> None:
+        _, plain = self.lowered(join_graph())
+        _, typed = self.lowered(typed_graph())
+        self.assertEqual(plain.value(next(plain.subjects(MORK.joinCardinality, None)), MORK.lookupComparison), MORK.TermComparison)
+        datum = next(typed.subjects(MORK.joinCardinality, None))
+        self.assertEqual(typed.value(datum, MORK.lookupComparison), MORK.CastComparison)
+        self.assertEqual(typed.value(datum, MORK.lookupDatatype), XSD.integer)
+
+    def test_the_lowered_scheme_is_one_the_mork_shapes_accept(self) -> None:
+        for graph in (join_graph(), candidate_graph(), any_number_graph(), typed_graph(), two_pair_graph()):
+            self.assertEqual(shape_violations(self.lowered(graph)[1], MORK_SHAPES), set())
+
+    def test_lowering_is_deterministic_and_the_same_with_the_triples_permuted(self) -> None:
+        for build in (join_graph, two_pair_graph):
+            reference = canonical.hash_graph(lower_projection(join_contract(build())))
+            self.assertEqual(canonical.hash_graph(lower_projection(join_contract(build()))), reference)
+            triples = sorted(build())
+            for seed in range(5):
+                shuffled = list(triples)
+                random.Random(seed).shuffle(shuffled)
+                graph = Graph()
+                for triple in shuffled:
+                    graph.add(triple)
+                self.assertEqual(canonical.hash_graph(lower_projection(join_contract(graph))), reference)
+
+    def test_a_join_is_not_a_bare_mapping(self) -> None:
+        contract, low = self.lowered(join_graph())
+        self.assertEqual(set(low.subjects(MORK.mappingFor, contract.iri)), set())
+        self.assertTrue(set(low.subjects(RDF.type, MORK.MappingScheme)))
+
+    def test_the_other_kinds_are_not_affected(self) -> None:
+        (derivation,) = read_projection_contracts(arr_graph())
+        self.assertIsNone(derivation.join)
+        self.assertIsNone(order_contract(order_graph()).join)
+
+
+@unittest.skipIf(mork_rdf is None, "mork_rdf is not installed")
+class JoinCompilationTests(unittest.TestCase):
+    """The lowered scheme compiles with `mork_rdf` and runs to the graph the contract states (SVA-S2h)."""
+
+    BASE = "https://example.org/lattice/surface/order-customer/out/"
+    LINK = ORDER_CUSTOMER + "placedFor"
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        if str(ROOT / "tools") not in sys.path:
+            sys.path.insert(0, str(ROOT / "tools"))
+
+    def compile(self, graph: Graph):
+        low = lower_projection(join_contract(graph))
+        (scheme,) = set(low.subjects(RDF.type, MORK.MappingScheme))
+        return mork_rdf.compile_scheme(low, scheme, base=self.BASE, at=datetime.fromisoformat("2026-11-24T00:00:00+00:00"))
+
+    def evaluate(self, engine: str, compiled, source: Graph):
+        if engine == "oxigraph":
+            out = mork_rdf.run(compiled, source)
+            return {(str(s), str(p), str(o)) for s, p, o in out.graph}, {(f.code, f.focus, f.value) for f in out.findings}
+        from rdflib import Dataset
+
+        dataset = Dataset()
+        for triple in source:
+            dataset.default_graph.add(triple)
+        written = {(str(s), str(p), str(o)) for q in compiled.constructs for s, p, o in dataset.query(q.text)}
+        reported = {(q.code, str(r["focus"]), None if r["value"] is None else str(r["value"])) for q in compiled.checks for r in dataset.query(q.text)}
+        return written, reported
+
+    def test_the_example_compiles_to_the_query_the_case_shows(self) -> None:
+        compiled = self.compile(join_graph())
+        (link,) = compiled.constructs
+        type_ = str(RDF.type)
+        expected = f"""BASE <{self.BASE}>
+CONSTRUCT {{ ?f1 <{self.LINK}> ?f2 . }}
+WHERE {{
+  ?f1 <{type_}> <{ORDER_CUSTOMER}Order> .
+  ?f1 <{ORDER_CUSTOMER}customerCode> ?v3 .
+  FILTER (((EXISTS {{ ?f1 <{ORDER_CUSTOMER}customerCode> ?any4 . }})))
+  ?f2 <{type_}> <{ORDER_CUSTOMER}Customer> .
+  ?f2 <{ORDER_CUSTOMER}code> ?v3 .
+  {{ SELECT ?f1 WHERE {{ ?f1 <{ORDER_CUSTOMER}customerCode> ?v6 . FILTER (((EXISTS {{ ?f1 <{ORDER_CUSTOMER}customerCode> ?any7 . }}))) ?f5 <{type_}> <{ORDER_CUSTOMER}Customer> . ?f5 <{ORDER_CUSTOMER}code> ?v6 . }} GROUP BY ?f1 HAVING (COUNT(DISTINCT ?f5) = 1) }}
+}}"""
+        self.assertEqual(" ".join(link.text.split()), " ".join(expected.split()))
+        self.assertEqual(sorted(q.code for q in compiled.checks), ["InstanceExcluded", "JoinAmbiguous", "JoinUnmatched"])
+        self.assertEqual([(f.code, f.severity) for f in compiled.findings], [("MappingReview", mork_rdf.Severity.WARNING)])
+        self.assertFalse(compiled.errors)
+
+    def test_the_example_runs_to_its_expected_graph_on_each_engine(self) -> None:
+        compiled = self.compile(join_graph())
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, join_graph())
+                self.assertEqual(
+                    written,
+                    {
+                        (ORDER_CUSTOMER + "order-1", self.LINK, ORDER_CUSTOMER + "customer-1"),
+                        (ORDER_CUSTOMER + "order-2", self.LINK, ORDER_CUSTOMER + "customer-1"),
+                    },
+                )
+                # The third order names a code no customer holds, so it is reported with the code and writes nothing.
+                self.assertEqual(reported, {("JoinUnmatched", ORDER_CUSTOMER + "order-3", "C9")})
+
+    def source_with(self, text: str) -> Graph:
+        source = join_graph()
+        source.parse(data=f"@prefix ex: <{ORDER_CUSTOMER}> .\n{text}", format="turtle")
+        return source
+
+    def test_an_order_whose_code_two_customers_hold_writes_no_link_and_names_each(self) -> None:
+        source = self.source_with('ex:customer-3 a ex:Customer ; ex:code "C1" . ')
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, self.compile(join_graph()), source)
+                self.assertEqual({s for s, p, o in written}, set())
+                self.assertEqual(
+                    {r for r in reported if r[0] == "JoinAmbiguous"},
+                    {
+                        ("JoinAmbiguous", ORDER_CUSTOMER + "order-1", ORDER_CUSTOMER + "customer-1"),
+                        ("JoinAmbiguous", ORDER_CUSTOMER + "order-1", ORDER_CUSTOMER + "customer-3"),
+                        ("JoinAmbiguous", ORDER_CUSTOMER + "order-2", ORDER_CUSTOMER + "customer-1"),
+                        ("JoinAmbiguous", ORDER_CUSTOMER + "order-2", ORDER_CUSTOMER + "customer-3"),
+                    },
+                )
+
+    def test_under_any_number_an_order_is_linked_to_each_customer_its_code_names(self) -> None:
+        source = self.source_with('ex:customer-3 a ex:Customer ; ex:code "C1" . ')
+        compiled = self.compile(any_number_graph())
+        self.assertNotIn("JoinAmbiguous", {q.code for q in compiled.checks})
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, _ = self.evaluate(engine, compiled, source)
+                self.assertEqual(
+                    written,
+                    {
+                        (order, self.LINK, ORDER_CUSTOMER + customer)
+                        for order in (ORDER_CUSTOMER + "order-1", ORDER_CUSTOMER + "order-2")
+                        for customer in ("customer-1", "customer-3")
+                    },
+                )
+
+    def test_an_order_missing_its_required_code_contributes_nothing_and_is_reported(self) -> None:
+        source = self.source_with('ex:order-4 a ex:Order . ')
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, self.compile(join_graph()), source)
+                self.assertNotIn(ORDER_CUSTOMER + "order-4", {s for s, p, o in written})
+                self.assertIn(("InstanceExcluded", ORDER_CUSTOMER + "order-4", f"<{ORDER_CUSTOMER}customerCode>"), reported)
+
+    def test_on_candidate_evidence_an_order_with_no_customer_is_silent(self) -> None:
+        compiled = self.compile(candidate_graph())
+        self.assertNotIn("JoinUnmatched", {q.code for q in compiled.checks})
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, self.source_with("ex:order-4 a ex:Order . "))
+                self.assertEqual(len(written), 2)
+                self.assertEqual(reported, set())
+
+    def test_a_join_on_two_values_links_the_customer_that_holds_both(self) -> None:
+        source = self.source_with(
+            """ex:customer-1 ex:region "north" .
+            ex:customer-3 a ex:Customer ; ex:code "C1" ; ex:region "south" .
+            ex:order-1 ex:customerRegion "south" . ex:order-2 ex:customerRegion "east" ."""
+        )
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, self.compile(two_pair_graph()), source)
+                self.assertEqual(written, {(ORDER_CUSTOMER + "order-1", self.LINK, ORDER_CUSTOMER + "customer-3")})
+                self.assertIn(("JoinUnmatched", ORDER_CUSTOMER + "order-2", "C1/east"), reported)
+
+    def test_integer_codes_are_cast_to_the_datatype_the_bindings_state(self) -> None:
+        source = Graph().parse(
+            data=f"""@prefix ex: <{ORDER_CUSTOMER}> .
+            ex:customer-1 a ex:Customer ; ex:code 7 .
+            ex:order-1 a ex:Order ; ex:customerCode "7" .""",
+            format="turtle",
+        )
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, _ = self.evaluate(engine, self.compile(typed_graph()), source)
+                self.assertEqual(written, {(ORDER_CUSTOMER + "order-1", self.LINK, ORDER_CUSTOMER + "customer-1")})
+
+    def test_a_join_carries_the_mapping_review_whatever_its_evidence_and_count(self) -> None:
+        for build in (join_graph, candidate_graph, any_number_graph, typed_graph, two_pair_graph):
+            with self.subTest(build=build.__name__):
+                review = [f for f in self.compile(build()).findings if f.code == "MappingReview"]
+                self.assertEqual(len(review), 1)
+                self.assertEqual(review[0].severity, mork_rdf.Severity.WARNING)
+
+    def test_compiling_the_lowered_scheme_is_the_same_whatever_the_order_of_the_contract(self) -> None:
+        reference = self.compile(join_graph()).text()
+        triples = sorted(join_graph())
+        for seed in range(3):
+            shuffled = list(triples)
+            random.Random(seed).shuffle(shuffled)
+            graph = Graph()
+            for triple in shuffled:
+                graph.add(triple)
+            self.assertEqual(self.compile(graph).text(), reference)
 
 
 if __name__ == "__main__":

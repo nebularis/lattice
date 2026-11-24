@@ -51,6 +51,8 @@ class _Frame:
     match: list = field(default_factory=list)     # the patterns that find the focus node
     identity: list = field(default_factory=list)  # the patterns and BIND that form the target term
     identity_refs: list = field(default_factory=list)  # the paths the identity reads, for the IdentityUnbound check
+    restrict: list = field(default_factory=list)  # what limits the frame's solutions after it matches, so a check can leave it out
+    join: Optional[tuple] = None      # a join's (patterns reading the parent's values, the variables they bind), kept for its checks
 
 
 class _Compiler:
@@ -250,6 +252,13 @@ class _Compiler:
 
     # --- frames (§5.3) -----------------------------------------------------------------------------------------------
 
+    def instances(self, sources: tuple, focus: str) -> list[str]:
+        """The patterns that make `focus` an instance of one of the source classes."""
+        if len(sources) == 1:
+            return [f"{focus} {_term(RDF.type)} {_term(sources[0])} ."]
+        kind = self.var("source")
+        return [f"VALUES {kind} {{ {' '.join(_term(s) for s in sources)} }}", f"{focus} {_term(RDF.type)} {kind} ."]
+
     def root_frame(self, spec: Spec) -> _Frame:
         focus = self.var("f")
         sources = [s for s in spec.sources]
@@ -262,12 +271,7 @@ class _Compiler:
             if frame.target.startswith("?") or frame.identity:
                 raise _Refusal("NoIterator", "a root datum names the source classes it iterates with mork:mappingFor and mork:representedAs")
             return frame
-        if len(sources) == 1:
-            frame.match.append(f"{focus} {_term(RDF.type)} {_term(sources[0])} .")
-        else:
-            kind = self.var("source")
-            frame.match.append(f"VALUES {kind} {{ {' '.join(_term(s) for s in sources)} }}")
-            frame.match.append(f"{focus} {_term(RDF.type)} {kind} .")
+        frame.match += self.instances(sources, focus)
         frame.match += self.guard(spec, focus)
         for concept in self.g.objects(spec.node, MORK.mappingFor):
             if next(iter(self.g.objects(concept, MORK.path)), None) is not None:
@@ -297,6 +301,7 @@ class _Compiler:
             lines += frame.match
             if last_identity or i < len(chain) - 1:
                 lines += frame.identity
+            lines += frame.restrict
         lines += extra or []
         return "\n  ".join(lines)
 
@@ -430,6 +435,7 @@ class _Compiler:
             if frame.target.startswith("?"):
                 self.check(chain, "IdentityAmbiguous", f"({frame.focus} AS ?focus)", self.where(chain), f"\nGROUP BY {frame.focus}\nHAVING (COUNT(DISTINCT {frame.target}) > 1)")
         self.construction(chain)
+        self.joined(chain)
         for child in spec.children:
             if child not in self.r.specs:
                 continue
@@ -454,6 +460,102 @@ class _Compiler:
                            self.where(chain[:-1], [f"FILTER NOT EXISTS {{ {frame.focus} {path} ?any }}"]))
         if frame.identity_refs:
             self.findings.append(Finding("MappingReview", str(spec.node), "its identity is read from the source, so it merges every instance that shares the value and a reviewer should confirm the merge is meant", Severity.WARNING))
+
+    # --- joins (README §7.10) ----------------------------------------------------------------------------------------
+
+    def _comparison(self, spec: Spec) -> tuple:
+        """How a join compares its two values, the lookup's comparisons (§7.3). A cast with no datatype to cast to is read as
+        lexical, as a lookup reads it."""
+        comparison = spec.comparison
+        if comparison == MORK.CastComparison and spec.lookup_datatype is None:
+            self.findings.append(Finding("JoinLexical", str(spec.node), "compared lexically, since no mork:lookupDatatype names the type to cast to", Severity.INFO))
+            comparison = MORK.LexicalComparison
+        if comparison not in (MORK.LexicalComparison, MORK.TermComparison, MORK.CastComparison):
+            raise _Refusal("JoinComparisonUnknown", f"{comparison.n3()} is not a comparison a join knows")
+        return comparison, spec.lookup_datatype
+
+    def _join_sides(self, spec: Spec, parent_focus: str, focus: str, comparison: tuple, left: Optional[list] = None) -> tuple:
+        """The patterns a join reads, each condition's value from the parent's node and the node found, and what makes them
+        equal. A term or cast comparison joins on a variable the two patterns share, so an engine can serve it from an index,
+        the cast one by binding the parent's value cast to the datatype first (§7.3). A lexical comparison cannot be served
+        by an index and is a filter. The parent's variables are made once, and `left` passes them on, so a query that asks
+        whether a second node matches the same parent's values makes only the second node's own."""
+        kind, datatype = comparison
+        reads, pairs, own, tests = [], [], [], []
+        for index, (parent_path, _, own_path, _) in enumerate(spec.joins):
+            if left is None:
+                value = self.var("v")
+                reads.append(f"{parent_focus} {paths.write(parent_path)} {value} .")
+                key = value
+                if kind == MORK.CastComparison:
+                    key = self.var("key")
+                    reads.append(f"BIND (IF(isIRI({value}), {value}, STRDT(STR({value}), {_term(datatype)})) AS {key})")
+            else:
+                value, key = left[index]
+            pairs.append((value, key))
+            if kind == MORK.LexicalComparison:
+                other = self.var("v")
+                own.append(f"{focus} {paths.write(own_path)} {other} .")
+                tests.append(f"STR({key}) = STR({other})")
+            else:
+                own.append(f"{focus} {paths.write(own_path)} {key} .")
+        return reads, pairs, own, tests
+
+    def join_frame(self, spec: Spec, parent: _Frame) -> _Frame:
+        """A join datum's frame. Its focus is a node of the second class, which is also its target, and it matches the
+        node whose values equal the parent's. A guard is tested on the parent's node, since it says which nodes join."""
+        focus = self.var("f")
+        frame = _Frame(spec, focus, focus)
+        comparison = self._comparison(spec)
+        reads, pairs, own, tests = self._join_sides(spec, parent.focus, focus, comparison)
+        frame.join = (reads, pairs, comparison)
+        frame.match = reads + self.guard(spec, parent.focus) + self.instances(spec.sources, focus) + own + [f"FILTER ({t})" for t in tests]
+        if spec.join_cardinality == MORK.AtMostOneMatch:
+            # A parent with several matches writes no link, and the check below names each match.
+            frame.restrict = [self._by_count(spec, parent.focus, comparison, "=")]
+        return frame
+
+    def _by_count(self, spec: Spec, parent_focus: str, comparison: tuple, relation: str) -> str:
+        """The parent nodes whose matches number one (`=`) or more than one (`>`), counted over the join again with variables
+        of its own. A variable the outer query has already bound is bound inside a subquery too on rdflib, which would count
+        the one match the outer row holds, so the subquery shares only the parent's node."""
+        focus = self.var("f")
+        reads, _, own, tests = self._join_sides(spec, parent_focus, focus, comparison)
+        patterns = reads + self.guard(spec, parent_focus) + self.instances(spec.sources, focus) + own + [f"FILTER ({t})" for t in tests]
+        return (f"{{ SELECT {parent_focus} WHERE {{ {' '.join(patterns)} }} "
+                f"GROUP BY {parent_focus} HAVING (COUNT(DISTINCT {focus}) {relation} 1) }}")
+
+    def joined(self, chain: list[_Frame]) -> None:
+        """What a join datum needs beyond its link (README §7.10). Its guard excludes whole parent nodes, which a check names
+        with the value each lacks, a parent that holds the values and finds no match is reported when the join says so, and
+        a parent that finds several is reported with each where the join allows one. It takes a mapping review."""
+        frame = chain[-1]
+        spec = frame.spec
+        if spec.kind is not Kind.JOIN or frame.join is None:
+            return
+        parent = chain[-2]
+        reads, pairs, comparison = frame.join
+        if spec.guard is not None:
+            try:
+                missing = required_paths(self.g, spec.guard, _term)
+            except GuardError:
+                missing = []  # the guard's own refusal says why
+            for path in missing:
+                self.check(chain, "InstanceExcluded", f"({parent.focus} AS ?focus) ({_string(path)} AS ?value)",
+                           self.where(chain[:-1], [f"FILTER NOT EXISTS {{ {parent.focus} {path} ?any }}"]))
+        self.findings.append(Finding("MappingReview", str(spec.node), "it relates each instance to the node whose values equal the instance's, so a reviewer should confirm the condition and the number of matches it allows", Severity.WARNING))
+        if spec.reports_unmatched:
+            other = self.var("f")
+            _, _, own, tests = self._join_sides(spec, parent.focus, other, comparison, pairs)
+            absent = f"FILTER NOT EXISTS {{ {' '.join(self.instances(spec.sources, other) + own + [f'FILTER ({t})' for t in tests])} }}"
+            values = [value for value, _ in pairs]
+            value = values[0] if len(values) == 1 else "CONCAT(" + ', "/", '.join(f"STR({v})" for v in values) + ")"
+            self.check(chain, "JoinUnmatched", f"({parent.focus} AS ?focus) ({value} AS ?value)",
+                       self.where(chain[:-1], reads + self.guard(spec, parent.focus) + [absent]))
+        if spec.join_cardinality == MORK.AtMostOneMatch:
+            several = self._by_count(spec, parent.focus, comparison, ">")
+            self.check(chain, "JoinAmbiguous", f"({parent.focus} AS ?focus) ({frame.focus} AS ?value)",
+                       self.where(chain[:-1], frame.match + [several]))
 
     def unguarded(self, chain: list[_Frame], spec: Spec) -> None:
         """A check naming each node that guarded siblings on one path share and that no guard of theirs admits, since such
@@ -484,6 +586,8 @@ class _Compiler:
         try:
             if spec.kind in (Kind.CONTEXTUAL, Kind.DATUM, Kind.SOURCE_NODE):
                 self.datum(chain + [self.child_frame(spec, chain[-1])])
+            elif spec.kind is Kind.JOIN:
+                self.datum(chain + [self.join_frame(spec, chain[-1])])
             elif spec.kind is Kind.ASSERTION:
                 self.assertion(chain, spec)
             elif spec.kind is Kind.DERIVATION:

@@ -181,6 +181,15 @@ class Minter:
     def lowered_write(self, index: int) -> URIRef:
         return URIRef(f"{self.namespace}scheme_{self.key}_write_{index}")
 
+    # A join lowers into a scheme as well. The datum that takes the second carrier's node is the contract's ``node``, the
+    # concept it iterates is the second carrier's, and each equality is a condition, in the order of the properties compared.
+
+    def lowered_second_concept(self) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_second")
+
+    def lowered_condition(self, index: int) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_condition_{index}")
+
     # -- per-value symbols --------------------------------------------------
 
     def value_fragment(self, value: str) -> str:

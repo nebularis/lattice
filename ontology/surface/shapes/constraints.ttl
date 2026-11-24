@@ -844,3 +844,186 @@ srf:ConstructedKeyEvidenceShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+srf:JoinRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A join projection states no join statement on its result-target role binding. Discharges srf:P14." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:JoinProjection .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:ResultTargetRole ;
+						srf:joinedAs ?statement .
+				}
+			}
+		"""
+	] .
+
+srf:JoinLinkPropertyRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "The result-target role binding of a join binds no property, so there is no link from an instance to the instance it names. Discharges srf:P14." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:JoinProjection ;
+					srf:hasRoleBinding ?binding .
+				?binding srf:roleKind srf:ResultTargetRole .
+				FILTER NOT EXISTS { ?binding srf:bindsProperty ?property }
+			}
+		"""
+	] .
+
+srf:JoinPlacementShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states a join statement and is not the result-target role binding of a join. Discharges srf:P14." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:joinedAs ?statement .
+				FILTER NOT EXISTS {
+					$this srf:roleKind srf:ResultTargetRole .
+					?contract srf:hasRoleBinding $this ;
+						srf:projectionKind srf:JoinProjection .
+				}
+			}
+		"""
+	] .
+
+srf:JoinStatementTypedShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states as its join statement a term that is not a srf:JoinStatement named by an IRI. Discharges srf:P14." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:joinedAs ?value .
+				FILTER (!isIRI(?value) || NOT EXISTS { ?value a srf:JoinStatement })
+			}
+		"""
+	] .
+
+srf:JoinStatementReachedShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "A join statement is not stated by the result-target role binding of any join, so no contract joins by it. Discharges srf:P14." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:JoinStatement .
+				FILTER NOT EXISTS { ?binding srf:joinedAs $this }
+			}
+		"""
+	] .
+
+srf:JoinLeftBindingShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "The left binding of a join pair is not a candidate-evidence or required-evidence role binding of the stating contract that binds a property, or it names a carrier other than the contract's own. Discharges srf:P16." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				?link srf:joinedAs $this .
+				?contract srf:hasRoleBinding ?link ;
+					srf:carrier ?own .
+				$this srf:joinsOn/srf:joinLeft ?value .
+				OPTIONAL { ?value srf:bindsCarrier ?other }
+				FILTER (NOT EXISTS {
+					?contract srf:hasRoleBinding ?value .
+					?value srf:roleKind ?role ;
+						srf:bindsProperty ?property .
+					FILTER (?role IN (srf:RequiredEvidenceRole, srf:CandidateEvidenceRole))
+				} || (BOUND(?other) && ?other != ?own))
+			}
+		"""
+	] .
+
+srf:JoinRightBindingShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "The right binding of a join pair is not a candidate-evidence or required-evidence role binding of the stating contract that binds a property, or it names no carrier other than the contract's own. Discharges srf:P16." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				?link srf:joinedAs $this .
+				?contract srf:hasRoleBinding ?link ;
+					srf:carrier ?own .
+				$this srf:joinsOn/srf:joinRight ?value .
+				OPTIONAL { ?value srf:bindsCarrier ?other }
+				FILTER (NOT EXISTS {
+					?contract srf:hasRoleBinding ?value .
+					?value srf:roleKind ?role ;
+						srf:bindsProperty ?property .
+					FILTER (?role IN (srf:RequiredEvidenceRole, srf:CandidateEvidenceRole))
+				} || !BOUND(?other) || ?other = ?own)
+			}
+		"""
+	] .
+
+srf:JoinSecondCarrierShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "The right bindings of a join statement name more than one second carrier. Discharges srf:P16." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:joinsOn/srf:joinRight ?first , ?second .
+				?first srf:bindsCarrier ?other .
+				?second srf:bindsCarrier ?value .
+				FILTER (?other != ?value)
+			}
+		"""
+	] .
+
+srf:JoinEvidenceKindShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "The bindings of a join statement are not all candidate evidence or all required evidence, so the join is on a mix. Discharges srf:P17." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:joinsOn/(srf:joinLeft|srf:joinRight) ?first , ?value .
+				?first srf:roleKind ?firstKind .
+				?value srf:roleKind ?kind .
+				FILTER (?firstKind != ?kind)
+			}
+		"""
+	] .
+
+srf:JoinStatementDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "The pairs of a join statement state different datatypes, or one pair states a datatype and another none. Discharges srf:P17." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:joinsOn/srf:joinLeft ?first , ?value .
+				?first srf:bindsDatatype ?datatype .
+				FILTER NOT EXISTS { ?value srf:bindsDatatype ?datatype }
+			}
+		"""
+	] .
+
+srf:JoinDatatypeShape a sh:NodeShape ;
+	sh:targetObjectsOf srf:joinsOn ;
+	sh:sparql [
+		sh:message "The two bindings of a join pair state different datatypes, or one states a datatype and the other none. Discharges srf:P17." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:joinLeft ?left ;
+					srf:joinRight ?right .
+				{
+					?left srf:bindsDatatype ?value .
+					FILTER NOT EXISTS { ?right srf:bindsDatatype ?value }
+				} UNION {
+					?right srf:bindsDatatype ?value .
+					FILTER NOT EXISTS { ?left srf:bindsDatatype ?value }
+				}
+			}
+		"""
+	] .

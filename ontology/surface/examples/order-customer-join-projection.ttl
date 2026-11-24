@@ -1,0 +1,126 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/surface/order-customer#> .
+
+# A join projection. An order names its customer by a code, and a customer holds
+# that code, but nothing in the graph links the two, so no read path reaches a
+# customer from an order and neither promotion nor indexing covers it. The
+# projection links each order to the customer whose code it names, and copies
+# nothing: a value of the customer is reached through the link.
+#
+# The contract states the relation on its result target, which binds the link
+# from the order. The statement says what relates the two carriers, the order's
+# customer code equal to the customer's code, and how many customers a code may
+# name. A code names at most one customer, so an order whose code two customers
+# hold writes no link and is reported, and an order whose code no customer holds
+# writes no link and is reported too, since the join is on required evidence.
+#
+# An order that lacks a customer code, a required value, contributes nothing.
+#
+# This contract lowers into a MORK mapping scheme (ADR-A18). It does not emit
+# SPARQL, SHACL, or anything else itself.
+
+# --- the carriers and the vocabulary they are read and written in -------------
+
+ex:Order a owl:Class .
+
+ex:customerCode a owl:DatatypeProperty ;
+    rdfs:domain ex:Order ;
+    rdfs:range xsd:string .
+
+ex:Customer a owl:Class .
+
+ex:code a owl:DatatypeProperty ;
+    rdfs:domain ex:Customer ;
+    rdfs:range xsd:string .
+
+ex:region a owl:DatatypeProperty ;
+    rdfs:domain ex:Customer ;
+    rdfs:range xsd:string .
+
+ex:placedFor a owl:ObjectProperty ;
+    rdfs:domain ex:Order ;
+    rdfs:range ex:Customer .
+
+# --- generation profile ------------------------------------------------------
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/2" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 .
+
+# --- the projection contract -------------------------------------------------
+
+ex:oc-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+# The order's customer code, which reads the contract's own carrier.
+ex:oc-code a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:customerCode .
+
+# The customer's code, which reads the second carrier. It names that carrier.
+ex:oc-match a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsCarrier ex:Customer ;
+    srf:bindsProperty ex:code .
+
+# The result target binds the link from each order to its customer, and states
+# what relates the two.
+ex:oc-link a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:placedFor ;
+    srf:joinedAs ex:oc-join .
+
+# The join statement: the two codes must be equal, and a code names at most one
+# customer.
+ex:oc-join a srf:JoinStatement ;
+    srf:joinsOn [ srf:joinLeft ex:oc-code ; srf:joinRight ex:oc-match ] ;
+    srf:joinMatches srf:AtMostOne .
+
+ex:oc-backend-policy a srf:ProjectionBackendPolicy ;
+    srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
+    srf:deterministicOnly true ;
+    srf:llmCompletionPolicy srf:NoLLMCompletion .
+
+ex:order-customer-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:order-customer-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "order-customer" ;
+    srf:carrier ex:Order ;
+    srf:projectionKind srf:JoinProjection ;
+    srf:hasRoleBinding ex:oc-subject, ex:oc-code, ex:oc-match, ex:oc-link ;
+    srf:targetNamespace "https://example.org/lattice/surface/order-customer/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:profile-v1 ;
+    srf:backendPolicy ex:oc-backend-policy .
+
+# --- instances ---------------------------------------------------------------
+
+ex:customer-1 a ex:Customer ;
+    ex:code "C1" ;
+    ex:region "north" .
+
+ex:customer-2 a ex:Customer ;
+    ex:code "C2" ;
+    ex:region "south" .
+
+# Two orders name one customer, so each is linked to it. A third names a code no
+# customer holds, so it is linked to nothing and reported.
+ex:order-1 a ex:Order ;
+    ex:customerCode "C1" .
+
+ex:order-2 a ex:Order ;
+    ex:customerCode "C1" .
+
+ex:order-3 a ex:Order ;
+    ex:customerCode "C9" .

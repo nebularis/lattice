@@ -204,6 +204,36 @@ ex:os-node a srf:ConstructedNode ;
 
 For a worked instance graph, see `ontology/surface/examples/order-supplier-construction-projection.ttl`. It lowers into a MORK mapping scheme (ADR-A18) whose root takes each order as its own identity, with beneath it the supplier, minted and typed, glued to the order by the link and guarded by the required code, and an assertion for each value.
 
+#### Join
+
+A graph construction writes a node. A join relates an instance to an instance that is already there, a node of another class that the first names by a value. Consider an order that names its customer by a code, where a customer holds that code. Nothing in the graph links the two, so no read path reaches the customer from the order, and the contract states the relation.
+
+```turtle-example
+@prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix ex:  <https://example.org/lattice/surface/order-customer#> .
+
+ex:oc-code a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ;
+	srf:bindsProperty ex:customerCode .
+ex:oc-match a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ;
+	srf:bindsCarrier ex:Customer ; srf:bindsProperty ex:code .
+ex:oc-link a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ;
+	srf:bindsProperty ex:placedFor ; srf:joinedAs ex:oc-join .
+
+ex:oc-join a srf:JoinStatement ;
+	srf:joinsOn [ srf:joinLeft ex:oc-code ; srf:joinRight ex:oc-match ] ;
+	srf:joinMatches srf:AtMostOne .
+```
+
+- **The relation is stated on the result-target binding.** The binding binds the link from the instance, here `ex:placedFor`, and `srf:joinedAs` names the statement of what relates the instance to the instance the link reaches. A role keeps its one meaning, so `srf:P2` and `srf:P3` stand. Only a join states one (`srf:P14`).
+- **The statement says what relates the two carriers.** Each `srf:joinsOn` pairs an evidence binding that reads a value of the contract's own carrier with one that reads a value of a second carrier, which `srf:bindsCarrier` names, and the relation is equality of the two values. A composite key is several pairs, all of which must hold (`srf:P15`, `srf:P16`). The bindings of a statement state one datatype between them, or none, so a join on values of several datatypes is not yet stated.
+- **The statement says how many, never implicitly.** `srf:AtMostOne` says a value names at most one instance of the second carrier, so an instance with several matches writes no link and is reported with each. `srf:AnyNumber` writes a link for each. Whether `srf:AtMostOne` is true of the second carrier's data is not checked here, and the report is how a contract that is wrong about it is found.
+- **A join writes a link and copies nothing.** A value of the second instance is reached through the link by a read path, so nothing goes stale where the second carrier changes. A join that must write a value is a derivation over joined evidence, which is a later kind.
+- **The evidence kind says what a missing match means.** A join is on required evidence or on candidate evidence, and every binding of its statement is of one kind (`srf:P17`). On required evidence an instance contributes whole or not at all. One that lacks a required value is excluded and reported, as in a graph construction, and one that has the values and finds no instance of the second carrier writes no link and is reported with the value. On candidate evidence a link is written where there is a match, and an instance with none writes nothing and is not reported.
+- **A join takes a mapping review (ADR-A41).** The condition and the number of matches it allows are where a reviewer's judgement is needed, so the review is recorded as a finding of the compilation every time.
+- **The second carrier's instances are the source's own.** A join reads them from the same graph as the first carrier's, so it relates data and never adds to it. A join to a reference scheme whose codes are curated apart from the data is a lookup, which MORK keeps for that.
+
+For a worked instance graph, see `ontology/surface/examples/order-customer-join-projection.ttl`. It lowers into a MORK mapping scheme (ADR-A18) whose root takes each order as its own identity, with beneath it the customer, taken from the source where its code equals the order's and glued to the order by the link, guarded by the order's required values.
+
 #### Choosing an index form
 
 The permitted forms trade off differently, supporting choices about population size and retrieval patterns.
@@ -257,7 +287,7 @@ This is the part that decides how much a consumer is allowed to trust a generate
 
 - **Conservativity is why an index is free to regenerate or discard.** An index mints only its own terms, so adding one entails nothing new about source terms and removing one loses no authored fact (`srf:X1`). That property, not the performance win, is what licenses treating a generated index as disposable cache.
 - **Promotion is the one case that isn't automatically conservative.** `srf:signatureScope` records which situation a given surface is in: `LocalSignature` when a promotion restates onto a property minted in the contract's own target namespace, and `SourceSignature` when it restates onto a property a consuming layer already declares (as in the subscription-currency example above). A `SourceSignature` promotion's assertions are indistinguishable from authored facts once emitted — which is exactly why two laws constrain it rather than leaving it implicit. A promotion reaching the authored signature must declare `ExactSource` or `CrosswalkExact` fidelity and must be `Materialised`, never `DefinitionOnly` (`srf:X6`). Separately, any promotion that is lossy — `DerivedSource` or `CrosswalkInexact` — may not target an authored property at all, only a property in its own generated namespace (`srf:X5`, `srf:X6` again from the other direction).
-- **A projection reads its scope from what it writes.** A derivation writes a value on the carrier, and a graph construction writes a node of the class it states. Where that class, or the property it links or writes, is minted in the contract's own target namespace, the projection is local-signature and conservative as an index is (`srf:P1`). Where it is a class an authored vocabulary declares, as `ex:Supplier` is, the constructed nodes and what is written on them reach the authored signature and are indistinguishable from authored facts once emitted, so the projection is source-signature and composes under the same rule as `srf:X1` and `srf:X6`.
+- **A projection reads its scope from what it writes.** A derivation writes a value on the carrier, a graph construction writes a node of the class it states, and a join writes the link and nothing else. Where that class, or the property it links or writes, is minted in the contract's own target namespace, the projection is local-signature and conservative as an index is (`srf:P1`). Where it is a class an authored vocabulary declares, as `ex:Supplier` is, the constructed nodes and what is written on them reach the authored signature and are indistinguishable from authored facts once emitted, so the projection is source-signature and composes under the same rule as `srf:X1` and `srf:X6`. A join that links by a property an authored vocabulary declares, as `ex:placedFor` is, writes authored-signature facts in the same way.
 - **Authority is capped below authoritative, always.** A surface declares `Advisory` or `CachedReproducible` and nothing higher (`srf:S9`) — an index that outranked the declaration it was built from would invert the derivation order. A lossy promotion is capped specifically at `Advisory` (`srf:X5`). If an external store is genuinely the system of record and accepts writes back, that relationship is a synchronisation contract, not a surface — Surface only ever restates, never originates.
 
 #### Derived records and staying fresh
@@ -966,7 +996,8 @@ srf:ProjectionRoleBinding a owl:Class ;
 		[ a owl:Restriction ; owl:onProperty srf:bindsCarrier ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:bindsDatatype ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:derivedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:constructedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+		[ a owl:Restriction ; owl:onProperty srf:constructedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:joinedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class." ;
 	fnd:utility "Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline srf:PathStep applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well." .
 ```
@@ -1243,6 +1274,61 @@ srf:fromBinding a owl:ObjectProperty, owl:FunctionalProperty ;
 	fnd:utility "A required-evidence binding gates the node, since an instance without it contributes nothing. A candidate-evidence binding writes what it finds (srf:P12)." .
 ```
 
+### 6.17 Projection joins
+
+A join projection states the relation it writes, in the way a derivation states its expression and a graph construction its node. The statement is on the result-target role binding with `srf:joinedAs`, so the binding keeps its one meaning, the place the projection's result is written, and the result of a join is a link to an instance that already exists, where a derivation's is a value and a construction's a node. The binding binds the link from each instance of the carrier to the instance it names. The statement says which evidence bindings are compared, in pairs, one that reads the contract's own carrier and one that reads a second carrier, and how many instances of the second one a value may name. The count is a closed choice, so a contract never leaves it to a report after the fact.
+
+#### `srf:JoinStatement`
+
+**Definition.** The relation a join projection writes between an instance of its carrier and an instance of a second carrier, the equality of values that relates them and how many instances of the second carrier one instance may name.
+
+**Utility.** State it once, on the result-target role binding of a join with `srf:joinedAs`, and name it by an IRI. Give it a `srf:joinsOn` for each part of the key, at least one, and one `srf:joinMatches`. The property the binding binds is the link, and where an authored vocabulary declares it the projection reaches the authored signature (`srf:P1`).
+
+```turtle-spec
+srf:JoinStatement a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:joinsOn ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:joinMatches ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The relation a join projection writes between an instance of its carrier and an instance of a second carrier, the equality of values that relates them and how many instances of the second carrier one instance may name." ;
+	fnd:utility "State it once, on the result-target role binding of a join with joinedAs, and name it by an IRI. Give it a joinsOn for each part of the key, at least one, and one joinMatches. The property the binding binds is the link, and where an authored vocabulary declares it the projection reaches the authored signature (srf:P1)." .
+
+srf:JoinPair a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:joinLeft ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:joinRight ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "One equality of a join statement, the evidence role binding that reads a value of the contract's own carrier and the one that reads the value of the second carrier it must equal." ;
+	fnd:utility "Name each pair by a blank node or an IRI, as srf:joinsOn takes it. A composite key is several pairs, and every one must hold." .
+
+srf:JoinCardinality a owl:Class ;
+	rdfs:comment "How many instances of the second carrier one instance of the contract's carrier may name. Its individuals are in the vocabulary." .
+```
+
+```turtle-spec
+srf:joinedAs a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:JoinStatement ;
+	rdfs:comment "The relation a join projection writes, stated on its result-target role binding, which binds the link from each instance to the instance it names." ;
+	fnd:utility "Set it on the result-target role binding of a join, once, and nowhere else (srf:P14). The property that binding binds is the link from the instance to the instance of the second carrier." .
+
+srf:joinsOn a owl:ObjectProperty ;
+	rdfs:domain srf:JoinStatement ; rdfs:range srf:JoinPair ;
+	rdfs:comment "An equality of values a join statement requires, and every one it names must hold." .
+
+srf:joinLeft a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:JoinPair ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "The candidate-evidence or required-evidence role binding of the same contract that reads a value of the contract's own carrier." ;
+	fnd:utility "It names no second carrier (srf:P16), and it is of the same evidence kind as the right binding and as every other binding of the statement (srf:P17)." .
+
+srf:joinRight a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:JoinPair ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "The candidate-evidence or required-evidence role binding of the same contract that reads a value of the second carrier, which it names with bindsCarrier." ;
+	fnd:utility "It names a carrier other than the contract's own, the same one in every pair of the statement (srf:P16), and states the datatype the left binding does, or neither states one (srf:P17)." .
+
+srf:joinMatches a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:JoinStatement ; rdfs:range srf:JoinCardinality ;
+	rdfs:comment "How many instances of the second carrier one instance may name." ;
+	fnd:utility "State it, never leave it implicit. AtMostOne says a value names at most one, so an instance with several matches writes no link and is reported with each. AnyNumber writes a link for each match." .
+```
+
 ## 7. Index forms
 
 | Form | Emits | Needs an enumerable population | Retrieval | Entailment required |
@@ -1356,6 +1442,9 @@ srf:GreaterThan a srf:ComparisonOperator ; rdfs:comment "The left compared opera
 srf:PerInstance a srf:IdentityChoice ; rdfs:comment "A constructed node for each instance of the carrier. Nothing is merged, and the node's identifier is a hash of the instance's identifier." .
 srf:ByKey a srf:IdentityChoice ; rdfs:comment "One constructed node for each value of a key of required-evidence bindings. Instances that share the key share the node, and its identifier is read from the key." .
 
+srf:AtMostOne a srf:JoinCardinality ; rdfs:comment "A value names at most one instance of the second carrier. An instance with several matches writes no link and is reported with each." .
+srf:AnyNumber a srf:JoinCardinality ; rdfs:comment "A value may name any number of instances of the second carrier, and a link is written to each." .
+
 srf:RmlBackend a srf:CompilerBackend ; rdfs:comment "RML/R2RML triples-map compilation." .
 srf:SparqlBackend a srf:CompilerBackend ; rdfs:comment "SPARQL query compilation." .
 srf:ShaclBackend a srf:CompilerBackend ; rdfs:comment "SHACL shape compilation." .
@@ -1394,7 +1483,7 @@ srf:R3 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Invali
 srf:R4 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Materialisation idempotence. Re-running a materialisation over an unchanged read set adds no triples." .
 srf:R5 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Closure well-foundedness. The declared closure basis is acyclic over the declared scope, established by traversing it." .
 
-srf:P1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Projection conservativity. A local-signature projection is conservative on the same terms as an index; a source-signature projection composes under the same rule as X1 and X6. A graph construction reads its scope from the class of its constructed node: a class minted in the contract's own target namespace is local-signature, and a class an authored vocabulary declares reaches the authored signature, so the nodes it writes and the values on them are indistinguishable from authored facts once emitted and the projection is source-signature." .
+srf:P1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Projection conservativity. A local-signature projection is conservative on the same terms as an index; a source-signature projection composes under the same rule as X1 and X6. A graph construction reads its scope from the class of its constructed node: a class minted in the contract's own target namespace is local-signature, and a class an authored vocabulary declares reaches the authored signature, so the nodes it writes and the values on them are indistinguishable from authored facts once emitted and the projection is source-signature. A join writes only the link its result-target role binding binds, and reads its scope from that property in the same way." .
 srf:P2 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every projection contract declares exactly one projection kind and at least an evaluation-subject and a result-target role binding; a join or derivation kind additionally declares at least one candidate-evidence or required-evidence role binding." .
 srf:P3 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection contract declares at most one evaluation-subject, result-target, and closure-basis role binding; candidate-evidence, required-evidence, and transform-dependency role bindings may repeat." .
 srf:P4 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy names no compiler backend in both allowedBackend and deniedBackend." .
@@ -1409,6 +1498,11 @@ srf:P10 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A graph
 srf:P11 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A constructed node states exactly one class and exactly one identity, a node for each instance or a node for each value of a key. It writes at least one value and writes each property at most once. It names key bindings exactly when its identity is by key." .
 srf:P12 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Each value a constructed node writes states exactly one property and names exactly one candidate-evidence or required-evidence role binding of the same contract that binds a property." .
 srf:P13 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A key binding of a constructed node is a required-evidence role binding of the same contract that binds a property, so an instance without a value for any part of the key contributes nothing." .
+
+srf:P14 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A join projection states exactly one join statement, with joinedAs on its result-target role binding, and that binding binds the property that links each instance to the instance it names. No other projection kind states a join. Every join statement is reached from such a statement." .
+srf:P15 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A join statement states at least one pair and exactly one match count, AtMostOne or AnyNumber. Each pair names exactly one left and exactly one right role binding." .
+srf:P16 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "The left binding of a join pair is a candidate-evidence or required-evidence role binding of the same contract that binds a property and names no carrier but the contract's own. The right binding is one that binds a property and names a carrier other than the contract's own, and every right binding of one statement names the same carrier." .
+srf:P17 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "The two bindings of a join pair, and the bindings of every pair of one statement, are of one evidence role kind, so a join is on required evidence or on candidate evidence and never on a mix. The two bindings of a pair state the same datatype, or neither states one, and the pairs of one statement state one datatype between them, or none." .
 ```
 
 ## 10. Shapes
@@ -1513,7 +1607,8 @@ srf:ProjectionRoleBindingShape a sh:NodeShape ;
 	sh:property [ sh:path srf:bindsCarrier ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:bindsDatatype ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:derivedAs ; sh:maxCount 1 ] ;
-	sh:property [ sh:path srf:constructedAs ; sh:maxCount 1 ] .
+	sh:property [ sh:path srf:constructedAs ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:joinedAs ; sh:maxCount 1 ] .
 
 srf:ProjectionBackendPolicyShape a sh:NodeShape ;
 	sh:targetClass srf:ProjectionBackendPolicy ;
@@ -1567,6 +1662,20 @@ srf:ConstructedNodeShape a sh:NodeShape ;
 		sh:message "A constructed node states exactly one identity, srf:PerInstance or srf:ByKey. Discharges srf:P11." ] ;
 	sh:property [ sh:path srf:writes ; sh:minCount 1 ;
 		sh:message "A constructed node writes at least one value. Discharges srf:P11." ] .
+
+srf:JoinStatementShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:property [ sh:path srf:joinsOn ; sh:minCount 1 ;
+		sh:message "A join statement states at least one pair of bindings that must be equal. Discharges srf:P15." ] ;
+	sh:property [ sh:path srf:joinMatches ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( srf:AtMostOne srf:AnyNumber ) ;
+		sh:message "A join statement states exactly one match count, srf:AtMostOne or srf:AnyNumber. Discharges srf:P15." ] .
+
+srf:JoinPairShape a sh:NodeShape ;
+	sh:targetObjectsOf srf:joinsOn ;
+	sh:property [ sh:path srf:joinLeft ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A join pair names exactly one left role binding. Discharges srf:P15." ] ;
+	sh:property [ sh:path srf:joinRight ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A join pair names exactly one right role binding. Discharges srf:P15." ] .
 
 srf:WrittenValueShape a sh:NodeShape ;
 	sh:targetObjectsOf srf:writes ;
@@ -2421,6 +2530,189 @@ srf:ConstructedKeyEvidenceShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+srf:JoinRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A join projection states no join statement on its result-target role binding. Discharges srf:P14." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:JoinProjection .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:ResultTargetRole ;
+						srf:joinedAs ?statement .
+				}
+			}
+		"""
+	] .
+
+srf:JoinLinkPropertyRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "The result-target role binding of a join binds no property, so there is no link from an instance to the instance it names. Discharges srf:P14." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:JoinProjection ;
+					srf:hasRoleBinding ?binding .
+				?binding srf:roleKind srf:ResultTargetRole .
+				FILTER NOT EXISTS { ?binding srf:bindsProperty ?property }
+			}
+		"""
+	] .
+
+srf:JoinPlacementShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states a join statement and is not the result-target role binding of a join. Discharges srf:P14." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:joinedAs ?statement .
+				FILTER NOT EXISTS {
+					$this srf:roleKind srf:ResultTargetRole .
+					?contract srf:hasRoleBinding $this ;
+						srf:projectionKind srf:JoinProjection .
+				}
+			}
+		"""
+	] .
+
+srf:JoinStatementTypedShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states as its join statement a term that is not a srf:JoinStatement named by an IRI. Discharges srf:P14." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:joinedAs ?value .
+				FILTER (!isIRI(?value) || NOT EXISTS { ?value a srf:JoinStatement })
+			}
+		"""
+	] .
+
+srf:JoinStatementReachedShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "A join statement is not stated by the result-target role binding of any join, so no contract joins by it. Discharges srf:P14." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:JoinStatement .
+				FILTER NOT EXISTS { ?binding srf:joinedAs $this }
+			}
+		"""
+	] .
+
+srf:JoinLeftBindingShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "The left binding of a join pair is not a candidate-evidence or required-evidence role binding of the stating contract that binds a property, or it names a carrier other than the contract's own. Discharges srf:P16." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				?link srf:joinedAs $this .
+				?contract srf:hasRoleBinding ?link ;
+					srf:carrier ?own .
+				$this srf:joinsOn/srf:joinLeft ?value .
+				OPTIONAL { ?value srf:bindsCarrier ?other }
+				FILTER (NOT EXISTS {
+					?contract srf:hasRoleBinding ?value .
+					?value srf:roleKind ?role ;
+						srf:bindsProperty ?property .
+					FILTER (?role IN (srf:RequiredEvidenceRole, srf:CandidateEvidenceRole))
+				} || (BOUND(?other) && ?other != ?own))
+			}
+		"""
+	] .
+
+srf:JoinRightBindingShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "The right binding of a join pair is not a candidate-evidence or required-evidence role binding of the stating contract that binds a property, or it names no carrier other than the contract's own. Discharges srf:P16." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				?link srf:joinedAs $this .
+				?contract srf:hasRoleBinding ?link ;
+					srf:carrier ?own .
+				$this srf:joinsOn/srf:joinRight ?value .
+				OPTIONAL { ?value srf:bindsCarrier ?other }
+				FILTER (NOT EXISTS {
+					?contract srf:hasRoleBinding ?value .
+					?value srf:roleKind ?role ;
+						srf:bindsProperty ?property .
+					FILTER (?role IN (srf:RequiredEvidenceRole, srf:CandidateEvidenceRole))
+				} || !BOUND(?other) || ?other = ?own)
+			}
+		"""
+	] .
+
+srf:JoinSecondCarrierShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "The right bindings of a join statement name more than one second carrier. Discharges srf:P16." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:joinsOn/srf:joinRight ?first , ?second .
+				?first srf:bindsCarrier ?other .
+				?second srf:bindsCarrier ?value .
+				FILTER (?other != ?value)
+			}
+		"""
+	] .
+
+srf:JoinEvidenceKindShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "The bindings of a join statement are not all candidate evidence or all required evidence, so the join is on a mix. Discharges srf:P17." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:joinsOn/(srf:joinLeft|srf:joinRight) ?first , ?value .
+				?first srf:roleKind ?firstKind .
+				?value srf:roleKind ?kind .
+				FILTER (?firstKind != ?kind)
+			}
+		"""
+	] .
+
+srf:JoinStatementDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:JoinStatement ;
+	sh:sparql [
+		sh:message "The pairs of a join statement state different datatypes, or one pair states a datatype and another none. Discharges srf:P17." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:joinsOn/srf:joinLeft ?first , ?value .
+				?first srf:bindsDatatype ?datatype .
+				FILTER NOT EXISTS { ?value srf:bindsDatatype ?datatype }
+			}
+		"""
+	] .
+
+srf:JoinDatatypeShape a sh:NodeShape ;
+	sh:targetObjectsOf srf:joinsOn ;
+	sh:sparql [
+		sh:message "The two bindings of a join pair state different datatypes, or one states a datatype and the other none. Discharges srf:P17." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:joinLeft ?left ;
+					srf:joinRight ?right .
+				{
+					?left srf:bindsDatatype ?value .
+					FILTER NOT EXISTS { ?right srf:bindsDatatype ?value }
+				} UNION {
+					?right srf:bindsDatatype ?value .
+					FILTER NOT EXISTS { ?left srf:bindsDatatype ?value }
+				}
+			}
+		"""
+	] .
 ```
 
 ## 11. Canonicalisation, identity, and invalidation
@@ -2460,6 +2752,7 @@ Non-domain examples are authored in:
 - `ontology/surface/examples/clinical-trial-crosswalk.ttl` — promotion across an inexact mapping relation
 - `ontology/surface/examples/saas-subscription-arr-projection.ttl` — a derivation projection stating the product of two required-evidence bindings as its expression, lowered under a deterministic-only backend policy
 - `ontology/surface/examples/order-supplier-construction-projection.ttl` — a graph construction projection stating a supplier for each supplier code, with its class, its key, and the code and name it writes, lowered under a deterministic-only backend policy
+- `ontology/surface/examples/order-customer-join-projection.ttl` — a join projection linking each order to the customer whose code it names, stating the equality of the two codes and that a code names at most one customer, lowered under a deterministic-only backend policy
 
 Deliberate-defect fixtures are authored in `ontology/surface/test/`.
 
@@ -2475,6 +2768,8 @@ ex:index-1 a srf:IndexContract ;
 ## 14. Release notes
 
 - **Unreleased**.
+  - no effect. A join projection states the relation it writes. New: `srf:JoinStatement`, `srf:JoinPair` and `srf:JoinCardinality` with its two individuals `srf:AtMostOne` and `srf:AnyNumber`, and the properties `srf:joinedAs`, `srf:joinsOn`, `srf:joinLeft`, `srf:joinRight` and `srf:joinMatches`. New laws `srf:P14` to `srf:P17`, with a shape for each part of them, and `srf:P1` says a join reads its scope from the link it writes.
+  - may invalidate. A join projection that states no join statement on its result-target role binding fails the new shape, and the compiler refuses to read it. A projection of another kind that states one fails too. The example is a join, an order linked to the customer whose code it names.
   - no effect. A graph construction projection states the node it writes. New: `srf:ConstructedNode`, `srf:WrittenValue` and `srf:IdentityChoice` with its two individuals `srf:PerInstance` and `srf:ByKey`, and the properties `srf:constructedAs`, `srf:constructedClass`, `srf:nodeIdentity`, `srf:keyBinding`, `srf:writes`, `srf:writesProperty` and `srf:fromBinding`. New laws `srf:P10` to `srf:P13`, with a shape for each part of them, and `srf:P1` says how a constructed node's class decides its signature scope.
   - may invalidate. A graph construction projection that states no constructed node on its result-target role binding fails the new shape, and the compiler refuses to read it. A projection of another kind that states one fails too. The example is a graph construction, an order giving a supplier keyed by a supplier code.
   - no effect. A derivation projection states its operation. New: `srf:ProjectionExpression` with `srf:SumExpression`, `srf:DifferenceExpression`, `srf:ProductExpression` and `srf:QuotientExpression` under `srf:ArithmeticExpression`, `srf:TypedLiteralExpression`, `srf:RoundingExpression` and `srf:ChoiceExpression`, `srf:ComparisonOperator` with its six individuals, and the properties `srf:derivedAs`, `srf:bindsDatatype`, `srf:resultDatatype`, `srf:leftOperand`, `srf:rightOperand`, `srf:typedValue`, `srf:roundedOperand`, `srf:roundingScale`, `srf:comparisonOperator`, `srf:comparedLeft`, `srf:comparedRight`, `srf:whenTrue` and `srf:whenFalse`. New laws `srf:P6` to `srf:P9`, with a shape for each part of them.

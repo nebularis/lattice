@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# A join, as the lowering of a Surface projection writes it (README §7.10). Each order that names a customer by a code is
+# linked to the customer whose code it is. The code is a required value, a code names at most one customer, and an
+# order whose code no customer holds is reported.
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix src:  <http://example.org/src#> .
+@prefix tgt:  <http://example.org/tgt#> .
+@prefix mm:   <http://example.org/mapping#> .
+
+mm:OrderCustomer a mork:MappingScheme .
+
+src:Order a mork:Entity .
+mm:Concept_Order a mork:DataConcept ; mork:representedAs src:Order .
+mm:Concept_Customer a mork:DataConcept ; mork:representedAs src:Customer .
+
+mm:Map_Order a mork:DataMapping , mork:Datum ;
+    mork:mappingScheme mm:OrderCustomer ;
+    mork:mappingFor mm:Concept_Order ;
+    mork:identityRule mork:SourceNodeIdentity ;
+    mork:compositeNarrowerMapping mm:Map_Customer .
+
+# The customer is the node the order's code finds. The link from the order is the inverse match, and the guard names the
+# values the order must hold to join.
+mm:Map_Customer a mork:DataMapping , mork:Datum ;
+    mork:mappingScheme mm:OrderCustomer ;
+    mork:broaderApplicative mm:Map_Order ;
+    mork:mappingFor mm:Concept_Customer ;
+    mork:identityRule mork:SourceNodeIdentity ;
+    mork:inverseRBoxMatch tgt:placedFor ;
+    mork:appliesWhen mm:CustomerGuard ;
+    mork:joinsOn mm:CustomerCode ;
+    mork:joinCardinality mork:AtMostOneMatch ;
+    mork:reportsUnmatched true ;
+    mork:lookupComparison mork:TermComparison .
+
+mm:CustomerGuard a sh:NodeShape ;
+    sh:property [ sh:path src:customerCode ; sh:minCount 1 ] .
+
+mm:CustomerCode a mork:JoinCondition ;
+    mork:parentRef "<http://example.org/src#customerCode>" ;
+    mork:ownRef "<http://example.org/src#code>" .

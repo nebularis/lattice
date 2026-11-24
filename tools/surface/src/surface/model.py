@@ -269,6 +269,37 @@ class ConstructedNode:
 
 
 @dataclass(frozen=True)
+class JoinPair:
+    """One equality of a join statement (``srf:joinsOn``): the binding that reads the contract's own carrier and the one that reads the second."""
+
+    left: RoleBinding
+    right: RoleBinding
+
+
+@dataclass(frozen=True)
+class JoinStatement:
+    """The relation a join projection writes (``srf:JoinStatement``, laws ``srf:P14`` to ``srf:P17``).
+
+    ``pairs`` are in the order of their properties, so the same contract always gives the same statement a lowering names by
+    position. ``matches`` is ``srf:AtMostOne`` or ``srf:AnyNumber``. ``required`` is whether the join is on required evidence,
+    which every binding of the statement shares (law ``srf:P17``), and not on candidate evidence.
+    """
+
+    iri: URIRef
+    pairs: Tuple[JoinPair, ...]
+    matches: URIRef
+    #: The class the right bindings read, the same in every pair (law ``srf:P16``).
+    second_carrier: URIRef
+    required: bool
+    #: The result-target role binding that states the join, which binds the property linking each instance to the instance it names.
+    link: RoleBinding
+
+    @property
+    def at_most_one(self) -> bool:
+        return str(self.matches) == str(SRF.AtMostOne)
+
+
+@dataclass(frozen=True)
 class BackendPolicy:
     """The declared backend eligibility and LLM-participation policy a projection lowers under."""
 
@@ -303,6 +334,8 @@ class ProjectionContract:
     expression: Optional[Expression] = None
     #: The node a graph construction states on its result-target role binding (law ``srf:P10``).
     construction: Optional[ConstructedNode] = None
+    #: The relation a join states on its result-target role binding (law ``srf:P14``).
+    join: Optional[JoinStatement] = None
 
     def roles(self, kind: URIRef) -> List[RoleBinding]:
         return [b for b in self.role_bindings if str(b.role_kind) == str(kind)]
@@ -696,6 +729,7 @@ class SurfaceGraphAnalyser:
 
         expression = self._derived_expression(iri, projection_kind, bindings)
         construction = self._constructed_node(iri, projection_kind, bindings)
+        join = self._join_statement(iri, projection_kind, bindings)
 
         policy_iri = self._iri(iri, SRF.backendPolicy, required=False)
         budget = self._literal(iri, SRF.populationBudget, required=False)
@@ -712,6 +746,7 @@ class SurfaceGraphAnalyser:
             population_budget=int(budget) if budget is not None else None,
             expression=expression,
             construction=construction,
+            join=join,
         )
 
     def _derived_expression(
@@ -826,6 +861,88 @@ class SurfaceGraphAnalyser:
             identity=identity,
             key=tuple(key),
             writes=tuple(writes),
+            link=link,
+        )
+
+    def _join_statement(
+        self, iri: URIRef, projection_kind: URIRef, bindings: Sequence[RoleBinding]
+    ) -> Optional[JoinStatement]:
+        """The relation a join states on its result-target binding, and none for any other kind (laws srf:P14 to srf:P17)."""
+        stated = [(b, self.g.value(b.iri, SRF.joinedAs, any=False)) for b in bindings]
+        stated = [(b, j) for b, j in stated if j is not None]
+        is_join = str(projection_kind) == str(SRF.JoinProjection)
+        for binding, _ in stated:
+            if str(binding.role_kind) != str(SRF.ResultTargetRole) or not is_join:
+                raise ContractError(
+                    f"{iri} states a join on {binding.iri}, which is not the result-target role binding of a join (law srf:P14)"
+                )
+        if not is_join:
+            return None
+        if not stated:
+            raise ContractError(f"{iri} is a join and states no join statement on its result-target role binding (law srf:P14)")
+        link, statement = stated[0]
+        if link.binds_property is None:
+            raise ContractError(
+                f"{iri} states a join on {link.iri}, which binds no property to link each instance to the instance it names (law srf:P14)"
+            )
+        if not isinstance(statement, URIRef) or str(SRF.JoinStatement) not in self._types(statement):
+            raise ContractError(f"{iri} states a join that is not a srf:JoinStatement named by an IRI (law srf:P14)")
+
+        matches = self._iri(statement, SRF.joinMatches, required=False)
+        if matches is None or str(matches) not in (str(SRF.AtMostOne), str(SRF.AnyNumber)):
+            raise ContractError(f"{statement} states no match count, srf:AtMostOne or srf:AnyNumber (law srf:P15)")
+        pair_nodes = list(self.g.objects(statement, SRF.joinsOn))
+        if not pair_nodes:
+            raise ContractError(f"{statement} names no pair of bindings that must be equal (law srf:P15)")
+
+        carrier = self._iri(iri, SRF.carrier)
+        by_iri = {str(b.iri): b for b in bindings}
+
+        def side(pair, predicate) -> RoleBinding:
+            name = self._iri(pair, predicate, required=False)
+            if name is None:
+                raise ContractError(f"{statement} has a pair that names no {predicate} binding (law srf:P15)")
+            binding = by_iri.get(str(name))
+            if binding is None or str(binding.role_kind) not in EVIDENCE_ROLES or binding.binds_property is None:
+                raise ContractError(
+                    f"{statement} names {name}, which is not an evidence role binding of {iri} that binds a property (law srf:P16)"
+                )
+            return binding
+
+        pairs: List[JoinPair] = []
+        for node in pair_nodes:
+            left, right = side(node, SRF.joinLeft), side(node, SRF.joinRight)
+            if left.binds_carrier is not None and str(left.binds_carrier) != str(carrier):
+                raise ContractError(
+                    f"{statement} reads {left.iri} on the left, which names {left.binds_carrier} and not the carrier of {iri} (law srf:P16)"
+                )
+            if right.binds_carrier is None or str(right.binds_carrier) == str(carrier):
+                raise ContractError(
+                    f"{statement} reads {right.iri} on the right, which names no carrier other than the carrier of {iri} (law srf:P16)"
+                )
+            if str(left.role_kind) != str(right.role_kind):
+                raise ContractError(f"{statement} pairs {left.iri} and {right.iri}, which are not of one evidence kind (law srf:P17)")
+            if (left.datatype is None) != (right.datatype is None) or (
+                left.datatype is not None and str(left.datatype) != str(right.datatype)
+            ):
+                raise ContractError(
+                    f"{statement} pairs {left.iri} and {right.iri}, which state different datatypes, or one states one and the other none (law srf:P17)"
+                )
+            pairs.append(JoinPair(left=left, right=right))
+        pairs.sort(key=lambda p: (str(p.left.binds_property), str(p.right.binds_property)))
+
+        if len({str(p.right.binds_carrier) for p in pairs}) > 1:
+            raise ContractError(f"{statement} reads more than one second carrier (law srf:P16)")
+        if len({str(b.role_kind) for p in pairs for b in (p.left, p.right)}) > 1:
+            raise ContractError(f"{statement} is on a mix of required and candidate evidence (law srf:P17)")
+        if len({None if p.left.datatype is None else str(p.left.datatype) for p in pairs}) > 1:
+            raise ContractError(f"{statement} compares values of several datatypes, which a join does not yet state (law srf:P17)")
+        return JoinStatement(
+            iri=statement,
+            pairs=tuple(pairs),
+            matches=matches,
+            second_carrier=pairs[0].right.binds_carrier,
+            required=str(pairs[0].left.role_kind) == str(SRF.RequiredEvidenceRole),
             link=link,
         )
 

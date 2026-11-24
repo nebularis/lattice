@@ -167,6 +167,9 @@ _type("VQ", "mork:QuotientExpression", "ValueExpression")
 _type("VN", "mork:RoundingExpression", "ValueExpression")
 _type("VC", "mork:ChoiceExpression", "ValueExpression")
 
+# -- Join --
+_type("JN", "mork:JoinCondition", "Join", "one equality of a join datum")
+
 # -- Scheme --
 _type("SM", "mork:MappingScheme", "Scheme", "block header %M")
 _type("ST", "mork:TaxonomyScheme", "Scheme", "block header %T")
@@ -195,6 +198,7 @@ _type("FS", "mork:FindingSeverity", "Enumeration")
 _type("OB", "mork:OutputBox", "Enumeration")
 _type("OP", "mork:ComparisonOperator", "Enumeration")
 _type("ID", "mork:IdentityRule", "Enumeration")
+_type("JK", "mork:JoinCardinality", "Enumeration")
 
 # -- Compiled mapping --
 _type("KM", "mork:CompiledMapping", "Compiled")
@@ -545,6 +549,13 @@ _prop("wt", "mork:whenTrue", group="Value expression")
 _prop("wf", "mork:whenFalse", group="Value expression")
 _prop("irl", "mork:identityRule", group="Value expression")
 
+# -- Join --
+_prop("jon", "mork:joinsOn", group="Join")
+_prop("par", "mork:parentRef", kind=KIND_DATA, datatype="xsd:string", group="Join")
+_prop("own", "mork:ownRef", kind=KIND_DATA, datatype="xsd:string", group="Join")
+_prop("jcd", "mork:joinCardinality", group="Join")
+_prop("rpu", "mork:reportsUnmatched", kind=KIND_DATA, datatype="xsd:boolean", group="Join")
+
 # -- Compiled mapping --
 _prop("hq", "mork:hasCompiledQuery", group="Compiled mapping")
 _prop("hf", "mork:hasCompileFinding", group="Compiled mapping")
@@ -809,6 +820,8 @@ RESERVED: Dict[str, str] = {
     ".ge": "mork:GreaterThanOrEqual",
     ".gt": "mork:GreaterThan",
     ".src": "mork:SourceNodeIdentity",
+    ".amo": "mork:AtMostOneMatch",
+    ".any": "mork:AnyNumberOfMatches",
     ".err": "mork:ErrorFinding",
     ".wrn": "mork:WarningFinding",
     ".inf": "mork:InfoFinding",

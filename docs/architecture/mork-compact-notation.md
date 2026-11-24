@@ -345,6 +345,12 @@ Multiple types are joined with `+`: `M+MD`, `C+RE`. A CURIE whose local name beg
 | `VN` | `mork:RoundingExpression` |  |
 | `VC` | `mork:ChoiceExpression` |  |
 
+**Join**
+
+| Code | Class | Notes |
+|---|---|---|
+| `JN` | `mork:JoinCondition` | one equality of a join datum |
+
 **Scheme** (normally introduced by block headers, usable as explicit types in `%X`)
 
 | Code | Class | Notes |
@@ -382,6 +388,7 @@ Multiple types are joined with `+`: `M+MD`, `C+RE`. A CURIE whose local name beg
 | `OB` | `mork:OutputBox` |  |
 | `OP` | `mork:ComparisonOperator` |  |
 | `ID` | `mork:IdentityRule` |  |
+| `JK` | `mork:JoinCardinality` |  |
 
 **Compiled mapping (the output of the RDF-to-RDF compiler, usually written by it)**
 
@@ -745,6 +752,16 @@ Kind: *object* takes an IRI, inline node or payload, *data* takes a literal type
 | `wf` | `mork:whenFalse` | object |  |
 | `irl` | `mork:identityRule` | object |  |
 
+**Join**
+
+| Code | Property | Kind | Literal type |
+|---|---|---|---|
+| `jon` | `mork:joinsOn` | object |  |
+| `par` | `mork:parentRef` | data | xsd:string |
+| `own` | `mork:ownRef` | data | xsd:string |
+| `jcd` | `mork:joinCardinality` | object |  |
+| `rpu` | `mork:reportsUnmatched` | data | xsd:boolean |
+
 **Compiled mapping**
 
 | Code | Property | Kind | Literal type |
@@ -913,6 +930,8 @@ Reserved tokens begin with `.` and are valid only in object position.
 | `.ge` | `mork:GreaterThanOrEqual` |
 | `.gt` | `mork:GreaterThan` |
 | `.src` | `mork:SourceNodeIdentity` |
+| `.amo` | `mork:AtMostOneMatch` |
+| `.any` | `mork:AnyNumberOfMatches` |
 | `.err` | `mork:ErrorFinding` |
 | `.wrn` | `mork:WarningFinding` |
 | `.inf` | `mork:InfoFinding` |

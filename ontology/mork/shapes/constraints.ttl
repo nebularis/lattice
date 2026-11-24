@@ -412,3 +412,45 @@ mork:SourceNodeIdentityShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+mork:JoinConditionShape a sh:NodeShape ;
+	sh:targetClass mork:JoinCondition ;
+	sh:property [ sh:path mork:parentRef ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ;
+		sh:message "A join condition states exactly one mork:parentRef, a path that is a string and not empty." ] ;
+	sh:property [ sh:path mork:ownRef ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ;
+		sh:message "A join condition states exactly one mork:ownRef, a path that is a string and not empty." ] .
+
+mork:JoinDatumShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:joinsOn ;
+	sh:property [ sh:path mork:joinsOn ; sh:class mork:JoinCondition ;
+		sh:message "A join datum names as a condition a term that is not a mork:JoinCondition." ] ;
+	sh:property [ sh:path mork:joinCardinality ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( mork:AtMostOneMatch mork:AnyNumberOfMatches ) ;
+		sh:message "A join datum states exactly one join cardinality, mork:AtMostOneMatch or mork:AnyNumberOfMatches." ] ;
+	sh:property [ sh:path mork:reportsUnmatched ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
+		sh:message "A join datum states exactly one mork:reportsUnmatched, true or false." ] ;
+	sh:property [ sh:path mork:identityRule ; sh:minCount 1 ; sh:hasValue mork:SourceNodeIdentity ;
+		sh:message "A join datum takes the node it finds, so it states mork:identityRule mork:SourceNodeIdentity." ] ;
+	sh:sparql [
+		sh:message "A join datum states no R-Box match to write the link from its parent with." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS {
+					$this ?property ?value .
+					FILTER (?property IN (mork:exactRBoxMatch, mork:inverseRBoxMatch, mork:broadRBoxCategoryMatch))
+				}
+			}
+		"""
+	] .
+
+mork:JoinPlacementShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:joinCardinality , mork:reportsUnmatched ;
+	sh:sparql [
+		sh:message "A datum states a join cardinality or mork:reportsUnmatched and no mork:joinsOn, so it is no join." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS { $this mork:joinsOn ?condition }
+			}
+		"""
+	] .

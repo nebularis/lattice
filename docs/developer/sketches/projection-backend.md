@@ -3,7 +3,7 @@
 # Sketch: a projection backend, from a Surface projection contract to queries a step runs
 
 **Unit:** `studio-visual-authoring` (SVA), slice SVA-S2d, raised on 2026-11-23 when the maintainer chose that projections are built in this unit, design first
-**Status:** sketch. SVA-Q24 to SVA-Q41 answered by the maintainer between 2026-11-23 and 2026-11-24. Derivations and graph constructions are built, and joins are being built
+**Status:** sketch. SVA-Q24 to SVA-Q41 answered by the maintainer between 2026-11-23 and 2026-11-24. Derivations, graph constructions and joins are built
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md), slices SVA-S2d and SVA-S2c
 **Builds on:** ADR-A16, ADR-A17, ADR-A18, ADR-A19, ADR-A20, ADR-A23 and ADR-A41 (all Accepted), ADR-A154 with its addendum of 2026-11-20, and `tools/mork_rdf`
 
@@ -163,50 +163,70 @@ What exists, read on 2026-11-24:
 | what an instance with no match writes, and what one with several matches writes | nothing. P2 asks a join for at least one evidence binding and says no more |
 | the review | ADR-A41, which asks a join for a mapping review and, as its addendum says, records it as a finding |
 
-What `mork_rdf` compiles today fits part of the output. A root datum iterating the first carrier, a source-node identity (SVA-S2e), a guard on required evidence and the reports of an excluded instance and an ambiguous identity (SVA-S2g) all carry over. The mapping review finding is SVA-S2g's `MappingReview`, raised for a join where it is raised for a keyed construction. A lookup (Case 6, the `mork_rdf` README section 7.3) is already a join of one kind. It writes, on the instance, the R-Box property with the reference node whose stated property equals the source value as its value, compares by cast, reports `LookupUnresolved` where none matches and `LookupAmbiguous` where several do, and asserts each. What a lookup does not do is read the second carrier from the source graph. It reads only the reference graph, so source data cannot add codes to a lookup (README section 13). A datum that stands for an instance of a second class of the world, reached from the first instance by equality of two values and not by a path, has no case, since a source-node identity takes the node a datum iterates and a contextual datum is glued to its parent by a property and mints its own node. The sketch does not settle whether the join is a lookup over reference data, a new term, or a lookup widened (SVA-Q40).
+What `mork_rdf` compiles today fits part of the output. A root datum iterating the first carrier, a source-node identity (SVA-S2e), a guard on required evidence and the reports of an excluded instance and an ambiguous identity (SVA-S2g) all carry over. The mapping review finding is SVA-S2g's `MappingReview`, raised for a join where it is raised for a keyed construction. A lookup (Case 6, the `mork_rdf` README section 7.3) is already a join of one kind. It writes, on the instance, the R-Box property with the reference node whose stated property equals the source value as its value, compares by cast, reports `LookupUnresolved` where none matches and `LookupAmbiguous` where several do, and asserts each. What a lookup does not do is read the second carrier from the source graph. It reads only the reference graph, so source data cannot add codes to a lookup (README section 13). A datum that stands for an instance of a second class of the world, reached from the first instance by equality of two values and not by a path, had no case, since a source-node identity takes the node a datum iterates and a contextual datum is glued to its parent by a property and mints its own node. The sketch left open whether the join is a lookup over reference data, a new term, or a lookup widened (SVA-Q40), and the maintainer chose a new term and left the lookup as it is.
 
-So the case pauses at SVA-Q36 to SVA-Q41 in section 3. Nothing is built, and the contract, the scheme and the query below are what the leanings give, as placeholders for the maintainer to answer. None of the Surface or MORK terms marked as placeholders exists yet.
+So the case paused until SVA-Q36 to SVA-Q41 in section 3 were answered, and the contract, the scheme and the query as built follow the example below.
 
-**The example on the leanings.** An order names its customer by a code, and a customer has a code and a region. No personal value is spelled into an identifier, since a code is a code a customer is known by and a join links existing nodes and mints none. Each order is linked to the customer whose code it names. The contract states what relates the two carriers and that the result is a link, and it states that a code names at most one customer, so an order with no customer or with several writes no link and is reported:
+**The example, as answered on 2026-11-24.** An order names its customer by a code, and a customer has a code and a region. No personal value is spelled into an identifier, since a code is a code a customer is known by and a join links existing nodes and mints none. Each order is linked to the customer whose code it names. The contract states what relates the two carriers and that the result is a link, and it states that a code names at most one customer, so an order with no customer or with several writes no link and is reported. Where the placeholders of the first draft stood, the terms are `srf:JoinStatement` for the statement, `srf:joinsOn` with `srf:joinLeft` and `srf:joinRight` for each pair of bindings that must be equal (several pairs for a composite key), and `srf:joinMatches` with the individuals `srf:AtMostOne` and `srf:AnyNumber`.
+
+What the three answers about missing and repeated matches come to, for a join that writes only a link:
+
+| The instance | On required evidence | On candidate evidence |
+|---|---|---|
+| lacks a value of its own carrier a required binding reads | excluded, writes nothing, reported by `InstanceExcluded` with the value | not applicable, the value is not required |
+| holds the values and no instance of the second carrier has them | writes no link and is reported by `JoinUnmatched` with the value | writes no link and is not reported |
+| holds the values and several instances have them | under at most one writes no link and is reported by `JoinAmbiguous` with each match, under any number writes a link for each | the same |
+
+The choice for candidate evidence is where a join differs from a keyed construction. A join writes the link and nothing else, so what a candidate-evidence binding finds is the link, and an instance with no match has nothing to write and nothing a reviewer asked for.
+
+**As built (SVA-S2h, 2026-11-24).** The example is `ontology/surface/examples/order-customer-join-projection.ttl`. A contract states the relation on the result-target binding with `srf:joinedAs`. The statement is a `srf:JoinStatement` with a `srf:joinsOn` for each pair and one `srf:joinMatches`, and each pair is a `srf:joinLeft` binding that reads the contract's own carrier and a `srf:joinRight` binding that reads a second carrier, which it names with `srf:bindsCarrier`. Laws `srf:P14` to `srf:P17` and a shape for each part check it, and `srf:P1` says that a link an authored vocabulary declares reaches the authored signature.
+
+The contract, as in the example:
 
 ```turtle
 ex:oc-code a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:customerCode .
 ex:oc-match a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsCarrier ex:Customer ; srf:bindsProperty ex:code .
-ex:oc-link a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ; srf:bindsProperty ex:placedFor ;
-    srf:joinedAs [ a srf:JoinedInstance ;                        # placeholder
-        srf:joinLeft ex:oc-code ; srf:joinRight ex:oc-match ;     # placeholders, equality of the two values
-        srf:joinMatches srf:AtMostOne ] .                         # placeholder
+ex:oc-link a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ; srf:bindsProperty ex:placedFor ; srf:joinedAs ex:oc-join .
+ex:oc-join a srf:JoinStatement ;
+    srf:joinsOn [ srf:joinLeft ex:oc-code ; srf:joinRight ex:oc-match ] ;
+    srf:joinMatches srf:AtMostOne .
 ```
 
-Lowered, in MORK, abridged, with the root a source-node datum over the first carrier as in section 2.2 and a datum beneath it for the second carrier that takes that carrier's node as its identity, guarded by the required evidence, and states the condition. `mork:joinsOn` is a placeholder, the choice (b) of SVA-Q40.
+Lowered, abridged, with each node's name shortened to its place in the scheme. The root is a source-node datum over the order, and the datum beneath it iterates the customer class through its own concept, takes the node it finds as its identity, and is glued to the order by the inverse match. The guard holds the order's required evidence and not the customer's, and is tested on the order. MORK gains `mork:JoinCondition`, `mork:joinsOn`, `mork:parentRef`, `mork:ownRef`, `mork:joinCardinality`, `mork:reportsUnmatched` and two individuals, and the datum reads `mork:lookupComparison` as a lookup does:
 
 ```turtle
 exec:scheme_root a mork:DataMapping, mork:Datum ; mork:mappingScheme exec:scheme ; mork:mappingFor exec:scheme_carrier ;
-    mork:identityRule mork:SourceNodeIdentity ; mork:compositeNarrowerMapping exec:scheme_match .
-exec:scheme_match a mork:DataMapping ; mork:mappingScheme exec:scheme ; mork:broaderApplicative exec:scheme_root ;
-    mork:mappingFor ex:Customer ; mork:identityRule mork:SourceNodeIdentity ;      # the matched instance is the node
-    mork:inverseRBoxMatch ex:placedFor ;                                           # the link, from the order to it
-    mork:appliesWhen exec:scheme_guard ; mork:joinsOn exec:scheme_condition .      # placeholder
-exec:scheme_condition mork:parentRef "<.../customerCode>" ; mork:ownRef "<.../code>" .   # placeholder
+    mork:identityRule mork:SourceNodeIdentity ; mork:compositeNarrowerMapping exec:scheme_node .
+exec:scheme_node a mork:DataMapping, mork:Datum ; mork:mappingScheme exec:scheme ; mork:broaderApplicative exec:scheme_root ;
+    mork:mappingFor exec:scheme_second ; mork:identityRule mork:SourceNodeIdentity ; mork:inverseRBoxMatch ex:placedFor ;
+    mork:appliesWhen exec:scheme_guard ; mork:joinsOn exec:scheme_condition_0 ;
+    mork:joinCardinality mork:AtMostOneMatch ; mork:reportsUnmatched true ; mork:lookupComparison mork:TermComparison .
+exec:scheme_second a mork:DataConcept ; mork:representedAs ex:Customer .
+exec:scheme_condition_0 a mork:JoinCondition ; mork:parentRef "<.../customerCode>" ; mork:ownRef "<.../code>" .
+exec:scheme_guard a sh:NodeShape ; sh:property exec:scheme_guard_0 .
+exec:scheme_guard_0 sh:path ex:customerCode ; sh:minCount 1 .
 ```
 
-Compiled, one query on the leanings. The second carrier's instance is a variable beside the first, the two values meet in one pattern, and the link is the only triple written. The check for a customer count other than one is a second query that counts matches and is not shown:
+Compiled, the query that writes the link, with the prefixed names standing for the full IRIs `mork_rdf` writes. The customer is a variable beside the order, and the two codes meet in one variable, so an engine can serve the join from an index. The subquery counts the order's matches again with variables of its own, since a variable the outer query has bound is bound inside a subquery on rdflib too, and keeps the orders with exactly one:
 
 ```sparql
 BASE <https://example.org/lattice/surface/order-customer/out/>
-CONSTRUCT { ?f1 ex:placedFor ?f3 . }
+CONSTRUCT { ?f1 ex:placedFor ?f2 . }
 WHERE {
   ?f1 rdf:type ex:Order .
-  ?f1 ex:customerCode ?v2 .
-  ?f3 rdf:type ex:Customer .
-  ?f3 ex:code ?v4 .
-  FILTER (?v2 = ?v4)
+  ?f1 ex:customerCode ?v3 .
+  FILTER (EXISTS { ?f1 ex:customerCode ?any4 . })
+  ?f2 rdf:type ex:Customer .
+  ?f2 ex:code ?v3 .
+  { SELECT ?f1 WHERE { ?f1 ex:customerCode ?v6 . FILTER (EXISTS { ?f1 ex:customerCode ?any7 . }) ?f5 rdf:type ex:Customer . ?f5 ex:code ?v6 . } GROUP BY ?f1 HAVING (COUNT(DISTINCT ?f5) = 1) }
 }
 ```
 
-The comparison of the two values is MORK's lookup comparison, a cast to a stated datatype and a join of the same RDF term by default (MR-17), and not SPARQL's value equality, which the two engines treat differently across integer-derived datatypes (TSD-64). A contract that joins numbers or mixed datatypes states how.
+The three checks are queries of their own and are not shown. `InstanceExcluded` names each order the guard excludes with the value it lacks. `JoinUnmatched` names each order that holds the code and finds no customer, with the code, and is emitted only where the datum says it reports. `JoinAmbiguous` names each customer of an order that finds several, and is emitted only under at most one. The datum also carries a `MappingReview` warning, which is where ADR-A41's review of a join is recorded as a finding in this slice. The compiler raises it for every join, whatever its evidence and count, and the studio's review requirement, which today reads only the projection kind, does not yet act on it (the same open point as for a keyed construction).
 
-What the example gives, over three orders where two name one customer and one names none, is two links, and the order with no customer reported. A join with a customer count above one, with the contract stating no limit, gives a link for each.
+**Choices the answers did not settle.** The two values are compared as a lookup compares them. The lowering states a term comparison where the bindings state no datatype, and a cast to the datatype where both state one, which the contract's `srf:bindsDatatype` gives, so the comparison is never SPARQL's value equality (TSD-64). A term or cast comparison shares one variable between the two patterns and a lexical one is a filter, which is the cost the lookup already documents. The bindings of one statement state one datatype between them, or none, since MORK states the comparison once for a datum. A join on values of several datatypes is not yet stated. A guard on the datum is tested on the order and not on the customer, which is the one place a guard's focus is the parent's.
+
+What the example gives, over three orders where two name one customer and one names a code no customer holds, is two links, and the third order reported with its code. A customer count above one, under at most one, gives no link and a report naming each customer. Under any number it gives a link for each.
 
 ## 3. Questions
 

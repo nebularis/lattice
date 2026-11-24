@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# Three customers and five orders. Two orders name one customer, one names a code no customer holds, one names no code,
+# and one names a code two customers hold (README §7.10).
+
+@prefix src: <http://example.org/src#> .
+@prefix rec: <http://example.org/records/> .
+
+rec:c1 a src:Customer ; src:code "C1" ; src:region "north" .
+rec:c2 a src:Customer ; src:code "C2" ; src:region "south" .
+rec:c3 a src:Customer ; src:code "C3" ; src:region "east" .
+rec:c4 a src:Customer ; src:code "C3" ; src:region "west" .
+
+rec:o1 a src:Order ; src:customerCode "C1" .
+rec:o2 a src:Order ; src:customerCode "C1" .
+rec:o3 a src:Order ; src:customerCode "C9" .
+rec:o4 a src:Order .
+rec:o5 a src:Order ; src:customerCode "C3" .

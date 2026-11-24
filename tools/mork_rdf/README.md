@@ -125,6 +125,7 @@ Each mapping node in force is classified by the case analysis of the MORK founda
 | assertion from a datum | `a mork:Datum` with an R-Box match, a value, a parent and no T-Box match | the value on the parent's target node, as an assertion writes it |
 | derivation | `mork:valueExpression`, an R-Box match and a parent | the value expression's value as the property on the parent's target node, which is the source node itself beneath a source-node datum (§7.8) |
 | source-node datum | `mork:identityRule mork:SourceNodeIdentity` | nothing itself. Its target node is the node it iterates, so the mappings beneath it write on that node, and no node is minted or typed (§6) |
+| join (Case 7) | `mork:joinsOn`, with the source-node identity, an R-Box match and a parent | the R-Box property from the parent's target node to the node of the datum's class whose values equal the parent's, and nothing else (§7.10) |
 | datum (Case 2) | `a mork:Datum`, or `mork:deferredMapping` | a target node per focus node, typed with each `mork:exactTBoxMatch`, or the class it defers to (§7.5) |
 | class creation (Case 1a) | `mork:broadTBoxCategoryMatch` | a new class in the T-Box, `rdfs:subClassOf` each broad match |
 | property creation | a broad R-Box match, no parent, no value and no children | a new property in the T-Box, `rdfs:subPropertyOf` the broad match, with its domain and range axioms (§7.6) |
@@ -368,6 +369,40 @@ Where a keyed node merges instances, the compiler also reports `MappingReview`, 
 
 A key is spelled into the node's identifier, so the compiler cannot tell a key that may be personal or may change from one that may not. Choosing one is the author's, and the Surface contract that lowers into this case states the boundary.
 
+### 7.10 A node of a second class, found by equality
+
+A source-node datum (§6) can have a second datum beneath it that takes a node of another class of the source, the node whose values equal the instance's. That is a join, and it is the case a lookup (§7.3) is not, since a lookup reads reference data and a join reads the source. The datum states the class it iterates with `mork:mappingFor`, takes `mork:SourceNodeIdentity` so the node it finds is its target and nothing is minted or typed, and is glued to its parent by an R-Box match, which writes the link from the parent and nothing else. Each `mork:joinsOn` states one equality, the value at `mork:parentRef` from the parent's node and the value at `mork:ownRef` from the node found, with one condition for each part of a composite key. For an order that names its customer by a code, with the code a required value and a code naming at most one customer, the compiled query that writes the link is
+
+```sparql
+BASE <http://example.org/out/>
+CONSTRUCT { ?f1 <http://example.org/tgt#placedFor> ?f2 . }
+WHERE {
+  ?f1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/src#Order> .
+  ?f1 <http://example.org/src#customerCode> ?v3 .
+  FILTER (((EXISTS { ?f1 <http://example.org/src#customerCode> ?any4 . })))
+  ?f2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/src#Customer> .
+  ?f2 <http://example.org/src#code> ?v3 .
+  { SELECT ?f1 WHERE { ?f1 <http://example.org/src#customerCode> ?v6 . FILTER (((EXISTS { ?f1 <http://example.org/src#customerCode> ?any7 . }))) ?f5 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/src#Customer> . ?f5 <http://example.org/src#code> ?v6 . } GROUP BY ?f1 HAVING (COUNT(DISTINCT ?f5) = 1) }
+}
+```
+
+**The guard is the parent's.** A guard (§7.7) on a join datum is a `FILTER` on the parent's node, since it says which parents join and the node found is not the one it tests. The query repeats it, so a parent that lacks a required value writes no link even where a node matches its other values.
+
+**The two values meet as a lookup's do.** `mork:lookupComparison` and `mork:lookupDatatype` of the join datum say how they compare, with the three comparisons and the lexical fallback of §7.3. A term comparison shares one variable between the two patterns, as the query above does, and a cast comparison binds the parent's value cast to the datatype first and shares that, so an engine can serve either from an index and the cost of a join is one probe for each parent value. A lexical comparison compares the text in a filter, which compares every parent value with every node of the class. The compiler never uses SPARQL's value equality, which the two engines read differently across datatypes that derive from integer (TSD-64).
+
+**A cardinality is stated, never implied.** `mork:AtMostOneMatch` limits the query above to the parents whose matches number one, counted over the join again with variables of its own, since a variable the outer query has bound is bound inside a subquery too on rdflib, and a parent with several matches writes no link. `mork:AnyNumberOfMatches` writes a link for each match and adds no such limit. A parent with several values at a path has them all counted, so under at most one an order naming two customers by two codes is ambiguous.
+
+Three checks report what the compiled queries leave out. `InstanceExcluded` is §7.9's and names each parent the guard excludes with the value it lacks, and the other two are emitted for a join datum only.
+
+| Code | A row means |
+|---|---|
+| `JoinUnmatched` | the parent holds every value the join compares and no node of the class has them, so no link was written. The value is the parent's value, or the values joined by a slash for a composite key. Emitted only where `mork:reportsUnmatched` is true, which a join on required evidence states |
+| `JoinAmbiguous` | the parent finds several nodes where `mork:AtMostOneMatch` allows one, so no link was written. One row for each match, the match as the value. Emitted only under `mork:AtMostOneMatch` |
+
+A parent that lacks a value the join compares, and is not excluded by a guard, has no pair to compare and is neither matched nor unmatched, so a join on candidate evidence writes nothing for it and says nothing. A join takes a mapping review (ADR-A41), so the compiler reports `MappingReview` on the join datum every time, since the condition and the number of matches it allows are where a reviewer's judgement is needed.
+
+**A join reads source data.** The nodes it finds are the source's own, so a node in the reference data is never one of them, and source data can add nodes to a join where it cannot add codes to a lookup. A join writes only the link and refuses a mapping beneath it (`JoinWrites`). A value from the node found is reached through the link by a read path.
+
 ## 8. Templates
 
 An instantiation (`mork:templateMapping`) is merged with its template before classification, by Definition 3.7's first strategy: the instantiation's own values first, the template's where it gives none. Its children are its own, followed by the template's children that none of its own children correlates with through `mork:templateBinding`. Each of the template's children is compiled under every instantiation, in that instantiation's context, and a query's `path` names the instantiation, so a reviewer sees which one it came from.
@@ -442,7 +477,11 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 | `RangeFromData`, `CombinationFromData` | error | a restriction over classes made from data that would need a combination at the closure (§7.6) |
 | `NoName` | error | a broad R-Box match with no name for the property it creates |
 | `BroadMatch` | warning | a broad match, compiled |
-| `MappingReview` | warning | a contextual datum beneath a source-node datum whose identity is read from the source, so it merges the instances that share the values and a reviewer should confirm the merge (§7.9) |
+| `MappingReview` | warning | a contextual datum beneath a source-node datum whose identity is read from the source, so it merges the instances that share the values and a reviewer should confirm the merge (§7.9), and every join datum, whose condition and number of matches a reviewer should confirm (§7.10) |
+| `JoinIncomplete` | error | a datum that states `mork:joinsOn` and lacks a part of a join: the source-node identity, a path in each condition, the class it iterates, a parent, an R-Box match, a cardinality or `mork:reportsUnmatched` (§7.10) |
+| `JoinWrites` | error | a mapping beneath a join datum, which writes its link and nothing else |
+| `JoinComparisonUnknown` | error | a `mork:lookupComparison` on a join that names no comparison |
+| `JoinLexical` | info | a join compared lexically, since a cast comparison has no datatype |
 | `ParentNotCompiled` | warning | the parent was not compiled |
 | `BelowConfidence` | error | under `min_confidence` |
 
@@ -471,6 +510,9 @@ Each check is a `SELECT` that the compiler emits beside the constructs, and the 
 | `ValueUndefined` | a derivation | the focus node has every value and the expression is undefined for them, so the property was not written (§7.8) |
 | `InstanceExcluded` | a guarded contextual datum beneath a source-node datum, for each required value in its guard | the guard excluded the focus node for want of the value, so it contributed nothing (§7.9) |
 | `ValueDisagrees` | an assertion on a node whose identity is read from the source, beneath a source-node datum | the node's instances give it different values, one row for each value (§7.9) |
+| `InstanceExcluded` | a join datum with a guard, for each required value in it | the guard excluded the parent, so no link was written (§7.10) |
+| `JoinUnmatched` | a join datum that reports unmatched parents | the parent holds the compared values and no node has them (§7.10) |
+| `JoinAmbiguous` | a join datum under `mork:AtMostOneMatch` | the parent finds several nodes, so no link was written, one row for each (§7.10) |
 | `Unguarded` | guarded datums sharing a path | a node of the path that no guard admits |
 | `Uncovered` | the scheme, when a declared `mork:Entity` has no compiled root iterating it | a source node of that class, from which nothing was made |
 
@@ -553,7 +595,7 @@ So a tree node's IRI does not depend on the order of the triples or on anything 
 ## 13. Security
 
 - **No text from a mapping reaches a query unparsed (PRI-55).** A path is parsed and written back from its tree, IRI by IRI. An IRI is checked absolute and free of the characters SPARQL's IRI production forbids. A literal is written by rdflib, which escapes it. A path such as `src:author } . DROP ALL #` is refused, not written, as the tests show.
-- **Lookups read only reference data.** A source cannot add codes to a lookup's scheme, because the lookup's patterns sit inside `GRAPH <urn:mork-rdf:reference>`.
+- **Lookups read only reference data.** A source cannot add codes to a lookup's scheme, because the lookup's patterns sit inside `GRAPH <urn:mork-rdf:reference>`. A join reads the source instead (§7.10), so the nodes it finds are the source's own, a source can add nodes to it, and a node in the reference data is never one of them.
 - **The queries only read.** They are `CONSTRUCT` and `SELECT`, never an update, so running a compiled mapping cannot change the store it runs on.
 - **The compiler never reads source data.** A malicious source can make a run return more or fewer triples. It cannot change what is compiled.
 
@@ -568,7 +610,9 @@ Costs are in solutions, per query, and have not been measured on any engine (STD
 | an assertion | its parent's solutions times its values | as above |
 | correspondences | the same, joined with a table of k rows | a `VALUES` join |
 | a lookup | its parent's solutions times, per value, the reference nodes of its class | `STR()` equality cannot use an index, so each value scans the class's reference nodes. Reference schemes are small. A large one wants an exact-term lookup instead (§18) |
+| a join | its parent's solutions times the nodes of the second class that share the compared value, one index probe for each parent value under a term or cast comparison and every node of the class under a lexical one | the join variable the two patterns share (§7.10) |
 | `IdentityAmbiguous`, `LookupAmbiguous` | one grouping pass over the construct's solutions | |
+| `JoinAmbiguous`, and the limit of `mork:AtMostOneMatch` | one grouping pass over the join, which the construct repeats | |
 | absence checks | one `FILTER NOT EXISTS` per solution | STD-029 |
 
 A mapping of n writing nodes is n constructs and at most two checks per node. Each query repeats its ancestors' patterns, so a deep DAG reads the same focus nodes once per descendant. That is the price of one independent query per mapping. A single combined query would read them once and lose the per-mapping traceability that §11 relies on.
@@ -620,6 +664,7 @@ The run reports three focus nodes. `ex:dune-2` has no ISBN (`IdentityUnbound`). 
 - **Axioms.** Each form and combination over named classes, and a union at the closure and per-class restrictions over classes made from data.
 - **Derivations.** A subscription scheme compiles to the query of §7.8, and a sample of four gives each product as an exact decimal on Oxigraph and on rdflib, with the subscription missing its price and the one whose price is no number each reported and written nothing for. Each operation, rounding at a positive and a negative scale, each comparison of a choice either way, typed literals, promotion between integer, decimal and double, and a quotient by zero of each datatype give their expected value or write nothing on both engines. A literal with a quote and a brace in it reaches the query escaped. The two differences of §7.8 are pinned, so an engine that changes fails there.
 - **Graph construction.** A scheme with a source-node root and a guarded contextual datum compiles to the query of §7.9 and runs on Oxigraph and rdflib. Orders with one code share a node, an order without the code contributes nothing and is reported, and an order with the key and without another required value writes no link even where another order made the node. Orders that disagree on a name are reported by node and value. A node for each instance merges nothing and takes no review, a keyed one takes it, a key of two values is one node for each pair, and the same answer comes whatever the order of the mapping graph and of the source.
+- **Join.** A scheme with a source-node root and a join datum compiles to the query of §7.10 and runs on Oxigraph and rdflib. Orders that name one customer link to it, an order with no code contributes nothing, an order whose code no customer holds is reported with the value, and an order whose code two customers hold writes no link and is reported with each. Under any number of matches it links to both and reports nothing as ambiguous, and on candidate evidence an unmatched order is silent. A guard on a second required value excludes a parent that a customer matches. A join on two values needs both to hold. A cast, a term and a lexical comparison each join a string code to an integer one as §7.10 says, and a cast with no datatype is lexical with a finding. A node in the reference data is never a match. A join that leaves out a part, or has a mapping beneath it, is refused by name, and the same answer comes whatever the order of the mapping graph and of the source. `tests/test_join.py`.
 - **Guards.** Each of fifteen shapes admits exactly the nodes pySHACL says conform, an unsupported feature refuses its mapping, guarded siblings divide their path, and a node no guard admits is reported.
 - **Validation.** Validating against the closed specification finds what full inference finds, on five mapping graphs, one of which breaks a shape.
 - **The skolem rule.** The vectors give exactly their expected triples, one name is re-derived by hand from §12.2, names do not depend on the triples' order, survive an unrelated addition and change with their own description, identical siblings stay two, and each irregular component is reported.
@@ -658,6 +703,7 @@ Taken while building, under the maintainer's direction to compile rather than in
 | MR-24 | A guard is a SHACL node shape named by `mork:appliesWhen`, compiled for a closed subset of SHACL with pySHACL as the oracle, and refused beyond it (decided 2026-10-29) | a guard tests the source's shape, which SHACL is the standard for, and no expression language is added to MORK |
 | MR-25 | MORK's specification is closed under RDFS once, and each mapping graph's own entailments are added to it for validation, unless it states schema (2026-10-29) | the closure was nearly all of a compile's time, and the findings are the same |
 | MR-26 | A derived value is written on the node a source-node datum iterates, one `CONSTRUCT` per derivation, its result cast to the root's datatype and its references not cast. Where a value is undefined nothing is written and a check says why, and a quotient of floats or doubles is guarded since XPath does not raise at zero (proposed 2026-11-24) | a derived property is never half written, and a reference read without a cast reports a value that is no number instead of changing it |
+| MR-27 | A join is a datum with `mork:joinsOn` beneath a source-node datum, which takes the second class's node from the source by equality of the parent's values and its own, writes the link and nothing else, states its cardinality and whether it reports an unmatched parent, and reads `mork:lookupComparison` as a lookup does. A lookup is unchanged and still reads reference data only (proposed 2026-11-24) | a join of two classes of the world is not a join to reference data, and a mapping states the meaning, never the compiler |
 
 ## 18. Open questions
 

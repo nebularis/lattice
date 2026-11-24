@@ -29,6 +29,7 @@ class Kind(Enum):
     CONTEXT = "context"                # a deferred context, which names what another mapping yields and writes nothing
     SOURCE_NODE = "source-node"        # a datum whose target node is the node it iterates, so nothing is minted or typed (§6)
     DERIVATION = "derivation"          # a property whose value is a value expression over what the focus node holds (§7.8)
+    JOIN = "join"                      # a datum whose target node is the node of a second class that equals its parent's values (§7.10)
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,9 @@ class Spec:
     guard: Optional[object] = None          # mork:appliesWhen, a SHACL node shape its focus nodes conform to (§7.7)
     identity_rule: Optional[URIRef] = None  # mork:identityRule, the rule that gives the datum its identity without a template
     value: Optional[URIRef] = None          # mork:valueExpression, the root of a typed value expression (§7.8)
+    joins: tuple = ()                       # mork:joinsOn, each condition as (parentRef path, parentRef text, ownRef path, ownRef text), sorted (§7.10)
+    join_cardinality: Optional[URIRef] = None   # mork:joinCardinality
+    reports_unmatched: Optional[bool] = None    # mork:reportsUnmatched
 
     @property
     def parent(self) -> Optional[URIRef]:
@@ -187,6 +191,24 @@ def _sources(g: Graph, node) -> tuple[URIRef, ...]:
         elif isinstance(concept, URIRef):
             out.add(concept)
     return tuple(sorted(out, key=str))
+
+
+def _joins(g: Graph, node, parse_path, declared: dict, findings: list) -> tuple:
+    """The conditions a datum joins on, each read once and sorted by its two paths, so the order they were written in
+    never changes a query. A condition missing a path, or with one that does not parse, is kept with `None` for it, and
+    classification refuses the datum by name."""
+    out = []
+    for condition in sorted(g.objects(node, MORK.joinsOn), key=str):
+        texts = [_text(g, condition, p) for p in (MORK.parentRef, MORK.ownRef)]
+        parsed = []
+        for text in texts:
+            try:
+                parsed.append(parse_path(text, declared) if text is not None else None)
+            except paths.PathError as error:
+                findings.append(Finding("BadPath", str(node), str(error)))
+                parsed.append(None)
+        out.append((parsed[0], texts[0], parsed[1], texts[1]))
+    return tuple(sorted(out, key=lambda c: (c[1] or "", c[3] or "")))
 
 
 def _identity(g: Graph, node) -> Optional[URIRef]:
@@ -326,6 +348,9 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             guard=_one(g, node, MORK.appliesWhen),
             identity_rule=_iri(g, node, MORK.identityRule),
             value=_iri(g, node, MORK.valueExpression),
+            joins=_joins(g, node, parse_path, declared, findings),
+            join_cardinality=_iri(g, node, MORK.joinCardinality),
+            reports_unmatched=flag.toPython() if isinstance(flag := _one(g, node, MORK.reportsUnmatched), Literal) and isinstance(flag.toPython(), bool) else None,
         )
 
     # --- templates (§8) ----------------------------------------------------------------------------------------------
@@ -402,6 +427,9 @@ def _merge(g: Graph, instance: Spec, template: Spec, specs: dict) -> Spec:
         guard=pick(instance.guard, template.guard),
         identity_rule=pick(instance.identity_rule, template.identity_rule),
         value=pick(instance.value, template.value),
+        joins=pick(instance.joins, template.joins),
+        join_cardinality=pick(instance.join_cardinality, template.join_cardinality),
+        reports_unmatched=pick(instance.reports_unmatched, template.reports_unmatched),
     )
 
 
@@ -424,6 +452,8 @@ def _classify(g: Graph, spec: Spec, specs: dict) -> tuple[Kind, Optional[Finding
         return Kind.ASSERTION, Finding("AxiomsOnExistingProperty", node, "domain and range axioms are made only for a property the mapping creates with a broad R-Box match, never for an existing one")
     if (spec.node, RDF.type, MORK.DeferredContext) in g and not (s.tbox or s.rbox or s.abox):
         return Kind.CONTEXT, None
+    if spec.joins:
+        return Kind.JOIN, _join_finding(spec, rbox)
     if spec.identity_rule is not None:
         if spec.identity_rule != MORK.SourceNodeIdentity:
             return Kind.SOURCE_NODE, Finding("IdentityRuleUnknown", node, f"{spec.identity_rule.n3()} is not an identity rule the compiler knows. It knows mork:SourceNodeIdentity")
@@ -462,6 +492,24 @@ def _classify(g: Graph, spec: Spec, specs: dict) -> tuple[Kind, Optional[Finding
     if s.abox:
         return Kind.CORRESPONDENCE, Finding("CorrespondenceUnused", node, "a correspondence is a row of its parent assertion's table, and this one has no parent", Severity.WARNING)
     return Kind.DATUM, Finding("Unclassified", node, "matches no case of the compiler: no T-Box, R-Box or A-Box match, and no datum")
+
+
+def _join_finding(spec: Spec, rbox) -> Optional[Finding]:
+    """Why a datum that states `mork:joinsOn` is no join, or None where it is one (§7.10)."""
+    node = str(spec.node)
+    if spec.identity_rule != MORK.SourceNodeIdentity:
+        return Finding("JoinIncomplete", node, "a join datum takes the node it finds, so it states mork:identityRule mork:SourceNodeIdentity")
+    if any(parent is None or own is None for parent, _, own, _ in spec.joins):
+        return Finding("JoinIncomplete", node, "a join condition names both mork:parentRef and mork:ownRef, each a path that parses")
+    if rbox is None or spec.parent is None or not spec.sources:
+        return Finding("JoinIncomplete", node, "a join datum names the class it iterates with mork:mappingFor, sits beneath a parent, and writes its link with an R-Box match")
+    if spec.join_cardinality not in (MORK.AtMostOneMatch, MORK.AnyNumberOfMatches):
+        return Finding("JoinIncomplete", node, "a join datum states mork:joinCardinality, mork:AtMostOneMatch or mork:AnyNumberOfMatches")
+    if spec.reports_unmatched is None:
+        return Finding("JoinIncomplete", node, "a join datum states mork:reportsUnmatched, true or false")
+    if spec.children:
+        return Finding("JoinWrites", node, "a join writes its link and nothing beneath it, so no mapping may sit beneath a join datum")
+    return None
 
 
 def effective_confidence(specs: dict) -> dict:

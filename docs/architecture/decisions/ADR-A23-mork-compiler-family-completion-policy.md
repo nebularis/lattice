@@ -57,3 +57,16 @@ ADR-A18's addendum of the same date lowers a graph construction projection into 
 3. **No new vocabulary.** The terms are those ADR-A18's addendum names.
 
 **Consequences.** The compiled queries of a construction are the same for the same scheme, and a sample of the carrier class run through them gives the nodes, the links and the values, with the excluded instances and the disagreements reported. Until a reader of the findings acts on `MappingReview`, the review ADR-A41 asks for is a finding and no more.
+
+## Addendum (2026-11-24): mork_rdf compiles join projections
+
+**Status of this addendum:** Proposed.
+
+ADR-A18's second addendum of the same date lowers a join projection into a mapping scheme whose second datum takes a node of the second carrier's class from the source by equality of values. A lookup cannot compile it, since a lookup reads reference data only so that source data cannot add codes to it (`mork_rdf` MR-10), and the policy above does not count a vocabulary no compiler reads as complete.
+
+1. **MORK gains a join datum.** A datum that states `mork:joinsOn` takes the node of the class it iterates whose values equal its parent's. A `mork:JoinCondition` states each equality by a path from the parent and a path from the node found. The datum states `mork:joinCardinality`, `mork:AtMostOneMatch` or `mork:AnyNumberOfMatches`, and `mork:reportsUnmatched`. It takes `mork:SourceNodeIdentity`, writes the link by an R-Box match and nothing else, and reads `mork:lookupComparison` and `mork:lookupDatatype` as a lookup does. Shapes refuse a join datum that leaves out a part.
+2. **`mork_rdf` compiles it as a case of its own.** The datum's frame matches an instance of its class and the equality, a term or cast comparison sharing one variable between the two patterns so an engine can serve it from an index. A guard on the datum is tested on the parent. Under at most one the construct is limited to the parents whose matches number one.
+3. **Three checks and a review report what the case leaves unsaid.** `InstanceExcluded` names each parent the guard excludes, `JoinUnmatched` a parent that holds the compared values and finds no node, where the datum says so, and `JoinAmbiguous` each match of a parent that finds several under at most one. A join datum carries a `MappingReview` warning, which ADR-A41 asks of a join.
+4. **A lookup is unchanged.** It reads reference data only, and a join reads the source.
+
+**Consequences.** The compiled query of a join is the same for the same scheme, and a sample of the carrier and second classes run through it gives the links, with the excluded, unmatched and ambiguous instances reported. Until a reader of the findings acts on `MappingReview`, the review ADR-A41 asks for is a finding and no more. A source can add nodes to a join where it cannot add codes to a lookup, which is why a join to curated reference data stays a lookup.
