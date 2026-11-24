@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** SVA-S2i, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** paused for the maintainer, who answers SVA-Q42 to SVA-Q48 of the projection backend sketch before SVA-S2i is built, and whether a join condition's comparison falls back to the datum's. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -266,3 +266,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-24: SVA-S2h's follow-up built and reviewed, its checks re-run. A candidate-evidence instance with values and no match is reported as information, the guard's limit is documented, each pair states its own datatype with the instance's value cast to the second carrier's, the count of matches defaults to at most one and is counted per value, and `srf:joinLinks` limits the links an instance may have, any number by default, with `JoinManyMatches` reporting a breach. The join addenda to ADR-A18 and ADR-A23 marked accepted, as the maintainer approved.
 - 2026-11-24: the maintainer confirmed that a pair casts the instance's value to the second carrier's datatype and never the reverse, which keeps the second carrier's side indexable, that MORK's link limit and unmatched severity stay optional with their defaults, and that both ambiguity reports stand, since their triggers differ. Whether a join condition falls back to the datum's comparison is put back to the maintainer with its consequences. SVA-S2i started.
 - 2026-11-24: SVA-S2i marked building.
+- 2026-11-24: SVA-S2i stopped at its first step with nothing built: an expansion's case is in the projection backend sketch's section 2.4, with SVA-Q42 to SVA-Q48 for the maintainer. The README says only that an expansion restates one relation as several, and what it expands (a fan-out of one value, a collection's members, a hierarchy) decides the contract's vocabulary and the scheme.
