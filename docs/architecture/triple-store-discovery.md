@@ -562,3 +562,19 @@ Recorded in the domain on 2026-11-19, after `v0.1.0`, so it has no tagged link y
 **What it means for LATTICE.** The generated persistence writes read `NOW()` for the month of the receipt and event graphs and for stored times, so on Jena they cannot be replayed at a stated time, and the operations of one request record times milliseconds apart (TD-256). The studio's simulator replaces each `NOW()` in the parsed update with the step's stated time and shows the update as it ran (SVA-P3). `NowPinningProbeTest` in `platform/config-studio-transforms` runs the probe, so a Jena that starts honouring a stated time fails there.
 
 TD-256 rests on it.
+
+### TSD-77. A decimal sum or product keeps its scale on rdflib and is canonical on Oxigraph
+
+Recorded in the domain on 2026-11-24, after `v0.1.0`, so it has no tagged link yet. `mise run graph:ask -- read TSD-77` prints it from the domain's clone.
+
+**What it means for LATTICE.** A projection's derived value, compiled by `mork_rdf`, is the same value on both engines and a different term, so `mork_rdf`'s tests compare derived decimals as values, and any digest over a derived decimal is taken of a canonical form LATTICE writes, never of the engine's term.
+
+Nothing in the registers rests on it.
+
+### TSD-78. A float or double divided by zero is unbound on rdflib and infinity on Oxigraph
+
+Recorded in the domain on 2026-11-24, after `v0.1.0`, so it has no tagged link yet. `mise run graph:ask -- read TSD-78` prints it from the domain's clone.
+
+**What it means for LATTICE.** MORK makes a quotient by zero undefined, so `mork_rdf` divides a float or double only by a divisor that is not zero, which leaves the result unbound on both engines, and a check reports the instance.
+
+Nothing in the registers rests on it.
