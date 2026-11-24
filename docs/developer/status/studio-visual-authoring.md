@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-24. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-24. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused before SVA-S2i for the maintainer, who confirms four readings SVA-S2h's follow-up made and says when SVA-S2i starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** SVA-S2i, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -64,7 +64,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2f | `mork_rdf` compiles a derivation | built 2026-11-24, building 2026-11-24 | SVA-S2e |
 | SVA-S2g | graph construction projections | built 2026-11-24 | SVA-S2f |
 | SVA-S2h | join projections | built 2026-11-24, building 2026-11-24 | SVA-S2f |
-| SVA-S2i | expansion projections | planned | SVA-S2f |
+| SVA-S2i | expansion projections | building 2026-11-24 | SVA-S2f |
 | SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2g, SVA-S2h, SVA-S2i |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
@@ -264,3 +264,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-24: with the maintainer's permission, SVA-S2h's rdflib finding recorded in the triple-stores domain as TSD-79, a sub-select evaluated with the outer query's bindings, probed again on rdflib 7.6.0 and Oxigraph 0.5.13. LATTICE's page names it.
 - 2026-11-24: the maintainer answered SVA-S2h's choices. A candidate-evidence instance that holds the values and finds no match is reported as information, and one without the values stays silent. The guard's limit on the matched node's evidence is documented. Each pair of a join states its own datatype. How many instances a value names may be omitted, at most one by default, written explicitly by the lowering. It is counted per value, and a second selectable rule limits the links an instance may have, any number by default. The maintainer approved the addenda on joins to ADR-A18 and ADR-A23, accepted once their text matches these answers. Built as SVA-S2h's follow-up.
 - 2026-11-24: SVA-S2h's follow-up built and reviewed, its checks re-run. A candidate-evidence instance with values and no match is reported as information, the guard's limit is documented, each pair states its own datatype with the instance's value cast to the second carrier's, the count of matches defaults to at most one and is counted per value, and `srf:joinLinks` limits the links an instance may have, any number by default, with `JoinManyMatches` reporting a breach. The join addenda to ADR-A18 and ADR-A23 marked accepted, as the maintainer approved.
+- 2026-11-24: the maintainer confirmed that a pair casts the instance's value to the second carrier's datatype and never the reverse, which keeps the second carrier's side indexable, that MORK's link limit and unmatched severity stay optional with their defaults, and that both ambiguity reports stand, since their triggers differ. Whether a join condition falls back to the datum's comparison is put back to the maintainer with its consequences. SVA-S2i started.
+- 2026-11-24: SVA-S2i marked building.
