@@ -18,7 +18,7 @@ DEP = "<dependency><groupId>{}</groupId><artifactId>{}</artifactId>{}</dependenc
 
 def write(root: Path, relative: str, text: str) -> None:
     (root / relative).parent.mkdir(parents=True, exist_ok=True)
-    (root / relative).write_text(text)
+    (root / relative).write_text(text, encoding="utf-8")
 
 
 def test_repository_is_isolated() -> None:

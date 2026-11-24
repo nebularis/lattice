@@ -23,7 +23,7 @@ def installed_version() -> str | None:
     if shutil.which("vyd") is None:
         return None
     try:
-        out = subprocess.run(["vyd", "--version"], capture_output=True, text=True, timeout=30).stdout.strip()
+        out = subprocess.run(["vyd", "--version"], capture_output=True, text=True, encoding="utf-8", timeout=30).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return None
     return out.split()[-1] if out else None
@@ -63,7 +63,7 @@ def main() -> int:
     kind, note = None, None
     if have_uv and installed:
         try:
-            tool_dir = subprocess.run(["uv", "tool", "dir"], capture_output=True, text=True, timeout=30).stdout.strip()
+            tool_dir = subprocess.run(["uv", "tool", "dir"], capture_output=True, text=True, encoding="utf-8", timeout=30).stdout.strip()
         except (OSError, subprocess.SubprocessError):
             tool_dir = ""
         if tool_dir:

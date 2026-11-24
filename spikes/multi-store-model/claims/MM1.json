@@ -1,0 +1,13 @@
+{
+  "subject": "MM1",
+  "statedAs": "Laws.applied_exactly_when_every_guard_holds, otherwise_the_first_failed_guard_decides",
+  "statementDigest": "sha256:71527f3db5ffb2ac6dd3f8812e82beec360709be97741d5ff9bff2aa7f7089ae",
+  "method": "Proof",
+  "scope": "EveryWellFormedCommand",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

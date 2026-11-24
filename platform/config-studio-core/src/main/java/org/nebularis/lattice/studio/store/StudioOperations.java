@@ -258,6 +258,11 @@ public final class StudioOperations {
         return store.tombstoned(graphOf(operation(f, "create-if-absent").contract, "metaGraphPrefix"), root);
     }
 
+    /** Whether {@code root} has a version row, live or tombstoned, so a create of it writes nothing. */
+    public boolean hasRow(StudioStore store, Family f, String root) {
+        return store.hasVersionRow(graphOf(operation(f, "create-if-absent").contract, "metaGraphPrefix"), root);
+    }
+
     /** The revision that transaction {@code txnId} claimed, empty when it has claimed none. */
     public Optional<String> claimed(StudioStore store, String txnId) {
         return store.claimRev(txnGraph, txnId);

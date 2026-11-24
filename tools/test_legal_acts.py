@@ -96,8 +96,8 @@ def test_c9b1_02_the_acts_document_imports_no_behaviour_runtime() -> None:
     version = main.value(URIRef("https://www.nebularis.org/neuro-semantic/instrument"), OWL.versionIRI)
     assert set(acts.objects(None, OWL.imports)) == {version}
     for path in (ACTS, SPEC):
-        assert "behaviour-runtime" not in path.read_text() and "/applied/" not in path.read_text(), path.name
-    assert "instrument-acts" not in SPEC.read_text()
+        assert "behaviour-runtime" not in path.read_text(encoding="utf-8") and "/applied/" not in path.read_text(encoding="utf-8"), path.name
+    assert "instrument-acts" not in SPEC.read_text(encoding="utf-8")
     runtime = _graph(ONTOLOGY / "behaviour" / "spec" / "behaviour-runtime.ttl")
     declared = {s for s in runtime.subjects(RDF.type, None) if str(s).startswith(str(BHV))}
     assert not declared & set(acts.all_nodes()), declared & set(acts.all_nodes())
@@ -274,7 +274,7 @@ def test_c9b1_11_a_term_implied_by_a_judgment() -> None:
     assert g.value(term, INS.activity) == INS_VOC.Refuse
     assert g.value(g.value(term, INS.scope), ELG.requiredConcept) == RE.arbitrary
     assert not [r for r in g.subjects(INS.impliedBy, source) if (r, RDF.type, INS.Obligation) in g]
-    readme = (LAYER / "README.md").read_text()
+    readme = (LAYER / "README.md").read_text(encoding="utf-8")
     assert "Instrument's runtime document is upstream" not in readme
 
 
@@ -299,7 +299,7 @@ def test_c9b1_12_an_exercise_record_is_a_finding_about_an_exercise() -> None:
     assert "exercise act" in str(runtime.value(BHV.exercised, RDFS.comment))
     assert "finding" in str(runtime.value(BHV.ExerciseRecord, RDFS.comment))
     assert "Deprecated on an exercise record" in str(runtime.value(BHV.actor, FND.utility))
-    assert "ins:" not in RUNTIME.read_text() and "lattice/instrument" not in RUNTIME.read_text()
+    assert "ins:" not in RUNTIME.read_text(encoding="utf-8") and "lattice/instrument" not in RUNTIME.read_text(encoding="utf-8")
 
 
 def test_c9b1_13_an_acceptance_record_is_deprecated_with_a_warning() -> None:
@@ -322,7 +322,7 @@ def test_c9b1_14_licence_suspension_keeps_no_acceptance() -> None:
     assert _bhv_results(g) == []
     for name, record in (("force-majeure", "flood-notice"), ("occasion-refinement", "r-notified"),
                          ("garden-leave", "ben-withdrawal")):
-        text = (BHV_LAYER / "examples" / f"{name}.ttl").read_text()
+        text = (BHV_LAYER / "examples" / f"{name}.ttl").read_text(encoding="utf-8")
         before = text[:text.index(f"ex:{record} a bhv:ActRecord")]
         comment = " ".join(line.lstrip("# ") for line in before.rsplit("\n\n", 1)[-1].splitlines())
         assert "legal act of the layer above" in comment, name
@@ -331,10 +331,10 @@ def test_c9b1_14_licence_suspension_keeps_no_acceptance() -> None:
 # ---- C9b1-15: release ------------------------------------------------------------------
 
 def test_c9b1_15_release_notes_and_versions() -> None:
-    assert "- 0.16.0 (breaking, CCS C9b1" in (LAYER / "README.md").read_text()
+    assert "- 0.16.0 (breaking, CCS C9b1" in (LAYER / "README.md").read_text(encoding="utf-8")
     assert "- 0.14.0 (`behaviour`, `behaviour-runtime` and `behaviour-vocab`, breaking, CCS C9b1" in \
-        (BHV_LAYER / "README.md").read_text()
-    register = (ONTOLOGY.parent / "docs" / "architecture" / "ontology-releases.md").read_text()
+        (BHV_LAYER / "README.md").read_text(encoding="utf-8")
+    register = (ONTOLOGY.parent / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("instrument-v0.16.0", "instrument-acts-v0.16.0", "instrument-vocab-v0.16.0", "instrument-shapes-v0.8.0",
                 "behaviour-v0.14.0", "behaviour-runtime-v0.14.0", "behaviour-vocab-v0.14.0", "behaviour-shapes-v0.5.0",
                 "applied-capacity-execution-v0.14.0"):

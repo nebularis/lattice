@@ -54,6 +54,8 @@ mise run check:testing-postgres       # this package's own tests
 
 `mise run bootstrap` installs this package without its server, so its tests skip until `bootstrap:testing-postgres` has run.
 
+Run `mise run bootstrap` once in a checkout before `check:testing-postgres`, as for every check. The task installs only this package and its server, and pytest also loads `tools/conftest.py`, which imports pySHACL, and needs the [requires plugin](../requires/README.md) to register the `requires` marker. Both come with `mise run bootstrap`. In a checkout that was never bootstrapped, the run stops with `ModuleNotFoundError: No module named 'pyshacl'` before any test runs.
+
 ## Design decisions
 
 - **A test-support package under `tools/testing/`** ([ADR-A125](../../../docs/architecture/decisions/ADR-A125-test-support-tooling.md)). Only tests, checks and benchmarks import it, and a suite that uses it skips without it.

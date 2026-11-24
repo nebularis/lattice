@@ -241,7 +241,7 @@ public final class Writer {
     /**
      * The rows that deletions answered from their receipts retire, which no plan in this batch holds: each part's and
      * document's graph its receipt says it wrote. A deleted workspace's description is tombstoned, so the receipt is what
-     * still names its documents. A deleted id is never used again (MSA-F9), so a row among them still live is one its
+     * still names its documents. A deleted id is never used again (MSA-F9, MSA-F15), so a row among them still live is one its
      * tombstone lost.
      */
     private List<Retired> retiredBy(List<Command> resent) {
@@ -305,9 +305,9 @@ public final class Writer {
             return seqs.computeIfAbsent(root, r -> ops.seq(store, f, r).orElse(0L));
         }
 
-        /** Whether {@code root} is tombstoned in the store, or by a deletion earlier in this batch. */
-        boolean deleted(Family f, String root) {
-            return retired.values().stream().flatMap(List::stream).anyMatch(r -> r.root().equals(root)) || ops.tombstoned(store, f, root);
+        /** Whether {@code root} has a version row in the store, live or tombstoned, or is tombstoned by a deletion earlier in this batch. */
+        boolean hasRow(Family f, String root) {
+            return retired.values().stream().flatMap(List::stream).anyMatch(r -> r.root().equals(root)) || ops.hasRow(store, f, root);
         }
 
         /** The operations of one command in order, each in a transaction of its own (PB-D10), and its receipt after them. */
@@ -696,9 +696,11 @@ public final class Writer {
             long next = c.expect() + 1;
             Workspace.Document held = ws.documents().get(doc);
             String root = Graphs.document(ws.id(), doc);
-            // A deleted document's row stays tombstoned, and a create over it writes nothing, so its id is refused before the
-            // description could list a document with no graph (MSA-F9).
-            if (held == null && c.expect() == 0 && deleted(Family.DOCUMENT, root)) {
+            // A create over a version row writes nothing, so an id that has one is refused before the description could list the
+            // document. A deleted document's row stays tombstoned (MSA-F9), and one whose tombstone lost stays live and unlisted
+            // until the deletion removes it (MSA-F15). A row this command's own create wrote, the command's first step, on a
+            // delivery whose description step lost, is the command's, and its resend completes it (MSAF6-02).
+            if (held == null && c.expect() == 0 && hasRow(Family.DOCUMENT, root) && ops.claimed(store, "urn:txn:" + c.id() + "/1").isEmpty()) {
                 return Reply.refused("the document was deleted, so its id cannot be used again");
             }
             boolean described = held != null && held.title().equals(c.label()) && held.template().equals(c.sample());

@@ -143,7 +143,7 @@ def test_h1_2d_t9_every_shipped_example_still_compiles_or_is_refused_as_before()
 
 def test_h1_2d_t10_the_cli_reports_the_refusal_and_exits_one(tmp_path, capsys):
     config = tmp_path / "multi.ttl"
-    config.write_text(PREFIXES + _competing_scopes("1, 3"))
+    config.write_text(PREFIXES + _competing_scopes("1, 3"), encoding="utf-8")
     code = main(["compile", str(SPEC_TTL), str(config), "--out", str(tmp_path / "out.ttl")])
     assert code == 1
     assert "MultiValuedFunctionalProperty" in capsys.readouterr().err

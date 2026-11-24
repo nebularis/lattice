@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# The derived family of one promotion in R2RML, with its relational place stated
+# in the same spike terms as the ledger's (place.ttl). The promotion is the
+# subscription's currency in Surface's example saas-subscription-currency, which
+# restates the end of a three-step read path as one property on the carrier.
+#
+# The family is placed apart from its source, its rows partitioned by the source
+# aggregate they derive from and keyed to the carrier (option (iii) of PM-Q9, and
+# PM-Q1 (a')). The source root decodes to nothing. The example declares no
+# persistence profile, so the spike takes each subscription as the root of its own
+# aggregate, which the rule below states.
+#
+# The path's last step is an object property, so the promoted value is an IRI and
+# one column holds it. A path that ends in a literal of one datatype is one column
+# with that datatype. A path whose values mix IRIs and literals, or literals of
+# several datatypes, is not mapped here (the note, section 4).
+
+@prefix rr:   <http://www.w3.org/ns/r2rml#> .
+@prefix rp:   <https://example.org/lattice/spike/relational-place#> .
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix exec: <https://example.org/lattice/surface/saas/exec#> .
+@prefix m:    <https://example.org/lattice/spike/promotion-mapping#> .
+
+m:subscription-currency-table a rr:LogicalTable ;
+    rr:tableName "subscription_currency" ;
+    rp:primaryKey ( "source" "carrier" "value" ) ;
+    rp:keyPart [ rp:column "source" ; rp:resource dal:Aggregate ; rp:part "root" ] ,
+        [ rp:column "carrier" ; rp:resource dal:Aggregate ; rp:part "record" ] ,
+        [ rp:column "value" ; rp:resource dal:Aggregate ; rp:part "value" ] ;
+    rp:derived [ rp:column "source" ; rp:sqlType "text" ; rp:fromColumn "carrier" ; rp:sameAsColumn "carrier" ;
+        rp:rule "the root of the source aggregate the carrier is in, here the carrier itself" ] .
+
+m:SubscriptionCurrency a rr:TriplesMap ;
+    rr:logicalTable m:subscription-currency-table ;
+    rr:subjectMap [ rr:column "carrier" ] ;
+    rr:predicateObjectMap
+        [ rr:predicate exec:subscriptionCurrency ; rr:objectMap [ rr:column "value" ; rr:termType rr:IRI ] ] .

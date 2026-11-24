@@ -71,7 +71,7 @@ def test_c11_01_runtime_version_imports_and_no_instrument() -> None:
     runtime = _graph(RUNTIME)
     assert runtime.value(URIRef("https://www.nebularis.org/neuro-semantic/behaviour-runtime"), OWL.versionIRI) == URIRef(LATTICE + f"behaviour-runtime/{RELEASE}")  # C11a
     assert set(runtime.objects(None, OWL.imports)) == {URIRef(LATTICE + f"behaviour/{RELEASE}")}
-    assert "lattice/instrument" not in RUNTIME.read_text() and "ins:" not in RUNTIME.read_text()
+    assert "lattice/instrument" not in RUNTIME.read_text(encoding="utf-8") and "ins:" not in RUNTIME.read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("example", ALL_EXAMPLES, ids=lambda p: p.stem)
@@ -128,11 +128,11 @@ def test_c11_09_examples_are_consistent(example: Path) -> None:
 
 
 def test_c11_10_release_rows_and_notes() -> None:
-    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
+    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("behaviour-v0.9.0", "behaviour-runtime-v0.9.0", "behaviour-vocab-v0.9.0", "behaviour-shapes-v0.3.0",
                 "applied-capacity-execution-v0.9.0"):
         assert f"| {tag} |" in register, tag
-    assert "Shapes 0.3.0 (breaking)" in (LAYER / "README.md").read_text()
+    assert "Shapes 0.3.0 (breaking)" in (LAYER / "README.md").read_text(encoding="utf-8")
 
 
 def test_c11_12_an_initial_state_outside_its_space_fails() -> None:

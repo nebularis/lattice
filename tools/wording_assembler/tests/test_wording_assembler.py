@@ -240,7 +240,7 @@ def _validate(xml: str, tmp_path: Path) -> None:
     if shutil.which("xmllint"):                                  # the schema check runs where xmllint is installed
         path = tmp_path / "out.xml"
         path.write_text(xml, encoding="utf-8", newline="\n")
-        done = subprocess.run(["xmllint", "--noout", "--schema", str(schema), str(path)], capture_output=True, text=True)
+        done = subprocess.run(["xmllint", "--noout", "--schema", str(schema), str(path)], capture_output=True, text=True, encoding="utf-8")
         assert done.returncode == 0, done.stderr
 
 

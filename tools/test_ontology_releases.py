@@ -29,13 +29,13 @@ def test_unlisted_version_fails_until_written_and_rows_are_kept(repo: Path) -> N
     write(repo)
     assert check(repo) == []
     assert pending_tags(repo) == ["doc-v0.1.0", "layer-shapes-v0.1.0"]
-    assert "shapes/structural.ttl" in (repo / REGISTER).read_text()
+    assert "shapes/structural.ttl" in (repo / REGISTER).read_text(encoding="utf-8")
     write_file(repo, "ontology/layer/spec/layer.ttl", document("0.2.0"))
     write(repo)
-    rows = [line for line in (repo / REGISTER).read_text().splitlines() if line.startswith("| doc |")]
+    rows = [line for line in (repo / REGISTER).read_text(encoding="utf-8").splitlines() if line.startswith("| doc |")]
     assert [row.split("|")[2].strip() for row in rows] == ["0.1.0", "0.2.0"]
     assert "[doc-spec-v0.2.0.ttl](" in rows[1]
-    assert "[layer-shapes-structural-v0.1.0.ttl](" in (repo / REGISTER).read_text()
+    assert "[layer-shapes-structural-v0.1.0.ttl](" in (repo / REGISTER).read_text(encoding="utf-8")
 
 
 def test_tag_on_another_version_fails(repo: Path) -> None:

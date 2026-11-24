@@ -102,8 +102,8 @@ def test_sh_t9_a_killed_starter_leaves_no_process_and_no_run_folder(tmp_path: Pa
     run_dir = tmp_path / "run-id"
     (run_dir / "run").mkdir(parents=True)
     process = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"], **stack.detached())
-    (run_dir / "run" / "fuseki.pid").write_text(str(process.pid))
-    starter = subprocess.Popen([sys.executable, "-c", "import sys, time; from pathlib import Path; from lattice_testing_studio_harness import reaper; r = reaper.start(Path(sys.argv[1])); print('up', flush=True); time.sleep(120)", str(run_dir)], stdout=subprocess.PIPE, text=True)
+    (run_dir / "run" / "fuseki.pid").write_text(str(process.pid), encoding="utf-8")
+    starter = subprocess.Popen([sys.executable, "-c", "import sys, time; from pathlib import Path; from lattice_testing_studio_harness import reaper; r = reaper.start(Path(sys.argv[1])); print('up', flush=True); time.sleep(120)", str(run_dir)], stdout=subprocess.PIPE, text=True, encoding="utf-8")
     try:
         assert starter.stdout.readline().strip() == "up"
         assert process.poll() is None, "the process stopped while its starter still ran"

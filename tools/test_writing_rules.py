@@ -78,10 +78,10 @@ def test_gh3_09_the_staged_lines_of_a_repository(tmp_path: Path) -> None:
     def sh(*args: str) -> None:
         subprocess.run(list(args), cwd=tmp_path, check=True, capture_output=True)
     sh("git", "init", "-q", "-b", "main")
-    (tmp_path / "a.md").write_text("Fine.\n")
+    (tmp_path / "a.md").write_text("Fine.\n", encoding="utf-8")
     sh("git", "add", ".")
     sh("git", "-c", "user.email=t@example.org", "-c", "user.name=T", "commit", "-q", "--no-verify", "-m", "x")
-    (tmp_path / "a.md").write_text("Fine.\n\nNot fine; at all.\n")
+    (tmp_path / "a.md").write_text("Fine.\n\nNot fine; at all.\n", encoding="utf-8")
     sh("git", "add", ".")
     found = wr.check(tmp_path, wr.staged(tmp_path))
     assert [str(f) for f in found] == ["a.md:3: a semicolon in prose. Use a period or a comma"]

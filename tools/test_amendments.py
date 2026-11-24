@@ -277,9 +277,9 @@ def test_c9a_13_one_case_per_relation() -> None:
 # ---- C9a-14: release -------------------------------------------------------------
 
 def test_c9a_14_release_notes_and_versions() -> None:
-    readme = (ONTOLOGY / "instrument" / "README.md").read_text()
+    readme = (ONTOLOGY / "instrument" / "README.md").read_text(encoding="utf-8")
     assert "- 0.15.0 (CCS C9a" in readme
     assert not (ONTOLOGY / "instrument" / "shapes" / ".version").exists()
-    register = (ONTOLOGY.parent / "docs" / "architecture" / "ontology-releases.md").read_text()
+    register = (ONTOLOGY.parent / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("instrument-v0.15.0", "instrument-vocab-v0.15.0", "instrument-shapes-v0.7.0"):
         assert f"| {tag} |" in register, tag

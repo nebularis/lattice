@@ -129,7 +129,8 @@ def test_h1_1_t11_no_shipped_example_has_a_prefix_violation(example):
 def test_h1_1_t12_cli_exits_nonzero_and_names_the_pair_on_a_violation(tmp_path, capsys):
     cfg = tmp_path / "overlap.ttl"
     cfg.write_text(
-        PREAMBLE + _graph_scope("Outer", "urn:g:lending/", "Behaviour") + _graph_scope("Inner", "urn:g:lending/behaviour/", "Behaviour")
+        PREAMBLE + _graph_scope("Outer", "urn:g:lending/", "Behaviour") + _graph_scope("Inner", "urn:g:lending/behaviour/", "Behaviour"),
+        encoding="utf-8",
     )
     assert main(["hygiene", str(cfg)]) == 1
     out = capsys.readouterr().out
@@ -138,8 +139,8 @@ def test_h1_1_t12_cli_exits_nonzero_and_names_the_pair_on_a_violation(tmp_path, 
 
 def test_h1_1_t13_cli_exits_zero_on_a_clean_configuration_and_on_warnings_only(tmp_path):
     clean = tmp_path / "clean.ttl"
-    clean.write_text(PREAMBLE + _graph_scope("A", "urn:g:a/", "C") + _graph_scope("B", "urn:g:b/", "C"))
+    clean.write_text(PREAMBLE + _graph_scope("A", "urn:g:a/", "C") + _graph_scope("B", "urn:g:b/", "C"), encoding="utf-8")
     assert main(["hygiene", str(clean)]) == 0
     warn = tmp_path / "warn.ttl"
-    warn.write_text(PREAMBLE + _ns_scope("Wide", "https://example.org/") + _ns_scope("Narrow", "https://example.org/x#"))
+    warn.write_text(PREAMBLE + _ns_scope("Wide", "https://example.org/") + _ns_scope("Narrow", "https://example.org/x#"), encoding="utf-8")
     assert main(["hygiene", str(warn)]) == 0

@@ -140,7 +140,7 @@ def test_od2_t3_what_section_1_cannot_hold_is_refused(purpose: str, message: str
 def test_od2_t4_the_release_tag_follows_the_versioning_policy_for_every_current_document() -> None:
     iris = set()
     for path in subprocess.run(["git", "ls-files", "ontology/**/spec/*.ttl", "ontology/**/vocab/*.ttl"],
-                               cwd=ROOT, capture_output=True, text=True, check=True).stdout.split():
+                               cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True).stdout.split():
         iris.update(re.findall(r"owl:versionIRI\s+<([^>]+/\d+\.\d+\.\d+)>", (ROOT / path).read_text(encoding="utf-8")))
     assert len(iris) > 20
     for iri in iris:

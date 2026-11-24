@@ -421,8 +421,8 @@ def render(report: Report) -> str:
 
 
 def write(report: Report, directory: Path = HERE) -> None:
-    (directory / "report.json").write_text(json.dumps({"run": report.run_record, "measurements": [m.__dict__ for m in report.measurements], "parse": report.parse}, indent=2))
-    (directory / "report.md").write_text(render(report))
+    (directory / "report.json").write_text(json.dumps({"run": report.run_record, "measurements": [m.__dict__ for m in report.measurements], "parse": report.parse}, indent=2), encoding="utf-8", newline="\n")
+    (directory / "report.md").write_text(render(report), encoding="utf-8", newline="\n")
 
 
 def main() -> int:

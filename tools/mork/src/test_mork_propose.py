@@ -56,7 +56,7 @@ def test_the_pack_holds_mtp_and_the_codebook():
 def test_the_check_reports_a_proposal_that_does_not_decode_or_names_no_scheme():
     bad = json.loads(check_mapping("this is not mcn"))
     assert not bad["decoded"] and bad["findings"][0]["stage"] == "decode"
-    cassette = yaml.safe_load((ROOT / "ontology" / "mork" / "mtp" / "data" / "cassettes" / "C-LOAN.yaml").read_text())["mcn"]
+    cassette = yaml.safe_load((ROOT / "ontology" / "mork" / "mtp" / "data" / "cassettes" / "C-LOAN.yaml").read_text(encoding="utf-8"))["mcn"]
     loan = json.loads(check_mapping(cassette))
     assert loan["decoded"] and loan["errors"] == 0, "a JSON source is left to its backend, not refused"
 
@@ -114,7 +114,7 @@ def test_the_pipeline_compiles_an_rdf_scheme_with_mork_rdf_and_refuses_what_the_
     from mork_communities.pipeline import PipelineNodes
 
     nodes = PipelineNodes(None, None, None)
-    state = {"mapping_turtle": PACK.read_text(), "iteration_count": 0, "session_id": "s", "provenance": []}
+    state = {"mapping_turtle": PACK.read_text(encoding="utf-8"), "iteration_count": 0, "session_id": "s", "provenance": []}
     compiled = asyncio.run(nodes.compile(state))
     assert [a["artefact_type"] for a in compiled["compiled_artefacts"]] == ["sparql"]
     cycle = """@prefix mork: <http://www.nebularis.org/ontologies/Mork#> . @prefix mm: <http://example.org/m#> .
@@ -125,7 +125,7 @@ def test_the_pipeline_compiles_an_rdf_scheme_with_mork_rdf_and_refuses_what_the_
 
 def test_an_uncertain_mapping_in_a_proposal_waits_for_review_and_is_no_error():
     mcn = (ROOT / "ontology" / "mork" / "mtp" / "data" / "cassettes" / "C-UNCERTAIN.yaml")
-    text = yaml.safe_load(mcn.read_text())["mcn"]
+    text = yaml.safe_load(mcn.read_text(encoding="utf-8"))["mcn"]
     checked = json.loads(check_mapping(text))
     reviews = [f for f in checked["findings"] if f["code"] == "Uncertain"]
     assert reviews and all(f["severity"] == "review" for f in reviews)

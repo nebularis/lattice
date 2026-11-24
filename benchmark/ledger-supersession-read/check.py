@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 # NB: This module has been produced using GenAI
 
-"""What a record of a change of terms adds to the read of a balance, held four ways, on Oxigraph, Jena and rdflib (ADR-A124, LG-32, LG-Q52).
+"""What a record of a change of terms adds to the read of a balance, held four ways, on Oxigraph, Jena and rdflib, and on PostgreSQL (ADR-A124, LG-32, LG-Q52, MSA-I7).
 
 The ledger layer lets an account come under a later version of its account definition. The record of that is a supersession, and what it is written on is LG-Q52 of
 `docs/developer/sketches/ledger-definition-versions-in-force.md`. The layer declares no supersession term yet, so this benchmark declares its own under the prefix `b:`
@@ -37,14 +37,23 @@ The reads, each timed over a fixed sample of accounts, at least 30 repetitions, 
 and point, equals the model's value, so all four variants agree. The stored triples, and the triples a change of terms writes, have the count the arithmetic gives. A wrong value
 fails the run and names the variant, the engine, the account and the two values. **Time never fails it.** Timings go to `report.md` and `report.json` here, generated and git-ignored.
 
+**The PostgreSQL arm** (MSA-I7). The same triples, given the layer's supersession terms (`ldg:Supersession`, `ldg:forOwner`, `ldg:supersedingVersion`) in place of the stand-ins
+above, are decoded into rows of the benchmark's own relational layout (`LAYOUT`) and copied into a database of the PostgreSQL test fixture (`tools/testing/postgres`). It runs
+per-version and per-pass, the two forms the layer built, and never the per-account forms, since the layer has no supersession on an account. Each read is one SQL statement with
+bound parameters, and its value is checked against the same model. The stored count is the rows of the entity tables, their filled cells and the rows of the link tables, which
+equals the triples, since each triple is a row's type, a cell or a link row. The write of the last change also reports the time its decode took.
+
 Run `mise run check:ledger-supersession-read`. `LEDGER_SUPERSESSION_QUICK=1` runs the smallest size only, `LEDGER_SUPERSESSION_MAX` caps the events, `LEDGER_SUPERSESSION_ENGINES`
-(a comma list of oxigraph, jena, rdflib) picks engines and `LEDGER_SUPERSESSION_REPS` sets the repetitions (default 30). Oxigraph is persisted to a temporary directory that is
-removed when the run ends, including on failure. Jena runs when its test kit jar is built (`mise run bootstrap:sparql-testkit`)."""
+(a comma list of oxigraph, jena, rdflib, postgresql) picks engines and `LEDGER_SUPERSESSION_REPS` sets the repetitions (default 30). Oxigraph is persisted to a temporary directory
+that is removed when the run ends, including on failure. Jena runs when its test kit jar is built (`mise run bootstrap:sparql-testkit`). PostgreSQL runs where the fixture's server
+is installed (`mise run bootstrap:testing-postgres`), and is skipped with the reason where it is not."""
 
 from __future__ import annotations
 
 import bisect
+import contextlib
 import gc
+import importlib
 import json
 import math
 import os
@@ -77,7 +86,8 @@ CHANGES = (0, 1, 10)
 SITES = 1000
 VARIANTS = ("per-account", "per-account-with-balance", "per-version", "per-pass")
 PER_ACCOUNT = ("per-account", "per-account-with-balance")
-ENGINES = ("oxigraph", "jena", "rdflib")
+LAYER_VARIANTS = ("per-version", "per-pass")  # the forms the layer built, a supersession naming its owner
+ENGINES = ("oxigraph", "jena", "rdflib", "postgresql")
 READS = ("V", "R1", "R2", "R3", "B")
 REPS = 30
 SEED = 20261123
@@ -242,7 +252,7 @@ def version_triples(name: str, k: int) -> list[tuple]:
            (q, RDF_TYPE, I(QNT + "Quantity")), (q, QNT + "onSpace", I(SPACE)), (q, QNT + "numericValue", D(amount)),
            (v, LDG + "unitOfAccount", I(SPACE)), (v, LDG + "admitsOwnerKind", I(OWNER_KIND)), (v, LDG + "mergePolicy", I(POLICY))]
     if parent:
-        out.append((v, LDG + "partOf", I(version_iri(parent, k))))
+        out.append((v, LDG + "partOf", I(version_iri(parent, 1 if parent == "cap" else k))))  # a change never reaches the cap, so its first version stays the parent's
     if name == "agg":
         c = f"urn:bench:def/{name}/v{k}/ceiling"
         out += [(v, RDFS_COMMENT, ("s", "The annual aggregate.")), (v, LDG + "creditCeiling", I(c)), (c, RDF_TYPE, I(QNT + "Quantity")), (c, QNT + "onSpace", I(SPACE)), (c, QNT + "numericValue", D(amount))]
@@ -455,7 +465,282 @@ class JenaBackend:
         self.store.close()
 
 
-BACKENDS = {"oxigraph": OxigraphBackend, "jena": JenaBackend, "rdflib": RdflibBackend}
+# ---- the PostgreSQL arm -----------------------------------------------------------------------------------------------------------------------------------------------
+#
+# The benchmark's own relational layout. Each typed subject is a row of the table its type names, keyed by its IRI, and each other predicate of it is a column, so a functional
+# predicate holds one value. A predicate that may hold several values, or that an earlier write's subject states in a later write, is a link table of two columns. Every reference
+# is a foreign key, checked at commit, every exactly-one predicate is NOT NULL, and a position or a revision is at least 0.
+
+LAYER_TERMS = {B + "Supersession": LDG + "Supersession", B + "owner": LDG + "forOwner", B + "supersedingVersion": LDG + "supersedingVersion"}
+RDFS = "http://www.w3.org/2000/01/rdf-schema#"
+SQL_TYPES = {"i": "text", "s": "text", "n": "bigint", "d": "numeric"}
+
+
+@dataclass(frozen=True)
+class Column:
+    name: str
+    predicate: str
+    kind: str  # the term kind it holds: i an IRI, s a plain string, n a non-negative integer, d a decimal
+    required: bool = True
+    references: str | None = None
+    unique: bool = False
+    allowed: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class Table:
+    name: str
+    type: str  # the rdf:type whose subjects are its rows
+    columns: tuple[Column, ...]
+
+
+@dataclass(frozen=True)
+class Link:
+    name: str
+    predicate: str
+    subject: tuple[str, str]  # (column, referenced table)
+    object: tuple[str, str]
+
+
+TABLES = (
+    Table("persistent_identity", FND + "PersistentIdentity", ()),
+    Table("merge_policy", LDG + "MergePolicy", (Column("identity", FND + "hasIdentity", "i", references="persistent_identity"), Column("merge_rule", LDG + "mergeRule", "i"))),
+    Table("quantity", QNT + "Quantity", (Column("on_space", QNT + "onSpace", "i"), Column("numeric_value", QNT + "numericValue", "d"))),
+    Table("account_definition", LDG + "AccountDefinition", (
+        Column("identity", FND + "hasIdentity", "i", references="persistent_identity"), Column("stated_amount", LDG + "statedAmount", "i", references="quantity"),
+        Column("unit_of_account", LDG + "unitOfAccount", "i"), Column("admits_owner_kind", LDG + "admitsOwnerKind", "i"),
+        Column("merge_policy", LDG + "mergePolicy", "i", references="merge_policy"), Column("part_of", LDG + "partOf", "i", False, "account_definition"),
+        Column("comment", RDFS + "comment", "s", False), Column("credit_ceiling", LDG + "creditCeiling", "i", False, "quantity"))),
+    Table("ledger", LDG + "Ledger", (Column("for_owner", LDG + "forOwner", "i"), Column("ledger_profile", LDG + "ledgerProfile", "i"), Column("revision", LDG + "revision", "n"))),
+    Table("account", LDG + "Account", (
+        Column("of_definition", LDG + "ofDefinition", "i", references="account_definition"), Column("for_owner", LDG + "forOwner", "i"),
+        Column("part_of_account", LDG + "partOfAccount", "i", False, "account"), Column("account_key", LDG + "accountKey", "s", False))),
+    Table("ledger_pass", LDG + "Pass", (Column("pass_position", LDG + "passPosition", "n"), Column("pass_revision", LDG + "passRevision", "n", unique=True))),
+    Table("posting", LDG + "Posting", (
+        Column("on_account", LDG + "onAccount", "i", references="account"), Column("in_pass", LDG + "inPass", "i", references="ledger_pass"),
+        Column("effective_position", LDG + "effectivePosition", "n"), Column("recorded_position", LDG + "recordedPosition", "n"),
+        Column("micro_position", LDG + "microPosition", "n"), Column("direction", LDG + "direction", "i", allowed=(LDG + "Debit", LDG + "Credit")),
+        Column("amount_value", LDG + "amountValue", "d"), Column("running_balance", LDG + "runningBalance", "d", False))),
+    Table("supersession", LDG + "Supersession", (
+        Column("for_owner", LDG + "forOwner", "i"), Column("in_pass", LDG + "inPass", "i", references="ledger_pass"), Column("effective_position", LDG + "effectivePosition", "n"),
+        Column("period_key", LDG + "periodKey", "i", False), Column("refusal_reason", LDG + "refusalReason", "i", False))),
+)
+LINKS = (
+    Link("supersession_version", LDG + "supersedingVersion", ("supersession", "supersession"), ("version", "account_definition")),
+    Link("definition_succession", FND + "supersededBy", ("version", "account_definition"), ("superseded_by", "account_definition")),
+)
+INDEXES = (("account_definition", "identity"), ("account", "part_of_account"), ("posting", "on_account"), ("supersession_version", "version"))
+BY_TYPE = {t.type: t for t in TABLES}
+BY_LINK = {link.predicate: link for link in LINKS}
+
+
+def as_layer_terms(triples) -> list[tuple]:
+    """The triples with the benchmark's stand-in supersession terms replaced by the layer's, which name the same things for the per-version and per-pass forms."""
+    return [(s, LAYER_TERMS.get(p, p), ("i", LAYER_TERMS.get(o[1], o[1])) if o[0] == "i" else o) for s, p, o in triples]
+
+
+def _cell(column: Column, subject: str, o: tuple[str, str]):
+    if o[0] != column.kind:
+        raise WrongResult(f"decode: {subject} states {column.predicate} as a {o[0]} term, and the column {column.name} holds {column.kind}")
+    return int(o[1]) if o[0] == "n" else Decimal(o[1]) if o[0] == "d" else o[1]
+
+
+def decode(triples) -> dict[str, list[tuple]]:
+    """The rows each table and link table gains from a payload of triples. A subject with no type or a type the layout does not place, a predicate its table has no column for,
+    or a functional predicate stated twice fails as a wrong result, so every triple becomes exactly one fact."""
+    rows: dict[str, list[tuple]] = {t.name: [] for t in TABLES} | {link.name: [] for link in LINKS}
+    subjects: dict[str, list[tuple]] = {}
+    for s, p, o in triples:
+        if p in BY_LINK:
+            rows[BY_LINK[p].name].append((s, o[1]))
+        else:
+            subjects.setdefault(s, []).append((p, o))
+    for s, pairs in subjects.items():
+        types = [o[1] for p, o in pairs if p == RDF_TYPE]
+        if len(types) != 1 or types[0] not in BY_TYPE:
+            raise WrongResult(f"decode: {s} has the types {types}, and the layout places a subject of exactly one of {sorted(BY_TYPE)}")
+        table = BY_TYPE[types[0]]
+        by_predicate = {c.predicate: c for c in table.columns}
+        cells: dict[str, object] = {}
+        for p, o in pairs:
+            if p == RDF_TYPE:
+                continue
+            if p not in by_predicate:
+                raise WrongResult(f"decode: {s} states {p}, and the table {table.name} has no column for it")
+            column = by_predicate[p]
+            if column.name in cells:
+                raise WrongResult(f"decode: {s} states {p} twice, and the column {column.name} holds one value")
+            cells[column.name] = _cell(column, s, o)
+        rows[table.name].append((s, *(cells.get(c.name) for c in table.columns)))
+    return rows
+
+
+def schema() -> list:
+    """The statements that create the layout, its constraints and its indexes."""
+    from psycopg import sql
+
+    deferred = sql.SQL(" DEFERRABLE INITIALLY DEFERRED")
+    out = []
+    for t in TABLES:
+        parts = [sql.SQL("iri text PRIMARY KEY")]
+        for c in t.columns:
+            part = sql.SQL("{} {}").format(sql.Identifier(c.name), sql.SQL(SQL_TYPES[c.kind]))
+            if c.required:
+                part += sql.SQL(" NOT NULL")
+            if c.unique:
+                part += sql.SQL(" UNIQUE")
+            if c.kind == "n":
+                part += sql.SQL(" CHECK ({} >= 0)").format(sql.Identifier(c.name))
+            if c.allowed:
+                part += sql.SQL(" CHECK ({} IN ({}))").format(sql.Identifier(c.name), sql.SQL(", ").join(map(sql.Literal, c.allowed)))
+            if c.references:
+                part += sql.SQL(" REFERENCES {} (iri)").format(sql.Identifier(c.references)) + deferred
+            parts.append(part)
+        out.append(sql.SQL("CREATE TABLE {} ({})").format(sql.Identifier(t.name), sql.SQL(", ").join(parts)))
+    for link in LINKS:
+        (sc, st), (oc, ot) = link.subject, link.object
+        out.append(sql.SQL("CREATE TABLE {} ({} text NOT NULL REFERENCES {} (iri){}, {} text NOT NULL REFERENCES {} (iri){}, PRIMARY KEY ({}, {}))").format(
+            sql.Identifier(link.name), sql.Identifier(sc), sql.Identifier(st), deferred, sql.Identifier(oc), sql.Identifier(ot), deferred, sql.Identifier(sc), sql.Identifier(oc)))
+    for table, column in INDEXES:
+        out.append(sql.SQL("CREATE INDEX ON {} ({})").format(sql.Identifier(table), sql.Identifier(column)))
+    return out
+
+
+def stored_facts_query():
+    """The rows of every entity table, their filled cells and the rows of every link table, in one statement."""
+    from psycopg import sql
+
+    terms = [sql.SQL("(SELECT count(*){} FROM {})").format(sql.SQL("").join(sql.SQL(" + count({})").format(sql.Identifier(c.name)) for c in t.columns), sql.Identifier(t.name))
+             for t in TABLES]
+    terms += [sql.SQL("(SELECT count(*) FROM {})").format(sql.Identifier(link.name)) for link in LINKS]
+    return sql.SQL("SELECT ") + sql.SQL(" + ").join(terms)
+
+
+def _in_force(revision: str) -> str:
+    """The stated amount in force at a revision for the account aliased `a`, as an SQL expression: the version of the account's definition's identity that the owner's
+    supersessions name, taking the one written at the greatest revision, and the account's own version where none is. `revision` is a bound parameter or a column, never data."""
+    return ("COALESCE((SELECT q.numeric_value FROM account_definition d0 JOIN account_definition v ON v.identity = d0.identity "
+            "JOIN supersession_version sv ON sv.version = v.iri JOIN supersession s ON s.iri = sv.supersession JOIN ledger_pass p ON p.iri = s.in_pass "
+            f"JOIN quantity q ON q.iri = v.stated_amount WHERE d0.iri = a.of_definition AND s.for_owner = a.for_owner AND p.pass_revision <= {revision} "
+            "ORDER BY p.pass_revision DESC LIMIT 1), "
+            "(SELECT q.numeric_value FROM account_definition d JOIN quantity q ON q.iri = d.stated_amount WHERE d.iri = a.of_definition))")
+
+
+SQL_V = f"SELECT {_in_force('%(r)s')} FROM account a WHERE a.iri = %(a)s"
+SQL_BALANCE = (f"SELECT l.running_balance, {_in_force('%(r)s')}, CASE WHEN l.pass_revision IS NULL THEN NULL ELSE {_in_force('l.pass_revision')} END FROM account a "
+               "LEFT JOIN LATERAL (SELECT po.running_balance, p.pass_revision FROM posting po JOIN ledger_pass p ON p.iri = po.in_pass "
+               "WHERE po.on_account = a.iri AND p.pass_revision <= %(r)s ORDER BY p.pass_revision DESC LIMIT 1) l ON true WHERE a.iri = %(a)s")
+SQL_ANCESTOR = ("WITH RECURSIVE subtree(iri) AS (SELECT %(a)s::text UNION ALL SELECT c.iri FROM account c JOIN subtree t ON c.part_of_account = t.iri) "
+                f"SELECT {_in_force('%(r)s')}, (SELECT COALESCE(SUM(CASE WHEN po.direction = %(debit)s THEN -po.amount_value ELSE po.amount_value END), 0) "
+                "FROM subtree t JOIN posting po ON po.on_account = t.iri) FROM account a WHERE a.iri = %(a)s")
+SQL_BULK = ("SELECT a.iri, COALESCE(l.numeric_value, q0.numeric_value) FROM account a JOIN account_definition d0 ON d0.iri = a.of_definition "
+            "JOIN quantity q0 ON q0.iri = d0.stated_amount LEFT JOIN (SELECT DISTINCT ON (s.for_owner, v.identity) s.for_owner, v.identity, q.numeric_value "
+            "FROM supersession s JOIN ledger_pass p ON p.iri = s.in_pass JOIN supersession_version sv ON sv.supersession = s.iri "
+            "JOIN account_definition v ON v.iri = sv.version JOIN quantity q ON q.iri = v.stated_amount WHERE p.pass_revision <= %(r)s "
+            "ORDER BY s.for_owner, v.identity, p.pass_revision DESC) l ON l.for_owner = a.for_owner AND l.identity = d0.identity")
+
+POSTGRES = None  # the server the PostgreSQL arm writes to, set by postgres_running()
+
+
+def postgres_absent() -> str | None:
+    """Why the PostgreSQL arm cannot run here, or None where it can."""
+    for name in ("psycopg", "lattice_testing_postgres", "postgresql_binaries"):
+        try:
+            module = importlib.import_module(name)
+        except ImportError:
+            return f"needs {name}, which cannot be imported here (mise run bootstrap:testing-postgres)"
+    if not hasattr(module, "bin"):
+        return "needs postgresql_binaries, of which only an unpacked directory is left here (mise run bootstrap:testing-postgres)"
+    return None
+
+
+@contextlib.contextmanager
+def postgres_running():
+    """Start the fixture's server for the run, and stop it and remove its directory at the end, including on failure."""
+    global POSTGRES
+    from lattice_testing_postgres import PostgresServer
+
+    with PostgresServer() as server:
+        POSTGRES = server
+        try:
+            yield server
+        finally:
+            POSTGRES = None
+
+
+class PostgresBackend:
+    """A database of its own on the running server, holding the layout. `write_decode_ms` is the time the last write's decode took."""
+
+    def __init__(self, directory: str):
+        if POSTGRES is None:
+            raise RuntimeError("no PostgreSQL server is running, start one with postgres_running()")
+        self.server = POSTGRES
+        self.name = self.server.create_database()
+        self.connection = self.server.connect(self.name, autocommit=True)
+        self.write_decode_ms: float | None = None
+        with self.connection.transaction():
+            for statement in schema():
+                self.connection.execute(statement)
+
+    def _insert(self, triples) -> float:
+        from psycopg import sql
+
+        payload = as_layer_terms(triples)
+        begin = time.perf_counter()
+        rows = decode(payload)
+        decoded = 1000 * (time.perf_counter() - begin)
+        with self.connection.transaction(), self.connection.cursor() as cursor:
+            for t in TABLES:
+                columns = ["iri", *(c.name for c in t.columns)]
+                self._copy(cursor, sql, t.name, columns, rows[t.name])
+            for link in LINKS:
+                self._copy(cursor, sql, link.name, [link.subject[0], link.object[0]], rows[link.name])
+        return decoded
+
+    @staticmethod
+    def _copy(cursor, sql, table: str, columns: list[str], rows: list[tuple]) -> None:
+        if not rows:
+            return
+        statement = sql.SQL("COPY {} ({}) FROM STDIN").format(sql.Identifier(table), sql.SQL(", ").join(map(sql.Identifier, columns)))
+        with cursor.copy(statement) as copy:
+            for row in rows:
+                copy.write_row(row)
+
+    def load(self, triples) -> None:
+        self._insert(triples)
+        self.connection.execute("ANALYZE")
+
+    def write(self, triples) -> None:
+        self.write_decode_ms = self._insert(triples)
+
+    def count(self) -> int:
+        return int(self.connection.execute(stored_facts_query()).fetchone()[0])
+
+    def stated_in_force(self, account: str, revision: int) -> int:
+        return int(self.connection.execute(SQL_V, {"a": account, "r": revision}).fetchone()[0])
+
+    def balance_at(self, account: str, revision: int) -> int:
+        balance, now, then = self.connection.execute(SQL_BALANCE, {"a": account, "r": revision}).fetchone()
+        return int(now) if balance is None else int(balance + now - then)
+
+    def ancestor_balance(self, account: str, revision: int) -> int:
+        stated, signed = self.connection.execute(SQL_ANCESTOR, {"a": account, "r": revision, "debit": LDG + "Debit"}).fetchone()
+        return int(stated + signed)
+
+    def bulk_in_force(self, revision: int) -> dict[str, int]:
+        return {row[0]: int(row[1]) for row in self.connection.execute(SQL_BULK, {"r": revision})}
+
+    def close(self) -> None:
+        self.connection.close()
+        self.server.drop_database(self.name)
+
+
+BACKENDS = {"oxigraph": OxigraphBackend, "jena": JenaBackend, "rdflib": RdflibBackend, "postgresql": PostgresBackend}
+
+
+def variants_for(engine: str) -> tuple[str, ...]:
+    """The variants an engine runs. PostgreSQL runs the forms the layer built, a supersession naming its owner, and never a record on an account, which the layer does not have."""
+    return LAYER_VARIANTS if engine == "postgresql" else VARIANTS
 
 
 # ---- the reads --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -475,6 +760,8 @@ def own_amount(db, account: str) -> int:
 
 def stated_in_force(db, variant: str, account: str, revision: int) -> int:
     """V, the stated amount in force for an account at a revision, and the account's own version where no record of a later one was written by then."""
+    if isinstance(db, PostgresBackend):
+        return db.stated_in_force(account, revision)
     if variant in PER_ACCOUNT:
         rows = db.select(f"{PREFIX}SELECT ?amt WHERE {{ ?r b:account <{account}> ; ldg:inPass ?p ; b:supersedingVersion ?v . ?p ldg:passRevision ?rev . FILTER(?rev <= {revision}) "
                          "?v ldg:statedAmount ?q . ?q qnt:numericValue ?amt } ORDER BY DESC(?rev) LIMIT 1")
@@ -487,6 +774,8 @@ def stated_in_force(db, variant: str, account: str, revision: int) -> int:
 
 def balance_at(db, variant: str, account: str, revision: int) -> int:
     """R1 and R2, a leaf's balance as of a revision. The latest posting is found by the account as an object, since a posting's name is not computable from the account."""
+    if isinstance(db, PostgresBackend):
+        return db.balance_at(account, revision)
     if variant == "per-account-with-balance":
         rows = db.select(f"{PREFIX}SELECT ?bal WHERE {{ {{ ?x ldg:onAccount <{account}> }} UNION {{ ?x b:account <{account}> }} ?x ldg:inPass ?p ; ldg:runningBalance ?bal . "
                          f"?p ldg:passRevision ?rev . FILTER(?rev <= {revision}) }} ORDER BY DESC(?rev) LIMIT 1")
@@ -500,6 +789,8 @@ def balance_at(db, variant: str, account: str, revision: int) -> int:
 
 def ancestor_balance(db, variant: str, account: str, revision: int) -> int:
     """R3, an ancestor's balance now: the stated amount in force, less the debits and plus the credits of every posting in its subtree."""
+    if isinstance(db, PostgresBackend):
+        return db.ancestor_balance(account, revision)
     (row,) = db.select(f"{PREFIX}SELECT (SUM(?s) AS ?sum) WHERE {{ ?acc ldg:partOfAccount* <{account}> . ?x ldg:onAccount ?acc ; ldg:direction ?d ; ldg:amountValue ?a . "
                        "BIND(IF(?d = ldg:Debit, -?a, ?a) AS ?s) }")
     return stated_in_force(db, variant, account, revision) + (integer(row[0]) if row[0] is not None else 0)
@@ -507,6 +798,8 @@ def ancestor_balance(db, variant: str, account: str, revision: int) -> int:
 
 def bulk_in_force(db, variant: str, revision: int) -> dict[str, int]:
     """B, the stated amount in force at a revision for every account, in one query."""
+    if isinstance(db, PostgresBackend):
+        return db.bulk_in_force(revision)
     if variant in PER_ACCOUNT:
         text = (f"{PREFIX}SELECT ?a ?amt WHERE {{ ?a ldg:ofDefinition ?d . ?d ldg:statedAmount ?q1 . ?q1 qnt:numericValue ?amt1 . "
                 f"OPTIONAL {{ {{ SELECT ?a (MAX(?rev0) AS ?m) WHERE {{ ?r0 b:account ?a ; ldg:inPass ?p0 . ?p0 ldg:passRevision ?rev0 . FILTER(?rev0 <= {revision}) }} GROUP BY ?a }} "
@@ -559,6 +852,7 @@ class Result:
     change_record_triples: int  # what the records of one change write, 0 with no change
     change_total_triples: int  # the records, the configuration and the pass
     write_ms: float | None
+    decode_ms: float | None = None  # the part of write_ms that decoded the change's triples into rows, PostgreSQL only
     timings: dict[str, dict[str, float]] = field(default_factory=dict)  # read -> {median_ms, p95_ms, n}
 
 
@@ -590,7 +884,7 @@ def run_config(engine: str, variant: str, m: Model, common: list[tuple], chunks:
             if stored != stored_expected:
                 raise WrongResult(f"{variant} on {engine}, {m.count} events, {m.changes} changes: stored {stored} triples, expected {stored_expected}")
             r = Result(engine, variant, m.count, m.changes, stored, expected_record_triples(variant, sites) if m.changes else 0,
-                       expected_change_triples(variant, sites) if m.changes else 0, write_ms)
+                       expected_change_triples(variant, sites) if m.changes else 0, write_ms, getattr(db, "write_decode_ms", None))
             leaves = sample(m)
             ancestors = [i for i, a in enumerate(m.accounts) if a.definition in ("sec0", "agg", "cap")]
             v_accounts = leaves + ancestors
@@ -628,6 +922,8 @@ def run_config(engine: str, variant: str, m: Model, common: list[tuple], chunks:
                     pools = {name: [] for name in READS}
             r.timings = {name: {"median_ms": statistics.median(v), "p95_ms": percentile(v, 0.95), "n": len(v)} for name, v in pools.items()}
         finally:
+            if isinstance(db, PostgresBackend):
+                db.close()
             db = None
             release_store()
     return r
@@ -642,11 +938,11 @@ def run(engines: list[str], sizes=SIZES, changes=CHANGES, reps: int = REPS, site
             common = common_triples(m)
             by_variant = {v: [change_triples(m, v, j) for j in range(1, k + 1)] for v in VARIANTS}
             for engine in engines:
-                for variant in VARIANTS:
+                for variant in variants_for(engine):
                     r = run_config(engine, variant, m, common, by_variant[variant], reps)
                     out.append(r)
                     t = r.timings
-                    print(f"{engine:8} {variant:24} events {count:6} changes {k:2}  stored {r.stored:8}  change {r.change_record_triples:5}  write "
+                    print(f"{engine:10} {variant:24} events {count:6} changes {k:2}  stored {r.stored:8}  change {r.change_record_triples:5}  write "
                           f"{'-' if r.write_ms is None else f'{r.write_ms:8.1f}'} ms  " + "  ".join(f"{n} {t[n]['median_ms']:8.3f}" for n in READS), flush=True)
     return out
 
@@ -665,11 +961,13 @@ def write_report(results: list[Result], env: dict, directory: Path = HERE) -> No
     for engine in dict.fromkeys(r.engine for r in results):
         for count in dict.fromkeys(r.events for r in results):
             lines += [f"## {engine}, {count} events", "", "Median and 95th percentile of each read, in milliseconds.", "",
-                      "| variant | K | stored | change records | change total | write ms |" + "".join(f" {n} p50 | {n} p95 |" for n in READS), "|---|---|---|---|---|---|" + "---|---|" * len(READS)]
+                      "| variant | K | stored | change records | change total | write ms | decode ms |" + "".join(f" {n} p50 | {n} p95 |" for n in READS),
+                      "|---|---|---|---|---|---|---|" + "---|---|" * len(READS)]
             for variant in VARIANTS:
                 for r in (x for x in results if (x.engine, x.variant, x.events) == (engine, variant, count)):
                     cells = "".join(f" {r.timings[n]['median_ms']:.3f} | {r.timings[n]['p95_ms']:.3f} |" for n in READS)
-                    lines.append(f"| {variant} | {r.changes} | {r.stored} | {r.change_record_triples} | {r.change_total_triples} | {'-' if r.write_ms is None else f'{r.write_ms:.1f}'} |{cells}")
+                    write, decode_cell = ('-' if x is None else f'{x:.1f}' for x in (r.write_ms, r.decode_ms))
+                    lines.append(f"| {variant} | {r.changes} | {r.stored} | {r.change_record_triples} | {r.change_total_triples} | {write} | {decode_cell} |{cells}")
             lines += ["", f"Median of each read under per-pass, against per-pass at K = 0 and against per-account at the same K.", "",
                       "| K | " + " | ".join(f"{n} vs K=0 | {n} vs per-account" for n in READS) + " |", "|---|" + "---|---|" * len(READS)]
             for k in (x for x in dict.fromkeys(r.changes for r in results) if x):
@@ -685,18 +983,23 @@ def write_report(results: list[Result], env: dict, directory: Path = HERE) -> No
 
 def main() -> int:
     found = available_engines()
+    absent = postgres_absent()
     wanted = [e for e in os.environ.get("LEDGER_SUPERSESSION_ENGINES", ",".join(ENGINES)).split(",") if e]
-    engines = [e for e in wanted if e in found]
+    engines = [e for e in wanted if e in found or (e == "postgresql" and absent is None)]
     for e in wanted:
-        if e not in found:
-            print(f"{e} not run: its test kit is not built or there is no java")
+        if e not in engines:
+            print(f"{e} not run: {absent}" if e == "postgresql" else f"{e} not run: its test kit is not built or there is no java")
     cap = int(os.environ.get("LEDGER_SUPERSESSION_MAX", SIZES[-1]))
     sizes = [s for s in SIZES if s <= cap] or [cap]
     if os.environ.get("LEDGER_SUPERSESSION_QUICK"):
         sizes = sizes[:1]
     reps = int(os.environ.get("LEDGER_SUPERSESSION_REPS", REPS))
     try:
-        results = run(engines, sizes, CHANGES, reps)
+        with contextlib.ExitStack() as stack:
+            if "postgresql" in engines:
+                found["postgresql"] = stack.enter_context(postgres_running()).server_version
+                print(f"postgresql runs on server version {found['postgresql']}, with the variants {', '.join(LAYER_VARIANTS)} only, since the layer has no supersession on an account")
+            results = run(engines, sizes, CHANGES, reps)
     except WrongResult as error:
         print(f"WRONG RESULT: {error}", file=sys.stderr)
         return 1

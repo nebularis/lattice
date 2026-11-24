@@ -2,9 +2,9 @@
 
 # Ledger supersession read
 
-A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md), slice LG-32 of the ledger unit. The ledger layer is about to let an account come under a later version of its account definition, and the record of that is to be called a supersession. Design question LG-Q52 of the [definition versions sketch](../../docs/developer/sketches/ledger-definition-versions-in-force.md) asks what the record is written on. Its cost is a lookup on every read of a balance, which was argued and not measured. This benchmark measures it, for four ways of writing the record, on three engines.
+A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmark-root.md), slice LG-32 of the ledger unit. The ledger layer is about to let an account come under a later version of its account definition, and the record of that is to be called a supersession. Design question LG-Q52 of the [definition versions sketch](../../docs/developer/sketches/ledger-definition-versions-in-force.md) asks what the record is written on. Its cost is a lookup on every read of a balance, which was argued and not measured. This benchmark measures it, for four ways of writing the record, on three engines, and for the two ways the layer built on PostgreSQL, as the section below describes.
 
-The layer declares no supersession term yet, so the benchmark declares its own under the prefix `b:` (`https://example.org/ledger-supersession-read#`): `b:Supersession`, `b:supersedingVersion`, `b:account` and `b:owner`. Every other term is the layer's (`ldg:`, with `fnd:supersededBy` and `fnd:hasIdentity` from Foundation and `qnt:numericValue` from Quantification), and a record names its pass with `ldg:inPass` and its effective position with `ldg:effectivePosition`. The data is fictional.
+The layer declared no supersession term when the benchmark was written, so it declares its own under the prefix `b:` (`https://example.org/ledger-supersession-read#`): `b:Supersession`, `b:supersedingVersion`, `b:account` and `b:owner`. Every other term is the layer's (`ldg:`, with `fnd:supersededBy` and `fnd:hasIdentity` from Foundation and `qnt:numericValue` from Quantification), and a record names its pass with `ldg:inPass` and its effective position with `ldg:effectivePosition`. The data is fictional.
 
 ## The corpus
 
@@ -12,7 +12,7 @@ One owner and its ledger. The account tree has 15 definitions: an annual cap, an
 
 N events fall on random leaf accounts, a site account or a plain sublimit's, from a fixed seed. Four in five are a debit and one in five a credit, with amounts of 1 to 1,000 against stated amounts of at least 10^9, so nothing is refused and no credit is cut. Each event is one pass with a revision one more than the last and a position equal to its index, and writes one posting of 9 triples with the running balance of its account, as `ldg:runningBalance` does.
 
-K changes of terms fall at evenly spaced events. Each raises the stated amount of the aggregate and of the 13 definitions below it by 1,000,003, which is 14 later versions. Each later version names the later version of its parent and is linked from the version before by `fnd:supersededBy`. A change is written in a pass of its own, which moves the revision by one, and its versions are in force from the position after the event it follows. A change writes 159 triples of configuration and 3 of its pass under every variant. The same history is held four ways.
+K changes of terms fall at evenly spaced events. Each raises the stated amount of the aggregate and of the 13 definitions below it by 1,000,003, which is 14 later versions. Each later version names the later version of its parent, or the cap's one version where the parent is the cap, and is linked from the version before by `fnd:supersededBy`. A change is written in a pass of its own, which moves the revision by one, and its versions are in force from the position after the event it follows. A change writes 159 triples of configuration and 3 of its pass under every variant. The same history is held four ways.
 
 | Variant | What a change of terms writes at runtime | Triples a change writes in its records |
 |---|---|---|
@@ -37,6 +37,43 @@ Each read is timed over a fixed sample of accounts, as the median and the 95th p
 
 A record's name is not computable from what a reader holds, since a reader does not know which passes carried a change, so a record is found by the account as an object (per-account) or by the version as an object (per-version and per-pass). Those sets are small, K records for an account and K + 1 versions of an identity. The same holds for a posting, found by its account. [TSD-36](../../docs/architecture/triple-store-discovery.md) says a bound object does not give the seek a bound subject gives, so the cost of these reads grows with the records an account or a version has, and the figures say by how much. Every other step starts from a bound subject.
 
+## The PostgreSQL arm
+
+Slice MSA-I7 of the multi-store unit adds a fourth engine, PostgreSQL, on the server of the [PostgreSQL test fixture](../../tools/testing/postgres/README.md), pinned at 16.15 and run with PostgreSQL's defaults apart from its address, port and socket. It holds the same history, from the same triples, in a relational layout of the benchmark's own, and is checked against the same model.
+
+**Which variants.** The layer now declares the record, as `ldg:Supersession` with `ldg:forOwner`, `ldg:inPass`, `ldg:effectivePosition` and `ldg:supersedingVersion`. Per-version and per-pass are two ways of writing it, one record for each later version or one for the pass. The arm runs those two and not the per-account variants, since the layer has no supersession on an account. The RDF arms still write the benchmark's stand-in terms, and the arm gives the triples the layer's terms before it decodes them: `b:Supersession`, `b:owner` and `b:supersedingVersion` become `ldg:Supersession`, `ldg:forOwner` and `ldg:supersedingVersion`.
+
+**The layout.** Each subject is a row of the table its `rdf:type` names, keyed by its IRI as text, and each other predicate is a column of that row. A predicate that may hold several values, or that a later write states of an earlier write's subject, is a link table of two columns. Every reference is a foreign key, checked at commit, every predicate the layer requires exactly once is `NOT NULL`, every position and revision is at least 0, and a posting's direction is debit or credit.
+
+| Table | Rows | Columns |
+|---|---|---|
+| `persistent_identity` | `fnd:PersistentIdentity` | none |
+| `merge_policy` | `ldg:MergePolicy` | `identity`, `merge_rule` |
+| `quantity` | `qnt:Quantity` | `on_space`, `numeric_value` (numeric) |
+| `account_definition` | `ldg:AccountDefinition`, one row for each version | `identity`, `stated_amount`, `unit_of_account`, `admits_owner_kind`, `merge_policy`, and where stated `part_of`, `comment`, `credit_ceiling` |
+| `ledger` | `ldg:Ledger` | `for_owner`, `ledger_profile`, `revision` |
+| `account` | `ldg:Account` | `of_definition`, `for_owner`, and where stated `part_of_account`, `account_key` |
+| `ledger_pass` | `ldg:Pass` | `pass_position`, `pass_revision` (unique) |
+| `posting` | `ldg:Posting` | `on_account`, `in_pass`, `effective_position`, `recorded_position`, `micro_position`, `direction`, `amount_value`, `running_balance` |
+| `supersession` | `ldg:Supersession` | `for_owner`, `in_pass`, `effective_position`, and where stated `period_key`, `refusal_reason` |
+| `supersession_version` | `ldg:supersedingVersion` | `supersession`, `version` |
+| `definition_succession` | `fnd:supersededBy` | `version`, `superseded_by` |
+
+The indexes beyond the keys are on a definition's identity, an account's parent, a posting's account and a superseding version. The history is copied in with `COPY` in one transaction and the tables are analysed before the reads. The last change of terms is decoded and copied in one transaction of its own, which is the timed write, and the report gives the decode's share of it.
+
+**The reads.** Each is one SQL statement with bound parameters, which psycopg prepares on the server after its fifth use, so the timed repetitions run prepared statements over a local TCP connection.
+
+| Read | The statement |
+|---|---|
+| V | from the account to its definition's identity, to every version of that identity that a supersession for the account's owner names, written at or before the revision, taking the one at the greatest revision, and the account's own version where there is none |
+| R1, R2 | the running balance and the revision of the account's latest posting at or before the revision, by a lateral join, with V at the revision and V at that posting's revision, in one row, and the balance is the first plus the second less the third |
+| R3 | V now, and the signed sum of the postings of the subtree, reached by a recursive query over `part_of_account` |
+| B | every account with its version's stated amount, left joined to the latest version of each owner and identity, taken with `DISTINCT ON` over the supersessions written at or before the revision |
+
+**The stored count.** The rows of the entity tables, their filled cells and the rows of the link tables. Each triple is a row's type, one cell or one link row, so the count is the triples' and is held to `expected_stored`. The decode fails on a subject it cannot place, a predicate its table has no column for, a functional predicate stated twice or a term of the wrong kind.
+
+No figure of the PostgreSQL arm is recorded here yet. The measured results below are the RDF engines' alone.
+
 ## What it tests
 
 | Claim | Test |
@@ -45,6 +82,7 @@ A record's name is not computable from what a reader holds, since a reader does 
 | A change of terms writes the triples the arithmetic gives | the stored triples after the history, and the triples of the last change (its records, its configuration and its pass), against `expected_stored` and `expected_change_triples` |
 | A lookup on each read has a cost that depends on how the record is written | median and 95th percentile of V, R1, R2, R3 and B for each variant at K = 0, 1 and 10 |
 | A change of terms costs a write that depends on how the record is written | the time to write the last change of terms, as one batch, into the history before it |
+| PostgreSQL reads the model's values from the layer's record | every read of per-version and per-pass on PostgreSQL against the same model, the stored facts against `expected_stored`, and the decode's share of the timed write |
 
 ## Pass criterion
 
@@ -60,7 +98,7 @@ mise run check:ledger-supersession-read
 LEDGER_SUPERSESSION_QUICK=1 mise run check:ledger-supersession-read
 ```
 
-The sizes are 2,000 and 20,000 events, each with K = 0, 1 and 10 and 1,000 sites. `LEDGER_SUPERSESSION_MAX` caps the events, `LEDGER_SUPERSESSION_QUICK` runs the smallest size alone, `LEDGER_SUPERSESSION_ENGINES` takes a comma list of `oxigraph`, `jena` and `rdflib`, and `LEDGER_SUPERSESSION_REPS` sets the repetitions, 30 by default. It is never a dependency of `check`. Oxigraph, through `pyoxigraph`, is persisted to a temporary directory that is removed when the run ends, including on failure, and nothing is written into the repository except the two report files. Jena and rdflib are in memory. Jena runs where its [test-support package](../../tools/testing/jena/README.md) is installed and its test kit jar is built (`mise run bootstrap:sparql-testkit`), and the report says so where it did not.
+The sizes are 2,000 and 20,000 events, each with K = 0, 1 and 10 and 1,000 sites. `LEDGER_SUPERSESSION_MAX` caps the events, `LEDGER_SUPERSESSION_QUICK` runs the smallest size alone, `LEDGER_SUPERSESSION_ENGINES` takes a comma list of `oxigraph`, `jena`, `rdflib` and `postgresql`, and `LEDGER_SUPERSESSION_REPS` sets the repetitions, 30 by default. It is never a dependency of `check`. Oxigraph, through `pyoxigraph`, is persisted to a temporary directory that is removed when the run ends, including on failure, and nothing is written into the repository except the two report files. Jena and rdflib are in memory. Jena runs where its [test-support package](../../tools/testing/jena/README.md) is installed and its test kit jar is built (`mise run bootstrap:sparql-testkit`), and the report says so where it did not. The task installs the PostgreSQL fixture and its server first (`bootstrap:testing-postgres`). The run starts one server, gives each history a database of its own and drops it after, and stops the server and removes its directory at the end, including on failure. Where the server cannot be imported, the run prints `postgresql not run:` with the package it needs, and the arm's tests skip naming it. The run prints the server version it ran on, and the report records it.
 
 ## Measured results
 
@@ -200,6 +238,6 @@ What the run shows. Each figure is a median, from the tables above and the repor
 
 | File | Role |
 |---|---|
-| `check.py` | the tree, the stream, the model, the four variants, the reads on three engines, the pass criterion and the report |
-| `test_check.py` | the check's own tests, including that a wrong value, a wrong count and a record too many fail it, that time does not, and that each variant reads the model's values |
+| `check.py` | the tree, the stream, the model, the four variants, the reads on three engines, the PostgreSQL arm's layout, decode and statements, the pass criterion and the report |
+| `test_check.py` | the check's own tests, including that a wrong value, a wrong count and a record too many fail it, that time does not, that each variant reads the model's values, and on PostgreSQL that the decode places every triple once and each read is held to the model |
 | `conftest.py` | makes a folder's removal fail while an Oxigraph store in it is open, as Windows does |

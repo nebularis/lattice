@@ -187,7 +187,7 @@ def test_a_generated_file_edited_by_hand_fails_the_check(tmp_path: Path) -> None
     copy = tmp_path / "ontology" / "eligibility"
     shutil.copytree(LAYER, copy)
     edited = copy / "shapes" / "constraints.ttl"
-    edited.write_text(edited.read_text().replace("sh:minCount 1", "sh:minCount 2", 1))
+    edited.write_text(edited.read_text(encoding="utf-8").replace("sh:minCount 1", "sh:minCount 2", 1), encoding="utf-8")
     assert _literate_check(tmp_path) == 1
 
 

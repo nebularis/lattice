@@ -62,9 +62,9 @@ def test_bq5_the_growth_exponent_of_a_quadratic_series_is_two():
 def test_bq6_the_report_names_its_run_and_is_written_where_asked(tmp_path):
     report = check.run(quick=True, engine_classes=[check.RdflibEngine])
     check.write(report, tmp_path)
-    text = (tmp_path / "report.md").read_text()
+    text = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert text.startswith("Run: ") and "rdflib" in text.splitlines()[0] and "E5" in text
-    assert json.loads((tmp_path / "report.json").read_text())["run"] == report.run_record
+    assert json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))["run"] == report.run_record
 
 
 def test_bq7_the_ways_of_running_one_query_agree():

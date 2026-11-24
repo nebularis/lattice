@@ -82,10 +82,10 @@ def test_vm1_07_bootstrap_installs_the_pinned_tag_over_a_git_install():
 def test_vm1_08_vyd_context_names_lattice_where_trusted():
     if shutil.which("vyd") is None:
         pytest.skip("vyd is not installed")
-    config = subprocess.run(["vyd", "config"], capture_output=True, text=True, timeout=60, cwd=ROOT).stdout
+    config = subprocess.run(["vyd", "config"], capture_output=True, text=True, encoding="utf-8", timeout=60, cwd=ROOT).stdout
     if "is not trusted" in config or "projects: none" in config:
         pytest.skip("the binding is not trusted here, run `vyd trust` in the checkout")
-    done = subprocess.run(["vyd", "context", str(ROOT)], capture_output=True, text=True, timeout=60)
+    done = subprocess.run(["vyd", "context", str(ROOT)], capture_output=True, text=True, encoding="utf-8", timeout=60)
     assert done.returncode == 0, done.stderr[-400:]
     assert "project: lattice" in done.stdout
 
@@ -228,18 +228,18 @@ def wait_for_background(tmp_path: Path) -> None:
 def test_vm7_03_the_session_hook_runs_in_a_cloud_session_only(tmp_path, remote, runs):
     settings = json.loads((ROOT / ".claude/settings.json").read_text(encoding="utf-8"))
     command = settings["hooks"]["SessionStart"][0]["hooks"][0]["command"]
-    done = subprocess.run(["bash", "-c", command], env={**session_env(tmp_path), "CLAUDE_CODE_REMOTE": remote}, capture_output=True, text=True)
+    done = subprocess.run(["bash", "-c", command], env={**session_env(tmp_path), "CLAUDE_CODE_REMOTE": remote}, capture_output=True, text=True, encoding="utf-8")
     assert done.returncode == 0 and ("bootstrap:vyvid" in ran(tmp_path)) is runs
 
 
 def test_vm8_01_a_session_with_nothing_deferred_only_keeps_the_pin(tmp_path):
-    done = subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path), capture_output=True, text=True)
+    done = subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path), capture_output=True, text=True, encoding="utf-8")
     assert done.returncode == 0 and done.stdout == "" and ran(tmp_path) == ["bootstrap:vyvid"]
 
 
 def test_vm8_02_a_session_finishes_what_setup_deferred_and_says_so(tmp_path):
     write_for_bash(tmp_path / ".lattice-setup-deferred", "bootstrap:dependencies\nbootstrap:testing-oxigraph\n")
-    done = subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path), capture_output=True, text=True)
+    done = subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path), capture_output=True, text=True, encoding="utf-8")
     wait_for_background(tmp_path)
     assert done.returncode == 0 and "bootstrap:dependencies bootstrap:testing-oxigraph" in done.stdout and "index is ready" in done.stdout
     assert ran(tmp_path) == ["bootstrap:vyvid", "bootstrap:dependencies", "bootstrap:testing-oxigraph"]
@@ -250,14 +250,14 @@ def test_vm8_06_a_task_that_reads_standard_input_cannot_eat_the_deferred_list(tm
     env = session_env(tmp_path)
     write_for_bash(tmp_path / "bin" / "mise", f"#!/bin/sh\ncat > /dev/null\necho \"$2\" >> {bash_path(tmp_path)}/ran\n")
     write_for_bash(tmp_path / ".lattice-setup-deferred", "bootstrap:testing-oxigraph\nbootstrap:frontend\n")
-    subprocess.run(["bash", str(SETUP), "--finish-deferred"], env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=30)
+    subprocess.run(["bash", str(SETUP), "--finish-deferred"], env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", timeout=30)
     assert ran(tmp_path) == ["bootstrap:testing-oxigraph", "bootstrap:frontend"]
     assert not (tmp_path / ".lattice-setup-deferred").exists()
 
 
 def test_vm8_03_a_deferred_task_that_fails_stays_deferred(tmp_path):
     write_for_bash(tmp_path / ".lattice-setup-deferred", "bootstrap:dependencies\n")
-    subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path, mise_exit=1), capture_output=True, text=True)
+    subprocess.run(["bash", str(SETUP), "--session"], env=session_env(tmp_path, mise_exit=1), capture_output=True, text=True, encoding="utf-8")
     wait_for_background(tmp_path)
     assert "bootstrap:dependencies" in ran(tmp_path)  # it was tried, so its staying is the script's doing
     assert (tmp_path / ".lattice-setup-deferred").read_text(encoding="utf-8") == "bootstrap:dependencies\n"

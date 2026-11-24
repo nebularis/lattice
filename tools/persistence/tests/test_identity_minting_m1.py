@@ -50,7 +50,7 @@ def _recipes(g: Graph) -> dict[str, dict]:
 
 @pytest.fixture(scope="module")
 def recipe_validator():
-    schemas = [json.loads((CONTRACTS / n).read_text()) for n in ("recipe.schema.json", "vectors.schema.json")]
+    schemas = [json.loads((CONTRACTS / n).read_text(encoding="utf-8")) for n in ("recipe.schema.json", "vectors.schema.json")]
     registry = Registry().with_resources([(s["$id"], Resource.from_contents(s)) for s in schemas])
     return Draft202012Validator(schemas[0], registry=registry)
 
@@ -119,7 +119,7 @@ def test_export_recipes_writes_each_recipe_and_refuses_a_tampered_one(tmp_path, 
     out, _ = compile_to_graph(_graph("identity-minting-anchors.ttl"))
     written = export_recipes(out, tmp_path)
     assert len(written) == 7
-    exported = {json.loads(p.read_text())["strategy"]: json.loads(p.read_text()) for p in written}
+    exported = {json.loads(p.read_text(encoding="utf-8"))["strategy"]: json.loads(p.read_text(encoding="utf-8")) for p in written}
     assert exported == anchor_recipes
     # Tamper with a recipe the edit actually changes. The AdoptedIdentity recipe
     # has no "urn:" in it, so picking an arbitrary node made this test fail

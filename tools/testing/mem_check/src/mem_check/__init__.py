@@ -31,7 +31,7 @@ _OVERRIDE = "MEM_CHECK_AVAILABLE_MIB"
 
 def _macos() -> int | None:
     try:
-        text = subprocess.run(["vm_stat"], capture_output=True, text=True, timeout=5, check=True).stdout
+        text = subprocess.run(["vm_stat"], capture_output=True, text=True, encoding="utf-8", timeout=5, check=True).stdout
     except (OSError, subprocess.SubprocessError):
         return None
     size = re.search(r"page size of (\d+) bytes", text)
@@ -82,7 +82,7 @@ def _windows() -> int | None:
 
 def _percent_macos() -> int | None:
     try:
-        return int(subprocess.run(["sysctl", "-n", "kern.memorystatus_level"], capture_output=True, text=True, timeout=5, check=True).stdout)
+        return int(subprocess.run(["sysctl", "-n", "kern.memorystatus_level"], capture_output=True, text=True, encoding="utf-8", timeout=5, check=True).stdout)
     except (OSError, ValueError, subprocess.SubprocessError):
         return None
 

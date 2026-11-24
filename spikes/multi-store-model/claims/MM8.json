@@ -1,0 +1,13 @@
+{
+  "subject": "MM8",
+  "statedAs": "Laws.a_create_starts_the_sequence_at_one, a_replace_moves_the_sequence_to_its_successor, an_append_moves_the_sequence_to_its_successor",
+  "statementDigest": "sha256:53579f3da4899d5f4dc7f1043d2d964f1f6093cafd83139f8a7ea4aefbe4f16f",
+  "method": "Proof",
+  "scope": "EveryState",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

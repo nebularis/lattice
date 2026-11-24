@@ -29,11 +29,11 @@ def doc(name: str, version: str, imports: str = "") -> str:
 def layer(tmp_path: Path) -> tuple[Path, lattice_repo_catalogue.Module]:
     spec = tmp_path / "ontology/x/spec"
     spec.mkdir(parents=True)
-    (spec / "x.ttl").write_text(doc("x", "0.21.0"))
-    (spec / "x-store.ttl").write_text(doc("x-store", "0.21.0", f" ;\n    owl:imports <https://example.org/foundation/0.21.0>, <{BASE}/x/0.21.0>"))
+    (spec / "x.ttl").write_text(doc("x", "0.21.0"), encoding="utf-8")
+    (spec / "x-store.ttl").write_text(doc("x-store", "0.21.0", f" ;\n    owl:imports <https://example.org/foundation/0.21.0>, <{BASE}/x/0.21.0>"), encoding="utf-8")
     (tmp_path / "ontology/x/shapes").mkdir()
-    (tmp_path / "ontology/x/shapes/.version").write_text("0.20.0\n")
-    (tmp_path / "ontology/x/README.md").write_text(f"| `spec/x.ttl` | <{BASE}/x> | <{BASE}/x/0.21.0> | none |\n\n- **Unreleased**.\n  - a change.\n- **0.21.0**.\n")
+    (tmp_path / "ontology/x/shapes/.version").write_text("0.20.0\n", encoding="utf-8")
+    (tmp_path / "ontology/x/README.md").write_text(f"| `spec/x.ttl` | <{BASE}/x> | <{BASE}/x/0.21.0> | none |\n\n- **Unreleased**.\n  - a change.\n- **0.21.0**.\n", encoding="utf-8")
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
     return tmp_path, lattice_repo_catalogue.Module("x", Path("ontology/x"), "standalone", ("spec", "shapes"), None)
@@ -54,16 +54,16 @@ def test_a_layer_spec_documents_move_in_unison_and_its_imports_of_others_stay(la
     root, module = layer
     log: list[str] = []
     assert bv.bump_spec(root, module, "minor", None, log) == "0.22.0"
-    store = (root / "ontology/x/spec/x-store.ttl").read_text()
+    store = (root / "ontology/x/spec/x-store.ttl").read_text(encoding="utf-8")
     assert f"<{BASE}/x-store/0.22.0>" in store and f"<{BASE}/x/0.22.0>" in store
     assert "<https://example.org/foundation/0.21.0>" in store, "another module's pin is not this module's to move"
-    assert f"<{BASE}/x/0.22.0>" in (root / "ontology/x/README.md").read_text()
+    assert f"<{BASE}/x/0.22.0>" in (root / "ontology/x/README.md").read_text(encoding="utf-8")
     assert "x: 2 spec document(s) 0.21.0 -> 0.22.0" in log
 
 
 def test_spec_documents_at_different_numbers_are_refused(layer) -> None:
     root, module = layer
-    (root / "ontology/x/spec/x.ttl").write_text(doc("x", "0.20.0"))
+    (root / "ontology/x/spec/x.ttl").write_text(doc("x", "0.20.0"), encoding="utf-8")
     with pytest.raises(bv.BumpError, match="move in unison"):
         bv.bump_spec(root, module, "minor", None, [])
 
@@ -71,14 +71,14 @@ def test_spec_documents_at_different_numbers_are_refused(layer) -> None:
 def test_the_shapes_share_one_version_moved_by_their_own_number(layer) -> None:
     root, module = layer
     assert bv.bump_shapes(root, module, "minor", None, []) == "0.21.0", "the shapes' own 0.20.0, not the specs' number"
-    assert (root / "ontology/x/shapes/.version").read_text() == "0.21.0\n"
+    assert (root / "ontology/x/shapes/.version").read_text(encoding="utf-8") == "0.21.0\n"
 
 
 def test_the_unreleased_notes_take_the_number(layer) -> None:
     root, _ = layer
     log: list[str] = []
     bv.name_release(root, root / "ontology/x/README.md", "0.22.0", log)
-    assert "- **0.22.0**.\n  - a change." in (root / "ontology/x/README.md").read_text()
+    assert "- **0.22.0**.\n  - a change." in (root / "ontology/x/README.md").read_text(encoding="utf-8")
     bv.name_release(root, root / "ontology/x/README.md", "0.23.0", log)
     assert "no Unreleased notes" in log[-1]
 

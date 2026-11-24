@@ -1,0 +1,13 @@
+{
+  "subject": "MM10",
+  "statedAs": "Laws.every_receipt_stays_at_or_below_its_rows_sequence, a_receipt_once_written_is_never_replaced, the_empty_state_has_its_receipts_below",
+  "statementDigest": "sha256:3b0d36e7038ec0a0f7a96b841c98d01be204ae8087e6591a1f0f7ed1f8a3e803",
+  "method": "Proof",
+  "scope": "EveryStateWithItsReceiptsBelow",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

@@ -117,7 +117,7 @@ class Recorder:
     def __init__(self, directory: Path) -> None:
         self.directory = Path(directory)
         (self.directory / "data").mkdir(parents=True, exist_ok=True)
-        self._calls = open(self.directory / f"calls-{os.getpid()}.jsonl", "a")
+        self._calls = open(self.directory / f"calls-{os.getpid()}.jsonl", "a", encoding="utf-8", newline="\n")
         self.not_recorded = 0
         atexit.register(self._write_counts)
 
@@ -128,7 +128,7 @@ class Recorder:
         digest = hashlib.sha1(data_nt.encode()).hexdigest()
         path = self.directory / "data" / f"{digest}.nt.gz"
         if not path.exists():
-            with gzip.open(path, "wt") as handle:
+            with gzip.open(path, "wt", encoding="utf-8", newline="\n") as handle:
                 handle.write(data_nt)
         self._calls.write(json.dumps({
             "shapes": describe_sources(sources), "data": digest, "namespaces": namespaces,
@@ -178,7 +178,7 @@ def load_calls(directory: Path) -> list[dict]:
     """Every distinct recorded call, in file order."""
     seen, calls = set(), []
     for path in sorted(Path(directory).glob("calls-*.jsonl")):
-        for line in path.read_text().splitlines():
+        for line in path.read_text(encoding="utf-8").splitlines():
             call = json.loads(line)
             identity = call_identity(call)
             if identity not in seen:
@@ -215,7 +215,7 @@ def replay_call(call: dict, directory: Path, root: Path = ROOT) -> tuple[bool | 
 
     data = Graph()
     try:
-        with gzip.open(Path(directory) / "data" / f"{call['data']}.nt.gz", "rt") as handle:
+        with gzip.open(Path(directory) / "data" / f"{call['data']}.nt.gz", "rt", encoding="utf-8") as handle:
             data.parse(data=handle.read(), format="nt")
     except Exception:
         return None, [], 0.0
@@ -318,11 +318,11 @@ def main(argv: list[str] | None = None) -> int:
         started = time.perf_counter()
         status = subprocess.run(record_command(args.workers), cwd=ROOT, env=environment).returncode
         calls = load_calls(directory)
-        skipped = sum(int(path.read_text() or 0) for path in directory.glob("not-recorded-*.count"))
+        skipped = sum(int(path.read_text(encoding="utf-8") or 0) for path in directory.glob("not-recorded-*.count"))
         print(f"recorded {len(calls)} distinct validations in {directory}, {skipped} not recorded ({time.perf_counter() - started:.0f}s, pytest exit {status})")
         return status
 
-    baseline = set(json.loads(args.baseline.read_text())) if args.baseline else None
+    baseline = set(json.loads(args.baseline.read_text(encoding="utf-8"))) if args.baseline else None
     summary = replay(args.directory, args.workers, baseline)
     print(f"done: {len(summary['differing'])} differences, {summary['known']} in the baseline, "
           f"{summary['unreadable']} graphs could not be read back, validation time summed {summary['seconds']:.0f}s, wall {summary['wall']:.0f}s")

@@ -38,7 +38,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if {"-h", "--help"} & set(argv):
         return subprocess.run([sys.executable, str(TOOLS / "bump_version.py"), *argv], cwd=root).returncode
     if argv:
-        bumped = subprocess.run([sys.executable, str(TOOLS / "bump_version.py"), *argv], cwd=root, stdout=subprocess.PIPE, text=True)
+        bumped = subprocess.run([sys.executable, str(TOOLS / "bump_version.py"), *argv], cwd=root, stdout=subprocess.PIPE, text=True, encoding="utf-8")
         if bumped.returncode:
             return bumped.returncode
         lines = bumped.stdout.splitlines()

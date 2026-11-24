@@ -23,7 +23,7 @@ def reap(run_dir: Path) -> None:
     """Stops every process with a pid file in the run, then removes the run's folder. After a clean `stop()` there is nothing left to do."""
     for pid_file in sorted((run_dir / "run").glob("*.pid")):
         try:
-            pid = int(pid_file.read_text().strip())
+            pid = int(pid_file.read_text(encoding="utf-8").strip())
         except (OSError, ValueError):
             continue
         if stack_module.alive(pid):

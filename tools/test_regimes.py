@@ -154,7 +154,7 @@ def test_c7a_01_version_imports_and_comments() -> None:
     for name in new:
         utility = str(spec.value(INS[name], FND.utility))
         assert "Subject:" in utility and "Value:" in utility, name
-    assert "behaviour-runtime" not in SPEC.read_text()
+    assert "behaviour-runtime" not in SPEC.read_text(encoding="utf-8")
 
 
 def test_c7a_01_domains_follow_the_rule() -> None:
@@ -366,7 +366,7 @@ def test_c7a_12_state_kinds_and_activities() -> None:
 
 def test_c7a_13_readme_is_the_source_and_releases_are_recorded() -> None:
     assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
-    readme = (LAYER / "README.md").read_text()
+    readme = (LAYER / "README.md").read_text(encoding="utf-8")
     assert "0.10.0 (CCS C7a" in readme and "Shapes 0.3.0 (additive" in readme
     assert not (LAYER / "shapes" / ".version").exists()
     vocab = _graph(VOCAB)

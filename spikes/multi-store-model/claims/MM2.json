@@ -1,0 +1,13 @@
+{
+  "subject": "MM2",
+  "statedAs": "Laws.a_command_not_applied_changes_nothing",
+  "statementDigest": "sha256:06d36f3efed4c9876d0ef809768c1bb8adf75fcb46405556f91e9cd84faf382f",
+  "method": "Proof",
+  "scope": "EveryCommand",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

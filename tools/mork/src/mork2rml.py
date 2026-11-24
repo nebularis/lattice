@@ -1723,7 +1723,7 @@ if __name__ == "__main__":
         format="%(levelname)s: %(message)s",
     )
 
-    with open(args.input, "r") as f:
+    with open(args.input, "r", encoding="utf-8") as f:
         mork_turtle = f.read()
 
     result = compile_mork_to_rml(
@@ -1737,6 +1737,6 @@ if __name__ == "__main__":
     if args.output == "-":
         sys.stdout.write(result)
     else:
-        with open(args.output, "w") as f:
+        with open(args.output, "w", encoding="utf-8", newline="\n") as f:
             f.write(result)
         logger.info("RML output written to %s", args.output)

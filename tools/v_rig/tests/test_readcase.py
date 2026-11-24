@@ -39,7 +39,7 @@ def test_a_conforming_read_case_loads(module_graphs):
 
 def test_a_read_case_the_shapes_refuse_is_refused(module_graphs, tmp_path):
     bad = tmp_path / "bad.ttl"
-    bad.write_text(READ_CASE.read_text().replace('vrig:key "trigger" ; vrig:value "occurrence" ;', 'vrig:key "trigger" ;'))
+    bad.write_text(READ_CASE.read_text(encoding="utf-8").replace('vrig:key "trigger" ; vrig:value "occurrence" ;', 'vrig:key "trigger" ;'), encoding="utf-8")
     with pytest.raises(readcase.ReadCaseError, match="does not conform"):
         readcase.load(bad, module_graphs)
 
@@ -73,7 +73,7 @@ def test_disagreements_become_findings_about_both_facts(graph, module_graphs):
 
 def test_the_comparison_is_the_same_whatever_wrote_the_case(graph, module_graphs):
     """The same facts under other identifiers give the same disagreements, since the comparison reads documents and keys."""
-    text = READ_CASE.read_text().replace("urn:example:v-rig:read-case:", "urn:example:v-rig:another-reader:")
+    text = READ_CASE.read_text(encoding="utf-8").replace("urn:example:v-rig:read-case:", "urn:example:v-rig:another-reader:")
     other = Graph().parse(data=text, format="turtle")
     first = readcase.compare(graph, readcase.load(READ_CASE, module_graphs))
     second = readcase.compare(graph, other)

@@ -140,7 +140,7 @@ def _children(runs: list[tuple[list[str], dict, str | None]]) -> list[str]:
 
     def run(item):
         argv, env, stdin = item
-        return subprocess.run(argv, input=stdin, env=env, capture_output=True, text=True, check=True).stdout
+        return subprocess.run(argv, input=stdin, env=env, capture_output=True, text=True, encoding="utf-8", check=True).stdout
 
     if not runs:
         return []

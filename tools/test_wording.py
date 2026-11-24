@@ -89,7 +89,7 @@ def test_c3_03_names_no_higher_layer() -> None:
     files = [p for p in LAYER.rglob("*") if p.suffix in {".ttl", ".md"}]
     assert files
     for path in files:
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         for higher in ("lattice/instrument", "lattice/behaviour", "ins:", "bhv:"):
             assert higher not in text, f"{path.relative_to(ROOT)} names {higher}"
 
@@ -176,7 +176,7 @@ def test_c3_09_readme_blocks_equal_the_files() -> None:
 
 
 def test_c3_10_both_versions_have_release_rows() -> None:
-    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
+    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("wording-v0.1.0", "wording-vocab-v0.1.0", "wording-shapes-v0.1.0"):
         assert f"| {tag} |" in register
 
@@ -189,7 +189,7 @@ def test_c3_13_every_element_type_used_is_in_the_baseline_scheme() -> None:
     used = set()
     for example in EXAMPLES:
         used |= set(_graph(example).objects(None, WRD.elementType))
-    readme = (LAYER / "README.md").read_text()
+    readme = (LAYER / "README.md").read_text(encoding="utf-8")
     for block in re.findall(r"```turtle-example\n(.*?)```", readme, re.S):
         used |= set(Graph().parse(data=f"@prefix wrd: <{WRD}> .\n@prefix wrd-voc: <{WRD_VOC}> .\n@prefix ex: <https://example.org/w/> .\n" + block,
                                   format="turtle").objects(None, WRD.elementType))
@@ -352,7 +352,7 @@ def test_c4_07_closed_vocab_sets() -> None:
 
 
 def test_c4_09_new_versions_have_release_rows() -> None:
-    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
+    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("wording-v0.2.0", "wording-vocab-v0.2.0", "wording-shapes-v0.2.0"):
         assert f"| {tag} |" in register, tag
 
@@ -531,7 +531,7 @@ def test_c5_10_the_second_facility_replaces_and_supersedes() -> None:
 
 
 def test_c5_11_release_notes_mark_0_3_0_breaking() -> None:
-    assert "- 0.3.0 (breaking)" in (LAYER / "README.md").read_text()
+    assert "- 0.3.0 (breaking)" in (LAYER / "README.md").read_text(encoding="utf-8")
 
 
 def test_c5_13_an_instance_never_versions_a_library_element() -> None:
@@ -570,7 +570,7 @@ def test_c5_vocab_closed_sets_and_endorsement() -> None:
 
 
 def test_c5_new_versions_have_release_rows() -> None:
-    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
+    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("wording-v0.3.0", "wording-vocab-v0.3.0", "wording-shapes-v0.3.0"):
         assert f"| {tag} |" in register, tag
 
@@ -601,7 +601,7 @@ def _reused(add: str = "", remove: tuple = ()) -> Graph:
         assert triple in g, triple
         g.remove(triple)
     if add:
-        prefixes = "".join(l + "\n" for l in (LAYER / "examples" / "reused-clause.ttl").read_text().splitlines()
+        prefixes = "".join(l + "\n" for l in (LAYER / "examples" / "reused-clause.ttl").read_text(encoding="utf-8").splitlines()
                            if l.startswith("@prefix"))
         g.parse(data=prefixes + add, format="turtle")
     return g
@@ -710,7 +710,7 @@ def test_c8b_08_instrument_imports_wording_0_7_0_and_nothing_names_0_6_0() -> No
 
 
 def test_c8b_09_readme_release_notes() -> None:
-    readme = (LAYER / "README.md").read_text()
+    readme = (LAYER / "README.md").read_text(encoding="utf-8")
     assert "- 0.7.0 (`wording` and `wording-vocab`, breaking, CCS C8b" in readme
     assert "- 0.18.0, the first release" in readme
-    assert "0.14.0 (breaking, CCS C8b)" in (ROOT / "ontology" / "instrument" / "README.md").read_text()
+    assert "0.14.0 (breaking, CCS C8b)" in (ROOT / "ontology" / "instrument" / "README.md").read_text(encoding="utf-8")

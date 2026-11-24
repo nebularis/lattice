@@ -7,6 +7,7 @@ a full small run passes and is audited."""
 from __future__ import annotations
 
 import json
+import locale
 import re
 import shutil
 import subprocess
@@ -76,8 +77,9 @@ needs_java = pytest.mark.skipif(shutil.which("mvn") is None or shutil.which("jav
 
 
 def run_java(directory: Path) -> subprocess.CompletedProcess:
+    # Maven's JVM writes a pipe in its native encoding, the locale's (the ANSI code page on Windows), not UTF-8.
     return subprocess.run(["mvn", "-q", "-f", str(HERE / "pom.xml"), "compile", "exec:exec", "-Dexec.mainClass=org.nebularis.lattice.benchmark.creditkinds.LedgerWrites", f"-Dwrites.dir={directory}",
-                           f"-Dwrites.report={directory / 'writes-java.json'}"], capture_output=True, text=True, check=False, timeout=900)
+                           f"-Dwrites.report={directory / 'writes-java.json'}"], capture_output=True, text=True, encoding=locale.getencoding(), check=False, timeout=900)
 
 
 def tiny(directory: Path) -> None:

@@ -54,7 +54,7 @@ def candidates(root: Path) -> list[Path]:
     """The files that can name a member's version: Turtle and READMEs under ``ontology/``, and the tool
     packages' sources, never their tests, which assert history as well as the present."""
     listed = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "--", "ontology", "tools"],
-                            cwd=root, capture_output=True, text=True, check=True).stdout.splitlines()
+                            cwd=root, capture_output=True, text=True, encoding="utf-8", check=True).stdout.splitlines()
     keep = []
     for line in listed:
         path = Path(line)

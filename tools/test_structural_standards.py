@@ -26,7 +26,7 @@ ROOT = lattice_repo_catalogue.find_root()
 
 def tracked(*pathspecs: str) -> list[str]:
     return subprocess.run(["git", "-C", str(ROOT), "ls-files", "--", *pathspecs],
-                          capture_output=True, text=True, check=True).stdout.splitlines()
+                          capture_output=True, text=True, encoding="utf-8", check=True).stdout.splitlines()
 
 
 def test_nothing_a_build_writes_is_tracked():

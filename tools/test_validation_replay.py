@@ -30,7 +30,7 @@ ex:NeedsName a sh:NodeShape ; sh:targetClass ex:Thing ;
 
 def _shapes(tmp_path: Path, minimum: int = 1) -> Path:
     path = tmp_path / "shapes.ttl"
-    path.write_text(SHAPES.format(minimum=minimum))
+    path.write_text(SHAPES.format(minimum=minimum), encoding="utf-8")
     return path
 
 
@@ -76,7 +76,7 @@ def test_blank_node_labels_do_not_count_as_a_difference() -> None:
 def test_the_same_call_is_loaded_once(tmp_path: Path) -> None:
     call = _recorded(tmp_path, _shapes(tmp_path), _data(named=False))
     line = json.dumps(call)
-    (tmp_path / "rec" / "calls-2.jsonl").write_text(line + "\n" + line + "\n")
+    (tmp_path / "rec" / "calls-2.jsonl").write_text(line + "\n" + line + "\n", encoding="utf-8")
     assert len(vr.load_calls(tmp_path / "rec")) == 1
 
 

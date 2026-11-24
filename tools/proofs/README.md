@@ -33,6 +33,8 @@ the generator again must never silently discard a proof.
 | `Eligibility` | `eligibility/` | `LatticeBase` | gated |
 | `Ledger` | `ledger/` | `LatticeBase`, importing `LatticeShared` | gated |
 
+**A spike's session.** `check.py` also builds and gates a spike's session named in its `SPIKE_SESSIONS`, from the spike's own directory, and only when it is named, for example `mise run check:proofs -- multi-store-model` for `MultiStoreModel` in [spikes/multi-store-model](../../spikes/multi-store-model/README.md), which imports `LatticeShared`. `multi_store_replay.py`, run by `mise run check:multi-store-model-replay`, exports that session's interpreter to Scala and replays histories through it.
+
 ## Shared infrastructure
 
 `gate.py` and `claim-schema.json` were carried over from `spikes/formal-prover/`, whose own copies were removed on 2026-11-07 so that one gate exists (ADR-A-FM2's addendum), unchanged in

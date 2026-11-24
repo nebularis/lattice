@@ -1,0 +1,79 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# The terms this spike adds beside R2RML to state a relational place: what R2RML
+# cannot say about a table that a compiled profile would need. They live in a
+# namespace of the spike's own, under example.org, and are not LATTICE terms. Each
+# annotates an R2RML logical table, so a place is read from the mapping and never
+# from SQL. The note for MSA-I10 says which of them a place class would need.
+
+@prefix rp:   <https://example.org/lattice/spike/relational-place#> .
+@prefix rr:   <http://www.w3.org/ns/r2rml#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+rp:primaryKey a rdf:Property ;
+    rdfs:domain rr:LogicalTable ;
+    rdfs:comment "The table's key columns, in order, as a list of column names." .
+
+rp:unique a rdf:Property ;
+    rdfs:domain rr:LogicalTable ;
+    rdfs:comment "A list of column names whose values are unique together, where a null is distinct from every value." .
+
+rp:uniqueNullsNotDistinct a rdf:Property ;
+    rdfs:domain rr:LogicalTable ;
+    rdfs:comment "A list of column names whose values are unique together, where two nulls are the same value. A natural key with an optional part needs it." .
+
+rp:notNull a rdf:Property ;
+    rdfs:domain rr:LogicalTable ;
+    rdfs:comment "A list of column names that hold a value on every row, beyond the key columns, the derived columns and the fields an exactly-one or at-least-one restriction gives." .
+
+rp:keyPart a rdf:Property ;
+    rdfs:domain rr:LogicalTable ;
+    rdfs:comment "That a column holds one part of the key of a logical resource." .
+
+rp:column a rdf:Property ;
+    rdfs:comment "The name of the column a key part, a derived column or a foreign key names." .
+
+rp:resource a rdf:Property ;
+    rdfs:comment "The logical resource a key part belongs to, an individual of the persistence layer's resource kinds." .
+
+rp:part a rdf:Property ;
+    rdfs:comment "The name of a key part. The persistence layer's logical keys name root, target, epoch, seq and transaction id. The spike adds record, the row of one record within the resource, and value, one value of a field that holds several." .
+
+rp:derived a rdf:Property ;
+    rdfs:domain rr:LogicalTable ;
+    rdfs:comment "A column that decodes to no triple. Encoding fills it by the rule it states." .
+
+rp:sqlType a rdf:Property ;
+    rdfs:comment "The SQL type of a derived column. A mapped column's type follows from its term map." .
+
+rp:rule a rdf:Property ;
+    rdfs:comment "The rule of a derived column, in words." .
+
+rp:fromColumn a rdf:Property ;
+    rdfs:comment "The column whose value a derived column's rule starts from." .
+
+rp:viaPath a rdf:Property ;
+    rdfs:comment "A SPARQL property path from the value of the column the rule starts from to the derived value, in the graph being encoded." .
+
+rp:valueClass a rdf:Property ;
+    rdfs:comment "The class the value a path reaches must have." .
+
+rp:fromIriTemplate a rdf:Property ;
+    rdfs:comment "A template the IRI in the column the rule starts from was built by, with one placeholder named for the derived column. Encoding reads the derived value back out of the IRI, unescaped." .
+
+rp:sameAsColumn a rdf:Property ;
+    rdfs:comment "That a derived column holds the value of another column." .
+
+rp:foreignKey a rdf:Property ;
+    rdfs:domain rr:LogicalTable ;
+    rdfs:comment "A foreign key: rp:columns of this table reference rp:refColumns of the logical table rp:references names, checked at commit." .
+
+rp:columns a rdf:Property ;
+    rdfs:comment "A list of column names of the referencing table." .
+
+rp:references a rdf:Property ;
+    rdfs:comment "The logical table a foreign key references." .
+
+rp:refColumns a rdf:Property ;
+    rdfs:comment "A list of column names of the referenced table, a primary key or a unique constraint of it." .

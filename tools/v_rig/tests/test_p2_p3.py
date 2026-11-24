@@ -150,8 +150,8 @@ def test_theory_files_are_written_beside_a_copied_ledger(theory, tmp_path):
     try:
         written = p2.write_theory(theory, out)
         assert {p.name for p in written} == {"VRigP2.thy", "ROOT", "Ledger.thy"}
-        assert (out / "p2" / "Ledger.thy").read_text() == p2.ledger_theory().read_text()
-        assert "session VRigP2 = HOL +" in (out / "p2" / "ROOT").read_text()
+        assert (out / "p2" / "Ledger.thy").read_text(encoding="utf-8") == p2.ledger_theory().read_text(encoding="utf-8")
+        assert "session VRigP2 = HOL +" in (out / "p2" / "ROOT").read_text(encoding="utf-8")
     finally:
         import shutil
         shutil.rmtree(out, ignore_errors=True)

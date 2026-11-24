@@ -277,12 +277,12 @@ def test_c9b2_13_signing_down_is_ratio_then_scale() -> None:
 def test_c9b2_14_readme_is_the_source_and_records_the_release() -> None:
     assert literate_extract.main([str(QLAYER / "README.md"), "--layer", "quantification", "--root", str(ROOT),
                                   "--check"]) == 0
-    readme = (QLAYER / "README.md").read_text()
+    readme = (QLAYER / "README.md").read_text(encoding="utf-8")
     assert "**0.8.0** (additive, CCS C9b2" in readme and "Shapes 0.3.0 (breaking)" in readme
     assert "| `Sum` | yes, extensive | no, only plus an extent | no, intensive | yes, of one base | no |" in readme
     assert "Answered in principle (CCS C9b2)" in readme
     assert not (QLAYER / "shapes" / ".version").exists()
-    worked = (QLAYER / "examples" / "examples.md").read_text()
+    worked = (QLAYER / "examples" / "examples.md").read_text(encoding="utf-8")
     assert worked.count("qnt:additivity qnt:Extensive") == 2
 
 

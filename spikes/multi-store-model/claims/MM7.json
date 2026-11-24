@@ -1,0 +1,13 @@
+{
+  "subject": "MM7",
+  "statedAs": "Laws.a_tombstoned_row_refuses_a_replace_and_changes_nothing",
+  "statementDigest": "sha256:30ba6438b1df2d66b815bce204e33a6b1a05be43091758201e934a3efcc1cffd",
+  "method": "Proof",
+  "scope": "EveryState",
+  "assumptionAudit": "gate.py scans every .thy file in this session for sorry/oops/admit/oracle/axiomatization/by-eval; none found",
+  "tool": {
+    "name": "Isabelle",
+    "version": "Isabelle2025-2"
+  },
+  "outcome": "passed"
+}

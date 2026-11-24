@@ -97,13 +97,13 @@ def _example(name: str) -> Graph:
 
 
 def _prefixes(name: str) -> str:
-    return "".join(line + "\n" for line in (EXAMPLES / f"{name}.ttl").read_text().splitlines()
+    return "".join(line + "\n" for line in (EXAMPLES / f"{name}.ttl").read_text(encoding="utf-8").splitlines()
                    if line.startswith("@prefix"))
 
 
 def _split(name: str) -> tuple[Graph, Graph]:
     """The example's form and instance, and its expected generated part."""
-    text = (EXAMPLES / f"{name}.ttl").read_text()
+    text = (EXAMPLES / f"{name}.ttl").read_text(encoding="utf-8")
     start = text.index("# ==== Generated bound meaning")
     end = text.find("\n# ====", start + 10)
     generated = text[start:] if end < 0 else text[start:end]
@@ -284,10 +284,10 @@ def test_c8_13_the_instantiator_names_generated_nodes_deterministically() -> Non
 
 def test_c8_14_readme_is_the_source_and_releases_are_recorded() -> None:
     assert literate_extract.main([str(LAYER / "README.md"), "--layer", "instrument", "--root", str(ROOT), "--check"]) == 0
-    readme = (LAYER / "README.md").read_text()
+    readme = (LAYER / "README.md").read_text(encoding="utf-8")
     assert "0.13.0 (additive, CCS C8" in readme and "Shapes 0.6.0 (breaking" in readme
     assert not (LAYER / "shapes" / ".version").exists()
-    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text()
+    register = (ROOT / "docs" / "architecture" / "ontology-releases.md").read_text(encoding="utf-8")
     for tag in ("instrument-v0.13.0", "instrument-shapes-v0.6.0", "instrument-vocab-v0.13.0"):
         assert tag in register, tag
 
@@ -376,5 +376,5 @@ def test_c8_20_a_word_meaning_a_condition_in_a_concept_slot_is_reported() -> Non
     "ontology/eligibility/README.md", "tools/README.md",
     "docs/architecture/decisions/ADR-A104-instrument-terms-and-legal-relations.md"])
 def test_c8_21_the_cycle_rule_is_documented(path: str) -> None:
-    text = (ROOT / path).read_text()
+    text = (ROOT / path).read_text(encoding="utf-8")
     assert "loop" in text and ("§18.4" in text or "cycle" in text.lower()), path

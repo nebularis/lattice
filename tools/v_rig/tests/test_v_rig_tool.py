@@ -197,7 +197,7 @@ def test_every_node_located_and_digested(graph):
         assert len(str(graph.value(node, VRIG.digest))) == 64
     for document in graph.subjects(RDF.type, VRIG.Document):
         assert str(graph.value(document, VRIG.digest)) == canon.sha256_hex(
-            canon.normalise_file((MINI_RIG / "documents" / f"{graph.value(document, VRIG.rigId)}.md").read_text()))
+            canon.normalise_file((MINI_RIG / "documents" / f"{graph.value(document, VRIG.rigId)}.md").read_text(encoding="utf-8")))
 
 
 # ---- conformance, stability and hygiene -------------------------------------------
@@ -227,7 +227,7 @@ def test_rig_files_unchanged_after_a_run(rig, tmp_path):
 def test_no_rig_text_in_any_log_line(caplog):
     with caplog.at_level(logging.INFO, logger="v_rig"):
         lift(read_rig(MINI_RIG), RUN)
-    body_lines = [l.strip() for d in (MINI_RIG / "documents").glob("*.md") for l in d.read_text().splitlines()
+    body_lines = [l.strip() for d in (MINI_RIG / "documents").glob("*.md") for l in d.read_text(encoding="utf-8").splitlines()
                   if len(l.strip()) > 30 and not l.startswith(("#", "|", "---"))]
     assert body_lines
     for record in caplog.records:
@@ -250,10 +250,10 @@ def test_unsupported_format_version_refused(tmp_path):
     copy = tmp_path / "rig"
     shutil.copytree(MINI_RIG, copy)
     manifest = copy / "manifest.yaml"
-    manifest.write_text(manifest.read_text().replace("format_version: 1", "format_version: 2"))
+    manifest.write_text(manifest.read_text(encoding="utf-8").replace("format_version: 1", "format_version: 2"), encoding="utf-8")
     with pytest.raises(RigError, match="format_version is 2"):
         read_rig(copy)
-    manifest.write_text("\n".join(l for l in manifest.read_text().splitlines() if "format_version" not in l))
+    manifest.write_text("\n".join(l for l in manifest.read_text(encoding="utf-8").splitlines() if "format_version" not in l), encoding="utf-8")
     with pytest.raises(RigError, match="no format_version key"):
         read_rig(copy)
 

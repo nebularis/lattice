@@ -32,7 +32,7 @@ def _jar_serves() -> bool:
     message and exits with status 2, and `run` then falls back to a JVM per call, which is correct
     but leaves nothing for these cases to check."""
     done = subprocess.run(["java", *reasoning.jvm_options(), "-jar", str(reasoning.JAR), "serve"],
-                          input="", capture_output=True, text=True, timeout=120)
+                          input="", capture_output=True, text=True, encoding="utf-8", timeout=120)
     return done.returncode == 0
 
 
@@ -123,7 +123,7 @@ def test_a_jar_that_cannot_serve_makes_the_process_fall_back_to_a_jvm_per_call(s
     if not reasoning.available():
         pytest.skip("java not available")
     not_a_jar = tmp_path / "not-a-testkit.jar"
-    not_a_jar.write_text("not a jar")
+    not_a_jar.write_text("not a jar", encoding="utf-8")
     monkeypatch.setattr(reasoning, "JAR", not_a_jar)
     monkeypatch.setenv("LATTICE_REASONING_JVM_OPTIONS", "")
     with pytest.raises(subprocess.CalledProcessError):      # the JVM per call reports the real fault

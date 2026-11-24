@@ -52,7 +52,7 @@ def files(root: Path, tests: bool) -> list[str]:
     catalogue = lattice_repo_catalogue.load(root)
     areas = [catalogue.area(name).as_posix() for name in ROOTS]
     listed = subprocess.run(["git", "-C", str(root), "ls-files", "--", *areas],
-                            capture_output=True, text=True, check=True).stdout.splitlines()
+                            capture_output=True, text=True, encoding="utf-8", check=True).stdout.splitlines()
     return [p for p in listed if Path(p).suffix in SUFFIXES and (tests or not is_test(p))]
 
 

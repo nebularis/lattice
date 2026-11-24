@@ -79,7 +79,7 @@ def _p1_rdflib_by_seed(rows: str, seeds=range(12)) -> list[bool]:
 
     def child(seed):
         env = {**os.environ, "PYTHONHASHSEED": str(seed)}
-        return subprocess.run([sys.executable, "-c", _P1_CHILD, rows], env=env, capture_output=True, text=True, check=True).stdout.strip() == "True"
+        return subprocess.run([sys.executable, "-c", _P1_CHILD, rows], env=env, capture_output=True, text=True, encoding="utf-8", check=True).stdout.strip() == "True"
 
     with ThreadPoolExecutor(max_workers=len(seeds)) as pool:
         return list(pool.map(child, seeds))
@@ -300,7 +300,7 @@ def _tsd34_rdflib_by_seed(query: str, seeds=range(16)) -> set[str]:
     from concurrent.futures import ThreadPoolExecutor
 
     def child(seed):
-        return subprocess.run([sys.executable, "-c", _TSD34_CHILD, query], env={**os.environ, "PYTHONHASHSEED": str(seed)}, capture_output=True, text=True, check=True).stdout.strip()
+        return subprocess.run([sys.executable, "-c", _TSD34_CHILD, query], env={**os.environ, "PYTHONHASHSEED": str(seed)}, capture_output=True, text=True, encoding="utf-8", check=True).stdout.strip()
 
     with ThreadPoolExecutor(max_workers=len(seeds)) as pool:
         return set(pool.map(child, seeds))

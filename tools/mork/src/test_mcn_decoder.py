@@ -2041,7 +2041,7 @@ class TestCodebookCoverage:
     def _spec_exceptions():
         """The terms section 8.5 of the specification lists as having no
         code, as local names."""
-        text = SPEC_MD.read_text()
+        text = SPEC_MD.read_text(encoding="utf-8")
         section = text.split("### 8.5 Terms without a code", 1)[1].split("\n## ", 1)[0]
         return set(re.findall(r"^\| `mork:(\w+)` \|", section, re.M))
 
@@ -2099,7 +2099,7 @@ class TestCodebookCoverage:
         assert not missing, f"individuals with no MCN reserved token: {missing}"
 
     def test_predeclared_prefixes_cover_mork_ttl_namespaces(self):
-        text = MORK_TTL.read_text()
+        text = MORK_TTL.read_text(encoding="utf-8")
         for prefix_decl in re.finditer(r"@prefix\s+(\w+):\s+<([^>]+)>", text):
             prefix, iri = prefix_decl.group(1), prefix_decl.group(2)
             if prefix in cb.PREDECLARED_PREFIXES:
@@ -2287,12 +2287,12 @@ FENCE = "`" * 3
 
 
 def _spec_blocks():
-    return re.findall(rf"^{FENCE}\n(.*?)^{FENCE}", SPEC_MD.read_text(), re.S | re.M)
+    return re.findall(rf"^{FENCE}\n(.*?)^{FENCE}", SPEC_MD.read_text(encoding="utf-8"), re.S | re.M)
 
 
 class TestExistingDocumentsDecodeAsBefore:
     def test_cassettes_and_specification_examples_decode_to_the_same_graphs(self):
-        texts = [p.read_text() for p in sorted(MTP_CASSETTES.glob("*.txt"))] + _spec_blocks()
+        texts = [p.read_text(encoding="utf-8") for p in sorted(MTP_CASSETTES.glob("*.txt"))] + _spec_blocks()
         seen = set()
         for text in texts:
             key = hashlib.sha256(text.encode()).hexdigest()

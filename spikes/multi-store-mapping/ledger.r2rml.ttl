@@ -1,0 +1,244 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# The ledger's records in R2RML, with the relational place of each table stated
+# beside the mapping in the spike's place terms (place.ttl). Every record the
+# ledger's runtime vocabulary declares is mapped but one. A supersession is held
+# until the ledger's LG-Q58 decides whether it names its owner or an account.
+#
+# The aggregate root of every table is the owner's ledger, the unit one writer
+# serialises. That is our leaning, put to the maintainer in the MSA-I10 pack. A
+# record names its ledger in no triple, so the ledger column is derived when the
+# graph is encoded and decodes to nothing. Composite foreign keys hold the derived
+# column to the records it is derived through.
+#
+# Every IRI is stored whole. The ledger's IRI rules are prose ("derive its IRI
+# from the owner's"), and an R2RML template percent-encodes an IRI it inserts, so
+# a template cannot rebuild a pass's IRI from its ledger's (the note, section 4).
+
+@prefix rr:   <http://www.w3.org/ns/r2rml#> .
+@prefix rp:   <https://example.org/lattice/spike/relational-place#> .
+@prefix dal:  <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .
+@prefix ldg:  <https://www.nebularis.org/neuro-semantic/lattice/ledger#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix m:    <https://example.org/lattice/spike/ledger-mapping#> .
+
+# ==== ledger ================================================================
+
+m:ledger-table a rr:LogicalTable ;
+    rr:tableName "ledger" ;
+    rp:primaryKey ( "ledger" ) ;
+    rp:unique ( "owner" ) , ( "ledger" "owner" ) ;
+    rp:keyPart [ rp:column "ledger" ; rp:resource dal:Aggregate ; rp:part "root" ] ,
+        [ rp:column "ledger" ; rp:resource dal:Aggregate ; rp:part "record" ] ,
+        [ rp:column "ledger" ; rp:resource dal:VersionRow ; rp:part "root" ] .
+
+m:Ledger a rr:TriplesMap ;
+    rr:logicalTable m:ledger-table ;
+    rr:subjectMap [ rr:column "ledger" ; rr:class ldg:Ledger ] ;
+    rr:predicateObjectMap
+        [ rr:predicate ldg:forOwner ; rr:objectMap [ rr:column "owner" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:ledgerProfile ; rr:objectMap [ rr:column "profile" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:revision ; rr:objectMap [ rr:column "revision" ; rr:datatype xsd:nonNegativeInteger ] ] .
+
+# ==== account ===============================================================
+
+m:account-table a rr:LogicalTable ;
+    rr:tableName "account" ;
+    rp:primaryKey ( "ledger" "account" ) ;
+    rp:uniqueNullsNotDistinct ( "definition_identity" "owner" "account_key" "period_key" ) ;
+    rp:keyPart [ rp:column "ledger" ; rp:resource dal:Aggregate ; rp:part "root" ] ,
+        [ rp:column "account" ; rp:resource dal:Aggregate ; rp:part "record" ] ;
+    rp:derived [ rp:column "ledger" ; rp:sqlType "text" ; rp:fromColumn "account" ;
+            rp:viaPath "ldg:forOwner/^ldg:forOwner" ; rp:valueClass ldg:Ledger ;
+            rp:rule "the ledger of the account's owner" ] ,
+        [ rp:column "definition_identity" ; rp:sqlType "text" ; rp:fromColumn "account" ;
+            rp:viaPath "ldg:ofDefinition/fnd:hasIdentity" ; rp:valueClass fnd:PersistentIdentity ;
+            rp:rule "the identity of the version the account opens under, read from the configuration, which is pinned" ] ;
+    rp:foreignKey [ rp:columns ( "ledger" "owner" ) ; rp:references m:ledger-table ; rp:refColumns ( "ledger" "owner" ) ] ,
+        [ rp:columns ( "ledger" "part_of_account" ) ; rp:references m:account-table ; rp:refColumns ( "ledger" "account" ) ] .
+
+m:Account a rr:TriplesMap ;
+    rr:logicalTable m:account-table ;
+    rr:subjectMap [ rr:column "account" ; rr:class ldg:Account ] ;
+    rr:predicateObjectMap
+        [ rr:predicate ldg:ofDefinition ; rr:objectMap [ rr:column "of_definition" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:forOwner ; rr:objectMap [ rr:column "owner" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:accountKey ; rr:objectMap [ rr:column "account_key" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:periodKey ; rr:objectMap [ rr:column "period_key" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:partOfAccount ; rr:objectMap [ rr:column "part_of_account" ; rr:termType rr:IRI ] ] .
+
+# ==== pass ==================================================================
+
+m:pass-table a rr:LogicalTable ;
+    rr:tableName "pass" ;
+    rp:primaryKey ( "ledger" "pass" ) ;
+    rp:unique ( "ledger" "revision" ) , ( "pass" ) ;
+    rp:keyPart [ rp:column "ledger" ; rp:resource dal:Aggregate ; rp:part "root" ] ,
+        [ rp:column "pass" ; rp:resource dal:Aggregate ; rp:part "record" ] ,
+        [ rp:column "ledger" ; rp:resource dal:Receipt ; rp:part "target" ] ,
+        [ rp:column "revision" ; rp:resource dal:Receipt ; rp:part "seq" ] ,
+        [ rp:column "pass" ; rp:resource dal:TransactionClaim ; rp:part "transaction id" ] ;
+    rp:derived [ rp:column "ledger" ; rp:sqlType "text" ; rp:fromColumn "pass" ;
+            rp:fromIriTemplate "{ledger}/pass/{key}" ;
+            rp:rule "the ledger whose IRI the pass's IRI is derived from, with the key the caller gave" ] ;
+    rp:foreignKey [ rp:columns ( "ledger" ) ; rp:references m:ledger-table ; rp:refColumns ( "ledger" ) ] .
+
+m:Pass a rr:TriplesMap ;
+    rr:logicalTable m:pass-table ;
+    rr:subjectMap [ rr:column "pass" ; rr:class ldg:Pass ] ;
+    rr:predicateObjectMap
+        [ rr:predicate ldg:passPosition ; rr:objectMap [ rr:column "position" ; rr:datatype xsd:nonNegativeInteger ] ] ,
+        [ rr:predicate ldg:passRevision ; rr:objectMap [ rr:column "revision" ; rr:datatype xsd:nonNegativeInteger ] ] .
+
+# ==== posting ===============================================================
+
+m:posting-table a rr:LogicalTable ;
+    rr:tableName "posting" ;
+    rp:primaryKey ( "ledger" "posting" ) ;
+    rp:keyPart [ rp:column "ledger" ; rp:resource dal:Aggregate ; rp:part "root" ] ,
+        [ rp:column "posting" ; rp:resource dal:Aggregate ; rp:part "record" ] ;
+    rp:derived [ rp:column "ledger" ; rp:sqlType "text" ; rp:fromColumn "posting" ;
+            rp:viaPath "ldg:onAccount/ldg:forOwner/^ldg:forOwner" ; rp:valueClass ldg:Ledger ;
+            rp:rule "the ledger of the owner of the account posted to" ] ;
+    rp:foreignKey [ rp:columns ( "ledger" "on_account" ) ; rp:references m:account-table ; rp:refColumns ( "ledger" "account" ) ] ,
+        [ rp:columns ( "ledger" "pass" ) ; rp:references m:pass-table ; rp:refColumns ( "ledger" "pass" ) ] .
+
+m:Posting a rr:TriplesMap ;
+    rr:logicalTable m:posting-table ;
+    rr:subjectMap [ rr:column "posting" ; rr:class ldg:Posting ] ;
+    rr:predicateObjectMap
+        [ rr:predicate ldg:onAccount ; rr:objectMap [ rr:column "on_account" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:inPass ; rr:objectMap [ rr:column "pass" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:effectivePosition ; rr:objectMap [ rr:column "effective_position" ; rr:datatype xsd:nonNegativeInteger ] ] ,
+        [ rr:predicate ldg:recordedPosition ; rr:objectMap [ rr:column "recorded_position" ; rr:datatype xsd:nonNegativeInteger ] ] ,
+        [ rr:predicate ldg:microPosition ; rr:objectMap [ rr:column "micro_position" ; rr:datatype xsd:nonNegativeInteger ] ] ,
+        [ rr:predicate ldg:direction ; rr:objectMap [ rr:column "direction" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:amountValue ; rr:objectMap [ rr:column "amount" ; rr:datatype xsd:decimal ] ] ,
+        [ rr:predicate ldg:runningBalance ; rr:objectMap [ rr:column "running_balance" ; rr:datatype xsd:decimal ] ] ,
+        [ rr:predicate ldg:creditKind ; rr:objectMap [ rr:column "credit_kind" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:offeredValue ; rr:objectMap [ rr:column "offered" ; rr:datatype xsd:decimal ] ] ,
+        [ rr:predicate ldg:overdrawnValue ; rr:objectMap [ rr:column "overdrawn" ; rr:datatype xsd:decimal ] ] ,
+        [ rr:predicate ldg:forPurpose ; rr:objectMap [ rr:column "for_purpose" ; rr:termType rr:IRI ] ] .
+
+# A posting's read set holds one source or more, so it is a table of its own.
+
+m:posting-source-table a rr:LogicalTable ;
+    rr:tableName "posting_source" ;
+    rp:primaryKey ( "ledger" "posting" "source" ) ;
+    rp:keyPart [ rp:column "ledger" ; rp:resource dal:Aggregate ; rp:part "root" ] ,
+        [ rp:column "posting" ; rp:resource dal:Aggregate ; rp:part "record" ] ,
+        [ rp:column "source" ; rp:resource dal:Aggregate ; rp:part "value" ] ;
+    rp:derived [ rp:column "ledger" ; rp:sqlType "text" ; rp:fromColumn "posting" ;
+            rp:viaPath "ldg:onAccount/ldg:forOwner/^ldg:forOwner" ; rp:valueClass ldg:Ledger ;
+            rp:rule "the ledger of the posting" ] ;
+    rp:foreignKey [ rp:columns ( "ledger" "posting" ) ; rp:references m:posting-table ; rp:refColumns ( "ledger" "posting" ) ] .
+
+m:PostingSource a rr:TriplesMap ;
+    rr:logicalTable m:posting-source-table ;
+    rr:subjectMap [ rr:column "posting" ] ;
+    rr:predicateObjectMap
+        [ rr:predicate prov:wasDerivedFrom ; rr:objectMap [ rr:column "source" ; rr:termType rr:IRI ] ] .
+
+# ==== cut ===================================================================
+
+m:cut-table a rr:LogicalTable ;
+    rr:tableName "cut" ;
+    rp:primaryKey ( "ledger" "cut" ) ;
+    rp:keyPart [ rp:column "ledger" ; rp:resource dal:Aggregate ; rp:part "root" ] ,
+        [ rp:column "cut" ; rp:resource dal:Aggregate ; rp:part "record" ] ;
+    rp:derived [ rp:column "ledger" ; rp:sqlType "text" ; rp:fromColumn "cut" ;
+            rp:viaPath "ldg:cutOf/ldg:onAccount/ldg:forOwner/^ldg:forOwner" ; rp:valueClass ldg:Ledger ;
+            rp:rule "the ledger of the credit the cut belongs to" ] ;
+    rp:foreignKey [ rp:columns ( "ledger" "cut_of" ) ; rp:references m:posting-table ; rp:refColumns ( "ledger" "posting" ) ] ,
+        [ rp:columns ( "ledger" "cut_at" ) ; rp:references m:account-table ; rp:refColumns ( "ledger" "account" ) ] .
+
+m:Cut a rr:TriplesMap ;
+    rr:logicalTable m:cut-table ;
+    rr:subjectMap [ rr:column "cut" ; rr:class ldg:Cut ] ;
+    rr:predicateObjectMap
+        [ rr:predicate ldg:cutOf ; rr:objectMap [ rr:column "cut_of" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:cutAt ; rr:objectMap [ rr:column "cut_at" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:cutValue ; rr:objectMap [ rr:column "cut_value" ; rr:datatype xsd:decimal ] ] .
+
+# ==== merge record ==========================================================
+
+m:merge-record-table a rr:LogicalTable ;
+    rr:tableName "merge_record" ;
+    rp:primaryKey ( "ledger" "merge_record" ) ;
+    rp:keyPart [ rp:column "ledger" ; rp:resource dal:Aggregate ; rp:part "root" ] ,
+        [ rp:column "merge_record" ; rp:resource dal:Aggregate ; rp:part "record" ] ;
+    rp:derived [ rp:column "ledger" ; rp:sqlType "text" ; rp:fromColumn "merge_record" ;
+            rp:viaPath "ldg:onAccount/ldg:forOwner/^ldg:forOwner" ; rp:valueClass ldg:Ledger ;
+            rp:rule "the ledger of the owner of the account merged on" ] ;
+    rp:foreignKey [ rp:columns ( "ledger" "on_account" ) ; rp:references m:account-table ; rp:refColumns ( "ledger" "account" ) ] ,
+        [ rp:columns ( "ledger" "pass" ) ; rp:references m:pass-table ; rp:refColumns ( "ledger" "pass" ) ] .
+
+m:MergeRecord a rr:TriplesMap ;
+    rr:logicalTable m:merge-record-table ;
+    rr:subjectMap [ rr:column "merge_record" ; rr:class ldg:MergeRecord ] ;
+    rr:predicateObjectMap
+        [ rr:predicate ldg:onAccount ; rr:objectMap [ rr:column "on_account" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:inPass ; rr:objectMap [ rr:column "pass" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:effectivePosition ; rr:objectMap [ rr:column "effective_position" ; rr:datatype xsd:nonNegativeInteger ] ] ,
+        [ rr:predicate ldg:availableBefore ; rr:objectMap [ rr:column "available_before" ; rr:datatype xsd:decimal ] ] ,
+        [ rr:predicate ldg:refusalReason ; rr:objectMap [ rr:column "refusal_reason" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:residualValue ; rr:objectMap [ rr:column "residual" ; rr:datatype xsd:decimal ] ] .
+
+# ==== request ===============================================================
+# A request is part of its merge record, so the merge record's ldg:request is
+# a column of the request's row, read by a second map whose subject is that column.
+
+m:request-table a rr:LogicalTable ;
+    rr:tableName "request" ;
+    rp:primaryKey ( "ledger" "request" ) ;
+    rp:notNull ( "merge_record" ) ;
+    rp:keyPart [ rp:column "ledger" ; rp:resource dal:Aggregate ; rp:part "root" ] ,
+        [ rp:column "request" ; rp:resource dal:Aggregate ; rp:part "record" ] ;
+    rp:derived [ rp:column "ledger" ; rp:sqlType "text" ; rp:fromColumn "request" ;
+            rp:viaPath "^ldg:request/ldg:onAccount/ldg:forOwner/^ldg:forOwner" ; rp:valueClass ldg:Ledger ;
+            rp:rule "the ledger of the request's merge record" ] ;
+    rp:foreignKey [ rp:columns ( "ledger" "merge_record" ) ; rp:references m:merge-record-table ; rp:refColumns ( "ledger" "merge_record" ) ] .
+
+m:Request a rr:TriplesMap ;
+    rr:logicalTable m:request-table ;
+    rr:subjectMap [ rr:column "request" ; rr:class ldg:Request ] ;
+    rr:predicateObjectMap
+        [ rr:predicate ldg:forProposal ; rr:objectMap [ rr:column "for_proposal" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:forPurpose ; rr:objectMap [ rr:column "for_purpose" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:requestedValue ; rr:objectMap [ rr:column "requested" ; rr:datatype xsd:decimal ] ] ,
+        [ rr:predicate ldg:grantedValue ; rr:objectMap [ rr:column "granted" ; rr:datatype xsd:decimal ] ] ,
+        [ rr:predicate ldg:proportionNumerator ; rr:objectMap [ rr:column "proportion_numerator" ; rr:datatype xsd:integer ] ] ,
+        [ rr:predicate ldg:proportionDenominator ; rr:objectMap [ rr:column "proportion_denominator" ; rr:datatype xsd:integer ] ] ,
+        [ rr:predicate ldg:rank ; rr:objectMap [ rr:column "rank" ; rr:datatype xsd:nonNegativeInteger ] ] ,
+        [ rr:predicate ldg:unitOrderPlace ; rr:objectMap [ rr:column "unit_order_place" ; rr:datatype xsd:nonNegativeInteger ] ] .
+
+m:MergeRecordRequest a rr:TriplesMap ;
+    rr:logicalTable m:request-table ;
+    rr:subjectMap [ rr:column "merge_record" ] ;
+    rr:predicateObjectMap
+        [ rr:predicate ldg:request ; rr:objectMap [ rr:column "request" ; rr:termType rr:IRI ] ] .
+
+# ==== checkpoint ============================================================
+
+m:checkpoint-table a rr:LogicalTable ;
+    rr:tableName "checkpoint" ;
+    rp:primaryKey ( "ledger" "checkpoint" ) ;
+    rp:unique ( "ledger" "on_account" "close_position" ) ;
+    rp:keyPart [ rp:column "ledger" ; rp:resource dal:Aggregate ; rp:part "root" ] ,
+        [ rp:column "checkpoint" ; rp:resource dal:Aggregate ; rp:part "record" ] ;
+    rp:derived [ rp:column "ledger" ; rp:sqlType "text" ; rp:fromColumn "checkpoint" ;
+            rp:viaPath "ldg:onAccount/ldg:forOwner/^ldg:forOwner" ; rp:valueClass ldg:Ledger ;
+            rp:rule "the ledger of the owner of the account" ] ;
+    rp:foreignKey [ rp:columns ( "ledger" "on_account" ) ; rp:references m:account-table ; rp:refColumns ( "ledger" "account" ) ] .
+
+m:Checkpoint a rr:TriplesMap ;
+    rr:logicalTable m:checkpoint-table ;
+    rr:subjectMap [ rr:column "checkpoint" ; rr:class ldg:Checkpoint ] ;
+    rr:predicateObjectMap
+        [ rr:predicate ldg:onAccount ; rr:objectMap [ rr:column "on_account" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate ldg:closePosition ; rr:objectMap [ rr:column "close_position" ; rr:datatype xsd:nonNegativeInteger ] ] ,
+        [ rr:predicate ldg:balanceValue ; rr:objectMap [ rr:column "balance" ; rr:datatype xsd:decimal ] ] ,
+        [ rr:predicate ldg:debitsTotal ; rr:objectMap [ rr:column "debits_total" ; rr:datatype xsd:decimal ] ] ,
+        [ rr:predicate ldg:creditsOfferedTotal ; rr:objectMap [ rr:column "credits_offered_total" ; rr:datatype xsd:decimal ] ] .

@@ -99,7 +99,7 @@ def test_h2_6b_t2_the_three_row_append_is_the_same_under_every_hash_seed_on_rdfl
     seen = set()
     for seed in range(8):
         env = {**os.environ, "PYTHONHASHSEED": str(seed), "PERSISTENCE_ENGINES": "rdflib"}
-        out = subprocess.run([sys.executable, "-c", script], env=env, capture_output=True, text=True, check=True).stdout.strip().splitlines()[-1]
+        out = subprocess.run([sys.executable, "-c", script], env=env, capture_output=True, text=True, encoding="utf-8", check=True).stdout.strip().splitlines()[-1]
         seen.add(out)
     assert len(seen) == 1
     written = json.loads(seen.pop())

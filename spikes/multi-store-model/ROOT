@@ -1,0 +1,15 @@
+(* The multi-store model, the prover spike of the multi-store architecture (sketch section 4.6).
+   The neutral IR of guarded commands over logical resources, its exec function, the four
+   operations of the paper lowering, the laws proved of them, and the interpreter exported to
+   Scala. It imports the shared session, LatticeShared, and never the ledger's session. Built by
+   `mise run check:proofs -- multi-store-model`. *)
+
+session MultiStoreModel = LatticeBase +
+  options [document = false, quick_and_dirty = false, timeout = 120]
+  sessions
+    LatticeShared
+  theories
+    IR
+    Commands
+    Laws
+    Export

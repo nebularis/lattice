@@ -68,7 +68,8 @@ def test_h1_2_t2_a_new_rule_in_the_source_joins_the_inventory(tmp_path):
             def h(shape):
                 raise BoundaryConflict("x")
             """
-        )
+        ),
+        encoding="utf-8",
     )
     assert source_rules(tmp_path) == {
         Rule(REFUSAL, "BrandNewRefusal"),
@@ -88,7 +89,7 @@ def test_h1_2_t3_an_unwitnessed_unlisted_rule_fails_the_report():
 def test_h1_2_t4_a_seeded_vacuous_rule_in_real_source_is_reported(tmp_path):
     """The plan's seeded check: add a rule nothing can trigger to the real
     inventory and confirm the real observation leaves it uncovered."""
-    (tmp_path / "vacuous.py").write_text('raise CrossAxisViolation("CanNeverFire", t, "x")\n')
+    (tmp_path / "vacuous.py").write_text('raise CrossAxisViolation("CanNeverFire", t, "x")\n', encoding="utf-8")
     rules = enumerate_rules() | source_rules(tmp_path)
     report = check_witness_coverage()
     seeded = build_report(rules, {**report.covered}, report.listed_gaps)
@@ -163,9 +164,9 @@ def test_h1_2_t12_an_audit_with_only_a_violation_witness_is_not_witnessed(tmp_pa
 def test_h1_2_t13_an_audit_that_fires_on_its_clean_dataset_is_a_problem(tmp_path):
     """A query that returns rows for good data detects nothing."""
     (tmp_path / "audits").mkdir()
-    violation = (witness.WITNESS_DIR / "audits" / "fork-detection-audit.violation.trig").read_text()
-    (tmp_path / "audits" / "fork-detection-audit.violation.trig").write_text(violation)
-    (tmp_path / "audits" / "fork-detection-audit.clean.trig").write_text(violation)
+    violation = (witness.WITNESS_DIR / "audits" / "fork-detection-audit.violation.trig").read_text(encoding="utf-8")
+    (tmp_path / "audits" / "fork-detection-audit.violation.trig").write_text(violation, encoding="utf-8")
+    (tmp_path / "audits" / "fork-detection-audit.clean.trig").write_text(violation, encoding="utf-8")
     observed, problems = observe_audits(audit_witnesses(tmp_path))
     assert Rule(AUDIT, "fork-detection-audit") not in observed
     assert any("the clean dataset returns rows" in p for p in problems)
@@ -215,7 +216,8 @@ def test_h1_2_t17_a_kind_passed_through_a_helper_parameter_is_followed(tmp_path)
                     self.constraint(where, node, "FirstKind")
                     self.constraint(where, node, missing_kind="SecondKind")
             """
-        )
+        ),
+        encoding="utf-8",
     )
     rules, problems = witness.scan_source(tmp_path)
     assert rules == {Rule(REFUSAL, "FirstKind"), Rule(REFUSAL, "SecondKind")}
@@ -231,7 +233,8 @@ def test_h1_2_t18_a_kind_that_cannot_be_determined_is_reported_not_skipped(tmp_p
             def f(key, target):
                 raise CrossAxisViolation(KINDS[key], target, "x")
             """
-        )
+        ),
+        encoding="utf-8",
     )
     rules, problems = witness.scan_source(tmp_path)
     assert rules == set()
@@ -251,7 +254,8 @@ def test_h1_2_t20_a_patch_fixture_removes_from_its_base_and_adds_its_own(tmp_pat
         "# remove: ex:LoanApplicationClass dal:priority\n"
         "@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .\n"
         "@prefix ex: <https://example.org/lending#> .\n"
-        "ex:Extra a dal:ClassScope ; dal:targetClass ex:Extra .\n"
+        "ex:Extra a dal:ClassScope ; dal:targetClass ex:Extra .\n",
+        encoding="utf-8",
     )
     base = witness._load_fixture(EXAMPLES_DIR / "baseline-single-class.ttl")
     patched = witness._load_fixture(fixture)
@@ -268,16 +272,17 @@ def test_h1_2_t21_a_patch_that_removes_nothing_is_refused(tmp_path):
         "# base: baseline-single-class.ttl\n"
         "# remove: ex:NoSuchNode dal:priority\n"
         "@prefix dal: <https://www.nebularis.org/neuro-semantic/lattice/persistence#> .\n"
-        "@prefix ex: <https://example.org/lending#> .\n"
+        "@prefix ex: <https://example.org/lending#> .\n",
+        encoding="utf-8",
     )
     with pytest.raises(ValueError, match="matches nothing"):
         witness._load_fixture(fixture)
 
 
 def test_h1_2_t22_a_witness_that_triggers_a_different_rule_than_its_name_is_a_problem(tmp_path):
-    (tmp_path / "refusal-Alpha.ttl").write_text("")
-    (tmp_path / "warning-Beta.ttl").write_text("")
-    (tmp_path / "_base.ttl").write_text("")  # a shared base is not a witness
+    (tmp_path / "refusal-Alpha.ttl").write_text("", encoding="utf-8")
+    (tmp_path / "warning-Beta.ttl").write_text("", encoding="utf-8")
+    (tmp_path / "_base.ttl").write_text("", encoding="utf-8")  # a shared base is not a witness
     observed = {Rule(REFUSAL, "Alpha"): {"refusal-Alpha.ttl"}, Rule(REFUSAL, "Gamma"): {"warning-Beta.ttl"}}
     problems = witness.named_witness_problems(observed, tmp_path)
     assert len(problems) == 1
@@ -354,7 +359,7 @@ def test_h1_2_t28_the_known_gap_list_is_empty():
 
 
 def test_h1_2_t29_a_shape_witness_must_fire_the_shape_it_is_named_for(tmp_path):
-    (tmp_path / "shape-Alpha.ttl").write_text("")
+    (tmp_path / "shape-Alpha.ttl").write_text("", encoding="utf-8")
     observed = {Rule(SHAPE, "Beta"): {"shape-Alpha.ttl"}}
     (problem,) = witness.named_witness_problems(observed, tmp_path)
     assert "shape-Alpha.ttl" in problem and "shape:Beta" in problem
@@ -369,7 +374,8 @@ def test_h1_2_t30_a_shape_that_reports_on_every_fixture_has_no_conforming_witnes
         @prefix sh:  <http://www.w3.org/ns/shacl#> .
         dal:AlwaysShape a sh:NodeShape ; sh:targetClass dal:ClassScope ;
             sh:property [ sh:path dal:describedBy ; sh:minCount 5 ] .
-        """
+        """,
+        encoding="utf-8",
     )
     monkeypatch.setattr(witness, "SHAPES_TTL", shapes)
     fired, conforming = observe_shapes([EXAMPLES_DIR / "baseline-single-class.ttl"])
