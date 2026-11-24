@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-24. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-24. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -62,7 +62,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2d | a sketch of a projection backend | built 2026-11-23, building 2026-11-23 | SVA-S2 |
 | SVA-S2e | the projection expression vocabulary and the lowering of a derivation | built 2026-11-24, building 2026-11-23 | SVA-S2d |
 | SVA-S2f | `mork_rdf` compiles a derivation | built 2026-11-24, building 2026-11-24 | SVA-S2e |
-| SVA-S2g | graph construction projections | planned | SVA-S2f |
+| SVA-S2g | graph construction projections | building 2026-11-24 | SVA-S2f |
 | SVA-S2h | join projections | planned | SVA-S2f |
 | SVA-S2i | expansion projections | planned | SVA-S2f |
 | SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2g, SVA-S2h, SVA-S2i |
@@ -247,3 +247,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-24: SVA-S2e built, [Validation Pack](../validation/SVA-S2e.md). A derivation states a typed expression on its result binding, MORK gains typed value expressions and a source-node identity, and the lowering carries a derivation into a scheme. The addenda to ADR-A18 and ADR-A23 are Proposed. Five modelling choices the sketch did not settle wait for the maintainer at the pause after SVA-S2g.
 - 2026-11-24: SVA-S2f started.
 - 2026-11-24: SVA-S2f built, [Validation Pack](../validation/SVA-S2f.md). `mork_rdf` compiles a derivation to one CONSTRUCT that writes on the carrier, with checks for a missing operand and an undefined result, and the lowered ARR contract runs to its values. Two engine differences it found wait for the maintainer to decide how they reach the triple-stores domain.
+- 2026-11-24: SVA-S2g started.
