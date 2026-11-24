@@ -1261,6 +1261,21 @@ class ProjectionLoweringTests(unittest.TestCase):
         for operand in operands:
             self.assertIn((operand, RDF.type, MORK.TypedRefExpression), low)
 
+    def test_the_lowered_scheme_names_its_contract_by_producesMapping_and_no_note_carries_the_iri(self) -> None:
+        contract = self.contract()
+        low = lower_projection(contract)
+        self.assertEqual(set(low.objects(contract.iri, SRF.producesMapping)), {lowered_head(contract)})
+        for note in low.objects(None, MORK.mappingNote):
+            self.assertNotIn(str(contract.iri), str(note))
+
+    def test_a_bare_mapping_names_its_contract_by_producesMapping_too(self) -> None:
+        graph = Graph().parse(data=LoweringDependencyTests.SCENARIO, format="turtle")
+        (contract,) = read_projection_contracts(graph)
+        low = lower_projection(contract)
+        self.assertEqual(set(low.objects(contract.iri, SRF.producesMapping)), {lowered_head(contract)})
+        for note in low.objects(None, MORK.mappingNote):
+            self.assertNotIn(str(contract.iri), str(note))
+
     def test_a_lowered_derivation_is_a_scheme_the_mork_shapes_accept(self) -> None:
         low = lower_projection(self.contract())
         self.assertEqual(shape_violations(low, MORK_SHAPES), set())

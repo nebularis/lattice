@@ -3,7 +3,7 @@
 # Sketch: a projection backend, from a Surface projection contract to queries a step runs
 
 **Unit:** `studio-visual-authoring` (SVA), slice SVA-S2d, raised on 2026-11-23 when the maintainer chose that projections are built in this unit, design first
-**Status:** sketch. SVA-Q24 to SVA-Q30 answered by the maintainer on 2026-11-23. SVA-Q31 to SVA-Q34, raised by SVA-S2g on 2026-11-24, answered by the maintainer on 2026-11-24 from a review of the case. SVA-Q35 is open
+**Status:** sketch. SVA-Q24 to SVA-Q30 answered by the maintainer on 2026-11-23. SVA-Q31 to SVA-Q35, raised by SVA-S2g on 2026-11-24, answered by the maintainer on 2026-11-24. No question is open
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md), slices SVA-S2d and SVA-S2c
 **Builds on:** ADR-A16, ADR-A17, ADR-A18, ADR-A19, ADR-A20, ADR-A23 and ADR-A41 (all Accepted), ADR-A154 with its addendum of 2026-11-20, and `tools/mork_rdf`
 
@@ -125,7 +125,7 @@ What a key costs, by arithmetic on 100,000 orders with 20,000 distinct codes and
 
 **SVA-Q34. Which decisions change?** Leaning, as for SVA-Q30: an addendum to ADR-A18 that replaces item 4 for this kind (a graph construction lowers into a scheme whose constructed node is a contextual datum), an addendum to ADR-A23, new laws in the Surface register beside P6 to P9, and minor versions of the Surface and, if (c) of SVA-Q31 needs a term, the MORK module, each released by `mise run version:bump` at the merge. The amendment to ADR-A18 is the maintainer's to decide. **Answered 2026-11-24, as leaned, with the laws named.** One construction on the result-target binding of a graph construction and no other kind. A constructed node states a class, an identity and at least one written value. Each written value names an evidence binding of the same contract. A key binding is required evidence. A run-time check for a keyed node's disagreement. A sentence on how P1, signature scope, reads for a node typed with an authored class. And an addendum to ADR-A18 and ADR-A23 for this kind.
 
-**SVA-Q35. Does a keyed construction take ADR-A41's mapping review?** ADR-A41 asks a mapping review of a join and names none for graph construction. A construction by key merges instances, as a join relates them. (a) A keyed construction takes the mapping review, recorded as a finding as a join's is, and a construction for each instance takes none. (b) Neither takes one. (c) Both take one. Leaning (a), since the merge is where a reviewer's judgement is needed.
+**SVA-Q35. Does a keyed construction take ADR-A41's mapping review?** ADR-A41 asks a mapping review of a join and names none for graph construction. A construction by key merges instances, as a join relates them. (a) A keyed construction takes the mapping review, recorded as a finding as a join's is, and a construction for each instance takes none. (b) Neither takes one. (c) Both take one. Leaning (a), since the merge is where a reviewer's judgement is needed. **Answered 2026-11-24, (a).** A keyed construction takes ADR-A41's mapping review, recorded as a finding the way a join's will be, and a construction for each instance takes none.
 
 ## 4. Slices
 

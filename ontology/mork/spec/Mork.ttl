@@ -506,7 +506,7 @@ mork:ReviewMode a mork:CompilationMode, owl:NamedIndividual ;
 
 mork:RoundingExpression a owl:Class ;
     rdfs:label "rounding expression" ;
-    rdfs:comment "Its operand rounded to the nearest multiple of ten to the power of minus the scale, a tie going toward positive infinity, as SPARQL's ROUND does. A scale of 2 rounds to hundredths and a scale of -2 to hundreds. The result datatype is the operand's." ;
+    rdfs:comment "Its operand rounded to the nearest multiple of ten to the power of minus the scale, a tie going toward positive infinity, as SPARQL's ROUND does. This is the one rounding mode, so -2.5 rounds to -2 and 2.5 to 3. Other modes, such as half-even, are added when a contract needs one. A scale of 2 rounds to hundredths and a scale of -2 to hundreds. The result datatype is the operand's." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:roundedOperand ; owl:someValuesFrom mork:ValueExpression ], [ a owl:Restriction ; owl:onProperty mork:roundingScale ; owl:someValuesFrom xsd:integer ], mork:ValueExpression .
 
 mork:RuleMapping a owl:Class ;

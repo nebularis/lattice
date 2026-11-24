@@ -555,9 +555,9 @@ srf:approvedTemplate a owl:DatatypeProperty ;
 	rdfs:comment "The identifier of a mapping template a bounded LLM completion may draw from." .
 
 srf:producesMapping a owl:ObjectProperty ;
-	rdfs:domain srf:GeneratedSurface ;
-	rdfs:comment "A MORK mapping node a projection's generation run lowered into." ;
-	fnd:utility "Populated only for a generated surface covering a ProjectionContract. Names a mork:DataMapping, mork:ShapeMapping, mork:RuleMapping, mork:QueryTemplate, or mork:ProjectionMapping by punning, without Surface importing MORK." .
+	rdfs:domain [ a owl:Class ; owl:unionOf ( srf:GeneratedSurface srf:ProjectionContract ) ] ;
+	rdfs:comment "A MORK mapping node a projection's lowering produced, which is how a lowered scheme or mapping names its contract." ;
+	fnd:utility "Written by the lowering from a ProjectionContract to the node that stands for it, the root of a scheme or a bare mapping. A generated surface covering a ProjectionContract may name its mapping the same way. Names a mork:DataMapping, mork:ShapeMapping, mork:RuleMapping, mork:QueryTemplate, or mork:ProjectionMapping by punning, without Surface importing MORK." .
 
 srf:ProjectionExpression a owl:Class ;
 	rdfs:subClassOf
@@ -596,7 +596,7 @@ srf:RoundingExpression a owl:Class ;
 	rdfs:subClassOf srf:ProjectionExpression ,
 		[ a owl:Restriction ; owl:onProperty srf:roundedOperand ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:roundingScale ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "Its operand rounded to the nearest multiple of ten to the power of minus the scale, a tie going toward positive infinity, as SPARQL's ROUND does. A scale of 2 rounds to hundredths and a scale of -2 to hundreds." .
+	rdfs:comment "Its operand rounded to the nearest multiple of ten to the power of minus the scale, a tie going toward positive infinity, as SPARQL's ROUND does. This is the one rounding mode, so -2.5 rounds to -2 and 2.5 to 3. Other modes, such as half-even, are added when a contract needs one. A scale of 2 rounds to hundredths and a scale of -2 to hundreds." .
 
 srf:ChoiceExpression a owl:Class ;
 	rdfs:subClassOf srf:ProjectionExpression ,

@@ -53,7 +53,7 @@ that iterates the carrier class and takes the source node as its identity (``mor
 minted or typed), a typed reference for each evidence role the expression reads, and an assertion of the result
 property whose value is the expression, carried across node by node into MORK's typed value expressions. The root also
 holds what the bare lowering below holds, the targeting spec and a parameter binding for every role binding and
-backend-policy field, so nothing the contract declared is lost. Nothing here compiles the scheme. The other projection
+backend-policy field, so nothing the contract declared is lost. The contract names what it lowered into with ``srf:producesMapping``, for a scheme and for a bare mapping alike, and no note carries its IRI. Nothing here compiles the scheme. The other projection
 kinds keep the bare lowering until their own expressions exist.
 
 **Dependency graph.** ``link_dependencies`` recognises exactly two declared
@@ -161,7 +161,12 @@ def _projection_bindings(contract: ProjectionContract) -> List[Tuple[str, str, o
 
 
 def _record_contract(graph: Graph, minter: Minter, contract: ProjectionContract, head: URIRef) -> None:
-    """Write the targeting spec and the parameter bindings of ``head``, the node that stands for the contract."""
+    """Write the link from the contract to ``head``, its targeting spec and its parameter bindings.
+
+    ``head`` is the node that stands for the contract. ``srf:producesMapping`` is how the lowered scheme or bare mapping
+    names its contract, as structure a reader follows, so no note carries the contract's IRI.
+    """
+    graph.add((contract.iri, SRF.producesMapping, head))
     target = minter.lowered_mapping_target()
     graph.add((head, MORK.hasTargetingSpec, target))
     graph.add((target, RDF.type, MORK.TargetingSpec))
@@ -211,7 +216,7 @@ def lower_projection(contract: ProjectionContract) -> Graph:
             mapping,
             MORK.mappingNote,
             Literal(
-                f"Lowered from srf:ProjectionContract {contract.iri} "
+                f"Lowered from a srf:ProjectionContract "
                 f"(projection kind {local_name(str(contract.projection_kind))}). "
                 f"Backend-specific compilation (ADR-A19, ADR-A23) has not yet run; "
                 f"this mapping records intent and role bindings only, and is not yet "
@@ -255,7 +260,7 @@ def _lower_derivation(graph: Graph, minter: Minter, contract: ProjectionContract
             root,
             MORK.mappingNote,
             Literal(
-                f"Lowered from srf:ProjectionContract {contract.iri} "
+                f"Lowered from a srf:ProjectionContract "
                 f"(projection kind {local_name(str(contract.projection_kind))}) into a mapping scheme. "
                 f"Backend-specific compilation (ADR-A19, ADR-A23) has not yet run."
             ),

@@ -421,7 +421,7 @@ A numeric value cannot be built from strings, so the value expressions are a sec
 | `mork:TypedRefExpression` | the value at its `mork:dataRef`, read as its result datatype |
 | `mork:TypedLiteralExpression` | its `mork:typedValue`, a literal of its result datatype |
 | `mork:SumExpression`, `mork:DifferenceExpression`, `mork:ProductExpression`, `mork:QuotientExpression` | the sum, the left operand less the right, the product and the left operand divided by the right. A quotient is undefined where the divisor is zero |
-| `mork:RoundingExpression` | its operand rounded to `mork:roundingScale` places after the decimal point, to the nearest, a tie going toward positive infinity. A negative scale rounds to tens, hundreds and so on |
+| `mork:RoundingExpression` | its operand rounded to `mork:roundingScale` places after the decimal point, to the nearest, a tie going toward positive infinity as SPARQL's ROUND does, so -2.5 rounds to -2. Other modes are added when a contract needs one. A negative scale rounds to tens, hundreds and so on |
 | `mork:ChoiceExpression` | `mork:whenTrue` where the comparison named by `mork:comparisonOperator` holds between `mork:comparedLeft` and `mork:comparedRight`, and `mork:whenFalse` otherwise |
 
 <!-- start: {"generated": "class-diagram", "part": "Typed value expressions", "classes": ["mork:ValueExpression", "mork:TypedRefExpression", "mork:TypedLiteralExpression", "mork:ArithmeticExpression", "mork:SumExpression", "mork:DifferenceExpression", "mork:ProductExpression", "mork:QuotientExpression", "mork:RoundingExpression", "mork:ChoiceExpression", "mork:ComparisonOperator", "mork:IdentityRule"]} -->
@@ -1903,7 +1903,7 @@ Superclasses and restrictions are written in **Subclass of.** and **Equivalent t
 
 #### `mork:RoundingExpression`
 
-**Definition.** Its operand rounded to the nearest multiple of ten to the power of minus the scale, a tie going toward positive infinity, as SPARQL's ROUND does. A scale of 2 rounds to hundredths and a scale of -2 to hundreds. The result datatype is the operand's.
+**Definition.** Its operand rounded to the nearest multiple of ten to the power of minus the scale, a tie going toward positive infinity, as SPARQL's ROUND does. This is the one rounding mode, so -2.5 rounds to -2 and 2.5 to 3. Other modes, such as half-even, are added when a contract needs one. A scale of 2 rounds to hundredths and a scale of -2 to hundreds. The result datatype is the operand's.
 
 **Label.** rounding expression
 
