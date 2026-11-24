@@ -14,6 +14,8 @@ Module map, following the layout ``tools/mork/src/mork2rml.py`` establishes:
 
 ``namespaces``  shared namespace bindings
 ``model``       specification dataclasses and ``SurfaceGraphAnalyser``
+``expression``  the closed vocabulary of a derivation's expression and its typing rules
+``lowering``    the lowering of a contract into a MORK mapping graph or scheme (ADR-A18)
 ``naming``      identifier minting and injectivity checking
 ``canonical``   canonicalisation and content hashing
 ``serialise``   deterministic Turtle output and file loading
@@ -29,6 +31,8 @@ __all__ = [
     "canonical",
     "cli",
     "compile",
+    "expression",
+    "lowering",
     "model",
     "mork",
     "namespaces",

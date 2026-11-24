@@ -330,6 +330,21 @@ Multiple types are joined with `+`: `M+MD`, `C+RE`. A CURIE whose local name beg
 | `EK` | `mork:LookupExpression` |  |
 | `EB` | `mork:TemplateBinding` | positional form `[name expr]` |
 
+**Typed value expression** (a numeric value is built from these, not from the string template expressions)
+
+| Code | Class | Notes |
+|---|---|---|
+| `V` | `mork:ValueExpression` | abstract, prefer the specific codes |
+| `VR` | `mork:TypedRefExpression` | reads `dataRef` as the result datatype |
+| `VL` | `mork:TypedLiteralExpression` | its value is `typedValue` |
+| `VA` | `mork:ArithmeticExpression` | abstract, prefer `VS`, `VD`, `VP` and `VQ` |
+| `VS` | `mork:SumExpression` |  |
+| `VD` | `mork:DifferenceExpression` |  |
+| `VP` | `mork:ProductExpression` |  |
+| `VQ` | `mork:QuotientExpression` |  |
+| `VN` | `mork:RoundingExpression` |  |
+| `VC` | `mork:ChoiceExpression` |  |
+
 **Scheme** (normally introduced by block headers, usable as explicit types in `%X`)
 
 | Code | Class | Notes |
@@ -365,6 +380,8 @@ Multiple types are joined with `+`: `M+MD`, `C+RE`. A CURIE whose local name beg
 | `RD` | `mork:ReviewDecision` |  |
 | `FS` | `mork:FindingSeverity` |  |
 | `OB` | `mork:OutputBox` |  |
+| `OP` | `mork:ComparisonOperator` |  |
+| `ID` | `mork:IdentityRule` |  |
 
 **Compiled mapping (the output of the RDF-to-RDF compiler, usually written by it)**
 
@@ -710,6 +727,24 @@ Kind: *object* takes an IRI, inline node or payload, *data* takes a literal type
 | `lcm` | `mork:lookupComparison` | object |  |
 | `ldt` | `mork:lookupDatatype` | object |  |
 
+**Value expression and identity rule**
+
+| Code | Property | Kind | Literal type |
+|---|---|---|---|
+| `vex` | `mork:valueExpression` | object |  |
+| `rdt` | `mork:resultDatatype` | object |  |
+| `lop` | `mork:leftOperand` | object |  |
+| `rop` | `mork:rightOperand` | object |  |
+| `tvl` | `mork:typedValue` | data | inferred |
+| `rdo` | `mork:roundedOperand` | object |  |
+| `rsc` | `mork:roundingScale` | data | xsd:integer |
+| `cop` | `mork:comparisonOperator` | object |  |
+| `cml` | `mork:comparedLeft` | object |  |
+| `cmr` | `mork:comparedRight` | object |  |
+| `wt` | `mork:whenTrue` | object |  |
+| `wf` | `mork:whenFalse` | object |  |
+| `irl` | `mork:identityRule` | object |  |
+
 **Compiled mapping**
 
 | Code | Property | Kind | Literal type |
@@ -871,6 +906,13 @@ Reserved tokens begin with `.` and are valid only in object position.
 | `.cast` | `mork:CastComparison` |
 | `.lexcmp` | `mork:LexicalComparison` |
 | `.termcmp` | `mork:TermComparison` |
+| `.lt` | `mork:LessThan` |
+| `.le` | `mork:LessThanOrEqual` |
+| `.eq` | `mork:EqualTo` |
+| `.ne` | `mork:NotEqualTo` |
+| `.ge` | `mork:GreaterThanOrEqual` |
+| `.gt` | `mork:GreaterThan` |
+| `.src` | `mork:SourceNodeIdentity` |
 | `.err` | `mork:ErrorFinding` |
 | `.wrn` | `mork:WarningFinding` |
 | `.inf` | `mork:InfoFinding` |

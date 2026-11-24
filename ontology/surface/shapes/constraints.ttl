@@ -118,10 +118,10 @@ srf:EnumerablePopulationShape a sh:NodeShape ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
-				VALUES ?perValueForm { srf:NominalClass srf:MembershipAssertion }
 				$this srf:indexForm ?perValueForm ;
 					  srf:valuePopulation ?population .
 				?population a srf:RangePartitionPopulation .
+				FILTER (?perValueForm IN (srf:NominalClass, srf:MembershipAssertion))
 			}
 		"""
 	] .
@@ -159,15 +159,15 @@ srf:CrosswalkRelationRequiredShape a sh:NodeShape ;
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
 				{
-					VALUES ?crosswalk { srf:CrosswalkExact srf:CrosswalkInexact }
 					$this srf:sourceFidelity ?crosswalk .
+					FILTER (?crosswalk IN (srf:CrosswalkExact, srf:CrosswalkInexact))
 					FILTER NOT EXISTS { $this srf:viaMatchRelation ?relation }
 				}
 				UNION
 				{
-					VALUES ?direct { srf:ExactSource srf:DerivedSource }
 					$this srf:sourceFidelity ?direct .
 					$this srf:viaMatchRelation ?declaredRelation .
+					FILTER (?direct IN (srf:ExactSource, srf:DerivedSource))
 				}
 			}
 		"""
@@ -198,8 +198,8 @@ srf:PromotionSignatureDisciplineShape a sh:NodeShape ;
 					  srf:targetNamespace ?namespace .
 				FILTER (!STRSTARTS(STR(?promoted), STR(?namespace)))
 				{
-					VALUES ?lossy { srf:DerivedSource srf:CrosswalkInexact }
 					$this srf:sourceFidelity ?lossy .
+					FILTER (?lossy IN (srf:DerivedSource, srf:CrosswalkInexact))
 				}
 				UNION
 				{ $this srf:realisationMode srf:DefinitionOnly }
@@ -227,10 +227,10 @@ srf:InexactPromotionAuthorityShape a sh:NodeShape ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
-				VALUES ?lossy { srf:DerivedSource srf:CrosswalkInexact }
 				$this srf:coversContract ?contract ;
 					  srf:derivationAuthority ?authority .
 				?contract srf:sourceFidelity ?lossy .
+				FILTER (?lossy IN (srf:DerivedSource, srf:CrosswalkInexact))
 				FILTER (?authority != srf:Advisory)
 			}
 		"""
@@ -368,12 +368,12 @@ srf:ProjectionEvidenceRequiredForJoinOrDerivationShape a sh:NodeShape ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
-				VALUES ?evidenceKind { srf:JoinProjection srf:DerivationProjection }
 				$this srf:projectionKind ?evidenceKind .
+				FILTER (?evidenceKind IN (srf:JoinProjection, srf:DerivationProjection))
 				FILTER NOT EXISTS {
 					$this srf:hasRoleBinding ?binding .
-					VALUES ?evidenceRole { srf:CandidateEvidenceRole srf:RequiredEvidenceRole }
 					?binding srf:roleKind ?evidenceRole .
+					FILTER (?evidenceRole IN (srf:CandidateEvidenceRole, srf:RequiredEvidenceRole))
 				}
 			}
 		"""
@@ -386,11 +386,11 @@ srf:ProjectionRoleKindSingletonShape a sh:NodeShape ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
-				VALUES ?singletonRole { srf:EvaluationSubjectRole srf:ResultTargetRole srf:ClosureBasisRole }
 				$this srf:hasRoleBinding ?first, ?second .
 				?first srf:roleKind ?singletonRole .
 				?second srf:roleKind ?singletonRole .
 				FILTER (?first != ?second)
+				FILTER (?singletonRole IN (srf:EvaluationSubjectRole, srf:ResultTargetRole, srf:ClosureBasisRole))
 			}
 		"""
 	] .
@@ -418,6 +418,282 @@ srf:ProjectionDeterministicOnlyLLMPolicyShape a sh:NodeShape ;
 				$this srf:deterministicOnly true ;
 					  srf:llmCompletionPolicy ?policy .
 				FILTER (?policy != srf:NoLLMCompletion)
+			}
+		"""
+	] .
+
+srf:DerivationExpressionRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A derivation projection states no expression on its result-target role binding. Discharges srf:P6." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:DerivationProjection .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:ResultTargetRole ;
+						srf:derivedAs ?expression .
+				}
+			}
+		"""
+	] .
+
+srf:DerivationResultPropertyRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "The result-target role binding of a derivation projection binds no property, so there is nothing to write the value on. Discharges srf:P6." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:DerivationProjection ;
+					srf:hasRoleBinding ?binding .
+				?binding srf:roleKind srf:ResultTargetRole .
+				FILTER NOT EXISTS { ?binding srf:bindsProperty ?property }
+			}
+		"""
+	] .
+
+srf:ProjectionExpressionPlacementShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states an expression and is not the result-target role binding of a derivation projection. Discharges srf:P6." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:derivedAs ?expression .
+				FILTER NOT EXISTS {
+					$this srf:roleKind srf:ResultTargetRole .
+					?contract srf:hasRoleBinding $this ;
+						srf:projectionKind srf:DerivationProjection .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionExpressionReachedShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ,
+		srf:TypedLiteralExpression , srf:RoundingExpression , srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A projection expression is not reached from the result-target role binding of any derivation, so no contract states it. Discharges srf:P6." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a ?kind .
+				FILTER NOT EXISTS {
+					$this (^srf:leftOperand|^srf:rightOperand|^srf:roundedOperand|^srf:comparedLeft|^srf:comparedRight|^srf:whenTrue|^srf:whenFalse)* ?root .
+					?binding srf:derivedAs ?root .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionOperandEvidenceShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "An operand of the contract's expression is neither an expression nor a candidate-evidence or required-evidence role binding of this contract that binds a property. Discharges srf:P7." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:hasRoleBinding/srf:derivedAs ?root .
+				?root (srf:leftOperand|srf:rightOperand|srf:roundedOperand|srf:comparedLeft|srf:comparedRight|srf:whenTrue|srf:whenFalse)* ?node .
+				?node (srf:leftOperand|srf:rightOperand|srf:roundedOperand|srf:comparedLeft|srf:comparedRight|srf:whenTrue|srf:whenFalse) ?value .
+				FILTER NOT EXISTS {
+					?value a ?kind .
+					FILTER (?kind IN (srf:SumExpression, srf:DifferenceExpression, srf:ProductExpression, srf:QuotientExpression,
+						srf:TypedLiteralExpression, srf:RoundingExpression, srf:ChoiceExpression))
+				}
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?value .
+					?value srf:roleKind ?role ;
+						srf:bindsProperty ?property .
+					FILTER (?role IN (srf:RequiredEvidenceRole, srf:CandidateEvidenceRole))
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionOperandTypedShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ,
+		srf:TypedLiteralExpression , srf:RoundingExpression , srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "An operand states no datatype, neither a result datatype as an expression nor a binding datatype as a role binding. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this (srf:leftOperand|srf:rightOperand|srf:roundedOperand|srf:comparedLeft|srf:comparedRight|srf:whenTrue|srf:whenFalse) ?value .
+				FILTER NOT EXISTS { ?value (srf:resultDatatype|srf:bindsDatatype) ?datatype }
+			}
+		"""
+	] .
+
+srf:ProjectionOperandNumericShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ,
+		srf:TypedLiteralExpression , srf:RoundingExpression , srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "An operand of arithmetic or rounding is not numeric. Its datatype is none of xsd:integer, xsd:decimal, xsd:float and xsd:double. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this (srf:leftOperand|srf:rightOperand|srf:roundedOperand) ?value .
+				?value (srf:resultDatatype|srf:bindsDatatype) ?datatype .
+				FILTER (?datatype NOT IN (xsd:integer, xsd:decimal, xsd:float, xsd:double))
+			}
+		"""
+	] .
+
+srf:ProjectionOrderingOperandsShape a sh:NodeShape ;
+	sh:targetClass srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A choice compares by order and one of its compared operands is not numeric. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this srf:comparisonOperator ?operator ;
+					(srf:comparedLeft|srf:comparedRight) ?value .
+				?value (srf:resultDatatype|srf:bindsDatatype) ?datatype .
+				FILTER (?operator IN (srf:LessThan, srf:LessThanOrEqual, srf:GreaterThanOrEqual, srf:GreaterThan))
+				FILTER (?datatype NOT IN (xsd:integer, xsd:decimal, xsd:float, xsd:double))
+			}
+		"""
+	] .
+
+srf:ProjectionComparedOperandsShape a sh:NodeShape ;
+	sh:targetClass srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A choice compares two operands of different datatypes that are not both numeric. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this srf:comparedLeft ?left ;
+					srf:comparedRight ?value .
+				?left (srf:resultDatatype|srf:bindsDatatype) ?leftType .
+				?value (srf:resultDatatype|srf:bindsDatatype) ?rightType .
+				FILTER (?leftType != ?rightType)
+				FILTER (!(?leftType IN (xsd:integer, xsd:decimal, xsd:float, xsd:double) && ?rightType IN (xsd:integer, xsd:decimal, xsd:float, xsd:double)))
+			}
+		"""
+	] .
+
+srf:ProjectionBranchDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A branch of a choice has a datatype other than the choice's own result datatype. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:resultDatatype ?actual ;
+					(srf:whenTrue|srf:whenFalse) ?value .
+				?value (srf:resultDatatype|srf:bindsDatatype) ?branchType .
+				FILTER (?branchType != ?actual)
+			}
+		"""
+	] .
+
+srf:ProjectionArithmeticDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a sum, difference or product is not the wider of its operands' datatypes under numeric promotion. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this srf:leftOperand ?left ;
+					srf:rightOperand ?right ;
+					srf:resultDatatype ?actual .
+				?left (srf:resultDatatype|srf:bindsDatatype) ?leftType .
+				?right (srf:resultDatatype|srf:bindsDatatype) ?rightType .
+				BIND(IF(?leftType = xsd:integer, 1, IF(?leftType = xsd:decimal, 2, IF(?leftType = xsd:float, 3, IF(?leftType = xsd:double, 4, 0)))) AS ?leftRank)
+				BIND(IF(?rightType = xsd:integer, 1, IF(?rightType = xsd:decimal, 2, IF(?rightType = xsd:float, 3, IF(?rightType = xsd:double, 4, 0)))) AS ?rightRank)
+				BIND(IF(?leftRank > ?rightRank, ?leftRank, ?rightRank) AS ?widest)
+				BIND(IF(?widest > 1, ?widest, 1) AS ?rank)
+				BIND(IF(?rank = 1, xsd:integer, IF(?rank = 2, xsd:decimal, IF(?rank = 3, xsd:float, xsd:double))) AS ?expected)
+				BIND(?actual AS ?value)
+				FILTER (?leftRank > 0 && ?rightRank > 0 && ?actual != ?expected)
+			}
+		"""
+	] .
+
+srf:ProjectionQuotientDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:QuotientExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a quotient is not the wider of its operands' datatypes under numeric promotion, and at least xsd:decimal. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this srf:leftOperand ?left ;
+					srf:rightOperand ?right ;
+					srf:resultDatatype ?actual .
+				?left (srf:resultDatatype|srf:bindsDatatype) ?leftType .
+				?right (srf:resultDatatype|srf:bindsDatatype) ?rightType .
+				BIND(IF(?leftType = xsd:integer, 1, IF(?leftType = xsd:decimal, 2, IF(?leftType = xsd:float, 3, IF(?leftType = xsd:double, 4, 0)))) AS ?leftRank)
+				BIND(IF(?rightType = xsd:integer, 1, IF(?rightType = xsd:decimal, 2, IF(?rightType = xsd:float, 3, IF(?rightType = xsd:double, 4, 0)))) AS ?rightRank)
+				BIND(IF(?leftRank > ?rightRank, ?leftRank, ?rightRank) AS ?widest)
+				BIND(IF(?widest > 2, ?widest, 2) AS ?rank)
+				BIND(IF(?rank = 1, xsd:integer, IF(?rank = 2, xsd:decimal, IF(?rank = 3, xsd:float, xsd:double))) AS ?expected)
+				BIND(?actual AS ?value)
+				FILTER (?leftRank > 0 && ?rightRank > 0 && ?actual != ?expected)
+			}
+		"""
+	] .
+
+srf:ProjectionRoundingDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:RoundingExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a rounding expression is not the datatype of its operand. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:roundedOperand ?operand ;
+					srf:resultDatatype ?actual .
+				?operand (srf:resultDatatype|srf:bindsDatatype) ?operandType .
+				BIND(?actual AS ?value)
+				FILTER (?operandType != ?actual)
+			}
+		"""
+	] .
+
+srf:ProjectionLiteralDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:TypedLiteralExpression ;
+	sh:sparql [
+		sh:message "The literal of a typed literal expression does not have the expression's result datatype. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:typedValue ?value ;
+					srf:resultDatatype ?actual .
+				FILTER (datatype(?value) != ?actual)
+			}
+		"""
+	] .
+
+srf:ProjectionResultTargetDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "The datatype a result-target role binding states is missing or is not the result datatype of the expression it states. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:derivedAs ?expression .
+				?expression srf:resultDatatype ?datatype .
+				FILTER NOT EXISTS { $this srf:bindsDatatype ?datatype }
+			}
+		"""
+	] .
+
+srf:ProjectionExpressionAcyclicShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ,
+		srf:TypedLiteralExpression , srf:RoundingExpression , srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A projection expression is an operand of itself, directly or through other expressions. Discharges srf:P9." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this (srf:leftOperand|srf:rightOperand|srf:roundedOperand|srf:comparedLeft|srf:comparedRight|srf:whenTrue|srf:whenFalse)+ $this .
 			}
 		"""
 	] .

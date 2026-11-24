@@ -27,7 +27,8 @@ from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
 
-from rdflib import Graph, URIRef
+from pyshacl import validate as shacl_validate
+from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import SKOS
 
 from . import canonical
@@ -46,7 +47,7 @@ from .compile import (
 from .invalidation import instance_graph_query
 from .model import ContractError, SurfaceGraphAnalyser, read_contracts, read_projection_contracts
 from .mork import HAS_PROJECTION_PROVENANCE, PROJECTION_MAPPING, lift, lower
-from .lowering import lower_all, lower_contract, lower_projection
+from .lowering import lower_all, lower_contract, lower_projection, lowered_head
 from .cli import contracts_needing_explicit_resolution_time
 from .invalidation import (
     compare_read_set,
@@ -57,7 +58,7 @@ from .invalidation import (
     read_set_from_manifest,
 )
 from .parity import run_shared_surface_parity
-from .namespaces import MORK, OWL, RDF, RDFS, SRF, VOC
+from .namespaces import MORK, OWL, RDF, RDFS, SH, SRF, VOC, XSD
 from .naming import (
     DIGEST_LOCAL_NAME,
     LOCAL_NAME_FROM_VALUE,
@@ -620,6 +621,342 @@ class ProjectionModelTests(unittest.TestCase):
             ).backend_policy(URIRef(SAAS_ARR + "policy"))
 
 
+SURFACE_SHAPES = (
+    ROOT / "ontology" / "surface" / "shapes" / "structural.ttl",
+    ROOT / "ontology" / "surface" / "shapes" / "constraints.ttl",
+)
+MORK_SHAPES = (ROOT / "ontology" / "mork" / "shapes" / "constraints.ttl",)
+
+
+def shape_violations(data: Graph, shape_files) -> set:
+    """The names of the shapes that report a violation of ``data``, with no entailment beside it."""
+    shapes = Graph()
+    for path in shape_files:
+        shapes.parse(path, format="turtle")
+    _, report, _ = shacl_validate(data, shacl_graph=shapes, advanced=True, inference="none")
+    named = set()
+    for shape in report.objects(None, SH.sourceShape):
+        # A property shape is a blank node. Name the node shape that holds it.
+        parent = next(iter(shapes.subjects(SH.property, shape)), shape)
+        named.add(str(parent))
+    return named
+
+
+EXPRESSION_HEAD = f"""
+@prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix ex: <{SAAS_ARR}> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    srf:generatorVersion "x" ; srf:canonicalisationVersion "srf-canon/2" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ; srf:permittedStackDepth 0 .
+
+ex:subject a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
+ex:price a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:hasMonthlyPrice ; srf:bindsDatatype xsd:decimal .
+ex:periods a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:hasBillingPeriodsPerYear ; srf:bindsDatatype xsd:integer .
+ex:cap a srf:ProjectionRoleBinding ; srf:roleKind srf:CandidateEvidenceRole ;
+    srf:bindsProperty ex:hasCap ; srf:bindsDatatype xsd:decimal .
+ex:label a srf:ProjectionRoleBinding ; srf:roleKind srf:CandidateEvidenceRole ;
+    srf:bindsProperty ex:hasLabel ; srf:bindsDatatype xsd:string .
+ex:target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:annualRecurringRevenue ; srf:bindsDatatype xsd:decimal ;
+    srf:derivedAs ex:root .
+
+ex:contract a srf:ProjectionContract ;
+    srf:contractKey "expression" ; srf:carrier ex:Subscription ;
+    srf:projectionKind srf:DerivationProjection ;
+    srf:hasRoleBinding ex:subject, ex:price, ex:periods, ex:cap, ex:label, ex:target ;
+    srf:targetNamespace "https://example.org/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:profile-v1 .
+"""
+
+#: A derivation that uses a product, a choice, a quotient, a literal and a rounding. A cap on the product is
+#: shared out over twelve periods and rounded to hundredths.
+FULL_EXPRESSION = """
+ex:root a srf:RoundingExpression ; srf:resultDatatype xsd:decimal ; srf:roundedOperand ex:share ; srf:roundingScale 2 .
+ex:share a srf:QuotientExpression ; srf:resultDatatype xsd:decimal ; srf:leftOperand ex:capped ; srf:rightOperand ex:twelve .
+ex:twelve a srf:TypedLiteralExpression ; srf:resultDatatype xsd:integer ; srf:typedValue 12 .
+ex:capped a srf:ChoiceExpression ; srf:resultDatatype xsd:decimal ; srf:comparisonOperator srf:GreaterThan ;
+    srf:comparedLeft ex:gross ; srf:comparedRight ex:cap ; srf:whenTrue ex:cap ; srf:whenFalse ex:gross .
+ex:gross a srf:ProductExpression ; srf:resultDatatype xsd:decimal ; srf:leftOperand ex:price ; srf:rightOperand ex:periods .
+"""
+
+
+def expression_contract(expression: str, head: str = EXPRESSION_HEAD) -> str:
+    return head + expression
+
+
+def arr_graph() -> Graph:
+    return load("saas-subscription-arr-projection.ttl")
+
+
+def arr_with(remove=(), add="") -> Graph:
+    """The ARR example with some triples removed, given as (subject, predicate, object) local names, and some Turtle added."""
+    graph = arr_graph()
+    for subject, predicate, obj in remove:
+        graph.remove((URIRef(SAAS_ARR + subject), predicate, obj if obj is None else URIRef(obj) if isinstance(obj, str) else obj))
+    if add:
+        graph.parse(
+            data=f"""
+            @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+            @prefix ex: <{SAAS_ARR}> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            {add}
+            """,
+            format="turtle",
+        )
+    return graph
+
+
+class ProjectionExpressionModelTests(unittest.TestCase):
+    """The analyser applies laws srf:P6 to srf:P9 as the shapes do."""
+
+    def read(self, expression: str, head: str = EXPRESSION_HEAD):
+        return read_projection_contracts(Graph().parse(data=expression_contract(expression, head), format="turtle"))[0]
+
+    def test_the_arr_contract_states_the_product_of_its_two_evidence_bindings(self) -> None:
+        (contract,) = read_projection_contracts(arr_graph())
+        expression = contract.expression
+        self.assertEqual(expression.kind, SRF.ProductExpression)
+        self.assertEqual(expression.datatype, XSD.decimal)
+        self.assertEqual(
+            [operand.iri for operand in expression.operands],
+            [URIRef(SAAS_ARR + "arr-price"), URIRef(SAAS_ARR + "arr-frequency")],
+        )
+
+    def test_every_kind_of_expression_is_read(self) -> None:
+        expression = self.read(FULL_EXPRESSION).expression
+        self.assertEqual(expression.kind, SRF.RoundingExpression)
+        self.assertEqual(expression.scale, 2)
+        quotient = expression.operands[0]
+        self.assertEqual(quotient.kind, SRF.QuotientExpression)
+        choice, literal = quotient.operands
+        self.assertEqual(literal.literal, Literal(12))
+        self.assertEqual(choice.comparison, SRF.GreaterThan)
+        self.assertEqual(len(choice.operands), 4)
+
+    def test_sum_and_difference_take_the_wider_datatype(self) -> None:
+        for kind in ("SumExpression", "DifferenceExpression"):
+            contract = self.read(
+                f"ex:root a srf:{kind} ; srf:resultDatatype xsd:decimal ; srf:leftOperand ex:periods ; srf:rightOperand ex:price ."
+            )
+            self.assertEqual(contract.expression.datatype, XSD.decimal)
+
+    def test_a_quotient_of_integers_is_a_decimal(self) -> None:
+        contract = self.read(
+            "ex:root a srf:QuotientExpression ; srf:resultDatatype xsd:decimal ; srf:leftOperand ex:periods ; srf:rightOperand ex:periods ."
+        )
+        self.assertEqual(contract.expression.datatype, XSD.decimal)
+        with self.assertRaisesRegex(ContractError, "srf:P8"):
+            self.read(
+                "ex:root a srf:QuotientExpression ; srf:resultDatatype xsd:integer ; srf:leftOperand ex:periods ; srf:rightOperand ex:periods ."
+            )
+
+    def test_a_derivation_with_no_expression_is_refused(self) -> None:
+        head = EXPRESSION_HEAD.replace("srf:derivedAs ex:root .", ".")
+        with self.assertRaisesRegex(ContractError, "srf:P6"):
+            self.read("", head)
+
+    def test_a_result_target_that_binds_no_property_is_refused(self) -> None:
+        head = EXPRESSION_HEAD.replace("srf:bindsProperty ex:annualRecurringRevenue ; ", "")
+        with self.assertRaisesRegex(ContractError, "srf:P6"):
+            self.read(FULL_EXPRESSION, head)
+
+    def test_an_expression_on_another_kind_is_refused(self) -> None:
+        head = EXPRESSION_HEAD.replace("srf:DerivationProjection", "srf:GraphConstructionProjection")
+        with self.assertRaisesRegex(ContractError, "srf:P6"):
+            self.read(FULL_EXPRESSION, head)
+
+    def test_an_operand_that_names_no_evidence_role_is_refused(self) -> None:
+        for operand in ("ex:subject", "ex:target", "ex:unknown"):
+            with self.subTest(operand=operand), self.assertRaisesRegex(ContractError, "srf:P7"):
+                self.read(
+                    f"ex:root a srf:ProductExpression ; srf:resultDatatype xsd:decimal ; srf:leftOperand {operand} ; srf:rightOperand ex:periods ."
+                )
+
+    def test_an_operand_from_another_contract_is_refused(self) -> None:
+        extra = """
+        ex:foreign a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ;
+            srf:bindsProperty ex:hasOther ; srf:bindsDatatype xsd:decimal .
+        ex:other a srf:ProjectionContract ; srf:hasRoleBinding ex:foreign .
+        """
+        with self.assertRaisesRegex(ContractError, "srf:P7"):
+            self.read(
+                extra
+                + "ex:root a srf:SumExpression ; srf:resultDatatype xsd:decimal ; srf:leftOperand ex:foreign ; srf:rightOperand ex:price ."
+            )
+
+    def test_an_operand_that_states_no_datatype_is_refused(self) -> None:
+        head = EXPRESSION_HEAD.replace("srf:bindsProperty ex:hasMonthlyPrice ; srf:bindsDatatype xsd:decimal .", "srf:bindsProperty ex:hasMonthlyPrice .")
+        with self.assertRaisesRegex(ContractError, "srf:P8"):
+            self.read(
+                "ex:root a srf:ProductExpression ; srf:resultDatatype xsd:decimal ; srf:leftOperand ex:price ; srf:rightOperand ex:periods .",
+                head,
+            )
+
+    def test_a_non_numeric_operand_of_arithmetic_is_refused(self) -> None:
+        with self.assertRaisesRegex(ContractError, "srf:P8"):
+            self.read(
+                "ex:root a srf:SumExpression ; srf:resultDatatype xsd:decimal ; srf:leftOperand ex:label ; srf:rightOperand ex:price ."
+            )
+
+    def test_a_choice_with_a_missing_branch_is_refused(self) -> None:
+        with self.assertRaisesRegex(ContractError, "srf:P7"):
+            self.read(
+                "ex:root a srf:ChoiceExpression ; srf:resultDatatype xsd:decimal ; srf:comparisonOperator srf:LessThan ;"
+                " srf:comparedLeft ex:price ; srf:comparedRight ex:cap ; srf:whenTrue ex:price ."
+            )
+
+    def test_the_branches_of_a_choice_share_the_choices_datatype(self) -> None:
+        with self.assertRaisesRegex(ContractError, "srf:P8"):
+            self.read(
+                "ex:root a srf:ChoiceExpression ; srf:resultDatatype xsd:decimal ; srf:comparisonOperator srf:LessThan ;"
+                " srf:comparedLeft ex:price ; srf:comparedRight ex:cap ; srf:whenTrue ex:price ; srf:whenFalse ex:periods ."
+            )
+
+    def test_an_ordering_comparison_needs_numeric_operands(self) -> None:
+        with self.assertRaisesRegex(ContractError, "srf:P8"):
+            self.read(
+                "ex:root a srf:ChoiceExpression ; srf:resultDatatype xsd:string ; srf:comparisonOperator srf:LessThan ;"
+                " srf:comparedLeft ex:label ; srf:comparedRight ex:label ; srf:whenTrue ex:label ; srf:whenFalse ex:label ."
+            )
+
+    def test_a_literal_must_have_the_datatype_it_states(self) -> None:
+        with self.assertRaisesRegex(ContractError, "srf:P8"):
+            self.read('ex:root a srf:TypedLiteralExpression ; srf:resultDatatype xsd:decimal ; srf:typedValue "12" .')
+
+    def test_the_result_target_states_the_datatype_of_the_expression(self) -> None:
+        head = EXPRESSION_HEAD.replace("srf:bindsProperty ex:annualRecurringRevenue ; srf:bindsDatatype xsd:decimal ;", "srf:bindsProperty ex:annualRecurringRevenue ; srf:bindsDatatype xsd:double ;")
+        with self.assertRaisesRegex(ContractError, "srf:P8"):
+            self.read(
+                "ex:root a srf:ProductExpression ; srf:resultDatatype xsd:decimal ; srf:leftOperand ex:price ; srf:rightOperand ex:periods .",
+                head,
+            )
+
+    def test_an_expression_that_is_an_operand_of_itself_is_refused(self) -> None:
+        with self.assertRaisesRegex(ContractError, "srf:P9"):
+            self.read(
+                "ex:root a srf:SumExpression ; srf:resultDatatype xsd:decimal ; srf:leftOperand ex:root ; srf:rightOperand ex:price ."
+            )
+
+
+class ProjectionExpressionShapeTests(unittest.TestCase):
+    """The shapes of ontology/surface refuse what the analyser refuses, with no code beside them."""
+
+    def violations(self, graph: Graph) -> set:
+        return {name.rsplit("#", 1)[-1] for name in shape_violations(graph, SURFACE_SHAPES)}
+
+    def test_the_arr_example_conforms(self) -> None:
+        self.assertEqual(self.violations(arr_graph()), set())
+
+    def test_a_richer_expression_conforms(self) -> None:
+        graph = Graph().parse(data=expression_contract(FULL_EXPRESSION), format="turtle")
+        self.assertEqual(self.violations(graph), set())
+
+    def test_an_untyped_operand_is_refused(self) -> None:
+        graph = arr_with(remove=[("arr-price", SRF.bindsDatatype, None)])
+        self.assertIn("ProjectionOperandTypedShape", self.violations(graph))
+
+    def test_an_operand_that_names_no_evidence_role_is_refused(self) -> None:
+        for operand in ("arr-subject", "arr-target", "unknown"):
+            with self.subTest(operand=operand):
+                graph = arr_with(remove=[("arr-expression", SRF.leftOperand, None)], add=f"ex:arr-expression srf:leftOperand ex:{operand} .")
+                self.assertIn("ProjectionOperandEvidenceShape", self.violations(graph))
+
+    def test_a_choice_missing_a_branch_is_refused(self) -> None:
+        graph = Graph().parse(data=expression_contract(FULL_EXPRESSION), format="turtle")
+        graph.remove((URIRef(SAAS_ARR + "capped"), SRF.whenFalse, None))
+        self.assertIn("ChoiceExpressionShape", self.violations(graph))
+
+    def test_a_non_numeric_operand_is_refused(self) -> None:
+        graph = Graph().parse(
+            data=expression_contract(
+                "ex:root a srf:SumExpression ; srf:resultDatatype xsd:decimal ; srf:leftOperand ex:label ; srf:rightOperand ex:price ."
+            ),
+            format="turtle",
+        )
+        self.assertIn("ProjectionOperandNumericShape", self.violations(graph))
+
+    def test_a_result_datatype_the_operands_do_not_give_is_refused(self) -> None:
+        graph = arr_with(remove=[("arr-expression", SRF.resultDatatype, None)], add="ex:arr-expression srf:resultDatatype xsd:integer .")
+        self.assertIn("ProjectionArithmeticDatatypeShape", self.violations(graph))
+        quotient = Graph().parse(
+            data=expression_contract(
+                "ex:root a srf:QuotientExpression ; srf:resultDatatype xsd:integer ; srf:leftOperand ex:periods ; srf:rightOperand ex:periods ."
+            ),
+            format="turtle",
+        )
+        self.assertIn("ProjectionQuotientDatatypeShape", self.violations(quotient))
+
+    def test_branches_that_disagree_are_refused(self) -> None:
+        graph = Graph().parse(data=expression_contract(FULL_EXPRESSION), format="turtle")
+        graph.remove((URIRef(SAAS_ARR + "capped"), SRF.whenTrue, None))
+        graph.add((URIRef(SAAS_ARR + "capped"), SRF.whenTrue, URIRef(SAAS_ARR + "periods")))
+        self.assertIn("ProjectionBranchDatatypeShape", self.violations(graph))
+
+    def test_an_ordering_comparison_of_strings_is_refused(self) -> None:
+        graph = Graph().parse(
+            data=expression_contract(
+                "ex:root a srf:ChoiceExpression ; srf:resultDatatype xsd:string ; srf:comparisonOperator srf:LessThan ;"
+                " srf:comparedLeft ex:label ; srf:comparedRight ex:label ; srf:whenTrue ex:label ; srf:whenFalse ex:label ."
+            ),
+            format="turtle",
+        )
+        self.assertIn("ProjectionOrderingOperandsShape", self.violations(graph))
+
+    def test_compared_operands_of_different_non_numeric_datatypes_are_refused(self) -> None:
+        graph = Graph().parse(
+            data=expression_contract(
+                "ex:root a srf:ChoiceExpression ; srf:resultDatatype xsd:decimal ; srf:comparisonOperator srf:EqualTo ;"
+                " srf:comparedLeft ex:label ; srf:comparedRight ex:price ; srf:whenTrue ex:price ; srf:whenFalse ex:cap ."
+            ),
+            format="turtle",
+        )
+        self.assertIn("ProjectionComparedOperandsShape", self.violations(graph))
+
+    def test_a_literal_of_another_datatype_is_refused(self) -> None:
+        graph = Graph().parse(
+            data=expression_contract('ex:root a srf:TypedLiteralExpression ; srf:resultDatatype xsd:decimal ; srf:typedValue "12" .'),
+            format="turtle",
+        )
+        self.assertIn("ProjectionLiteralDatatypeShape", self.violations(graph))
+
+    def test_a_rounding_expression_keeps_its_operands_datatype(self) -> None:
+        graph = Graph().parse(data=expression_contract(FULL_EXPRESSION), format="turtle")
+        graph.remove((URIRef(SAAS_ARR + "root"), SRF.resultDatatype, None))
+        graph.add((URIRef(SAAS_ARR + "root"), SRF.resultDatatype, XSD.integer))
+        self.assertIn("ProjectionRoundingDatatypeShape", self.violations(graph))
+
+    def test_a_result_target_datatype_that_is_not_the_expressions_is_refused(self) -> None:
+        graph = arr_with(remove=[("arr-target", SRF.bindsDatatype, None)], add="ex:arr-target srf:bindsDatatype xsd:double .")
+        self.assertIn("ProjectionResultTargetDatatypeShape", self.violations(graph))
+
+    def test_a_derivation_with_no_expression_is_refused(self) -> None:
+        graph = arr_with(remove=[("arr-target", SRF.derivedAs, None)])
+        self.assertIn("DerivationExpressionRequiredShape", self.violations(graph))
+
+    def test_a_result_target_that_binds_no_property_is_refused(self) -> None:
+        graph = arr_with(remove=[("arr-target", SRF.bindsProperty, None)])
+        self.assertIn("DerivationResultPropertyRequiredShape", self.violations(graph))
+
+    def test_an_expression_no_contract_states_is_refused(self) -> None:
+        graph = arr_with(remove=[("arr-target", SRF.derivedAs, None)])
+        self.assertIn("ProjectionExpressionReachedShape", self.violations(graph))
+
+    def test_an_expression_on_a_binding_that_is_not_a_result_target_is_refused(self) -> None:
+        graph = arr_with(add="ex:arr-price srf:derivedAs ex:arr-expression .")
+        self.assertIn("ProjectionExpressionPlacementShape", self.violations(graph))
+
+    def test_an_expression_that_is_an_operand_of_itself_is_refused(self) -> None:
+        graph = arr_with(remove=[("arr-expression", SRF.leftOperand, None)], add="ex:arr-expression srf:leftOperand ex:arr-expression .")
+        self.assertIn("ProjectionExpressionAcyclicShape", self.violations(graph))
+
+
 class InvalidationTests(unittest.TestCase):
     def test_read_set_change_is_reported_as_stale(self) -> None:
         compiled, _ = compile_example("employment-job-family.ttl", "job-family")
@@ -886,16 +1223,47 @@ class ProjectionLoweringTests(unittest.TestCase):
             graph, only=SAAS_ARR + "subscription-arr-projection"
         )[0]
 
-    def test_lower_projection_emits_one_data_mapping(self) -> None:
-        mapping_graph = lower_projection(self.contract())
-        mappings = set(mapping_graph.subjects(RDF.type, MORK.DataMapping))
-        self.assertEqual(len(mappings), 1)
-        mapping = next(iter(mappings))
+    def test_a_derivation_lowers_into_a_scheme_with_a_source_node_root(self) -> None:
+        low = lower_projection(self.contract())
+        schemes = set(low.subjects(RDF.type, MORK.MappingScheme))
+        self.assertEqual(len(schemes), 1)
+        scheme = next(iter(schemes))
+        roots = [m for m in low.subjects(RDF.type, MORK.Datum) if (m, MORK.mappingScheme, scheme) in low]
+        self.assertEqual(len(roots), 1)
+        root = roots[0]
+        self.assertEqual(root, lowered_head(self.contract()))
+        self.assertEqual(low.value(root, MORK.identityRule), MORK.SourceNodeIdentity)
+        # No node is minted or typed: the root names no class to type with and no other identity.
+        for forbidden in (MORK.deferredMapping, MORK.identityTemplateMapping, MORK.conceptName, MORK.individualIRI):
+            self.assertIsNone(low.value(root, forbidden))
+        concept = low.value(root, MORK.mappingFor)
+        self.assertEqual(low.value(concept, MORK.representedAs), URIRef(SAAS_ARR + "Subscription"))
+
+    def test_the_assertion_writes_the_result_property_with_the_lowered_expression(self) -> None:
+        low = lower_projection(self.contract())
+        root = lowered_head(self.contract())
+        (assertion,) = low.objects(root, MORK.compositeNarrowerMapping)
+        self.assertEqual(low.value(assertion, MORK.exactRBoxMatch), URIRef(SAAS_ARR + "annualRecurringRevenue"))
+        expression = low.value(assertion, MORK.valueExpression)
+        self.assertIn((expression, RDF.type, MORK.ProductExpression), low)
+        self.assertEqual(low.value(expression, MORK.resultDatatype), XSD.decimal)
+        operands = {low.value(expression, MORK.leftOperand), low.value(expression, MORK.rightOperand)}
+        references = {
+            (low.value(o, MORK.dataRef), low.value(o, MORK.resultDatatype)) for o in operands
+        }
         self.assertEqual(
-            mapping_graph.value(mapping, MORK.mappingFor),
-            URIRef(SAAS_ARR + "subscription-arr-projection"),
+            references,
+            {
+                (Literal(f"<{SAAS_ARR}hasMonthlyPrice>"), XSD.decimal),
+                (Literal(f"<{SAAS_ARR}hasBillingPeriodsPerYear>"), XSD.integer),
+            },
         )
-        self.assertTrue(any(mapping_graph.triples((mapping, MORK.hasTargetingSpec, None))))
+        for operand in operands:
+            self.assertIn((operand, RDF.type, MORK.TypedRefExpression), low)
+
+    def test_a_lowered_derivation_is_a_scheme_the_mork_shapes_accept(self) -> None:
+        low = lower_projection(self.contract())
+        self.assertEqual(shape_violations(low, MORK_SHAPES), set())
 
     def test_lower_projection_records_role_bindings_and_backend_policy_as_parameters(
         self,
@@ -915,6 +1283,52 @@ class ProjectionLoweringTests(unittest.TestCase):
         first = lower_projection(contract)
         second = lower_projection(contract)
         self.assertEqual(canonical.hash_graph(first), canonical.hash_graph(second))
+
+    def test_lowering_is_the_same_with_the_contracts_triples_permuted(self) -> None:
+        reference = canonical.hash_graph(lower_projection(self.contract()))
+        triples = sorted(load("saas-subscription-arr-projection.ttl"))
+        for seed in range(5):
+            shuffled = list(triples)
+            random.Random(seed).shuffle(shuffled)
+            graph = Graph()
+            for triple in shuffled:
+                graph.add(triple)
+            contract = read_projection_contracts(graph, only=SAAS_ARR + "subscription-arr-projection")[0]
+            self.assertEqual(canonical.hash_graph(lower_projection(contract)), reference)
+
+    def test_a_projection_of_another_kind_keeps_the_bare_mapping(self) -> None:
+        graph = Graph().parse(data=LoweringDependencyTests.SCENARIO, format="turtle")
+        (contract,) = read_projection_contracts(graph)
+        low = lower_projection(contract)
+        mappings = set(low.subjects(RDF.type, MORK.DataMapping))
+        self.assertEqual(mappings, {lowered_head(contract)})
+        self.assertEqual(low.value(lowered_head(contract), MORK.mappingFor), contract.iri)
+        self.assertEqual(set(low.subjects(RDF.type, MORK.MappingScheme)), set())
+
+    def test_a_richer_expression_lowers_node_by_node(self) -> None:
+        contract = read_projection_contracts(Graph().parse(data=expression_contract(FULL_EXPRESSION), format="turtle"))[0]
+        low = lower_projection(contract)
+        kinds = {low.value(n, RDF.type) for n in low.subjects(MORK.resultDatatype, None)}
+        self.assertEqual(
+            kinds,
+            {
+                MORK.RoundingExpression,
+                MORK.QuotientExpression,
+                MORK.TypedLiteralExpression,
+                MORK.ChoiceExpression,
+                MORK.ProductExpression,
+                MORK.TypedRefExpression,
+            },
+        )
+        (choice,) = low.subjects(RDF.type, MORK.ChoiceExpression)
+        self.assertEqual(low.value(choice, MORK.comparisonOperator), MORK.GreaterThan)
+        (rounding,) = low.subjects(RDF.type, MORK.RoundingExpression)
+        self.assertEqual(low.value(rounding, MORK.roundingScale), Literal(2))
+        (literal,) = low.subjects(RDF.type, MORK.TypedLiteralExpression)
+        self.assertEqual(low.value(literal, MORK.typedValue), Literal(12))
+        self.assertEqual(shape_violations(low, MORK_SHAPES), set())
+        rerun = lower_projection(contract)
+        self.assertEqual(canonical.hash_graph(low), canonical.hash_graph(rerun))
 
 
 class ContractLoweringTests(unittest.TestCase):

@@ -37,6 +37,11 @@ mork:AnonymousElement a owl:Class ;
     rdfs:comment "Used to describe the Representation of an Entity that has no identifier, e.g., that is defined anonymously, such as an object within an array." ;
     rdfs:subClassOf [ a owl:Class ; owl:intersectionOf ( mork:CollectionElement [ a owl:Restriction ; owl:onProperty mork:identifier ; owl:hasValue "" ] ) ], mork:CollectionElement .
 
+mork:ArithmeticExpression a owl:Class ;
+    rdfs:label "arithmetic expression" ;
+    rdfs:comment "An operation on two numeric operands, taken in order. The result datatype is the widest of the operands' under numeric promotion." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:leftOperand ; owl:someValuesFrom mork:ValueExpression ], [ a owl:Restriction ; owl:onProperty mork:rightOperand ; owl:someValuesFrom mork:ValueExpression ], mork:ValueExpression .
+
 mork:Array a owl:Class ;
     rdfs:label "array" ;
     rdfs:comment "Used to represent an Array, which is an unordered collection of elements. Elements can be associated with the array via the elementType object property." ;
@@ -69,6 +74,11 @@ mork:Chaining a owl:Class ;
     rdfs:subClassOf mork:Composition ;
     owl:disjointWith mork:Collection .
 
+mork:ChoiceExpression a owl:Class ;
+    rdfs:label "choice expression" ;
+    rdfs:comment "The value of its true branch where its left compared operand stands in its comparison to its right compared operand, and the value of its false branch otherwise. Both branches have the result datatype." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:comparedLeft ; owl:someValuesFrom mork:ValueExpression ], [ a owl:Restriction ; owl:onProperty mork:comparedRight ; owl:someValuesFrom mork:ValueExpression ], [ a owl:Restriction ; owl:onProperty mork:comparisonOperator ; owl:someValuesFrom mork:ComparisonOperator ], [ a owl:Restriction ; owl:onProperty mork:whenFalse ; owl:someValuesFrom mork:ValueExpression ], [ a owl:Restriction ; owl:onProperty mork:whenTrue ; owl:someValuesFrom mork:ValueExpression ], mork:ValueExpression .
+
 mork:ClassCombination a owl:Class ;
     rdfs:label "class combination" ;
     rdfs:comment "Which combination of several classes classCombination names. Named individuals are UnionOfClasses and IntersectionOfClasses." .
@@ -94,6 +104,10 @@ mork:CommunityMembership a owl:Class ;
 mork:CommunityScheme a owl:Class ;
     rdfs:label "community scheme" ;
     rdfs:comment "One discovery of semantic communities, over the section observations it was discovered from, with the algorithm and resolution it used." .
+
+mork:ComparisonOperator a owl:Class ;
+    rdfs:label "comparison operator" ;
+    rdfs:comment "How a choice compares its two compared operands. Its individuals are LessThan, LessThanOrEqual, EqualTo, NotEqualTo, GreaterThanOrEqual and GreaterThan." .
 
 mork:CompilationMode a owl:Class ;
     rdfs:label "compilation mode" ;
@@ -185,6 +199,11 @@ mork:DefiningRestriction a mork:AxiomForm, owl:NamedIndividual ;
     rdfs:label "defining restriction" ;
     rdfs:comment "Each domain class D is equivalent to the restriction that some value of the property is in the range R, D ≡ ∃p.R, so anything with such a value is classified as a member of D." .
 
+mork:DifferenceExpression a owl:Class ;
+    rdfs:label "difference expression" ;
+    rdfs:comment "The left operand less the right operand." ;
+    rdfs:subClassOf mork:ArithmeticExpression .
+
 mork:Digraph a owl:Class ;
     rdfs:comment "A concept that a digraph match relates to an axiom. Deprecated in favour of the composite mappings." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:digraphMatch ; owl:someValuesFrom mork:OwlAxiom ], skos:Concept .
@@ -197,6 +216,10 @@ mork:Entity a owl:Class ;
     rdfs:label "entity (representation)" ;
     rdfs:comment "Is used to denote an entity in a representation scheme. An Entity will usually be marked with its identity in some originating representation scheme using the identifier datatype property." ;
     rdfs:subClassOf mork:IdentifiableElement .
+
+mork:EqualTo a mork:ComparisonOperator, owl:NamedIndividual ;
+    rdfs:label "equal to" ;
+    rdfs:comment "The two compared operands are equal." .
 
 mork:ErrorFinding a mork:FindingSeverity, owl:NamedIndividual ;
     rdfs:label "error finding" ;
@@ -225,6 +248,14 @@ mork:GlobalAxioms a mork:AxiomForm, owl:NamedIndividual ;
     rdfs:label "global axioms" ;
     rdfs:comment "The property's rdfs:domain and rdfs:range, which hold for every use of it. The default." .
 
+mork:GreaterThan a mork:ComparisonOperator, owl:NamedIndividual ;
+    rdfs:label "greater than" ;
+    rdfs:comment "The left compared operand is greater than the right." .
+
+mork:GreaterThanOrEqual a mork:ComparisonOperator, owl:NamedIndividual ;
+    rdfs:label "greater than or equal" ;
+    rdfs:comment "The left compared operand is greater than or equal to the right." .
+
 mork:Hypothesis a owl:Class ;
     rdfs:comment "A data mapping that another mapping uses as a hypothesis in support of its postulated match." ;
     rdfs:subClassOf mork:DataMapping .
@@ -232,6 +263,10 @@ mork:Hypothesis a owl:Class ;
 mork:IdentifiableElement a owl:Class ;
     rdfs:comment "A Representation that carries an identifier used by some external scheme or schema. Entity and Attribute are identifiable elements." ;
     rdfs:subClassOf [ a owl:Class ; owl:intersectionOf ( mork:Representation [ a owl:Restriction ; owl:onProperty mork:identifier ; owl:someValuesFrom xsd:string ] ) ], mork:Representation .
+
+mork:IdentityRule a owl:Class ;
+    rdfs:label "identity rule" ;
+    rdfs:comment "A rule that gives a datum its identity without a template or a name. Its one individual is SourceNodeIdentity." .
 
 mork:InclusionIntent a owl:Class ;
     rdfs:label "inclusion intent" ;
@@ -278,6 +313,14 @@ mork:IntersectionOfClasses a mork:ClassCombination, owl:NamedIndividual ;
 
 mork:JSON a mork:SerializationFormat, owl:NamedIndividual .
 
+mork:LessThan a mork:ComparisonOperator, owl:NamedIndividual ;
+    rdfs:label "less than" ;
+    rdfs:comment "The left compared operand is less than the right." .
+
+mork:LessThanOrEqual a mork:ComparisonOperator, owl:NamedIndividual ;
+    rdfs:label "less than or equal" ;
+    rdfs:comment "The left compared operand is less than or equal to the right." .
+
 mork:LexicalComparison a mork:LookupComparison, owl:NamedIndividual ;
     rdfs:label "lexical comparison" ;
     rdfs:comment "The value read and the reference value match when their lexical forms are equal, whatever their datatypes. No index can serve it, so each value read is compared with each reference value." .
@@ -323,6 +366,10 @@ mork:NormativeReferenceItent a owl:Class ;
     rdfs:label "normative reference intent" ;
     rdfs:comment "An intent node referencing an external standard, authority, or published form by identifier, without committing to its domain semantics." ;
     rdfs:subClassOf mork:IntentNode .
+
+mork:NotEqualTo a mork:ComparisonOperator, owl:NamedIndividual ;
+    rdfs:label "not equal to" ;
+    rdfs:comment "The two compared operands are not equal." .
 
 mork:Objectification a owl:Class ;
     rdfs:comment "Represents an \"objectified fact\" relating two DataConcepts to one another with a specific set of roles in mind." ;
@@ -374,6 +421,11 @@ mork:ParameterBinding a owl:Class ;
     rdfs:label "parameter binding" ;
     rdfs:comment "A reified binding with type metadata: paramName, paramType (Numeric, Concept, Path, String, Duration), and paramValue." .
 
+mork:ProductExpression a owl:Class ;
+    rdfs:label "product expression" ;
+    rdfs:comment "The product of its left and right operands." ;
+    rdfs:subClassOf mork:ArithmeticExpression .
+
 mork:ProductionMode a mork:CompilationMode, owl:NamedIndividual ;
     rdfs:label "production mode" ;
     rdfs:comment "Every GenerativeMapping in the scheme must have progressed beyond fnd:Draft governance state (Reviewed, Active, or Superseded) and declare fnd:hasIdentity before it compiles. It is enforced by mork:GenerativeMappingProductionGovernanceShape." .
@@ -413,6 +465,11 @@ mork:QueryTemplate a owl:Class ;
     rdfs:comment "A reusable, parameterised query template (SPARQL or Cypher) with parameter placeholders." ;
     rdfs:subClassOf skos:Concept .
 
+mork:QuotientExpression a owl:Class ;
+    rdfs:label "quotient expression" ;
+    rdfs:comment "The left operand divided by the right operand. The result datatype is at least xsd:decimal, whatever the operands, and the value is undefined where the right operand is zero." ;
+    rdfs:subClassOf mork:ArithmeticExpression .
+
 mork:RDF a mork:SerializationFormat, owl:NamedIndividual ;
     skos:scopeNote "A source in RDF is read as a graph, whatever syntax carried it. Its representations are its own vocabulary's terms, a path is a SPARQL 1.1 property path, and the prefixes a path uses are declared with sh:declare." .
 
@@ -446,6 +503,11 @@ mork:ReviewDecision a owl:Class ;
 mork:ReviewMode a mork:CompilationMode, owl:NamedIndividual ;
     rdfs:label "review mode" ;
     rdfs:comment "Governance state and version identity are recommended but not enforced by mork:GenerativeMappingProductionGovernanceShape on member mappings." .
+
+mork:RoundingExpression a owl:Class ;
+    rdfs:label "rounding expression" ;
+    rdfs:comment "Its operand rounded to the nearest multiple of ten to the power of minus the scale, a tie going toward positive infinity, as SPARQL's ROUND does. A scale of 2 rounds to hundredths and a scale of -2 to hundreds. The result datatype is the operand's." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:roundedOperand ; owl:someValuesFrom mork:ValueExpression ], [ a owl:Restriction ; owl:onProperty mork:roundingScale ; owl:someValuesFrom xsd:integer ], mork:ValueExpression .
 
 mork:RuleMapping a owl:Class ;
     rdfs:label "rule mapping" ;
@@ -500,10 +562,19 @@ mork:ShapeTemplate a owl:Class ;
     rdfs:comment "A parameterisable blueprint for one SHACL NodeShape or PropertyShape. ShapeTemplates serve as curated, reusable patterns that the LLM can instantiate, reducing scope for hallucination and model drift." ;
     rdfs:subClassOf skos:Concept .
 
+mork:SourceNodeIdentity a mork:IdentityRule, owl:NamedIndividual ;
+    rdfs:label "source node identity" ;
+    rdfs:comment "The datum's node is the source node it iterates. Nothing is minted and no type is written, so the assertions beneath the datum write on the source node." .
+
 mork:SpatialScope a owl:Class ;
     rdfs:label "spatial scope" ;
     rdfs:comment "An intent node representing a geographic scope (e.g., 'in US states', 'excluding EU')." ;
     rdfs:subClassOf mork:IntentNode .
+
+mork:SumExpression a owl:Class ;
+    rdfs:label "sum expression" ;
+    rdfs:comment "The sum of its left and right operands." ;
+    rdfs:subClassOf mork:ArithmeticExpression .
 
 mork:TargetingSpec a owl:Class ;
     rdfs:label "targeting spec" ;
@@ -548,6 +619,16 @@ mork:TransformProvenance a owl:Class ;
     rdfs:comment "Records the origin and review chain of a generated RML triples map, including LLM model ID, confidence, review status, and the direction of transformation (ingress: external source to ontology, or egress: ontology to a flatter target representation)." ;
     rdfs:subClassOf skos:Concept .
 
+mork:TypedLiteralExpression a owl:Class ;
+    rdfs:label "typed literal expression" ;
+    rdfs:comment "A constant of a stated datatype in the value expression algebra. Evaluates to its typedValue, which is a literal of the result datatype." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:typedValue ; owl:someValuesFrom rdfs:Literal ], mork:ValueExpression .
+
+mork:TypedRefExpression a owl:Class ;
+    rdfs:label "typed ref expression" ;
+    rdfs:comment "A reference to source data, read as a literal of the datatype the expression states. Evaluates by extracting the value at the dataRef path from the source node and reading it as the result datatype." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:dataRef ; owl:someValuesFrom xsd:string ], mork:ValueExpression .
+
 mork:UncertainMapping a owl:Class ;
     rdfs:label "uncertain mapping" ;
     rdfs:comment "Individuals belonging to this class, represent mapping where the ontological target is missing, incomplete, uncertain, or undefined. Members of this class SHOULD also be members of DataMapping or one of its (other) subclasses." ;
@@ -566,6 +647,11 @@ mork:UnorderedCollection a owl:Class ;
     rdfs:comment "A Collection whose items are not ordered, that is a collection for which mork:orderedItems is false." ;
     rdfs:subClassOf mork:Collection ;
     owl:equivalentClass [ a owl:Restriction ; owl:onProperty mork:orderedItems ; owl:hasValue "false"^^xsd:boolean ] .
+
+mork:ValueExpression a owl:Class ;
+    rdfs:label "value expression" ;
+    rdfs:comment "A node of the typed value expression algebra, which evaluates to a literal of the datatype it states. It sits beside the template expressions, which evaluate to strings and form a monoid under concatenation, and it does not extend them." ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:resultDatatype ; owl:someValuesFrom rdfs:Datatype ] .
 
 mork:WarningFinding a mork:FindingSeverity, owl:NamedIndividual ;
     rdfs:label "warning finding" ;
@@ -754,6 +840,24 @@ mork:communitySize a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "How many concepts a semantic community has." ;
     rdfs:domain mork:SemanticCommunity ;
     rdfs:range xsd:integer .
+
+mork:comparedLeft a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "compared left" ;
+    rdfs:comment "The left operand of the comparison a choice makes." ;
+    rdfs:domain mork:ChoiceExpression ;
+    rdfs:range mork:ValueExpression .
+
+mork:comparedRight a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "compared right" ;
+    rdfs:comment "The right operand of the comparison a choice makes." ;
+    rdfs:domain mork:ChoiceExpression ;
+    rdfs:range mork:ValueExpression .
+
+mork:comparisonOperator a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "comparison operator" ;
+    rdfs:comment "How a choice compares its compared operands." ;
+    rdfs:domain mork:ChoiceExpression ;
+    rdfs:range mork:ComparisonOperator .
 
 mork:compilationMode a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:label "compilation mode" ;
@@ -1253,6 +1357,12 @@ mork:identifier a owl:DatatypeProperty ;
     rdfs:comment "Is used to mark a Representation or DataConcept with an identifier used by some external scheme or schema." ;
     rdfs:subPropertyOf owl:topDataProperty .
 
+mork:identityRule a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "has identity rule" ;
+    rdfs:comment "The rule that gives a datum its identity where no template, name or IRI is stated. A datum states at most one identity." ;
+    rdfs:domain mork:Datum ;
+    rdfs:range mork:IdentityRule .
+
 mork:identityTemplateMapping a owl:ObjectProperty ;
     rdfs:label "has identity template mapping" ;
     rdfs:comment "Used to indicate a deferredMapping (which this is a sub-object-property of) between the subject and some object(s) upon which the identity (IRI formation) of the subject is dependent. Unlike deferredMapping, this property is not symmetric." ;
@@ -1347,6 +1457,12 @@ mork:jurisdiction a owl:DatatypeProperty ;
     rdfs:label "jurisdiction" ;
     rdfs:comment "The jurisdiction applicable to a ConstraintScheme, ConstraintProvenance, or TargetingSpec." ;
     rdfs:range xsd:string .
+
+mork:leftOperand a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "left operand" ;
+    rdfs:comment "The first operand of an arithmetic expression." ;
+    rdfs:domain mork:ArithmeticExpression ;
+    rdfs:range mork:ValueExpression .
 
 mork:lexicalMatch a owl:ObjectProperty ;
     rdfs:label "is lexical match with" ;
@@ -1802,6 +1918,12 @@ mork:resolvesIdentityFor a owl:ObjectProperty ;
     rdfs:domain mork:DataMapping ;
     rdfs:range mork:Datum .
 
+mork:resultDatatype a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "result datatype" ;
+    rdfs:comment "The datatype of the literal a value expression evaluates to. Every value expression states one." ;
+    rdfs:domain mork:ValueExpression ;
+    rdfs:range rdfs:Datatype .
+
 mork:reviewDecision a owl:ObjectProperty ;
     rdfs:label "reviewDecision" ;
     rdfs:comment "What a mapping review decided." ;
@@ -1824,6 +1946,24 @@ mork:reviewStatus a owl:DatatypeProperty ;
     rdfs:comment "Review status of the constraint. Values: DRAFT, APPROVED, DEPRECATED." ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( mork:ConstraintProvenance mork:RuleProvenance mork:ProjectionProvenance ) ] ;
     rdfs:range xsd:string .
+
+mork:rightOperand a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "right operand" ;
+    rdfs:comment "The second operand of an arithmetic expression." ;
+    rdfs:domain mork:ArithmeticExpression ;
+    rdfs:range mork:ValueExpression .
+
+mork:roundedOperand a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "rounded operand" ;
+    rdfs:comment "The operand a rounding expression rounds." ;
+    rdfs:domain mork:RoundingExpression ;
+    rdfs:range mork:ValueExpression .
+
+mork:roundingScale a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "rounding scale" ;
+    rdfs:comment "The number of places a rounding expression keeps after the decimal point. It may be negative." ;
+    rdfs:domain mork:RoundingExpression ;
+    rdfs:range xsd:integer .
 
 mork:scopeInclusion a owl:DatatypeProperty ;
     rdfs:label "scope inclusion" ;
@@ -1959,9 +2099,21 @@ mork:totalTokens a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain mork:ProposalRun ;
     rdfs:range xsd:nonNegativeInteger .
 
+mork:typedValue a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "typed value" ;
+    rdfs:comment "The constant a typed literal expression evaluates to. Its datatype is the expression's result datatype." ;
+    rdfs:domain mork:TypedLiteralExpression ;
+    rdfs:range rdfs:Literal .
+
 mork:uniqueItems a owl:DatatypeProperty ;
     rdfs:comment "Whether the items of a Collection are unique, as in a set." ;
     rdfs:subPropertyOf mork:itemsConstrained .
+
+mork:valueExpression a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "has value expression" ;
+    rdfs:comment "The typed value expression that forms the value an assertion writes. An assertion takes its value from one of dataRef, dataInline, an A-Box match, correspondences or a value expression." ;
+    rdfs:domain mork:DataMapping ;
+    rdfs:range mork:ValueExpression .
 
 mork:weightedBroader a owl:ObjectProperty ;
     rdfs:label "has weighted broader" ;
@@ -1979,12 +2131,26 @@ mork:weighting a owl:DatatypeProperty ;
     rdfs:subPropertyOf owl:topDataProperty ;
     rdfs:range xsd:integer .
 
+mork:whenFalse a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "when false" ;
+    rdfs:comment "The value a choice takes where its comparison does not hold." ;
+    rdfs:domain mork:ChoiceExpression ;
+    rdfs:range mork:ValueExpression .
+
+mork:whenTrue a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "when true" ;
+    rdfs:comment "The value a choice takes where its comparison holds." ;
+    rdfs:domain mork:ChoiceExpression ;
+    rdfs:range mork:ValueExpression .
+
 mork:yieldConcept a owl:ObjectProperty ;
     rdfs:label "yields concept" ;
     rdfs:comment "Used to indicate that a mapping yields a particular concept to a broader scope'd mapping. In practice, this means that a compositeNarrower or deferredMapping can \"yield\" its output to another mapping, allowing generated axioms to be referenced declaratively prior to their assertion in a target ontology." ;
     rdfs:subPropertyOf owl:topObjectProperty .
 
 [ a owl:AllDisjointClasses ; owl:members ( mork:OrderedCollection mork:SetListing mork:UnorderedCollection ) ] .
+
+[ a owl:AllDisjointClasses ; owl:members ( mork:TypedRefExpression mork:TypedLiteralExpression mork:SumExpression mork:DifferenceExpression mork:ProductExpression mork:QuotientExpression mork:RoundingExpression mork:ChoiceExpression ) ] .
 
 [] a owl:AllDisjointClasses ;
     rdfs:comment "A DataMapping individual cannot simultaneously generate a SHACL shape and a SWRL rule. If a business criterion requires both validation and inference, it is modelled as two separate GenerativeMapping individuals." ;

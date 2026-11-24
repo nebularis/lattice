@@ -246,7 +246,7 @@ import-names = ["spc"]
 name = "surface"
 path = "tools/surface"
 import-names = ["surface"]
-reaches = ["contracts/config-studio", "ontology/surface", "test/conformance"]
+reaches = ["contracts/config-studio", "ontology/mork", "ontology/surface", "test/conformance"]
 
 [[tools]]
 name = "testing/ledger_corpus"

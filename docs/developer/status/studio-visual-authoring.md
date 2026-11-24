@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-23. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-24. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -60,7 +60,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | built 2026-11-23, building 2026-11-23 | SVA-S2 |
 | SVA-S2b | the first instance of a class names its contracts | built 2026-11-23, building 2026-11-23 | SVA-S2 |
 | SVA-S2d | a sketch of a projection backend | built 2026-11-23, building 2026-11-23 | SVA-S2 |
-| SVA-S2e | the projection expression vocabulary and the lowering of a derivation | building 2026-11-23 | SVA-S2d |
+| SVA-S2e | the projection expression vocabulary and the lowering of a derivation | built 2026-11-24, building 2026-11-23 | SVA-S2d |
 | SVA-S2f | `mork_rdf` compiles a derivation | planned | SVA-S2e |
 | SVA-S2g | graph construction projections | planned | SVA-S2f |
 | SVA-S2h | join projections | planned | SVA-S2f |
@@ -244,3 +244,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-23: the maintainer answered SVA-Q24 to SVA-Q30. The operation is stated in the contract and carried across by the lowering, the vocabulary holds rounding and a choice on a comparison now as well as the arithmetic, MORK gains typed value expressions, a derived value lands on the carrier itself, every projection kind is built in this unit, and a step's projection part is a second run of the Python worker. Planned SVA-S2e to SVA-S2i before SVA-S2c.
 - 2026-11-23: SVA-S2d built: the projection backend sketch with its questions answered and its slices planned.
 - 2026-11-23: the maintainer pre-approved SVA-S2e, SVA-S2f and SVA-S2g in that order, with a pause after. SVA-S2e started.
+- 2026-11-24: SVA-S2e built, [Validation Pack](../validation/SVA-S2e.md). A derivation states a typed expression on its result binding, MORK gains typed value expressions and a source-node identity, and the lowering carries a derivation into a scheme. The addenda to ADR-A18 and ADR-A23 are Proposed. Five modelling choices the sketch did not settle wait for the maintainer at the pause after SVA-S2g.

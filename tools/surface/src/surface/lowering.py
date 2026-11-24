@@ -47,6 +47,15 @@ pre-existing ``mork.py::lift`` both already do) already entails
 not-yet-specific member of that class, which is the honest state of a mapping
 before a backend has compiled it into anything.
 
+**A derivation lowers into a scheme.** A derivation projection states its operation as an expression (``srf:P6``),
+so its lowering is more than a record of intent. ``lower_projection`` writes a ``mork:MappingScheme`` with a root datum
+that iterates the carrier class and takes the source node as its identity (``mork:SourceNodeIdentity``, so no node is
+minted or typed), a typed reference for each evidence role the expression reads, and an assertion of the result
+property whose value is the expression, carried across node by node into MORK's typed value expressions. The root also
+holds what the bare lowering below holds, the targeting spec and a parameter binding for every role binding and
+backend-policy field, so nothing the contract declared is lost. Nothing here compiles the scheme. The other projection
+kinds keep the bare lowering until their own expressions exist.
+
 **Dependency graph.** ``link_dependencies`` recognises exactly two declared
 cross-references within one lowering batch: a projection role binding's
 ``bindsCarrier`` naming another contract's own carrier, and a role binding's
@@ -65,7 +74,8 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 from rdflib import Graph, Literal, URIRef
 
-from .model import Contract, ProjectionContract
+from .expression import ARITHMETIC_KINDS, CHOICE, ROUNDING, TYPED_LITERAL
+from .model import Contract, Expression, ProjectionContract, RoleBinding
 from .namespaces import MORK, RDF, SH, SRF
 from .naming import Minter, local_name
 
@@ -119,43 +129,8 @@ def contract_parameter_bindings(contract: Contract) -> List[Tuple[str, str, obje
     return bindings
 
 
-def lower_projection(contract: ProjectionContract) -> Graph:
-    """Write the ``mork:DataMapping`` a projection contract lowers into.
-
-    One mapping per contract. Every role binding and every backend-policy
-    field becomes a parameter binding, so nothing the contract declared is
-    lost in translation and a later compiler stage can read it back without
-    re-parsing the Surface declaration graph.
-    """
-    minter = _minter_for(contract)
-
-    graph = Graph()
-    graph.bind("mork", MORK)
-    graph.bind("srf", SRF)
-    graph.bind("sh", SH)
-
-    mapping = minter.lowered_mapping()
-    graph.add((mapping, RDF.type, MORK.DataMapping))
-    graph.add((mapping, MORK.mappingFor, contract.iri))
-    graph.add(
-        (
-            mapping,
-            MORK.mappingNote,
-            Literal(
-                f"Lowered from srf:ProjectionContract {contract.iri} "
-                f"(projection kind {local_name(str(contract.projection_kind))}). "
-                f"Backend-specific compilation (ADR-A19, ADR-A23) has not yet run; "
-                f"this mapping records intent and role bindings only, and is not yet "
-                f"classified as any GenerativeMapping subtype."
-            ),
-        )
-    )
-
-    target = minter.lowered_mapping_target()
-    graph.add((mapping, MORK.hasTargetingSpec, target))
-    graph.add((target, RDF.type, MORK.TargetingSpec))
-    graph.add((target, SH.targetClass, contract.carrier))
-
+def _projection_bindings(contract: ProjectionContract) -> List[Tuple[str, str, object]]:
+    """Every role binding and backend-policy field of a projection, as the parameter bindings that record it."""
     bindings: List[Tuple[str, str, object]] = [
         ("projectionKind", "Concept", contract.projection_kind),
         ("targetNamespace", "String", Literal(contract.target_namespace)),
@@ -182,13 +157,160 @@ def lower_projection(contract: ProjectionContract) -> Graph:
         for template in policy.approved_templates:
             safe_name = local_name(template) if "://" in template else template
             bindings.append((f"approvedTemplate_{safe_name}", "String", Literal(template)))
+    return bindings
 
-    for name, kind, value in bindings:
+
+def _record_contract(graph: Graph, minter: Minter, contract: ProjectionContract, head: URIRef) -> None:
+    """Write the targeting spec and the parameter bindings of ``head``, the node that stands for the contract."""
+    target = minter.lowered_mapping_target()
+    graph.add((head, MORK.hasTargetingSpec, target))
+    graph.add((target, RDF.type, MORK.TargetingSpec))
+    graph.add((target, SH.targetClass, contract.carrier))
+
+    for name, kind, value in _projection_bindings(contract):
         node = minter.lowered_mapping_param(name)
-        graph.add((mapping, MORK.hasParameterBinding, node))
+        graph.add((head, MORK.hasParameterBinding, node))
         _parameter(graph, node, name, kind, value)
 
+
+def lowers_to_scheme(contract: ProjectionContract) -> bool:
+    """Whether a projection lowers into a mapping scheme, which today is a derivation that states its expression."""
+    return contract.expression is not None
+
+
+def lowered_head(contract: ProjectionContract) -> URIRef:
+    """The node of a lowered projection that stands for the contract, the one a dependency edge leaves from."""
+    minter = _minter_for(contract)
+    return minter.lowered_root() if lowers_to_scheme(contract) else minter.lowered_mapping()
+
+
+def lower_projection(contract: ProjectionContract) -> Graph:
+    """Write what a projection contract lowers into.
+
+    A derivation lowers into a mapping scheme (``_lower_derivation``). Every other kind lowers into one bare
+    ``mork:DataMapping`` per contract. Every role binding and every backend-policy field becomes a parameter binding,
+    so nothing the contract declared is lost in translation and a later compiler stage can read it back without
+    re-parsing the Surface declaration graph.
+    """
+    minter = _minter_for(contract)
+
+    graph = Graph()
+    graph.bind("mork", MORK)
+    graph.bind("srf", SRF)
+    graph.bind("sh", SH)
+
+    if lowers_to_scheme(contract):
+        _lower_derivation(graph, minter, contract)
+        return graph
+
+    mapping = minter.lowered_mapping()
+    graph.add((mapping, RDF.type, MORK.DataMapping))
+    graph.add((mapping, MORK.mappingFor, contract.iri))
+    graph.add(
+        (
+            mapping,
+            MORK.mappingNote,
+            Literal(
+                f"Lowered from srf:ProjectionContract {contract.iri} "
+                f"(projection kind {local_name(str(contract.projection_kind))}). "
+                f"Backend-specific compilation (ADR-A19, ADR-A23) has not yet run; "
+                f"this mapping records intent and role bindings only, and is not yet "
+                f"classified as any GenerativeMapping subtype."
+            ),
+        )
+    )
+    _record_contract(graph, minter, contract, mapping)
     return graph
+
+
+def _lower_derivation(graph: Graph, minter: Minter, contract: ProjectionContract) -> None:
+    """A derivation as a mapping scheme (ADR-A18).
+
+    The root iterates the carrier class and is identified by the source node itself, so the assertion beneath it writes
+    the result property on the carrier instance and no datum is minted or typed. Each evidence role the expression
+    reads is a typed reference, shared by every operand that names it.
+    """
+    expression = contract.expression
+    assert expression is not None
+    role_index = {str(role.iri): index for index, role in enumerate(contract.role_bindings)}
+
+    scheme = minter.lowered_scheme()
+    concept = minter.lowered_carrier_concept()
+    root = minter.lowered_root()
+    assertion = minter.lowered_assertion()
+
+    graph.add((scheme, RDF.type, MORK.MappingScheme))
+
+    graph.add((concept, RDF.type, MORK.DataConcept))
+    graph.add((concept, MORK.representedAs, contract.carrier))
+
+    graph.add((root, RDF.type, MORK.DataMapping))
+    graph.add((root, RDF.type, MORK.Datum))
+    graph.add((root, MORK.mappingScheme, scheme))
+    graph.add((root, MORK.mappingFor, concept))
+    graph.add((root, MORK.identityRule, MORK.SourceNodeIdentity))
+    graph.add((root, MORK.compositeNarrowerMapping, assertion))
+    graph.add(
+        (
+            root,
+            MORK.mappingNote,
+            Literal(
+                f"Lowered from srf:ProjectionContract {contract.iri} "
+                f"(projection kind {local_name(str(contract.projection_kind))}) into a mapping scheme. "
+                f"Backend-specific compilation (ADR-A19, ADR-A23) has not yet run."
+            ),
+        )
+    )
+    _record_contract(graph, minter, contract, root)
+
+    target = contract.roles(SRF.ResultTargetRole)[0]
+    graph.add((assertion, RDF.type, MORK.DataMapping))
+    graph.add((assertion, MORK.mappingScheme, scheme))
+    graph.add((assertion, MORK.exactRBoxMatch, target.binds_property))
+    graph.add((assertion, MORK.valueExpression, _lower_expression(graph, minter, expression, "0", role_index)))
+
+
+def _lower_reference(graph: Graph, minter: Minter, role: RoleBinding, index: int) -> URIRef:
+    node = minter.lowered_reference(index)
+    graph.add((node, RDF.type, MORK.TypedRefExpression))
+    graph.add((node, MORK.resultDatatype, role.datatype))
+    # An absolute IRI in angle brackets is a SPARQL 1.1 path of one step, so no prefix needs declaring.
+    graph.add((node, MORK.dataRef, Literal(f"<{role.binds_property}>")))
+    return node
+
+
+def _lower_expression(
+    graph: Graph, minter: Minter, expression: Expression, position: str, role_index: Dict[str, int]
+) -> URIRef:
+    """Carry an expression into MORK's typed value expressions, naming each node by its position."""
+    node = minter.lowered_expression(position)
+    kind = expression.kind
+    graph.add((node, RDF.type, MORK[local_name(str(kind))]))
+    graph.add((node, MORK.resultDatatype, expression.datatype))
+
+    operands: List[URIRef] = []
+    for offset, operand in enumerate(expression.operands):
+        if isinstance(operand, RoleBinding):
+            operands.append(_lower_reference(graph, minter, operand, role_index[str(operand.iri)]))
+        else:
+            operands.append(_lower_expression(graph, minter, operand, f"{position}_{offset}", role_index))
+
+    if kind in ARITHMETIC_KINDS:
+        graph.add((node, MORK.leftOperand, operands[0]))
+        graph.add((node, MORK.rightOperand, operands[1]))
+    elif kind == ROUNDING:
+        graph.add((node, MORK.roundedOperand, operands[0]))
+        graph.add((node, MORK.roundingScale, Literal(expression.scale)))
+    elif kind == TYPED_LITERAL:
+        graph.add((node, MORK.typedValue, expression.literal))
+    else:
+        assert kind == CHOICE
+        graph.add((node, MORK.comparisonOperator, MORK[local_name(str(expression.comparison))]))
+        graph.add((node, MORK.comparedLeft, operands[0]))
+        graph.add((node, MORK.comparedRight, operands[1]))
+        graph.add((node, MORK.whenTrue, operands[2]))
+        graph.add((node, MORK.whenFalse, operands[3]))
+    return node
 
 
 def lower_contract(contract: Contract) -> Graph:
@@ -323,11 +445,12 @@ def lower_all(
         )
     for projection in projections:
         graph = lower_projection(projection)
-        mapping = next(graph.subjects(RDF.type, MORK.DataMapping))
         for triple in graph:
             combined.add(triple)
         lowered.append(
-            LoweredMapping(contract_iri=projection.iri, mapping=mapping, carrier=projection.carrier)
+            LoweredMapping(
+                contract_iri=projection.iri, mapping=lowered_head(projection), carrier=projection.carrier
+            )
         )
 
     for triple in link_dependencies(lowered, projections):

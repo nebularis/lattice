@@ -21,6 +21,7 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 mork:GenerativeMappingGovernanceStateClosedShape a sh:NodeShape ;
 	sh:targetClass mork:GenerativeMapping ;
@@ -105,4 +106,309 @@ mork:IntentRefinementAcyclicityShape a sh:NodeShape ;
 				$this mork:refinesIntent+ $this .
 			}
 		""" ;
+	] .
+
+# Typed value expressions. A value expression states its result datatype, and each node is checked against its direct
+# operands only, so the whole expression is checked by induction. Every shape targets the closed list of concrete
+# classes and never relies on subclass entailment, so a mapping graph is checked without the ontology beside it.
+
+mork:ValueExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:TypedRefExpression , mork:TypedLiteralExpression , mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression ,
+		mork:QuotientExpression , mork:RoundingExpression , mork:ChoiceExpression ;
+	sh:property [ sh:path mork:resultDatatype ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A value expression states exactly one result datatype." ] .
+
+mork:ArithmeticExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression , mork:QuotientExpression ;
+	sh:property [ sh:path mork:leftOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An arithmetic expression has exactly one left operand." ] ;
+	sh:property [ sh:path mork:rightOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An arithmetic expression has exactly one right operand." ] .
+
+mork:TypedRefExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:TypedRefExpression ;
+	sh:property [ sh:path mork:dataRef ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A typed reference reads exactly one mork:dataRef." ] .
+
+mork:TypedLiteralExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:TypedLiteralExpression ;
+	sh:property [ sh:path mork:typedValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ;
+		sh:message "A typed literal expression has exactly one literal value." ] .
+
+mork:RoundingExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:RoundingExpression ;
+	sh:property [ sh:path mork:roundedOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A rounding expression has exactly one operand." ] ;
+	sh:property [ sh:path mork:roundingScale ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+		sh:message "A rounding expression has exactly one scale, an integer." ] .
+
+mork:ChoiceExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:ChoiceExpression ;
+	sh:property [ sh:path mork:comparisonOperator ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:in ( mork:LessThan mork:LessThanOrEqual mork:EqualTo mork:NotEqualTo mork:GreaterThanOrEqual mork:GreaterThan ) ;
+		sh:message "A choice states exactly one comparison operator, one of the six the vocabulary names." ] ;
+	sh:property [ sh:path mork:comparedLeft ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one left compared operand." ] ;
+	sh:property [ sh:path mork:comparedRight ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one right compared operand." ] ;
+	sh:property [ sh:path mork:whenTrue ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one branch for a true comparison." ] ;
+	sh:property [ sh:path mork:whenFalse ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one branch for a false comparison." ] .
+
+mork:ValueOperandShape a sh:NodeShape ;
+	sh:targetClass mork:TypedRefExpression , mork:TypedLiteralExpression , mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression ,
+		mork:QuotientExpression , mork:RoundingExpression , mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "An operand is not a typed value expression. It has none of the types of the value expression vocabulary, so it states no datatype." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this (mork:leftOperand|mork:rightOperand|mork:roundedOperand|mork:comparedLeft|mork:comparedRight|mork:whenTrue|mork:whenFalse) ?value .
+				FILTER NOT EXISTS {
+					?value a ?kind .
+					FILTER (?kind IN (mork:TypedRefExpression, mork:TypedLiteralExpression, mork:SumExpression, mork:DifferenceExpression,
+						mork:ProductExpression, mork:QuotientExpression, mork:RoundingExpression, mork:ChoiceExpression))
+				}
+			}
+		"""
+	] .
+
+mork:ValueOperandNumericShape a sh:NodeShape ;
+	sh:targetClass mork:TypedRefExpression , mork:TypedLiteralExpression , mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression ,
+		mork:QuotientExpression , mork:RoundingExpression , mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "An operand of arithmetic or rounding is not numeric. Its datatype is none of xsd:integer, xsd:decimal, xsd:float and xsd:double." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this (mork:leftOperand|mork:rightOperand|mork:roundedOperand) ?value .
+				?value mork:resultDatatype ?datatype .
+				FILTER (?datatype NOT IN (xsd:integer, xsd:decimal, xsd:float, xsd:double))
+			}
+		"""
+	] .
+
+mork:ChoiceOrderingOperandsShape a sh:NodeShape ;
+	sh:targetClass mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A choice compares by order and one of its compared operands is not numeric." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this mork:comparisonOperator ?operator ;
+					(mork:comparedLeft|mork:comparedRight) ?value .
+				?value mork:resultDatatype ?datatype .
+				FILTER (?operator IN (mork:LessThan, mork:LessThanOrEqual, mork:GreaterThanOrEqual, mork:GreaterThan))
+				FILTER (?datatype NOT IN (xsd:integer, xsd:decimal, xsd:float, xsd:double))
+			}
+		"""
+	] .
+
+mork:ChoiceComparedOperandsShape a sh:NodeShape ;
+	sh:targetClass mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A choice compares two operands of different datatypes that are not both numeric." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this mork:comparedLeft ?left ;
+					mork:comparedRight ?value .
+				?left mork:resultDatatype ?leftType .
+				?value mork:resultDatatype ?rightType .
+				FILTER (?leftType != ?rightType)
+				FILTER (!(?leftType IN (xsd:integer, xsd:decimal, xsd:float, xsd:double) && ?rightType IN (xsd:integer, xsd:decimal, xsd:float, xsd:double)))
+			}
+		"""
+	] .
+
+mork:ChoiceBranchDatatypeShape a sh:NodeShape ;
+	sh:targetClass mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A branch of a choice has a datatype other than the choice's own result datatype." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:resultDatatype ?actual ;
+					(mork:whenTrue|mork:whenFalse) ?value .
+				?value mork:resultDatatype ?branchType .
+				FILTER (?branchType != ?actual)
+			}
+		"""
+	] .
+
+mork:ArithmeticDatatypeShape a sh:NodeShape ;
+	sh:targetClass mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a sum, difference or product is not the widest of its operands' datatypes under numeric promotion." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this mork:leftOperand ?left ;
+					mork:rightOperand ?right ;
+					mork:resultDatatype ?actual .
+				?left mork:resultDatatype ?leftType .
+				?right mork:resultDatatype ?rightType .
+				BIND(IF(?leftType = xsd:integer, 1, IF(?leftType = xsd:decimal, 2, IF(?leftType = xsd:float, 3, IF(?leftType = xsd:double, 4, 0)))) AS ?leftRank)
+				BIND(IF(?rightType = xsd:integer, 1, IF(?rightType = xsd:decimal, 2, IF(?rightType = xsd:float, 3, IF(?rightType = xsd:double, 4, 0)))) AS ?rightRank)
+				BIND(IF(?leftRank > ?rightRank, ?leftRank, ?rightRank) AS ?widest)
+				BIND(IF(?widest > 1, ?widest, 1) AS ?rank)
+				BIND(IF(?rank = 1, xsd:integer, IF(?rank = 2, xsd:decimal, IF(?rank = 3, xsd:float, xsd:double))) AS ?expected)
+				BIND(?actual AS ?value)
+				FILTER (?leftRank > 0 && ?rightRank > 0 && ?actual != ?expected)
+			}
+		"""
+	] .
+
+mork:QuotientDatatypeShape a sh:NodeShape ;
+	sh:targetClass mork:QuotientExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a quotient is not the widest of its operands' datatypes under numeric promotion, and at least xsd:decimal." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this mork:leftOperand ?left ;
+					mork:rightOperand ?right ;
+					mork:resultDatatype ?actual .
+				?left mork:resultDatatype ?leftType .
+				?right mork:resultDatatype ?rightType .
+				BIND(IF(?leftType = xsd:integer, 1, IF(?leftType = xsd:decimal, 2, IF(?leftType = xsd:float, 3, IF(?leftType = xsd:double, 4, 0)))) AS ?leftRank)
+				BIND(IF(?rightType = xsd:integer, 1, IF(?rightType = xsd:decimal, 2, IF(?rightType = xsd:float, 3, IF(?rightType = xsd:double, 4, 0)))) AS ?rightRank)
+				BIND(IF(?leftRank > ?rightRank, ?leftRank, ?rightRank) AS ?widest)
+				BIND(IF(?widest > 2, ?widest, 2) AS ?rank)
+				BIND(IF(?rank = 1, xsd:integer, IF(?rank = 2, xsd:decimal, IF(?rank = 3, xsd:float, xsd:double))) AS ?expected)
+				BIND(?actual AS ?value)
+				FILTER (?leftRank > 0 && ?rightRank > 0 && ?actual != ?expected)
+			}
+		"""
+	] .
+
+mork:RoundingDatatypeShape a sh:NodeShape ;
+	sh:targetClass mork:RoundingExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a rounding expression is not the datatype of its operand." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:roundedOperand ?operand ;
+					mork:resultDatatype ?actual .
+				?operand mork:resultDatatype ?operandType .
+				BIND(?actual AS ?value)
+				FILTER (?operandType != ?actual)
+			}
+		"""
+	] .
+
+mork:TypedLiteralDatatypeShape a sh:NodeShape ;
+	sh:targetClass mork:TypedLiteralExpression ;
+	sh:sparql [
+		sh:message "The literal of a typed literal expression does not have the expression's result datatype." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:typedValue ?value ;
+					mork:resultDatatype ?actual .
+				FILTER (datatype(?value) != ?actual)
+			}
+		"""
+	] .
+
+mork:ValueExpressionAcyclicityShape a sh:NodeShape ;
+	sh:targetClass mork:TypedRefExpression , mork:TypedLiteralExpression , mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression ,
+		mork:QuotientExpression , mork:RoundingExpression , mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A value expression is an operand of itself, directly or through other expressions." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this (mork:leftOperand|mork:rightOperand|mork:roundedOperand|mork:comparedLeft|mork:comparedRight|mork:whenTrue|mork:whenFalse)+ $this .
+			}
+		"""
+	] .
+
+mork:ValueExpressionAssertionShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:valueExpression ;
+	sh:sparql [
+		sh:message "The value expression of a mapping is not a typed value expression." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:valueExpression ?value .
+				FILTER NOT EXISTS {
+					?value a ?kind .
+					FILTER (?kind IN (mork:TypedRefExpression, mork:TypedLiteralExpression, mork:SumExpression, mork:DifferenceExpression,
+						mork:ProductExpression, mork:QuotientExpression, mork:RoundingExpression, mork:ChoiceExpression))
+				}
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A mapping states a value expression and also a mork:dataRef or a mork:dataInline, so it has two values." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:valueExpression ?expression ;
+					?property ?value .
+				FILTER (?property IN (mork:dataRef, mork:dataInline))
+			}
+		"""
+	] .
+
+mork:SourceNodeIdentityShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:identityRule ;
+	sh:sparql [
+		sh:message "A datum states an identity rule that is not mork:SourceNodeIdentity." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:identityRule ?value .
+				FILTER (?value != mork:SourceNodeIdentity)
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum with a source node identity states another identity, by an IRI, a name, a template or an A-Box match." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this ?property ?value .
+				FILTER (?property IN (mork:individualIRI, mork:identityTemplateMapping, mork:conceptFQNameTemplate, mork:conceptNameTemplate,
+					mork:conceptName, mork:exactABoxMatch, mork:broadABoxCategoryMatch, mork:narrowABoxCategoryMatch))
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum with a source node identity has an expression that resolves its identity, so it states another identity." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:identityRule mork:SourceNodeIdentity .
+				?value mork:resolvesIdentityFor $this .
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum with a source node identity names a class to type the node with, by a deferred mapping or a T-Box match, and it writes no type." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this ?property ?value .
+				FILTER (?property IN (mork:deferredMapping, mork:exactTBoxMatch, mork:broadTBoxCategoryMatch, mork:narrowTBoxCategoryMatch))
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum with a source node identity iterates nothing. It is not a mork:Datum, or names no source concept with mork:mappingFor." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this mork:identityRule ?rule .
+				FILTER (NOT EXISTS { $this a mork:Datum } || NOT EXISTS { $this mork:mappingFor ?concept })
+			}
+		"""
 	] .

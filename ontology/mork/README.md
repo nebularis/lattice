@@ -115,6 +115,7 @@ classDiagram
         digraphOf
     }
     class Hypothesis
+    class IdentityRule
     class IndexedMapping
     class MappingScheme {
         mappingVersion (xsd:string)
@@ -126,6 +127,7 @@ classDiagram
     class SerializationFormat
     class TaxonomyScheme
     class UncertainMapping
+    class ValueExpression
     class WeightedMatch
     Concept <|-- DataConcept
     Concept <|-- DataMapping
@@ -141,12 +143,14 @@ classDiagram
     DataMapping --> DataMapping : templateBinding
     DataMapping --> Datum : resolvesIdentityFor
     DataMapping --> Representation : egressProjection
+    DataMapping --> ValueExpression : valueExpression
     DataMapping <|-- Datum
     DataMapping <|-- DeferredContext
     DataMapping <|-- Hypothesis
     DataMapping <|-- IndexedMapping
     DataMapping <|-- UncertainMapping
     DataMapping <|-- WeightedMatch
+    Datum --> IdentityRule : identityRule
     MappingScheme --> CompilationMode : compilationMode
     RepresentationScheme --> SerializationFormat : format
     class ObjectProperty_broaderMapping["Object Property - broaderMapping"]
@@ -345,6 +349,7 @@ A datum makes a target node, and the node needs an identity. The mapping states 
 
 | Statement | Target node |
 |---|---|
+| `mork:identityRule` with `mork:SourceNodeIdentity` | the node the datum iterates, its source node. Nothing is minted and no type is written |
 | `mork:individualIRI` | that IRI, for every record |
 | an A-Box match | the named individual |
 | `mork:identityTemplateMapping` to a template expression, or an expression that `mork:resolvesIdentityFor` the datum | the IRI the expression forms |
@@ -405,6 +410,97 @@ mm:ItemIri_l a mork:LiteralExpression ;
     mork:dataInline "http://example.org/work/" .
 mm:ItemIri_r a mork:RefExpression ;
     mork:dataRef "src:isbn" .
+```
+
+A datum that writes onto the node it iterates takes `mork:SourceNodeIdentity`, as a value derived from properties the source node already holds does. It states no other identity and no class to type the node with, so the assertions beneath it write on the source node as they find it, and a shape refuses a datum that states either.
+
+A numeric value cannot be built from strings, so the value expressions are a second algebra beside the template expressions, which stay a monoid over strings. A `mork:valueExpression` of an assertion is the value it writes. Each node states the datatype of its value with `mork:resultDatatype`, which a shape checks against the node's direct operands, so an operand that states no datatype, an operand that is not numeric where arithmetic needs one and the two branches of a choice that disagree are each refused. The numeric datatypes are `xsd:integer`, `xsd:decimal`, `xsd:float` and `xsd:double`, widest last, and an arithmetic node takes the widest of its operands' datatypes, with a quotient at least `xsd:decimal`.
+
+| Class | Evaluates to |
+|---|---|
+| `mork:TypedRefExpression` | the value at its `mork:dataRef`, read as its result datatype |
+| `mork:TypedLiteralExpression` | its `mork:typedValue`, a literal of its result datatype |
+| `mork:SumExpression`, `mork:DifferenceExpression`, `mork:ProductExpression`, `mork:QuotientExpression` | the sum, the left operand less the right, the product and the left operand divided by the right. A quotient is undefined where the divisor is zero |
+| `mork:RoundingExpression` | its operand rounded to `mork:roundingScale` places after the decimal point, to the nearest, a tie going toward positive infinity. A negative scale rounds to tens, hundreds and so on |
+| `mork:ChoiceExpression` | `mork:whenTrue` where the comparison named by `mork:comparisonOperator` holds between `mork:comparedLeft` and `mork:comparedRight`, and `mork:whenFalse` otherwise |
+
+<!-- start: {"generated": "class-diagram", "part": "Typed value expressions", "classes": ["mork:ValueExpression", "mork:TypedRefExpression", "mork:TypedLiteralExpression", "mork:ArithmeticExpression", "mork:SumExpression", "mork:DifferenceExpression", "mork:ProductExpression", "mork:QuotientExpression", "mork:RoundingExpression", "mork:ChoiceExpression", "mork:ComparisonOperator", "mork:IdentityRule"]} -->
+
+**Typed value expressions**
+
+```mermaid
+classDiagram
+    direction LR
+    class ArithmeticExpression
+    class ChoiceExpression
+    class ComparisonOperator
+    class Datatype
+    class DifferenceExpression
+    class IdentityRule
+    class ProductExpression
+    class QuotientExpression
+    class RoundingExpression {
+        roundingScale (xsd:integer)
+    }
+    class SumExpression
+    class TypedLiteralExpression {
+        typedValue (rdfs:Literal)
+    }
+    class TypedRefExpression
+    class ValueExpression
+    ArithmeticExpression --> ValueExpression : leftOperand
+    ArithmeticExpression --> ValueExpression : rightOperand
+    ArithmeticExpression <|-- DifferenceExpression
+    ArithmeticExpression <|-- ProductExpression
+    ArithmeticExpression <|-- QuotientExpression
+    ArithmeticExpression <|-- SumExpression
+    ChoiceExpression --> ComparisonOperator : comparisonOperator
+    ChoiceExpression --> ValueExpression : comparedLeft
+    ChoiceExpression --> ValueExpression : comparedRight
+    ChoiceExpression --> ValueExpression : whenFalse
+    ChoiceExpression --> ValueExpression : whenTrue
+    RoundingExpression --> ValueExpression : roundedOperand
+    ValueExpression --> Datatype : resultDatatype
+    ValueExpression <|-- ArithmeticExpression
+    ValueExpression <|-- ChoiceExpression
+    ValueExpression <|-- RoundingExpression
+    ValueExpression <|-- TypedLiteralExpression
+    ValueExpression <|-- TypedRefExpression
+```
+
+<!-- end -->
+
+A derived annual figure shows the two together. The root takes the source node as its identity, and the assertion beneath it writes the product of two values the source node holds.
+
+```turtle-example
+mm:Arr a mork:MappingScheme .
+
+mm:Concept_Subscription a mork:DataConcept ;
+    mork:representedAs src:Subscription .
+
+mm:Map_Subscription a mork:DataMapping , mork:Datum ;
+    mork:mappingScheme mm:Arr ;
+    mork:mappingFor mm:Concept_Subscription ;
+    mork:identityRule mork:SourceNodeIdentity ;
+    mork:compositeNarrowerMapping mm:Map_Arr .
+
+mm:Map_Arr a mork:DataMapping ;
+    mork:mappingScheme mm:Arr ;
+    mork:exactRBoxMatch tgt:annualRecurringRevenue ;
+    mork:valueExpression mm:ArrValue .
+
+mm:ArrValue a mork:ProductExpression ;
+    mork:resultDatatype xsd:decimal ;
+    mork:leftOperand mm:ArrPrice ;
+    mork:rightOperand mm:ArrPeriods .
+
+mm:ArrPrice a mork:TypedRefExpression ;
+    mork:resultDatatype xsd:decimal ;
+    mork:dataRef "src:monthlyPrice" .
+
+mm:ArrPeriods a mork:TypedRefExpression ;
+    mork:resultDatatype xsd:integer ;
+    mork:dataRef "src:periodsPerYear" .
 ```
 
 ### 5.5 Templates
@@ -1740,6 +1836,98 @@ Superclasses and restrictions are written in **Subclass of.** and **Equivalent t
 **Subclass of.** `mork:DataMapping`, `mork:weighting some xsd:integer`
 
 **Scope note.** each member of this class may carry skos:note and rdfs:seeAlso that explain the rules used to arrive at the match
+
+#### `mork:ValueExpression`
+
+**Definition.** A node of the typed value expression algebra, which evaluates to a literal of the datatype it states. It sits beside the template expressions, which evaluate to strings and form a monoid under concatenation, and it does not extend them.
+
+**Label.** value expression
+
+**Subclass of.** `mork:resultDatatype some rdfs:Datatype`
+
+#### `mork:TypedRefExpression`
+
+**Definition.** A reference to source data, read as a literal of the datatype the expression states. Evaluates by extracting the value at the dataRef path from the source node and reading it as the result datatype.
+
+**Label.** typed ref expression
+
+**Subclass of.** `mork:ValueExpression`, `mork:dataRef some xsd:string`
+
+#### `mork:TypedLiteralExpression`
+
+**Definition.** A constant of a stated datatype in the value expression algebra. Evaluates to its typedValue, which is a literal of the result datatype.
+
+**Label.** typed literal expression
+
+**Subclass of.** `mork:ValueExpression`, `mork:typedValue some rdfs:Literal`
+
+#### `mork:ArithmeticExpression`
+
+**Definition.** An operation on two numeric operands, taken in order. The result datatype is the widest of the operands' under numeric promotion.
+
+**Label.** arithmetic expression
+
+**Subclass of.** `mork:ValueExpression`, `mork:leftOperand some mork:ValueExpression`, `mork:rightOperand some mork:ValueExpression`
+
+#### `mork:SumExpression`
+
+**Definition.** The sum of its left and right operands.
+
+**Label.** sum expression
+
+**Subclass of.** `mork:ArithmeticExpression`
+
+#### `mork:DifferenceExpression`
+
+**Definition.** The left operand less the right operand.
+
+**Label.** difference expression
+
+**Subclass of.** `mork:ArithmeticExpression`
+
+#### `mork:ProductExpression`
+
+**Definition.** The product of its left and right operands.
+
+**Label.** product expression
+
+**Subclass of.** `mork:ArithmeticExpression`
+
+#### `mork:QuotientExpression`
+
+**Definition.** The left operand divided by the right operand. The result datatype is at least xsd:decimal, whatever the operands, and the value is undefined where the right operand is zero.
+
+**Label.** quotient expression
+
+**Subclass of.** `mork:ArithmeticExpression`
+
+#### `mork:RoundingExpression`
+
+**Definition.** Its operand rounded to the nearest multiple of ten to the power of minus the scale, a tie going toward positive infinity, as SPARQL's ROUND does. A scale of 2 rounds to hundredths and a scale of -2 to hundreds. The result datatype is the operand's.
+
+**Label.** rounding expression
+
+**Subclass of.** `mork:ValueExpression`, `mork:roundedOperand some mork:ValueExpression`, `mork:roundingScale some xsd:integer`
+
+#### `mork:ChoiceExpression`
+
+**Definition.** The value of its true branch where its left compared operand stands in its comparison to its right compared operand, and the value of its false branch otherwise. Both branches have the result datatype.
+
+**Label.** choice expression
+
+**Subclass of.** `mork:ValueExpression`, `mork:comparisonOperator some mork:ComparisonOperator`, `mork:comparedLeft some mork:ValueExpression`, `mork:comparedRight some mork:ValueExpression`, `mork:whenTrue some mork:ValueExpression`, `mork:whenFalse some mork:ValueExpression`
+
+#### `mork:ComparisonOperator`
+
+**Definition.** How a choice compares its two compared operands. Its individuals are LessThan, LessThanOrEqual, EqualTo, NotEqualTo, GreaterThanOrEqual and GreaterThan.
+
+**Label.** comparison operator
+
+#### `mork:IdentityRule`
+
+**Definition.** A rule that gives a datum its identity without a template or a name. Its one individual is SourceNodeIdentity.
+
+**Label.** identity rule
 
 <!-- end -->
 
@@ -3378,6 +3566,138 @@ The object properties of MORK first, then those of Executable.
 
 **Subproperty of.** `owl:topObjectProperty`
 
+#### `mork:valueExpression`
+
+**Definition.** The typed value expression that forms the value an assertion writes. An assertion takes its value from one of dataRef, dataInline, an A-Box match, correspondences or a value expression.
+
+**Label.** has value expression
+
+**Domain.** `mork:DataMapping`
+
+**Range.** `mork:ValueExpression`
+
+**Characteristics.** functional
+
+#### `mork:identityRule`
+
+**Definition.** The rule that gives a datum its identity where no template, name or IRI is stated. A datum states at most one identity.
+
+**Label.** has identity rule
+
+**Domain.** `mork:Datum`
+
+**Range.** `mork:IdentityRule`
+
+**Characteristics.** functional
+
+#### `mork:resultDatatype`
+
+**Definition.** The datatype of the literal a value expression evaluates to. Every value expression states one.
+
+**Label.** result datatype
+
+**Domain.** `mork:ValueExpression`
+
+**Range.** `rdfs:Datatype`
+
+**Characteristics.** functional
+
+#### `mork:leftOperand`
+
+**Definition.** The first operand of an arithmetic expression.
+
+**Label.** left operand
+
+**Domain.** `mork:ArithmeticExpression`
+
+**Range.** `mork:ValueExpression`
+
+**Characteristics.** functional
+
+#### `mork:rightOperand`
+
+**Definition.** The second operand of an arithmetic expression.
+
+**Label.** right operand
+
+**Domain.** `mork:ArithmeticExpression`
+
+**Range.** `mork:ValueExpression`
+
+**Characteristics.** functional
+
+#### `mork:roundedOperand`
+
+**Definition.** The operand a rounding expression rounds.
+
+**Label.** rounded operand
+
+**Domain.** `mork:RoundingExpression`
+
+**Range.** `mork:ValueExpression`
+
+**Characteristics.** functional
+
+#### `mork:comparisonOperator`
+
+**Definition.** How a choice compares its compared operands.
+
+**Label.** comparison operator
+
+**Domain.** `mork:ChoiceExpression`
+
+**Range.** `mork:ComparisonOperator`
+
+**Characteristics.** functional
+
+#### `mork:comparedLeft`
+
+**Definition.** The left operand of the comparison a choice makes.
+
+**Label.** compared left
+
+**Domain.** `mork:ChoiceExpression`
+
+**Range.** `mork:ValueExpression`
+
+**Characteristics.** functional
+
+#### `mork:comparedRight`
+
+**Definition.** The right operand of the comparison a choice makes.
+
+**Label.** compared right
+
+**Domain.** `mork:ChoiceExpression`
+
+**Range.** `mork:ValueExpression`
+
+**Characteristics.** functional
+
+#### `mork:whenTrue`
+
+**Definition.** The value a choice takes where its comparison holds.
+
+**Label.** when true
+
+**Domain.** `mork:ChoiceExpression`
+
+**Range.** `mork:ValueExpression`
+
+**Characteristics.** functional
+
+#### `mork:whenFalse`
+
+**Definition.** The value a choice takes where its comparison does not hold.
+
+**Label.** when false
+
+**Domain.** `mork:ChoiceExpression`
+
+**Range.** `mork:ValueExpression`
+
+**Characteristics.** functional
+
 <!-- end -->
 
 <!-- start: {"output-file": "spec/Executable.ttl"} -->
@@ -4452,6 +4772,30 @@ The datatype properties of MORK first, then those of Executable.
 
 **Subproperty of.** `owl:topDataProperty`
 
+#### `mork:typedValue`
+
+**Definition.** The constant a typed literal expression evaluates to. Its datatype is the expression's result datatype.
+
+**Label.** typed value
+
+**Domain.** `mork:TypedLiteralExpression`
+
+**Range.** `rdfs:Literal`
+
+**Characteristics.** functional
+
+#### `mork:roundingScale`
+
+**Definition.** The number of places a rounding expression keeps after the decimal point. It may be negative.
+
+**Label.** rounding scale
+
+**Domain.** `mork:RoundingExpression`
+
+**Range.** `xsd:integer`
+
+**Characteristics.** functional
+
 <!-- end -->
 
 <!-- start: {"output-file": "spec/Executable.ttl"} -->
@@ -4480,7 +4824,7 @@ The datatype properties of MORK first, then those of Executable.
 
 ### 6.4 Individuals
 
-MORK's individuals are the compilation modes, serialisation formats, lookup comparisons, axiom forms and class combinations, and the individuals that stand for OWL axioms of a target ontology. Executable's are its diagnostics. `mork:OwlAxiom` is a class and an individual at once, and its statements as an individual are in 6.6.
+MORK's individuals are the compilation modes, serialisation formats, lookup comparisons, axiom forms and class combinations, the comparison operators of a choice and the source node identity, and the individuals that stand for OWL axioms of a target ontology. Executable's are its diagnostics. `mork:OwlAxiom` is a class and an individual at once, and its statements as an individual are in 6.6.
 
 <!-- start: {"output-file": "spec/Mork.ttl"} -->
 
@@ -4529,6 +4873,16 @@ MORK's individuals are the compilation modes, serialisation formats, lookup comp
 | `mork:LexicalComparison` | `mork:LookupComparison`, `owl:NamedIndividual` | lexical comparison | The value read and the reference value match when their lexical forms are equal, whatever their datatypes. No index can serve it, so each value read is compared with each reference value. |
 | `mork:TermComparison` | `mork:LookupComparison`, `owl:NamedIndividual` | term comparison | The value read matches only the same RDF term, with no cast. A value whose datatype differs from the reference data's is reported unresolved, which the author has chosen. |
 
+| Individual | Type | Label | Definition |
+|---|---|---|---|
+| `mork:SourceNodeIdentity` | `mork:IdentityRule`, `owl:NamedIndividual` | source node identity | The datum's node is the source node it iterates. Nothing is minted and no type is written, so the assertions beneath the datum write on the source node. |
+| `mork:LessThan` | `mork:ComparisonOperator`, `owl:NamedIndividual` | less than | The left compared operand is less than the right. |
+| `mork:LessThanOrEqual` | `mork:ComparisonOperator`, `owl:NamedIndividual` | less than or equal | The left compared operand is less than or equal to the right. |
+| `mork:EqualTo` | `mork:ComparisonOperator`, `owl:NamedIndividual` | equal to | The two compared operands are equal. |
+| `mork:NotEqualTo` | `mork:ComparisonOperator`, `owl:NamedIndividual` | not equal to | The two compared operands are not equal. |
+| `mork:GreaterThanOrEqual` | `mork:ComparisonOperator`, `owl:NamedIndividual` | greater than or equal | The left compared operand is greater than or equal to the right. |
+| `mork:GreaterThan` | `mork:ComparisonOperator`, `owl:NamedIndividual` | greater than | The left compared operand is greater than the right. |
+
 <!-- end -->
 
 <!-- start: {"output-file": "spec/Executable.ttl"} -->
@@ -4559,6 +4913,8 @@ Disjoint classes. One `owl:AllDisjointClasses` axiom carries a comment, so it is
 **Disjoint.** `mork:Association`, `mork:Entity`
 
 **Disjoint.** `mork:Chaining`, `mork:Collection`
+
+**All disjoint.** `mork:TypedRefExpression`, `mork:TypedLiteralExpression`, `mork:SumExpression`, `mork:DifferenceExpression`, `mork:ProductExpression`, `mork:QuotientExpression`, `mork:RoundingExpression`, `mork:ChoiceExpression`
 
 <!-- end -->
 
@@ -5364,17 +5720,20 @@ The Axiom Index is generated from this section.
 | `exe:SubsumptionCheck` | Class | Subclass of `exe:DesignTimeCheck`. Disjoint with `exe:OverlapCheck`, `exe:SatisfiabilityCheck`. |
 | `exe:SwrlArtefact` | Class | Subclass of `exe:GeneratedArtefact`. Disjoint with `exe:OwlArtefact`, `exe:ShaclArtefact`, `exe:SparqlArtefact`. |
 | `mork:AnonymousElement` | Class | Subclass of `mork:CollectionElement` and (`mork:identifier` value ""), `mork:CollectionElement`. |
+| `mork:ArithmeticExpression` | Class | Subclass of `mork:leftOperand` some `mork:ValueExpression`, `mork:rightOperand` some `mork:ValueExpression`, `mork:ValueExpression`. |
 | `mork:Array` | Class | Subclass of `mork:UnorderedCollection`. |
 | `mork:Association` | Class | Subclass of `mork:Representation`. Disjoint with `mork:Entity`. |
 | `mork:Attribute` | Class | Subclass of `mork:IdentifiableElement`. |
 | `mork:AxiomForm` | Class |  |
 | `mork:Chaining` | Class | Subclass of `mork:Composition`. Disjoint with `mork:Collection`. |
+| `mork:ChoiceExpression` | Class | Subclass of `mork:comparedLeft` some `mork:ValueExpression`, `mork:comparedRight` some `mork:ValueExpression`, `mork:comparisonOperator` some `mork:ComparisonOperator`, `mork:whenFalse` some `mork:ValueExpression`, `mork:whenTrue` some `mork:ValueExpression`, `mork:ValueExpression`. Disjoint with `mork:DifferenceExpression`, `mork:ProductExpression`, `mork:QuotientExpression`, `mork:RoundingExpression`, `mork:SumExpression`, `mork:TypedLiteralExpression`, `mork:TypedRefExpression`. |
 | `mork:ClassCombination` | Class |  |
 | `mork:Collection` | Class | Subclass of `mork:Composition`. Disjoint with `mork:Chaining`. |
 | `mork:CollectionElement` | Class | Subclass of `mork:Membership`. |
 | `mork:CommunityMatch` | Class |  |
 | `mork:CommunityMembership` | Class |  |
 | `mork:CommunityScheme` | Class |  |
+| `mork:ComparisonOperator` | Class |  |
 | `mork:CompilationMode` | Class |  |
 | `mork:CompileFinding` | Class |  |
 | `mork:CompiledMapping` | Class |  |
@@ -5389,6 +5748,7 @@ The Axiom Index is generated from this section.
 | `mork:Datum` | Class | Subclass of `mork:DataMapping`. Equivalent to `mork:deferredMapping` some `mork:DataMapping`. |
 | `mork:DeferredConceptIRI` | Class | Subclass of `mork:OwlAxiom`. |
 | `mork:DeferredContext` | Class | Subclass of `mork:DataMapping`. |
+| `mork:DifferenceExpression` | Class | Subclass of `mork:ArithmeticExpression`. Disjoint with `mork:ChoiceExpression`, `mork:ProductExpression`, `mork:QuotientExpression`, `mork:RoundingExpression`, `mork:SumExpression`, `mork:TypedLiteralExpression`, `mork:TypedRefExpression`. |
 | `mork:Digraph` | Class | Subclass of `mork:digraphMatch` some `mork:OwlAxiom`, `skos:Concept`. |
 | `mork:Entity` | Class | Subclass of `mork:IdentifiableElement`. Disjoint with `mork:Association`. |
 | `mork:ExclusionIntent` | Class | Subclass of `mork:IntentNode`. |
@@ -5396,6 +5756,7 @@ The Axiom Index is generated from this section.
 | `mork:GenerativeMapping` | Class | Subclass of `fnd:Governable`, `fnd:Versioned`, `mork:DataMapping`. |
 | `mork:Hypothesis` | Class | Subclass of `mork:DataMapping`. |
 | `mork:IdentifiableElement` | Class | Subclass of `mork:Representation` and (`mork:identifier` some `xsd:string`), `mork:Representation`. |
+| `mork:IdentityRule` | Class |  |
 | `mork:InclusionIntent` | Class | Subclass of `mork:IntentNode`. |
 | `mork:IndexedMapping` | Class | Subclass of `mork:DataMapping`. |
 | `mork:IntentNode` | Class | Subclass of `mork:intentScheme` some `mork:IntentScheme`, `skos:Concept`. |
@@ -5420,6 +5781,7 @@ The Axiom Index is generated from this section.
 | `mork:OwlDataProperty` | Class | Subclass of `mork:OwlAxiom`. |
 | `mork:OwlObjectProperty` | Class | Subclass of `mork:OwlAxiom`. |
 | `mork:ParameterBinding` | Class |  |
+| `mork:ProductExpression` | Class | Subclass of `mork:ArithmeticExpression`. Disjoint with `mork:ChoiceExpression`, `mork:DifferenceExpression`, `mork:QuotientExpression`, `mork:RoundingExpression`, `mork:SumExpression`, `mork:TypedLiteralExpression`, `mork:TypedRefExpression`. |
 | `mork:ProjectionMapping` | Class | Subclass of `mork:generatesClassDefinition` some `mork:OwlClass`, `mork:hasParameterBinding` min 1, `mork:hasProjectionProvenance` some `mork:ProjectionProvenance`, `mork:hasTargetingSpec` some `mork:TargetingSpec`, `mork:GenerativeMapping`. Equivalent to `mork:DataMapping` and (`mork:generatesClassDefinition` some `mork:OwlClass`). |
 | `mork:ProjectionProvenance` | Class | Subclass of `mork:provenanceCreated` some `xsd:dateTime`, `mork:provenanceCreator` some `xsd:string`, `skos:Concept`. |
 | `mork:PropertyProjection` | Class |  |
@@ -5427,11 +5789,13 @@ The Axiom Index is generated from this section.
 | `mork:QualitativeIntent` | Class | Subclass of `mork:IntentNode`. |
 | `mork:QuantitativeConstraint` | Class | Subclass of `mork:IntentNode`. |
 | `mork:QueryTemplate` | Class | Subclass of `skos:Concept`. |
+| `mork:QuotientExpression` | Class | Subclass of `mork:ArithmeticExpression`. Disjoint with `mork:ChoiceExpression`, `mork:DifferenceExpression`, `mork:ProductExpression`, `mork:RoundingExpression`, `mork:SumExpression`, `mork:TypedLiteralExpression`, `mork:TypedRefExpression`. |
 | `mork:RefExpression` | Class | Subclass of `mork:dataRef` some `xsd:string`, `mork:TemplateExpression`. |
 | `mork:Referencing` | Class | Subclass of `mork:Association`. |
 | `mork:Representation` | Class | Subclass of `skos:inScheme` some `mork:RepresentationScheme`, `skos:Concept`. |
 | `mork:RepresentationScheme` | Class | Subclass of `skos:ConceptScheme` and (`mork:format` some `mork:SerializationFormat`), `skos:ConceptScheme`. |
 | `mork:ReviewDecision` | Class |  |
+| `mork:RoundingExpression` | Class | Subclass of `mork:roundedOperand` some `mork:ValueExpression`, `mork:roundingScale` some `xsd:integer`, `mork:ValueExpression`. Disjoint with `mork:ChoiceExpression`, `mork:DifferenceExpression`, `mork:ProductExpression`, `mork:QuotientExpression`, `mork:SumExpression`, `mork:TypedLiteralExpression`, `mork:TypedRefExpression`. |
 | `mork:RuleMapping` | Class | Subclass of `mork:generatesRuleDefinition` some `swrl:Imp`, `mork:hasParameterBinding` min 1, `mork:hasRuleProvenance` some `mork:RuleProvenance`, `mork:hasTargetingSpec` some `mork:TargetingSpec`, `mork:GenerativeMapping`. Equivalent to `mork:DataMapping` and (`mork:generatesRuleDefinition` some `swrl:Imp`). |
 | `mork:RuleProvenance` | Class | Subclass of `mork:provenanceCreated` some `xsd:dateTime`, `mork:provenanceCreator` some `xsd:string`, `skos:Concept`. |
 | `mork:RuleScheme` | Class | Subclass of `skos:ConceptScheme`. |
@@ -5444,6 +5808,7 @@ The Axiom Index is generated from this section.
 | `mork:ShapeMapping` | Class | Subclass of `mork:generatesShapeDefinition` some `sh:Shape`, `mork:hasConstraintProvenance` some `mork:ConstraintProvenance`, `mork:hasParameterBinding` min 1, `mork:hasTargetingSpec` some `mork:TargetingSpec`, `mork:GenerativeMapping`. Equivalent to `mork:DataMapping` and (`mork:generatesShapeDefinition` some `sh:Shape`). |
 | `mork:ShapeTemplate` | Class | Subclass of `skos:Concept`. |
 | `mork:SpatialScope` | Class | Subclass of `mork:IntentNode`. |
+| `mork:SumExpression` | Class | Subclass of `mork:ArithmeticExpression`. Disjoint with `mork:ChoiceExpression`, `mork:DifferenceExpression`, `mork:ProductExpression`, `mork:QuotientExpression`, `mork:RoundingExpression`, `mork:TypedLiteralExpression`, `mork:TypedRefExpression`. |
 | `mork:TargetingSpec` | Class | Subclass of (`sh:targetClass` some `owl:Class`) or (`sh:targetObjectsOf` some `rdf:Property`) or (`sh:targetSubjectsOf` some `rdf:Property`) or (`sh:targetNode` some `owl:Thing`). |
 | `mork:TaxonomyScheme` | Class | Subclass of `skos:ConceptScheme`. |
 | `mork:TemplateBinding` | Class |  |
@@ -5451,8 +5816,11 @@ The Axiom Index is generated from this section.
 | `mork:TemporalScope` | Class | Subclass of `mork:IntentNode`. |
 | `mork:TransformMapping` | Class | Subclass of `mork:generatesTransformDefinition` some `rr:TriplesMap`, `mork:hasTransformProvenance` some `mork:TransformProvenance`, `mork:GenerativeMapping`. Equivalent to `mork:DataMapping` and (`mork:generatesTransformDefinition` some `rr:TriplesMap`). |
 | `mork:TransformProvenance` | Class | Subclass of `skos:Concept`. |
+| `mork:TypedLiteralExpression` | Class | Subclass of `mork:typedValue` some `rdfs:Literal`, `mork:ValueExpression`. Disjoint with `mork:ChoiceExpression`, `mork:DifferenceExpression`, `mork:ProductExpression`, `mork:QuotientExpression`, `mork:RoundingExpression`, `mork:SumExpression`, `mork:TypedRefExpression`. |
+| `mork:TypedRefExpression` | Class | Subclass of `mork:dataRef` some `xsd:string`, `mork:ValueExpression`. Disjoint with `mork:ChoiceExpression`, `mork:DifferenceExpression`, `mork:ProductExpression`, `mork:QuotientExpression`, `mork:RoundingExpression`, `mork:SumExpression`, `mork:TypedLiteralExpression`. |
 | `mork:UncertainMapping` | Class | Subclass of `mork:DataMapping`. Equivalent to (`mork:hypothesisMapping` some `mork:DataMapping`) or (`mork:mappingRecommendation` some `xsd:string`). |
 | `mork:UnorderedCollection` | Class | Subclass of `mork:Collection`. Equivalent to `mork:orderedItems` value "false"^^xsd:boolean. Disjoint with `mork:OrderedCollection`, `mork:SetListing`. |
+| `mork:ValueExpression` | Class | Subclass of `mork:resultDatatype` some `rdfs:Datatype`. |
 | `mork:WeightedMatch` | Class | Subclass of `mork:weighting` some `xsd:integer`, `mork:DataMapping`. |
 | `exe:admittedBy` | Object property | Range `elg:Condition`. |
 | `exe:againstClass` | Object property | Domain `exe:DesignTimeCheck`. Functional. |
@@ -5495,6 +5863,9 @@ The Axiom Index is generated from this section.
 | `mork:closureCombination` | Object property | Domain `mork:CompiledQuery`. Functional. |
 | `mork:closureProperty` | Object property | Domain `mork:CompiledQuery`. Functional. |
 | `mork:communityScheme` | Object property | Domain `mork:SemanticCommunity`. Range `mork:CommunityScheme`. |
+| `mork:comparedLeft` | Object property | Domain `mork:ChoiceExpression`. Range `mork:ValueExpression`. Functional. |
+| `mork:comparedRight` | Object property | Domain `mork:ChoiceExpression`. Range `mork:ValueExpression`. Functional. |
+| `mork:comparisonOperator` | Object property | Domain `mork:ChoiceExpression`. Range `mork:ComparisonOperator`. Functional. |
 | `mork:compilationMode` | Object property | Domain `mork:MappingScheme`. Range `mork:CompilationMode`. Functional. |
 | `mork:compiledFrom` | Object property | Domain `mork:CompiledQuery`. Functional. |
 | `mork:compiledInMode` | Object property | Domain `mork:CompiledMapping`. Range `mork:CompilationMode`. Functional. |
@@ -5554,6 +5925,7 @@ The Axiom Index is generated from this section.
 | `mork:hasTargetingSpec` | Object property | Domain `mork:GenerativeMapping`. Range `mork:TargetingSpec`. |
 | `mork:hasTransformProvenance` | Object property | Domain `mork:TransformMapping`. Range `mork:TransformProvenance`. |
 | `mork:hypothesisMapping` | Object property | Subproperty of `mork:relatedMapping`. |
+| `mork:identityRule` | Object property | Domain `mork:Datum`. Range `mork:IdentityRule`. Functional. |
 | `mork:identityTemplateMapping` | Object property | Subproperty of `mork:templateMapping`. |
 | `mork:indicativeMapping` | Object property | Subproperty of `mork:hasMapping`. |
 | `mork:intentMapping` | Object property | Domain `mork:IntentNode`. Range `mork:DataMapping`. Subproperty of `skos:mappingRelation`. |
@@ -5561,6 +5933,7 @@ The Axiom Index is generated from this section.
 | `mork:interpolationComponent` | Object property | Domain `skos:OrderedCollection`. Range (`mork:DataMapping` and (`mork:dataRef` some `xsd:string`)) or (`mork:dataInline` min 1). Subproperty of `skos:member`. |
 | `mork:intransitiveExactMatch` | Object property | Symmetric. Subproperty of `skos:closeMatch`. |
 | `mork:inverseRBoxMatch` | Object property | Subproperty of `mork:exactRBoxMatch`. |
+| `mork:leftOperand` | Object property | Domain `mork:ArithmeticExpression`. Range `mork:ValueExpression`. Functional. |
 | `mork:lexicalMatch` | Object property | Subproperty of `mork:possibleMatch`. |
 | `mork:lookupComparison` | Object property | Range `mork:LookupComparison`. Functional. |
 | `mork:lookupDatatype` | Object property | Range `rdfs:Datatype`. Functional. |
@@ -5612,8 +5985,11 @@ The Axiom Index is generated from this section.
 | `mork:representationScheme` | Object property | Range `mork:RepresentationScheme`. Subproperty of `skos:inScheme`. |
 | `mork:representedAs` | Object property | Subproperty of `skos:relatedMatch`. |
 | `mork:resolvesIdentityFor` | Object property | Domain `mork:DataMapping`. Range `mork:Datum`. Subproperty of `mork:precedes`. |
+| `mork:resultDatatype` | Object property | Domain `mork:ValueExpression`. Range `rdfs:Datatype`. Functional. |
 | `mork:reviewDecision` | Object property | Domain `mork:MappingReview`. Range `mork:ReviewDecision`. |
 | `mork:reviewOf` | Object property | Domain `mork:MappingReview`. |
+| `mork:rightOperand` | Object property | Domain `mork:ArithmeticExpression`. Range `mork:ValueExpression`. Functional. |
+| `mork:roundedOperand` | Object property | Domain `mork:RoundingExpression`. Range `mork:ValueExpression`. Functional. |
 | `mork:scopeValue` | Object property | Domain `mork:SpatialScope`. Range `skos:Concept`. |
 | `mork:semanticMatch` | Object property | Subproperty of `mork:possibleMatch`. |
 | `mork:shadowDomain` | Object property |  |
@@ -5628,8 +6004,11 @@ The Axiom Index is generated from this section.
 | `mork:templateBinding` | Object property | Domain `mork:DataMapping`. Range `mork:DataMapping`. |
 | `mork:templateClassMapping` | Object property | Subproperty of `mork:templateMapping`. |
 | `mork:templateMapping` | Object property | Subproperty of `mork:deferredMapping`. |
+| `mork:valueExpression` | Object property | Domain `mork:DataMapping`. Range `mork:ValueExpression`. Functional. |
 | `mork:weightedBroader` | Object property | Inverse of `mork:weightedNarrower`. Subproperty of `mork:broaderMapping`. |
 | `mork:weightedNarrower` | Object property | Subproperty of `mork:narrowerMapping`. |
+| `mork:whenFalse` | Object property | Domain `mork:ChoiceExpression`. Range `mork:ValueExpression`. Functional. |
+| `mork:whenTrue` | Object property | Domain `mork:ChoiceExpression`. Range `mork:ValueExpression`. Functional. |
 | `mork:yieldConcept` | Object property | Subproperty of `owl:topObjectProperty`. |
 | `exe:checkHolds` | Datatype property | Domain `exe:DesignTimeCheck`. Range `xsd:boolean`. Functional. |
 | `exe:siblingsDisjoint` | Datatype property | Domain `exe:OwlArtefact`. Range `xsd:boolean`. Functional. |
@@ -5711,6 +6090,7 @@ The Axiom Index is generated from this section.
 | `mork:referenceIdentifier` | Datatype property | Domain `mork:NormativeReferenceItent`. Range `xsd:string`. |
 | `mork:reviewNote` | Datatype property | Domain `mork:MappingReview`. Range `xsd:string`. Functional. |
 | `mork:reviewStatus` | Datatype property | Domain `mork:ConstraintProvenance` or `mork:RuleProvenance` or `mork:ProjectionProvenance`. Range `xsd:string`. |
+| `mork:roundingScale` | Datatype property | Domain `mork:RoundingExpression`. Range `xsd:integer`. Functional. |
 | `mork:scopeInclusion` | Datatype property | Domain `mork:SpatialScope`. Range `xsd:string`. |
 | `mork:scopeType` | Datatype property | Domain `mork:SpatialScope`. Range `xsd:string`. |
 | `mork:stratum` | Datatype property | Domain `mork:CompiledQuery`. Range `xsd:integer`. Functional. |
@@ -5722,6 +6102,7 @@ The Axiom Index is generated from this section.
 | `mork:temporalDuration` | Datatype property | Domain `mork:TemporalScope`. Range `xsd:dayTimeDuration`. |
 | `mork:temporalUnit` | Datatype property | Domain `mork:TemporalScope`. Range `xsd:string`. |
 | `mork:totalTokens` | Datatype property | Domain `mork:ProposalRun`. Range `xsd:nonNegativeInteger`. Functional. |
+| `mork:typedValue` | Datatype property | Domain `mork:TypedLiteralExpression`. Range `rdfs:Literal`. Functional. |
 | `mork:uniqueItems` | Datatype property | Subproperty of `mork:itemsConstrained`. |
 | `mork:weighting` | Datatype property | Range `xsd:integer`. Subproperty of `owl:topDataProperty`. |
 | `exe:AboveExclusion` | Individual | Type `exe:Diagnostic`. |
@@ -5746,20 +6127,27 @@ The Axiom Index is generated from this section.
 | `mork:DeferredObjectPropertyDefinition` | Individual | Type `mork:OwlObjectProperty`, `owl:NamedIndividual`. |
 | `mork:DefiningRestriction` | Individual | Type `mork:AxiomForm`, `owl:NamedIndividual`. |
 | `mork:DraftMode` | Individual | Type `mork:CompilationMode`, `owl:NamedIndividual`. |
+| `mork:EqualTo` | Individual | Type `mork:ComparisonOperator`, `owl:NamedIndividual`. |
 | `mork:ErrorFinding` | Individual | Type `mork:FindingSeverity`, `owl:NamedIndividual`. |
 | `mork:ExistentialRestriction` | Individual | Type `mork:AxiomForm`, `owl:NamedIndividual`. |
 | `mork:GlobalAxioms` | Individual | Type `mork:AxiomForm`, `owl:NamedIndividual`. |
+| `mork:GreaterThan` | Individual | Type `mork:ComparisonOperator`, `owl:NamedIndividual`. |
+| `mork:GreaterThanOrEqual` | Individual | Type `mork:ComparisonOperator`, `owl:NamedIndividual`. |
 | `mork:InfoFinding` | Individual | Type `mork:FindingSeverity`, `owl:NamedIndividual`. |
 | `mork:InstanceOutput` | Individual | Type `mork:OutputBox`, `owl:NamedIndividual`. |
 | `mork:IntersectionOfClasses` | Individual | Type `mork:ClassCombination`, `owl:NamedIndividual`. |
 | `mork:JSON` | Individual | Type `mork:SerializationFormat`, `owl:NamedIndividual`. |
+| `mork:LessThan` | Individual | Type `mork:ComparisonOperator`, `owl:NamedIndividual`. |
+| `mork:LessThanOrEqual` | Individual | Type `mork:ComparisonOperator`, `owl:NamedIndividual`. |
 | `mork:LexicalComparison` | Individual | Type `mork:LookupComparison`, `owl:NamedIndividual`. |
 | `mork:MorkOntologyScheme` | Individual | Type `mork:OntologicalScheme`, `owl:NamedIndividual`. |
+| `mork:NotEqualTo` | Individual | Type `mork:ComparisonOperator`, `owl:NamedIndividual`. |
 | `mork:OwlNothing` | Individual | Type `mork:OwlAxiom`, `owl:NamedIndividual`. |
 | `mork:ProductionMode` | Individual | Type `mork:CompilationMode`, `owl:NamedIndividual`. |
 | `mork:RDF` | Individual | Type `mork:SerializationFormat`, `owl:NamedIndividual`. |
 | `mork:Rejected` | Individual | Type `mork:ReviewDecision`, `owl:NamedIndividual`. |
 | `mork:ReviewMode` | Individual | Type `mork:CompilationMode`, `owl:NamedIndividual`. |
+| `mork:SourceNodeIdentity` | Individual | Type `mork:IdentityRule`, `owl:NamedIndividual`. |
 | `mork:TermComparison` | Individual | Type `mork:LookupComparison`, `owl:NamedIndividual`. |
 | `mork:TerminologyOutput` | Individual | Type `mork:OutputBox`, `owl:NamedIndividual`. |
 | `mork:UnionOfClasses` | Individual | Type `mork:ClassCombination`, `owl:NamedIndividual`. |
@@ -5790,6 +6178,15 @@ Section 6 states no restriction table, so no `shapes/structural.ttl` is generate
 | `mork:PrecedenceAcyclicityShape` | a mapping that precedes itself, directly or through the properties `mork:precedes` is derived from |
 | `mork:SoftPrecedenceAcyclicityShape` | the same for `mork:softPrecedes` and the inverse of `mork:hypothesisMapping` |
 | `mork:IntentRefinementAcyclicityShape` | an intent node that refines itself through `mork:refinesIntent` |
+| `mork:ValueExpressionShape` | a value expression that states no result datatype, or more than one |
+| `mork:ArithmeticExpressionShape`, `mork:TypedRefExpressionShape`, `mork:TypedLiteralExpressionShape`, `mork:RoundingExpressionShape`, `mork:ChoiceExpressionShape` | an arithmetic expression without both operands, a reference without a `mork:dataRef`, a typed literal without a value, a rounding expression without its operand and scale, and a choice without its operator, both compared operands and both branches |
+| `mork:ValueOperandShape` | an operand that is not a typed value expression, so an untyped operand is refused |
+| `mork:ValueOperandNumericShape` | an operand of arithmetic or rounding whose datatype is not numeric |
+| `mork:ChoiceOrderingOperandsShape`, `mork:ChoiceComparedOperandsShape`, `mork:ChoiceBranchDatatypeShape` | a choice that compares by order operands that are not numeric, one that compares operands of different datatypes that are not both numeric, and a branch whose datatype is not the choice's |
+| `mork:ArithmeticDatatypeShape`, `mork:QuotientDatatypeShape`, `mork:RoundingDatatypeShape`, `mork:TypedLiteralDatatypeShape` | a result datatype that is not the one the node gives: the widest of an arithmetic node's operands, with a quotient at least decimal, the operand's under rounding, and a typed literal's own |
+| `mork:ValueExpressionAcyclicityShape` | a value expression that is an operand of itself, directly or through others |
+| `mork:ValueExpressionAssertionShape` | a mapping whose value expression is not a typed value expression, and a mapping that states a value expression beside `mork:dataRef` or `mork:dataInline` |
+| `mork:SourceNodeIdentityShape` | a datum with a source node identity that states another identity, names a class to type the node with, iterates nothing, or states an identity rule that is not `mork:SourceNodeIdentity` |
 
 The order relations are transitive, which OWL 2 DL forbids from also being asymmetric or irreflexive, so their acyclicity is checked here and not in the ontology. Each shape follows the relation and the named properties it is derived from, so a cycle is found whether or not the relation has been materialised.
 
@@ -5816,6 +6213,7 @@ The order relations are transitive, which OWL 2 DL forbids from also being asymm
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
 @prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 mork:GenerativeMappingGovernanceStateClosedShape a sh:NodeShape ;
 	sh:targetClass mork:GenerativeMapping ;
@@ -5901,6 +6299,311 @@ mork:IntentRefinementAcyclicityShape a sh:NodeShape ;
 			}
 		""" ;
 	] .
+
+# Typed value expressions. A value expression states its result datatype, and each node is checked against its direct
+# operands only, so the whole expression is checked by induction. Every shape targets the closed list of concrete
+# classes and never relies on subclass entailment, so a mapping graph is checked without the ontology beside it.
+
+mork:ValueExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:TypedRefExpression , mork:TypedLiteralExpression , mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression ,
+		mork:QuotientExpression , mork:RoundingExpression , mork:ChoiceExpression ;
+	sh:property [ sh:path mork:resultDatatype ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A value expression states exactly one result datatype." ] .
+
+mork:ArithmeticExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression , mork:QuotientExpression ;
+	sh:property [ sh:path mork:leftOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An arithmetic expression has exactly one left operand." ] ;
+	sh:property [ sh:path mork:rightOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An arithmetic expression has exactly one right operand." ] .
+
+mork:TypedRefExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:TypedRefExpression ;
+	sh:property [ sh:path mork:dataRef ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A typed reference reads exactly one mork:dataRef." ] .
+
+mork:TypedLiteralExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:TypedLiteralExpression ;
+	sh:property [ sh:path mork:typedValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ;
+		sh:message "A typed literal expression has exactly one literal value." ] .
+
+mork:RoundingExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:RoundingExpression ;
+	sh:property [ sh:path mork:roundedOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A rounding expression has exactly one operand." ] ;
+	sh:property [ sh:path mork:roundingScale ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+		sh:message "A rounding expression has exactly one scale, an integer." ] .
+
+mork:ChoiceExpressionShape a sh:NodeShape ;
+	sh:targetClass mork:ChoiceExpression ;
+	sh:property [ sh:path mork:comparisonOperator ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:in ( mork:LessThan mork:LessThanOrEqual mork:EqualTo mork:NotEqualTo mork:GreaterThanOrEqual mork:GreaterThan ) ;
+		sh:message "A choice states exactly one comparison operator, one of the six the vocabulary names." ] ;
+	sh:property [ sh:path mork:comparedLeft ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one left compared operand." ] ;
+	sh:property [ sh:path mork:comparedRight ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one right compared operand." ] ;
+	sh:property [ sh:path mork:whenTrue ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one branch for a true comparison." ] ;
+	sh:property [ sh:path mork:whenFalse ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one branch for a false comparison." ] .
+
+mork:ValueOperandShape a sh:NodeShape ;
+	sh:targetClass mork:TypedRefExpression , mork:TypedLiteralExpression , mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression ,
+		mork:QuotientExpression , mork:RoundingExpression , mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "An operand is not a typed value expression. It has none of the types of the value expression vocabulary, so it states no datatype." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this (mork:leftOperand|mork:rightOperand|mork:roundedOperand|mork:comparedLeft|mork:comparedRight|mork:whenTrue|mork:whenFalse) ?value .
+				FILTER NOT EXISTS {
+					?value a ?kind .
+					FILTER (?kind IN (mork:TypedRefExpression, mork:TypedLiteralExpression, mork:SumExpression, mork:DifferenceExpression,
+						mork:ProductExpression, mork:QuotientExpression, mork:RoundingExpression, mork:ChoiceExpression))
+				}
+			}
+		"""
+	] .
+
+mork:ValueOperandNumericShape a sh:NodeShape ;
+	sh:targetClass mork:TypedRefExpression , mork:TypedLiteralExpression , mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression ,
+		mork:QuotientExpression , mork:RoundingExpression , mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "An operand of arithmetic or rounding is not numeric. Its datatype is none of xsd:integer, xsd:decimal, xsd:float and xsd:double." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this (mork:leftOperand|mork:rightOperand|mork:roundedOperand) ?value .
+				?value mork:resultDatatype ?datatype .
+				FILTER (?datatype NOT IN (xsd:integer, xsd:decimal, xsd:float, xsd:double))
+			}
+		"""
+	] .
+
+mork:ChoiceOrderingOperandsShape a sh:NodeShape ;
+	sh:targetClass mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A choice compares by order and one of its compared operands is not numeric." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this mork:comparisonOperator ?operator ;
+					(mork:comparedLeft|mork:comparedRight) ?value .
+				?value mork:resultDatatype ?datatype .
+				FILTER (?operator IN (mork:LessThan, mork:LessThanOrEqual, mork:GreaterThanOrEqual, mork:GreaterThan))
+				FILTER (?datatype NOT IN (xsd:integer, xsd:decimal, xsd:float, xsd:double))
+			}
+		"""
+	] .
+
+mork:ChoiceComparedOperandsShape a sh:NodeShape ;
+	sh:targetClass mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A choice compares two operands of different datatypes that are not both numeric." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this mork:comparedLeft ?left ;
+					mork:comparedRight ?value .
+				?left mork:resultDatatype ?leftType .
+				?value mork:resultDatatype ?rightType .
+				FILTER (?leftType != ?rightType)
+				FILTER (!(?leftType IN (xsd:integer, xsd:decimal, xsd:float, xsd:double) && ?rightType IN (xsd:integer, xsd:decimal, xsd:float, xsd:double)))
+			}
+		"""
+	] .
+
+mork:ChoiceBranchDatatypeShape a sh:NodeShape ;
+	sh:targetClass mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A branch of a choice has a datatype other than the choice's own result datatype." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:resultDatatype ?actual ;
+					(mork:whenTrue|mork:whenFalse) ?value .
+				?value mork:resultDatatype ?branchType .
+				FILTER (?branchType != ?actual)
+			}
+		"""
+	] .
+
+mork:ArithmeticDatatypeShape a sh:NodeShape ;
+	sh:targetClass mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a sum, difference or product is not the widest of its operands' datatypes under numeric promotion." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this mork:leftOperand ?left ;
+					mork:rightOperand ?right ;
+					mork:resultDatatype ?actual .
+				?left mork:resultDatatype ?leftType .
+				?right mork:resultDatatype ?rightType .
+				BIND(IF(?leftType = xsd:integer, 1, IF(?leftType = xsd:decimal, 2, IF(?leftType = xsd:float, 3, IF(?leftType = xsd:double, 4, 0)))) AS ?leftRank)
+				BIND(IF(?rightType = xsd:integer, 1, IF(?rightType = xsd:decimal, 2, IF(?rightType = xsd:float, 3, IF(?rightType = xsd:double, 4, 0)))) AS ?rightRank)
+				BIND(IF(?leftRank > ?rightRank, ?leftRank, ?rightRank) AS ?widest)
+				BIND(IF(?widest > 1, ?widest, 1) AS ?rank)
+				BIND(IF(?rank = 1, xsd:integer, IF(?rank = 2, xsd:decimal, IF(?rank = 3, xsd:float, xsd:double))) AS ?expected)
+				BIND(?actual AS ?value)
+				FILTER (?leftRank > 0 && ?rightRank > 0 && ?actual != ?expected)
+			}
+		"""
+	] .
+
+mork:QuotientDatatypeShape a sh:NodeShape ;
+	sh:targetClass mork:QuotientExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a quotient is not the widest of its operands' datatypes under numeric promotion, and at least xsd:decimal." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this mork:leftOperand ?left ;
+					mork:rightOperand ?right ;
+					mork:resultDatatype ?actual .
+				?left mork:resultDatatype ?leftType .
+				?right mork:resultDatatype ?rightType .
+				BIND(IF(?leftType = xsd:integer, 1, IF(?leftType = xsd:decimal, 2, IF(?leftType = xsd:float, 3, IF(?leftType = xsd:double, 4, 0)))) AS ?leftRank)
+				BIND(IF(?rightType = xsd:integer, 1, IF(?rightType = xsd:decimal, 2, IF(?rightType = xsd:float, 3, IF(?rightType = xsd:double, 4, 0)))) AS ?rightRank)
+				BIND(IF(?leftRank > ?rightRank, ?leftRank, ?rightRank) AS ?widest)
+				BIND(IF(?widest > 2, ?widest, 2) AS ?rank)
+				BIND(IF(?rank = 1, xsd:integer, IF(?rank = 2, xsd:decimal, IF(?rank = 3, xsd:float, xsd:double))) AS ?expected)
+				BIND(?actual AS ?value)
+				FILTER (?leftRank > 0 && ?rightRank > 0 && ?actual != ?expected)
+			}
+		"""
+	] .
+
+mork:RoundingDatatypeShape a sh:NodeShape ;
+	sh:targetClass mork:RoundingExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a rounding expression is not the datatype of its operand." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:roundedOperand ?operand ;
+					mork:resultDatatype ?actual .
+				?operand mork:resultDatatype ?operandType .
+				BIND(?actual AS ?value)
+				FILTER (?operandType != ?actual)
+			}
+		"""
+	] .
+
+mork:TypedLiteralDatatypeShape a sh:NodeShape ;
+	sh:targetClass mork:TypedLiteralExpression ;
+	sh:sparql [
+		sh:message "The literal of a typed literal expression does not have the expression's result datatype." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:typedValue ?value ;
+					mork:resultDatatype ?actual .
+				FILTER (datatype(?value) != ?actual)
+			}
+		"""
+	] .
+
+mork:ValueExpressionAcyclicityShape a sh:NodeShape ;
+	sh:targetClass mork:TypedRefExpression , mork:TypedLiteralExpression , mork:SumExpression , mork:DifferenceExpression , mork:ProductExpression ,
+		mork:QuotientExpression , mork:RoundingExpression , mork:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A value expression is an operand of itself, directly or through other expressions." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this (mork:leftOperand|mork:rightOperand|mork:roundedOperand|mork:comparedLeft|mork:comparedRight|mork:whenTrue|mork:whenFalse)+ $this .
+			}
+		"""
+	] .
+
+mork:ValueExpressionAssertionShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:valueExpression ;
+	sh:sparql [
+		sh:message "The value expression of a mapping is not a typed value expression." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:valueExpression ?value .
+				FILTER NOT EXISTS {
+					?value a ?kind .
+					FILTER (?kind IN (mork:TypedRefExpression, mork:TypedLiteralExpression, mork:SumExpression, mork:DifferenceExpression,
+						mork:ProductExpression, mork:QuotientExpression, mork:RoundingExpression, mork:ChoiceExpression))
+				}
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A mapping states a value expression and also a mork:dataRef or a mork:dataInline, so it has two values." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:valueExpression ?expression ;
+					?property ?value .
+				FILTER (?property IN (mork:dataRef, mork:dataInline))
+			}
+		"""
+	] .
+
+mork:SourceNodeIdentityShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:identityRule ;
+	sh:sparql [
+		sh:message "A datum states an identity rule that is not mork:SourceNodeIdentity." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:identityRule ?value .
+				FILTER (?value != mork:SourceNodeIdentity)
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum with a source node identity states another identity, by an IRI, a name, a template or an A-Box match." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this ?property ?value .
+				FILTER (?property IN (mork:individualIRI, mork:identityTemplateMapping, mork:conceptFQNameTemplate, mork:conceptNameTemplate,
+					mork:conceptName, mork:exactABoxMatch, mork:broadABoxCategoryMatch, mork:narrowABoxCategoryMatch))
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum with a source node identity has an expression that resolves its identity, so it states another identity." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:identityRule mork:SourceNodeIdentity .
+				?value mork:resolvesIdentityFor $this .
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum with a source node identity names a class to type the node with, by a deferred mapping or a T-Box match, and it writes no type." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this ?property ?value .
+				FILTER (?property IN (mork:deferredMapping, mork:exactTBoxMatch, mork:broadTBoxCategoryMatch, mork:narrowTBoxCategoryMatch))
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum with a source node identity iterates nothing. It is not a mork:Datum, or names no source concept with mork:mappingFor." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this mork:identityRule ?rule .
+				FILTER (NOT EXISTS { $this a mork:Datum } || NOT EXISTS { $this mork:mappingFor ?concept })
+			}
+		"""
+	] .
 ```
 -->
 
@@ -5935,6 +6638,9 @@ Not applicable.
 
 ## 12. Release Notes
 
+- **Unreleased**.
+  - no effect. Typed value expressions sit beside the template expressions, which stay a monoid over strings. New: `mork:ValueExpression` with `mork:TypedRefExpression`, `mork:TypedLiteralExpression`, `mork:ArithmeticExpression` and its `mork:SumExpression`, `mork:DifferenceExpression`, `mork:ProductExpression` and `mork:QuotientExpression`, `mork:RoundingExpression` and `mork:ChoiceExpression`, `mork:ComparisonOperator` with its six individuals, and the properties `mork:valueExpression`, `mork:resultDatatype`, `mork:leftOperand`, `mork:rightOperand`, `mork:typedValue`, `mork:roundedOperand`, `mork:roundingScale`, `mork:comparisonOperator`, `mork:comparedLeft`, `mork:comparedRight`, `mork:whenTrue` and `mork:whenFalse`. New shapes refuse an untyped operand, a non-numeric operand of arithmetic, a result datatype the operands do not give, a choice missing a branch, a cycle and a mapping with two values.
+  - no effect. A datum may take the source node it iterates as its identity. New: `mork:IdentityRule`, its individual `mork:SourceNodeIdentity` and `mork:identityRule`, with a shape that refuses a datum with that identity that states another identity, names a class to type the node with or iterates nothing. A datum that states no identity rule means what it meant before.
 - **0.21.0**.
   - no effect. Imports re-pinned to release 0.21.0, with no other change.
   - no effect. The README follows the layout of [ADR-A126](../../docs/architecture/decisions/ADR-A126-literate-specification-layout-and-grammar.md), and generates both spec documents and the shapes file from sections 1, 2, 6 and 7. Both spec documents gain a `dct:description` and a `dct:creator`, and 230 definitions move from `skos:definition` to `rdfs:comment`, where the layout puts a term's definition. 31 terms of MORK and 3 of Executable gain a definition they lacked. 20 definitions and 13 scope notes become `xsd:string` typed literals, which are equal to plain literals in RDF 1.1. Some texts drop a citation of a decision that is not published, a pointer to a document that does not exist or a semicolon, and the closed-world shape for production mode has its message reworded the same way.
@@ -5957,5 +6663,5 @@ Earlier versions are listed in the [ontology release register](../../docs/archit
 - **The definition annotation.** The layout puts a term's definition in `rdfs:comment`, and MORK had used `skos:definition`. Keeping both would state each definition twice, so the migration keeps one. A further annotation label in the grammar for `skos:definition` would let the module keep its original property.
 - **New definitions.** The 34 definitions that the migration adds are drafted from each term's position in the vocabulary and from how the compilers use it, and the maintainers should review them.
 - **Citations of the foundations.** Several definitions and axiom annotations cite sections of the MORK foundations paper, which this repository does not hold. They should cite a published document, or drop the citation.
-- **Not read by any compiler.** `mork:templateClassMapping` is not read by the RDF-to-RDF backend, so a class creation that names one compiles without those axioms, and generative mappings are compiled only by the Eligibility backends of 5.14. Neither is a choice, and each should have a decision.
+- **Not read by any compiler.** `mork:templateClassMapping` is not read by the RDF-to-RDF backend, so a class creation that names one compiles without those axioms, and generative mappings are compiled only by the Eligibility backends of 5.14. Neither is a choice, and each should have a decision. The RDF-to-RDF backend does not yet read the value expressions or the source node identity of 5.4 either, so a scheme that uses them is checked by the shapes and compiled by nothing.
 - **Plain literals.** 20 definitions and 13 scope notes are `xsd:string` typed literals, since the grammar writes a text with a line break or markup that way. The grammar could accept a plain Turtle literal.

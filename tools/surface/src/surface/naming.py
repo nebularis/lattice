@@ -138,6 +138,27 @@ class Minter:
     def lowered_mapping_param(self, name: str) -> URIRef:
         return URIRef(f"{self.namespace}mapping_{self.key}_param_{name}")
 
+    # A derivation lowers into a mapping scheme (ADR-A18). Each node takes its place in the contract's own structure,
+    # never an order a hash table or a set gave, so the same contract names the same nodes.
+
+    def lowered_scheme(self) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}")
+
+    def lowered_carrier_concept(self) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_carrier")
+
+    def lowered_root(self) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_root")
+
+    def lowered_assertion(self) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_value")
+
+    def lowered_reference(self, role_index: int) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_ref_{role_index}")
+
+    def lowered_expression(self, position: str) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_expr_{position}")
+
     # -- per-value symbols --------------------------------------------------
 
     def value_fragment(self, value: str) -> str:

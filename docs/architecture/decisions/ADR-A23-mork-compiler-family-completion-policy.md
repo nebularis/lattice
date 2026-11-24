@@ -33,3 +33,15 @@ SPARQL, SHACL, and SWRL are implemented for `elg:IntervalCondition` only, via th
 ## Addendum (2026-10-30, Proposed with ADR-A148): XSLT and JOLT
 
 ADR-A148 proposes XSLT and JOLT as targets for a mapping over an XML or JSON source, compiled from a logical plan read by `tools/mork_rdf`'s reader. It takes effect when ADR-A148 is accepted.
+
+## Addendum (2026-11-23): mork_rdf compiles derivation projections
+
+**Status of this addendum:** Proposed.
+
+ADR-A18's addendum of the same date lowers a derivation projection into a mapping scheme whose root takes the source node as its identity and whose assertion has a value expression. Nothing compiles that scheme yet, and by the policy above a vocabulary no compiler reads does not count as complete.
+
+1. **`mork_rdf` compiles a lowered derivation.** The compiler of mapping schemes over an RDF source reads the root and its assertion and writes one CONSTRUCT query. The assertion writes the result property on the source node. The expression compiles to SPARQL arithmetic in a `BIND`, each reference bound by the path it reads, and a rounding, a choice and a quotient compile to `ROUND`, `IF` and division.
+2. **A carrier missing an operand writes nothing, and a check reports it.** A value that is undefined, such as a quotient by zero, writes nothing in the same way. A derived property is never half written.
+3. **No new vocabulary.** The terms are those ADR-A18's addendum names. A scheme over an RDF source is compiled to SPARQL by `mork_rdf`, and the other kinds keep the compilers this decision lists.
+
+**Consequences.** The compiled query of a derivation is the same for the same scheme, and a sample of the carrier class run through it gives the derived values. Until the compiler exists, a lowered derivation is checked by MORK's shapes and compiled by nothing.

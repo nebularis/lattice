@@ -134,6 +134,7 @@ Promotion restates one value; indexing restates a value as a retrieval symbol. N
 @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
 @prefix ex:  <https://example.org/lattice/surface/> .
 @prefix saas: <https://example.org/saas/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 ex:subscription-arr a srf:ProjectionContract ;
 	srf:contractKey "subscription-arr" ;
@@ -146,9 +147,16 @@ ex:subscription-arr a srf:ProjectionContract ;
 	srf:backendPolicy ex:arr-backend-policy .
 
 ex:arr-subject a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
-ex:arr-price a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty saas:hasMonthlyPrice .
-ex:arr-frequency a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty saas:hasBillingPeriodsPerYear .
-ex:arr-target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ; srf:bindsProperty saas:annualRecurringRevenue .
+ex:arr-price a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ;
+	srf:bindsProperty saas:hasMonthlyPrice ; srf:bindsDatatype xsd:decimal .
+ex:arr-frequency a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ;
+	srf:bindsProperty saas:hasBillingPeriodsPerYear ; srf:bindsDatatype xsd:integer .
+ex:arr-target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ;
+	srf:bindsProperty saas:annualRecurringRevenue ; srf:bindsDatatype xsd:decimal ;
+	srf:derivedAs ex:arr-expression .
+
+ex:arr-expression a srf:ProductExpression ; srf:resultDatatype xsd:decimal ;
+	srf:leftOperand ex:arr-price ; srf:rightOperand ex:arr-frequency .
 
 ex:arr-backend-policy a srf:ProjectionBackendPolicy ;
 	srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
@@ -160,7 +168,8 @@ A few things of note:
 
 - **No read path.** A projection reads its evidence through role bindings, not `srf:hasPathStep` — `srf:RequiredEvidenceRole` names the property directly, because the value isn't reached by traversal, it's read from two properties of the carrier itself and combined.
 - **Two required-evidence bindings, one contract.** Unlike `EvaluationSubjectRole`, `ResultTargetRole`, and `ClosureBasisRole`, which a contract declares at most once, `RequiredEvidenceRole` and `CandidateEvidenceRole` may repeat — a derivation commonly needs more than one input (`srf:P3`).
-- **This contract never emits SPARQL, SHACL, or anything else directly.** It lowers into a MORK mapping graph (ADR-A18); the backend policy states which compiled targets that mapping may become, and forbids LLM participation in the lowering outright (`srf:deterministicOnly true`).
+- **The operation is stated in the contract.** A derivation states what it computes with `srf:derivedAs` on its result-target binding, in a closed vocabulary of typed expressions (section 6.15). Here the product of the two evidence bindings, a decimal times an integer, is a decimal, and the result-target binding states the same datatype. A shape refuses an operand that states no datatype, an operand that is not an evidence binding of the same contract, and a choice that lacks a branch (`srf:P6` to `srf:P9`).
+- **This contract never emits SPARQL, SHACL, or anything else directly.** It lowers into a MORK mapping scheme (ADR-A18). The scheme iterates the carrier class, takes each source node as its own identity so nothing is minted, reads each evidence binding through a typed reference, and asserts the result property with the expression carried across. The backend policy states which compiled targets that scheme may become, and forbids LLM participation in the lowering outright (`srf:deterministicOnly true`).
 
 For a worked instance graph, see `ontology/surface/examples/saas-subscription-arr-projection.ttl`.
 
@@ -922,7 +931,9 @@ srf:ProjectionRoleBinding a owl:Class ;
 	rdfs:subClassOf
 		[ a owl:Restriction ; owl:onProperty srf:roleKind ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:bindsProperty ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:bindsCarrier ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+		[ a owl:Restriction ; owl:onProperty srf:bindsCarrier ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:bindsDatatype ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:derivedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class." ;
 	fnd:utility "Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline srf:PathStep applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well." .
 ```
@@ -1006,6 +1017,132 @@ srf:producesMapping a owl:ObjectProperty ;
 	rdfs:domain srf:GeneratedSurface ;
 	rdfs:comment "A MORK mapping node a projection's generation run lowered into." ;
 	fnd:utility "Populated only for a generated surface covering a ProjectionContract. Names a mork:DataMapping, mork:ShapeMapping, mork:RuleMapping, mork:QueryTemplate, or mork:ProjectionMapping by punning, without Surface importing MORK." .
+```
+
+### 6.15 Projection expressions
+
+A derivation projection states the operation it performs as an expression, in a closed vocabulary, so the contract carries the meaning of the derivation and no backend has to supply it. The expression is stated on the result-target role binding with `srf:derivedAs`, and its operands are the contract's evidence role bindings and expressions of their own. The vocabulary is the four arithmetic operations, a literal of a stated datatype, rounding to a stated scale, and a choice between two values on a comparison of two operands. Each node and each evidence role binding an expression reads states its datatype, so a shape refuses an untyped operand, a non-numeric operand of arithmetic or an ordering comparison, and branches of a choice that disagree. A node is named by an IRI, never a blank node, so the expression has a canonical form.
+
+#### `srf:ProjectionExpression`
+
+**Definition.** A node of the expression a derivation projection states over its evidence role bindings. It is one of a closed set of operations, and states the datatype of the value it computes.
+
+**Utility.** State the operation a derivation performs here, never in a backend's text. Give every node a `srf:resultDatatype` and every evidence role binding an operand reads a `srf:bindsDatatype`, since a shape checks each node against its direct operands only.
+
+```turtle-spec
+srf:ProjectionExpression a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:resultDatatype ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A node of the expression a derivation projection states over its evidence role bindings. It is one of a closed set of operations, and states the datatype of the value it computes." ;
+	fnd:utility "State the operation a derivation performs here, never in a backend's text. Give every node a resultDatatype and every evidence role binding an operand reads a bindsDatatype, since a shape checks each node against its direct operands only." .
+
+srf:ArithmeticExpression a owl:Class ;
+	rdfs:subClassOf srf:ProjectionExpression ,
+		[ a owl:Restriction ; owl:onProperty srf:leftOperand ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:rightOperand ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "An operation on two numeric operands, taken in order." .
+
+srf:SumExpression a owl:Class ;
+	rdfs:subClassOf srf:ArithmeticExpression ;
+	rdfs:comment "The sum of its left and right operands." .
+
+srf:DifferenceExpression a owl:Class ;
+	rdfs:subClassOf srf:ArithmeticExpression ;
+	rdfs:comment "The left operand less the right operand." .
+
+srf:ProductExpression a owl:Class ;
+	rdfs:subClassOf srf:ArithmeticExpression ;
+	rdfs:comment "The product of its left and right operands." .
+
+srf:QuotientExpression a owl:Class ;
+	rdfs:subClassOf srf:ArithmeticExpression ;
+	rdfs:comment "The left operand divided by the right operand. A quotient is at least decimal, whatever its operands, and is undefined where the right operand is zero." .
+
+srf:TypedLiteralExpression a owl:Class ;
+	rdfs:subClassOf srf:ProjectionExpression ,
+		[ a owl:Restriction ; owl:onProperty srf:typedValue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "A constant, written as a literal of the datatype the expression states." .
+
+srf:RoundingExpression a owl:Class ;
+	rdfs:subClassOf srf:ProjectionExpression ,
+		[ a owl:Restriction ; owl:onProperty srf:roundedOperand ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:roundingScale ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "Its operand rounded to the nearest multiple of ten to the power of minus the scale, a tie going toward positive infinity, as SPARQL's ROUND does. A scale of 2 rounds to hundredths and a scale of -2 to hundreds." .
+
+srf:ChoiceExpression a owl:Class ;
+	rdfs:subClassOf srf:ProjectionExpression ,
+		[ a owl:Restriction ; owl:onProperty srf:comparisonOperator ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:comparedLeft ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:comparedRight ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:whenTrue ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:whenFalse ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The value of its true branch where its left compared operand stands in its comparison to its right compared operand, and the value of its false branch otherwise." .
+
+srf:ComparisonOperator a owl:Class ;
+	rdfs:comment "How a choice compares its two operands. Its individuals are in the vocabulary." .
+
+[ a owl:AllDisjointClasses ; owl:members (
+	srf:SumExpression srf:DifferenceExpression srf:ProductExpression srf:QuotientExpression
+	srf:TypedLiteralExpression srf:RoundingExpression srf:ChoiceExpression ) ] .
+```
+
+Each operand is another expression, or a role binding of the same contract that reads evidence (`srf:RequiredEvidenceRole` or `srf:CandidateEvidenceRole`) and binds a property. A binding as an operand stands for the value of its property on the carrier instance.
+
+```turtle-spec
+srf:derivedAs a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:ProjectionExpression ;
+	rdfs:comment "The expression a derivation projection states over its evidence role bindings." ;
+	fnd:utility "Set it on the result-target role binding of a derivation projection, once, and nowhere else (srf:P6). The value written on the carrier is the value of the expression." .
+
+srf:bindsDatatype a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range rdfs:Datatype ;
+	rdfs:comment "The datatype of the value the bound property carries, as an expression reads it." ;
+	fnd:utility "State it on each evidence role binding an expression reads and on the result-target role binding, where it is the datatype of the expression's value. It restates the range of the property the contract binds, which the contract graph may not hold, so that a shape can check the contract alone (srf:P8)." .
+
+srf:resultDatatype a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionExpression ; rdfs:range rdfs:Datatype ;
+	rdfs:comment "The datatype of the value an expression computes." ;
+	fnd:utility "Numeric promotion gives it for arithmetic (srf:P8). Write xsd:integer, xsd:decimal, xsd:float or xsd:double for a numeric value." .
+
+srf:leftOperand a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ArithmeticExpression ;
+	rdfs:comment "The first operand of an arithmetic expression, an expression or an evidence role binding of the same contract." .
+
+srf:rightOperand a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ArithmeticExpression ;
+	rdfs:comment "The second operand of an arithmetic expression, an expression or an evidence role binding of the same contract." .
+
+srf:typedValue a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:TypedLiteralExpression ; rdfs:range rdfs:Literal ;
+	rdfs:comment "The constant of a typed literal expression. Its datatype is the expression's result datatype." .
+
+srf:roundedOperand a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:RoundingExpression ;
+	rdfs:comment "The operand a rounding expression rounds, an expression or an evidence role binding of the same contract." .
+
+srf:roundingScale a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:RoundingExpression ; rdfs:range xsd:integer ;
+	rdfs:comment "The number of places a rounding expression keeps after the decimal point. It may be negative." .
+
+srf:comparisonOperator a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ChoiceExpression ; rdfs:range srf:ComparisonOperator ;
+	rdfs:comment "How a choice compares its compared operands." .
+
+srf:comparedLeft a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ChoiceExpression ;
+	rdfs:comment "The left operand of the comparison a choice makes, an expression or an evidence role binding of the same contract." .
+
+srf:comparedRight a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ChoiceExpression ;
+	rdfs:comment "The right operand of the comparison a choice makes, an expression or an evidence role binding of the same contract." .
+
+srf:whenTrue a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ChoiceExpression ;
+	rdfs:comment "The value a choice takes where its comparison holds, an expression or an evidence role binding of the same contract." .
+
+srf:whenFalse a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ChoiceExpression ;
+	rdfs:comment "The value a choice takes where its comparison does not hold, an expression or an evidence role binding of the same contract." .
 ```
 
 ## 7. Index forms
@@ -1111,6 +1248,13 @@ srf:ResultTargetRole a srf:ProjectionRole ; rdfs:comment "Where a projection's c
 srf:ClosureBasisRole a srf:ProjectionRole ; rdfs:comment "The relation a projection's closure, where it has one, is computed over." .
 srf:TransformDependencyRole a srf:ProjectionRole ; rdfs:comment "A dependency a derivation reads without itself being required or candidate evidence." .
 
+srf:LessThan a srf:ComparisonOperator ; rdfs:comment "The left compared operand is less than the right." .
+srf:LessThanOrEqual a srf:ComparisonOperator ; rdfs:comment "The left compared operand is less than or equal to the right." .
+srf:EqualTo a srf:ComparisonOperator ; rdfs:comment "The two compared operands are equal." .
+srf:NotEqualTo a srf:ComparisonOperator ; rdfs:comment "The two compared operands are not equal." .
+srf:GreaterThanOrEqual a srf:ComparisonOperator ; rdfs:comment "The left compared operand is greater than or equal to the right." .
+srf:GreaterThan a srf:ComparisonOperator ; rdfs:comment "The left compared operand is greater than the right." .
+
 srf:RmlBackend a srf:CompilerBackend ; rdfs:comment "RML/R2RML triples-map compilation." .
 srf:SparqlBackend a srf:CompilerBackend ; rdfs:comment "SPARQL query compilation." .
 srf:ShaclBackend a srf:CompilerBackend ; rdfs:comment "SHACL shape compilation." .
@@ -1154,6 +1298,11 @@ srf:P2 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every pr
 srf:P3 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection contract declares at most one evaluation-subject, result-target, and closure-basis role binding; candidate-evidence, required-evidence, and transform-dependency role bindings may repeat." .
 srf:P4 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy names no compiler backend in both allowedBackend and deniedBackend." .
 srf:P5 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy declaring deterministicOnly true declares no llmCompletionPolicy other than NoLLMCompletion." .
+
+srf:P6 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A derivation projection states exactly one expression, with derivedAs on its result-target role binding, and that binding binds the property the value is written on. No other projection kind states an expression. Every expression node is reached from such a statement through its operands." .
+srf:P7 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Each operand of a projection expression is a projection expression, or a candidate-evidence or required-evidence role binding of the same contract that binds a property." .
+srf:P8 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Each projection expression states a result datatype, and each evidence role binding an expression reads and the result-target role binding state a binding datatype. The operands of an arithmetic expression, a rounding expression and an ordering comparison are numeric. A node's result datatype is the wider of its operands' under numeric promotion (a quotient is at least decimal), the datatype of its operand under rounding, and the datatype of both branches of a choice. The result-target role binding's datatype is the expression's." .
+srf:P9 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection expression is acyclic. No expression is an operand of itself, directly or through other expressions." .
 ```
 
 ## 10. Shapes
@@ -1163,6 +1312,7 @@ Contract-local and record-local checks are shipped here. Checks that need a sour
 ```turtle-shapes
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 srf:SurfaceContractShape a sh:NodeShape ;
 	sh:targetClass srf:SurfaceContract ;
@@ -1254,12 +1404,53 @@ srf:ProjectionRoleBindingShape a sh:NodeShape ;
 	sh:targetClass srf:ProjectionRoleBinding ;
 	sh:property [ sh:path srf:roleKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:bindsProperty ; sh:maxCount 1 ] ;
-	sh:property [ sh:path srf:bindsCarrier ; sh:maxCount 1 ] .
+	sh:property [ sh:path srf:bindsCarrier ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:bindsDatatype ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:derivedAs ; sh:maxCount 1 ] .
 
 srf:ProjectionBackendPolicyShape a sh:NodeShape ;
 	sh:targetClass srf:ProjectionBackendPolicy ;
 	sh:property [ sh:path srf:llmCompletionPolicy ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:deterministicOnly ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+srf:ProjectionExpressionShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ,
+		srf:TypedLiteralExpression , srf:RoundingExpression , srf:ChoiceExpression ;
+	sh:property [ sh:path srf:resultDatatype ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A projection expression states exactly one result datatype. Discharges srf:P8." ] .
+
+srf:ArithmeticExpressionShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ;
+	sh:property [ sh:path srf:leftOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An arithmetic expression has exactly one left operand. Discharges srf:P7." ] ;
+	sh:property [ sh:path srf:rightOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An arithmetic expression has exactly one right operand. Discharges srf:P7." ] .
+
+srf:TypedLiteralExpressionShape a sh:NodeShape ;
+	sh:targetClass srf:TypedLiteralExpression ;
+	sh:property [ sh:path srf:typedValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ;
+		sh:message "A typed literal expression has exactly one literal value. Discharges srf:P8." ] .
+
+srf:RoundingExpressionShape a sh:NodeShape ;
+	sh:targetClass srf:RoundingExpression ;
+	sh:property [ sh:path srf:roundedOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A rounding expression has exactly one operand. Discharges srf:P7." ] ;
+	sh:property [ sh:path srf:roundingScale ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+		sh:message "A rounding expression has exactly one scale, an integer. Discharges srf:P8." ] .
+
+srf:ChoiceExpressionShape a sh:NodeShape ;
+	sh:targetClass srf:ChoiceExpression ;
+	sh:property [ sh:path srf:comparisonOperator ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:in ( srf:LessThan srf:LessThanOrEqual srf:EqualTo srf:NotEqualTo srf:GreaterThanOrEqual srf:GreaterThan ) ;
+		sh:message "A choice states exactly one comparison operator, one of the six the vocabulary names. Discharges srf:P8." ] ;
+	sh:property [ sh:path srf:comparedLeft ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one left compared operand. Discharges srf:P7." ] ;
+	sh:property [ sh:path srf:comparedRight ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one right compared operand. Discharges srf:P7." ] ;
+	sh:property [ sh:path srf:whenTrue ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one branch for a true comparison. Discharges srf:P7." ] ;
+	sh:property [ sh:path srf:whenFalse ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one branch for a false comparison. Discharges srf:P7." ] .
 ```
 
 ```turtle-shapes
@@ -1381,10 +1572,10 @@ srf:EnumerablePopulationShape a sh:NodeShape ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
-				VALUES ?perValueForm { srf:NominalClass srf:MembershipAssertion }
 				$this srf:indexForm ?perValueForm ;
 					  srf:valuePopulation ?population .
 				?population a srf:RangePartitionPopulation .
+				FILTER (?perValueForm IN (srf:NominalClass, srf:MembershipAssertion))
 			}
 		"""
 	] .
@@ -1422,15 +1613,15 @@ srf:CrosswalkRelationRequiredShape a sh:NodeShape ;
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
 				{
-					VALUES ?crosswalk { srf:CrosswalkExact srf:CrosswalkInexact }
 					$this srf:sourceFidelity ?crosswalk .
+					FILTER (?crosswalk IN (srf:CrosswalkExact, srf:CrosswalkInexact))
 					FILTER NOT EXISTS { $this srf:viaMatchRelation ?relation }
 				}
 				UNION
 				{
-					VALUES ?direct { srf:ExactSource srf:DerivedSource }
 					$this srf:sourceFidelity ?direct .
 					$this srf:viaMatchRelation ?declaredRelation .
+					FILTER (?direct IN (srf:ExactSource, srf:DerivedSource))
 				}
 			}
 		"""
@@ -1461,8 +1652,8 @@ srf:PromotionSignatureDisciplineShape a sh:NodeShape ;
 					  srf:targetNamespace ?namespace .
 				FILTER (!STRSTARTS(STR(?promoted), STR(?namespace)))
 				{
-					VALUES ?lossy { srf:DerivedSource srf:CrosswalkInexact }
 					$this srf:sourceFidelity ?lossy .
+					FILTER (?lossy IN (srf:DerivedSource, srf:CrosswalkInexact))
 				}
 				UNION
 				{ $this srf:realisationMode srf:DefinitionOnly }
@@ -1490,10 +1681,10 @@ srf:InexactPromotionAuthorityShape a sh:NodeShape ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
-				VALUES ?lossy { srf:DerivedSource srf:CrosswalkInexact }
 				$this srf:coversContract ?contract ;
 					  srf:derivationAuthority ?authority .
 				?contract srf:sourceFidelity ?lossy .
+				FILTER (?lossy IN (srf:DerivedSource, srf:CrosswalkInexact))
 				FILTER (?authority != srf:Advisory)
 			}
 		"""
@@ -1631,12 +1822,12 @@ srf:ProjectionEvidenceRequiredForJoinOrDerivationShape a sh:NodeShape ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
-				VALUES ?evidenceKind { srf:JoinProjection srf:DerivationProjection }
 				$this srf:projectionKind ?evidenceKind .
+				FILTER (?evidenceKind IN (srf:JoinProjection, srf:DerivationProjection))
 				FILTER NOT EXISTS {
 					$this srf:hasRoleBinding ?binding .
-					VALUES ?evidenceRole { srf:CandidateEvidenceRole srf:RequiredEvidenceRole }
 					?binding srf:roleKind ?evidenceRole .
+					FILTER (?evidenceRole IN (srf:CandidateEvidenceRole, srf:RequiredEvidenceRole))
 				}
 			}
 		"""
@@ -1649,11 +1840,11 @@ srf:ProjectionRoleKindSingletonShape a sh:NodeShape ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
-				VALUES ?singletonRole { srf:EvaluationSubjectRole srf:ResultTargetRole srf:ClosureBasisRole }
 				$this srf:hasRoleBinding ?first, ?second .
 				?first srf:roleKind ?singletonRole .
 				?second srf:roleKind ?singletonRole .
 				FILTER (?first != ?second)
+				FILTER (?singletonRole IN (srf:EvaluationSubjectRole, srf:ResultTargetRole, srf:ClosureBasisRole))
 			}
 		"""
 	] .
@@ -1681,6 +1872,282 @@ srf:ProjectionDeterministicOnlyLLMPolicyShape a sh:NodeShape ;
 				$this srf:deterministicOnly true ;
 					  srf:llmCompletionPolicy ?policy .
 				FILTER (?policy != srf:NoLLMCompletion)
+			}
+		"""
+	] .
+
+srf:DerivationExpressionRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A derivation projection states no expression on its result-target role binding. Discharges srf:P6." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:DerivationProjection .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:ResultTargetRole ;
+						srf:derivedAs ?expression .
+				}
+			}
+		"""
+	] .
+
+srf:DerivationResultPropertyRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "The result-target role binding of a derivation projection binds no property, so there is nothing to write the value on. Discharges srf:P6." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:DerivationProjection ;
+					srf:hasRoleBinding ?binding .
+				?binding srf:roleKind srf:ResultTargetRole .
+				FILTER NOT EXISTS { ?binding srf:bindsProperty ?property }
+			}
+		"""
+	] .
+
+srf:ProjectionExpressionPlacementShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states an expression and is not the result-target role binding of a derivation projection. Discharges srf:P6." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:derivedAs ?expression .
+				FILTER NOT EXISTS {
+					$this srf:roleKind srf:ResultTargetRole .
+					?contract srf:hasRoleBinding $this ;
+						srf:projectionKind srf:DerivationProjection .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionExpressionReachedShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ,
+		srf:TypedLiteralExpression , srf:RoundingExpression , srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A projection expression is not reached from the result-target role binding of any derivation, so no contract states it. Discharges srf:P6." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a ?kind .
+				FILTER NOT EXISTS {
+					$this (^srf:leftOperand|^srf:rightOperand|^srf:roundedOperand|^srf:comparedLeft|^srf:comparedRight|^srf:whenTrue|^srf:whenFalse)* ?root .
+					?binding srf:derivedAs ?root .
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionOperandEvidenceShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "An operand of the contract's expression is neither an expression nor a candidate-evidence or required-evidence role binding of this contract that binds a property. Discharges srf:P7." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:hasRoleBinding/srf:derivedAs ?root .
+				?root (srf:leftOperand|srf:rightOperand|srf:roundedOperand|srf:comparedLeft|srf:comparedRight|srf:whenTrue|srf:whenFalse)* ?node .
+				?node (srf:leftOperand|srf:rightOperand|srf:roundedOperand|srf:comparedLeft|srf:comparedRight|srf:whenTrue|srf:whenFalse) ?value .
+				FILTER NOT EXISTS {
+					?value a ?kind .
+					FILTER (?kind IN (srf:SumExpression, srf:DifferenceExpression, srf:ProductExpression, srf:QuotientExpression,
+						srf:TypedLiteralExpression, srf:RoundingExpression, srf:ChoiceExpression))
+				}
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?value .
+					?value srf:roleKind ?role ;
+						srf:bindsProperty ?property .
+					FILTER (?role IN (srf:RequiredEvidenceRole, srf:CandidateEvidenceRole))
+				}
+			}
+		"""
+	] .
+
+srf:ProjectionOperandTypedShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ,
+		srf:TypedLiteralExpression , srf:RoundingExpression , srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "An operand states no datatype, neither a result datatype as an expression nor a binding datatype as a role binding. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this (srf:leftOperand|srf:rightOperand|srf:roundedOperand|srf:comparedLeft|srf:comparedRight|srf:whenTrue|srf:whenFalse) ?value .
+				FILTER NOT EXISTS { ?value (srf:resultDatatype|srf:bindsDatatype) ?datatype }
+			}
+		"""
+	] .
+
+srf:ProjectionOperandNumericShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ,
+		srf:TypedLiteralExpression , srf:RoundingExpression , srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "An operand of arithmetic or rounding is not numeric. Its datatype is none of xsd:integer, xsd:decimal, xsd:float and xsd:double. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this (srf:leftOperand|srf:rightOperand|srf:roundedOperand) ?value .
+				?value (srf:resultDatatype|srf:bindsDatatype) ?datatype .
+				FILTER (?datatype NOT IN (xsd:integer, xsd:decimal, xsd:float, xsd:double))
+			}
+		"""
+	] .
+
+srf:ProjectionOrderingOperandsShape a sh:NodeShape ;
+	sh:targetClass srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A choice compares by order and one of its compared operands is not numeric. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this srf:comparisonOperator ?operator ;
+					(srf:comparedLeft|srf:comparedRight) ?value .
+				?value (srf:resultDatatype|srf:bindsDatatype) ?datatype .
+				FILTER (?operator IN (srf:LessThan, srf:LessThanOrEqual, srf:GreaterThanOrEqual, srf:GreaterThan))
+				FILTER (?datatype NOT IN (xsd:integer, xsd:decimal, xsd:float, xsd:double))
+			}
+		"""
+	] .
+
+srf:ProjectionComparedOperandsShape a sh:NodeShape ;
+	sh:targetClass srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A choice compares two operands of different datatypes that are not both numeric. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this srf:comparedLeft ?left ;
+					srf:comparedRight ?value .
+				?left (srf:resultDatatype|srf:bindsDatatype) ?leftType .
+				?value (srf:resultDatatype|srf:bindsDatatype) ?rightType .
+				FILTER (?leftType != ?rightType)
+				FILTER (!(?leftType IN (xsd:integer, xsd:decimal, xsd:float, xsd:double) && ?rightType IN (xsd:integer, xsd:decimal, xsd:float, xsd:double)))
+			}
+		"""
+	] .
+
+srf:ProjectionBranchDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A branch of a choice has a datatype other than the choice's own result datatype. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:resultDatatype ?actual ;
+					(srf:whenTrue|srf:whenFalse) ?value .
+				?value (srf:resultDatatype|srf:bindsDatatype) ?branchType .
+				FILTER (?branchType != ?actual)
+			}
+		"""
+	] .
+
+srf:ProjectionArithmeticDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a sum, difference or product is not the wider of its operands' datatypes under numeric promotion. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this srf:leftOperand ?left ;
+					srf:rightOperand ?right ;
+					srf:resultDatatype ?actual .
+				?left (srf:resultDatatype|srf:bindsDatatype) ?leftType .
+				?right (srf:resultDatatype|srf:bindsDatatype) ?rightType .
+				BIND(IF(?leftType = xsd:integer, 1, IF(?leftType = xsd:decimal, 2, IF(?leftType = xsd:float, 3, IF(?leftType = xsd:double, 4, 0)))) AS ?leftRank)
+				BIND(IF(?rightType = xsd:integer, 1, IF(?rightType = xsd:decimal, 2, IF(?rightType = xsd:float, 3, IF(?rightType = xsd:double, 4, 0)))) AS ?rightRank)
+				BIND(IF(?leftRank > ?rightRank, ?leftRank, ?rightRank) AS ?widest)
+				BIND(IF(?widest > 1, ?widest, 1) AS ?rank)
+				BIND(IF(?rank = 1, xsd:integer, IF(?rank = 2, xsd:decimal, IF(?rank = 3, xsd:float, xsd:double))) AS ?expected)
+				BIND(?actual AS ?value)
+				FILTER (?leftRank > 0 && ?rightRank > 0 && ?actual != ?expected)
+			}
+		"""
+	] .
+
+srf:ProjectionQuotientDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:QuotientExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a quotient is not the wider of its operands' datatypes under numeric promotion, and at least xsd:decimal. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT $this ?value WHERE {
+				$this srf:leftOperand ?left ;
+					srf:rightOperand ?right ;
+					srf:resultDatatype ?actual .
+				?left (srf:resultDatatype|srf:bindsDatatype) ?leftType .
+				?right (srf:resultDatatype|srf:bindsDatatype) ?rightType .
+				BIND(IF(?leftType = xsd:integer, 1, IF(?leftType = xsd:decimal, 2, IF(?leftType = xsd:float, 3, IF(?leftType = xsd:double, 4, 0)))) AS ?leftRank)
+				BIND(IF(?rightType = xsd:integer, 1, IF(?rightType = xsd:decimal, 2, IF(?rightType = xsd:float, 3, IF(?rightType = xsd:double, 4, 0)))) AS ?rightRank)
+				BIND(IF(?leftRank > ?rightRank, ?leftRank, ?rightRank) AS ?widest)
+				BIND(IF(?widest > 2, ?widest, 2) AS ?rank)
+				BIND(IF(?rank = 1, xsd:integer, IF(?rank = 2, xsd:decimal, IF(?rank = 3, xsd:float, xsd:double))) AS ?expected)
+				BIND(?actual AS ?value)
+				FILTER (?leftRank > 0 && ?rightRank > 0 && ?actual != ?expected)
+			}
+		"""
+	] .
+
+srf:ProjectionRoundingDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:RoundingExpression ;
+	sh:sparql [
+		sh:message "The result datatype of a rounding expression is not the datatype of its operand. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:roundedOperand ?operand ;
+					srf:resultDatatype ?actual .
+				?operand (srf:resultDatatype|srf:bindsDatatype) ?operandType .
+				BIND(?actual AS ?value)
+				FILTER (?operandType != ?actual)
+			}
+		"""
+	] .
+
+srf:ProjectionLiteralDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:TypedLiteralExpression ;
+	sh:sparql [
+		sh:message "The literal of a typed literal expression does not have the expression's result datatype. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:typedValue ?value ;
+					srf:resultDatatype ?actual .
+				FILTER (datatype(?value) != ?actual)
+			}
+		"""
+	] .
+
+srf:ProjectionResultTargetDatatypeShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "The datatype a result-target role binding states is missing or is not the result datatype of the expression it states. Discharges srf:P8." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:derivedAs ?expression .
+				?expression srf:resultDatatype ?datatype .
+				FILTER NOT EXISTS { $this srf:bindsDatatype ?datatype }
+			}
+		"""
+	] .
+
+srf:ProjectionExpressionAcyclicShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ,
+		srf:TypedLiteralExpression , srf:RoundingExpression , srf:ChoiceExpression ;
+	sh:sparql [
+		sh:message "A projection expression is an operand of itself, directly or through other expressions. Discharges srf:P9." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this (srf:leftOperand|srf:rightOperand|srf:roundedOperand|srf:comparedLeft|srf:comparedRight|srf:whenTrue|srf:whenFalse)+ $this .
 			}
 		"""
 	] .
@@ -1721,7 +2188,7 @@ Non-domain examples are authored in:
 - `ontology/surface/examples/employment-job-family.ttl` — hierarchical closure and per-value classes over a scheme-bound population
 - `ontology/surface/examples/saas-subscription-currency.ttl` — promotion across a three-step read path onto a direct property
 - `ontology/surface/examples/clinical-trial-crosswalk.ttl` — promotion across an inexact mapping relation
-- `ontology/surface/examples/saas-subscription-arr-projection.ttl` — a derivation projection combining two required-evidence bindings into a computed result, lowered under a deterministic-only backend policy
+- `ontology/surface/examples/saas-subscription-arr-projection.ttl` — a derivation projection stating the product of two required-evidence bindings as its expression, lowered under a deterministic-only backend policy
 
 Deliberate-defect fixtures are authored in `ontology/surface/test/`.
 
@@ -1736,6 +2203,10 @@ ex:index-1 a srf:IndexContract ;
 
 ## 14. Release notes
 
+- **Unreleased**.
+  - no effect. A derivation projection states its operation. New: `srf:ProjectionExpression` with `srf:SumExpression`, `srf:DifferenceExpression`, `srf:ProductExpression` and `srf:QuotientExpression` under `srf:ArithmeticExpression`, `srf:TypedLiteralExpression`, `srf:RoundingExpression` and `srf:ChoiceExpression`, `srf:ComparisonOperator` with its six individuals, and the properties `srf:derivedAs`, `srf:bindsDatatype`, `srf:resultDatatype`, `srf:leftOperand`, `srf:rightOperand`, `srf:typedValue`, `srf:roundedOperand`, `srf:roundingScale`, `srf:comparisonOperator`, `srf:comparedLeft`, `srf:comparedRight`, `srf:whenTrue` and `srf:whenFalse`. New laws `srf:P6` to `srf:P9`, with a shape for each part of them.
+  - may invalidate. A derivation projection that states no expression on its result-target role binding fails the new shape, and the compiler refuses to read it. A projection of another kind that states one fails too. The example derivation states its operation, the product of its monthly price and its billing periods a year, and the datatype of each evidence binding.
+  - no effect. Six SPARQL constraints of the shapes no longer use a `VALUES` clause, which SHACL forbids in a constraint and a validator such as pySHACL refuses, so the shapes load in one. Each is written with `FILTER` and `IN` and reports what it reported.
 - **0.21.0**.
   - no effect. Imports re-pinned to release 0.21.0, with no other change.
 - **0.20.0**.

@@ -21,12 +21,26 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 from rdflib import Graph, Literal, URIRef
 from rdflib.paths import InvPath, Path, SequencePath
 
-from .namespaces import FND, QNT, RDF, SRF, VOC
+from .expression import (
+    ARITHMETIC_KINDS,
+    COMPARISON_OPERATORS,
+    EXPRESSION_KINDS,
+    CHOICE,
+    OPERAND_SLOTS,
+    ORDERING_OPERATORS,
+    QUOTIENT,
+    ROUNDING,
+    TYPED_LITERAL,
+    comparable,
+    is_numeric,
+    promoted,
+)
+from .namespaces import FND, QNT, RDF, SRF, VOC, XSD
 
 
 class ContractError(ValueError):
@@ -196,6 +210,32 @@ class RoleBinding:
     role_kind: URIRef
     binds_property: Optional[URIRef] = None
     binds_carrier: Optional[URIRef] = None
+    #: The datatype of the value the bound property carries (``srf:bindsDatatype``), as an expression reads it.
+    datatype: Optional[URIRef] = None
+
+
+@dataclass(frozen=True)
+class Expression:
+    """One node of a derivation's expression (``srf:ProjectionExpression``), with its operands transcribed.
+
+    ``operands`` are in the order ``expression.OPERAND_SLOTS`` gives for the kind. An operand is another
+    ``Expression`` or the ``RoleBinding`` of an evidence role of the same contract.
+    """
+
+    iri: URIRef
+    kind: URIRef
+    datatype: URIRef
+    operands: Tuple["Operand", ...] = ()
+    literal: Optional[Literal] = None
+    scale: Optional[int] = None
+    comparison: Optional[URIRef] = None
+
+
+Operand = Union[Expression, RoleBinding]
+
+
+def operand_datatype(operand: Operand) -> Optional[URIRef]:
+    return operand.datatype
 
 
 @dataclass(frozen=True)
@@ -229,6 +269,8 @@ class ProjectionContract:
     role_bindings: Sequence[RoleBinding]
     backend_policy: Optional[BackendPolicy] = None
     population_budget: Optional[int] = None
+    #: The expression a derivation states on its result-target role binding (law ``srf:P6``).
+    expression: Optional[Expression] = None
 
     def roles(self, kind: URIRef) -> List[RoleBinding]:
         return [b for b in self.role_bindings if str(b.role_kind) == str(kind)]
@@ -437,6 +479,117 @@ class SurfaceGraphAnalyser:
             role_kind=self._iri(iri, SRF.roleKind),
             binds_property=self._iri(iri, SRF.bindsProperty, required=False),
             binds_carrier=self._iri(iri, SRF.bindsCarrier, required=False),
+            datatype=self._iri(iri, SRF.bindsDatatype, required=False),
+        )
+
+    # -- a derivation's expression (laws srf:P6 to srf:P9) --------------------
+
+    def expression(
+        self,
+        iri: URIRef,
+        contract: URIRef,
+        bindings: Dict[str, RoleBinding],
+        reaching: Tuple[str, ...] = (),
+    ) -> Expression:
+        """Transcribe the expression rooted at ``iri``, applying the checks the shapes make."""
+        if str(iri) in reaching:
+            raise ContractError(f"{contract} states an expression that is an operand of itself at {iri} (law srf:P9)")
+        kinds = [kind for kind in EXPRESSION_KINDS if str(kind) in self._types(iri)]
+        if len(kinds) != 1:
+            raise ContractError(
+                f"{iri} in the expression of {contract} is not exactly one kind of projection expression (law srf:P7)"
+            )
+        kind = kinds[0]
+        name = str(kind).rsplit("#", 1)[-1]
+        datatype = self._iri(iri, SRF.resultDatatype, required=False)
+        if datatype is None:
+            raise ContractError(f"{iri} is a {name} with no result datatype (law srf:P8)")
+
+        operands: List[Operand] = []
+        for slot in OPERAND_SLOTS[kind]:
+            slot_name = str(slot).rsplit("#", 1)[-1]
+            value = self._iri(iri, slot, required=False)
+            if value is None:
+                raise ContractError(f"{iri} is a {name} with no {slot_name} (law srf:P7)")
+            binding = bindings.get(str(value))
+            if binding is not None:
+                if str(binding.role_kind) not in EVIDENCE_ROLES or binding.binds_property is None:
+                    raise ContractError(
+                        f"{iri} reads {value} as its {slot_name}, which is not an evidence role binding that "
+                        f"binds a property (law srf:P7)"
+                    )
+                operands.append(binding)
+            elif any(str(k) in self._types(value) for k in EXPRESSION_KINDS):
+                operands.append(self.expression(value, contract, bindings, reaching + (str(iri),)))
+            else:
+                raise ContractError(
+                    f"{iri} reads {value} as its {slot_name}, which is neither an expression nor an evidence "
+                    f"role binding of {contract} (law srf:P7)"
+                )
+            if operand_datatype(operands[-1]) is None:
+                raise ContractError(f"{iri} reads {value} as its {slot_name}, which states no datatype (law srf:P8)")
+
+        literal: Optional[Literal] = None
+        scale: Optional[int] = None
+        comparison: Optional[URIRef] = None
+
+        if kind in ARITHMETIC_KINDS:
+            left, right = (operand_datatype(o) for o in operands)
+            if not (is_numeric(left) and is_numeric(right)):
+                raise ContractError(f"{iri} is a {name} with an operand that is not numeric (law srf:P8)")
+            expected = promoted(left, right, at_least_decimal=kind == QUOTIENT)
+            if str(datatype) != str(expected):
+                raise ContractError(
+                    f"{iri} is a {name} of {left} and {right}, so its result datatype is {expected} "
+                    f"and not {datatype} (law srf:P8)"
+                )
+        elif kind == ROUNDING:
+            operand_type = operand_datatype(operands[0])
+            if not is_numeric(operand_type):
+                raise ContractError(f"{iri} rounds an operand that is not numeric (law srf:P8)")
+            if str(datatype) != str(operand_type):
+                raise ContractError(
+                    f"{iri} rounds a {operand_type} so its result datatype is {operand_type} and not {datatype} (law srf:P8)"
+                )
+            raw_scale = self.g.value(iri, SRF.roundingScale, any=False)
+            if not isinstance(raw_scale, Literal) or str(raw_scale.datatype) != str(XSD.integer):
+                raise ContractError(f"{iri} states no integer rounding scale (law srf:P8)")
+            scale = int(raw_scale)
+        elif kind == TYPED_LITERAL:
+            raw = self.g.value(iri, SRF.typedValue, any=False)
+            if not isinstance(raw, Literal):
+                raise ContractError(f"{iri} is a typed literal expression with no literal value (law srf:P8)")
+            if str(raw.datatype) != str(datatype):
+                raise ContractError(
+                    f"{iri} states a literal of datatype {raw.datatype} and a result datatype {datatype} (law srf:P8)"
+                )
+            literal = raw
+        else:
+            assert kind == CHOICE
+            comparison = self._iri(iri, SRF.comparisonOperator, required=False)
+            if comparison is None or str(comparison) not in {str(o) for o in COMPARISON_OPERATORS}:
+                raise ContractError(f"{iri} is a choice with no comparison operator of the vocabulary (law srf:P8)")
+            left, right, when_true, when_false = (operand_datatype(o) for o in operands)
+            if not comparable(left, right):
+                raise ContractError(
+                    f"{iri} compares a {left} with a {right}, which are neither one datatype nor both numeric (law srf:P8)"
+                )
+            if str(comparison) in {str(o) for o in ORDERING_OPERATORS} and not (is_numeric(left) and is_numeric(right)):
+                raise ContractError(f"{iri} compares by order operands that are not numeric (law srf:P8)")
+            for branch in (when_true, when_false):
+                if str(branch) != str(datatype):
+                    raise ContractError(
+                        f"{iri} is a choice of datatype {datatype} with a branch of datatype {branch} (law srf:P8)"
+                    )
+
+        return Expression(
+            iri=iri,
+            kind=kind,
+            datatype=datatype,
+            operands=tuple(operands),
+            literal=literal,
+            scale=scale,
+            comparison=comparison,
         )
 
     def backend_policy(self, iri: URIRef) -> BackendPolicy:
@@ -509,6 +662,8 @@ class SurfaceGraphAnalyser:
                 f"candidate-evidence or required-evidence role binding (law srf:P2)"
             )
 
+        expression = self._derived_expression(iri, projection_kind, bindings)
+
         policy_iri = self._iri(iri, SRF.backendPolicy, required=False)
         budget = self._literal(iri, SRF.populationBudget, required=False)
         return ProjectionContract(
@@ -522,7 +677,43 @@ class SurfaceGraphAnalyser:
             role_bindings=tuple(bindings),
             backend_policy=self.backend_policy(policy_iri) if policy_iri is not None else None,
             population_budget=int(budget) if budget is not None else None,
+            expression=expression,
         )
+
+    def _derived_expression(
+        self, iri: URIRef, projection_kind: URIRef, bindings: Sequence[RoleBinding]
+    ) -> Optional[Expression]:
+        """The expression a derivation states on its result-target binding, and none for any other kind (law srf:P6)."""
+        by_iri = {str(b.iri): b for b in bindings}
+        derived = [(b, self.g.value(b.iri, SRF.derivedAs, any=False)) for b in bindings]
+        stated = [(b, e) for b, e in derived if e is not None]
+        is_derivation = str(projection_kind) == str(SRF.DerivationProjection)
+        for binding, _ in stated:
+            if str(binding.role_kind) != str(SRF.ResultTargetRole) or not is_derivation:
+                raise ContractError(
+                    f"{iri} states an expression on {binding.iri}, which is not the result-target role binding "
+                    f"of a derivation (law srf:P6)"
+                )
+        if not is_derivation:
+            return None
+        if not stated:
+            raise ContractError(
+                f"{iri} is a derivation and states no expression on its result-target role binding (law srf:P6)"
+            )
+        target, root = stated[0]
+        if target.binds_property is None:
+            raise ContractError(
+                f"{iri} states an expression on {target.iri}, which binds no property to write the value on (law srf:P6)"
+            )
+        if not isinstance(root, URIRef):
+            raise ContractError(f"{iri} states an expression that is not named by an IRI (law srf:P6)")
+        expression = self.expression(root, iri, by_iri)
+        if target.datatype is None or str(target.datatype) != str(expression.datatype):
+            raise ContractError(
+                f"{iri} states a result-target datatype of {target.datatype} for an expression of "
+                f"datatype {expression.datatype} (law srf:P8)"
+            )
+        return expression
 
     def projection_contracts(self, only: Optional[str] = None) -> List[ProjectionContract]:
         declared = sorted(

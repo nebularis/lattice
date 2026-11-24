@@ -70,6 +70,13 @@ srf:ResultTargetRole a srf:ProjectionRole ; rdfs:comment "Where a projection's c
 srf:ClosureBasisRole a srf:ProjectionRole ; rdfs:comment "The relation a projection's closure, where it has one, is computed over." .
 srf:TransformDependencyRole a srf:ProjectionRole ; rdfs:comment "A dependency a derivation reads without itself being required or candidate evidence." .
 
+srf:LessThan a srf:ComparisonOperator ; rdfs:comment "The left compared operand is less than the right." .
+srf:LessThanOrEqual a srf:ComparisonOperator ; rdfs:comment "The left compared operand is less than or equal to the right." .
+srf:EqualTo a srf:ComparisonOperator ; rdfs:comment "The two compared operands are equal." .
+srf:NotEqualTo a srf:ComparisonOperator ; rdfs:comment "The two compared operands are not equal." .
+srf:GreaterThanOrEqual a srf:ComparisonOperator ; rdfs:comment "The left compared operand is greater than or equal to the right." .
+srf:GreaterThan a srf:ComparisonOperator ; rdfs:comment "The left compared operand is greater than the right." .
+
 srf:RmlBackend a srf:CompilerBackend ; rdfs:comment "RML/R2RML triples-map compilation." .
 srf:SparqlBackend a srf:CompilerBackend ; rdfs:comment "SPARQL query compilation." .
 srf:ShaclBackend a srf:CompilerBackend ; rdfs:comment "SHACL shape compilation." .
@@ -113,3 +120,8 @@ srf:P2 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every pr
 srf:P3 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection contract declares at most one evaluation-subject, result-target, and closure-basis role binding; candidate-evidence, required-evidence, and transform-dependency role bindings may repeat." .
 srf:P4 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy names no compiler backend in both allowedBackend and deniedBackend." .
 srf:P5 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy declaring deterministicOnly true declares no llmCompletionPolicy other than NoLLMCompletion." .
+
+srf:P6 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A derivation projection states exactly one expression, with derivedAs on its result-target role binding, and that binding binds the property the value is written on. No other projection kind states an expression. Every expression node is reached from such a statement through its operands." .
+srf:P7 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Each operand of a projection expression is a projection expression, or a candidate-evidence or required-evidence role binding of the same contract that binds a property." .
+srf:P8 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Each projection expression states a result datatype, and each evidence role binding an expression reads and the result-target role binding state a binding datatype. The operands of an arithmetic expression, a rounding expression and an ordering comparison are numeric. A node's result datatype is the wider of its operands' under numeric promotion (a quotient is at least decimal), the datatype of its operand under rounding, and the datatype of both branches of a choice. The result-target role binding's datatype is the expression's." .
+srf:P9 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection expression is acyclic. No expression is an operand of itself, directly or through other expressions." .

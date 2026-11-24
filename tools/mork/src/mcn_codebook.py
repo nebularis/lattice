@@ -155,6 +155,18 @@ _type("EI", "mork:InterpolationExpression", "Expression")
 _type("EK", "mork:LookupExpression", "Expression")
 _type("EB", "mork:TemplateBinding", "Expression", "positional form [name expr]")
 
+# -- Typed value expression --
+_type("V", "mork:ValueExpression", "ValueExpression", "abstract; prefer the specific codes")
+_type("VR", "mork:TypedRefExpression", "ValueExpression", "reads dataRef as the result datatype")
+_type("VL", "mork:TypedLiteralExpression", "ValueExpression", "its value is typedValue")
+_type("VA", "mork:ArithmeticExpression", "ValueExpression", "abstract; prefer VS/VD/VP/VQ")
+_type("VS", "mork:SumExpression", "ValueExpression")
+_type("VD", "mork:DifferenceExpression", "ValueExpression")
+_type("VP", "mork:ProductExpression", "ValueExpression")
+_type("VQ", "mork:QuotientExpression", "ValueExpression")
+_type("VN", "mork:RoundingExpression", "ValueExpression")
+_type("VC", "mork:ChoiceExpression", "ValueExpression")
+
 # -- Scheme --
 _type("SM", "mork:MappingScheme", "Scheme", "block header %M")
 _type("ST", "mork:TaxonomyScheme", "Scheme", "block header %T")
@@ -181,6 +193,8 @@ _type("LC", "mork:LookupComparison", "Enumeration")
 _type("RD", "mork:ReviewDecision", "Enumeration")
 _type("FS", "mork:FindingSeverity", "Enumeration")
 _type("OB", "mork:OutputBox", "Enumeration")
+_type("OP", "mork:ComparisonOperator", "Enumeration")
+_type("ID", "mork:IdentityRule", "Enumeration")
 
 # -- Compiled mapping --
 _type("KM", "mork:CompiledMapping", "Compiled")
@@ -516,6 +530,21 @@ _prop("cmb", "mork:classCombination", group="Guard and lookup")
 _prop("lcm", "mork:lookupComparison", group="Guard and lookup")
 _prop("ldt", "mork:lookupDatatype", group="Guard and lookup")
 
+# -- Value expression and identity rule --
+_prop("vex", "mork:valueExpression", group="Value expression")
+_prop("rdt", "mork:resultDatatype", group="Value expression")
+_prop("lop", "mork:leftOperand", group="Value expression")
+_prop("rop", "mork:rightOperand", group="Value expression")
+_prop("tvl", "mork:typedValue", kind=KIND_DATA, datatype="*", group="Value expression")
+_prop("rdo", "mork:roundedOperand", group="Value expression")
+_prop("rsc", "mork:roundingScale", kind=KIND_DATA, datatype="xsd:integer", group="Value expression")
+_prop("cop", "mork:comparisonOperator", group="Value expression")
+_prop("cml", "mork:comparedLeft", group="Value expression")
+_prop("cmr", "mork:comparedRight", group="Value expression")
+_prop("wt", "mork:whenTrue", group="Value expression")
+_prop("wf", "mork:whenFalse", group="Value expression")
+_prop("irl", "mork:identityRule", group="Value expression")
+
 # -- Compiled mapping --
 _prop("hq", "mork:hasCompiledQuery", group="Compiled mapping")
 _prop("hf", "mork:hasCompileFinding", group="Compiled mapping")
@@ -773,6 +802,13 @@ RESERVED: Dict[str, str] = {
     ".cast": "mork:CastComparison",
     ".lexcmp": "mork:LexicalComparison",
     ".termcmp": "mork:TermComparison",
+    ".lt": "mork:LessThan",
+    ".le": "mork:LessThanOrEqual",
+    ".eq": "mork:EqualTo",
+    ".ne": "mork:NotEqualTo",
+    ".ge": "mork:GreaterThanOrEqual",
+    ".gt": "mork:GreaterThan",
+    ".src": "mork:SourceNodeIdentity",
     ".err": "mork:ErrorFinding",
     ".wrn": "mork:WarningFinding",
     ".inf": "mork:InfoFinding",

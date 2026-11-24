@@ -2,6 +2,7 @@
 
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 srf:SurfaceContractShape a sh:NodeShape ;
 	sh:targetClass srf:SurfaceContract ;
@@ -93,9 +94,50 @@ srf:ProjectionRoleBindingShape a sh:NodeShape ;
 	sh:targetClass srf:ProjectionRoleBinding ;
 	sh:property [ sh:path srf:roleKind ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:bindsProperty ; sh:maxCount 1 ] ;
-	sh:property [ sh:path srf:bindsCarrier ; sh:maxCount 1 ] .
+	sh:property [ sh:path srf:bindsCarrier ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:bindsDatatype ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:derivedAs ; sh:maxCount 1 ] .
 
 srf:ProjectionBackendPolicyShape a sh:NodeShape ;
 	sh:targetClass srf:ProjectionBackendPolicy ;
 	sh:property [ sh:path srf:llmCompletionPolicy ; sh:minCount 1 ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:deterministicOnly ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+srf:ProjectionExpressionShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ,
+		srf:TypedLiteralExpression , srf:RoundingExpression , srf:ChoiceExpression ;
+	sh:property [ sh:path srf:resultDatatype ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A projection expression states exactly one result datatype. Discharges srf:P8." ] .
+
+srf:ArithmeticExpressionShape a sh:NodeShape ;
+	sh:targetClass srf:SumExpression , srf:DifferenceExpression , srf:ProductExpression , srf:QuotientExpression ;
+	sh:property [ sh:path srf:leftOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An arithmetic expression has exactly one left operand. Discharges srf:P7." ] ;
+	sh:property [ sh:path srf:rightOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "An arithmetic expression has exactly one right operand. Discharges srf:P7." ] .
+
+srf:TypedLiteralExpressionShape a sh:NodeShape ;
+	sh:targetClass srf:TypedLiteralExpression ;
+	sh:property [ sh:path srf:typedValue ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ;
+		sh:message "A typed literal expression has exactly one literal value. Discharges srf:P8." ] .
+
+srf:RoundingExpressionShape a sh:NodeShape ;
+	sh:targetClass srf:RoundingExpression ;
+	sh:property [ sh:path srf:roundedOperand ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A rounding expression has exactly one operand. Discharges srf:P7." ] ;
+	sh:property [ sh:path srf:roundingScale ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+		sh:message "A rounding expression has exactly one scale, an integer. Discharges srf:P8." ] .
+
+srf:ChoiceExpressionShape a sh:NodeShape ;
+	sh:targetClass srf:ChoiceExpression ;
+	sh:property [ sh:path srf:comparisonOperator ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:in ( srf:LessThan srf:LessThanOrEqual srf:EqualTo srf:NotEqualTo srf:GreaterThanOrEqual srf:GreaterThan ) ;
+		sh:message "A choice states exactly one comparison operator, one of the six the vocabulary names. Discharges srf:P8." ] ;
+	sh:property [ sh:path srf:comparedLeft ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one left compared operand. Discharges srf:P7." ] ;
+	sh:property [ sh:path srf:comparedRight ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one right compared operand. Discharges srf:P7." ] ;
+	sh:property [ sh:path srf:whenTrue ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one branch for a true comparison. Discharges srf:P7." ] ;
+	sh:property [ sh:path srf:whenFalse ; sh:minCount 1 ; sh:maxCount 1 ;
+		sh:message "A choice has exactly one branch for a false comparison. Discharges srf:P7." ] .

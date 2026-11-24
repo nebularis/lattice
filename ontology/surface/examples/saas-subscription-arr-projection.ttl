@@ -12,13 +12,12 @@
 # (its monthly price and its billing periods per year), so neither promotion
 # nor indexing covers it. The projection contract names the two required
 # inputs and the result target as role bindings, states its projection kind,
-# and declares a backend policy that forbids LLM participation in lowering.
+# and states the operation as an expression on the result target, the product
+# of the two inputs. It declares a backend policy that forbids LLM
+# participation in lowering.
 #
-# This contract lowers into a MORK mapping graph (ADR-A18); it does not emit
-# SPARQL, SHACL, or anything else itself. The three non-domain examples this
-# sibling to only need to resolve promotion and index contracts, so no
-# compiler currently reads this file's contract — see ADR-A19 and ADR-A23 for
-# when a lowering and backend-compiler pass is expected to exist.
+# This contract lowers into a MORK mapping scheme (ADR-A18). It does not emit
+# SPARQL, SHACL, or anything else itself.
 
 # --- the carrier and its properties ------------------------------------------
 
@@ -54,15 +53,27 @@ ex:arr-subject a srf:ProjectionRoleBinding ;
 
 ex:arr-price a srf:ProjectionRoleBinding ;
     srf:roleKind srf:RequiredEvidenceRole ;
-    srf:bindsProperty ex:hasMonthlyPrice .
+    srf:bindsProperty ex:hasMonthlyPrice ;
+    srf:bindsDatatype xsd:decimal .
 
 ex:arr-frequency a srf:ProjectionRoleBinding ;
     srf:roleKind srf:RequiredEvidenceRole ;
-    srf:bindsProperty ex:hasBillingPeriodsPerYear .
+    srf:bindsProperty ex:hasBillingPeriodsPerYear ;
+    srf:bindsDatatype xsd:integer .
 
 ex:arr-target a srf:ProjectionRoleBinding ;
     srf:roleKind srf:ResultTargetRole ;
-    srf:bindsProperty ex:annualRecurringRevenue .
+    srf:bindsProperty ex:annualRecurringRevenue ;
+    srf:bindsDatatype xsd:decimal ;
+    srf:derivedAs ex:arr-expression .
+
+# The operation: annual recurring revenue is the monthly price times the
+# billing periods a year. Each operand is an evidence binding of this contract.
+# A decimal times an integer is a decimal.
+ex:arr-expression a srf:ProductExpression ;
+    srf:resultDatatype xsd:decimal ;
+    srf:leftOperand ex:arr-price ;
+    srf:rightOperand ex:arr-frequency .
 
 ex:arr-backend-policy a srf:ProjectionBackendPolicy ;
     srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
