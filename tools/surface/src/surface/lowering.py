@@ -53,8 +53,13 @@ that iterates the carrier class and takes the source node as its identity (``mor
 minted or typed), a typed reference for each evidence role the expression reads, and an assertion of the result
 property whose value is the expression, carried across node by node into MORK's typed value expressions. The root also
 holds what the bare lowering below holds, the targeting spec and a parameter binding for every role binding and
-backend-policy field, so nothing the contract declared is lost. The contract names what it lowered into with ``srf:producesMapping``, for a scheme and for a bare mapping alike, and no note carries its IRI. Nothing here compiles the scheme. The other projection
-kinds keep the bare lowering until their own expressions exist.
+backend-policy field, so nothing the contract declared is lost. The contract names what it lowered into with ``srf:producesMapping``, for a scheme and for a bare mapping alike, and no note carries its IRI. Nothing here compiles the scheme.
+
+**A graph construction lowers into a scheme too.** It states the node it writes on its result-target binding
+(``srf:P10`` to ``srf:P13``), so ``lower_projection`` writes a scheme whose root takes the source node as its identity,
+beneath it a contextual datum that mints and types the constructed node, is glued to the instance by the link, and is
+guarded by every required-evidence binding, and beneath that an assertion for each value the node writes
+(``_lower_construction``). The join and the expansion keep the bare lowering until their own statements exist.
 
 **Dependency graph.** ``link_dependencies`` recognises exactly two declared
 cross-references within one lowering batch: a projection role binding's
@@ -71,11 +76,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Set, Tuple
+from urllib.parse import quote
 
 from rdflib import Graph, Literal, URIRef
 
 from .expression import ARITHMETIC_KINDS, CHOICE, ROUNDING, TYPED_LITERAL
-from .model import Contract, Expression, ProjectionContract, RoleBinding
+from .model import ConstructedNode, Contract, Expression, ProjectionContract, RoleBinding
 from .namespaces import MORK, RDF, SH, SRF
 from .naming import Minter, local_name
 
@@ -179,8 +185,9 @@ def _record_contract(graph: Graph, minter: Minter, contract: ProjectionContract,
 
 
 def lowers_to_scheme(contract: ProjectionContract) -> bool:
-    """Whether a projection lowers into a mapping scheme, which today is a derivation that states its expression."""
-    return contract.expression is not None
+    """Whether a projection lowers into a mapping scheme, which today is a derivation that states its expression and a
+    graph construction that states its node."""
+    return contract.expression is not None or contract.construction is not None
 
 
 def lowered_head(contract: ProjectionContract) -> URIRef:
@@ -204,7 +211,10 @@ def lower_projection(contract: ProjectionContract) -> Graph:
     graph.bind("srf", SRF)
     graph.bind("sh", SH)
 
-    if lowers_to_scheme(contract):
+    if contract.construction is not None:
+        _lower_construction(graph, minter, contract, contract.construction)
+        return graph
+    if contract.expression is not None:
         _lower_derivation(graph, minter, contract)
         return graph
 
@@ -273,6 +283,116 @@ def _lower_derivation(graph: Graph, minter: Minter, contract: ProjectionContract
     graph.add((assertion, MORK.mappingScheme, scheme))
     graph.add((assertion, MORK.exactRBoxMatch, target.binds_property))
     graph.add((assertion, MORK.valueExpression, _lower_expression(graph, minter, expression, "0", role_index)))
+
+
+def _lower_construction(graph: Graph, minter: Minter, contract: ProjectionContract, node: ConstructedNode) -> None:
+    """A graph construction as a mapping scheme (ADR-A18).
+
+    The root iterates the carrier class and is identified by the source node, as a derivation's is, so nothing is minted
+    for the instance. Beneath it a contextual datum mints and types the constructed node and is glued to the instance by
+    the link the result-target binding binds, and an assertion beneath that writes each value from its evidence
+    binding. The datum is guarded by every required-evidence binding, so an instance that lacks one contributes nothing
+    at all, no node, no link and no value (the guard sits on the datum's frame, which each query beneath inherits).
+
+    The node's identity is the contract's choice. A node for each instance is named from a hash of the instance's
+    identifier, and a keyed node from the key's values, an identifier concatenation over the key bindings in the order of
+    their properties. Both carry the contract's key and the class in the identifier, so two contracts never reach one
+    node. A keyed node merges every instance that shares the key, which a reader of the scheme finds in its identity
+    template and ``mork_rdf`` reports as a mapping review.
+    """
+    scheme = minter.lowered_scheme()
+    concept = minter.lowered_carrier_concept()
+    root = minter.lowered_root()
+    datum = minter.lowered_node()
+
+    graph.add((scheme, RDF.type, MORK.MappingScheme))
+    graph.add((concept, RDF.type, MORK.DataConcept))
+    graph.add((concept, MORK.representedAs, contract.carrier))
+
+    graph.add((root, RDF.type, MORK.DataMapping))
+    graph.add((root, RDF.type, MORK.Datum))
+    graph.add((root, MORK.mappingScheme, scheme))
+    graph.add((root, MORK.mappingFor, concept))
+    graph.add((root, MORK.identityRule, MORK.SourceNodeIdentity))
+    graph.add((root, MORK.compositeNarrowerMapping, datum))
+    graph.add(
+        (
+            root,
+            MORK.mappingNote,
+            Literal(
+                f"Lowered from a srf:ProjectionContract "
+                f"(projection kind {local_name(str(contract.projection_kind))}) into a mapping scheme. "
+                f"Backend-specific compilation (ADR-A19, ADR-A23) has not yet run."
+            ),
+        )
+    )
+    _record_contract(graph, minter, contract, root)
+
+    # The node is made, typed and linked from the instance, and only for an instance that holds every required value.
+    stem = f"{quote(contract.key, safe='')}/{quote(local_name(str(node.constructed_class)), safe='')}"
+    graph.add((datum, RDF.type, MORK.DataMapping))
+    graph.add((datum, MORK.mappingScheme, scheme))
+    graph.add((datum, MORK.broaderApplicative, root))
+    graph.add((datum, MORK.exactTBoxMatch, node.constructed_class))
+    graph.add((datum, MORK.inverseRBoxMatch, node.link.binds_property))
+
+    required = sorted(
+        {str(b.binds_property) for b in contract.roles(SRF.RequiredEvidenceRole) if b.binds_property is not None}
+    )
+    if required:
+        guard = minter.lowered_guard()
+        graph.add((datum, MORK.appliesWhen, guard))
+        graph.add((guard, RDF.type, SH.NodeShape))
+        for index, path in enumerate(required):
+            constraint = minter.lowered_guard_property(index)
+            graph.add((guard, SH.property, constraint))
+            graph.add((constraint, SH.path, URIRef(path)))
+            graph.add((constraint, SH.minCount, Literal(1)))
+
+    if node.keyed:
+        _lower_key_identity(graph, minter, datum, stem, node)
+    else:
+        graph.add((datum, MORK.conceptName, Literal(stem)))
+
+    for index, written in enumerate(node.writes):
+        assertion = minter.lowered_write(index)
+        graph.add((datum, MORK.compositeNarrowerMapping, assertion))
+        graph.add((assertion, RDF.type, MORK.DataMapping))
+        graph.add((assertion, MORK.mappingScheme, scheme))
+        graph.add((assertion, MORK.exactRBoxMatch, written.property))
+        graph.add((assertion, MORK.dataRef, Literal(f"<{written.binding.binds_property}>")))
+
+
+def _lower_key_identity(graph: Graph, minter: Minter, datum: URIRef, stem: str, node: ConstructedNode) -> None:
+    """A keyed node's identifier, the stem and then the key's values separated by a slash, each value encoded for an IRI.
+
+    The parts are the stem, then each key value with a slash before every one after the first. They are joined from the
+    last pair outwards, so the outermost concatenation is the identity the datum names.
+    """
+    parts: List[URIRef] = []
+    literal = minter.lowered_identity_part(0)
+    graph.add((literal, RDF.type, MORK.LiteralExpression))
+    graph.add((literal, MORK.dataInline, Literal(f"{stem}/")))
+    parts.append(literal)
+    for index, binding in enumerate(node.key):
+        if index:
+            separator = minter.lowered_identity_part(len(parts))
+            graph.add((separator, RDF.type, MORK.LiteralExpression))
+            graph.add((separator, MORK.dataInline, Literal("/")))
+            parts.append(separator)
+        reference = minter.lowered_identity_part(len(parts))
+        graph.add((reference, RDF.type, MORK.RefExpression))
+        graph.add((reference, MORK.dataRef, Literal(f"<{binding.binds_property}>")))
+        parts.append(reference)
+
+    right = parts[-1]
+    for position in range(len(parts) - 2, -1, -1):
+        joined = minter.lowered_identity(position)
+        graph.add((joined, RDF.type, MORK.ConcatExpression))
+        graph.add((joined, MORK.concatLeft, parts[position]))
+        graph.add((joined, MORK.concatRight, right))
+        right = joined
+    graph.add((datum, MORK.identityTemplateMapping, right))
 
 
 def _lower_reference(graph: Graph, minter: Minter, role: RoleBinding, index: int) -> URIRef:

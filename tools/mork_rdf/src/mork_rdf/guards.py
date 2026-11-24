@@ -32,6 +32,19 @@ def compile_guard(g: Graph, shape, focus: str, term: Callable, var: Callable) ->
     return _node(g, shape, focus, term, var, ())
 
 
+def required_paths(g: Graph, shape, term: Callable) -> list[str]:
+    """The paths a guard's own property shapes require a value at, with `sh:minCount 1` or more, each written as SPARQL
+    and sorted. A guard a focus node fails by lacking one of these is excluded for want of that value, which a check
+    names (README §7.7). Only the shape's own property shapes are read, so a requirement inside `sh:not`, `sh:and` or
+    `sh:or` is not one of them."""
+    out = set()
+    for prop in g.objects(shape, SH.property):
+        lo = g.value(prop, SH.minCount)
+        if lo is not None and int(lo) >= 1:
+            out.add(_path(g, prop, term))
+    return sorted(out)
+
+
 def _list(g: Graph, node) -> list:
     if node == RDF.nil:
         return []

@@ -159,6 +159,28 @@ class Minter:
     def lowered_expression(self, position: str) -> URIRef:
         return URIRef(f"{self.namespace}scheme_{self.key}_expr_{position}")
 
+    # A graph construction lowers into a scheme too. The constructed node, its guard, its identity and each value it writes
+    # take their place in the contract's own structure, the writes in the order of the properties they write.
+
+    def lowered_node(self) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_node")
+
+    def lowered_guard(self) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_guard")
+
+    def lowered_guard_property(self, index: int) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_guard_{index}")
+
+    def lowered_identity(self, index: int) -> URIRef:
+        """The ``index``-th concatenation of a keyed node's identity, the outermost first."""
+        return URIRef(f"{self.namespace}scheme_{self.key}_identity_{index}")
+
+    def lowered_identity_part(self, index: int) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_identity_part_{index}")
+
+    def lowered_write(self, index: int) -> URIRef:
+        return URIRef(f"{self.namespace}scheme_{self.key}_write_{index}")
+
     # -- per-value symbols --------------------------------------------------
 
     def value_fragment(self, value: str) -> str:

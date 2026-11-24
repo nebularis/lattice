@@ -17,7 +17,7 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, XSD
 
 from . import paths
-from .guards import GuardError, compile_guard
+from .guards import GuardError, compile_guard, required_paths
 from .model import (MORK, REFERENCE_GRAPH, SKOS, CompiledMapping, CompiledQuery, CompileError, Finding, Severity, local)
 from .read import Kind, Reading, Spec, Yielded, _named, effective_confidence, iter_roots, read, resolve
 
@@ -429,11 +429,31 @@ class _Compiler:
             self.check(chain, "IdentityUnbound", f"({frame.focus} AS ?focus)", self.where(chain, [f"FILTER NOT EXISTS {{ {refs} }}"], last_identity=False))
             if frame.target.startswith("?"):
                 self.check(chain, "IdentityAmbiguous", f"({frame.focus} AS ?focus)", self.where(chain), f"\nGROUP BY {frame.focus}\nHAVING (COUNT(DISTINCT {frame.target}) > 1)")
+        self.construction(chain)
         for child in spec.children:
             if child not in self.r.specs:
                 continue
             self.child(chain, self.r.specs[child])
         self.unguarded(chain, spec)
+
+    def construction(self, chain: list[_Frame]) -> None:
+        """What a contextual datum beneath a source-node datum needs beyond the datum's own queries (README §7.9). Its
+        guard excludes whole instances, so a check names each one and the value it lacks, and a node whose identity is
+        read from the source merges the instances that share it, which takes a mapping review."""
+        frame = chain[-1]
+        spec = frame.spec
+        if len(chain) < 2 or spec.kind is not Kind.CONTEXTUAL or chain[-2].spec.kind is not Kind.SOURCE_NODE or frame.focus != chain[-2].focus:
+            return
+        if spec.guard is not None:
+            try:
+                missing = required_paths(self.g, spec.guard, _term)
+            except GuardError:
+                missing = []  # the guard's own refusal says why
+            for path in missing:
+                self.check(chain, "InstanceExcluded", f"({frame.focus} AS ?focus) ({_string(path)} AS ?value)",
+                           self.where(chain[:-1], [f"FILTER NOT EXISTS {{ {frame.focus} {path} ?any }}"]))
+        if frame.identity_refs:
+            self.findings.append(Finding("MappingReview", str(spec.node), "its identity is read from the source, so it merges every instance that shares the value and a reviewer should confirm the merge is meant", Severity.WARNING))
 
     def unguarded(self, chain: list[_Frame], spec: Spec) -> None:
         """A check naming each node that guarded siblings on one path share and that no guard of theirs admits, since such
@@ -579,6 +599,7 @@ class _Compiler:
                 self.check(chain, "UnmappedValue", f"({parent.focus} AS ?focus) ({raw} AS ?value)", where, node=spec)
             else:
                 self._kind_check(chain, spec, prop_iri, raw, list(patterns))
+                self.disagreement(chain, spec, raw, patterns)
         elif rows:
             raise _Refusal("NoValue", "correspondences translate the values mork:dataRef reads, and this mapping has none")
         elif spec.data_inline is not None:
@@ -589,6 +610,18 @@ class _Compiler:
                 self.findings.append(Finding("BroadMatch", str(spec.node), "asserts a broader individual than the source names", Severity.WARNING))
         triple = f"{value} {prop} {parent.target} ." if inverse else f"{parent.target} {prop} {value} ."
         self.construct(chain, [triple], patterns, node=spec)
+
+    def disagreement(self, chain: list[_Frame], spec: Spec, value: str, patterns: list) -> None:
+        """For an assertion on a node whose identity is read from the source, a check naming each node that two instances
+        give different values for the property, one row for each value (README §7.9)."""
+        parent = chain[-1]
+        if not parent.identity_refs or not parent.target.startswith("?") or len(chain) < 2 or chain[-2].spec.kind is not Kind.SOURCE_NODE:
+            return
+        if paths.write(spec.data_ref) in parent.identity_refs:
+            return  # a value the identity reads is the same for every instance that shares the node
+        inner = self.where(chain, patterns)
+        grouped = f"{{ SELECT {parent.target} WHERE {{ {inner} }} GROUP BY {parent.target} HAVING (COUNT(DISTINCT {value}) > 1) }}"
+        self.check(chain, "ValueDisagrees", f"({parent.target} AS ?focus) ({value} AS ?value)", self.where(chain, patterns + [grouped]), node=spec)
 
     # --- derived values (§7.8) ---------------------------------------------------------------------------------------
 

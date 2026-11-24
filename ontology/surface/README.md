@@ -173,6 +173,37 @@ A few things of note:
 
 For a worked instance graph, see `ontology/surface/examples/saas-subscription-arr-projection.ttl`.
 
+#### Graph construction
+
+A derivation computes a value onto the instance. A graph construction writes new structure that no single read path reaches: a node of another class, linked from the instance and carrying values read from it. Consider an order that names its supplier by a code and, where it has one, a name. No read path reaches a supplier as a node of its own, so the contract states the node.
+
+```turtle-example
+@prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix ex:  <https://example.org/lattice/surface/order-supplier#> .
+
+ex:os-code a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ;
+	srf:bindsProperty ex:supplierCode .
+ex:os-name a srf:ProjectionRoleBinding ; srf:roleKind srf:CandidateEvidenceRole ;
+	srf:bindsProperty ex:supplierName .
+ex:os-link a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ;
+	srf:bindsProperty ex:suppliedBy ; srf:constructedAs ex:os-node .
+
+ex:os-node a srf:ConstructedNode ;
+	srf:constructedClass ex:Supplier ;
+	srf:nodeIdentity srf:ByKey ; srf:keyBinding ex:os-code ;
+	srf:writes [ srf:writesProperty ex:code ; srf:fromBinding ex:os-code ] ,
+	           [ srf:writesProperty ex:name ; srf:fromBinding ex:os-name ] .
+```
+
+- **The construction is stated on the result-target binding.** The binding binds the link from the instance, here `ex:suppliedBy`, and `srf:constructedAs` names the node the link reaches. A role keeps its one meaning, so `srf:P2` and `srf:P3` stand. The link is mandatory, and under a key it records which instances support a node. Only a graph construction states one (`srf:P10`).
+- **The node states what it is.** A class, an identity and at least one value it writes, each value naming an evidence binding of the same contract (`srf:P11`, `srf:P12`). It writes each property once.
+- **The identity is the contract's choice, never implicit.** `srf:PerInstance` gives a node for each instance, and `srf:ByKey` one node for each value of a key of required-evidence bindings (`srf:P13`), so two instances with one key share one node. How the identifier is spelled is naming, which the compiler keeps. It is readable from the key, or a hash of the instance's identifier for a node for each instance, and it carries the contract's key, so two contracts never reach one node.
+- **An instance contributes whole or not at all.** A node is written only for an instance that holds every required-evidence binding's value. One that has the key and lacks a required value writes no link, even where another instance has made the node, and a check reports it. A candidate-evidence binding writes what it finds, so an order with no name still gives its supplier and its link.
+- **A key is spelled into an identifier.** The key's value is part of the node's identifier, which outlives the data it came from, so a key that may be personal, such as an email address or a name, would place a personal value in an identifier, and a key that may change leaves the node under its old identifier. Surface cannot check either, so a key that may be personal or may change is no key. Use a code the thing is known by. Where there is none, construct a node for each instance.
+- **A key merges, and a merge is shared.** Instances that give one node different values for one property disagree, and a run-time check names the node and the values. Withdrawing one instance removes its link and leaves the node while another instance supports it, which takes a read of the node's other links, where a node for each instance goes with its instance and reads nothing. A keyed construction takes a mapping review (ADR-A41), since the merge is where a reviewer's judgement is needed, and a construction for each instance takes none.
+
+For a worked instance graph, see `ontology/surface/examples/order-supplier-construction-projection.ttl`. It lowers into a MORK mapping scheme (ADR-A18) whose root takes each order as its own identity, with beneath it the supplier, minted and typed, glued to the order by the link and guarded by the required code, and an assertion for each value.
+
 #### Choosing an index form
 
 The permitted forms trade off differently, supporting choices about population size and retrieval patterns.
@@ -226,6 +257,7 @@ This is the part that decides how much a consumer is allowed to trust a generate
 
 - **Conservativity is why an index is free to regenerate or discard.** An index mints only its own terms, so adding one entails nothing new about source terms and removing one loses no authored fact (`srf:X1`). That property, not the performance win, is what licenses treating a generated index as disposable cache.
 - **Promotion is the one case that isn't automatically conservative.** `srf:signatureScope` records which situation a given surface is in: `LocalSignature` when a promotion restates onto a property minted in the contract's own target namespace, `SourceSignature` when it restates onto a property a consuming layer already declares (as in the subscription-currency example above). A `SourceSignature` promotion's assertions are indistinguishable from authored facts once emitted — which is exactly why two laws constrain it rather than leaving it implicit: a promotion reaching the authored signature must declare `ExactSource` or `CrosswalkExact` fidelity and must be `Materialised`, never `DefinitionOnly` (`srf:X6`); and separately, any promotion that is lossy — `DerivedSource` or `CrosswalkInexact` — may not target an authored property at all, only a property in its own generated namespace (`srf:X5`, `srf:X6` again from the other direction).
+- **A projection reads its scope from what it writes.** A derivation writes a value on the carrier, and a graph construction writes a node of the class it states. Where that class, or the property it links or writes, is minted in the contract's own target namespace, the projection is local-signature and conservative as an index is (`srf:P1`). Where it is a class an authored vocabulary declares, as `ex:Supplier` is, the constructed nodes and what is written on them reach the authored signature and are indistinguishable from authored facts once emitted, so the projection is source-signature and composes under the same rule as `srf:X1` and `srf:X6`.
 - **Authority is capped below authoritative, always.** A surface declares `Advisory` or `CachedReproducible` and nothing higher (`srf:S9`) — an index that outranked the declaration it was built from would invert the derivation order. A lossy promotion is capped specifically at `Advisory` (`srf:X5`). If an external store is genuinely the system of record and accepts writes back, that relationship is a synchronisation contract, not a surface — Surface only ever restates, never originates.
 
 #### Derived records and staying fresh
@@ -933,7 +965,8 @@ srf:ProjectionRoleBinding a owl:Class ;
 		[ a owl:Restriction ; owl:onProperty srf:bindsProperty ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:bindsCarrier ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:bindsDatatype ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:derivedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+		[ a owl:Restriction ; owl:onProperty srf:derivedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:constructedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class." ;
 	fnd:utility "Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline srf:PathStep applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well." .
 ```
@@ -1145,6 +1178,71 @@ srf:whenFalse a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:comment "The value a choice takes where its comparison does not hold, an expression or an evidence role binding of the same contract." .
 ```
 
+### 6.16 Projection constructions
+
+A graph construction projection states the node it writes, in the way a derivation states its expression. The statement is on the result-target role binding with `srf:constructedAs`, so the binding keeps its one meaning, the place the projection's result is written, and the result of a graph construction is a node where a derivation's is a value. The binding binds the link from each instance to the node. The constructed node states its class, its identity, and each value it writes from an evidence binding of the same contract. The identity is a closed choice, a node for each instance or a node for each value of a key, so two instances are never merged by an author's silence.
+
+#### `srf:ConstructedNode`
+
+**Definition.** The node a graph construction projection writes for an instance of its carrier, with the class it is typed with, its identity and the values it carries.
+
+**Utility.** State it once, on the result-target role binding of a graph construction with `srf:constructedAs`, and name it by an IRI. Give it one `srf:constructedClass`, one `srf:nodeIdentity`, a `srf:keyBinding` for each part of its key where its identity is `srf:ByKey`, and a `srf:writes` for each value it carries, at least one. The class a constructed node is typed with decides the projection's signature scope (`srf:P1`).
+
+```turtle-spec
+srf:ConstructedNode a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:constructedClass ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:nodeIdentity ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:writes ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The node a graph construction projection writes for an instance of its carrier, with the class it is typed with, its identity and the values it carries." ;
+	fnd:utility "State it once, on the result-target role binding of a graph construction with constructedAs, and name it by an IRI. Give it one constructedClass, one nodeIdentity, a keyBinding for each part of its key where its identity is ByKey, and a writes for each value it carries, at least one. The class it is typed with decides the projection's signature scope (srf:P1)." .
+
+srf:WrittenValue a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:writesProperty ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:fromBinding ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "One value a constructed node carries, the property it is written as and the evidence role binding it is read from." ;
+	fnd:utility "Name each written value by a blank node or an IRI, as srf:writes takes it. A node writes each property once." .
+
+srf:IdentityChoice a owl:Class ;
+	rdfs:comment "What makes two constructed nodes the same node. Its individuals are in the vocabulary." .
+```
+
+```turtle-spec
+srf:constructedAs a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:ConstructedNode ;
+	rdfs:comment "The node a graph construction projection writes, stated on its result-target role binding, which binds the link from each instance to it." ;
+	fnd:utility "Set it on the result-target role binding of a graph construction, once, and nowhere else (srf:P10). The property that binding binds is the link from the instance to the node." .
+
+srf:constructedClass a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ConstructedNode ; rdfs:range rdfs:Class ;
+	rdfs:comment "The class a constructed node is typed with." ;
+	fnd:utility "A class an authored vocabulary declares puts the projection in the authored signature, and a class minted in the contract's target namespace in its own (srf:P1)." .
+
+srf:nodeIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ConstructedNode ; rdfs:range srf:IdentityChoice ;
+	rdfs:comment "Whether a constructed node is made for each instance of the carrier or for each value of a key." ;
+	fnd:utility "State it, never leave it implicit. PerInstance gives each instance its own node, which merges nothing. ByKey merges the instances that share the values of the key bindings, which takes a mapping review (ADR-A41) and brings a run-time check for a node whose instances disagree on a value." .
+
+srf:keyBinding a owl:ObjectProperty ;
+	rdfs:domain srf:ConstructedNode ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "A required-evidence role binding whose value is part of the key a keyed constructed node is made for." ;
+	fnd:utility "Name one for each part of the key, and none for a node for each instance (srf:P11). A key binding is required evidence (srf:P13), so an instance without a value for it contributes nothing. The key is spelled into the node's identifier, so a key that may be personal or may change is no key." .
+
+srf:writes a owl:ObjectProperty ;
+	rdfs:domain srf:ConstructedNode ; rdfs:range srf:WrittenValue ;
+	rdfs:comment "A value a constructed node carries." .
+
+srf:writesProperty a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:WrittenValue ; rdfs:range rdf:Property ;
+	rdfs:comment "The property a written value is written as on the constructed node." .
+
+srf:fromBinding a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:WrittenValue ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "The candidate-evidence or required-evidence role binding of the same contract a written value is read from." ;
+	fnd:utility "A required-evidence binding gates the node, since an instance without it contributes nothing. A candidate-evidence binding writes what it finds (srf:P12)." .
+```
+
 ## 7. Index forms
 
 | Form | Emits | Needs an enumerable population | Retrieval | Entailment required |
@@ -1255,6 +1353,9 @@ srf:NotEqualTo a srf:ComparisonOperator ; rdfs:comment "The two compared operand
 srf:GreaterThanOrEqual a srf:ComparisonOperator ; rdfs:comment "The left compared operand is greater than or equal to the right." .
 srf:GreaterThan a srf:ComparisonOperator ; rdfs:comment "The left compared operand is greater than the right." .
 
+srf:PerInstance a srf:IdentityChoice ; rdfs:comment "A constructed node for each instance of the carrier. Nothing is merged, and the node's identifier is a hash of the instance's identifier." .
+srf:ByKey a srf:IdentityChoice ; rdfs:comment "One constructed node for each value of a key of required-evidence bindings. Instances that share the key share the node, and its identifier is read from the key." .
+
 srf:RmlBackend a srf:CompilerBackend ; rdfs:comment "RML/R2RML triples-map compilation." .
 srf:SparqlBackend a srf:CompilerBackend ; rdfs:comment "SPARQL query compilation." .
 srf:ShaclBackend a srf:CompilerBackend ; rdfs:comment "SHACL shape compilation." .
@@ -1293,7 +1394,7 @@ srf:R3 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Invali
 srf:R4 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Materialisation idempotence. Re-running a materialisation over an unchanged read set adds no triples." .
 srf:R5 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Closure well-foundedness. The declared closure basis is acyclic over the declared scope, established by traversing it." .
 
-srf:P1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Projection conservativity. A local-signature projection is conservative on the same terms as an index; a source-signature projection composes under the same rule as X1 and X6." .
+srf:P1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Projection conservativity. A local-signature projection is conservative on the same terms as an index; a source-signature projection composes under the same rule as X1 and X6. A graph construction reads its scope from the class of its constructed node: a class minted in the contract's own target namespace is local-signature, and a class an authored vocabulary declares reaches the authored signature, so the nodes it writes and the values on them are indistinguishable from authored facts once emitted and the projection is source-signature." .
 srf:P2 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every projection contract declares exactly one projection kind and at least an evaluation-subject and a result-target role binding; a join or derivation kind additionally declares at least one candidate-evidence or required-evidence role binding." .
 srf:P3 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection contract declares at most one evaluation-subject, result-target, and closure-basis role binding; candidate-evidence, required-evidence, and transform-dependency role bindings may repeat." .
 srf:P4 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy names no compiler backend in both allowedBackend and deniedBackend." .
@@ -1303,6 +1404,11 @@ srf:P6 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A deriva
 srf:P7 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Each operand of a projection expression is a projection expression, or a candidate-evidence or required-evidence role binding of the same contract that binds a property." .
 srf:P8 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Each projection expression states a result datatype, and each evidence role binding an expression reads and the result-target role binding state a binding datatype. The operands of an arithmetic expression, a rounding expression and an ordering comparison are numeric. A node's result datatype is the wider of its operands' under numeric promotion (a quotient is at least decimal), the datatype of its operand under rounding, and the datatype of both branches of a choice. The result-target role binding's datatype is the expression's." .
 srf:P9 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection expression is acyclic. No expression is an operand of itself, directly or through other expressions." .
+
+srf:P10 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A graph construction projection states exactly one constructed node, with constructedAs on its result-target role binding, and that binding binds the property that links each instance to the node. No other projection kind states a construction. Every constructed node is reached from such a statement." .
+srf:P11 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A constructed node states exactly one class and exactly one identity, a node for each instance or a node for each value of a key. It writes at least one value and writes each property at most once. It names key bindings exactly when its identity is by key." .
+srf:P12 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Each value a constructed node writes states exactly one property and names exactly one candidate-evidence or required-evidence role binding of the same contract that binds a property." .
+srf:P13 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A key binding of a constructed node is a required-evidence role binding of the same contract that binds a property, so an instance without a value for any part of the key contributes nothing." .
 ```
 
 ## 10. Shapes
@@ -1406,7 +1512,8 @@ srf:ProjectionRoleBindingShape a sh:NodeShape ;
 	sh:property [ sh:path srf:bindsProperty ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:bindsCarrier ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:bindsDatatype ; sh:maxCount 1 ] ;
-	sh:property [ sh:path srf:derivedAs ; sh:maxCount 1 ] .
+	sh:property [ sh:path srf:derivedAs ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:constructedAs ; sh:maxCount 1 ] .
 
 srf:ProjectionBackendPolicyShape a sh:NodeShape ;
 	sh:targetClass srf:ProjectionBackendPolicy ;
@@ -1451,6 +1558,22 @@ srf:ChoiceExpressionShape a sh:NodeShape ;
 		sh:message "A choice has exactly one branch for a true comparison. Discharges srf:P7." ] ;
 	sh:property [ sh:path srf:whenFalse ; sh:minCount 1 ; sh:maxCount 1 ;
 		sh:message "A choice has exactly one branch for a false comparison. Discharges srf:P7." ] .
+
+srf:ConstructedNodeShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:property [ sh:path srf:constructedClass ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A constructed node states exactly one class. Discharges srf:P11." ] ;
+	sh:property [ sh:path srf:nodeIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( srf:PerInstance srf:ByKey ) ;
+		sh:message "A constructed node states exactly one identity, srf:PerInstance or srf:ByKey. Discharges srf:P11." ] ;
+	sh:property [ sh:path srf:writes ; sh:minCount 1 ;
+		sh:message "A constructed node writes at least one value. Discharges srf:P11." ] .
+
+srf:WrittenValueShape a sh:NodeShape ;
+	sh:targetObjectsOf srf:writes ;
+	sh:property [ sh:path srf:writesProperty ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A written value states exactly one property it is written as. Discharges srf:P12." ] ;
+	sh:property [ sh:path srf:fromBinding ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A written value names exactly one evidence role binding it is read from. Discharges srf:P12." ] .
 ```
 
 ```turtle-shapes
@@ -2151,6 +2274,153 @@ srf:ProjectionExpressionAcyclicShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+srf:ConstructionRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A graph construction projection states no constructed node on its result-target role binding. Discharges srf:P10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:GraphConstructionProjection .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:ResultTargetRole ;
+						srf:constructedAs ?node .
+				}
+			}
+		"""
+	] .
+
+srf:ConstructionLinkPropertyRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "The result-target role binding of a graph construction binds no property, so there is no link from an instance to the node. Discharges srf:P10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:GraphConstructionProjection ;
+					srf:hasRoleBinding ?binding .
+				?binding srf:roleKind srf:ResultTargetRole .
+				FILTER NOT EXISTS { ?binding srf:bindsProperty ?property }
+			}
+		"""
+	] .
+
+srf:ConstructionPlacementShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states a constructed node and is not the result-target role binding of a graph construction. Discharges srf:P10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:constructedAs ?node .
+				FILTER NOT EXISTS {
+					$this srf:roleKind srf:ResultTargetRole .
+					?contract srf:hasRoleBinding $this ;
+						srf:projectionKind srf:GraphConstructionProjection .
+				}
+			}
+		"""
+	] .
+
+srf:ConstructionNodeTypedShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states as its constructed node a term that is not a srf:ConstructedNode named by an IRI. Discharges srf:P10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:constructedAs ?value .
+				FILTER (!isIRI(?value) || NOT EXISTS { ?value a srf:ConstructedNode })
+			}
+		"""
+	] .
+
+srf:ConstructedNodeReachedShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A constructed node is not stated by the result-target role binding of any graph construction, so no contract constructs it. Discharges srf:P10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:ConstructedNode .
+				FILTER NOT EXISTS { ?binding srf:constructedAs $this }
+			}
+		"""
+	] .
+
+srf:ConstructedKeyShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A constructed node by key names no key binding, or a constructed node for each instance names one. Discharges srf:P11." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				{
+					$this srf:nodeIdentity srf:ByKey .
+					FILTER NOT EXISTS { $this srf:keyBinding ?key }
+				} UNION {
+					$this srf:nodeIdentity srf:PerInstance ;
+						srf:keyBinding ?key .
+				}
+			}
+		"""
+	] .
+
+srf:ConstructedPropertyOnceShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A constructed node writes one property more than once. Discharges srf:P11." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:writes ?first , ?second .
+				?first srf:writesProperty ?value .
+				?second srf:writesProperty ?value .
+				FILTER (?first != ?second)
+			}
+		"""
+	] .
+
+srf:WrittenValueEvidenceShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A value a constructed node writes is read from a term that is not a candidate-evidence or required-evidence role binding of the stating contract that binds a property. Discharges srf:P12." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				?link srf:constructedAs $this .
+				?contract srf:hasRoleBinding ?link .
+				$this srf:writes/srf:fromBinding ?value .
+				FILTER NOT EXISTS {
+					?contract srf:hasRoleBinding ?value .
+					?value srf:roleKind ?role ;
+						srf:bindsProperty ?property .
+					FILTER (?role IN (srf:RequiredEvidenceRole, srf:CandidateEvidenceRole))
+				}
+			}
+		"""
+	] .
+
+srf:ConstructedKeyEvidenceShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A key binding of a constructed node is not a required-evidence role binding of the stating contract that binds a property. Discharges srf:P13." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				?link srf:constructedAs $this .
+				?contract srf:hasRoleBinding ?link .
+				$this srf:keyBinding ?value .
+				FILTER NOT EXISTS {
+					?contract srf:hasRoleBinding ?value .
+					?value srf:roleKind srf:RequiredEvidenceRole ;
+						srf:bindsProperty ?property .
+				}
+			}
+		"""
+	] .
 ```
 
 ## 11. Canonicalisation, identity, and invalidation
@@ -2189,6 +2459,7 @@ Non-domain examples are authored in:
 - `ontology/surface/examples/saas-subscription-currency.ttl` — promotion across a three-step read path onto a direct property
 - `ontology/surface/examples/clinical-trial-crosswalk.ttl` — promotion across an inexact mapping relation
 - `ontology/surface/examples/saas-subscription-arr-projection.ttl` — a derivation projection stating the product of two required-evidence bindings as its expression, lowered under a deterministic-only backend policy
+- `ontology/surface/examples/order-supplier-construction-projection.ttl` — a graph construction projection stating a supplier for each supplier code, with its class, its key, and the code and name it writes, lowered under a deterministic-only backend policy
 
 Deliberate-defect fixtures are authored in `ontology/surface/test/`.
 
@@ -2204,6 +2475,8 @@ ex:index-1 a srf:IndexContract ;
 ## 14. Release notes
 
 - **Unreleased**.
+  - no effect. A graph construction projection states the node it writes. New: `srf:ConstructedNode`, `srf:WrittenValue` and `srf:IdentityChoice` with its two individuals `srf:PerInstance` and `srf:ByKey`, and the properties `srf:constructedAs`, `srf:constructedClass`, `srf:nodeIdentity`, `srf:keyBinding`, `srf:writes`, `srf:writesProperty` and `srf:fromBinding`. New laws `srf:P10` to `srf:P13`, with a shape for each part of them, and `srf:P1` says how a constructed node's class decides its signature scope.
+  - may invalidate. A graph construction projection that states no constructed node on its result-target role binding fails the new shape, and the compiler refuses to read it. A projection of another kind that states one fails too. The example is a graph construction, an order giving a supplier keyed by a supplier code.
   - no effect. A derivation projection states its operation. New: `srf:ProjectionExpression` with `srf:SumExpression`, `srf:DifferenceExpression`, `srf:ProductExpression` and `srf:QuotientExpression` under `srf:ArithmeticExpression`, `srf:TypedLiteralExpression`, `srf:RoundingExpression` and `srf:ChoiceExpression`, `srf:ComparisonOperator` with its six individuals, and the properties `srf:derivedAs`, `srf:bindsDatatype`, `srf:resultDatatype`, `srf:leftOperand`, `srf:rightOperand`, `srf:typedValue`, `srf:roundedOperand`, `srf:roundingScale`, `srf:comparisonOperator`, `srf:comparedLeft`, `srf:comparedRight`, `srf:whenTrue` and `srf:whenFalse`. New laws `srf:P6` to `srf:P9`, with a shape for each part of them.
   - may invalidate. A derivation projection that states no expression on its result-target role binding fails the new shape, and the compiler refuses to read it. A projection of another kind that states one fails too. The example derivation states its operation, the product of its monthly price and its billing periods a year, and the datatype of each evidence binding.
   - no effect. Six SPARQL constraints of the shapes no longer use a `VALUES` clause, which SHACL forbids in a constraint and a validator such as pySHACL refuses, so the shapes load in one. Each is written with `FILTER` and `IN` and reports what it reported.

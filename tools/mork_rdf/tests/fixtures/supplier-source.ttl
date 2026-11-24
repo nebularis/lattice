@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# Four orders. Two name one supplier and agree on its name, one names another and gives no name, and one gives a name and
+# no code (README §7.9).
+
+@prefix src: <http://example.org/src#> .
+@prefix rec: <http://example.org/records/> .
+
+rec:o1 a src:Order ; src:supplierCode "S1" ; src:supplierName "Acme Components" .
+rec:o2 a src:Order ; src:supplierCode "S1" ; src:supplierName "Acme Components" .
+rec:o3 a src:Order ; src:supplierCode "S2" .
+rec:o4 a src:Order ; src:supplierName "Nameless Code" .

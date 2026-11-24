@@ -96,7 +96,8 @@ srf:ProjectionRoleBindingShape a sh:NodeShape ;
 	sh:property [ sh:path srf:bindsProperty ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:bindsCarrier ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:bindsDatatype ; sh:maxCount 1 ] ;
-	sh:property [ sh:path srf:derivedAs ; sh:maxCount 1 ] .
+	sh:property [ sh:path srf:derivedAs ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:constructedAs ; sh:maxCount 1 ] .
 
 srf:ProjectionBackendPolicyShape a sh:NodeShape ;
 	sh:targetClass srf:ProjectionBackendPolicy ;
@@ -141,3 +142,19 @@ srf:ChoiceExpressionShape a sh:NodeShape ;
 		sh:message "A choice has exactly one branch for a true comparison. Discharges srf:P7." ] ;
 	sh:property [ sh:path srf:whenFalse ; sh:minCount 1 ; sh:maxCount 1 ;
 		sh:message "A choice has exactly one branch for a false comparison. Discharges srf:P7." ] .
+
+srf:ConstructedNodeShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:property [ sh:path srf:constructedClass ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A constructed node states exactly one class. Discharges srf:P11." ] ;
+	sh:property [ sh:path srf:nodeIdentity ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( srf:PerInstance srf:ByKey ) ;
+		sh:message "A constructed node states exactly one identity, srf:PerInstance or srf:ByKey. Discharges srf:P11." ] ;
+	sh:property [ sh:path srf:writes ; sh:minCount 1 ;
+		sh:message "A constructed node writes at least one value. Discharges srf:P11." ] .
+
+srf:WrittenValueShape a sh:NodeShape ;
+	sh:targetObjectsOf srf:writes ;
+	sh:property [ sh:path srf:writesProperty ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A written value states exactly one property it is written as. Discharges srf:P12." ] ;
+	sh:property [ sh:path srf:fromBinding ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A written value names exactly one evidence role binding it is read from. Discharges srf:P12." ] .

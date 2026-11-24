@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# A graph construction, as the lowering of a Surface projection writes it (README §7.9). Each order gives a supplier by its
+# code, minted and typed, linked from the order, and carrying its code and, where there is one, its name. The code is a
+# required value, so an order without one contributes nothing.
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix src:  <http://example.org/src#> .
+@prefix tgt:  <http://example.org/tgt#> .
+@prefix mm:   <http://example.org/mapping#> .
+
+mm:Supplier a mork:MappingScheme .
+
+src:Order a mork:Entity .
+mm:Concept_Order a mork:DataConcept ; mork:representedAs src:Order .
+
+mm:Map_Order a mork:DataMapping , mork:Datum ;
+    mork:mappingScheme mm:Supplier ;
+    mork:mappingFor mm:Concept_Order ;
+    mork:identityRule mork:SourceNodeIdentity ;
+    mork:compositeNarrowerMapping mm:Map_Supplier .
+
+# The node. Its guard names the required values, its identity is the key, and the link from the order is the inverse match.
+mm:Map_Supplier a mork:DataMapping ;
+    mork:mappingScheme mm:Supplier ;
+    mork:broaderApplicative mm:Map_Order ;
+    mork:exactTBoxMatch tgt:Supplier ;
+    mork:inverseRBoxMatch tgt:suppliedBy ;
+    mork:appliesWhen mm:SupplierGuard ;
+    mork:identityTemplateMapping mm:SupplierIdentity ;
+    mork:compositeNarrowerMapping mm:Map_Code , mm:Map_Name .
+
+mm:SupplierGuard a sh:NodeShape ;
+    sh:property [ sh:path src:supplierCode ; sh:minCount 1 ] .
+
+mm:SupplierIdentity a mork:ConcatExpression ; mork:concatLeft mm:SupplierIdentity_l ; mork:concatRight mm:SupplierIdentity_r .
+mm:SupplierIdentity_l a mork:LiteralExpression ; mork:dataInline "order-supplier/Supplier/" .
+mm:SupplierIdentity_r a mork:RefExpression ; mork:dataRef "<http://example.org/src#supplierCode>" .
+
+mm:Map_Code a mork:DataMapping ;
+    mork:mappingScheme mm:Supplier ;
+    mork:exactRBoxMatch tgt:code ;
+    mork:dataRef "<http://example.org/src#supplierCode>" .
+
+mm:Map_Name a mork:DataMapping ;
+    mork:mappingScheme mm:Supplier ;
+    mork:exactRBoxMatch tgt:name ;
+    mork:dataRef "<http://example.org/src#supplierName>" .

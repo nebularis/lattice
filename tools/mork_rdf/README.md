@@ -338,6 +338,36 @@ A path that yields several values gives several results, one for each combinatio
 
 **What the engines do differently.** The compiled query gives Oxigraph and rdflib the same values on every case the tests cover, and two things differ. A decimal product keeps its operands' scale on rdflib and is canonical on Oxigraph, so 29.50 times 12 is `"354.00"` there and `"354"` here, the same value and two terms. A reader of a result compares values, never lexical forms, and a test that joins on the term does not. A double divided by zero is INF on Oxigraph and an error on rdflib, which the quotient's guard above removes. Nothing here is yet an entry in the record of store behaviour, which the maintainer adds the domain's findings to.
 
+### 7.9 A node made for each instance
+
+A source-node datum (§6) with a contextual datum beneath it writes a node of its own for each instance. That is a graph construction, and it needs no case beyond the ones above. The root iterates the class and is each instance itself. The contextual datum mints and types the node and is glued to the instance by an R-Box match. An assertion beneath it writes each value. For an order that gives a supplier keyed by a supplier code, with the code a required value and the name optional, the compiled query that writes the node and the link is
+
+```sparql
+BASE <http://example.org/out/>
+CONSTRUCT { ?t3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/tgt#Supplier> . ?f1 <http://example.org/tgt#suppliedBy> ?t3 . }
+WHERE {
+  ?f1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/src#Order> .
+  FILTER (((EXISTS { ?f1 <http://example.org/src#supplierCode> ?any2 . })))
+  ?f1 <http://example.org/src#supplierCode> ?v4 .
+  BIND (IRI(CONCAT("order-supplier/Supplier/", ENCODE_FOR_URI(STR(?v4)))) AS ?t3)
+}
+```
+
+**The guard sits on the node, so an instance contributes whole or not at all.** A guard (§7.7) is a `FILTER` on its frame, and every query beneath inherits the frame. The assertions for the code and the name each repeat the guard and the identity, whole, so an instance the guard excludes writes no type, no link and no value, even where another instance has made the same node. The node's identity is formed from the key, here `order-supplier/Supplier/` and the code, so every order with one code reaches one node. A node for each instance names `mork:conceptName` and no key, and takes the default hash of the instance's identifier, so no two instances reach one node.
+
+**An optional value is not in the guard.** An order with no name still gives its supplier and its link, and the assertion for the name writes nothing for it. A value is required when the guard has a property shape with `sh:minCount 1` at its path.
+
+Two checks report what the compiled queries leave out or merge. They are emitted only for a contextual datum beneath a source-node datum that follows no path of its own, and the second only where the node's identity is read from the source.
+
+| Code | A row means |
+|---|---|
+| `InstanceExcluded` | the guard excluded the focus node, which contributed nothing. The value names the path of a required value it lacks, one row for each. A guard condition that is not a required value, such as `sh:hasValue`, excludes without a row |
+| `ValueDisagrees` | the node is made from several instances and they give it different values at the assertion's path. One row for each value, with the node as the focus, and the assertion names the property. Each value was written. A value the identity itself reads is the same for every instance, so it has no check |
+
+Where a keyed node merges instances, the compiler also reports `MappingReview`, a warning on the datum, since a merge is where a reviewer should confirm that the instances which share a key are one thing (ADR-A41). A node for each instance merges nothing and gets none. Values are compared as RDF terms, so `1.0` and `1` disagree. An instance with several values at an assertion's path gives several values to its node, which also disagree.
+
+A key is spelled into the node's identifier, so the compiler cannot tell a key that may be personal or may change from one that may not. Choosing one is the author's, and the Surface contract that lowers into this case states the boundary.
+
 ## 8. Templates
 
 An instantiation (`mork:templateMapping`) is merged with its template before classification, by Definition 3.7's first strategy: the instantiation's own values first, the template's where it gives none. Its children are its own, followed by the template's children that none of its own children correlates with through `mork:templateBinding`. Each of the template's children is compiled under every instantiation, in that instantiation's context, and a query's `path` names the instantiation, so a reviewer sees which one it came from.
@@ -412,6 +442,7 @@ A finding has a code, the mapping it is about, a message and a severity. Info lo
 | `RangeFromData`, `CombinationFromData` | error | a restriction over classes made from data that would need a combination at the closure (§7.6) |
 | `NoName` | error | a broad R-Box match with no name for the property it creates |
 | `BroadMatch` | warning | a broad match, compiled |
+| `MappingReview` | warning | a contextual datum beneath a source-node datum whose identity is read from the source, so it merges the instances that share the values and a reviewer should confirm the merge (§7.9) |
 | `ParentNotCompiled` | warning | the parent was not compiled |
 | `BelowConfidence` | error | under `min_confidence` |
 
@@ -438,6 +469,8 @@ Each check is a `SELECT` that the compiler emits beside the constructs, and the 
 | `TermKind` | an assertion whose property the target vocabulary types | a literal for an object property, or an IRI for a datatype property |
 | `OperandMissing` | a derivation, for each path its expression reads | the focus node lacks the value, so the property was not written (§7.8) |
 | `ValueUndefined` | a derivation | the focus node has every value and the expression is undefined for them, so the property was not written (§7.8) |
+| `InstanceExcluded` | a guarded contextual datum beneath a source-node datum, for each required value in its guard | the guard excluded the focus node for want of the value, so it contributed nothing (§7.9) |
+| `ValueDisagrees` | an assertion on a node whose identity is read from the source, beneath a source-node datum | the node's instances give it different values, one row for each value (§7.9) |
 | `Unguarded` | guarded datums sharing a path | a node of the path that no guard admits |
 | `Uncovered` | the scheme, when a declared `mork:Entity` has no compiled root iterating it | a source node of that class, from which nothing was made |
 
@@ -586,6 +619,7 @@ The run reports three focus nodes. `ex:dune-2` has no ISBN (`IdentityUnbound`). 
 - **Deferred references.** A class made from data typing a node made from the same record, a lookup over the classes a creation made two strata earlier, and a context yielding its own name.
 - **Axioms.** Each form and combination over named classes, and a union at the closure and per-class restrictions over classes made from data.
 - **Derivations.** A subscription scheme compiles to the query of §7.8, and a sample of four gives each product as an exact decimal on Oxigraph and on rdflib, with the subscription missing its price and the one whose price is no number each reported and written nothing for. Each operation, rounding at a positive and a negative scale, each comparison of a choice either way, typed literals, promotion between integer, decimal and double, and a quotient by zero of each datatype give their expected value or write nothing on both engines. A literal with a quote and a brace in it reaches the query escaped. The two differences of §7.8 are pinned, so an engine that changes fails there.
+- **Graph construction.** A scheme with a source-node root and a guarded contextual datum compiles to the query of §7.9 and runs on Oxigraph and rdflib. Orders with one code share a node, an order without the code contributes nothing and is reported, and an order with the key and without another required value writes no link even where another order made the node. Orders that disagree on a name are reported by node and value. A node for each instance merges nothing and takes no review, a keyed one takes it, a key of two values is one node for each pair, and the same answer comes whatever the order of the mapping graph and of the source.
 - **Guards.** Each of fifteen shapes admits exactly the nodes pySHACL says conform, an unsupported feature refuses its mapping, guarded siblings divide their path, and a node no guard admits is reported.
 - **Validation.** Validating against the closed specification finds what full inference finds, on five mapping graphs, one of which breaks a shape.
 - **The skolem rule.** The vectors give exactly their expected triples, one name is re-derived by hand from §12.2, names do not depend on the triples' order, survive an unrelated addition and change with their own description, identical siblings stay two, and each irregular component is reported.

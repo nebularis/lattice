@@ -697,3 +697,150 @@ srf:ProjectionExpressionAcyclicShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+srf:ConstructionRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "A graph construction projection states no constructed node on its result-target role binding. Discharges srf:P10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:GraphConstructionProjection .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:ResultTargetRole ;
+						srf:constructedAs ?node .
+				}
+			}
+		"""
+	] .
+
+srf:ConstructionLinkPropertyRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "The result-target role binding of a graph construction binds no property, so there is no link from an instance to the node. Discharges srf:P10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:GraphConstructionProjection ;
+					srf:hasRoleBinding ?binding .
+				?binding srf:roleKind srf:ResultTargetRole .
+				FILTER NOT EXISTS { ?binding srf:bindsProperty ?property }
+			}
+		"""
+	] .
+
+srf:ConstructionPlacementShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states a constructed node and is not the result-target role binding of a graph construction. Discharges srf:P10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:constructedAs ?node .
+				FILTER NOT EXISTS {
+					$this srf:roleKind srf:ResultTargetRole .
+					?contract srf:hasRoleBinding $this ;
+						srf:projectionKind srf:GraphConstructionProjection .
+				}
+			}
+		"""
+	] .
+
+srf:ConstructionNodeTypedShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states as its constructed node a term that is not a srf:ConstructedNode named by an IRI. Discharges srf:P10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:constructedAs ?value .
+				FILTER (!isIRI(?value) || NOT EXISTS { ?value a srf:ConstructedNode })
+			}
+		"""
+	] .
+
+srf:ConstructedNodeReachedShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A constructed node is not stated by the result-target role binding of any graph construction, so no contract constructs it. Discharges srf:P10." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:ConstructedNode .
+				FILTER NOT EXISTS { ?binding srf:constructedAs $this }
+			}
+		"""
+	] .
+
+srf:ConstructedKeyShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A constructed node by key names no key binding, or a constructed node for each instance names one. Discharges srf:P11." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				{
+					$this srf:nodeIdentity srf:ByKey .
+					FILTER NOT EXISTS { $this srf:keyBinding ?key }
+				} UNION {
+					$this srf:nodeIdentity srf:PerInstance ;
+						srf:keyBinding ?key .
+				}
+			}
+		"""
+	] .
+
+srf:ConstructedPropertyOnceShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A constructed node writes one property more than once. Discharges srf:P11." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:writes ?first , ?second .
+				?first srf:writesProperty ?value .
+				?second srf:writesProperty ?value .
+				FILTER (?first != ?second)
+			}
+		"""
+	] .
+
+srf:WrittenValueEvidenceShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A value a constructed node writes is read from a term that is not a candidate-evidence or required-evidence role binding of the stating contract that binds a property. Discharges srf:P12." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				?link srf:constructedAs $this .
+				?contract srf:hasRoleBinding ?link .
+				$this srf:writes/srf:fromBinding ?value .
+				FILTER NOT EXISTS {
+					?contract srf:hasRoleBinding ?value .
+					?value srf:roleKind ?role ;
+						srf:bindsProperty ?property .
+					FILTER (?role IN (srf:RequiredEvidenceRole, srf:CandidateEvidenceRole))
+				}
+			}
+		"""
+	] .
+
+srf:ConstructedKeyEvidenceShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A key binding of a constructed node is not a required-evidence role binding of the stating contract that binds a property. Discharges srf:P13." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				?link srf:constructedAs $this .
+				?contract srf:hasRoleBinding ?link .
+				$this srf:keyBinding ?value .
+				FILTER NOT EXISTS {
+					?contract srf:hasRoleBinding ?value .
+					?value srf:roleKind srf:RequiredEvidenceRole ;
+						srf:bindsProperty ?property .
+				}
+			}
+		"""
+	] .

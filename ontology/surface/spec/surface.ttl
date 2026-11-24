@@ -492,7 +492,8 @@ srf:ProjectionRoleBinding a owl:Class ;
 		[ a owl:Restriction ; owl:onProperty srf:bindsProperty ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:bindsCarrier ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:bindsDatatype ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:derivedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+		[ a owl:Restriction ; owl:onProperty srf:derivedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:constructedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class." ;
 	fnd:utility "Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline srf:PathStep applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well." .
 
@@ -668,3 +669,54 @@ srf:whenTrue a owl:ObjectProperty, owl:FunctionalProperty ;
 srf:whenFalse a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ChoiceExpression ;
 	rdfs:comment "The value a choice takes where its comparison does not hold, an expression or an evidence role binding of the same contract." .
+
+srf:ConstructedNode a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:constructedClass ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:nodeIdentity ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:writes ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The node a graph construction projection writes for an instance of its carrier, with the class it is typed with, its identity and the values it carries." ;
+	fnd:utility "State it once, on the result-target role binding of a graph construction with constructedAs, and name it by an IRI. Give it one constructedClass, one nodeIdentity, a keyBinding for each part of its key where its identity is ByKey, and a writes for each value it carries, at least one. The class it is typed with decides the projection's signature scope (srf:P1)." .
+
+srf:WrittenValue a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:writesProperty ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:fromBinding ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "One value a constructed node carries, the property it is written as and the evidence role binding it is read from." ;
+	fnd:utility "Name each written value by a blank node or an IRI, as srf:writes takes it. A node writes each property once." .
+
+srf:IdentityChoice a owl:Class ;
+	rdfs:comment "What makes two constructed nodes the same node. Its individuals are in the vocabulary." .
+
+srf:constructedAs a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:ConstructedNode ;
+	rdfs:comment "The node a graph construction projection writes, stated on its result-target role binding, which binds the link from each instance to it." ;
+	fnd:utility "Set it on the result-target role binding of a graph construction, once, and nowhere else (srf:P10). The property that binding binds is the link from the instance to the node." .
+
+srf:constructedClass a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ConstructedNode ; rdfs:range rdfs:Class ;
+	rdfs:comment "The class a constructed node is typed with." ;
+	fnd:utility "A class an authored vocabulary declares puts the projection in the authored signature, and a class minted in the contract's target namespace in its own (srf:P1)." .
+
+srf:nodeIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ConstructedNode ; rdfs:range srf:IdentityChoice ;
+	rdfs:comment "Whether a constructed node is made for each instance of the carrier or for each value of a key." ;
+	fnd:utility "State it, never leave it implicit. PerInstance gives each instance its own node, which merges nothing. ByKey merges the instances that share the values of the key bindings, which takes a mapping review (ADR-A41) and brings a run-time check for a node whose instances disagree on a value." .
+
+srf:keyBinding a owl:ObjectProperty ;
+	rdfs:domain srf:ConstructedNode ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "A required-evidence role binding whose value is part of the key a keyed constructed node is made for." ;
+	fnd:utility "Name one for each part of the key, and none for a node for each instance (srf:P11). A key binding is required evidence (srf:P13), so an instance without a value for it contributes nothing. The key is spelled into the node's identifier, so a key that may be personal or may change is no key." .
+
+srf:writes a owl:ObjectProperty ;
+	rdfs:domain srf:ConstructedNode ; rdfs:range srf:WrittenValue ;
+	rdfs:comment "A value a constructed node carries." .
+
+srf:writesProperty a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:WrittenValue ; rdfs:range rdf:Property ;
+	rdfs:comment "The property a written value is written as on the constructed node." .
+
+srf:fromBinding a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:WrittenValue ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "The candidate-evidence or required-evidence role binding of the same contract a written value is read from." ;
+	fnd:utility "A required-evidence binding gates the node, since an instance without it contributes nothing. A candidate-evidence binding writes what it finds (srf:P12)." .

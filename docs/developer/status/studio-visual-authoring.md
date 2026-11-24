@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-24. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-24. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** SVA-S2g, then a pause, with the three addenda put to the maintainer. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** paused after SVA-S2g for the maintainer, who decides whether to accept the addenda to ADR-A18, ADR-A23 and ADR-A41, and says when SVA-S2h starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -62,7 +62,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2d | a sketch of a projection backend | built 2026-11-23, building 2026-11-23 | SVA-S2 |
 | SVA-S2e | the projection expression vocabulary and the lowering of a derivation | built 2026-11-24, building 2026-11-23 | SVA-S2d |
 | SVA-S2f | `mork_rdf` compiles a derivation | built 2026-11-24, building 2026-11-24 | SVA-S2e |
-| SVA-S2g | graph construction projections | building 2026-11-24 | SVA-S2f |
+| SVA-S2g | graph construction projections | built 2026-11-24 | SVA-S2f |
 | SVA-S2h | join projections | planned | SVA-S2f |
 | SVA-S2i | expansion projections | planned | SVA-S2f |
 | SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2g, SVA-S2h, SVA-S2i |
@@ -254,3 +254,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-24: the maintainer answered SVA-Q35 (a). A keyed construction takes ADR-A41's mapping review, recorded as a finding as a join's is, and a construction for each instance takes none, since a merge is where a person's judgement adds something. Passed to SVA-S2g's developer to build and record in the sketch.
 - 2026-11-24: SVA-S2e's follow-up done. TD-262 records that a binding's datatype restates its property's range, the rounding mode is stated in its definitions, and the lowering writes `srf:producesMapping` from a contract to its scheme or mapping, with the contract's IRI gone from the notes and `srf:producesMapping`'s domain widened to a projection contract, and ADR-A18's addendum says how a scheme names its contract. SVA-Q35 is recorded in the sketch and in a Proposed addendum to ADR-A41, where the join's review rule is. SVA-S2g stopped before building: a hand-built prototype on Oxigraph showed the existing cases keep an instance whole or not at all beneath a source-node root, and report neither an excluded instance nor a keyed node whose instances disagree, which needs two new checks in `mork_rdf`. Paused for the maintainer.
 - 2026-11-24: the maintainer accepted the leanings. SVA-S2g adds two checks to `mork_rdf`, one for an instance its guard excludes and one for a keyed node whose instances disagree, with no new mapping kind. `srf:producesMapping`'s widened domain stands, and SVA-Q35's rule stays in ADR-A41's addendum. The addenda to ADR-A18, ADR-A23 and ADR-A41 stay Proposed until SVA-S2g is built, then go to the maintainer together. SVA-S2g resumes from its prototype.
+- 2026-11-24: SVA-S2g built, [Validation Pack](../validation/SVA-S2g.md). A graph construction states its node on its result-target binding, lowers into a scheme `mork_rdf` compiles with its existing cases, and an instance the guard excludes contributes nothing, which two new checks and a mapping review finding report. The addenda to ADR-A18 and ADR-A23 for this kind are Proposed, with ADR-A41's, and wait for the maintainer to accept together at the pause after SVA-S2g.
+- 2026-11-24: reviewed SVA-S2g and re-ran its checks. Recorded TD-263, since the disagreement check compares terms and TSD-77 makes equal numbers differ as terms. The Surface README's 24 semicolons in prose are older than this unit, 25 at its base, and are left for the maintainer to say whether this unit tidies them.

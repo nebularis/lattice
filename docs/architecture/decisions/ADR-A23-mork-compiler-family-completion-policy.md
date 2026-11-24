@@ -45,3 +45,15 @@ ADR-A18's addendum of the same date lowers a derivation projection into a mappin
 3. **No new vocabulary.** The terms are those ADR-A18's addendum names. A scheme over an RDF source is compiled to SPARQL by `mork_rdf`, and the other kinds keep the compilers this decision lists.
 
 **Consequences.** The compiled query of a derivation is the same for the same scheme, and a sample of the carrier class run through it gives the derived values. Until the compiler exists, a lowered derivation is checked by MORK's shapes and compiled by nothing.
+
+## Addendum (2026-11-24): mork_rdf compiles graph construction projections
+
+**Status of this addendum:** Proposed.
+
+ADR-A18's addendum of the same date lowers a graph construction projection into a mapping scheme with a source-node root, a guarded contextual datum that mints the constructed node, and an assertion for each value. By the policy above a vocabulary no compiler reads does not count as complete.
+
+1. **`mork_rdf` compiles a lowered construction with its existing cases.** The root, the contextual datum with its guard and identity, and the assertions are compiled as they are for any scheme, and no mapping kind is added. A guard sits on the datum's frame, which every query beneath inherits, so an instance contributes whole or not at all.
+2. **Two checks report what the cases leave unsaid.** One names each instance the datum's guard excludes for want of a required value, with the value it lacks. One names a node whose identity is read from the source and whose instances give a property different values, with the node and each value. A keyed datum beneath a source-node datum also carries a `MappingReview` warning.
+3. **No new vocabulary.** The terms are those ADR-A18's addendum names.
+
+**Consequences.** The compiled queries of a construction are the same for the same scheme, and a sample of the carrier class run through them gives the nodes, the links and the values, with the excluded instances and the disagreements reported. Until a reader of the findings acts on `MappingReview`, the review ADR-A41 asks for is a finding and no more.

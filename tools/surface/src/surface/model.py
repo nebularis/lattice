@@ -239,6 +239,36 @@ def operand_datatype(operand: Operand) -> Optional[URIRef]:
 
 
 @dataclass(frozen=True)
+class WrittenValue:
+    """One value a constructed node carries (``srf:writes``): the property it is written as, and the evidence binding it is read from."""
+
+    property: URIRef
+    binding: RoleBinding
+
+
+@dataclass(frozen=True)
+class ConstructedNode:
+    """The node a graph construction writes for an instance (``srf:ConstructedNode``, laws ``srf:P10`` to ``srf:P13``).
+
+    ``identity`` is ``srf:PerInstance`` or ``srf:ByKey``. ``key`` holds the required-evidence bindings of a keyed node, in
+    the order of their properties, and is empty for a node for each instance. ``writes`` is in the order of the
+    properties written, so the same contract always gives the same node a lowering names by position.
+    """
+
+    iri: URIRef
+    constructed_class: URIRef
+    identity: URIRef
+    key: Tuple[RoleBinding, ...]
+    writes: Tuple[WrittenValue, ...]
+    #: The result-target role binding that states the node, which binds the property linking the instance to it.
+    link: RoleBinding
+
+    @property
+    def keyed(self) -> bool:
+        return str(self.identity) == str(SRF.ByKey)
+
+
+@dataclass(frozen=True)
 class BackendPolicy:
     """The declared backend eligibility and LLM-participation policy a projection lowers under."""
 
@@ -271,6 +301,8 @@ class ProjectionContract:
     population_budget: Optional[int] = None
     #: The expression a derivation states on its result-target role binding (law ``srf:P6``).
     expression: Optional[Expression] = None
+    #: The node a graph construction states on its result-target role binding (law ``srf:P10``).
+    construction: Optional[ConstructedNode] = None
 
     def roles(self, kind: URIRef) -> List[RoleBinding]:
         return [b for b in self.role_bindings if str(b.role_kind) == str(kind)]
@@ -663,6 +695,7 @@ class SurfaceGraphAnalyser:
             )
 
         expression = self._derived_expression(iri, projection_kind, bindings)
+        construction = self._constructed_node(iri, projection_kind, bindings)
 
         policy_iri = self._iri(iri, SRF.backendPolicy, required=False)
         budget = self._literal(iri, SRF.populationBudget, required=False)
@@ -678,6 +711,7 @@ class SurfaceGraphAnalyser:
             backend_policy=self.backend_policy(policy_iri) if policy_iri is not None else None,
             population_budget=int(budget) if budget is not None else None,
             expression=expression,
+            construction=construction,
         )
 
     def _derived_expression(
@@ -714,6 +748,86 @@ class SurfaceGraphAnalyser:
                 f"datatype {expression.datatype} (law srf:P8)"
             )
         return expression
+
+    def _constructed_node(
+        self, iri: URIRef, projection_kind: URIRef, bindings: Sequence[RoleBinding]
+    ) -> Optional[ConstructedNode]:
+        """The node a graph construction states on its result-target binding, and none for any other kind (laws srf:P10 to srf:P13)."""
+        stated = [(b, self.g.value(b.iri, SRF.constructedAs, any=False)) for b in bindings]
+        stated = [(b, n) for b, n in stated if n is not None]
+        is_construction = str(projection_kind) == str(SRF.GraphConstructionProjection)
+        for binding, _ in stated:
+            if str(binding.role_kind) != str(SRF.ResultTargetRole) or not is_construction:
+                raise ContractError(
+                    f"{iri} states a construction on {binding.iri}, which is not the result-target role binding "
+                    f"of a graph construction (law srf:P10)"
+                )
+        if not is_construction:
+            return None
+        if not stated:
+            raise ContractError(
+                f"{iri} is a graph construction and states no construction on its result-target role binding (law srf:P10)"
+            )
+        link, node = stated[0]
+        if link.binds_property is None:
+            raise ContractError(
+                f"{iri} states a construction on {link.iri}, which binds no property to link each instance to its node (law srf:P10)"
+            )
+        if not isinstance(node, URIRef) or str(SRF.ConstructedNode) not in self._types(node):
+            raise ContractError(f"{iri} states a construction that is not a srf:ConstructedNode named by an IRI (law srf:P10)")
+        by_iri = {str(b.iri): b for b in bindings}
+
+        constructed_class = self._iri(node, SRF.constructedClass, required=False)
+        if constructed_class is None:
+            raise ContractError(f"{node} states no class for the node it constructs (law srf:P11)")
+        identity = self._iri(node, SRF.nodeIdentity, required=False)
+        if identity is None or str(identity) not in (str(SRF.PerInstance), str(SRF.ByKey)):
+            raise ContractError(f"{node} states no identity, a node for each instance or for each value of a key (law srf:P11)")
+
+        key_iris = sorted((k for k in self.g.objects(node, SRF.keyBinding)), key=str)
+        keyed = str(identity) == str(SRF.ByKey)
+        if keyed and not key_iris:
+            raise ContractError(f"{node} is keyed and names no key binding (law srf:P11)")
+        if not keyed and key_iris:
+            raise ContractError(f"{node} is a node for each instance and names a key binding (law srf:P11)")
+        key: List[RoleBinding] = []
+        for value in key_iris:
+            binding = by_iri.get(str(value))
+            if binding is None or str(binding.role_kind) != str(SRF.RequiredEvidenceRole) or binding.binds_property is None:
+                raise ContractError(
+                    f"{node} names {value} as a key binding, which is not a required-evidence role binding of "
+                    f"{iri} that binds a property (law srf:P13)"
+                )
+            key.append(binding)
+        key.sort(key=lambda b: str(b.binds_property))
+
+        writes: List[WrittenValue] = []
+        for written in self.g.objects(node, SRF.writes):
+            prop = self._iri(written, SRF.writesProperty, required=False)
+            source = self._iri(written, SRF.fromBinding, required=False)
+            if prop is None or source is None:
+                raise ContractError(f"{node} writes a value that states no property or no evidence binding (law srf:P12)")
+            binding = by_iri.get(str(source))
+            if binding is None or str(binding.role_kind) not in EVIDENCE_ROLES or binding.binds_property is None:
+                raise ContractError(
+                    f"{node} writes {prop} from {source}, which is not an evidence role binding of {iri} that "
+                    f"binds a property (law srf:P12)"
+                )
+            writes.append(WrittenValue(property=prop, binding=binding))
+        if not writes:
+            raise ContractError(f"{node} writes no value (law srf:P11)")
+        writes.sort(key=lambda w: str(w.property))
+        for first, second in zip(writes, writes[1:]):
+            if str(first.property) == str(second.property):
+                raise ContractError(f"{node} writes {first.property} more than once (law srf:P11)")
+        return ConstructedNode(
+            iri=node,
+            constructed_class=constructed_class,
+            identity=identity,
+            key=tuple(key),
+            writes=tuple(writes),
+            link=link,
+        )
 
     def projection_contracts(self, only: Optional[str] = None) -> List[ProjectionContract]:
         declared = sorted(

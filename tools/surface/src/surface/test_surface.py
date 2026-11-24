@@ -21,6 +21,7 @@ notice.
 from __future__ import annotations
 
 import random
+import sys
 import unittest
 from collections import deque
 from dataclasses import replace
@@ -1511,6 +1512,506 @@ class DefectFixtureTests(unittest.TestCase):
     def test_closure_form_without_a_basis_is_refused(self) -> None:
         with self.assertRaisesRegex(ContractError, "closure basis"):
             read_contracts(parse_files([str(FIXTURES / "defect-closure-without-basis.ttl")]))
+
+
+ORDER_SUPPLIER = "https://example.org/lattice/surface/order-supplier#"
+ORDER_SUPPLIER_EXAMPLE = "order-supplier-construction-projection.ttl"
+
+
+def order_graph() -> Graph:
+    return load(ORDER_SUPPLIER_EXAMPLE)
+
+
+def order_with(remove=(), add="") -> Graph:
+    """The order and supplier example with some triples removed, given as (subject, predicate, object) local names with the
+    object a local name, a term or None for any, and some Turtle added."""
+    graph = order_graph()
+    for subject, predicate, obj in remove:
+        target = obj if obj is None or isinstance(obj, URIRef) else URIRef(ORDER_SUPPLIER + obj)
+        graph.remove((URIRef(ORDER_SUPPLIER + subject), predicate, target))
+    if add:
+        graph.parse(
+            data=f"""
+            @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+            @prefix ex: <{ORDER_SUPPLIER}> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            {add}
+            """,
+            format="turtle",
+        )
+    return graph
+
+
+def per_instance_graph() -> Graph:
+    """The example with a node for each order, which names no key."""
+    return order_with(
+        remove=[("os-node", SRF.nodeIdentity, SRF.ByKey), ("os-node", SRF.keyBinding, "os-code")],
+        add="ex:os-node srf:nodeIdentity srf:PerInstance .",
+    )
+
+
+def two_key_graph() -> Graph:
+    """The example keyed by two required-evidence bindings, the code and a region the order names."""
+    return order_with(
+        add="""
+        ex:os-region a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:supplierRegion .
+        ex:order-supplier-projection srf:hasRoleBinding ex:os-region .
+        ex:os-node srf:keyBinding ex:os-region .
+        """
+    )
+
+
+def order_contract(graph: Graph):
+    return read_projection_contracts(graph, only=ORDER_SUPPLIER + "order-supplier-projection")[0]
+
+
+class ConstructionModelTests(unittest.TestCase):
+    """The analyser applies laws srf:P10 to srf:P13 as the shapes do."""
+
+    def test_the_example_parses_its_node_its_key_and_the_values_it_writes(self) -> None:
+        contract = order_contract(order_graph())
+        node = contract.construction
+        self.assertIsNone(contract.expression)
+        self.assertEqual(node.iri, URIRef(ORDER_SUPPLIER + "os-node"))
+        self.assertEqual(node.constructed_class, URIRef(ORDER_SUPPLIER + "Supplier"))
+        self.assertTrue(node.keyed)
+        self.assertEqual([k.iri for k in node.key], [URIRef(ORDER_SUPPLIER + "os-code")])
+        self.assertEqual(
+            [(w.property, w.binding.iri) for w in node.writes],
+            [
+                (URIRef(ORDER_SUPPLIER + "code"), URIRef(ORDER_SUPPLIER + "os-code")),
+                (URIRef(ORDER_SUPPLIER + "name"), URIRef(ORDER_SUPPLIER + "os-name")),
+            ],
+        )
+        self.assertEqual(node.link.binds_property, URIRef(ORDER_SUPPLIER + "suppliedBy"))
+
+    def test_a_node_for_each_instance_names_no_key(self) -> None:
+        node = order_contract(per_instance_graph()).construction
+        self.assertFalse(node.keyed)
+        self.assertEqual(node.key, ())
+
+    def test_a_key_of_two_bindings_is_read_in_the_order_of_their_properties(self) -> None:
+        node = order_contract(two_key_graph()).construction
+        self.assertEqual([k.binds_property for k in node.key], [URIRef(ORDER_SUPPLIER + "supplierCode"), URIRef(ORDER_SUPPLIER + "supplierRegion")])
+
+    def test_the_constructed_node_is_the_same_whatever_the_order_of_the_triples(self) -> None:
+        reference = order_contract(order_graph()).construction
+        triples = sorted(order_graph())
+        for seed in range(5):
+            shuffled = list(triples)
+            random.Random(seed).shuffle(shuffled)
+            graph = Graph()
+            for triple in shuffled:
+                graph.add(triple)
+            self.assertEqual(order_contract(graph).construction, reference)
+
+    def refused(self, graph: Graph, law: str) -> None:
+        with self.assertRaisesRegex(ContractError, law):
+            read_projection_contracts(graph)
+
+    def test_a_graph_construction_with_no_node_is_refused(self) -> None:
+        self.refused(order_with(remove=[("os-link", SRF.constructedAs, None)]), "srf:P10")
+
+    def test_a_node_on_a_binding_that_is_not_a_result_target_is_refused(self) -> None:
+        self.refused(order_with(add="ex:os-code srf:constructedAs ex:os-node ."), "srf:P10")
+
+    def test_a_node_on_a_projection_of_another_kind_is_refused(self) -> None:
+        graph = order_with(remove=[("order-supplier-projection", SRF.projectionKind, None)], add="ex:order-supplier-projection srf:projectionKind srf:JoinProjection .")
+        self.refused(graph, "srf:P10")
+
+    def test_a_derivation_that_states_a_node_is_refused(self) -> None:
+        graph = arr_with(add="ex:arr-target srf:constructedAs ex:arr-expression .")
+        self.refused(graph, "srf:P10")
+
+    def test_a_link_that_binds_no_property_is_refused(self) -> None:
+        self.refused(order_with(remove=[("os-link", SRF.bindsProperty, None)]), "srf:P10")
+
+    def test_a_node_that_is_not_a_constructed_node_is_refused(self) -> None:
+        self.refused(order_with(remove=[("os-node", RDF.type, SRF.ConstructedNode)]), "srf:P10")
+
+    def test_a_node_with_no_class_is_refused(self) -> None:
+        self.refused(order_with(remove=[("os-node", SRF.constructedClass, None)]), "srf:P11")
+
+    def test_a_node_with_no_identity_or_an_identity_the_choice_does_not_name_is_refused(self) -> None:
+        self.refused(order_with(remove=[("os-node", SRF.nodeIdentity, None)]), "srf:P11")
+        self.refused(order_with(remove=[("os-node", SRF.nodeIdentity, None)], add="ex:os-node srf:nodeIdentity ex:Elsewhere ."), "srf:P11")
+
+    def test_a_keyed_node_with_no_key_and_an_unkeyed_node_with_one_are_refused(self) -> None:
+        self.refused(order_with(remove=[("os-node", SRF.keyBinding, None)]), "srf:P11")
+        self.refused(order_with(remove=[("os-node", SRF.nodeIdentity, None)], add="ex:os-node srf:nodeIdentity srf:PerInstance ."), "srf:P11")
+
+    def test_a_node_that_writes_nothing_is_refused(self) -> None:
+        self.refused(order_with(remove=[("os-node", SRF.writes, None)]), "srf:P11")
+
+    def test_a_node_that_writes_one_property_twice_is_refused(self) -> None:
+        self.refused(order_with(add="ex:os-node srf:writes [ srf:writesProperty ex:name ; srf:fromBinding ex:os-code ] ."), "srf:P11")
+
+    def test_a_value_written_from_what_is_not_an_evidence_binding_is_refused(self) -> None:
+        for source in ("os-subject", "os-link", "unknown"):
+            with self.subTest(source=source):
+                graph = order_with(add=f"ex:os-node srf:writes [ srf:writesProperty ex:other ; srf:fromBinding ex:{source} ] .")
+                self.refused(graph, "srf:P12")
+
+    def test_a_written_value_with_no_property_or_no_binding_is_refused(self) -> None:
+        self.refused(order_with(add="ex:os-node srf:writes [ srf:fromBinding ex:os-name ] ."), "srf:P12")
+        self.refused(order_with(add="ex:os-node srf:writes [ srf:writesProperty ex:other ] ."), "srf:P12")
+
+    def test_a_key_that_is_not_required_evidence_is_refused(self) -> None:
+        for key in ("os-name", "os-subject", "unknown"):
+            with self.subTest(key=key):
+                self.refused(order_with(add=f"ex:os-node srf:keyBinding ex:{key} ."), "srf:P13")
+
+
+class ConstructionShapeTests(unittest.TestCase):
+    """The shapes of ontology/surface refuse what the analyser refuses, with no code beside them."""
+
+    def violations(self, graph: Graph) -> set:
+        return {name.rsplit("#", 1)[-1] for name in shape_violations(graph, SURFACE_SHAPES)}
+
+    def test_the_example_and_its_variants_conform(self) -> None:
+        for graph in (order_graph(), per_instance_graph(), two_key_graph()):
+            self.assertEqual(self.violations(graph), set())
+
+    def test_a_graph_construction_with_no_node_is_refused(self) -> None:
+        graph = order_with(remove=[("os-link", SRF.constructedAs, None)])
+        self.assertIn("ConstructionRequiredShape", self.violations(graph))
+        self.assertIn("ConstructedNodeReachedShape", self.violations(graph))
+
+    def test_a_node_on_a_binding_that_is_not_a_result_target_is_refused(self) -> None:
+        self.assertIn("ConstructionPlacementShape", self.violations(order_with(add="ex:os-code srf:constructedAs ex:os-node .")))
+        graph = arr_with(add="ex:arr-target srf:constructedAs ex:arr-expression .")
+        self.assertIn("ConstructionPlacementShape", self.violations(graph))
+
+    def test_a_node_on_a_projection_of_another_kind_is_refused(self) -> None:
+        graph = order_with(remove=[("order-supplier-projection", SRF.projectionKind, None)], add="ex:order-supplier-projection srf:projectionKind srf:JoinProjection .")
+        self.assertIn("ConstructionPlacementShape", self.violations(graph))
+
+    def test_two_nodes_on_one_binding_are_refused(self) -> None:
+        graph = order_with(add="ex:os-link srf:constructedAs ex:os-other . ex:os-other a srf:ConstructedNode .")
+        self.assertIn("ProjectionRoleBindingShape", self.violations(graph))
+
+    def test_a_link_that_binds_no_property_is_refused(self) -> None:
+        self.assertIn("ConstructionLinkPropertyRequiredShape", self.violations(order_with(remove=[("os-link", SRF.bindsProperty, None)])))
+
+    def test_a_node_that_is_no_constructed_node_is_refused(self) -> None:
+        self.assertIn("ConstructionNodeTypedShape", self.violations(order_with(remove=[("os-node", RDF.type, SRF.ConstructedNode)])))
+
+    def test_a_node_with_no_class_no_identity_or_no_value_is_refused(self) -> None:
+        for predicate in (SRF.constructedClass, SRF.nodeIdentity, SRF.writes):
+            with self.subTest(predicate=predicate):
+                self.assertIn("ConstructedNodeShape", self.violations(order_with(remove=[("os-node", predicate, None)])))
+
+    def test_an_identity_the_choice_does_not_name_is_refused(self) -> None:
+        graph = order_with(remove=[("os-node", SRF.nodeIdentity, None)], add="ex:os-node srf:nodeIdentity ex:Elsewhere .")
+        self.assertIn("ConstructedNodeShape", self.violations(graph))
+
+    def test_a_keyed_node_with_no_key_and_an_unkeyed_node_with_one_are_refused(self) -> None:
+        self.assertIn("ConstructedKeyShape", self.violations(order_with(remove=[("os-node", SRF.keyBinding, None)])))
+        graph = order_with(remove=[("os-node", SRF.nodeIdentity, None)], add="ex:os-node srf:nodeIdentity srf:PerInstance .")
+        self.assertIn("ConstructedKeyShape", self.violations(graph))
+
+    def test_a_property_written_twice_is_refused(self) -> None:
+        graph = order_with(add="ex:os-node srf:writes [ srf:writesProperty ex:name ; srf:fromBinding ex:os-code ] .")
+        self.assertIn("ConstructedPropertyOnceShape", self.violations(graph))
+
+    def test_a_written_value_with_no_property_or_no_binding_is_refused(self) -> None:
+        for body in ("srf:fromBinding ex:os-name", "srf:writesProperty ex:other"):
+            with self.subTest(body=body):
+                graph = order_with(add=f"ex:os-node srf:writes [ {body} ] .")
+                self.assertIn("WrittenValueShape", self.violations(graph))
+
+    def test_a_value_written_from_what_is_not_an_evidence_binding_is_refused(self) -> None:
+        for source in ("os-subject", "os-link", "unknown"):
+            with self.subTest(source=source):
+                graph = order_with(add=f"ex:os-node srf:writes [ srf:writesProperty ex:other ; srf:fromBinding ex:{source} ] .")
+                self.assertIn("WrittenValueEvidenceShape", self.violations(graph))
+
+    def test_a_key_that_is_not_required_evidence_is_refused(self) -> None:
+        for key in ("os-name", "os-subject", "unknown"):
+            with self.subTest(key=key):
+                self.assertIn("ConstructedKeyEvidenceShape", self.violations(order_with(add=f"ex:os-node srf:keyBinding ex:{key} .")))
+
+    def test_the_laws_the_shapes_discharge_are_in_the_vocabulary(self) -> None:
+        vocabulary = parse_files([str(ROOT / "ontology" / "surface" / "vocab" / "surface-vocab.ttl")])
+        for law in ("P10", "P11", "P12", "P13"):
+            self.assertIn((SRF[law], RDF.type, SRF.Law), vocabulary)
+        for choice in ("PerInstance", "ByKey"):
+            self.assertIn((SRF[choice], RDF.type, SRF.IdentityChoice), vocabulary)
+
+
+class ConstructionLoweringTests(unittest.TestCase):
+    """Surface-to-MORK lowering of a graph construction (ADR-A18)."""
+
+    def lowered(self, graph: Graph):
+        contract = order_contract(graph)
+        return contract, lower_projection(contract)
+
+    def parts(self, low: Graph, contract):
+        root = lowered_head(contract)
+        (node,) = low.objects(root, MORK.compositeNarrowerMapping)
+        return root, node
+
+    def test_the_construction_lowers_into_a_scheme_a_source_node_root_and_a_contextual_datum(self) -> None:
+        contract, low = self.lowered(order_graph())
+        (scheme,) = set(low.subjects(RDF.type, MORK.MappingScheme))
+        root, node = self.parts(low, contract)
+        self.assertEqual(root, lowered_head(contract))
+        self.assertEqual(low.value(root, MORK.identityRule), MORK.SourceNodeIdentity)
+        concept = low.value(root, MORK.mappingFor)
+        self.assertEqual(low.value(concept, MORK.representedAs), URIRef(ORDER_SUPPLIER + "Order"))
+        self.assertEqual(low.value(node, MORK.broaderApplicative), root)
+        self.assertEqual(low.value(node, MORK.exactTBoxMatch), URIRef(ORDER_SUPPLIER + "Supplier"))
+        self.assertEqual(low.value(node, MORK.inverseRBoxMatch), URIRef(ORDER_SUPPLIER + "suppliedBy"))
+        self.assertEqual(low.value(node, MORK.mappingScheme), scheme)
+        self.assertEqual(set(low.objects(contract.iri, SRF.producesMapping)), {root})
+
+    def test_the_datum_is_guarded_by_each_required_evidence_binding_and_by_no_candidate(self) -> None:
+        contract, low = self.lowered(order_graph())
+        _, node = self.parts(low, contract)
+        guard = low.value(node, MORK.appliesWhen)
+        self.assertIn((guard, RDF.type, SH.NodeShape), low)
+        required = {(low.value(c, SH.path), low.value(c, SH.minCount)) for c in low.objects(guard, SH.property)}
+        self.assertEqual(required, {(URIRef(ORDER_SUPPLIER + "supplierCode"), Literal(1))})
+
+    def test_a_required_value_that_is_not_the_key_guards_the_datum_too(self) -> None:
+        graph = order_with(remove=[("os-name", SRF.roleKind, None)], add="ex:os-name srf:roleKind srf:RequiredEvidenceRole .")
+        contract, low = self.lowered(graph)
+        _, node = self.parts(low, contract)
+        guard = low.value(node, MORK.appliesWhen)
+        paths = {low.value(c, SH.path) for c in low.objects(guard, SH.property)}
+        self.assertEqual(paths, {URIRef(ORDER_SUPPLIER + "supplierCode"), URIRef(ORDER_SUPPLIER + "supplierName")})
+
+    def test_an_assertion_writes_each_value_from_its_binding(self) -> None:
+        contract, low = self.lowered(order_graph())
+        _, node = self.parts(low, contract)
+        written = {
+            (low.value(a, MORK.exactRBoxMatch), low.value(a, MORK.dataRef))
+            for a in low.objects(node, MORK.compositeNarrowerMapping)
+        }
+        self.assertEqual(
+            written,
+            {
+                (URIRef(ORDER_SUPPLIER + "code"), Literal(f"<{ORDER_SUPPLIER}supplierCode>")),
+                (URIRef(ORDER_SUPPLIER + "name"), Literal(f"<{ORDER_SUPPLIER}supplierName>")),
+            },
+        )
+
+    def test_a_keyed_identity_is_the_contract_key_the_class_and_the_key_values(self) -> None:
+        contract, low = self.lowered(order_graph())
+        _, node = self.parts(low, contract)
+        self.assertIsNone(low.value(node, MORK.conceptName))
+        identity = low.value(node, MORK.identityTemplateMapping)
+        self.assertIn((identity, RDF.type, MORK.ConcatExpression), low)
+        left, right = low.value(identity, MORK.concatLeft), low.value(identity, MORK.concatRight)
+        self.assertEqual(low.value(left, MORK.dataInline), Literal("order-supplier/Supplier/"))
+        self.assertEqual(low.value(right, MORK.dataRef), Literal(f"<{ORDER_SUPPLIER}supplierCode>"))
+
+    def test_a_key_of_two_values_is_joined_by_a_slash_in_the_order_of_their_properties(self) -> None:
+        contract, low = self.lowered(two_key_graph())
+        _, node = self.parts(low, contract)
+        references = []
+        current = low.value(node, MORK.identityTemplateMapping)
+        while current is not None:
+            left, right = low.value(current, MORK.concatLeft), low.value(current, MORK.concatRight)
+            references.append(low.value(left, MORK.dataInline) or low.value(left, MORK.dataRef))
+            current = right if (right, RDF.type, MORK.ConcatExpression) in low else None
+            if current is None:
+                references.append(low.value(right, MORK.dataInline) or low.value(right, MORK.dataRef))
+        self.assertEqual(
+            references,
+            [
+                Literal("order-supplier/Supplier/"),
+                Literal(f"<{ORDER_SUPPLIER}supplierCode>"),
+                Literal("/"),
+                Literal(f"<{ORDER_SUPPLIER}supplierRegion>"),
+            ],
+        )
+        self.assertEqual(shape_violations(low, MORK_SHAPES), set())
+
+    def test_a_node_for_each_instance_names_no_key_and_is_named_from_the_contract_key_and_class(self) -> None:
+        contract, low = self.lowered(per_instance_graph())
+        _, node = self.parts(low, contract)
+        self.assertIsNone(low.value(node, MORK.identityTemplateMapping))
+        self.assertEqual(low.value(node, MORK.conceptName), Literal("order-supplier/Supplier"))
+
+    def test_the_lowered_scheme_is_one_the_mork_shapes_accept(self) -> None:
+        for graph in (order_graph(), per_instance_graph(), two_key_graph()):
+            self.assertEqual(shape_violations(self.lowered(graph)[1], MORK_SHAPES), set())
+
+    def test_lowering_is_deterministic_and_the_same_with_the_triples_permuted(self) -> None:
+        contract = order_contract(order_graph())
+        reference = canonical.hash_graph(lower_projection(contract))
+        self.assertEqual(canonical.hash_graph(lower_projection(contract)), reference)
+        triples = sorted(order_graph())
+        for seed in range(5):
+            shuffled = list(triples)
+            random.Random(seed).shuffle(shuffled)
+            graph = Graph()
+            for triple in shuffled:
+                graph.add(triple)
+            self.assertEqual(canonical.hash_graph(lower_projection(order_contract(graph))), reference)
+
+    def test_a_contract_key_that_needs_encoding_is_encoded_in_the_identifier(self) -> None:
+        graph = order_with(remove=[("order-supplier-projection", SRF.contractKey, None)], add='ex:order-supplier-projection srf:contractKey "order supplier/1" .')
+        contract, low = self.lowered(graph)
+        _, node = self.parts(low, contract)
+        left = low.value(low.value(node, MORK.identityTemplateMapping), MORK.concatLeft)
+        self.assertEqual(low.value(left, MORK.dataInline), Literal("order%20supplier%2F1/Supplier/"))
+
+    def test_a_construction_is_not_a_bare_mapping(self) -> None:
+        contract, low = self.lowered(order_graph())
+        self.assertEqual(set(low.subjects(MORK.mappingFor, contract.iri)), set())
+        self.assertTrue(set(low.subjects(RDF.type, MORK.MappingScheme)))
+
+
+try:
+    import mork_rdf
+except ImportError:  # the compiler is a package of its own, installed by the python bootstrap
+    mork_rdf = None
+
+
+@unittest.skipIf(mork_rdf is None, "mork_rdf is not installed")
+class ConstructionCompilationTests(unittest.TestCase):
+    """The lowered scheme compiles with `mork_rdf` and runs to the graph the contract states (SVA-S2g)."""
+
+    BASE = "https://example.org/lattice/surface/order-supplier/out/"
+    NODE = BASE + "order-supplier/Supplier/"
+    TYPE = str(RDF.type)
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        # The compiler reads MORK's own shapes through the repository catalogue's reader, which sits in tools/.
+        if str(ROOT / "tools") not in sys.path:
+            sys.path.insert(0, str(ROOT / "tools"))
+
+    def compile(self, graph: Graph):
+        low = lower_projection(order_contract(graph))
+        (scheme,) = set(low.subjects(RDF.type, MORK.MappingScheme))
+        return mork_rdf.compile_scheme(low, scheme, base=self.BASE, at=datetime.fromisoformat("2026-11-24T00:00:00+00:00"))
+
+    def evaluate(self, engine: str, compiled, source: Graph):
+        if engine == "oxigraph":
+            out = mork_rdf.run(compiled, source)
+            return {(str(s), str(p), str(o)) for s, p, o in out.graph}, {(f.code, f.focus, f.value) for f in out.findings}
+        from rdflib import Dataset
+
+        dataset = Dataset()
+        for triple in source:
+            dataset.default_graph.add(triple)
+        written = {(str(s), str(p), str(o)) for q in compiled.constructs for s, p, o in dataset.query(q.text)}
+        reported = {(q.code, str(r["focus"]), None if r["value"] is None else str(r["value"])) for q in compiled.checks for r in dataset.query(q.text)}
+        return written, reported
+
+    def test_the_example_compiles_to_the_query_the_case_shows(self) -> None:
+        compiled = self.compile(order_graph())
+        node = compiled.constructs[0]
+        expected = f"""BASE <{self.BASE}>
+CONSTRUCT {{ ?t3 <{self.TYPE}> <{ORDER_SUPPLIER}Supplier> . ?f1 <{ORDER_SUPPLIER}suppliedBy> ?t3 . }}
+WHERE {{
+  ?f1 <{self.TYPE}> <{ORDER_SUPPLIER}Order> .
+  FILTER (((EXISTS {{ ?f1 <{ORDER_SUPPLIER}supplierCode> ?any2 . }})))
+  ?f1 <{ORDER_SUPPLIER}supplierCode> ?v4 .
+  BIND (IRI(CONCAT("order-supplier/Supplier/", ENCODE_FOR_URI(STR(?v4)))) AS ?t3)
+}}"""
+        self.assertEqual(" ".join(node.text.split()), " ".join(expected.split()))
+        self.assertEqual(len(compiled.constructs), 3)
+        self.assertEqual([f.code for f in compiled.findings], ["MappingReview"])
+        self.assertFalse(compiled.errors)
+
+    def test_the_example_runs_to_its_expected_graph_on_each_engine(self) -> None:
+        compiled = self.compile(order_graph())
+        source = order_graph()
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, source)
+                s1, s2 = self.NODE + "S1", self.NODE + "S2"
+                self.assertEqual(
+                    {t for t in written if t[2] != "true"},
+                    {
+                        (s1, self.TYPE, ORDER_SUPPLIER + "Supplier"),
+                        (s1, ORDER_SUPPLIER + "code", "S1"),
+                        (s1, ORDER_SUPPLIER + "name", "Acme Components"),
+                        (s2, self.TYPE, ORDER_SUPPLIER + "Supplier"),
+                        (s2, ORDER_SUPPLIER + "code", "S2"),
+                        (ORDER_SUPPLIER + "order-1", ORDER_SUPPLIER + "suppliedBy", s1),
+                        (ORDER_SUPPLIER + "order-2", ORDER_SUPPLIER + "suppliedBy", s1),
+                        (ORDER_SUPPLIER + "order-3", ORDER_SUPPLIER + "suppliedBy", s2),
+                    },
+                )
+                self.assertEqual(reported, set())
+
+    def test_a_node_for_each_order_runs_to_a_node_for_each_order(self) -> None:
+        compiled = self.compile(per_instance_graph())
+        self.assertEqual(compiled.findings, ())
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, _ = self.evaluate(engine, compiled, order_graph())
+                nodes = {s for s, p, o in written if p == self.TYPE and o == ORDER_SUPPLIER + "Supplier"}
+                self.assertEqual(len(nodes), 3)
+                links = {s: o for s, p, o in written if p == ORDER_SUPPLIER + "suppliedBy"}
+                self.assertEqual(len(set(links.values())), 3)
+
+    def test_an_order_missing_its_required_code_contributes_nothing_and_is_reported(self) -> None:
+        source = order_graph()
+        source.parse(
+            data=f"""@prefix ex: <{ORDER_SUPPLIER}> . ex:order-4 a ex:Order ; ex:supplierName "No Code Ltd" .""", format="turtle"
+        )
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, self.compile(order_graph()), source)
+                self.assertNotIn(ORDER_SUPPLIER + "order-4", {s for s, p, o in written})
+                self.assertNotIn("No Code Ltd", {o for s, p, o in written})
+                self.assertEqual(reported, {("InstanceExcluded", ORDER_SUPPLIER + "order-4", f"<{ORDER_SUPPLIER}supplierCode>")})
+
+    def test_an_order_with_the_key_and_without_another_required_value_writes_no_link_where_another_made_the_node(self) -> None:
+        contract_graph = order_with(remove=[("os-name", SRF.roleKind, None)], add="ex:os-name srf:roleKind srf:RequiredEvidenceRole .")
+        source = Graph()
+        source.parse(
+            data=f"""@prefix ex: <{ORDER_SUPPLIER}> .
+            ex:a a ex:Order ; ex:supplierCode "S1" ; ex:supplierName "Acme Components" .
+            ex:b a ex:Order ; ex:supplierCode "S1" .""",
+            format="turtle",
+        )
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, self.compile(contract_graph), source)
+                self.assertIn((ORDER_SUPPLIER + "a", ORDER_SUPPLIER + "suppliedBy", self.NODE + "S1"), written)
+                self.assertNotIn(ORDER_SUPPLIER + "b", {s for s, p, o in written})
+                self.assertEqual(reported, {("InstanceExcluded", ORDER_SUPPLIER + "b", f"<{ORDER_SUPPLIER}supplierName>")})
+
+    def test_a_node_whose_orders_disagree_on_its_name_is_reported_by_node_and_value(self) -> None:
+        source = Graph()
+        source.parse(
+            data=f"""@prefix ex: <{ORDER_SUPPLIER}> .
+            ex:a a ex:Order ; ex:supplierCode "S1" ; ex:supplierName "Acme Components" .
+            ex:b a ex:Order ; ex:supplierCode "S1" ; ex:supplierName "Acme Ltd" .""",
+            format="turtle",
+        )
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                _, reported = self.evaluate(engine, self.compile(order_graph()), source)
+                self.assertEqual(
+                    reported,
+                    {("ValueDisagrees", self.NODE + "S1", "Acme Components"), ("ValueDisagrees", self.NODE + "S1", "Acme Ltd")},
+                )
+
+    def test_a_keyed_construction_carries_the_mapping_review_and_one_for_each_instance_does_not(self) -> None:
+        keyed = [f for f in self.compile(order_graph()).findings if f.code == "MappingReview"]
+        self.assertEqual(len(keyed), 1)
+        self.assertEqual(keyed[0].severity, mork_rdf.Severity.WARNING)
+        self.assertEqual([f for f in self.compile(per_instance_graph()).findings if f.code == "MappingReview"], [])
+
+    def test_compiling_the_lowered_scheme_is_the_same_whatever_the_order_of_the_contract(self) -> None:
+        reference = self.compile(order_graph()).text()
+        triples = sorted(order_graph())
+        for seed in range(3):
+            shuffled = list(triples)
+            random.Random(seed).shuffle(shuffled)
+            graph = Graph()
+            for triple in shuffled:
+                graph.add(triple)
+            self.assertEqual(self.compile(graph).text(), reference)
+
 
 
 if __name__ == "__main__":

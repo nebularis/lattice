@@ -3,7 +3,7 @@
 # Sketch: a projection backend, from a Surface projection contract to queries a step runs
 
 **Unit:** `studio-visual-authoring` (SVA), slice SVA-S2d, raised on 2026-11-23 when the maintainer chose that projections are built in this unit, design first
-**Status:** sketch. SVA-Q24 to SVA-Q30 answered by the maintainer on 2026-11-23. SVA-Q31 to SVA-Q35, raised by SVA-S2g on 2026-11-24, answered by the maintainer on 2026-11-24. No question is open
+**Status:** sketch. SVA-Q24 to SVA-Q30 answered by the maintainer on 2026-11-23. SVA-Q31 to SVA-Q35, raised by SVA-S2g on 2026-11-24, answered by the maintainer on 2026-11-24. No question is open. SVA-S2g built the graph construction case on 2026-11-24
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md), slices SVA-S2d and SVA-S2c
 **Builds on:** ADR-A16, ADR-A17, ADR-A18, ADR-A19, ADR-A20, ADR-A23 and ADR-A41 (all Accepted), ADR-A154 with its addendum of 2026-11-20, and `tools/mork_rdf`
 
@@ -84,7 +84,7 @@ What `mork_rdf` compiles today fits the output. A root datum iterating `src:Orde
 | which evidence goes on which constructed property | nothing, since an evidence binding names the property it reads only |
 | the identity of the constructed node | nothing. `mork_rdf`'s default is a hash of the source node's IRI, which is a rule, not a statement of the contract |
 
-So the contract, the scheme and the query are not written here. A scheme can be written by hand, but writing the lowering would settle the questions below by implementation, and the sketch's rule for this section is to pause. SVA-S2g builds nothing until SVA-Q31 to SVA-Q34 in section 3 are answered.
+So the case paused until SVA-Q31 to SVA-Q35 in section 3 were answered, and the contract, the scheme and the query as built follow the example below.
 
 **The example, as answered on 2026-11-24.** A party minted from a buyer's email spells a personal value into an identifier, which the identity patterns warn against, so the example is an order giving a supplier keyed by a supplier code, with the supplier's name as candidate evidence. Placeholder names, for SVA-S2g to ground:
 
@@ -100,6 +100,54 @@ ex:os-node a srf:ConstructedNode ; srf:constructedClass tgt:Supplier ;
 ```
 
 What a key costs, by arithmetic on 100,000 orders with 20,000 distinct codes and two written values: 20,000 nodes and 160,000 triples where a node for each order gives 100,000 and 400,000, and withdrawing one order removes one link and reads the node's other links, about four, where a node for each order removes four triples and reads nothing.
+
+**As built (SVA-S2g, 2026-11-24).** The example is `ontology/surface/examples/order-supplier-construction-projection.ttl`, with the placeholder names kept and the order's own classes and properties in one namespace. A contract states the construction on the result-target binding with `srf:constructedAs`, and the constructed node is a `srf:ConstructedNode` with `srf:constructedClass`, `srf:nodeIdentity` (`srf:PerInstance` or `srf:ByKey`), a `srf:keyBinding` for each part of a key, and a `srf:writes` for each value, a `srf:WrittenValue` that gives `srf:writesProperty` and `srf:fromBinding`. Laws `srf:P10` to `srf:P13` and a shape for each part check it, and `srf:P1` says that a node typed with a class an authored vocabulary declares reaches the authored signature.
+
+The contract, as in the example:
+
+```turtle
+ex:os-link a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ; srf:bindsProperty ex:suppliedBy ;
+    srf:constructedAs ex:os-node .
+ex:os-node a srf:ConstructedNode ; srf:constructedClass ex:Supplier ;
+    srf:nodeIdentity srf:ByKey ; srf:keyBinding ex:os-code ;
+    srf:writes [ srf:writesProperty ex:code ; srf:fromBinding ex:os-code ] ,
+               [ srf:writesProperty ex:name ; srf:fromBinding ex:os-name ] .
+```
+
+Lowered, abridged, with each node's name shortened to its place in the scheme. The guard names every required-evidence binding, the candidate name is not in it, and the identity is the contract's key, the class and the key's values:
+
+```turtle
+exec:scheme_root a mork:DataMapping, mork:Datum ; mork:mappingScheme exec:scheme ; mork:mappingFor exec:scheme_carrier ;
+    mork:identityRule mork:SourceNodeIdentity ; mork:compositeNarrowerMapping exec:scheme_node .
+exec:scheme_node a mork:DataMapping ; mork:mappingScheme exec:scheme ; mork:broaderApplicative exec:scheme_root ;
+    mork:exactTBoxMatch ex:Supplier ; mork:inverseRBoxMatch ex:suppliedBy ;
+    mork:appliesWhen exec:scheme_guard ; mork:identityTemplateMapping exec:scheme_identity_0 ;
+    mork:compositeNarrowerMapping exec:scheme_write_0 , exec:scheme_write_1 .
+exec:scheme_guard a sh:NodeShape ; sh:property exec:scheme_guard_0 .
+exec:scheme_guard_0 sh:path ex:supplierCode ; sh:minCount 1 .
+exec:scheme_identity_0 a mork:ConcatExpression ; mork:concatLeft exec:scheme_identity_part_0 ; mork:concatRight exec:scheme_identity_part_1 .
+exec:scheme_identity_part_0 a mork:LiteralExpression ; mork:dataInline "order-supplier/Supplier/" .
+exec:scheme_identity_part_1 a mork:RefExpression ; mork:dataRef "<https://example.org/lattice/surface/order-supplier#supplierCode>" .
+exec:scheme_write_0 a mork:DataMapping ; mork:exactRBoxMatch ex:code ; mork:dataRef "<.../supplierCode>" .
+exec:scheme_write_1 a mork:DataMapping ; mork:exactRBoxMatch ex:name ; mork:dataRef "<.../supplierName>" .
+```
+
+Compiled, the query that writes the node and the link, with the prefixed names standing for the full IRIs `mork_rdf` writes. The query for each value repeats the guard and the identity, whole, and adds the value's own pattern:
+
+```sparql
+BASE <https://example.org/lattice/surface/order-supplier/out/>
+CONSTRUCT { ?t3 rdf:type ex:Supplier . ?f1 ex:suppliedBy ?t3 . }
+WHERE {
+  ?f1 rdf:type ex:Order .
+  FILTER (EXISTS { ?f1 ex:supplierCode ?any2 . })
+  ?f1 ex:supplierCode ?v4 .
+  BIND (IRI(CONCAT("order-supplier/Supplier/", ENCODE_FOR_URI(STR(?v4)))) AS ?t3)
+}
+```
+
+**The guard held.** The first thing the case had to show was that a guard sits right on a contextual node beneath a source-node root, so an instance contributes whole or not at all (SVA-Q33). It does, on Oxigraph and on rdflib. An order that holds the key and lacks another required value writes no link, no type and no value of its own, even where another order has made the node, and without the guard the same order links to the node and nothing is reported. `mork_rdf`'s existing cases report neither that exclusion nor a keyed node whose instances disagree, so it gains two checks and no mapping kind. `InstanceExcluded` names each excluded instance and the required value it lacks, and `ValueDisagrees` names a keyed node and each value its instances give a property. A keyed construction also compiles with a `MappingReview` warning, which is where SVA-Q35 (a) is recorded as a finding in this slice, and a construction for each instance compiles with none. Whether the studio's review requirement, which today reads only the projection kind, acts on it is for the slice that compiles projections in the studio.
+
+What the example gives, over three orders where two name one supplier, is two supplier nodes and three links, each node typed and carrying its code, and the name on the first.
 
 ## 3. Questions
 

@@ -1,0 +1,126 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/surface/order-supplier#> .
+
+# A graph construction projection. An order names its supplier by a code and,
+# where it has one, by a name, but no read path reaches a supplier as a node of
+# its own, so neither promotion nor indexing covers it. The projection writes
+# one supplier for each supplier code, links each order to it, and gives it the
+# code and the name.
+#
+# The contract states the construction on its result target, which binds the
+# link from the order. The constructed node states its class, its identity and
+# each value it writes. Its identity is by a key, the supplier code, so two
+# orders with one code share one supplier. A code is a code a supplier is known
+# by, not a personal value and not one that changes, which a key must be: the
+# key is spelled into the supplier's identifier, and Surface cannot check it.
+#
+# An order that lacks the code, a required value, contributes nothing. An order
+# that lacks the name, a candidate value, still gives its supplier and its link.
+#
+# This contract lowers into a MORK mapping scheme (ADR-A18). It does not emit
+# SPARQL, SHACL, or anything else itself.
+
+# --- the carrier and the vocabulary it is read and written in -----------------
+
+ex:Order a owl:Class .
+
+ex:supplierCode a owl:DatatypeProperty ;
+    rdfs:domain ex:Order ;
+    rdfs:range xsd:string .
+
+ex:supplierName a owl:DatatypeProperty ;
+    rdfs:domain ex:Order ;
+    rdfs:range xsd:string .
+
+ex:Supplier a owl:Class .
+
+ex:suppliedBy a owl:ObjectProperty ;
+    rdfs:domain ex:Order ;
+    rdfs:range ex:Supplier .
+
+ex:code a owl:DatatypeProperty ;
+    rdfs:domain ex:Supplier ;
+    rdfs:range xsd:string .
+
+ex:name a owl:DatatypeProperty ;
+    rdfs:domain ex:Supplier ;
+    rdfs:range xsd:string .
+
+# --- generation profile ------------------------------------------------------
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/2" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 .
+
+# --- the projection contract -------------------------------------------------
+
+ex:os-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+ex:os-code a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:supplierCode .
+
+ex:os-name a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:CandidateEvidenceRole ;
+    srf:bindsProperty ex:supplierName .
+
+# The result target binds the link from each order to its supplier, and states
+# the node the link reaches.
+ex:os-link a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:suppliedBy ;
+    srf:constructedAs ex:os-node .
+
+# The constructed node: its class, its identity, and each value it writes from
+# an evidence binding of this contract. Its key binding is required evidence.
+ex:os-node a srf:ConstructedNode ;
+    srf:constructedClass ex:Supplier ;
+    srf:nodeIdentity srf:ByKey ;
+    srf:keyBinding ex:os-code ;
+    srf:writes
+        [ srf:writesProperty ex:code ; srf:fromBinding ex:os-code ] ,
+        [ srf:writesProperty ex:name ; srf:fromBinding ex:os-name ] .
+
+ex:os-backend-policy a srf:ProjectionBackendPolicy ;
+    srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
+    srf:deterministicOnly true ;
+    srf:llmCompletionPolicy srf:NoLLMCompletion .
+
+ex:order-supplier-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:order-supplier-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "order-supplier" ;
+    srf:carrier ex:Order ;
+    srf:projectionKind srf:GraphConstructionProjection ;
+    srf:hasRoleBinding ex:os-subject, ex:os-code, ex:os-name, ex:os-link ;
+    srf:targetNamespace "https://example.org/lattice/surface/order-supplier/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:profile-v1 ;
+    srf:backendPolicy ex:os-backend-policy .
+
+# --- carrier instances -------------------------------------------------------
+
+# Two orders name one supplier, so they share a node. A third names another
+# and gives no name.
+ex:order-1 a ex:Order ;
+    ex:supplierCode "S1" ;
+    ex:supplierName "Acme Components" .
+
+ex:order-2 a ex:Order ;
+    ex:supplierCode "S1" ;
+    ex:supplierName "Acme Components" .
+
+ex:order-3 a ex:Order ;
+    ex:supplierCode "S2" .
