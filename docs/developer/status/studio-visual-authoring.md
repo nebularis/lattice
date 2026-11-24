@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused for the maintainer, who answers SVA-Q42 to SVA-Q48 of the projection backend sketch before SVA-S2i is built, and whether a join condition's comparison falls back to the datum's. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** paused for the maintainer, who answers SVA-Q49 before SVA-S2i is built. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -65,7 +65,8 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2g | graph construction projections | built 2026-11-24 | SVA-S2f |
 | SVA-S2h | join projections | built 2026-11-24, building 2026-11-24 | SVA-S2f |
 | SVA-S2i | expansion projections | building 2026-11-24 | SVA-S2f |
-| SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2g, SVA-S2h, SVA-S2i |
+| SVA-S2j | expansion combined with graph construction | planned | SVA-S2i |
+| SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
@@ -267,3 +268,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-24: the maintainer confirmed that a pair casts the instance's value to the second carrier's datatype and never the reverse, which keeps the second carrier's side indexable, that MORK's link limit and unmatched severity stay optional with their defaults, and that both ambiguity reports stand, since their triggers differ. Whether a join condition falls back to the datum's comparison is put back to the maintainer with its consequences. SVA-S2i started.
 - 2026-11-24: SVA-S2i marked building.
 - 2026-11-24: SVA-S2i stopped at its first step with nothing built: an expansion's case is in the projection backend sketch's section 2.4, with SVA-Q42 to SVA-Q48 for the maintainer. The README says only that an expansion restates one relation as several, and what it expands (a fan-out of one value, a collection's members, a hierarchy) decides the contract's vocabulary and the scheme.
+- 2026-11-24: the maintainer answered SVA-Q42 to SVA-Q48. An expansion expands a collection or a transitive closure, each selectable, from an RDF list or the transitive relation, each member restated as a statement on the instance, nothing written for an empty or missing source with an empty collection reported as information, no bound with an `EngineeringReview` finding, the terms and decisions as leaned. A node for each member is planned as SVA-S2j before SVA-S2c. A join condition no longer falls back to the datum's comparison, built with SVA-S2i. SVA-Q49, whether members are stated by a SHACL path and whether conformance to a shape is a source, is put to the maintainer.

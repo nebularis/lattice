@@ -560,7 +560,8 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-S2g | graph construction projections | studio-visual-authoring | built 2026-11-24 | SVA-S2f | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2h | join projections | studio-visual-authoring | built 2026-11-24 | SVA-S2f | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2i | expansion projections | studio-visual-authoring | building 2026-11-24 | SVA-S2f | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-S2c | projections lowered and run in a surface step | studio-visual-authoring | planned | SVA-S2g, SVA-S2h, SVA-S2i | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S2j | expansion combined with graph construction | studio-visual-authoring | planned | SVA-S2i | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S2c | projections lowered and run in a surface step | studio-visual-authoring | planned | SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S3 | the surface simulator pane | studio-visual-authoring | planned | SVA-S1, SVA-S2, SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M1 | the mapping schemes listed on the left | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M2a | MORK's template library, with `mork_rdf` | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
