@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused after SVA-S2g for the maintainer, who decides whether to accept the addenda to ADR-A18, ADR-A23 and ADR-A41, and says when SVA-S2h starts. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** the Surface README's prose tidied, then SVA-S2h, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -256,3 +256,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-24: the maintainer accepted the leanings. SVA-S2g adds two checks to `mork_rdf`, one for an instance its guard excludes and one for a keyed node whose instances disagree, with no new mapping kind. `srf:producesMapping`'s widened domain stands, and SVA-Q35's rule stays in ADR-A41's addendum. The addenda to ADR-A18, ADR-A23 and ADR-A41 stay Proposed until SVA-S2g is built, then go to the maintainer together. SVA-S2g resumes from its prototype.
 - 2026-11-24: SVA-S2g built, [Validation Pack](../validation/SVA-S2g.md). A graph construction states its node on its result-target binding, lowers into a scheme `mork_rdf` compiles with its existing cases, and an instance the guard excludes contributes nothing, which two new checks and a mapping review finding report. The addenda to ADR-A18 and ADR-A23 for this kind are Proposed, with ADR-A41's, and wait for the maintainer to accept together at the pause after SVA-S2g.
 - 2026-11-24: reviewed SVA-S2g and re-ran its checks. Recorded TD-263, since the disagreement check compares terms and TSD-77 makes equal numbers differ as terms. The Surface README's 24 semicolons in prose are older than this unit, 25 at its base, and are left for the maintainer to say whether this unit tidies them.
+- 2026-11-24: the maintainer accepted the addenda to ADR-A18 (derivations and graph constructions carried across by the lowering, and a scheme naming its contract), ADR-A23 (`mork_rdf` compiles both) and ADR-A41 (a keyed construction takes the mapping review), and asked that the Surface README's semicolons in prose be tidied now. SVA-S2h comes next, with a pause after it.

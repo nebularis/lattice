@@ -28,7 +28,7 @@ Authoring MORK's mapping graph by hand — parameter bindings, targeting specs, 
 
 ## Addendum (2026-11-23): a derivation's expression is carried across, and a lowered derivation is a scheme with a source node root
 
-**Status of this addendum:** Proposed.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-24.
 
 The decision above lowers a projection into mapping nodes without saying what a derivation computes, so the operation of a derivation was written nowhere and a backend had to supply it. Surface now has a vocabulary to state it, and MORK has typed value expressions and an identity rule that writes on the source node.
 
@@ -44,7 +44,7 @@ The decision above lowers a projection into mapping nodes without saying what a 
 
 ## Addendum (2026-11-24): a graph construction states its node, and a lowered construction is a scheme
 
-**Status of this addendum:** Proposed.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-24.
 
 Item 4 of the addendum of 2026-11-23 leaves a graph construction as a bare mapping. A construction writes new structure, a node of a class, linked from the instance and carrying values read from it, and Surface's role kinds cannot say what that node is. This addendum replaces item 4 for this kind. A join and an expansion keep the bare mapping.
 

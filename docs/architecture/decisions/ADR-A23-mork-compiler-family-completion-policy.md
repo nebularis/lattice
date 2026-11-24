@@ -36,7 +36,7 @@ ADR-A148 proposes XSLT and JOLT as targets for a mapping over an XML or JSON sou
 
 ## Addendum (2026-11-23): mork_rdf compiles derivation projections
 
-**Status of this addendum:** Proposed.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-24.
 
 ADR-A18's addendum of the same date lowers a derivation projection into a mapping scheme whose root takes the source node as its identity and whose assertion has a value expression. Nothing compiles that scheme yet, and by the policy above a vocabulary no compiler reads does not count as complete.
 
@@ -48,7 +48,7 @@ ADR-A18's addendum of the same date lowers a derivation projection into a mappin
 
 ## Addendum (2026-11-24): mork_rdf compiles graph construction projections
 
-**Status of this addendum:** Proposed.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-24.
 
 ADR-A18's addendum of the same date lowers a graph construction projection into a mapping scheme with a source-node root, a guarded contextual datum that mints the constructed node, and an assertion for each value. By the policy above a vocabulary no compiler reads does not count as complete.
 
