@@ -2,7 +2,7 @@
 
 # `tools/models/multi-store-protocols/`
 
-TLA+ models of the protocols behind rows of the multi-store catalogue (sketch section 4.2). They are design-time evidence for the formal-methods track H plan's FMH-5, protocol model A, and for MSA-I6, models X1 to X4. They are not shipped code and not a proof. TLC checks every state of a small finite instance, so a result holds for the stated constants only.
+TLA+ models of the protocols behind rows of the multi-store catalogue (sketch section 4.2). They are design-time evidence for the formal-methods track H plan's FMH-5, protocol model A, for MSA-I6, models X1 to X4 and X1 with receipts only, and for MSA-I14, model X5 of the studio's writers. They are not shipped code and not a proof. TLC checks every state of a small finite instance, so a result holds for the stated constants only.
 
 ## Models
 
@@ -166,6 +166,69 @@ What the model abstracts away.
 - The router is read in one step and a view is never invalidated, so a view stays stale until the writer refreshes it.
 - `C3` was checked for `Fenced` only. It was not checked for `Naive`.
 
+### `X1_ReceiptsOnly.tla`
+
+X1 with the stores the studio has, which keep a receipt for each command id and no version row for the partition. The module extends `X1_SerialisedApply.tla` and changes nothing in it. Each of its configurations replaces X1's `Outcome` by `ReceiptOutcome`, so a store answers a command that has a receipt `Duplicate` and applies any other, and nothing in the store guards the partition's order. `X1_Unguarded.cfg` takes out the guard and the receipts together, and these configurations take out the guard alone.
+
+X1's `ver` then holds the seq of the last command a store applied, which is what X1's version row would hold. S1 states that it equals the count of commands applied, so here S1 reads as "no command was skipped". Three invariants are added.
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `AtMostOnce` | invariant | The first half of S1. No command's effect is applied to a store twice. | holds |
+| `NoGap` | invariant | A store holds no command after one it lacks. | fails with `Received` |
+| `NoGapBehindA` | invariant | Store B holds no command after one that A holds and B lacks, the gap of the second store alone. | fails with `Received` |
+
+What the model abstracts away, beyond X1's list.
+
+- Each command writes an aggregate of its own, so an aggregate's revision never refuses it. Commands on one aggregate are the subject of `X5_WholeCommand.tla`.
+
+### `X5_WholeCommand.tla`
+
+Writers of the studio on one partition, and whether every state they reach is one that some sequence of whole commands gives. One workspace has two aggregates, its description and one document, each with a version row, and the description lists the document. The stream holds a deletion of the document, which writes both aggregates, beside a save of the document, a save of the description alone, or both. The model is written from the studio's `Writer` and its generated operations as built, and from ADR-A149's decision 13 and its addendum of 2026-11-19.
+
+A writer handles one command at a time. It reads the command's receipt, and a command with one is answered from it. Otherwise it reads the rows and plans the command, or answers it without a request where the command's own check fails. A save of the document expects revision 1, the one its sender read, and is answered stale otherwise. A deletion of a document the description does not list is answered not found. A planned command is sent as one request, which the store applies in one step, and the writer reads the receipt back to answer. Then it stores the offset.
+
+Every step of a request is guarded on its row's revision and on its transaction having no claim, and writes the claim where it applies, as the generated operations do. A transaction is named by the command's id and the step's number, the same on every delivery, so a step another delivery applied writes nothing.
+
+| `Guard` | Meaning |
+|---|---|
+| `PerStep` | The design as built. Each step applies where its own guard holds. A deletion is a description step and then a tombstone of the document, and its receipt is guarded on the description step's claim. A save has one step, and its receipt is guarded on it. A deletion whose receipt is present after its request, or that is answered from its receipt, tombstones a document row still live in a later request, then answers. |
+| `Whole` | One guard over every row the command writes, so the request applies every step and the receipt, or nothing. A refused command is planned again from its receipt on, up to `Retries` times, and is then answered as not applied. |
+| `Fenced` | `Whole`, and every request carries the writer's epoch. A writer sets the partition's epoch when it starts, and the store refuses a request whose epoch is not the partition's, after which the writer stops without answering. |
+| `FencedAnswer` | `Fenced`, and a command refused by its own check, which sends no request, is answered from the same read as its rows, which also reads the epoch and the receipt. A writer that reads another epoch stops without answering, and one that reads the receipt answers from it. A variant beyond the two designs asked for, added after `Fenced`'s run. |
+
+| Constant | Meaning |
+|---|---|
+| `Guard` | As above. |
+| `Delivery` | `Stream` is X1's delivery. Each writer takes the stream in order from the offset stored when it started, and stores the offset of each command it finishes, as applied, the last writer winning. `Any` makes each writer take every command once, in any order, which stands for two writers that do not share one order. |
+| `Saves` | The saves on the stream, `SaveDoc`, `SaveDesc` or both, in that order. |
+| `DelFirst` | Whether the deletion is first on the stream. Otherwise it is last. |
+| `NWriters` | How many writers start, one after another. Each may start while the one before is alive. |
+| `MaxCrashes` | The most crashes in a behaviour. |
+| `Retries` | How many times a refused command is planned again under `Whole`, `Fenced` and `FencedAnswer`. |
+
+Properties.
+
+| Name | Kind | Statement | Expected |
+|---|---|---|---|
+| `WholeCommands` | invariant | The description's revision and listing, the document's revision and liveness and the set of receipts equal what some sequence of distinct commands gives, each applied whole from the start as one writer alone applies it. So no command has a receipt while part of it is not applied, and no row has moved that no receipt accounts for. | fails with `PerStep` under `Any`, holds otherwise |
+| `AnswersAgree` | invariant | No command answered as not applied has a receipt, then or later. | fails under `Stream` unless `FencedAnswer`. Checked under `Any` with `FencedAnswer` only |
+| `TypeOK` | invariant | Each variable stays in its range. | holds |
+
+What the model abstracts away. Where the code leaves a choice, the model makes the one stated here.
+
+- One workspace, one document and two or three commands. The save of the document is of a document already listed whose title and template do not change, so it writes the document alone. The save of the description stands for a change of access, of dependencies or of an import's holding, each of which rewrites the description as read under its revision's guard. Creations, deletions of a workspace, parts, publications and jobs are not modelled.
+- A batch holds one command. A batch of several commands of one workspace, planned together, is not modelled.
+- The read of the receipt before planning and the reads of the plan are two steps, since another writer may commit between them. The plan's reads are one step, although the writer makes several. The request and the read of the receipt after it are one step, as the store applies one request in one transaction.
+- A document's revision is read through the description, so it reads 0 where the document is not listed or its row is tombstoned, as the writer reads only the live rows of listed documents.
+- The tombstone a deletion makes again after its request is one step, a read and a request together, so its first round lands. Nothing else moves the document after a deletion's request in these instances. The transaction ids of those rounds are not modelled, since a round that loses writes no claim.
+- Content is not modelled. A row is its revision and, for the document, whether it is live. A receipt is the command's id, and a second delivery that writes it again leaves the same receipt.
+- A writer answers once for each delivery. Which answer the sender keeps when two writers answer one command is not modelled, so `AnswersAgree` counts any answer that disagrees.
+- Under `Fenced` and `FencedAnswer` a writer sets the epoch in the step it starts.
+- The patch log, the promotions kept in the same request, jobs, events and the broker are not modelled. Liveness is not checked.
+
+The model terminates, so TLC is run with `-deadlock`.
+
 ## Configurations
 
 | File | Model | Parameters | Checks | Expected |
@@ -198,6 +261,28 @@ What the model abstracts away.
 | `X4_NaiveTimeouts.cfg` | X4 | `Naive`, timeouts, two writers of two writes | C2 | violated |
 | `X4_Fenced.cfg` | X4 | `Fenced`, no timeouts, two writers of two writes | C1, C2, C3 | no error |
 | `X4_FencedTimeouts.cfg` | X4 | `Fenced`, timeouts, two writers of two writes | C1, C2, C3 | no error |
+| `X1R_Applied.cfg` | X1, receipts only | `K=3`, `W=2`, `MaxCrashes=2`, no zombie, `Applied` | S1, S2, `AThenB`, `NoGap`, L1 | no error |
+| `X1R_AppliedZombie2.cfg` | X1, receipts only | `K=3`, `W=2`, `MaxCrashes=2`, zombie, `Applied` | S1, S2, `AThenB`, `NoGap`, L1 | no error |
+| `X1R_Received.cfg` | X1, receipts only | `K=3`, `W=2`, `MaxCrashes=1`, no zombie, `Received` | `AtMostOnce`, S2, `AThenB`, L1 | L1 violated |
+| `X1R_ReceivedGap.cfg` | X1, receipts only | as `X1R_Received.cfg` | `NoGap` | violated |
+| `X1R_ReceivedGapB.cfg` | X1, receipts only | as `X1R_Received.cfg` | `NoGapBehindA` | violated |
+| `X1R_ReceivedRow.cfg` | X1, receipts only | as `X1R_Received.cfg` | `EachAppliedOnceInEffect` | violated |
+| `X1R_ReceivedStep.cfg` | X1, receipts only | as `X1R_Received.cfg` | `VersionStepsByOne` | violated |
+| `X5_BuiltAnyDoc.cfg` | X5 | `PerStep`, `Any`, the save of the document, two writers, one crash | `WholeCommands` | violated |
+| `X5_BuiltAnyDesc.cfg` | X5 | `PerStep`, `Any`, the save of the description, two writers, one crash | `WholeCommands` | violated |
+| `X5_BuiltStream.cfg` | X5 | `PerStep`, `Stream`, both saves then the deletion, two writers, one crash | `TypeOK`, `WholeCommands` | no error |
+| `X5_BuiltStreamDelFirst.cfg` | X5 | as `X5_BuiltStream.cfg` with the deletion first | `TypeOK`, `WholeCommands` | no error |
+| `X5_BuiltStream3.cfg` | X5 | as `X5_BuiltStream.cfg` with three writers and two crashes | `TypeOK`, `WholeCommands` | no error |
+| `X5_BuiltStreamAnswers.cfg` | X5 | as `X5_BuiltStream.cfg` | `AnswersAgree` | violated |
+| `X5_WholeAny.cfg` | X5 | `Whole`, `Any`, both saves and the deletion, two writers, one crash, `Retries=3` | `TypeOK`, `WholeCommands` | no error |
+| `X5_WholeStream.cfg` | X5 | `Whole`, `Stream`, otherwise as `X5_WholeAny.cfg` | `TypeOK`, `WholeCommands` | no error |
+| `X5_WholeStreamAnswers.cfg` | X5 | as `X5_WholeStream.cfg` | `AnswersAgree` | violated |
+| `X5_FencedAny.cfg` | X5 | `Fenced`, otherwise as `X5_WholeAny.cfg` | `TypeOK`, `WholeCommands` | no error |
+| `X5_FencedStream.cfg` | X5 | `Fenced`, otherwise as `X5_WholeStream.cfg` | `TypeOK`, `WholeCommands` | no error |
+| `X5_FencedStreamAnswers.cfg` | X5 | as `X5_FencedStream.cfg` | `AnswersAgree` | violated |
+| `X5_FencedAnswerAny.cfg` | X5 | `FencedAnswer`, otherwise as `X5_WholeAny.cfg` | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
+| `X5_FencedAnswerStream.cfg` | X5 | `FencedAnswer`, otherwise as `X5_WholeStream.cfg` | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
+| `X5_FencedAnswerStream3.cfg` | X5 | as `X5_FencedAnswerStream.cfg` with three writers and two crashes | `TypeOK`, `WholeCommands`, `AnswersAgree` | no error |
 
 ## Running
 
@@ -209,7 +294,15 @@ $java = "$(mise where java)\bin\java.exe"
 & $java -XX:+UseParallelGC -cp $env:TLA2TOOLS_JAR tlc2.TLC -workers auto -deadlock -config X1_Applied.cfg X1_SerialisedApply.tla
 ```
 
-The module for a `ModelA_*.cfg` is `ModelA_GuardedCas.tla`, for an `X1_*.cfg` is `X1_SerialisedApply.tla`, for an `X2_*.cfg` is `X2_EvidenceAcrossStores.tla`, for an `X3_*.cfg` is `X3_ReceiptRelay.tla` and for an `X4_*.cfg` is `X4_AuthorityCutover.tla`. TLC writes `states/` and any trace file into the directory, and `.gitignore` excludes them.
+The module for a `ModelA_*.cfg` is `ModelA_GuardedCas.tla`, for an `X1_*.cfg` is `X1_SerialisedApply.tla`, for an `X1R_*.cfg` is `X1_ReceiptsOnly.tla`, for an `X2_*.cfg` is `X2_EvidenceAcrossStores.tla`, for an `X3_*.cfg` is `X3_ReceiptRelay.tla`, for an `X4_*.cfg` is `X4_AuthorityCutover.tla` and for an `X5_*.cfg` is `X5_WholeCommand.tla`. TLC writes `states/` and any trace file into the directory, and `.gitignore` excludes them.
+
+The `X1R_*` and `X5_*` configurations were run under a heap of 2 GB, with the young generation fixed at 16 MB and each collection logged, so that the log gives the heap a run needs. In PowerShell the JVM options are quoted, since `mise` is a function there.
+
+```powershell
+mise exec '--' java '-Xmx2g' '-Xmn16m' '-XX:+UseParallelGC' '-Xlog:gc' -cp $env:TLA2TOOLS_JAR tlc2.TLC -workers 1 -deadlock -config X5_BuiltAnyDoc.cfg X5_WholeCommand.tla
+```
+
+The peak heap below is the largest heap in use before a collection that the log printed. A collection runs at least every 16 MB allocated, so the true peak is at most 16 MB above it.
 
 ## Results
 
@@ -246,6 +339,33 @@ TLC 2.19 with TLA+ tools 1.7.4 on Java 25, 2026-11-18. The runs expected to find
 | `X4_Fenced` | no error | 740 | 331 | 14 | none |
 | `X4_FencedTimeouts` | no error | 4,536 | 1,171 | 18 | none |
 
+The `X1R_*` and `X5_*` configurations were run with TLC 2.19 and TLA+ tools 1.7.4 on Java 25.0.2, on 2026-11-24 by TLC's clock, each under a heap of 2 GB as the Running section shows, with `-workers auto` where no error was expected and `-workers 1` where a counterexample was. TLC's time is the "Finished in" figure, in whole seconds. The wall time includes the JVM's start. The peak heap is as the Running section defines it. Every one fits a heap of 2 GB, the largest at 114 MB.
+
+| Configuration | Result | States generated | Distinct states | Depth | TLC time | Wall time | Peak heap | Counterexample |
+|---|---|---|---|---|---|---|---|---|
+| `X1R_Applied` | no error | 2,411 | 1,479 | 25 | 00s | 2.5 s | 28 MB | none |
+| `X1R_AppliedZombie2` | no error | 216,611 | 50,513 | 41 | 05s | 7.0 s | 114 MB | none |
+| `X1R_Received` | `EventuallyApplied` violated, `AtMostOnce`, S2 and `AThenB` hold | 632 | 397 | not printed | 00s | 2.2 s | 27 MB | Incarnation 1 receives commands 1 and 2, applies 1 to both stores, stores offset 2 (received), receives 3, applies 2 to A and crashes before B. Incarnation 2 resumes at 3 and applies it to A and then to B, where it has no receipt and nothing guards the order. A ends with 1, 2 and 3, and B with 1 and 3. B never receives 2. |
+| `X1R_ReceivedGap` | `NoGap` violated | 385 | 235 | 14 | 00s | 2.1 s | 15 MB | Incarnation 1 receives 1 and 2, applies 1 to both stores, stores offset 2 and crashes. Incarnation 2 resumes at 3 and applies it to A, which holds 1 and 3. Command 2 is in neither store. |
+| `X1R_ReceivedGapB` | `NoGapBehindA` violated | 505 | 312 | 16 | 00s | 2.1 s | 15 MB | Incarnation 1 receives 1 and 2, applies 1 to both stores, stores offset 2, applies 2 to A and crashes before B. Incarnation 2 resumes at 3 and applies it to A and then to B. A holds 1, 2 and 3, and B holds 1 and 3. |
+| `X1R_ReceivedRow` | `EachAppliedOnceInEffect` violated | 385 | 235 | 14 | 00s | 2.2 s | 15 MB | The same trace as `X1R_ReceivedGap`. A's last command applied is 3, and it has applied two. |
+| `X1R_ReceivedStep` | `VersionStepsByOne` violated | 385 | 235 | 14 | 00s | 2.3 s | 15 MB | The same trace. A's last command applied moves from 1 to 3. |
+| `X5_BuiltAnyDoc` | `WholeCommands` violated | 536 | 243 | 11 | 00s | 2.1 s | 16 MB | Writer 1 plans the save of the document at revision 1. Writer 2 starts and plans the deletion, reading the description at 1 and the document at 1. Writer 1's request moves the document to 2 and writes the save's receipt. Writer 2's request applies the description step, so the document is no longer listed, and its tombstone at revision 1 writes nothing, and the receipt is written on the description step's claim. The deletion has a receipt and the document's row is live at 2, unlisted, until writer 2's later request removes it. |
+| `X5_BuiltAnyDesc` | `WholeCommands` violated | 536 | 242 | 11 | 00s | 2.1 s | 16 MB | Writer 1 plans the save of the description at revision 1. Writer 2 plans the deletion at description 1 and document 1. Writer 1's request moves the description to 2. Writer 2's request writes nothing for the description step and tombstones the document, and writes no receipt, since the description step has no claim. The description lists a tombstoned document and no receipt accounts for the tombstone. Writer 2 answers the deletion as not applied. |
+| `X5_BuiltStream` | no error | 3,535 | 1,344 | 31 | 00s | 2.3 s | 24 MB | none |
+| `X5_BuiltStreamDelFirst` | no error | 2,786 | 1,080 | 31 | 00s | 2.2 s | 24 MB | none |
+| `X5_BuiltStream3` | no error | 249,875 | 56,474 | 39 | 01s | 3.0 s | 63 MB | none |
+| `X5_BuiltStreamAnswers` | `AnswersAgree` violated | 157 | 81 | 10 | 00s | 2.1 s | 16 MB | Writer 1 plans the save of the document. Writer 2 starts at offset 0, takes the same save and reads no receipt. Writer 1's request applies the save and writes its receipt. Writer 2 then plans, reads the document at revision 2 and answers the save stale, which it was not. |
+| `X5_WholeAny` | no error | 41,580 | 14,308 | 31 | 00s | 2.5 s | 30 MB | none |
+| `X5_WholeStream` | no error | 3,020 | 1,181 | 30 | 00s | 2.2 s | 24 MB | none |
+| `X5_WholeStreamAnswers` | `AnswersAgree` violated | 157 | 81 | 10 | 00s | 2.1 s | 16 MB | The same trace as `X5_BuiltStreamAnswers`. Writer 1's request carries no epoch, so nothing refuses it after writer 2 starts. |
+| `X5_FencedAny` | no error | 24,745 | 9,335 | 31 | 00s | 2.5 s | 30 MB | none |
+| `X5_FencedStream` | no error | 1,955 | 827 | 30 | 00s | 2.2 s | 24 MB | none |
+| `X5_FencedStreamAnswers` | `AnswersAgree` violated | 165 | 84 | 10 | 00s | 2.1 s | 16 MB | Writer 1 takes the save of the document and reads no receipt. Writer 2 starts, which sets the epoch to 2, takes the same save, plans it and applies it. Writer 1, which has lost the partition, then plans, reads the document at revision 2 and answers the save stale. It sends no request, so the epoch never refuses it. |
+| `X5_FencedAnswerAny` | no error | 18,789 | 7,083 | 29 | 00s | 2.4 s | 30 MB | none |
+| `X5_FencedAnswerStream` | no error | 1,299 | 540 | 24 | 00s | 2.2 s | 18 MB | none |
+| `X5_FencedAnswerStream3` | no error | 55,386 | 14,597 | 35 | 01s | 2.7 s | 33 MB | none |
+
 ## What the results say
 
 - The guard in each store, and the offset stored as applied, give a row that is ordered, applies each command at most once in effect, and applies every confirmed command eventually, for up to three incarnations including a zombie that keeps acting. The zombie's late applies are answered `Duplicate`.
@@ -255,3 +375,9 @@ TLC 2.19 with TLA+ tools 1.7.4 on Java 25, 2026-11-18. The runs expected to find
 - A decision that reads the watermark first and then the value as of `p` carries evidence that equals what the source held at `p`, and the evaluation waits. If the source stalls, the evaluation never completes, which is the cost of the row. The best known read never waits and completes in every configuration run, but its evidence can differ from what the source held at `p`. In the configurations run the audit found every such decision, because the read set records the position read at. The audit also flags a decision whose evidence is stale and one whose evidence is not, so it is a trigger for review and not a verdict.
 - A relay that publishes by one global commit position skips a receipt that commits after a later position has been published, and a restart does not repair it. The skip breaks order within a stream, since a later receipt of the stream can be published first. A relay that tracks the next seq of each stream publishes every receipt in order in the configurations run, and a restart makes it publish some receipts twice, so the consumer has to be idempotent.
 - Copying and then flipping the authority loses a write that the old authority acknowledges between the copy and the flip. Fencing the old authority before the copy loses none in the configurations run. A writer that times out and resends can have the same write acknowledged by both stores without a fence. With the fence it is acknowledged once in the configurations run, and every write is acknowledged in the end.
+- Stores that keep a receipt for each command and no row for the partition keep every property of X1 with offsets stored as applied, for one writer at a time and for up to three incarnations including a zombie. TLC printed the same counts as for X1 with the guard, so in those configurations the partition's row refused nothing that the receipts did not answer.
+- With received offsets the same stores keep at-most-once, order within each store and `AThenB`, and lose eventual application as X1 does. They also let store B apply command 3 after it missed command 2, which X1's guard refused, so a gap in the second store is reachable and nothing in the store stops it. S1 as X1 states it and `VersionStepsByOne` fail by the same trace, since the last command applied no longer counts the commands applied.
+- The studio's writer as built reaches states that no sequence of whole commands gives when two writers do not share one order. A deletion is answered from a receipt while the document it deletes is live and unlisted, until a later request removes it. A deletion whose description step lost tombstones the document while the description still lists it, with no receipt. Where each writer takes the stream in order from the stored offset, TLC found no such state, for two writers in either order of the stream and for three writers with two crashes. We read this as the transaction ids doing the work, since a step that another delivery applied writes nothing, and a writer reaches a command only after it has finished every earlier one. That is a reading of the runs and not a proof.
+- The answers as built disagree even in stream order. A writer that read no receipt plans after another writer applied the command, and answers a save stale although it was applied.
+- One guard over every row a command writes reaches only states that whole commands give, in both deliveries in the configurations run, and its answers disagree by the same trace as the design as built.
+- One guard with the epoch in every request also reaches only such states in the configurations run, and its answers still disagree. The writer that lost the partition answers a command its own check refuses without sending a request, so the epoch never reaches that answer. Answering such a command from one read of its rows, the epoch and its receipt removes the disagreement in the configurations run, for two writers in either delivery and for three writers in stream order.
