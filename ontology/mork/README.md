@@ -116,6 +116,7 @@ classDiagram
     class Digraph {
         digraphOf
     }
+    class FindingSeverity
     class Hypothesis
     class IdentityRule
     class IndexedMapping
@@ -154,8 +155,10 @@ classDiagram
     DataMapping <|-- IndexedMapping
     DataMapping <|-- UncertainMapping
     DataMapping <|-- WeightedMatch
+    Datum --> FindingSeverity : unmatchedSeverity
     Datum --> IdentityRule : identityRule
     Datum --> JoinCardinality : joinCardinality
+    Datum --> JoinCardinality : linkCardinality
     Datum --> JoinCondition : joinsOn
     MappingScheme --> CompilationMode : compilationMode
     RepresentationScheme --> SerializationFormat : format
@@ -509,9 +512,11 @@ mm:ArrPeriods a mork:TypedRefExpression ;
     mork:dataRef "src:periodsPerYear" .
 ```
 
-A datum can also take a node of a second class of the source, found by equality of values. A join datum sits beneath another datum and iterates the second class with `mork:mappingFor`. It takes `mork:SourceNodeIdentity`, so the node it finds is its target and nothing is minted or typed, and it is glued to its parent by an R-Box match, which writes the link from the parent to the node and nothing else. Each `mork:joinsOn` is a `mork:JoinCondition`, the value at `mork:parentRef` from the parent's node equal to the value at `mork:ownRef` from the node found, with one condition for each part of a composite key.
+A datum can also take a node of a second class of the source, found by equality of values. A join datum sits beneath another datum and iterates the second class with `mork:mappingFor`. It takes `mork:SourceNodeIdentity`, so the node it finds is its target and nothing is minted or typed, and it is glued to its parent by an R-Box match, which writes the link from the parent to the node and nothing else. Each `mork:joinsOn` is a `mork:JoinCondition`, the value at `mork:parentRef` from the parent's node equal to the value at `mork:ownRef` from the node found, with one condition for each part of a composite key. Each condition states how its two values are compared, by `mork:lookupComparison` and `mork:lookupDatatype` as a lookup states it (5.6), so one key may compare a string pair and an integer pair and a condition may cast its parent's value to the type the node found holds. Where a condition states neither, the datum's own are read, and then a lookup's default.
 
-`mork:joinCardinality` says how many nodes one parent may find. Under `mork:AtMostOneMatch` a parent that finds several writes no link and is reported with each, and under `mork:AnyNumberOfMatches` it writes a link to each. `mork:reportsUnmatched` says whether a parent that holds the compared values and finds no node is reported. A guard (`mork:appliesWhen`) on a join datum is tested on the parent's node and not on the node found, since it says which parents join. The two values are compared as a lookup compares them (5.6), by `mork:lookupComparison` and `mork:lookupDatatype`, so a join and a lookup state that choice the same way.
+Two rules limit what a parent writes, each stated by the datum. `mork:joinCardinality` says how many nodes one value may find. A value is the values of one parent's conditions taken together, so a parent with two codes has two values. Under `mork:AtMostOneMatch` a value that finds several writes no link and is reported with each match, and under `mork:AnyNumberOfMatches` it writes a link to each. `mork:linkCardinality` says how many nodes one parent may find in all, whatever value found them, and a datum that states none means `mork:AnyNumberOfMatches`. Under `mork:AtMostOneMatch` a parent whose values together find several writes no link and is reported with each match. `mork:reportsUnmatched` says whether a parent that holds the compared values and finds no node is reported, and `mork:unmatchedSeverity` says as what, a warning or information, and a datum that states none means a warning.
+
+A guard (`mork:appliesWhen`) on a join datum is tested on the parent's node and not on the node found, since it says which parents join. It therefore holds the parent's required values and never the found node's, so a required value of the second class other than the one a condition compares is not checked by the join.
 
 A lookup reads reference data only, so source data cannot add codes to it. A join reads the source, so the nodes it finds are the source's own and a node in the reference data is never one of them. Which of the two a mapping needs depends on where the second class is kept.
 
@@ -526,6 +531,7 @@ classDiagram
     class Datum {
         reportsUnmatched (xsd:boolean)
     }
+    class FindingSeverity
     class IdentityRule
     class JoinCardinality
     class JoinCondition {
@@ -533,8 +539,10 @@ classDiagram
         parentRef (xsd:string)
     }
     DataMapping <|-- Datum
+    Datum --> FindingSeverity : unmatchedSeverity
     Datum --> IdentityRule : identityRule
     Datum --> JoinCardinality : joinCardinality
+    Datum --> JoinCardinality : linkCardinality
     Datum --> JoinCondition : joinsOn
 ```
 
@@ -562,12 +570,14 @@ mm:Map_Customer a mork:DataMapping , mork:Datum ;
     mork:inverseRBoxMatch tgt:placedFor ;
     mork:joinsOn mm:CustomerCode ;
     mork:joinCardinality mork:AtMostOneMatch ;
+    mork:linkCardinality mork:AnyNumberOfMatches ;
     mork:reportsUnmatched true ;
-    mork:lookupComparison mork:TermComparison .
+    mork:unmatchedSeverity mork:WarningFinding .
 
 mm:CustomerCode a mork:JoinCondition ;
     mork:parentRef "src:customerCode" ;
-    mork:ownRef "src:code" .
+    mork:ownRef "src:code" ;
+    mork:lookupComparison mork:TermComparison .
 ```
 
 ### 5.5 Templates
@@ -1998,7 +2008,7 @@ Superclasses and restrictions are written in **Subclass of.** and **Equivalent t
 
 #### `mork:JoinCondition`
 
-**Definition.** One equality a join datum states, the value at parentRef from its parent's node equal to the value at ownRef from the node it finds. A datum with a composite key states one for each part of the key.
+**Definition.** One equality a join datum states, the value at parentRef from its parent's node equal to the value at ownRef from the node it finds. A datum with a composite key states one for each part of the key. A condition states how its two values are compared with lookupComparison and lookupDatatype, and where it states none the datum's own are read.
 
 **Label.** join condition
 
@@ -2006,7 +2016,7 @@ Superclasses and restrictions are written in **Subclass of.** and **Equivalent t
 
 #### `mork:JoinCardinality`
 
-**Definition.** How many nodes a join may find for one parent node. Its individuals are AtMostOneMatch and AnyNumberOfMatches.
+**Definition.** How many nodes a join may find, for one value of a parent node under joinCardinality and for the parent in all under linkCardinality. Its individuals are AtMostOneMatch and AnyNumberOfMatches.
 
 **Label.** join cardinality
 
@@ -3683,13 +3693,37 @@ The object properties of MORK first, then those of Executable.
 
 #### `mork:joinCardinality`
 
-**Definition.** How many nodes a join may find for one parent node, AtMostOneMatch or AnyNumberOfMatches. A join datum states one.
+**Definition.** How many nodes a join may find for one value of a parent node, AtMostOneMatch or AnyNumberOfMatches. A value is the values of the parent's conditions taken together, so a parent with two values at a path has two. A join datum states one.
 
 **Label.** join cardinality
 
 **Domain.** `mork:Datum`
 
 **Range.** `mork:JoinCardinality`
+
+**Characteristics.** functional
+
+#### `mork:linkCardinality`
+
+**Definition.** How many nodes a join may find for one parent node in all, whatever value found them, AtMostOneMatch or AnyNumberOfMatches. A parent whose values together find several writes no link under AtMostOneMatch. Unset is equivalent to AnyNumberOfMatches.
+
+**Label.** link cardinality
+
+**Domain.** `mork:Datum`
+
+**Range.** `mork:JoinCardinality`
+
+**Characteristics.** functional
+
+#### `mork:unmatchedSeverity`
+
+**Definition.** The severity a join reports an unmatched parent node with, WarningFinding where the values are required and InfoFinding where they are a candidate. Unset is equivalent to WarningFinding.
+
+**Label.** unmatched severity
+
+**Domain.** `mork:Datum`
+
+**Range.** `mork:FindingSeverity`
 
 **Characteristics.** functional
 
@@ -4925,7 +4959,7 @@ The datatype properties of MORK first, then those of Executable.
 
 #### `mork:reportsUnmatched`
 
-**Definition.** Whether a join reports a parent node that holds the values it compares and finds no node, which is so where the join is on required evidence. A join datum states it.
+**Definition.** Whether a join reports a parent node that holds the values it compares and finds no node. A join datum states it. A parent that lacks the values is never reported.
 
 **Label.** reports unmatched
 
@@ -5021,8 +5055,8 @@ MORK's individuals are the compilation modes, serialisation formats, lookup comp
 | `mork:NotEqualTo` | `mork:ComparisonOperator`, `owl:NamedIndividual` | not equal to | The two compared operands are not equal. |
 | `mork:GreaterThanOrEqual` | `mork:ComparisonOperator`, `owl:NamedIndividual` | greater than or equal | The left compared operand is greater than or equal to the right. |
 | `mork:GreaterThan` | `mork:ComparisonOperator`, `owl:NamedIndividual` | greater than | The left compared operand is greater than the right. |
-| `mork:AtMostOneMatch` | `mork:JoinCardinality`, `owl:NamedIndividual` | at most one match | A parent node finds at most one node. Where it finds several it writes no link and is reported with each. |
-| `mork:AnyNumberOfMatches` | `mork:JoinCardinality`, `owl:NamedIndividual` | any number of matches | A parent node may find any number of nodes, and a link is written to each. |
+| `mork:AtMostOneMatch` | `mork:JoinCardinality`, `owl:NamedIndividual` | at most one match | One value, or the parent in all, finds at most one node. Where it finds several it writes no link and is reported with each. |
+| `mork:AnyNumberOfMatches` | `mork:JoinCardinality`, `owl:NamedIndividual` | any number of matches | One value, or the parent in all, may find any number of nodes, and a link is written to each. |
 
 <!-- end -->
 
@@ -6080,6 +6114,7 @@ The Axiom Index is generated from this section.
 | `mork:joinsOn` | Object property | Domain `mork:Datum`. Range `mork:JoinCondition`. |
 | `mork:leftOperand` | Object property | Domain `mork:ArithmeticExpression`. Range `mork:ValueExpression`. Functional. |
 | `mork:lexicalMatch` | Object property | Subproperty of `mork:possibleMatch`. |
+| `mork:linkCardinality` | Object property | Domain `mork:Datum`. Range `mork:JoinCardinality`. Functional. |
 | `mork:lookupComparison` | Object property | Range `mork:LookupComparison`. Functional. |
 | `mork:lookupDatatype` | Object property | Range `rdfs:Datatype`. Functional. |
 | `mork:lookupProperty` | Object property | Domain `mork:LookupExpression`. Range `owl:DatatypeProperty`. Functional. |
@@ -6149,6 +6184,7 @@ The Axiom Index is generated from this section.
 | `mork:templateBinding` | Object property | Domain `mork:DataMapping`. Range `mork:DataMapping`. |
 | `mork:templateClassMapping` | Object property | Subproperty of `mork:templateMapping`. |
 | `mork:templateMapping` | Object property | Subproperty of `mork:deferredMapping`. |
+| `mork:unmatchedSeverity` | Object property | Domain `mork:Datum`. Range `mork:FindingSeverity`. Functional. |
 | `mork:valueExpression` | Object property | Domain `mork:DataMapping`. Range `mork:ValueExpression`. Functional. |
 | `mork:weightedBroader` | Object property | Inverse of `mork:weightedNarrower`. Subproperty of `mork:broaderMapping`. |
 | `mork:weightedNarrower` | Object property | Subproperty of `mork:narrowerMapping`. |
@@ -6337,9 +6373,9 @@ Section 6 states no restriction table, so no `shapes/structural.ttl` is generate
 | `mork:ValueExpressionAcyclicityShape` | a value expression that is an operand of itself, directly or through others |
 | `mork:ValueExpressionAssertionShape` | a mapping whose value expression is not a typed value expression, and a mapping that states a value expression beside `mork:dataRef` or `mork:dataInline` |
 | `mork:SourceNodeIdentityShape` | a datum with a source node identity that states another identity, names a class to type the node with, iterates nothing, or states an identity rule that is not `mork:SourceNodeIdentity` |
-| `mork:JoinConditionShape` | a join condition that states no `mork:parentRef` or no `mork:ownRef`, or states one twice, or that is empty or not a string |
-| `mork:JoinDatumShape` | a join datum that states no join cardinality of the two, no `mork:reportsUnmatched` that is a boolean, an identity rule other than `mork:SourceNodeIdentity`, no R-Box match to write its link with, or a condition that is not a `mork:JoinCondition` |
-| `mork:JoinPlacementShape` | a datum that states a join cardinality or `mork:reportsUnmatched` and no `mork:joinsOn`, so it is no join |
+| `mork:JoinConditionShape` | a join condition that states no `mork:parentRef` or no `mork:ownRef`, or states one twice, or that is empty or not a string, or states a comparison that is not one of the three or a datatype twice |
+| `mork:JoinDatumShape` | a join datum that states no join cardinality of the two, no `mork:reportsUnmatched` that is a boolean, a link cardinality that is not one of the two or is stated twice, an unmatched severity that is not a warning or information or is stated twice, an identity rule other than `mork:SourceNodeIdentity`, no R-Box match to write its link with, or a condition that is not a `mork:JoinCondition` |
+| `mork:JoinPlacementShape` | a datum that states a join cardinality, a link cardinality, `mork:reportsUnmatched` or an unmatched severity and no `mork:joinsOn`, so it is no join |
 
 The order relations are transitive, which OWL 2 DL forbids from also being asymmetric or irreflexive, so their acyclicity is checked here and not in the ontology. Each shape follows the relation and the named properties it is derived from, so a cycle is found whether or not the relation has been materialised.
 
@@ -6763,7 +6799,11 @@ mork:JoinConditionShape a sh:NodeShape ;
 	sh:property [ sh:path mork:parentRef ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ;
 		sh:message "A join condition states exactly one mork:parentRef, a path that is a string and not empty." ] ;
 	sh:property [ sh:path mork:ownRef ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ;
-		sh:message "A join condition states exactly one mork:ownRef, a path that is a string and not empty." ] .
+		sh:message "A join condition states exactly one mork:ownRef, a path that is a string and not empty." ] ;
+	sh:property [ sh:path mork:lookupComparison ; sh:maxCount 1 ; sh:in ( mork:CastComparison mork:LexicalComparison mork:TermComparison ) ;
+		sh:message "A join condition states at most one mork:lookupComparison, mork:CastComparison, mork:LexicalComparison or mork:TermComparison." ] ;
+	sh:property [ sh:path mork:lookupDatatype ; sh:maxCount 1 ;
+		sh:message "A join condition states at most one mork:lookupDatatype." ] .
 
 mork:JoinDatumShape a sh:NodeShape ;
 	sh:targetSubjectsOf mork:joinsOn ;
@@ -6771,8 +6811,12 @@ mork:JoinDatumShape a sh:NodeShape ;
 		sh:message "A join datum names as a condition a term that is not a mork:JoinCondition." ] ;
 	sh:property [ sh:path mork:joinCardinality ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( mork:AtMostOneMatch mork:AnyNumberOfMatches ) ;
 		sh:message "A join datum states exactly one join cardinality, mork:AtMostOneMatch or mork:AnyNumberOfMatches." ] ;
+	sh:property [ sh:path mork:linkCardinality ; sh:maxCount 1 ; sh:in ( mork:AtMostOneMatch mork:AnyNumberOfMatches ) ;
+		sh:message "A join datum states at most one link cardinality, mork:AtMostOneMatch or mork:AnyNumberOfMatches." ] ;
 	sh:property [ sh:path mork:reportsUnmatched ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ;
 		sh:message "A join datum states exactly one mork:reportsUnmatched, true or false." ] ;
+	sh:property [ sh:path mork:unmatchedSeverity ; sh:maxCount 1 ; sh:in ( mork:WarningFinding mork:InfoFinding ) ;
+		sh:message "A join datum states at most one mork:unmatchedSeverity, mork:WarningFinding or mork:InfoFinding." ] ;
 	sh:property [ sh:path mork:identityRule ; sh:minCount 1 ; sh:hasValue mork:SourceNodeIdentity ;
 		sh:message "A join datum takes the node it finds, so it states mork:identityRule mork:SourceNodeIdentity." ] ;
 	sh:sparql [
@@ -6789,9 +6833,9 @@ mork:JoinDatumShape a sh:NodeShape ;
 	] .
 
 mork:JoinPlacementShape a sh:NodeShape ;
-	sh:targetSubjectsOf mork:joinCardinality , mork:reportsUnmatched ;
+	sh:targetSubjectsOf mork:joinCardinality , mork:linkCardinality , mork:reportsUnmatched , mork:unmatchedSeverity ;
 	sh:sparql [
-		sh:message "A datum states a join cardinality or mork:reportsUnmatched and no mork:joinsOn, so it is no join." ;
+		sh:message "A datum states a join cardinality, a link cardinality, mork:reportsUnmatched or an unmatched severity and no mork:joinsOn, so it is no join." ;
 		sh:select """
 			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
 			SELECT $this WHERE {
@@ -6834,7 +6878,7 @@ Not applicable.
 ## 12. Release Notes
 
 - **Unreleased**.
-  - no effect. A datum may take a node of a second class of the source by equality of values, a join. New: `mork:JoinCondition` and `mork:JoinCardinality` with its individuals `mork:AtMostOneMatch` and `mork:AnyNumberOfMatches`, and the properties `mork:joinsOn`, `mork:parentRef`, `mork:ownRef`, `mork:joinCardinality` and `mork:reportsUnmatched`, with shapes that refuse a join datum that states no cardinality, no `mork:reportsUnmatched`, another identity or no R-Box match, a condition that lacks a path, and a cardinality or `mork:reportsUnmatched` with no condition. A mapping that states none of them means what it meant before, and a lookup is unchanged.
+  - no effect. A datum may take a node of a second class of the source by equality of values, a join. New: `mork:JoinCondition` and `mork:JoinCardinality` with its individuals `mork:AtMostOneMatch` and `mork:AnyNumberOfMatches`, and the properties `mork:joinsOn`, `mork:parentRef`, `mork:ownRef`, `mork:joinCardinality` (how many nodes one value finds), `mork:linkCardinality` (how many one parent finds in all, any number where unset), `mork:reportsUnmatched` and `mork:unmatchedSeverity` (a warning where unset), with shapes that refuse a join datum that states no cardinality, no `mork:reportsUnmatched`, another identity or no R-Box match, a condition that lacks a path or states a comparison that is not one of the three, and a cardinality, a link cardinality, `mork:reportsUnmatched` or an unmatched severity with no condition. A condition states its own comparison and datatype, with `mork:lookupComparison` and `mork:lookupDatatype`. A mapping that states none of them means what it meant before, and a lookup is unchanged.
   - no effect. Typed value expressions sit beside the template expressions, which stay a monoid over strings. New: `mork:ValueExpression` with `mork:TypedRefExpression`, `mork:TypedLiteralExpression`, `mork:ArithmeticExpression` and its `mork:SumExpression`, `mork:DifferenceExpression`, `mork:ProductExpression` and `mork:QuotientExpression`, `mork:RoundingExpression` and `mork:ChoiceExpression`, `mork:ComparisonOperator` with its six individuals, and the properties `mork:valueExpression`, `mork:resultDatatype`, `mork:leftOperand`, `mork:rightOperand`, `mork:typedValue`, `mork:roundedOperand`, `mork:roundingScale`, `mork:comparisonOperator`, `mork:comparedLeft`, `mork:comparedRight`, `mork:whenTrue` and `mork:whenFalse`. New shapes refuse an untyped operand, a non-numeric operand of arithmetic, a result datatype the operands do not give, a choice missing a branch, a cycle and a mapping with two values.
   - no effect. A datum may take the source node it iterates as its identity. New: `mork:IdentityRule`, its individual `mork:SourceNodeIdentity` and `mork:identityRule`, with a shape that refuses a datum with that identity that states another identity, names a class to type the node with or iterates nothing. A datum that states no identity rule means what it meant before.
 - **0.21.0**.

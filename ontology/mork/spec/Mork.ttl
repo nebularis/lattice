@@ -39,7 +39,7 @@ mork:AnonymousElement a owl:Class ;
 
 mork:AnyNumberOfMatches a mork:JoinCardinality, owl:NamedIndividual ;
     rdfs:label "any number of matches" ;
-    rdfs:comment "A parent node may find any number of nodes, and a link is written to each." .
+    rdfs:comment "One value, or the parent in all, may find any number of nodes, and a link is written to each." .
 
 mork:ArithmeticExpression a owl:Class ;
     rdfs:label "arithmetic expression" ;
@@ -60,7 +60,7 @@ mork:Association a owl:Class ;
 
 mork:AtMostOneMatch a mork:JoinCardinality, owl:NamedIndividual ;
     rdfs:label "at most one match" ;
-    rdfs:comment "A parent node finds at most one node. Where it finds several it writes no link and is reported with each." .
+    rdfs:comment "One value, or the parent in all, finds at most one node. Where it finds several it writes no link and is reported with each." .
 
 mork:Attribute a owl:Class ;
     rdfs:label "attribute (representation)" ;
@@ -323,11 +323,11 @@ mork:JSON a mork:SerializationFormat, owl:NamedIndividual .
 
 mork:JoinCardinality a owl:Class ;
     rdfs:label "join cardinality" ;
-    rdfs:comment "How many nodes a join may find for one parent node. Its individuals are AtMostOneMatch and AnyNumberOfMatches." .
+    rdfs:comment "How many nodes a join may find, for one value of a parent node under joinCardinality and for the parent in all under linkCardinality. Its individuals are AtMostOneMatch and AnyNumberOfMatches." .
 
 mork:JoinCondition a owl:Class ;
     rdfs:label "join condition" ;
-    rdfs:comment "One equality a join datum states, the value at parentRef from its parent's node equal to the value at ownRef from the node it finds. A datum with a composite key states one for each part of the key." ;
+    rdfs:comment "One equality a join datum states, the value at parentRef from its parent's node equal to the value at ownRef from the node it finds. A datum with a composite key states one for each part of the key. A condition states how its two values are compared with lookupComparison and lookupDatatype, and where it states none the datum's own are read." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:ownRef ; owl:someValuesFrom xsd:string ], [ a owl:Restriction ; owl:onProperty mork:parentRef ; owl:someValuesFrom xsd:string ] .
 
 mork:LessThan a mork:ComparisonOperator, owl:NamedIndividual ;
@@ -1472,7 +1472,7 @@ mork:itemsConstrained a owl:DatatypeProperty ;
 
 mork:joinCardinality a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:label "join cardinality" ;
-    rdfs:comment "How many nodes a join may find for one parent node, AtMostOneMatch or AnyNumberOfMatches. A join datum states one." ;
+    rdfs:comment "How many nodes a join may find for one value of a parent node, AtMostOneMatch or AnyNumberOfMatches. A value is the values of the parent's conditions taken together, so a parent with two values at a path has two. A join datum states one." ;
     rdfs:domain mork:Datum ;
     rdfs:range mork:JoinCardinality .
 
@@ -1497,6 +1497,12 @@ mork:lexicalMatch a owl:ObjectProperty ;
     rdfs:label "is lexical match with" ;
     rdfs:comment "Used to indicate a possible or partial lexical match, where similar terms (i.e., words) exist, but the semantics or structure are not a good match." ;
     rdfs:subPropertyOf mork:possibleMatch .
+
+mork:linkCardinality a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "link cardinality" ;
+    rdfs:comment "How many nodes a join may find for one parent node in all, whatever value found them, AtMostOneMatch or AnyNumberOfMatches. A parent whose values together find several writes no link under AtMostOneMatch. Unset is equivalent to AnyNumberOfMatches." ;
+    rdfs:domain mork:Datum ;
+    rdfs:range mork:JoinCardinality .
 
 mork:llmConfidence a owl:DatatypeProperty ;
     rdfs:label "llm confidence" ;
@@ -1937,7 +1943,7 @@ mork:relatedProperty a owl:ObjectProperty ;
 
 mork:reportsUnmatched a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "reports unmatched" ;
-    rdfs:comment "Whether a join reports a parent node that holds the values it compares and finds no node, which is so where the join is on required evidence. A join datum states it." ;
+    rdfs:comment "Whether a join reports a parent node that holds the values it compares and finds no node. A join datum states it. A parent that lacks the values is never reported." ;
     rdfs:domain mork:Datum ;
     rdfs:range xsd:boolean .
 
@@ -2155,6 +2161,12 @@ mork:typedValue a owl:DatatypeProperty, owl:FunctionalProperty ;
 mork:uniqueItems a owl:DatatypeProperty ;
     rdfs:comment "Whether the items of a Collection are unique, as in a set." ;
     rdfs:subPropertyOf mork:itemsConstrained .
+
+mork:unmatchedSeverity a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "unmatched severity" ;
+    rdfs:comment "The severity a join reports an unmatched parent node with, WarningFinding where the values are required and InfoFinding where they are a candidate. Unset is equivalent to WarningFinding." ;
+    rdfs:domain mork:Datum ;
+    rdfs:range mork:FindingSeverity .
 
 mork:valueExpression a owl:FunctionalProperty, owl:ObjectProperty ;
     rdfs:label "has value expression" ;

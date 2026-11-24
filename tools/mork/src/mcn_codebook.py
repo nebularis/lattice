@@ -555,6 +555,8 @@ _prop("par", "mork:parentRef", kind=KIND_DATA, datatype="xsd:string", group="Joi
 _prop("own", "mork:ownRef", kind=KIND_DATA, datatype="xsd:string", group="Join")
 _prop("jcd", "mork:joinCardinality", group="Join")
 _prop("rpu", "mork:reportsUnmatched", kind=KIND_DATA, datatype="xsd:boolean", group="Join")
+_prop("lkc", "mork:linkCardinality", group="Join")
+_prop("usv", "mork:unmatchedSeverity", group="Join")
 
 # -- Compiled mapping --
 _prop("hq", "mork:hasCompiledQuery", group="Compiled mapping")

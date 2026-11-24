@@ -63,8 +63,9 @@ guarded by every required-evidence binding, and beneath that an assertion for ea
 
 **A join lowers into a scheme too.** It states the relation on its result-target binding (``srf:P14`` to ``srf:P17``), so
 ``lower_projection`` writes a scheme whose root takes the source node as its identity, and beneath it a datum that takes
-the second carrier's node from the source as its own, states each equality of values as a condition, how many nodes a value
-may name, and whether an instance with no match is reported, and is glued to the instance by the link
+the second carrier's node from the source as its own, states each equality of values as a condition with the comparison
+of its pair, how many nodes a value may name, how many links an instance may have, and how an instance with no match is
+reported, and is glued to the instance by the link
 (``_lower_join``). It is guarded by every required-evidence binding of the contract's own carrier, and writes the link and
 nothing else. The expansion keeps the bare lowering until its own statement exists.
 
@@ -394,13 +395,14 @@ def _lower_join(graph: Graph, minter: Minter, contract: ProjectionContract, join
     iterates the second carrier's class and takes the node it finds as its own, so nothing is minted or typed, and is glued
     to the instance by the link the result-target binding binds. Each equality the statement names is a condition of the
     datum, the instance's property on the left and the second carrier's on the right, in the order of the properties. The
-    datum states how many nodes a value may name, and states that an instance with no match is reported where the join is on
-    required evidence and not where it is on candidate evidence, so the scheme leaves neither implicit.
+    datum states how many nodes one value may name and how many links one instance may have, each written whether the
+    contract states it or means its default, and that an instance that holds the values and finds no match is reported, as a
+    warning on required evidence and as information on candidate evidence, so the scheme leaves none of them implicit.
 
     The datum is guarded by every required-evidence binding of the contract's own carrier, which is tested on the instance
-    and not on the node found, so an instance that lacks one contributes nothing. The two values are compared by the
-    datatype the bindings state, which is one for the whole statement (law ``srf:P17``), a cast to it joined as the same term,
-    and by term where they state none.
+    and not on the node found, so an instance that lacks one contributes nothing. Each condition states its own comparison,
+    a cast to the datatype its right binding states, joined as the same term, and the same term where it states none
+    (law ``srf:P17``), so one key may compare a string pair and an integer pair.
     """
     scheme = minter.lowered_scheme()
     concept = minter.lowered_carrier_concept()
@@ -443,14 +445,13 @@ def _lower_join(graph: Graph, minter: Minter, contract: ProjectionContract, join
     graph.add(
         (datum, MORK.joinCardinality, MORK.AtMostOneMatch if join.at_most_one else MORK.AnyNumberOfMatches)
     )
-    graph.add((datum, MORK.reportsUnmatched, Literal(join.required)))
-
-    datatype = join.pairs[0].left.datatype
-    if datatype is None:
-        graph.add((datum, MORK.lookupComparison, MORK.TermComparison))
-    else:
-        graph.add((datum, MORK.lookupComparison, MORK.CastComparison))
-        graph.add((datum, MORK.lookupDatatype, datatype))
+    graph.add(
+        (datum, MORK.linkCardinality, MORK.AtMostOneMatch if join.at_most_one_link else MORK.AnyNumberOfMatches)
+    )
+    # An instance that holds the values and finds no match is reported either way. On required evidence it is a warning, since
+    # a value a contract asks for found nothing, and on candidate evidence it is information.
+    graph.add((datum, MORK.reportsUnmatched, Literal(True)))
+    graph.add((datum, MORK.unmatchedSeverity, MORK.WarningFinding if join.required else MORK.InfoFinding))
 
     required = _own_required(contract)
     if required:
@@ -469,6 +470,13 @@ def _lower_join(graph: Graph, minter: Minter, contract: ProjectionContract, join
         graph.add((condition, RDF.type, MORK.JoinCondition))
         graph.add((condition, MORK.parentRef, Literal(f"<{pair.left.binds_property}>")))
         graph.add((condition, MORK.ownRef, Literal(f"<{pair.right.binds_property}>")))
+        # Each pair is compared as it says. A pair whose second carrier states a datatype casts the instance's value to it and
+        # joins the same term, and a pair that states none joins the same term as it is.
+        if pair.datatype is None:
+            graph.add((condition, MORK.lookupComparison, MORK.TermComparison))
+        else:
+            graph.add((condition, MORK.lookupComparison, MORK.CastComparison))
+            graph.add((condition, MORK.lookupDatatype, pair.datatype))
 
 
 def _lower_key_identity(graph: Graph, minter: Minter, datum: URIRef, stem: str, node: ConstructedNode) -> None:

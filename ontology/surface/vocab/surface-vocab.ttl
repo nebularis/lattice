@@ -80,8 +80,8 @@ srf:GreaterThan a srf:ComparisonOperator ; rdfs:comment "The left compared opera
 srf:PerInstance a srf:IdentityChoice ; rdfs:comment "A constructed node for each instance of the carrier. Nothing is merged, and the node's identifier is a hash of the instance's identifier." .
 srf:ByKey a srf:IdentityChoice ; rdfs:comment "One constructed node for each value of a key of required-evidence bindings. Instances that share the key share the node, and its identifier is read from the key." .
 
-srf:AtMostOne a srf:JoinCardinality ; rdfs:comment "A value names at most one instance of the second carrier. An instance with several matches writes no link and is reported with each." .
-srf:AnyNumber a srf:JoinCardinality ; rdfs:comment "A value may name any number of instances of the second carrier, and a link is written to each." .
+srf:AtMostOne a srf:JoinCardinality ; rdfs:comment "At most one instance. Where one value finds several, or under joinLinks one instance finds several in all, no link is written and each match is reported." .
+srf:AnyNumber a srf:JoinCardinality ; rdfs:comment "Any number of instances, and a link is written to each." .
 
 srf:RmlBackend a srf:CompilerBackend ; rdfs:comment "RML/R2RML triples-map compilation." .
 srf:SparqlBackend a srf:CompilerBackend ; rdfs:comment "SPARQL query compilation." .
@@ -138,6 +138,6 @@ srf:P12 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Each va
 srf:P13 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A key binding of a constructed node is a required-evidence role binding of the same contract that binds a property, so an instance without a value for any part of the key contributes nothing." .
 
 srf:P14 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A join projection states exactly one join statement, with joinedAs on its result-target role binding, and that binding binds the property that links each instance to the instance it names. No other projection kind states a join. Every join statement is reached from such a statement." .
-srf:P15 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A join statement states at least one pair and exactly one match count, AtMostOne or AnyNumber. Each pair names exactly one left and exactly one right role binding." .
+srf:P15 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A join statement states at least one pair, at most one match count and at most one link count, each AtMostOne or AnyNumber, and means AtMostOne and AnyNumber where it states none. Each pair names exactly one left and exactly one right role binding." .
 srf:P16 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "The left binding of a join pair is a candidate-evidence or required-evidence role binding of the same contract that binds a property and names no carrier but the contract's own. The right binding is one that binds a property and names a carrier other than the contract's own, and every right binding of one statement names the same carrier." .
-srf:P17 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "The two bindings of a join pair, and the bindings of every pair of one statement, are of one evidence role kind, so a join is on required evidence or on candidate evidence and never on a mix. The two bindings of a pair state the same datatype, or neither states one, and the pairs of one statement state one datatype between them, or none." .
+srf:P17 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "The two bindings of a join pair, and the bindings of every pair of one statement, are of one evidence role kind, so a join is on required evidence or on candidate evidence and never on a mix. Each pair states its own datatype, the right binding's, to which the left value is cast. A left binding that states a datatype has a right binding that states one, and the pairs of one statement need not agree." .

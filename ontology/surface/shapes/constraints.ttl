@@ -994,36 +994,17 @@ srf:JoinEvidenceKindShape a sh:NodeShape ;
 		"""
 	] .
 
-srf:JoinStatementDatatypeShape a sh:NodeShape ;
-	sh:targetClass srf:JoinStatement ;
-	sh:sparql [
-		sh:message "The pairs of a join statement state different datatypes, or one pair states a datatype and another none. Discharges srf:P17." ;
-		sh:select """
-			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
-			SELECT $this ?value WHERE {
-				$this srf:joinsOn/srf:joinLeft ?first , ?value .
-				?first srf:bindsDatatype ?datatype .
-				FILTER NOT EXISTS { ?value srf:bindsDatatype ?datatype }
-			}
-		"""
-	] .
-
 srf:JoinDatatypeShape a sh:NodeShape ;
 	sh:targetObjectsOf srf:joinsOn ;
 	sh:sparql [
-		sh:message "The two bindings of a join pair state different datatypes, or one states a datatype and the other none. Discharges srf:P17." ;
+		sh:message "The left binding of a join pair states a datatype and the right binding states none to cast it to. Discharges srf:P17." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this ?value WHERE {
 				$this srf:joinLeft ?left ;
 					srf:joinRight ?right .
-				{
-					?left srf:bindsDatatype ?value .
-					FILTER NOT EXISTS { ?right srf:bindsDatatype ?value }
-				} UNION {
-					?right srf:bindsDatatype ?value .
-					FILTER NOT EXISTS { ?left srf:bindsDatatype ?value }
-				}
+				?left srf:bindsDatatype ?value .
+				FILTER NOT EXISTS { ?right srf:bindsDatatype ?datatype }
 			}
 		"""
 	] .

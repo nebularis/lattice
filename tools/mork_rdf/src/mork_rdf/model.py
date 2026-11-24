@@ -50,6 +50,7 @@ class CompiledQuery:
     reads: tuple[str, ...] = ()  # the mappings whose output the query reads, which run in earlier strata
     stratum: int = 0    # the step of the run the query belongs to, after every stratum it reads (README §12)
     head: Optional[tuple[str, str, str]] = None  # for a closure, the property, rdfs:domain or rdfs:range, and the combination
+    severity: Severity = Severity.WARNING  # for a check, the severity each row it returns is reported with
 
 
 @dataclass(frozen=True)
@@ -95,6 +96,7 @@ class CompiledMapping:
                       "# via " + " > ".join(f"<{p}>" for p in query.path)]
             lines += ["# reads the output of " + ", ".join(f"<{r}>" for r in query.reads)] if query.reads else []
             lines += [f"# writes <{query.head[0]}> <{query.head[1]}> the <{query.head[2]}> of the members"] if query.head else []
+            lines += [f"# each row is reported as {query.severity.value}"] if query.kind == "check" and query.severity is not Severity.WARNING else []
             lines.append(query.text)
         return "\n".join(lines) + "\n"
 

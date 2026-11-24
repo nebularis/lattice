@@ -138,7 +138,7 @@ def run(compiled: CompiledMapping, source: Source, reference: Optional[Source] =
         except (KeyError, IndexError):
             value = None
         findings.append(Finding(query.code or "Check", query.mapping, _message(query.code),
-                                Severity.WARNING, focus=focus.value if focus is not None else None,
+                                query.severity, focus=focus.value if focus is not None else None,
                                 value=value.value if value is not None else None))
     for digest, count in report.components:
         findings.append(Finding("SkolemCanonical", None, _message("SkolemCanonical"), Severity.WARNING,
@@ -186,7 +186,8 @@ def _message(code: Optional[str]) -> str:
         "InstanceExcluded": "the guard excludes the focus node for want of the value, so it contributed nothing, no node and no link",
         "ValueDisagrees": "the node is made from several instances and they give it different values for the property, so each was written",
         "JoinUnmatched": "the focus node holds the values the join compares and no node of the second class has them, so no link was written",
-        "JoinAmbiguous": "the focus node names several nodes where the join allows at most one, so no link was written, and each match is named",
+        "JoinAmbiguous": "one value of the focus node names several nodes where the join allows at most one for a value, so no link was written for it, and each match is named",
+        "JoinManyMatches": "the values of the focus node together find several nodes where the join allows at most one link for a node, so no link was written, and each match is named",
         "Unguarded": "no guard of the mappings that share this node's path admits it, so none of them mapped it",
         "SkolemCanonical": "these blank nodes are in a cycle, shared, or reached from no named node, so they are named by their component's canonical labels, which change whenever the component does",
         "Uncovered": "the node's class is a declared source entity that no compiled root iterates, so nothing was made from it",

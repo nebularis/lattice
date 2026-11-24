@@ -275,13 +275,21 @@ class JoinPair:
     left: RoleBinding
     right: RoleBinding
 
+    @property
+    def datatype(self) -> Optional[URIRef]:
+        """The datatype the pair compares by, which is the second carrier's, and the one the left value is cast to (law ``srf:P17``).
+        None where the right binding states none, and the two values are then compared as the same term."""
+        return self.right.datatype
+
 
 @dataclass(frozen=True)
 class JoinStatement:
     """The relation a join projection writes (``srf:JoinStatement``, laws ``srf:P14`` to ``srf:P17``).
 
     ``pairs`` are in the order of their properties, so the same contract always gives the same statement a lowering names by
-    position. ``matches`` is ``srf:AtMostOne`` or ``srf:AnyNumber``. ``required`` is whether the join is on required evidence,
+    position. ``matches`` is ``srf:AtMostOne`` or ``srf:AnyNumber``, how many instances of the second carrier one value names,
+    and ``srf:AtMostOne`` where the statement states none. ``links`` is how many links one instance may have, ``srf:AtMostOne``
+    or ``srf:AnyNumber``, and ``srf:AnyNumber`` where it states none. ``required`` is whether the join is on required evidence,
     which every binding of the statement shares (law ``srf:P17``), and not on candidate evidence.
     """
 
@@ -294,9 +302,18 @@ class JoinStatement:
     #: The result-target role binding that states the join, which binds the property linking each instance to the instance it names.
     link: RoleBinding
 
+    #: How many links one instance may have. The default is any number.
+    links: URIRef = SRF.AnyNumber
+
     @property
     def at_most_one(self) -> bool:
+        """Whether one value names at most one instance of the second carrier."""
         return str(self.matches) == str(SRF.AtMostOne)
+
+    @property
+    def at_most_one_link(self) -> bool:
+        """Whether one instance may have at most one link."""
+        return str(self.links) == str(SRF.AtMostOne)
 
 
 @dataclass(frozen=True)
@@ -888,9 +905,14 @@ class SurfaceGraphAnalyser:
         if not isinstance(statement, URIRef) or str(SRF.JoinStatement) not in self._types(statement):
             raise ContractError(f"{iri} states a join that is not a srf:JoinStatement named by an IRI (law srf:P14)")
 
-        matches = self._iri(statement, SRF.joinMatches, required=False)
-        if matches is None or str(matches) not in (str(SRF.AtMostOne), str(SRF.AnyNumber)):
-            raise ContractError(f"{statement} states no match count, srf:AtMostOne or srf:AnyNumber (law srf:P15)")
+        # Neither count is required. A statement that states no match count means srf:AtMostOne and one that states no link count
+        # means srf:AnyNumber, and the lowering writes each into the scheme, so the compiled form leaves neither implicit.
+        matches = self._iri(statement, SRF.joinMatches, required=False) or SRF.AtMostOne
+        if str(matches) not in (str(SRF.AtMostOne), str(SRF.AnyNumber)):
+            raise ContractError(f"{statement} states a match count that is not srf:AtMostOne or srf:AnyNumber (law srf:P15)")
+        links = self._iri(statement, SRF.joinLinks, required=False) or SRF.AnyNumber
+        if str(links) not in (str(SRF.AtMostOne), str(SRF.AnyNumber)):
+            raise ContractError(f"{statement} states a link count that is not srf:AtMostOne or srf:AnyNumber (law srf:P15)")
         pair_nodes = list(self.g.objects(statement, SRF.joinsOn))
         if not pair_nodes:
             raise ContractError(f"{statement} names no pair of bindings that must be equal (law srf:P15)")
@@ -922,11 +944,9 @@ class SurfaceGraphAnalyser:
                 )
             if str(left.role_kind) != str(right.role_kind):
                 raise ContractError(f"{statement} pairs {left.iri} and {right.iri}, which are not of one evidence kind (law srf:P17)")
-            if (left.datatype is None) != (right.datatype is None) or (
-                left.datatype is not None and str(left.datatype) != str(right.datatype)
-            ):
+            if left.datatype is not None and right.datatype is None:
                 raise ContractError(
-                    f"{statement} pairs {left.iri} and {right.iri}, which state different datatypes, or one states one and the other none (law srf:P17)"
+                    f"{statement} pairs {left.iri}, which states a datatype, with {right.iri}, which states none to cast it to (law srf:P17)"
                 )
             pairs.append(JoinPair(left=left, right=right))
         pairs.sort(key=lambda p: (str(p.left.binds_property), str(p.right.binds_property)))
@@ -935,12 +955,11 @@ class SurfaceGraphAnalyser:
             raise ContractError(f"{statement} reads more than one second carrier (law srf:P16)")
         if len({str(b.role_kind) for p in pairs for b in (p.left, p.right)}) > 1:
             raise ContractError(f"{statement} is on a mix of required and candidate evidence (law srf:P17)")
-        if len({None if p.left.datatype is None else str(p.left.datatype) for p in pairs}) > 1:
-            raise ContractError(f"{statement} compares values of several datatypes, which a join does not yet state (law srf:P17)")
         return JoinStatement(
             iri=statement,
             pairs=tuple(pairs),
             matches=matches,
+            links=links,
             second_carrier=pairs[0].right.binds_carrier,
             required=str(pairs[0].left.role_kind) == str(SRF.RequiredEvidenceRole),
             link=link,

@@ -71,9 +71,11 @@ class Spec:
     guard: Optional[object] = None          # mork:appliesWhen, a SHACL node shape its focus nodes conform to (§7.7)
     identity_rule: Optional[URIRef] = None  # mork:identityRule, the rule that gives the datum its identity without a template
     value: Optional[URIRef] = None          # mork:valueExpression, the root of a typed value expression (§7.8)
-    joins: tuple = ()                       # mork:joinsOn, each condition as (parentRef path, parentRef text, ownRef path, ownRef text), sorted (§7.10)
-    join_cardinality: Optional[URIRef] = None   # mork:joinCardinality
+    joins: tuple = ()                       # mork:joinsOn, each condition as (parentRef path, parentRef text, ownRef path, ownRef text, its comparison, its datatype), sorted (§7.10)
+    join_cardinality: Optional[URIRef] = None   # mork:joinCardinality, how many nodes one value finds
+    link_cardinality: Optional[URIRef] = None   # mork:linkCardinality, how many nodes a parent finds in all
     reports_unmatched: Optional[bool] = None    # mork:reportsUnmatched
+    unmatched_severity: Optional[URIRef] = None # mork:unmatchedSeverity
 
     @property
     def parent(self) -> Optional[URIRef]:
@@ -196,7 +198,8 @@ def _sources(g: Graph, node) -> tuple[URIRef, ...]:
 def _joins(g: Graph, node, parse_path, declared: dict, findings: list) -> tuple:
     """The conditions a datum joins on, each read once and sorted by its two paths, so the order they were written in
     never changes a query. A condition missing a path, or with one that does not parse, is kept with `None` for it, and
-    classification refuses the datum by name."""
+    classification refuses the datum by name. A condition's own comparison and datatype are kept as stated, `None` where it
+    states none, and the compiler reads the datum's where they are."""
     out = []
     for condition in sorted(g.objects(node, MORK.joinsOn), key=str):
         texts = [_text(g, condition, p) for p in (MORK.parentRef, MORK.ownRef)]
@@ -207,8 +210,8 @@ def _joins(g: Graph, node, parse_path, declared: dict, findings: list) -> tuple:
             except paths.PathError as error:
                 findings.append(Finding("BadPath", str(node), str(error)))
                 parsed.append(None)
-        out.append((parsed[0], texts[0], parsed[1], texts[1]))
-    return tuple(sorted(out, key=lambda c: (c[1] or "", c[3] or "")))
+        out.append((parsed[0], texts[0], parsed[1], texts[1], _iri(g, condition, MORK.lookupComparison), _iri(g, condition, MORK.lookupDatatype)))
+    return tuple(sorted(out, key=lambda c: (c[1] or "", c[3] or "", str(c[4] or ""), str(c[5] or ""))))
 
 
 def _identity(g: Graph, node) -> Optional[URIRef]:
@@ -350,6 +353,8 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             value=_iri(g, node, MORK.valueExpression),
             joins=_joins(g, node, parse_path, declared, findings),
             join_cardinality=_iri(g, node, MORK.joinCardinality),
+            link_cardinality=_iri(g, node, MORK.linkCardinality),
+            unmatched_severity=_iri(g, node, MORK.unmatchedSeverity),
             reports_unmatched=flag.toPython() if isinstance(flag := _one(g, node, MORK.reportsUnmatched), Literal) and isinstance(flag.toPython(), bool) else None,
         )
 
@@ -429,6 +434,8 @@ def _merge(g: Graph, instance: Spec, template: Spec, specs: dict) -> Spec:
         value=pick(instance.value, template.value),
         joins=pick(instance.joins, template.joins),
         join_cardinality=pick(instance.join_cardinality, template.join_cardinality),
+        link_cardinality=pick(instance.link_cardinality, template.link_cardinality),
+        unmatched_severity=pick(instance.unmatched_severity, template.unmatched_severity),
         reports_unmatched=pick(instance.reports_unmatched, template.reports_unmatched),
     )
 
@@ -499,14 +506,18 @@ def _join_finding(spec: Spec, rbox) -> Optional[Finding]:
     node = str(spec.node)
     if spec.identity_rule != MORK.SourceNodeIdentity:
         return Finding("JoinIncomplete", node, "a join datum takes the node it finds, so it states mork:identityRule mork:SourceNodeIdentity")
-    if any(parent is None or own is None for parent, _, own, _ in spec.joins):
+    if any(condition[0] is None or condition[2] is None for condition in spec.joins):
         return Finding("JoinIncomplete", node, "a join condition names both mork:parentRef and mork:ownRef, each a path that parses")
     if rbox is None or spec.parent is None or not spec.sources:
         return Finding("JoinIncomplete", node, "a join datum names the class it iterates with mork:mappingFor, sits beneath a parent, and writes its link with an R-Box match")
     if spec.join_cardinality not in (MORK.AtMostOneMatch, MORK.AnyNumberOfMatches):
         return Finding("JoinIncomplete", node, "a join datum states mork:joinCardinality, mork:AtMostOneMatch or mork:AnyNumberOfMatches")
+    if spec.link_cardinality not in (None, MORK.AtMostOneMatch, MORK.AnyNumberOfMatches):
+        return Finding("JoinIncomplete", node, "a join datum states mork:linkCardinality, mork:AtMostOneMatch or mork:AnyNumberOfMatches, or none")
     if spec.reports_unmatched is None:
         return Finding("JoinIncomplete", node, "a join datum states mork:reportsUnmatched, true or false")
+    if spec.unmatched_severity not in (None, MORK.WarningFinding, MORK.InfoFinding):
+        return Finding("JoinIncomplete", node, "a join datum states mork:unmatchedSeverity, mork:WarningFinding or mork:InfoFinding, or none")
     if spec.children:
         return Finding("JoinWrites", node, "a join writes its link and nothing beneath it, so no mapping may sit beneath a join datum")
     return None

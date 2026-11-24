@@ -761,6 +761,8 @@ Kind: *object* takes an IRI, inline node or payload, *data* takes a literal type
 | `own` | `mork:ownRef` | data | xsd:string |
 | `jcd` | `mork:joinCardinality` | object |  |
 | `rpu` | `mork:reportsUnmatched` | data | xsd:boolean |
+| `lkc` | `mork:linkCardinality` | object |  |
+| `usv` | `mork:unmatchedSeverity` | object |  |
 
 **Compiled mapping**
 

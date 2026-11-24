@@ -1,5 +1,5 @@
 {
-  "ontology": "sha256:6cb8b06a023425dab520cc659f0dbf0d7e7c9764d85bfd7b9118be6f7ad7ca43",
+  "ontology": "sha256:46f13bef9dc4699dfd5aeb6bc079657b774467b2ef37779c243875920bc08a42",
   "term:http://www.nebularis.org/ontologies/Mork#Accepted": "sha256:8870d9332ef893aaeb8a7025fac7684df3c14b09f46d447c6236dd9c1d9c900e",
   "term:http://www.nebularis.org/ontologies/Mork#AnonymousElement": "sha256:9a9d86aab337bf55f07a042b943509c008f88280535fd2667dcee858841cef3d",
   "term:http://www.nebularis.org/ontologies/Mork#AnyNumberOfMatches": "sha256:a61a75df5634c1f3f3dd671bc485199f6601bbabbee6fed4958bf05e9a949ba6",
@@ -289,6 +289,7 @@
   "term:http://www.nebularis.org/ontologies/Mork#jurisdiction": "sha256:05f433a612f5d0dd7598aa5f3c221c3cc771fd579fd55a56d35de44c3a89cabf",
   "term:http://www.nebularis.org/ontologies/Mork#leftOperand": "sha256:df0930c65779481e3d3609eeeb0cc416e374e1fcc182a0b1dba8e77d45ddd903",
   "term:http://www.nebularis.org/ontologies/Mork#lexicalMatch": "sha256:e03ea965f54b88d894e7f846a1399e404bbcabf97bffa80fbd1912279179bef1",
+  "term:http://www.nebularis.org/ontologies/Mork#linkCardinality": "sha256:c58a6e660feae71ad2257dcdff7fe7ba121ca00d86cd7f2160f2fae652a2a6ed",
   "term:http://www.nebularis.org/ontologies/Mork#llmConfidence": "sha256:7ead93c1aed7630bc606a1a51d4356da8015d4b2406355096d76ea1b91a8bcad",
   "term:http://www.nebularis.org/ontologies/Mork#llmModelId": "sha256:2800fa5cf8b711b2196a43f4d5618f0c28e85759047069306dbd633ffd840756",
   "term:http://www.nebularis.org/ontologies/Mork#lookupComparison": "sha256:d2438b28cf60012e18c17d61c8419d0343dbc0e03cd4dbb7670094f08a2bd7ec",
@@ -409,6 +410,7 @@
   "term:http://www.nebularis.org/ontologies/Mork#totalTokens": "sha256:3db229ca55ddd9387567008dc443cbcd00400ddfbbe932b7dd42dbe029f0f09f",
   "term:http://www.nebularis.org/ontologies/Mork#typedValue": "sha256:1a1d5fefd6bd409e8e140c10ebab89e4f3c0e5ef186867af8fb8f80eb23ed4ee",
   "term:http://www.nebularis.org/ontologies/Mork#uniqueItems": "sha256:b3e2a59e5a315187b5bb412811dfed1737aa7e81fa6f21e16107ec4adf413e54",
+  "term:http://www.nebularis.org/ontologies/Mork#unmatchedSeverity": "sha256:8541f1fe751104bce45a902c1c9d351192604e5a0c6c7937f13f46fdaa4acfe3",
   "term:http://www.nebularis.org/ontologies/Mork#userDeclined": "sha256:dc42cb73c87804db5bc71a66a5ddb6a43856f5d6b1d8639a8b22b7eb28ec9de2",
   "term:http://www.nebularis.org/ontologies/Mork#valueExpression": "sha256:6962fa2d0b46390a08d4d81cfdefeff87321edee36d8b11b1176ed2ce41c9161",
   "term:http://www.nebularis.org/ontologies/Mork#weightedBroader": "sha256:4398da54297c4db9d415eac9e3ab155419abca4139bd20871f0c4aeb44cdedaf",

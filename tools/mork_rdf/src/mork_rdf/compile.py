@@ -329,11 +329,11 @@ class _Compiler:
             self.queries.append(query)
 
     def check(self, chain: list[_Frame], code: str, select: str, where: str, tail: str = "", node: Optional[Spec] = None,
-              reads: tuple = ()) -> None:
+              reads: tuple = (), severity: Severity = Severity.WARNING) -> None:
         query = f"{self.prologue}SELECT DISTINCT {select}\nWHERE {{\n  {where}\n}}{tail}"
         mapping = node or chain[-1].spec
         self.queries.append(CompiledQuery(str(mapping.node), tuple(str(f.spec.node) for f in chain) + ((str(node.node),) if node is not None and node is not chain[-1].spec else ()), "check", code, query,
-                                          reads=tuple(str(r) for r in reads)))
+                                          reads=tuple(str(r) for r in reads), severity=severity))
 
     # --- the walk ----------------------------------------------------------------------------------------------------
 
@@ -463,26 +463,32 @@ class _Compiler:
 
     # --- joins (README §7.10) ----------------------------------------------------------------------------------------
 
-    def _comparison(self, spec: Spec) -> tuple:
-        """How a join compares its two values, the lookup's comparisons (§7.3). A cast with no datatype to cast to is read as
-        lexical, as a lookup reads it."""
-        comparison = spec.comparison
-        if comparison == MORK.CastComparison and spec.lookup_datatype is None:
-            self.findings.append(Finding("JoinLexical", str(spec.node), "compared lexically, since no mork:lookupDatatype names the type to cast to", Severity.INFO))
-            comparison = MORK.LexicalComparison
-        if comparison not in (MORK.LexicalComparison, MORK.TermComparison, MORK.CastComparison):
-            raise _Refusal("JoinComparisonUnknown", f"{comparison.n3()} is not a comparison a join knows")
-        return comparison, spec.lookup_datatype
+    def _comparisons(self, spec: Spec) -> list:
+        """How a join compares each condition's two values, the lookup's comparisons (§7.3), as (comparison, datatype) in the
+        order of the conditions. A condition's own comparison and datatype are read, then the datum's, then a lookup's default.
+        A cast with no datatype to cast to is read as lexical, as a lookup reads it."""
+        out = []
+        for condition in spec.joins:
+            comparison = condition[4] or spec.comparison
+            datatype = condition[5] or spec.lookup_datatype
+            if comparison == MORK.CastComparison and datatype is None:
+                self.findings.append(Finding("JoinLexical", str(spec.node), f"the condition on {condition[1]} is compared lexically, since no mork:lookupDatatype names the type to cast to", Severity.INFO))
+                comparison = MORK.LexicalComparison
+            if comparison not in (MORK.LexicalComparison, MORK.TermComparison, MORK.CastComparison):
+                raise _Refusal("JoinComparisonUnknown", f"{comparison.n3()} is not a comparison a join knows")
+            out.append((comparison, datatype))
+        return out
 
-    def _join_sides(self, spec: Spec, parent_focus: str, focus: str, comparison: tuple, left: Optional[list] = None) -> tuple:
+    def _join_sides(self, spec: Spec, parent_focus: str, focus: str, comparisons: list, left: Optional[list] = None) -> tuple:
         """The patterns a join reads, each condition's value from the parent's node and the node found, and what makes them
         equal. A term or cast comparison joins on a variable the two patterns share, so an engine can serve it from an index,
         the cast one by binding the parent's value cast to the datatype first (§7.3). A lexical comparison cannot be served
-        by an index and is a filter. The parent's variables are made once, and `left` passes them on, so a query that asks
-        whether a second node matches the same parent's values makes only the second node's own."""
-        kind, datatype = comparison
+        by an index and is a filter. Each condition is compared as it says, so one key may mix them. The parent's variables
+        are made once, and `left` passes them on, so a query that asks whether a second node matches the same parent's values
+        makes only the second node's own."""
         reads, pairs, own, tests = [], [], [], []
-        for index, (parent_path, _, own_path, _) in enumerate(spec.joins):
+        for index, (condition, (kind, datatype)) in enumerate(zip(spec.joins, comparisons)):
+            parent_path, own_path = condition[0], condition[2]
             if left is None:
                 value = self.var("v")
                 reads.append(f"{parent_focus} {paths.write(parent_path)} {value} .")
@@ -506,35 +512,49 @@ class _Compiler:
         node whose values equal the parent's. A guard is tested on the parent's node, since it says which nodes join."""
         focus = self.var("f")
         frame = _Frame(spec, focus, focus)
-        comparison = self._comparison(spec)
-        reads, pairs, own, tests = self._join_sides(spec, parent.focus, focus, comparison)
-        frame.join = (reads, pairs, comparison)
+        comparisons = self._comparisons(spec)
+        reads, pairs, own, tests = self._join_sides(spec, parent.focus, focus, comparisons)
+        frame.join = (reads, pairs, comparisons)
         frame.match = reads + self.guard(spec, parent.focus) + self.instances(spec.sources, focus) + own + [f"FILTER ({t})" for t in tests]
+        # A value that finds several writes no link and a parent whose values together find several writes none either,
+        # each where the join says so, and the checks below name each match.
         if spec.join_cardinality == MORK.AtMostOneMatch:
-            # A parent with several matches writes no link, and the check below names each match.
-            frame.restrict = [self._by_count(spec, parent.focus, comparison, "=")]
+            frame.restrict.append(self._by_count(spec, parent.focus, comparisons, "=", (reads, pairs)))
+        if spec.link_cardinality == MORK.AtMostOneMatch:
+            frame.restrict.append(self._by_count(spec, parent.focus, comparisons, "="))
         return frame
 
-    def _by_count(self, spec: Spec, parent_focus: str, comparison: tuple, relation: str) -> str:
-        """The parent nodes whose matches number one (`=`) or more than one (`>`), counted over the join again with variables
-        of its own. A variable the outer query has already bound is bound inside a subquery too on rdflib, which would count
-        the one match the outer row holds, so the subquery shares only the parent's node."""
+    def _by_count(self, spec: Spec, parent_focus: str, comparisons: list, relation: str, outer: Optional[tuple] = None) -> str:
+        """The parent nodes whose matches number one (`=`) or more than one (`>`), counted over the join again, and the
+        matches counted are the sub-select's own variable. A variable the outer query has bound and the sub-select does not
+        project is bound inside it too on rdflib, which would count the one match the outer row holds (TSD-79), so the
+        sub-select shares only what it projects. Without `outer` it projects the parent's node and counts the parent's
+        matches over all its values, with variables of its own. With `outer`, the outer query's reads and (value, key) pairs,
+        it projects each key as well and counts the matches of each value, so a parent with two codes that each name one node
+        has two values and each is counted once."""
         focus = self.var("f")
-        reads, _, own, tests = self._join_sides(spec, parent_focus, focus, comparison)
+        if outer is None:
+            reads, _, own, tests = self._join_sides(spec, parent_focus, focus, comparisons)
+            group = parent_focus
+        else:
+            reads, pairs = outer
+            _, _, own, tests = self._join_sides(spec, parent_focus, focus, comparisons, pairs)
+            group = parent_focus + "".join(f" {key}" for _, key in pairs)
         patterns = reads + self.guard(spec, parent_focus) + self.instances(spec.sources, focus) + own + [f"FILTER ({t})" for t in tests]
-        return (f"{{ SELECT {parent_focus} WHERE {{ {' '.join(patterns)} }} "
-                f"GROUP BY {parent_focus} HAVING (COUNT(DISTINCT {focus}) {relation} 1) }}")
+        return (f"{{ SELECT {group} WHERE {{ {' '.join(patterns)} }} "
+                f"GROUP BY {group} HAVING (COUNT(DISTINCT {focus}) {relation} 1) }}")
 
     def joined(self, chain: list[_Frame]) -> None:
         """What a join datum needs beyond its link (README §7.10). Its guard excludes whole parent nodes, which a check names
-        with the value each lacks, a parent that holds the values and finds no match is reported when the join says so, and
-        a parent that finds several is reported with each where the join allows one. It takes a mapping review."""
+        with the value each lacks, a parent that holds the values and finds no match is reported when the join says so, as
+        its severity says, and a value that finds several, or the parent's values together, are reported with each match where
+        the join allows one. It takes a mapping review."""
         frame = chain[-1]
         spec = frame.spec
         if spec.kind is not Kind.JOIN or frame.join is None:
             return
         parent = chain[-2]
-        reads, pairs, comparison = frame.join
+        reads, pairs, comparisons = frame.join
         if spec.guard is not None:
             try:
                 missing = required_paths(self.g, spec.guard, _term)
@@ -546,15 +566,20 @@ class _Compiler:
         self.findings.append(Finding("MappingReview", str(spec.node), "it relates each instance to the node whose values equal the instance's, so a reviewer should confirm the condition and the number of matches it allows", Severity.WARNING))
         if spec.reports_unmatched:
             other = self.var("f")
-            _, _, own, tests = self._join_sides(spec, parent.focus, other, comparison, pairs)
+            _, _, own, tests = self._join_sides(spec, parent.focus, other, comparisons, pairs)
             absent = f"FILTER NOT EXISTS {{ {' '.join(self.instances(spec.sources, other) + own + [f'FILTER ({t})' for t in tests])} }}"
             values = [value for value, _ in pairs]
             value = values[0] if len(values) == 1 else "CONCAT(" + ', "/", '.join(f"STR({v})" for v in values) + ")"
+            severity = Severity.INFO if spec.unmatched_severity == MORK.InfoFinding else Severity.WARNING
             self.check(chain, "JoinUnmatched", f"({parent.focus} AS ?focus) ({value} AS ?value)",
-                       self.where(chain[:-1], reads + self.guard(spec, parent.focus) + [absent]))
+                       self.where(chain[:-1], reads + self.guard(spec, parent.focus) + [absent]), severity=severity)
         if spec.join_cardinality == MORK.AtMostOneMatch:
-            several = self._by_count(spec, parent.focus, comparison, ">")
+            several = self._by_count(spec, parent.focus, comparisons, ">", (reads, pairs))
             self.check(chain, "JoinAmbiguous", f"({parent.focus} AS ?focus) ({frame.focus} AS ?value)",
+                       self.where(chain[:-1], frame.match + [several]))
+        if spec.link_cardinality == MORK.AtMostOneMatch:
+            several = self._by_count(spec, parent.focus, comparisons, ">")
+            self.check(chain, "JoinManyMatches", f"({parent.focus} AS ?focus) ({frame.focus} AS ?value)",
                        self.where(chain[:-1], frame.match + [several]))
 
     def unguarded(self, chain: list[_Frame], spec: Spec) -> None:

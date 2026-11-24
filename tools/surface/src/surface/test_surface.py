@@ -2060,6 +2060,28 @@ def typed_graph() -> Graph:
     return join_with(add="ex:oc-code srf:bindsDatatype xsd:integer . ex:oc-match srf:bindsDatatype xsd:integer .")
 
 
+def cast_graph() -> Graph:
+    """The example where the order holds its code as a string and the customer as an integer, so the order's value is cast."""
+    return join_with(add="ex:oc-code srf:bindsDatatype xsd:string . ex:oc-match srf:bindsDatatype xsd:integer .")
+
+
+def default_graph() -> Graph:
+    """The example that states neither count, so it means at most one match for a value and any number of links."""
+    return join_with(remove=[("oc-join", SRF.joinMatches, None)])
+
+
+def one_link_graph() -> Graph:
+    return join_with(add="ex:oc-join srf:joinLinks srf:AtMostOne .")
+
+
+def mixed_graph() -> Graph:
+    """The two-pair example whose first pair is compared as the same term and whose second casts a string region to an integer."""
+    graph = two_pair_graph()
+    for name, datatype in (("oc-region", XSD.string), ("oc-region-match", XSD.integer)):
+        graph.add((URIRef(ORDER_CUSTOMER + name), SRF.bindsDatatype, datatype))
+    return graph
+
+
 def two_pair_graph() -> Graph:
     """The example joined on the code and a region, so a customer must hold both values the order names."""
     return join_with(
@@ -2096,12 +2118,25 @@ class JoinModelTests(unittest.TestCase):
         self.assertFalse(join_contract(candidate_graph()).join.required)
         self.assertFalse(join_contract(any_number_graph()).join.at_most_one)
 
+    def test_a_statement_that_states_neither_count_means_at_most_one_match_for_a_value_and_any_number_of_links(self) -> None:
+        join = join_contract(default_graph()).join
+        self.assertEqual((join.matches, join.links), (SRF.AtMostOne, SRF.AnyNumber))
+        self.assertTrue(join.at_most_one)
+        self.assertFalse(join.at_most_one_link)
+        self.assertTrue(join_contract(one_link_graph()).join.at_most_one_link)
+
+    def test_each_pair_states_its_own_datatype_the_right_bindings_and_a_pair_that_states_none_compares_the_same_term(self) -> None:
+        self.assertEqual([p.datatype for p in join_contract(join_graph()).join.pairs], [None])
+        self.assertEqual([p.datatype for p in join_contract(cast_graph()).join.pairs], [XSD.integer])
+        self.assertEqual([p.datatype for p in join_contract(typed_graph()).join.pairs], [XSD.integer])
+        self.assertEqual([p.datatype for p in join_contract(mixed_graph()).join.pairs], [None, XSD.integer])
+
     def test_pairs_are_read_in_the_order_of_the_properties_they_compare(self) -> None:
         pairs = join_contract(two_pair_graph()).join.pairs
         self.assertEqual([p.left.binds_property for p in pairs], [URIRef(ORDER_CUSTOMER + "customerCode"), URIRef(ORDER_CUSTOMER + "customerRegion")])
 
     def test_the_statement_is_the_same_whatever_the_order_of_the_triples(self) -> None:
-        for build in (join_graph, two_pair_graph):
+        for build in (join_graph, two_pair_graph, mixed_graph, one_link_graph):
             reference = join_contract(build()).join
             triples = sorted(build())
             for seed in range(5):
@@ -2136,9 +2171,9 @@ class JoinModelTests(unittest.TestCase):
     def test_a_statement_with_no_pair_is_refused(self) -> None:
         self.refused(join_with(remove=[("oc-join", SRF.joinsOn, None)]), "srf:P15")
 
-    def test_a_statement_with_no_count_or_a_count_the_choice_does_not_name_is_refused(self) -> None:
-        self.refused(join_with(remove=[("oc-join", SRF.joinMatches, None)]), "srf:P15")
+    def test_a_count_the_choice_does_not_name_is_refused(self) -> None:
         self.refused(join_with(remove=[("oc-join", SRF.joinMatches, None)], add="ex:oc-join srf:joinMatches ex:Elsewhere ."), "srf:P15")
+        self.refused(join_with(add="ex:oc-join srf:joinLinks ex:Elsewhere ."), "srf:P15")
 
     def test_a_pair_with_no_left_or_no_right_is_refused(self) -> None:
         for side in ("joinLeft", "joinRight"):
@@ -2174,13 +2209,15 @@ class JoinModelTests(unittest.TestCase):
             graph.add((URIRef(ORDER_CUSTOMER + name), SRF.roleKind, SRF.CandidateEvidenceRole))
         self.refused(graph, "srf:P17")
 
-    def test_datatypes_the_pair_or_the_statement_state_differently_are_refused(self) -> None:
+    def test_a_left_binding_that_states_a_datatype_with_no_right_one_to_cast_it_to_is_refused(self) -> None:
         self.refused(join_with(add="ex:oc-code srf:bindsDatatype xsd:integer ."), "srf:P17")
-        self.refused(join_with(add="ex:oc-code srf:bindsDatatype xsd:integer . ex:oc-match srf:bindsDatatype xsd:string ."), "srf:P17")
         graph = two_pair_graph()
-        for name in ("oc-region", "oc-region-match"):
-            graph.add((URIRef(ORDER_CUSTOMER + name), SRF.bindsDatatype, XSD.string))
+        graph.add((URIRef(ORDER_CUSTOMER + "oc-region"), SRF.bindsDatatype, XSD.string))
         self.refused(graph, "srf:P17")
+
+    def test_pairs_and_the_bindings_of_a_pair_may_state_different_datatypes(self) -> None:
+        for graph in (cast_graph(), mixed_graph(), join_with(add="ex:oc-match srf:bindsDatatype xsd:integer .")):
+            self.assertIsNotNone(join_contract(graph).join)
 
 
 class JoinShapeTests(unittest.TestCase):
@@ -2190,7 +2227,7 @@ class JoinShapeTests(unittest.TestCase):
         return {name.rsplit("#", 1)[-1] for name in shape_violations(graph, SURFACE_SHAPES)}
 
     def test_the_example_and_its_variants_conform(self) -> None:
-        for graph in (join_graph(), candidate_graph(), any_number_graph(), typed_graph(), two_pair_graph()):
+        for graph in (join_graph(), candidate_graph(), any_number_graph(), typed_graph(), two_pair_graph(), cast_graph(), default_graph(), one_link_graph(), mixed_graph()):
             self.assertEqual(self.violations(graph), set())
 
     def test_a_join_with_no_statement_is_refused(self) -> None:
@@ -2216,14 +2253,16 @@ class JoinShapeTests(unittest.TestCase):
     def test_a_statement_that_is_no_join_statement_is_refused(self) -> None:
         self.assertIn("JoinStatementTypedShape", self.violations(join_with(remove=[("oc-join", RDF.type, SRF.JoinStatement)])))
 
-    def test_a_statement_with_no_pair_or_no_count_is_refused(self) -> None:
-        for predicate in (SRF.joinsOn, SRF.joinMatches):
-            with self.subTest(predicate=predicate):
-                self.assertIn("JoinStatementShape", self.violations(join_with(remove=[("oc-join", predicate, None)])))
+    def test_a_statement_with_no_pair_is_refused_and_one_with_no_count_is_not(self) -> None:
+        self.assertIn("JoinStatementShape", self.violations(join_with(remove=[("oc-join", SRF.joinsOn, None)])))
+        self.assertNotIn("JoinStatementShape", self.violations(default_graph()))
 
-    def test_a_count_the_choice_does_not_name_is_refused(self) -> None:
+    def test_a_count_the_choice_does_not_name_or_a_count_stated_twice_is_refused(self) -> None:
         graph = join_with(remove=[("oc-join", SRF.joinMatches, None)], add="ex:oc-join srf:joinMatches ex:Elsewhere .")
         self.assertIn("JoinStatementShape", self.violations(graph))
+        self.assertIn("JoinStatementShape", self.violations(join_with(add="ex:oc-join srf:joinLinks ex:Elsewhere .")))
+        self.assertIn("JoinStatementShape", self.violations(join_with(add="ex:oc-join srf:joinMatches srf:AnyNumber .")))
+        self.assertIn("JoinStatementShape", self.violations(join_with(add="ex:oc-join srf:joinLinks srf:AtMostOne , srf:AnyNumber .")))
 
     def test_a_pair_with_no_left_or_no_right_is_refused(self) -> None:
         for side in ("joinLeft", "joinRight"):
@@ -2262,14 +2301,15 @@ class JoinShapeTests(unittest.TestCase):
             graph.add((URIRef(ORDER_CUSTOMER + name), SRF.roleKind, SRF.CandidateEvidenceRole))
         self.assertIn("JoinEvidenceKindShape", self.violations(graph))
 
-    def test_datatypes_the_pair_or_the_statement_state_differently_are_refused(self) -> None:
+    def test_a_left_binding_that_states_a_datatype_with_no_right_one_to_cast_it_to_is_refused(self) -> None:
         self.assertIn("JoinDatatypeShape", self.violations(join_with(add="ex:oc-code srf:bindsDatatype xsd:integer .")))
-        self.assertIn("JoinDatatypeShape", self.violations(join_with(add="ex:oc-match srf:bindsDatatype xsd:integer .")))
-        self.assertIn("JoinDatatypeShape", self.violations(join_with(add="ex:oc-code srf:bindsDatatype xsd:integer . ex:oc-match srf:bindsDatatype xsd:string .")))
         graph = two_pair_graph()
-        for name in ("oc-region", "oc-region-match"):
-            graph.add((URIRef(ORDER_CUSTOMER + name), SRF.bindsDatatype, XSD.string))
-        self.assertIn("JoinStatementDatatypeShape", self.violations(graph))
+        graph.add((URIRef(ORDER_CUSTOMER + "oc-region"), SRF.bindsDatatype, XSD.string))
+        self.assertIn("JoinDatatypeShape", self.violations(graph))
+
+    def test_a_pair_may_cast_one_side_and_the_pairs_of_a_statement_may_differ(self) -> None:
+        for graph in (join_with(add="ex:oc-match srf:bindsDatatype xsd:integer ."), cast_graph(), mixed_graph()):
+            self.assertNotIn("JoinDatatypeShape", self.violations(graph))
 
     def test_the_laws_the_shapes_discharge_are_in_the_vocabulary(self) -> None:
         vocabulary = parse_files([str(ROOT / "ontology" / "surface" / "vocab" / "surface-vocab.ttl")])
@@ -2315,15 +2355,33 @@ class JoinLoweringTests(unittest.TestCase):
         self.assertEqual(low.value(condition, MORK.parentRef), Literal(f"<{ORDER_CUSTOMER}customerCode>"))
         self.assertEqual(low.value(condition, MORK.ownRef), Literal(f"<{ORDER_CUSTOMER}code>"))
         self.assertEqual(low.value(datum, MORK.joinCardinality), MORK.AtMostOneMatch)
+        self.assertEqual(low.value(datum, MORK.linkCardinality), MORK.AnyNumberOfMatches)
         self.assertEqual(low.value(datum, MORK.reportsUnmatched), Literal(True))
+        self.assertEqual(low.value(datum, MORK.unmatchedSeverity), MORK.WarningFinding)
 
     def test_a_count_of_any_number_and_a_join_on_candidate_evidence_are_stated_as_they_are(self) -> None:
         _, any_low = self.lowered(any_number_graph())
         _, candidate_low = self.lowered(candidate_graph())
-        for low, count, reported in ((any_low, MORK.AnyNumberOfMatches, True), (candidate_low, MORK.AtMostOneMatch, False)):
+        for low, count, severity in ((any_low, MORK.AnyNumberOfMatches, MORK.WarningFinding), (candidate_low, MORK.AtMostOneMatch, MORK.InfoFinding)):
             datum = next(low.subjects(MORK.joinCardinality, None))
             self.assertEqual(low.value(datum, MORK.joinCardinality), count)
-            self.assertEqual(low.value(datum, MORK.reportsUnmatched), Literal(reported))
+            # An instance that holds the values and finds no match is reported either way, as information on candidate evidence.
+            self.assertEqual(low.value(datum, MORK.reportsUnmatched), Literal(True))
+            self.assertEqual(low.value(datum, MORK.unmatchedSeverity), severity)
+
+    def test_a_count_the_contract_leaves_out_is_written_into_the_scheme_as_its_default(self) -> None:
+        """The contract may omit either count. The compiled form never does, so MORK states what the contract meant."""
+        _, low = self.lowered(default_graph())
+        datum = next(low.subjects(MORK.joinCardinality, None))
+        self.assertEqual(low.value(datum, MORK.joinCardinality), MORK.AtMostOneMatch)
+        self.assertEqual(low.value(datum, MORK.linkCardinality), MORK.AnyNumberOfMatches)
+        self.assertEqual(canonical.hash_graph(self.lowered(default_graph())[1]) != canonical.hash_graph(self.lowered(one_link_graph())[1]), True)
+        _, low = self.lowered(one_link_graph())
+        self.assertEqual(low.value(next(low.subjects(MORK.joinCardinality, None)), MORK.linkCardinality), MORK.AtMostOneMatch)
+        statement = join_graph()
+        statement.add((URIRef(ORDER_CUSTOMER + "oc-join"), SRF.joinLinks, SRF.AnyNumber))
+        stated = self.lowered(statement)[1]
+        self.assertEqual(canonical.hash_graph(stated), canonical.hash_graph(self.lowered(join_graph())[1]))
 
     def test_the_guard_holds_the_required_evidence_of_the_instance_and_not_the_second_carriers(self) -> None:
         contract, low = self.lowered(join_graph())
@@ -2356,20 +2414,35 @@ class JoinLoweringTests(unittest.TestCase):
             ],
         )
 
-    def test_values_are_compared_by_term_unless_the_bindings_state_a_datatype_which_they_are_cast_to(self) -> None:
-        _, plain = self.lowered(join_graph())
-        _, typed = self.lowered(typed_graph())
-        self.assertEqual(plain.value(next(plain.subjects(MORK.joinCardinality, None)), MORK.lookupComparison), MORK.TermComparison)
-        datum = next(typed.subjects(MORK.joinCardinality, None))
-        self.assertEqual(typed.value(datum, MORK.lookupComparison), MORK.CastComparison)
-        self.assertEqual(typed.value(datum, MORK.lookupDatatype), XSD.integer)
+    def comparisons(self, graph: Graph) -> list:
+        contract, low = self.lowered(graph)
+        _, datum = self.parts(low, contract)
+        self.assertIsNone(low.value(datum, MORK.lookupComparison))
+        self.assertIsNone(low.value(datum, MORK.lookupDatatype))
+        return [(low.value(c, MORK.parentRef), low.value(c, MORK.lookupComparison), low.value(c, MORK.lookupDatatype)) for c in sorted(low.objects(datum, MORK.joinsOn))]
+
+    def test_each_condition_compares_by_term_unless_its_right_binding_states_a_datatype_which_the_value_is_cast_to(self) -> None:
+        code, region = (Literal(f"<{ORDER_CUSTOMER}{name}>") for name in ("customerCode", "customerRegion"))
+        self.assertEqual(self.comparisons(join_graph()), [(code, MORK.TermComparison, None)])
+        self.assertEqual(self.comparisons(typed_graph()), [(code, MORK.CastComparison, XSD.integer)])
+        # A string held by the order against an integer held by the customer, and a right binding alone, cast the order's value.
+        self.assertEqual(self.comparisons(cast_graph()), [(code, MORK.CastComparison, XSD.integer)])
+        self.assertEqual(self.comparisons(join_with(add="ex:oc-match srf:bindsDatatype xsd:integer .")), [(code, MORK.CastComparison, XSD.integer)])
+
+    def test_a_composite_key_of_mixed_datatypes_states_each_pairs_comparison_on_its_own_condition(self) -> None:
+        code, region = (Literal(f"<{ORDER_CUSTOMER}{name}>") for name in ("customerCode", "customerRegion"))
+        self.assertEqual(self.comparisons(mixed_graph()), [(code, MORK.TermComparison, None), (region, MORK.CastComparison, XSD.integer)])
+        two_integers = two_pair_graph()
+        for name in ("oc-region", "oc-region-match"):
+            two_integers.add((URIRef(ORDER_CUSTOMER + name), SRF.bindsDatatype, XSD.decimal))
+        self.assertEqual(self.comparisons(two_integers), [(code, MORK.TermComparison, None), (region, MORK.CastComparison, XSD.decimal)])
 
     def test_the_lowered_scheme_is_one_the_mork_shapes_accept(self) -> None:
-        for graph in (join_graph(), candidate_graph(), any_number_graph(), typed_graph(), two_pair_graph()):
+        for graph in (join_graph(), candidate_graph(), any_number_graph(), typed_graph(), two_pair_graph(), cast_graph(), default_graph(), one_link_graph(), mixed_graph()):
             self.assertEqual(shape_violations(self.lowered(graph)[1], MORK_SHAPES), set())
 
     def test_lowering_is_deterministic_and_the_same_with_the_triples_permuted(self) -> None:
-        for build in (join_graph, two_pair_graph):
+        for build in (join_graph, two_pair_graph, mixed_graph, one_link_graph):
             reference = canonical.hash_graph(lower_projection(join_contract(build())))
             self.assertEqual(canonical.hash_graph(lower_projection(join_contract(build()))), reference)
             triples = sorted(build())
@@ -2434,7 +2507,7 @@ WHERE {{
   FILTER (((EXISTS {{ ?f1 <{ORDER_CUSTOMER}customerCode> ?any4 . }})))
   ?f2 <{type_}> <{ORDER_CUSTOMER}Customer> .
   ?f2 <{ORDER_CUSTOMER}code> ?v3 .
-  {{ SELECT ?f1 WHERE {{ ?f1 <{ORDER_CUSTOMER}customerCode> ?v6 . FILTER (((EXISTS {{ ?f1 <{ORDER_CUSTOMER}customerCode> ?any7 . }}))) ?f5 <{type_}> <{ORDER_CUSTOMER}Customer> . ?f5 <{ORDER_CUSTOMER}code> ?v6 . }} GROUP BY ?f1 HAVING (COUNT(DISTINCT ?f5) = 1) }}
+  {{ SELECT ?f1 ?v3 WHERE {{ ?f1 <{ORDER_CUSTOMER}customerCode> ?v3 . FILTER (((EXISTS {{ ?f1 <{ORDER_CUSTOMER}customerCode> ?any6 . }}))) ?f5 <{type_}> <{ORDER_CUSTOMER}Customer> . ?f5 <{ORDER_CUSTOMER}code> ?v3 . }} GROUP BY ?f1 ?v3 HAVING (COUNT(DISTINCT ?f5) = 1) }}
 }}"""
         self.assertEqual(" ".join(link.text.split()), " ".join(expected.split()))
         self.assertEqual(sorted(q.code for q in compiled.checks), ["InstanceExcluded", "JoinAmbiguous", "JoinUnmatched"])
@@ -2501,14 +2574,56 @@ WHERE {{
                 self.assertNotIn(ORDER_CUSTOMER + "order-4", {s for s, p, o in written})
                 self.assertIn(("InstanceExcluded", ORDER_CUSTOMER + "order-4", f"<{ORDER_CUSTOMER}customerCode>"), reported)
 
-    def test_on_candidate_evidence_an_order_with_no_customer_is_silent(self) -> None:
+    def test_on_candidate_evidence_an_order_with_a_code_and_no_customer_is_reported_as_information_and_one_with_no_code_is_silent(self) -> None:
         compiled = self.compile(candidate_graph())
-        self.assertNotIn("JoinUnmatched", {q.code for q in compiled.checks})
+        (unmatched,) = [q for q in compiled.checks if q.code == "JoinUnmatched"]
+        self.assertEqual(unmatched.severity, mork_rdf.Severity.INFO)
+        # On required evidence the same finding is a warning.
+        (required,) = [q for q in self.compile(join_graph()).checks if q.code == "JoinUnmatched"]
+        self.assertEqual(required.severity, mork_rdf.Severity.WARNING)
         for engine in ("oxigraph", "rdflib"):
             with self.subTest(engine=engine):
                 written, reported = self.evaluate(engine, compiled, self.source_with("ex:order-4 a ex:Order . "))
                 self.assertEqual(len(written), 2)
-                self.assertEqual(reported, set())
+                # order-3 holds a code no customer has. order-4 holds no code, and says nothing.
+                self.assertEqual(reported, {("JoinUnmatched", ORDER_CUSTOMER + "order-3", "C9")})
+        out = mork_rdf.run(compiled, self.source_with("ex:order-4 a ex:Order . "))
+        self.assertEqual({(f.code, f.focus): f.severity for f in out.findings}, {("JoinUnmatched", ORDER_CUSTOMER + "order-3"): mork_rdf.Severity.INFO})
+
+    def test_two_codes_that_each_name_one_customer_give_an_order_two_links_since_a_value_is_counted_for_itself(self) -> None:
+        source = self.source_with('ex:order-4 a ex:Order ; ex:customerCode "C1" , "C2" . ')
+        compiled = self.compile(join_graph())
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, source)
+                self.assertEqual(
+                    {(s, o) for s, p, o in written if s == ORDER_CUSTOMER + "order-4"},
+                    {(ORDER_CUSTOMER + "order-4", ORDER_CUSTOMER + "customer-1"), (ORDER_CUSTOMER + "order-4", ORDER_CUSTOMER + "customer-2")},
+                )
+                self.assertFalse({r for r in reported if r[1] == ORDER_CUSTOMER + "order-4"})
+
+    def test_under_at_most_one_link_the_same_order_writes_no_link_and_names_each_match(self) -> None:
+        source = self.source_with('ex:order-4 a ex:Order ; ex:customerCode "C1" , "C2" . ')
+        compiled = self.compile(one_link_graph())
+        self.assertIn("JoinManyMatches", {q.code for q in compiled.checks})
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, source)
+                self.assertNotIn(ORDER_CUSTOMER + "order-4", {s for s, p, o in written})
+                self.assertEqual(
+                    {r for r in reported if r[0] == "JoinManyMatches"},
+                    {("JoinManyMatches", ORDER_CUSTOMER + "order-4", ORDER_CUSTOMER + "customer-1"), ("JoinManyMatches", ORDER_CUSTOMER + "order-4", ORDER_CUSTOMER + "customer-2")},
+                )
+                # An order that finds one customer in all keeps its link.
+                self.assertEqual({s for s, p, o in written}, {ORDER_CUSTOMER + "order-1", ORDER_CUSTOMER + "order-2"})
+
+    def test_a_contract_that_states_neither_count_compiles_to_the_query_that_states_both(self) -> None:
+        stated, omitted = self.compile(join_graph()), self.compile(default_graph())
+        self.assertEqual([q.text for q in omitted.queries], [q.text for q in stated.queries])
+        self.assertNotIn("JoinManyMatches", {q.code for q in omitted.checks})
+        lowered = lower_projection(join_contract(default_graph()))
+        self.assertIn((None, MORK.joinCardinality, MORK.AtMostOneMatch), lowered)
+        self.assertIn((None, MORK.linkCardinality, MORK.AnyNumberOfMatches), lowered)
 
     def test_a_join_on_two_values_links_the_customer_that_holds_both(self) -> None:
         source = self.source_with(
@@ -2521,6 +2636,49 @@ WHERE {{
                 written, reported = self.evaluate(engine, self.compile(two_pair_graph()), source)
                 self.assertEqual(written, {(ORDER_CUSTOMER + "order-1", self.LINK, ORDER_CUSTOMER + "customer-3")})
                 self.assertIn(("JoinUnmatched", ORDER_CUSTOMER + "order-2", "C1/east"), reported)
+
+    MIXED = """@prefix ex: <%s> .
+        ex:customer-1 a ex:Customer ; ex:code "A" ; ex:region 42 .
+        ex:customer-2 a ex:Customer ; ex:code "A" ; ex:region 5 .
+        ex:order-1 a ex:Order ; ex:customerCode "A" ; ex:customerRegion "42" .
+        ex:order-2 a ex:Order ; ex:customerCode "A" ; ex:customerRegion 5 .
+        ex:order-3 a ex:Order ; ex:customerCode "A" ; ex:customerRegion "9" .
+        ex:order-4 a ex:Order ; ex:customerCode "B" ; ex:customerRegion "42" ."""
+
+    def test_a_pair_may_cast_one_side_a_string_the_order_holds_against_an_integer_the_customer_holds(self) -> None:
+        source = Graph().parse(data=f"""@prefix ex: <{ORDER_CUSTOMER}> .
+            ex:customer-1 a ex:Customer ; ex:code 42 .
+            ex:order-1 a ex:Order ; ex:customerCode "42" .
+            ex:order-2 a ex:Order ; ex:customerCode "43" .""", format="turtle")
+        for build in (cast_graph, lambda: join_with(add="ex:oc-match srf:bindsDatatype xsd:integer .")):
+            compiled = self.compile(build())
+            for engine in ("oxigraph", "rdflib"):
+                with self.subTest(engine=engine):
+                    written, reported = self.evaluate(engine, compiled, source)
+                    self.assertEqual(written, {(ORDER_CUSTOMER + "order-1", self.LINK, ORDER_CUSTOMER + "customer-1")})
+                    self.assertEqual(reported, {("JoinUnmatched", ORDER_CUSTOMER + "order-2", "43")})
+        # Compared as the same term, with no cast, the string never meets the integer.
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, _ = self.evaluate(engine, self.compile(join_graph()), source)
+                self.assertEqual(written, set())
+
+    def test_a_composite_key_compares_a_string_pair_and_an_integer_pair_each_as_its_pair_says(self) -> None:
+        source = Graph().parse(data=self.MIXED % ORDER_CUSTOMER, format="turtle")
+        compiled = self.compile(mixed_graph())
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, source)
+                # The code is joined as the same term and the region is cast to an integer, so the string "42" meets 42, and
+                # the integer 5 meets 5. The two customers hold one code, so the region tells them apart.
+                self.assertEqual(
+                    written,
+                    {(ORDER_CUSTOMER + "order-1", self.LINK, ORDER_CUSTOMER + "customer-1"), (ORDER_CUSTOMER + "order-2", self.LINK, ORDER_CUSTOMER + "customer-2")},
+                )
+                self.assertEqual(
+                    {r for r in reported if r[0] in ("JoinUnmatched", "JoinAmbiguous")},
+                    {("JoinUnmatched", ORDER_CUSTOMER + "order-3", "A/9"), ("JoinUnmatched", ORDER_CUSTOMER + "order-4", "B/42")},
+                )
 
     def test_integer_codes_are_cast_to_the_datatype_the_bindings_state(self) -> None:
         source = Graph().parse(
@@ -2535,7 +2693,7 @@ WHERE {{
                 self.assertEqual(written, {(ORDER_CUSTOMER + "order-1", self.LINK, ORDER_CUSTOMER + "customer-1")})
 
     def test_a_join_carries_the_mapping_review_whatever_its_evidence_and_count(self) -> None:
-        for build in (join_graph, candidate_graph, any_number_graph, typed_graph, two_pair_graph):
+        for build in (join_graph, candidate_graph, any_number_graph, typed_graph, two_pair_graph, cast_graph, default_graph, one_link_graph, mixed_graph):
             with self.subTest(build=build.__name__):
                 review = [f for f in self.compile(build()).findings if f.code == "MappingReview"]
                 self.assertEqual(len(review), 1)

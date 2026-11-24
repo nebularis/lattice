@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import random
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -84,7 +85,7 @@ WHERE {{
   FILTER (((EXISTS {{ ?f1 <{SRC}customerCode> ?any4 . }})))
   ?f2 <{RDF_TYPE}> <{SRC}Customer> .
   ?f2 <{SRC}code> ?v3 .
-  {{ SELECT ?f1 WHERE {{ ?f1 <{SRC}customerCode> ?v6 . FILTER (((EXISTS {{ ?f1 <{SRC}customerCode> ?any7 . }}))) ?f5 <{RDF_TYPE}> <{SRC}Customer> . ?f5 <{SRC}code> ?v6 . }} GROUP BY ?f1 HAVING (COUNT(DISTINCT ?f5) = 1) }}
+  {{ SELECT ?f1 ?v3 WHERE {{ ?f1 <{SRC}customerCode> ?v3 . FILTER (((EXISTS {{ ?f1 <{SRC}customerCode> ?any6 . }}))) ?f5 <{RDF_TYPE}> <{SRC}Customer> . ?f5 <{SRC}code> ?v3 . }} GROUP BY ?f1 ?v3 HAVING (COUNT(DISTINCT ?f5) = 1) }}
 }}"""
 
 
@@ -244,6 +245,205 @@ def test_a_cast_with_no_datatype_is_read_as_lexical_and_says_so():
 def test_a_comparison_a_join_does_not_know_is_refused_by_name():
     mapping = compiled(comparison("Neither"))
     assert "JoinComparisonUnknown" in {f.code for f in mapping.errors}
+
+
+# --- what a candidate join reports, as information ---------------------------------------------------------------------
+
+def candidate_info() -> Graph:
+    """The join on candidate evidence, with no guard, that reports a parent holding the value and finding no node as information."""
+    return variant(
+        "    mork:appliesWhen mm:CustomerGuard ;\n    mork:joinsOn mm:CustomerCode ;\n    mork:joinCardinality mork:AtMostOneMatch ;\n    mork:reportsUnmatched true ;",
+        "    mork:joinsOn mm:CustomerCode ;\n    mork:joinCardinality mork:AtMostOneMatch ;\n    mork:reportsUnmatched true ;\n    mork:unmatchedSeverity mork:InfoFinding ;")
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_a_candidate_join_reports_a_parent_with_a_value_and_no_match_as_information_and_a_parent_without_a_value_not_at_all(engine):
+    mapping = compiled(candidate_info())
+    (unmatched,) = [q for q in mapping.checks if q.code == "JoinUnmatched"]
+    assert unmatched.severity is Severity.INFO
+    assert "# each row is reported as info" in mapping.text()
+    written, reported = evaluate(engine, mapping, fixture("customer-source.ttl"))
+    assert written == {(REC + "o1", LINK, REC + "c1"), (REC + "o2", LINK, REC + "c1")}
+    # o3 holds a code no customer has, so it is reported. o4 holds no code and says nothing.
+    assert rows({"JoinUnmatched"}, reported) == {("JoinUnmatched", REC + "o3", "C9")}
+    assert not [r for r in reported if r[1] == REC + "o4"]
+
+
+def test_the_information_is_the_severity_of_the_finding_a_run_returns_and_a_warning_stays_a_warning():
+    info = {f.code: f.severity for f in run(compiled(candidate_info()), fixture("customer-source.ttl")).findings}
+    assert info["JoinUnmatched"] is Severity.INFO and info["JoinAmbiguous"] is Severity.WARNING
+    warning = {f.code: f.severity for f in run(compiled(joined()), fixture("customer-source.ttl")).findings}
+    assert warning["JoinUnmatched"] is Severity.WARNING
+    stated = variant("    mork:reportsUnmatched true ;", "    mork:reportsUnmatched true ;\n    mork:unmatchedSeverity mork:WarningFinding ;")
+    assert [q.text for q in compiled(stated).queries] == [q.text for q in compiled(joined()).queries]
+
+
+# --- how many matches a value names, and how many links a parent may have --------------------------------------------
+
+ORDERS = PREFIXES + """
+rec:k1 a src:Customer ; src:code "A" .
+rec:k2 a src:Customer ; src:code "B" .
+rec:d1 a src:Customer ; src:code "D" .
+rec:d2 a src:Customer ; src:code "D" .
+rec:o1 a src:Order ; src:customerCode "A" , "B" .
+rec:o2 a src:Order ; src:customerCode "A" , "D" .
+rec:o3 a src:Order ; src:customerCode "A" .
+"""
+
+
+def counted(value: str = "AtMostOneMatch", link: str = "") -> Graph:
+    """The join with how many nodes a value finds, and how many a parent finds in all where `link` names it."""
+    extra = f"    mork:linkCardinality mork:{link} ;\n" if link else ""
+    return variant("    mork:joinCardinality mork:AtMostOneMatch ;\n", f"    mork:joinCardinality mork:{value} ;\n{extra}")
+
+
+def orders() -> Graph:
+    return Graph().parse(data=ORDERS, format="turtle")
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_a_value_is_counted_for_itself_so_two_codes_that_each_name_one_customer_give_two_links(engine):
+    mapping = compiled(counted())
+    assert sorted(q.code for q in mapping.checks) == ["InstanceExcluded", "JoinAmbiguous", "JoinUnmatched"]
+    written, reported = evaluate(engine, mapping, orders())
+    # o1 holds two codes and each names one customer. o2's code A names one, and its code D names two, so D writes no link and A does.
+    assert written == {(REC + "o1", LINK, REC + "k1"), (REC + "o1", LINK, REC + "k2"), (REC + "o2", LINK, REC + "k1"), (REC + "o3", LINK, REC + "k1")}
+    assert rows(JOIN_CODES | {"JoinManyMatches"}, reported) == {("JoinAmbiguous", REC + "o2", REC + "d1"), ("JoinAmbiguous", REC + "o2", REC + "d2")}
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_under_at_most_one_link_a_parent_whose_values_together_find_several_writes_no_link_and_names_each(engine):
+    mapping = compiled(counted(link="AtMostOneMatch"))
+    assert sorted(q.code for q in mapping.checks) == ["InstanceExcluded", "JoinAmbiguous", "JoinManyMatches", "JoinUnmatched"]
+    written, reported = evaluate(engine, mapping, orders())
+    # The order with two codes, the same one that gave two links, now gives none and names both customers. o2 finds three in all.
+    assert written == {(REC + "o3", LINK, REC + "k1")}
+    assert rows({"JoinManyMatches"}, reported) == {
+        ("JoinManyMatches", REC + "o1", REC + "k1"), ("JoinManyMatches", REC + "o1", REC + "k2"),
+        ("JoinManyMatches", REC + "o2", REC + "k1"), ("JoinManyMatches", REC + "o2", REC + "d1"), ("JoinManyMatches", REC + "o2", REC + "d2")}
+    assert rows({"JoinAmbiguous"}, reported) == {("JoinAmbiguous", REC + "o2", REC + "d1"), ("JoinAmbiguous", REC + "o2", REC + "d2")}
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_the_two_rules_are_separate_so_any_number_of_matches_for_a_value_can_still_limit_the_links(engine):
+    mapping = compiled(counted("AnyNumberOfMatches", "AtMostOneMatch"))
+    assert sorted(q.code for q in mapping.checks) == ["InstanceExcluded", "JoinManyMatches", "JoinUnmatched"]
+    written, reported = evaluate(engine, mapping, orders())
+    assert written == {(REC + "o3", LINK, REC + "k1")}
+    assert {r[1] for r in rows({"JoinManyMatches"}, reported)} == {REC + "o1", REC + "o2"}
+    # With any number for both, nothing is limited and each match is linked.
+    written, reported = evaluate(engine, compiled(counted("AnyNumberOfMatches")), orders())
+    assert len(written) == 6 and not rows({"JoinAmbiguous", "JoinManyMatches"}, reported)
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_a_parent_that_finds_one_node_in_all_keeps_its_link_and_one_that_finds_two_loses_it_under_at_most_one_link(engine):
+    written, reported = evaluate(engine, compiled(counted(link="AtMostOneMatch")), fixture("customer-source.ttl"))
+    # o1 and o2 find the one customer, so they keep their links. o5's code names two, which the limit on a value reports as well.
+    assert written == {(REC + "o1", LINK, REC + "c1"), (REC + "o2", LINK, REC + "c1")}
+    assert rows({"JoinManyMatches"}, reported) == {("JoinManyMatches", REC + "o5", REC + "c3"), ("JoinManyMatches", REC + "o5", REC + "c4")}
+
+
+def test_a_join_that_states_no_link_cardinality_means_any_number_of_links():
+    unstated, stated = compiled(counted()), compiled(counted(link="AnyNumberOfMatches"))
+    assert [q.text for q in unstated.queries] == [q.text for q in stated.queries]
+    assert "JoinManyMatches" not in {q.code for q in unstated.checks}
+
+
+def test_a_sub_select_counts_the_matches_in_a_variable_of_its_own_and_shares_only_what_it_projects():
+    """TSD-79. The count is over a node variable no outer pattern names. Each sub-select projects the parent, and the one
+    that counts for each value projects the value too, so the two engines give the specification's answer."""
+    text = compiled(counted(link="AtMostOneMatch")).constructs[0].text
+    parts = text.split("{ SELECT ")[1:]
+    assert len(parts) == 2
+    assert parts[0].startswith("?f1 ?v3 WHERE") and parts[1].startswith("?f1 WHERE")
+    counted_nodes = [re.search(r"COUNT\(DISTINCT (\?f\d+)\)", part).group(1) for part in parts]
+    assert len(set(counted_nodes)) == 2 and "?f2" not in counted_nodes
+
+
+# --- a comparison and a datatype for each pair -------------------------------------------------------------------------
+
+MIXED_SOURCE = PREFIXES + """
+rec:c1 a src:Customer ; src:code "C1" ; src:number 42 .
+rec:c2 a src:Customer ; src:code "C1" ; src:number 7 .
+rec:a a src:Order ; src:customerCode "C1" ; src:customerNumber "42" .
+rec:b a src:Order ; src:customerCode "C1" ; src:customerNumber 7 .
+rec:c a src:Order ; src:customerCode "C1" ; src:customerNumber "9" .
+"""
+
+NUMBER = PREFIXES + """
+mm:CustomerNumber a mork:JoinCondition ; mork:parentRef "<http://example.org/src#customerNumber>" ; mork:ownRef "<http://example.org/src#number>" %s.
+"""
+CODE_OWN = 'mork:ownRef "<http://example.org/src#code>" .'
+TWO_CONDITIONS = ("    mork:joinsOn mm:CustomerCode ;", "    mork:joinsOn mm:CustomerCode , mm:CustomerNumber ;")
+CODE_AS_TERM = (CODE_OWN, 'mork:ownRef "<http://example.org/src#code>" ; mork:lookupComparison mork:TermComparison .')
+
+
+def mixed(own_comparisons: bool) -> Graph:
+    """A key of a string pair and an integer pair. Each condition states its own comparison, as the lowering writes them
+    and the datum states none, or the datum casts to integer and the string pair states a term comparison beside it."""
+    if own_comparisons:
+        graph = variants(TWO_CONDITIONS, ("    mork:reportsUnmatched true ;\n    mork:lookupComparison mork:TermComparison .", "    mork:reportsUnmatched true ."), CODE_AS_TERM)
+        return graph.parse(data=NUMBER % "; mork:lookupComparison mork:CastComparison ; mork:lookupDatatype xsd:integer ", format="turtle")
+    graph = variants(TWO_CONDITIONS, ("    mork:lookupComparison mork:TermComparison .", "    mork:lookupComparison mork:CastComparison ;\n    mork:lookupDatatype xsd:integer ."), CODE_AS_TERM)
+    return graph.parse(data=NUMBER % "", format="turtle")
+
+
+@pytest.mark.parametrize("own", [True, False])
+@pytest.mark.parametrize("engine", ENGINES)
+def test_a_composite_key_compares_a_string_pair_and_an_integer_pair_each_as_it_says(engine, own):
+    """Both ways give one answer. The code is compared as the same term, and the order's number, a string where the customer
+    holds an integer, is cast to integer. An order whose number is already an integer joins too."""
+    mapping = compiled(mixed(own))
+    assert not [f for f in mapping.findings if f.code == "JoinLexical"]
+    # Only the number is cast, in the query and in the count beneath it, and always to integer.
+    assert re.findall(r"STRDT\(STR\(\?v\d+\), <([^>]+)>\)", mapping.constructs[0].text) == ["http://www.w3.org/2001/XMLSchema#integer"] * 2
+    written, reported = evaluate(engine, mapping, Graph().parse(data=MIXED_SOURCE, format="turtle"))
+    assert written == {(REC + "a", LINK, REC + "c1"), (REC + "b", LINK, REC + "c2")}
+    assert rows({"JoinUnmatched", "JoinAmbiguous"}, reported) == {("JoinUnmatched", REC + "c", "C1/9")}
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_a_pair_that_is_compared_as_a_term_does_not_join_a_string_and_an_integer(engine):
+    graph = variants(TWO_CONDITIONS, ("    mork:lookupComparison mork:TermComparison .", "    mork:lookupComparison mork:TermComparison ."), CODE_AS_TERM)
+    graph.parse(data=NUMBER % "", format="turtle")
+    written, _ = evaluate(engine, compiled(graph), Graph().parse(data=MIXED_SOURCE, format="turtle"))
+    assert written == {(REC + "b", LINK, REC + "c2")}
+
+
+def test_a_cast_with_no_datatype_is_read_as_lexical_for_its_condition_only_and_says_which():
+    graph = variants(TWO_CONDITIONS, CODE_AS_TERM).parse(data=NUMBER % "; mork:lookupComparison mork:CastComparison ", format="turtle")
+    mapping = compiled(graph)
+    (finding,) = [f for f in mapping.findings if f.code == "JoinLexical"]
+    assert finding.severity is Severity.INFO and "customerNumber" in finding.message
+    text = mapping.constructs[0].text
+    # Only the number is a filter, in the query and in the count beneath it, and the code still shares its variable.
+    assert text.count("FILTER (STR(?v") == 2 and "sameTerm" not in text and "?f2 <http://example.org/src#code> ?v3 ." in text
+
+
+# --- the shapes refuse a breach -----------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("old,new", [
+    ("    mork:reportsUnmatched true ;", "    mork:reportsUnmatched true ;\n    mork:linkCardinality mork:Neither ;"),
+    ("    mork:reportsUnmatched true ;", "    mork:reportsUnmatched true ;\n    mork:linkCardinality mork:AtMostOneMatch , mork:AnyNumberOfMatches ;"),
+    ("    mork:reportsUnmatched true ;", "    mork:reportsUnmatched true ;\n    mork:unmatchedSeverity mork:ErrorFinding ;"),
+    ("    mork:reportsUnmatched true ;", "    mork:reportsUnmatched true ;\n    mork:unmatchedSeverity mork:InfoFinding , mork:WarningFinding ;"),
+    ('    mork:ownRef "<http://example.org/src#code>" .', '    mork:ownRef "<http://example.org/src#code>" ;\n    mork:lookupComparison mork:Neither .'),
+    ('    mork:ownRef "<http://example.org/src#code>" .', '    mork:ownRef "<http://example.org/src#code>" ;\n    mork:lookupDatatype xsd:integer , xsd:string .'),
+])
+def test_the_shapes_of_mork_refuse_a_breach_of_a_limit_a_severity_or_a_condition_comparison(old, new):
+    assert "MorkShape" in {f.code for f in compiled(variant(old, new)).findings}
+
+
+def test_a_link_cardinality_or_a_severity_with_no_condition_is_refused_since_it_is_no_join():
+    for line in ("mm:Map_Order mork:linkCardinality mork:AtMostOneMatch .", "mm:Map_Order mork:unmatchedSeverity mork:InfoFinding ."):
+        assert "MorkShape" in {f.code for f in compiled(joined().parse(data=PREFIXES + line, format="turtle")).findings}
+
+
+@pytest.mark.parametrize("line", ["mork:linkCardinality mork:Neither ;", "mork:unmatchedSeverity mork:ErrorFinding ;"])
+def test_a_link_cardinality_or_a_severity_the_compiler_does_not_know_is_refused_and_writes_nothing(line):
+    mapping = compiled(variant("    mork:reportsUnmatched true ;", "    mork:reportsUnmatched true ;\n    " + line))
+    assert "JoinIncomplete" in {f.code for f in mapping.errors} and not mapping.constructs
 
 
 # --- a join reads the source and never the reference data ------------------------------------------------------------

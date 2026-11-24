@@ -725,9 +725,10 @@ srf:fromBinding a owl:ObjectProperty, owl:FunctionalProperty ;
 srf:JoinStatement a owl:Class ;
 	rdfs:subClassOf
 		[ a owl:Restriction ; owl:onProperty srf:joinsOn ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:joinMatches ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "The relation a join projection writes between an instance of its carrier and an instance of a second carrier, the equality of values that relates them and how many instances of the second carrier one instance may name." ;
-	fnd:utility "State it once, on the result-target role binding of a join with joinedAs, and name it by an IRI. Give it a joinsOn for each part of the key, at least one, and one joinMatches. The property the binding binds is the link, and where an authored vocabulary declares it the projection reaches the authored signature (srf:P1)." .
+		[ a owl:Restriction ; owl:onProperty srf:joinMatches ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:joinLinks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The relation a join projection writes between an instance of its carrier and an instance of a second carrier, the equality of values that relates them, how many instances of the second carrier one value may name and how many links one instance may have." ;
+	fnd:utility "State it once, on the result-target role binding of a join with joinedAs, and name it by an IRI. Give it a joinsOn for each part of the key, at least one, and a joinMatches or a joinLinks where the default is not what the join means. The property the binding binds is the link, and where an authored vocabulary declares it the projection reaches the authored signature (srf:P1)." .
 
 srf:JoinPair a owl:Class ;
 	rdfs:subClassOf
@@ -737,7 +738,7 @@ srf:JoinPair a owl:Class ;
 	fnd:utility "Name each pair by a blank node or an IRI, as srf:joinsOn takes it. A composite key is several pairs, and every one must hold." .
 
 srf:JoinCardinality a owl:Class ;
-	rdfs:comment "How many instances of the second carrier one instance of the contract's carrier may name. Its individuals are in the vocabulary." .
+	rdfs:comment "How many instances a join relates, for one value under joinMatches and for one instance under joinLinks. Its individuals are in the vocabulary." .
 
 srf:joinedAs a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:JoinStatement ;
@@ -760,5 +761,10 @@ srf:joinRight a owl:ObjectProperty, owl:FunctionalProperty ;
 
 srf:joinMatches a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:JoinStatement ; rdfs:range srf:JoinCardinality ;
-	rdfs:comment "How many instances of the second carrier one instance may name." ;
-	fnd:utility "State it, never leave it implicit. AtMostOne says a value names at most one, so an instance with several matches writes no link and is reported with each. AnyNumber writes a link for each match." .
+	rdfs:comment "How many instances of the second carrier one value may name, counted for each value of an instance. A statement that states none means AtMostOne." ;
+	fnd:utility "Leave it out where a value names at most one instance, which is what a key means. AtMostOne says a value names at most one, so an instance with a value that names several writes no link for that value and is reported with each. AnyNumber writes a link for each match." .
+
+srf:joinLinks a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:JoinStatement ; rdfs:range srf:JoinCardinality ;
+	rdfs:comment "How many links one instance may have, whichever of its values found the instances. A statement that states none means AnyNumber." ;
+	fnd:utility "Leave it out where an instance may be linked to every instance its values find. AtMostOne says an instance whose values together find several writes no link and is reported with each." .

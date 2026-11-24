@@ -225,10 +225,12 @@ ex:oc-join a srf:JoinStatement ;
 ```
 
 - **The relation is stated on the result-target binding.** The binding binds the link from the instance, here `ex:placedFor`, and `srf:joinedAs` names the statement of what relates the instance to the instance the link reaches. A role keeps its one meaning, so `srf:P2` and `srf:P3` stand. Only a join states one (`srf:P14`).
-- **The statement says what relates the two carriers.** Each `srf:joinsOn` pairs an evidence binding that reads a value of the contract's own carrier with one that reads a value of a second carrier, which `srf:bindsCarrier` names, and the relation is equality of the two values. A composite key is several pairs, all of which must hold (`srf:P15`, `srf:P16`). The bindings of a statement state one datatype between them, or none, so a join on values of several datatypes is not yet stated.
-- **The statement says how many, never implicitly.** `srf:AtMostOne` says a value names at most one instance of the second carrier, so an instance with several matches writes no link and is reported with each. `srf:AnyNumber` writes a link for each. Whether `srf:AtMostOne` is true of the second carrier's data is not checked here, and the report is how a contract that is wrong about it is found.
+- **The statement says what relates the two carriers.** Each `srf:joinsOn` pairs an evidence binding that reads a value of the contract's own carrier with one that reads a value of a second carrier, which `srf:bindsCarrier` names, and the relation is equality of the two values. A composite key is several pairs, all of which must hold (`srf:P15`, `srf:P16`).
+- **Each pair states its own datatype.** The right binding of a pair states the datatype the second carrier holds, and the left value is cast to it, so a pair whose left holds the string `"42"` and whose right holds the integer `42` joins, and a pair that states none compares the two as the same term. A key may therefore compare a string pair and an integer pair. A left binding that states a datatype has a right one that states one to cast it to (`srf:P17`).
+- **Two counts limit what an instance writes, and each is chosen.** `srf:joinMatches` says how many instances of the second carrier one value may name, `srf:AtMostOne` or `srf:AnyNumber`. It is counted for each value, so an instance with two codes that each name one customer has two links, and an instance with a code that names two customers writes no link for that code and is reported with each. A statement that states none means `srf:AtMostOne`. `srf:joinLinks` says how many links one instance may have, and a statement that states none means `srf:AnyNumber`. Under `srf:AtMostOne` an instance whose values together find several instances writes no link and is reported with each. Whether a count is true of the second carrier's data is not checked here, and the report is how a contract that is wrong about it is found.
 - **A join writes a link and copies nothing.** A value of the second instance is reached through the link by a read path, so nothing goes stale where the second carrier changes. A join that must write a value is a derivation over joined evidence, which is a later kind.
-- **The evidence kind says what a missing match means.** A join is on required evidence or on candidate evidence, and every binding of its statement is of one kind (`srf:P17`). On required evidence an instance contributes whole or not at all. One that lacks a required value is excluded and reported, as in a graph construction, and one that has the values and finds no instance of the second carrier writes no link and is reported with the value. On candidate evidence a link is written where there is a match, and an instance with none writes nothing and is not reported.
+- **The evidence kind says what a missing match means.** A join is on required evidence or on candidate evidence, and every binding of its statement is of one kind (`srf:P17`). On required evidence an instance contributes whole or not at all. One that lacks a required value is excluded and reported, as in a graph construction, and one that has the values and finds no instance of the second carrier writes no link and is reported with the value. On candidate evidence a link is written where there is a match. An instance that holds the values and finds none writes nothing and is reported as information, and one that lacks the values says nothing.
+- **The guard has a limit.** What makes an instance contribute is tested on the instance, so it holds the required evidence of the contract's own carrier and never the second instance's, beyond the key it was matched on. A required value of the second carrier other than the key is not checked by the join, and a contract that needs one states it where it is read.
 - **A join takes a mapping review (ADR-A41).** The condition and the number of matches it allows are where a reviewer's judgement is needed, so the review is recorded as a finding of the compilation every time.
 - **The second carrier's instances are the source's own.** A join reads them from the same graph as the first carrier's, so it relates data and never adds to it. A join to a reference scheme whose codes are curated apart from the data is a lookup, which MORK keeps for that.
 
@@ -1276,21 +1278,22 @@ srf:fromBinding a owl:ObjectProperty, owl:FunctionalProperty ;
 
 ### 6.17 Projection joins
 
-A join projection states the relation it writes, in the way a derivation states its expression and a graph construction its node. The statement is on the result-target role binding with `srf:joinedAs`, so the binding keeps its one meaning, the place the projection's result is written, and the result of a join is a link to an instance that already exists, where a derivation's is a value and a construction's a node. The binding binds the link from each instance of the carrier to the instance it names. The statement says which evidence bindings are compared, in pairs, one that reads the contract's own carrier and one that reads a second carrier, and how many instances of the second one a value may name. The count is a closed choice, so a contract never leaves it to a report after the fact.
+A join projection states the relation it writes, in the way a derivation states its expression and a graph construction its node. The statement is on the result-target role binding with `srf:joinedAs`, so the binding keeps its one meaning, the place the projection's result is written, and the result of a join is a link to an instance that already exists, where a derivation's is a value and a construction's a node. The binding binds the link from each instance of the carrier to the instance it names. The statement says which evidence bindings are compared, in pairs, one that reads the contract's own carrier and one that reads a second carrier, how many instances of the second one a value may name, and how many links one instance may have. Each count is a closed choice with a default its term states, so a contract never leaves it to a report after the fact.
 
 #### `srf:JoinStatement`
 
-**Definition.** The relation a join projection writes between an instance of its carrier and an instance of a second carrier, the equality of values that relates them and how many instances of the second carrier one instance may name.
+**Definition.** The relation a join projection writes between an instance of its carrier and an instance of a second carrier, the equality of values that relates them, how many instances of the second carrier one value may name and how many links one instance may have.
 
-**Utility.** State it once, on the result-target role binding of a join with `srf:joinedAs`, and name it by an IRI. Give it a `srf:joinsOn` for each part of the key, at least one, and one `srf:joinMatches`. The property the binding binds is the link, and where an authored vocabulary declares it the projection reaches the authored signature (`srf:P1`).
+**Utility.** State it once, on the result-target role binding of a join with `srf:joinedAs`, and name it by an IRI. Give it a `srf:joinsOn` for each part of the key, at least one, and a `srf:joinMatches` or a `srf:joinLinks` where the default is not what the join means. The property the binding binds is the link, and where an authored vocabulary declares it the projection reaches the authored signature (`srf:P1`).
 
 ```turtle-spec
 srf:JoinStatement a owl:Class ;
 	rdfs:subClassOf
 		[ a owl:Restriction ; owl:onProperty srf:joinsOn ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:joinMatches ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "The relation a join projection writes between an instance of its carrier and an instance of a second carrier, the equality of values that relates them and how many instances of the second carrier one instance may name." ;
-	fnd:utility "State it once, on the result-target role binding of a join with joinedAs, and name it by an IRI. Give it a joinsOn for each part of the key, at least one, and one joinMatches. The property the binding binds is the link, and where an authored vocabulary declares it the projection reaches the authored signature (srf:P1)." .
+		[ a owl:Restriction ; owl:onProperty srf:joinMatches ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:joinLinks ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The relation a join projection writes between an instance of its carrier and an instance of a second carrier, the equality of values that relates them, how many instances of the second carrier one value may name and how many links one instance may have." ;
+	fnd:utility "State it once, on the result-target role binding of a join with joinedAs, and name it by an IRI. Give it a joinsOn for each part of the key, at least one, and a joinMatches or a joinLinks where the default is not what the join means. The property the binding binds is the link, and where an authored vocabulary declares it the projection reaches the authored signature (srf:P1)." .
 
 srf:JoinPair a owl:Class ;
 	rdfs:subClassOf
@@ -1300,7 +1303,7 @@ srf:JoinPair a owl:Class ;
 	fnd:utility "Name each pair by a blank node or an IRI, as srf:joinsOn takes it. A composite key is several pairs, and every one must hold." .
 
 srf:JoinCardinality a owl:Class ;
-	rdfs:comment "How many instances of the second carrier one instance of the contract's carrier may name. Its individuals are in the vocabulary." .
+	rdfs:comment "How many instances a join relates, for one value under joinMatches and for one instance under joinLinks. Its individuals are in the vocabulary." .
 ```
 
 ```turtle-spec
@@ -1325,8 +1328,13 @@ srf:joinRight a owl:ObjectProperty, owl:FunctionalProperty ;
 
 srf:joinMatches a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:JoinStatement ; rdfs:range srf:JoinCardinality ;
-	rdfs:comment "How many instances of the second carrier one instance may name." ;
-	fnd:utility "State it, never leave it implicit. AtMostOne says a value names at most one, so an instance with several matches writes no link and is reported with each. AnyNumber writes a link for each match." .
+	rdfs:comment "How many instances of the second carrier one value may name, counted for each value of an instance. A statement that states none means AtMostOne." ;
+	fnd:utility "Leave it out where a value names at most one instance, which is what a key means. AtMostOne says a value names at most one, so an instance with a value that names several writes no link for that value and is reported with each. AnyNumber writes a link for each match." .
+
+srf:joinLinks a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:JoinStatement ; rdfs:range srf:JoinCardinality ;
+	rdfs:comment "How many links one instance may have, whichever of its values found the instances. A statement that states none means AnyNumber." ;
+	fnd:utility "Leave it out where an instance may be linked to every instance its values find. AtMostOne says an instance whose values together find several writes no link and is reported with each." .
 ```
 
 ## 7. Index forms
@@ -1442,8 +1450,8 @@ srf:GreaterThan a srf:ComparisonOperator ; rdfs:comment "The left compared opera
 srf:PerInstance a srf:IdentityChoice ; rdfs:comment "A constructed node for each instance of the carrier. Nothing is merged, and the node's identifier is a hash of the instance's identifier." .
 srf:ByKey a srf:IdentityChoice ; rdfs:comment "One constructed node for each value of a key of required-evidence bindings. Instances that share the key share the node, and its identifier is read from the key." .
 
-srf:AtMostOne a srf:JoinCardinality ; rdfs:comment "A value names at most one instance of the second carrier. An instance with several matches writes no link and is reported with each." .
-srf:AnyNumber a srf:JoinCardinality ; rdfs:comment "A value may name any number of instances of the second carrier, and a link is written to each." .
+srf:AtMostOne a srf:JoinCardinality ; rdfs:comment "At most one instance. Where one value finds several, or under joinLinks one instance finds several in all, no link is written and each match is reported." .
+srf:AnyNumber a srf:JoinCardinality ; rdfs:comment "Any number of instances, and a link is written to each." .
 
 srf:RmlBackend a srf:CompilerBackend ; rdfs:comment "RML/R2RML triples-map compilation." .
 srf:SparqlBackend a srf:CompilerBackend ; rdfs:comment "SPARQL query compilation." .
@@ -1500,9 +1508,9 @@ srf:P12 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Each va
 srf:P13 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A key binding of a constructed node is a required-evidence role binding of the same contract that binds a property, so an instance without a value for any part of the key contributes nothing." .
 
 srf:P14 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A join projection states exactly one join statement, with joinedAs on its result-target role binding, and that binding binds the property that links each instance to the instance it names. No other projection kind states a join. Every join statement is reached from such a statement." .
-srf:P15 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A join statement states at least one pair and exactly one match count, AtMostOne or AnyNumber. Each pair names exactly one left and exactly one right role binding." .
+srf:P15 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A join statement states at least one pair, at most one match count and at most one link count, each AtMostOne or AnyNumber, and means AtMostOne and AnyNumber where it states none. Each pair names exactly one left and exactly one right role binding." .
 srf:P16 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "The left binding of a join pair is a candidate-evidence or required-evidence role binding of the same contract that binds a property and names no carrier but the contract's own. The right binding is one that binds a property and names a carrier other than the contract's own, and every right binding of one statement names the same carrier." .
-srf:P17 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "The two bindings of a join pair, and the bindings of every pair of one statement, are of one evidence role kind, so a join is on required evidence or on candidate evidence and never on a mix. The two bindings of a pair state the same datatype, or neither states one, and the pairs of one statement state one datatype between them, or none." .
+srf:P17 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "The two bindings of a join pair, and the bindings of every pair of one statement, are of one evidence role kind, so a join is on required evidence or on candidate evidence and never on a mix. Each pair states its own datatype, the right binding's, to which the left value is cast. A left binding that states a datatype has a right binding that states one, and the pairs of one statement need not agree." .
 ```
 
 ## 10. Shapes
@@ -1667,8 +1675,10 @@ srf:JoinStatementShape a sh:NodeShape ;
 	sh:targetClass srf:JoinStatement ;
 	sh:property [ sh:path srf:joinsOn ; sh:minCount 1 ;
 		sh:message "A join statement states at least one pair of bindings that must be equal. Discharges srf:P15." ] ;
-	sh:property [ sh:path srf:joinMatches ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( srf:AtMostOne srf:AnyNumber ) ;
-		sh:message "A join statement states exactly one match count, srf:AtMostOne or srf:AnyNumber. Discharges srf:P15." ] .
+	sh:property [ sh:path srf:joinMatches ; sh:maxCount 1 ; sh:in ( srf:AtMostOne srf:AnyNumber ) ;
+		sh:message "A join statement states at most one match count, srf:AtMostOne or srf:AnyNumber. Discharges srf:P15." ] ;
+	sh:property [ sh:path srf:joinLinks ; sh:maxCount 1 ; sh:in ( srf:AtMostOne srf:AnyNumber ) ;
+		sh:message "A join statement states at most one link count, srf:AtMostOne or srf:AnyNumber. Discharges srf:P15." ] .
 
 srf:JoinPairShape a sh:NodeShape ;
 	sh:targetObjectsOf srf:joinsOn ;
@@ -2680,36 +2690,17 @@ srf:JoinEvidenceKindShape a sh:NodeShape ;
 		"""
 	] .
 
-srf:JoinStatementDatatypeShape a sh:NodeShape ;
-	sh:targetClass srf:JoinStatement ;
-	sh:sparql [
-		sh:message "The pairs of a join statement state different datatypes, or one pair states a datatype and another none. Discharges srf:P17." ;
-		sh:select """
-			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
-			SELECT $this ?value WHERE {
-				$this srf:joinsOn/srf:joinLeft ?first , ?value .
-				?first srf:bindsDatatype ?datatype .
-				FILTER NOT EXISTS { ?value srf:bindsDatatype ?datatype }
-			}
-		"""
-	] .
-
 srf:JoinDatatypeShape a sh:NodeShape ;
 	sh:targetObjectsOf srf:joinsOn ;
 	sh:sparql [
-		sh:message "The two bindings of a join pair state different datatypes, or one states a datatype and the other none. Discharges srf:P17." ;
+		sh:message "The left binding of a join pair states a datatype and the right binding states none to cast it to. Discharges srf:P17." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this ?value WHERE {
 				$this srf:joinLeft ?left ;
 					srf:joinRight ?right .
-				{
-					?left srf:bindsDatatype ?value .
-					FILTER NOT EXISTS { ?right srf:bindsDatatype ?value }
-				} UNION {
-					?right srf:bindsDatatype ?value .
-					FILTER NOT EXISTS { ?left srf:bindsDatatype ?value }
-				}
+				?left srf:bindsDatatype ?value .
+				FILTER NOT EXISTS { ?right srf:bindsDatatype ?datatype }
 			}
 		"""
 	] .
@@ -2768,7 +2759,7 @@ ex:index-1 a srf:IndexContract ;
 ## 14. Release notes
 
 - **Unreleased**.
-  - no effect. A join projection states the relation it writes. New: `srf:JoinStatement`, `srf:JoinPair` and `srf:JoinCardinality` with its two individuals `srf:AtMostOne` and `srf:AnyNumber`, and the properties `srf:joinedAs`, `srf:joinsOn`, `srf:joinLeft`, `srf:joinRight` and `srf:joinMatches`. New laws `srf:P14` to `srf:P17`, with a shape for each part of them, and `srf:P1` says a join reads its scope from the link it writes.
+  - no effect. A join projection states the relation it writes. New: `srf:JoinStatement`, `srf:JoinPair` and `srf:JoinCardinality` with its two individuals `srf:AtMostOne` and `srf:AnyNumber`, and the properties `srf:joinedAs`, `srf:joinsOn`, `srf:joinLeft`, `srf:joinRight`, `srf:joinMatches` and `srf:joinLinks`. New laws `srf:P14` to `srf:P17`, with a shape for each part of them, and `srf:P1` says a join reads its scope from the link it writes. A statement need not state either count. `srf:joinMatches`, how many instances of the second carrier one value may name and counted for each value, means `srf:AtMostOne` where it is left out. `srf:joinLinks`, how many links one instance may have, means `srf:AnyNumber`. Each pair states its own datatype, the right binding's, to which the left value is cast, so one key may compare a string pair and an integer pair. On candidate evidence an instance that holds the values and finds no match is reported as information.
   - may invalidate. A join projection that states no join statement on its result-target role binding fails the new shape, and the compiler refuses to read it. A projection of another kind that states one fails too. The example is a join, an order linked to the customer whose code it names.
   - no effect. A graph construction projection states the node it writes. New: `srf:ConstructedNode`, `srf:WrittenValue` and `srf:IdentityChoice` with its two individuals `srf:PerInstance` and `srf:ByKey`, and the properties `srf:constructedAs`, `srf:constructedClass`, `srf:nodeIdentity`, `srf:keyBinding`, `srf:writes`, `srf:writesProperty` and `srf:fromBinding`. New laws `srf:P10` to `srf:P13`, with a shape for each part of them, and `srf:P1` says how a constructed node's class decides its signature scope.
   - may invalidate. A graph construction projection that states no constructed node on its result-target role binding fails the new shape, and the compiler refuses to read it. A projection of another kind that states one fails too. The example is a graph construction, an order giving a supplier keyed by a supplier code.

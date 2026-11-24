@@ -157,8 +157,10 @@ srf:JoinStatementShape a sh:NodeShape ;
 	sh:targetClass srf:JoinStatement ;
 	sh:property [ sh:path srf:joinsOn ; sh:minCount 1 ;
 		sh:message "A join statement states at least one pair of bindings that must be equal. Discharges srf:P15." ] ;
-	sh:property [ sh:path srf:joinMatches ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( srf:AtMostOne srf:AnyNumber ) ;
-		sh:message "A join statement states exactly one match count, srf:AtMostOne or srf:AnyNumber. Discharges srf:P15." ] .
+	sh:property [ sh:path srf:joinMatches ; sh:maxCount 1 ; sh:in ( srf:AtMostOne srf:AnyNumber ) ;
+		sh:message "A join statement states at most one match count, srf:AtMostOne or srf:AnyNumber. Discharges srf:P15." ] ;
+	sh:property [ sh:path srf:joinLinks ; sh:maxCount 1 ; sh:in ( srf:AtMostOne srf:AnyNumber ) ;
+		sh:message "A join statement states at most one link count, srf:AtMostOne or srf:AnyNumber. Discharges srf:P15." ] .
 
 srf:JoinPairShape a sh:NodeShape ;
 	sh:targetObjectsOf srf:joinsOn ;
