@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** paused for the maintainer, who answers SVA-Q36 to SVA-Q41 of the [projection backend sketch](../sketches/projection-backend.md) before SVA-S2h is built. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** SVA-S2h, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -259,3 +259,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-24: the maintainer accepted the addenda to ADR-A18 (derivations and graph constructions carried across by the lowering, and a scheme naming its contract), ADR-A23 (`mork_rdf` compiles both) and ADR-A41 (a keyed construction takes the mapping review), and asked that the Surface README's semicolons in prose be tidied now. SVA-S2h comes next, with a pause after it.
 - 2026-11-24: SVA-S2h started, after the Surface README's prose is tidied.
 - 2026-11-24: the Surface README's 24 semicolons in prose replaced, with wording changed only where a sentence needed a connective, and no extracted artefact changed. SVA-S2h stopped at its first step with nothing built: a join's case is in the projection backend sketch's section 2.3, with SVA-Q36 to SVA-Q41 for the maintainer. A MORK lookup already joins, but reads reference data only.
+- 2026-11-24: the maintainer answered SVA-Q36 to SVA-Q41 as leaned. A join states an equality condition between an evidence binding on its carrier and one on the second carrier, writes a link only, writes nothing and reports an instance with no match on required evidence and writes what it finds on candidate evidence, states at most one or any number with several matches under at most one reported and unlinked, and is carried by a new MORK term and compiler case reading the second class from the source graph, MORK's lookup left as it is. SVA-S2h resumes from its case.
