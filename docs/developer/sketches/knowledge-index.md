@@ -405,7 +405,7 @@ One shape over the decision graph also replaces the several ad-hoc `**Status:**`
 
 **KI-Q1. How is the server stopped? Answered 2026-10-24, and the question is void.** There is no server, so there is nothing to stop. KI-Q2 dissolved it.
 
-**KI-Q2. What is the no-server query latency? Answered 2026-10-24, measured and recorded as [TSD-38](../../architecture/triple-store-discovery.md).** A read-only open is 23.8 ms, a query is 0.1 to 0.9 ms, and a whole process is 50 ms end to end over 72,832 quads. The server is dropped. Re-measure if the corpus grows by an order of magnitude, because the open is a fixed cost and the queries are not.
+**KI-Q2. What is the no-server query latency? Answered 2026-10-24, measured and recorded as [TSD-38](../../architecture/triple-store-discovery.md).** A read-only open is 23.8 ms, a query is 0.1 to 0.9 ms, and a whole process is 50 ms end to end over 72,832 quads. The server is dropped. Re-measure if the corpus grows by an order of magnitude, because the open is a fixed cost and the queries are not. The finding is now TSD-38.
 
 **KI-Q3. Where do the three new registers live? Answered 2026-10-24 by precedent.** `docs/developer/plans/`, beside `pending-design-decisions.md` and `technical-debt.md`. A register is not a unit, and saying so in the file's own header is what those two already do. A `registers/` directory would be a new kind of directory, needing an accepted ADR and a catalogue entry, to hold files that already have a conventional home.
 

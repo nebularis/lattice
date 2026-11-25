@@ -342,7 +342,7 @@ Decided or to be kept so nothing here is foreclosed:
 | EC-Q4 | How a combinator expression is written | an RDF expression IR like Eligibility's compiled IR in `tools/mork_compilers`, or the JSON abstract syntax the logic-encodings note proposes (§1, §4), with RDF as its projection |
 | EC-Q5 | How fine the log is | one derived artefact per pass, or per lifted computation. Per pass is cheaper. Per computation explains more |
 | EC-Q6 | A Datalog backend at runtime | an ADR beside A83 and under A71, choosing whether the platform may run a rules engine in production, and on what licence terms |
-| EC-Q7 | Whether this is a layer | **Answered 2026-10-19 for the ledger:** the ledger and its merge rules are a substrate layer of their own, Ledger, above Quantification and imported by Behaviour (ADR-A131). Combinators stay with EC-Q1. Environments are evaluation semantics, stated in this model and fixed by conformance cases, never left to one implementation (ADR-A131 decision 9) |
+| EC-Q7 | Whether this is a layer | **Answered 2026-10-19 for the ledger:** the ledger and its merge rules are a substrate layer of their own, Ledger, above Quantification and imported by Behaviour (ADR-A131). Combinators stay with EC-Q1. Environments are evaluation semantics, stated in this model and fixed by conformance cases, never left to one implementation (ADR-A131 decision 9). The rule is now ADR-A131 decisions 1 and 9 |
 
 ## 13. When it comes back in
 
