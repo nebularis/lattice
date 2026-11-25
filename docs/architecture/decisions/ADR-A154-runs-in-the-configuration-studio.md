@@ -62,7 +62,7 @@ Decision 12 makes the transforms worker the run worker, running XSLT, JOLT and S
 
 ## Addendum (2026-11-25): a surface step's projection part is a second run
 
-**Status of this addendum:** Proposed.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-25.
 
 The addendum of 2026-11-20 leaves a persistence step and a surface step to the run worker, which runs the writer's maintenance in Jena. A surface step also has to show what each projection contract writes for an edit. A projection is lowered into a MORK mapping scheme and compiled by `mork_rdf`, whose driver holds the rules of a run (the blank nodes named by the skolem rule, the strata, the closures and the checks). Running those rules in the run worker would be the second implementation the addendum of 2026-11-20 decided against, and moving the whole surface step to the Python worker would move the writer's maintenance, which is Java's, out of the worker that runs it.
 

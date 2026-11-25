@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** a pause, for the maintainer's answers on SVA-S2c (where the pane that sends the projection run goes, the choices its Validation Pack lists, and ADR-A154's addendum). The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** SVA-D1, the sample documents and their README, when the maintainer asks for it. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -281,3 +281,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-25: SVA-S2c marked building.
 - 2026-11-25: SVA-S2c built, with SVA-S2j's choice 6. The compile job lowers and compiles every projection kind, a step's projection part is a `projection` run the Python worker answers, the facility sample has one projection of each kind, and ADR-A154 has a Proposed addendum. The pane is not built, since the studio has no surface pane yet, and the plan gives it to SVA-S3 until the maintainer decides. A defect in how `mork_rdf` describes a check's severity was found and fixed. TD-261 closed, TD-264 and TD-265 opened.
 - 2026-11-25: SVA-S2c built.
+- 2026-11-25: the maintainer gave the pane that sends the projection run to SVA-S3, accepted SVA-S2c's fourteen choices as built and ADR-A154's addendum on the projection run, and agreed the facility sample's projections are placed T1.

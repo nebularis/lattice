@@ -98,7 +98,7 @@ The reviewer ran each again on 2026-11-25 after restoring the fixture's layout: 
 - The writer keeps no projection's rows, so a projection step shows what a scheme would write and not what the store holds. TD-265 records that the cost of a step over a world larger than a sample is not measured.
 - MORK's definition of `mork:dataMember` still says a member is written as it is, which TD-264 records for the next change to MORK's specification.
 - TD-261 is closed. It is removed from the register, as a closed row is, and the earlier packs that name it are history.
-- ADR-A154's addendum is Proposed. The maintainer marks it Accepted.
+- ADR-A154's addendum was accepted by the maintainer on 2026-11-25, with the fourteen choices above as built, the pane given to SVA-S3, and the placement below.
 - No version was bumped. Surface, MORK and the studio's contract wait for `mise run version:bump` at the merge, with the earlier slices' changes.
 
 ## Placement
