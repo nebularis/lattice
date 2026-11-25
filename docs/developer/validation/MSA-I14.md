@@ -339,4 +339,4 @@ A unit lowered to SPARQL writes its receipt first, under the joint guard of ever
 
 **The one command.** `mise run check:models-multi-store -- "X8_OrderSets*"`, which ends `models: 3 as expected, 0 failed, 0 skipped, 0 stopped`. Run on 2026-11-25 on macOS under a heap of 576 MB, which the two runs with no error filled. The base tier is now 148 configurations.
 
-**The probes' finding.** I14-P1 and I14-P2 are recorded as TSD-76 in the `triple-stores` domain, written on 2026-11-25 and not yet committed there.
+**The probes' finding.** I14-P1 and I14-P2 are recorded as TSD-80 in the `triple-stores` domain, written on 2026-11-25.

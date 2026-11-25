@@ -5,7 +5,7 @@
 **Unit:** [`multi-store-architecture`](../../status/multi-store-architecture.md), slice MSA-I14 of the [plan](../../plans/multi-store-architecture.md)
 **Written:** 2026-11-23, on paper, against `Writer`, `StudioOperations`, `Maintenance` and `StreamWriter` as MSA-F1 to MSA-F14 left them. Nothing was run
 **Placement:** T0, public. Platform configuration, nothing domain-specific
-**For:** the maintainer, who decides MSA-Q21 to MSA-Q23. Then whoever builds the slices of section 13
+**For:** the maintainer, who decided MSA-Q21 to MSA-Q23 and MSA-Q29 by 2026-11-25. Then whoever builds the slices of section 13
 **Builds on:** [MSA-I11](MSA-I11-logical-port.md) for the unit, MSA-I9 for what a single active consumer does not give, MSA-I6 for the model, and [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md) decision 13 with its addendum of 2026-11-19
 
 ## 1. The question
@@ -177,6 +177,8 @@ Each pattern has every term bound, so it is one index lookup. On Fuseki a small 
 
 *Leaning (b), now, with (c) as where it goes.* Is it needed now? Yes, since MSA-I8 builds a write path and the plan holds it on this. Can it be simpler? (a) is less new code and does not meet the requirement. (c) is the same rule with more to build first.
 
+**Answered 2026-11-24, (c) built once as (b)'s lowering.** The persistence compiler gains a unit, its receipt first under the joint guard of every row and each later operation requiring that receipt, and the writer is generated from it. A shared `WHERE` across the operations is not possible, since two of them end in a sweep of a graph and two sweeps in one pattern multiply. Both probes of the lowering pass on rdflib, Oxigraph and Jena in memory (TSD-80). Points 1 and 2 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s Proposed addendum of 2026-11-25.
+
 ## 6. The partition's order and a second writer, MSA-Q22
 
 Under (b) two writers on one partition cannot tear a command. Each request is atomic and each command is whole, so whatever order their requests land in, the store holds a sequence of whole commands, each applied once because its guard requires its own receipt to be absent. That is the hypothesis for R1 to R3 with no further mechanism.
@@ -214,6 +216,8 @@ A command that carries the revision it expects is safe from this, since the late
 
 *Leaning (b).* The inversion is silent and falls on the commands that change access and delete content. The cost is one lookup. It is the weaker of the two leanings, since it rests on the broker's activation signal, which MSA-I9 did not probe for lateness.
 
+**Answered 2026-11-25, (b) with the planning read taking the batch's receipts and the token.** Models X5, X7, X8 and X9 changed the ground twice. Held to R2 as first written, the token bought nothing in any run, and the answers agreed with no token once the planning read took the receipts. Held to R2 as section 7a restates it, two writers that start from any position answer a command as not applied after it applied with no token, and never with it (`X7_AnyWholeAnswerFinal`, `X7_AnyFencedAnswerFinal`, and the same pair in X8). The token does not give R4 under such a delivery (`X7_AnyFencedAnswerOrderSets`), so R4 rests on a writer starting from the stored offset and taking the stream in order. The broker's activation signal is still not probed. Points 6 and 7 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s Proposed addendum of 2026-11-25.
+
 ## 7. What a command's answer is read from, MSA-Q23
 
 Under (b) of section 5 the receipt is the command's first operation and everything else depends on it, so a receipt is present exactly where the whole command was applied. Reading the answer from the receipt is then right by construction. One hole is left. The deletion of a workspace clears the workspace's receipt graph, in the same request, and takes with it the receipt of any command on that workspace earlier in the batch (TD-172).
@@ -231,6 +235,16 @@ Under (b) of section 5 the receipt is the command's first operation and everythi
 | defensible history | a deleted workspace leaves no trace of who deleted what before it | the receipts say who did what and when (PRI-54). They hold the sender, the principal and graph names, and no content |
 
 *Leaning (b).* The cost is that a principal's name outlives the workspace until retention runs. Where a deletion has to remove that too, retention for a deleted workspace is immediate once its deletion's receipt is older than the resend window, which is a setting and not a design change.
+
+**Answered 2026-11-24, (b).** Model X7 reproduces TD-172 with one writer, finds that (a) answers a sender's resend of a creation as not applied after its deletion, and finds no error under (b). Point 8 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s Proposed addendum of 2026-11-25.
+
+## 7a. What a refused command leaves, MSA-Q29
+
+Added 2026-11-24. Nothing is recorded for a refusal, so a change sent before the creation it needs is answered as not applied, and its resend applies once the workspace exists. One command id is then answered both ways, which R2 as written forbids (`X7_RefusedThenApplies`).
+
+**(a) Nothing, and R2 is restated.** Only an answer of applied is final. **(b) A receipt of the refusal,** read with the others, so a resend is answered as refused. It costs a write for each refusal and is not modelled. **(c) The sender's concern,** a new attempt takes a new command id.
+
+**Answered 2026-11-25, (a).** R2 now reads that a command answered as applied was applied, and none is answered as not applied once it has applied (`AppliedIsFinal`, `NoRefusalAfterApplied`). It holds with one writer and with the token under any delivery, and fails with two writers and no token, which is why section 6's answer keeps the token. Point 9 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s Proposed addendum of 2026-11-25.
 
 ## 8. Identifiers
 
@@ -286,6 +300,8 @@ The commands are a deletion over two aggregates, a save of one of them, a creati
 
 ## 12. The recommendation, and what would overturn it
 
+Decided by 2026-11-25, as the answers in sections 5 to 7a say. The recommendation of 2026-11-23 follows as it was written, and differs from the answers in two ways, that the guard is the compiler's unit and not hand-written, and that R2 is restated.
+
 One guard for each command with the receipt first (MSA-Q21 (b)), a writer token in that guard (MSA-Q22 (b)), and receipts that no command removes (MSA-Q23 (b)). Together they are meant to pay TD-166 to TD-172, TD-180 and TD-181, and to remove `finish`, `retiredBy` and the resend path of a deletion.
 
 It is overturned where any of these holds.
@@ -297,7 +313,7 @@ It is overturned where any of these holds.
 
 ## 13. What would follow
 
-Not planned until the maintainer has decided.
+Not planned yet. The table is of 2026-11-23. The model row is done, on macOS and not on machine S, and the addendum is drafted. The precondition row is now the compiler's unit, which needs an addendum to ADR-A123 first.
 
 | Slice | Is | Needs |
 |---|---|---|
@@ -329,9 +345,11 @@ MSA-I8 can start once the addendum is accepted, since it puts a ledger family be
 
 Points 5 and 6 are in the draft only if MSA-Q22 and MSA-Q23 are answered (b).
 
+**Superseded 2026-11-25.** The draft above is kept as it was written. The addendum as proposed is in [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md), dated 2026-11-25, with eleven points. It adds the generated unit, the planning read, the stream-order rule, the restated R2 and the patch log and job rules, and its second limit says a store that lets two concurrent updates both commit is not covered.
+
 ## 15. What was not read or run
 
-- Nothing was run. Every state in section 4 is read from the code, and TD-168, TD-169's first case, TD-180 and TD-181 are not reproduced.
+- Nothing was run when this note was written. Since then models X5, X7, X8 and X9 were checked and the unit's lowering probed on three engines in memory (the [Validation Pack](../../validation/MSA-I14.md)). Every state in section 4 is still read from the code, and TD-168, TD-169's first case, TD-180 and TD-181 are not reproduced against it.
 - The generated operations' text, the templates `Maintenance` binds, and how the broker signals activation to a single active consumer were not read.
 - That a generated operation has no precondition slot is from a search of `tools/persistence/src/persistence` for the word, not from reading the compiler.
 - The lookup counts are counted from the writer's code, and no time was measured.

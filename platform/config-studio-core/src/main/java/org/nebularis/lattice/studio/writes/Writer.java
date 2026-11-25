@@ -940,10 +940,9 @@ public final class Writer {
          * deleted meanwhile stays deleted. Everything on the job node but what {@link #WORKER_PREDICATES} names must be as
          * the service wrote it, so an update cannot move a job to another workspace or point it at another graph. A job that
          * succeeded keeps its status and results: a second worker that took the job for lost may write {@code Failed} after the
-         * first has finished, and the update is dropped, with no receipt and no event. The check reads the job before the
-         * request, so it holds only while every writer starts from the offset the store holds and takes the stream in order.
-         * Two writers with applies in flight on one partition can still overwrite a job that succeeded, until the condition
-         * is in the update's guard (TD-181).
+         * first has finished, and the update is dropped, with no receipt and no event. The rule is checked from the job as read,
+         * for the reply, and again in the guard of the update's receipt, so a second writer that applied the job's success
+         * after that read still finds the update dropped (TD-181).
          */
         private Reply jobUpdate(int index, Command c) {
             String jobIri = Graphs.job(c.job());
@@ -989,7 +988,11 @@ public final class Writer {
                 }
             }
             String receipts = Graphs.jobReceipts(c.job());
-            receipt(c, receipts, ownerGuard(c, jobIri), names.stream().sorted().toList(), null);
+            // The rule the read above applied, in the request's guard, so it holds whatever another writer applied since that read.
+            boolean succeeds = update.contains(update.createResource(jobIri), Cst.status, Cst.Succeeded);
+            Element guard = succeeds ? ownerGuard(c, jobIri)
+                : group(ownerGuard(c, jobIri), notExists(quad(jobIri, iri(jobIri), Cst.status.asNode(), Cst.Succeeded.asNode())));
+            receipt(c, receipts, guard, names.stream().sorted().toList(), null);
             request.add(clear(jobIri, mine(c, receipts)));
             request.add(insert(jobIri, update, mine(c, receipts)));
             for (String name : names) {
@@ -1011,7 +1014,8 @@ public final class Writer {
                 return planned(index, c, Reply.ok(), () -> store.graph(jobIri).isEmpty() ? Reply.ok() : Reply.notFound());
             }
             jobs.put(c.job(), Optional.of(update));
-            return planned(index, c, Reply.ok(), Reply::notFound);
+            // A request the guard refused found the job gone, or found that it had succeeded, where the update is dropped as above.
+            return planned(index, c, Reply.ok(), () -> succeeded(store.graph(jobIri), jobIri) ? Reply.ok() : Reply.notFound());
         }
 
         /**
@@ -1123,6 +1127,10 @@ public final class Writer {
             Resource job = existing.createResource(jobIri);
             return c.workspace() == null ? existing.contains(job, Cst.kind, Cst.Rebuild)
                 : existing.contains(job, Cst.workspace, existing.createResource(Graphs.workspace(c.workspace())));
+        }
+
+        private static boolean succeeded(Model job, String jobIri) {
+            return job.contains(job.createResource(jobIri), Cst.status, Cst.Succeeded);
         }
 
         private Element ownerGuard(Command c, String jobIri) {
