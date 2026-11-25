@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -57,9 +58,10 @@ class RunWorkerTest {
 
     /** Publishes into memory. Everything it is given must hold against the schema, which is checked after each test. */
     private static final class FakeSink implements FrameSink {
-        final List<String> log = Collections.synchronizedList(new ArrayList<>());
+        // Copy on write, since a test streams the log while the worker thread appends to it, which a synchronised list does not allow.
+        final List<String> log = new CopyOnWriteArrayList<>();
+        final List<String> problems = new CopyOnWriteArrayList<>();
         final Map<String, List<String>> frames = Collections.synchronizedMap(new LinkedHashMap<>());
-        final List<String> problems = Collections.synchronizedList(new ArrayList<>());
         volatile long delayMillis;
 
         @Override

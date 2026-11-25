@@ -1,0 +1,202 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# The RDF of ex5-section29new-normal.lrml, made with Saxon-HE 12.5 by xslt/triplifyMerger-ids-noxi.xsl, one of the OASIS LegalRuleML Core Specification 1.0's
+# stylesheets, and read into Turtle. It is a derivative of the OASIS example, so the notice in ../README.md applies to it. tools/test_config_studio_stage.py makes it again and
+# checks that it is the same graph.
+@prefix : <http://docs.oasis-open.org/legalruleml/examples/compactified/ex8-defeasible-compact#> .
+@prefix lrmlmm: <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rulemm: <http://docs.oasis-open.org/legalruleml/ns/v1.0/rule-metamodel#> .
+
+:psInfo1 a lrmlmm:Context ;
+    lrmlmm:appliesAssociation :ascs0,
+        :ascs1,
+        :ascs2 ;
+    lrmlmm:inScope :ps1 .
+
+:rep1 a lrmlmm:ReparationStatement ;
+    lrmlmm:hasTemplate :assoc1 .
+
+:rule1 a rulemm:Rule ;
+    lrmlmm:hasStrength :str1 ;
+    rulemm:closure <http://docs.oasis-open.org/legalruleml/examples/compactified/universal> ;
+    rulemm:if [ a rulemm:Atom ;
+            rulemm:args [ a rdf:List ;
+                    rdf:first [ a rulemm:Var ;
+                            rulemm:symbol "X" ] ;
+                    rdf:rest () ] ;
+            rulemm:op [ a rulemm:Rel ;
+                    rulemm:symbol "" ;
+                    owl:sameAs :person ] ] ;
+    rulemm:then [ a lrmlmm:SuborderList ;
+            rulemm:formulas [ a rdf:List ;
+                    rdf:first [ a lrmlmm:Prohibition ;
+                            rulemm:formula [ a rulemm:Atom ;
+                                    rulemm:args [ a rdf:List ;
+                                            rdf:first [ a rulemm:Var ;
+                                                    rulemm:symbol "X" ] ;
+                                            rdf:rest () ] ;
+                                    rulemm:op [ a rulemm:Rel ;
+                                            rulemm:symbol "" ;
+                                            owl:sameAs :engageCreditActivity ] ] ] ;
+                    rdf:rest () ] ] .
+
+:rule2 a rulemm:Rule ;
+    lrmlmm:hasStrength [ a lrmlmm:DefeasibleStrength ] ;
+    rulemm:closure <http://docs.oasis-open.org/legalruleml/examples/compactified/universal> ;
+    rulemm:if [ a rulemm:Atom ;
+            rulemm:args [ a rdf:List ;
+                    rdf:first [ a rulemm:Var ;
+                            rulemm:symbol "X" ] ;
+                    rdf:rest () ] ;
+            rulemm:op [ a rulemm:Rel ;
+                    rulemm:symbol "" ;
+                    owl:sameAs :hasLicence ] ] ;
+    rulemm:then [ a lrmlmm:SuborderList ;
+            rulemm:formulas [ a rdf:List ;
+                    rdf:first [ a lrmlmm:Permission ;
+                            rulemm:formula [ a rulemm:Atom ;
+                                    rulemm:args [ a rdf:List ;
+                                            rdf:first [ a rulemm:Var ;
+                                                    rulemm:symbol "X" ] ;
+                                            rdf:rest () ] ;
+                                    rulemm:op [ a rulemm:Rel ;
+                                            rulemm:symbol "" ;
+                                            owl:sameAs :engageCreditActivity ] ] ] ;
+                    rdf:rest () ] ] .
+
+:str1 a lrmlmm:DefeasibleStrength ;
+    owl:sameAs <http://example.org/defeasible/vocab#defeasible1> .
+
+:textblock1 a lrmlmm:Statements ;
+    lrmlmm:hasQualification [ a lrmlmm:Override ;
+            lrmlmm:over :ps2 ;
+            lrmlmm:under :ps1 ] ;
+    rdf:first [ a lrmlmm:ReparationStatement ;
+            lrmlmm:hasTemplate [ a rdfs:Resource ;
+                    lrmlmm:mergerOf ( :assoc1 [ a lrmlmm:Reparation ;
+                                lrmlmm:appliesPenalty :pen2 ;
+                                lrmlmm:toPrescriptiveStatement :ps1 ] ) ] ] ;
+    rdf:rest [ a rdf:List ;
+            rdf:first :ps1 ;
+            rdf:rest [ a rdf:List ;
+                    rdf:first :ps2 ;
+                    rdf:rest [ a rdf:List ;
+                            rdf:first :pen1 ;
+                            rdf:rest [ a rdf:List ;
+                                    rdf:first :pen2 ;
+                                    rdf:rest [ a rdf:List ;
+                                            rdf:first :rep1 ;
+                                            rdf:rest [ a rdf:List ;
+                                                    rdf:first [ a lrmlmm:OverrideStatement ;
+                                                            lrmlmm:hasTemplate [ a lrmlmm:Override ;
+                                                                    lrmlmm:over :ps2 ;
+                                                                    lrmlmm:under :ps1 ] ] ;
+                                                    rdf:rest () ] ] ] ] ] ] .
+
+:ascs0 a lrmlmm:Association ;
+    lrmlmm:appliesSource :ls1 ;
+    lrmlmm:toTarget :atom1,
+        :atom2,
+        :atom3 .
+
+:ascs1 a lrmlmm:Association ;
+    lrmlmm:appliesModality <http://example.org/deontic/vocab#ob1> ;
+    lrmlmm:toTarget :oblig1 .
+
+:ascs2 a lrmlmm:Association ;
+    lrmlmm:appliesStrength <http://example.org/defeasible/vocab#defeasible> ;
+    lrmlmm:toTarget :ps1 .
+
+:assoc1 a lrmlmm:Reparation,
+        rdfs:Resource ;
+    lrmlmm:appliesPenalty :pen1 ;
+    lrmlmm:toPrescriptiveStatement :ps1 .
+
+:ls1 a lrmlmm:LegalSource ;
+    owl:sameAs <http://www.comlaw.gov.au/Details/C2009A00134/Html/Text#param43> .
+
+:pen1 a lrmlmm:PenaltyStatement ;
+    lrmlmm:hasTemplate [ a lrmlmm:SuborderList ;
+            rulemm:formulas [ a rdf:List ;
+                    rdf:first [ a lrmlmm:Obligation ;
+                            rulemm:formula [ a rulemm:Atom ;
+                                    rulemm:args [ a rdf:List ;
+                                            rdf:first [ a rulemm:Var ;
+                                                    rulemm:symbol "X" ] ;
+                                            rdf:rest [ a rdf:List ;
+                                                    rdf:first [ a rulemm:Ind ;
+                                                            rulemm:symbol "2000" ] ;
+                                                    rdf:rest () ] ] ;
+                                    rulemm:op [ a rulemm:Rel ;
+                                            rulemm:symbol "" ;
+                                            owl:sameAs :payCivilUnits ] ] ] ;
+                    rdf:rest () ] ] .
+
+:pen2 a lrmlmm:PenaltyStatement ;
+    lrmlmm:hasTemplate [ a lrmlmm:SuborderList ;
+            rulemm:formulas [ a rdf:List ;
+                    rdf:first [ a lrmlmm:Obligation ;
+                            rulemm:formula [ a rulemm:Atom ;
+                                    rulemm:args [ a rdf:List ;
+                                            rdf:first [ a rulemm:Var ;
+                                                    rulemm:symbol "X" ] ;
+                                            rdf:rest [ a rdf:List ;
+                                                    rdf:first [ a rulemm:Ind ;
+                                                            rulemm:symbol "200" ] ;
+                                                    rdf:rest () ] ] ;
+                                    rulemm:op [ a rulemm:Rel ;
+                                            rulemm:symbol "" ;
+                                            owl:sameAs :payPenalUnits ] ] ] ;
+                    rdf:rest [ a rdf:List ;
+                            rdf:first [ a lrmlmm:Obligation ;
+                                    rulemm:formula [ a rulemm:Atom ;
+                                            rulemm:args [ a rdf:List ;
+                                                    rdf:first [ a rulemm:Var ;
+                                                            rulemm:symbol "X" ] ;
+                                                    rdf:rest [ a rdf:List ;
+                                                            rdf:first [ a rulemm:Ind ;
+                                                                    rulemm:symbol "2 years" ] ;
+                                                            rdf:rest () ] ] ;
+                                            rulemm:op [ a rulemm:Rel ;
+                                                    rulemm:symbol "" ;
+                                                    owl:sameAs :imprisonment ] ] ] ;
+                            rdf:rest [ a rdf:List ;
+                                    rdf:first [ a lrmlmm:Obligation ;
+                                            rulemm:formula [ a rulemm:Atom ;
+                                                    rulemm:args [ a rdf:List ;
+                                                            rdf:first [ a rulemm:Var ;
+                                                                    rulemm:symbol "X" ] ;
+                                                            rdf:rest [ a rdf:List ;
+                                                                    rdf:first [ a rulemm:Ind ;
+                                                                            rulemm:symbol "200" ] ;
+                                                                    rdf:rest [ a rdf:List ;
+                                                                            rdf:first [ a rulemm:Ind ;
+                                                                                    rulemm:symbol "2 years" ] ;
+                                                                            rdf:rest () ] ] ] ;
+                                                    rulemm:op [ a rulemm:Rel ;
+                                                            rulemm:symbol "" ;
+                                                            owl:sameAs :payPebnalUnitPlusImprisonment ] ] ] ;
+                                    rdf:rest () ] ] ] ] .
+
+:ps2 a lrmlmm:PrescriptiveStatement ;
+    lrmlmm:hasTemplate :rule2 .
+
+:ps1 a lrmlmm:PrescriptiveStatement ;
+    lrmlmm:hasTemplate :rule1 .
+
+[] a lrmlmm:LegalRuleML ;
+    lrmlmm:hasAssociations [ a lrmlmm:Associations ;
+            rdf:first :ascs0 ;
+            rdf:rest [ a rdf:List ;
+                    rdf:first :ascs1 ;
+                    rdf:rest [ a rdf:List ;
+                            rdf:first :ascs2 ;
+                            rdf:rest () ] ] ] ;
+    lrmlmm:hasContext :psInfo1 ;
+    lrmlmm:hasLegalSources [ a lrmlmm:LegalSources ;
+            rdf:first :ls1 ;
+            rdf:rest () ] ;
+    lrmlmm:hasStatements :textblock1 .
+

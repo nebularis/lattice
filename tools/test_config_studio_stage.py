@@ -6,6 +6,8 @@ from __future__ import annotations
 import csv
 import json
 import re
+import shutil
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -349,3 +351,35 @@ def test_a_scheme_over_csv_or_yaml_compiles_to_rml_alone_as_the_sample_pane_list
     artefacts = {str(done.value(a, jobs.CST.path)): str(done.value(a, jobs.CST.group)) for a in done.subjects(RDF.type, jobs.CST.Artefact)}
     assert artefacts["mapping.rml.ttl"] == f"urn:example:mapping/{name}#Scheme"
     assert not any(path.endswith((".xsl", ".jolt.json")) for path in artefacts), "no transform reads the format, so the RML form is the only one"
+
+
+LRML_EXAMPLES = ("ex5-section29new-normal", "cover-exclusion-condition")
+
+
+@pytest.mark.parametrize("name", LRML_EXAMPLES)
+def test_a_legalruleml_documents_rdf_is_what_the_oasis_stylesheet_makes_of_it_on_saxon_he(name: str, tmp_path: Path) -> None:
+    """The committed Turtle is the RDF/XML of `triplifyMerger-ids-noxi.xsl` over the document, so the two stay equal (`mise run bootstrap:mork-transforms` builds the jar)."""
+    from mork_transforms import engine
+
+    folder = lattice_repo_catalogue.find_root() / "contracts" / "config-studio" / "legalruleml"
+    jar = engine.jar()
+    if not jar.is_file() or shutil.which("java") is None:
+        pytest.skip("the transforms jar is not built, run mise run bootstrap:mork-transforms")
+    made = tmp_path / "made.rdf"
+    done = subprocess.run(["java", "-cp", str(jar), "net.sf.saxon.Transform", f"-s:{folder / 'examples' / (name + '.lrml')}", f"-xsl:{folder / 'xslt' / 'triplifyMerger-ids-noxi.xsl'}", f"-o:{made}"],
+                          capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    assert isomorphic(Graph().parse(made, format="xml"), Graph().parse(folder / "examples" / f"{name}.ttl"))
+
+
+def test_the_clean_room_legalruleml_document_has_a_cover_an_exclusion_and_a_condition_and_the_oasis_copies_are_whole() -> None:
+    folder = lattice_repo_catalogue.find_root() / "contracts" / "config-studio" / "legalruleml" / "examples"
+    lrml = "http://docs.oasis-open.org/legalruleml/ns/v1.0/"
+    root = ET.parse(folder / "cover-exclusion-condition.lrml").getroot()
+    kinds = {e.get("key"): e.tag.rsplit("}", 1)[-1] for e in root.iter() if e.tag in (f"{{{lrml}}}PrescriptiveStatement", f"{{{lrml}}}ConstitutiveStatement")}
+    assert kinds == {"cover": "PrescriptiveStatement", "exclusion": "PrescriptiveStatement", "condition": "ConstitutiveStatement"}
+    assert {e.tag.rsplit("}", 1)[-1] for e in root.iter()} >= {"Obligation", "Prohibition", "Override"}
+    for name in ("ex5-section29new-compact.lrml", "ex5-section29new-normal.lrml", "../xslt/triplifyMerger-ids-noxi.xsl"):
+        data = (folder / name).read_bytes()
+        assert b"\r" not in data, f"{name} keeps LF line endings, as OASIS publishes it"
+        ET.fromstring(data)

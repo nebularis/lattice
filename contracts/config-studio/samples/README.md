@@ -327,7 +327,7 @@ Mapping mode lists every mapping scheme of the workspace on the left, explores a
 
 ### LegalRuleML
 
-**Demonstrates:** two proposals mapping LegalRuleML's metamodel to stated meaning, one made cold and one made with the ODRL trial's history, each mapping with its review. LegalRuleML's source is RDF in the metamodel's terms, so its sample source is Turtle. No LegalRuleML XML document is offered yet.
+**Demonstrates:** two proposals mapping LegalRuleML's metamodel to stated meaning, one made cold and one made with the ODRL trial's history, each mapping with its review. LegalRuleML's source is RDF in the metamodel's terms, so its sample sources are Turtle. Two LegalRuleML documents are offered with the RDF each gives, an OASIS example and the project's own clean-room document of a cover, an exclusion and a condition.
 
 **Documents:**
 
@@ -335,6 +335,9 @@ Mapping mode lists every mapping scheme of the workspace on the left, explores a
 - [`sample-supply-terms.ttl`](../legalruleml/trial/sample-supply-terms.ttl), the sample source, a made-up supply agreement in the metamodel
 - [`legalruleml-metamodel.ttl`](../legalruleml/trial/legalruleml-metamodel.ttl), the metamodel as one Turtle source, which the proposer reads
 - [`rdfs/`](../legalruleml/rdfs), the twelve RDFS files of the metamodel, copied from OASIS with their notice
+- [`ex5-section29new-compact.lrml`](../legalruleml/examples/ex5-section29new-compact.lrml) and [`ex5-section29new-normal.lrml`](../legalruleml/examples/ex5-section29new-normal.lrml), an OASIS example in the compact and the normal syntax, copied unmodified with their notice, and [`ex5-section29new-normal.ttl`](../legalruleml/examples/ex5-section29new-normal.ttl), its RDF
+- [`cover-exclusion-condition.lrml`](../legalruleml/examples/cover-exclusion-condition.lrml), the project's own clean-room document in the normal syntax, and [`cover-exclusion-condition.ttl`](../legalruleml/examples/cover-exclusion-condition.ttl), its RDF
+- [`triplifyMerger-ids-noxi.xsl`](../legalruleml/xslt/triplifyMerger-ids-noxi.xsl), the OASIS stylesheet that makes the RDF, and [`examples/README.md`](../legalruleml/examples/README.md), which says how and records where each file comes from
 
 **Studio sample:** LegalRuleML mappings (`legalruleml-mappings`)
 
@@ -342,7 +345,9 @@ Mapping mode lists every mapping scheme of the workspace on the left, explores a
 
 1. Make a workspace from the sample and open the Mapping view. The two proposals are listed, each mapping with its review.
 2. Open the Sample tab, press **Load a file** and choose `sample-supply-terms.ttl`, then press **Run**.
-3. To propose a scheme afresh, give the proposer the metamodel as its source vocabulary and the namespace `http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#`. It needs a language model the worker is configured with.
+3. To run it over a LegalRuleML document, press **Load a file** and choose `cover-exclusion-condition.ttl`, then **Run**. Nine of the 74 outputs hold triples, those of the obligation and the prohibition, and the override gives nothing to the proposals' mappings. Choose `ex5-section29new-normal.ttl` for the OASIS example, which gives more. The Turtle is what the OASIS stylesheet makes of the `.lrml` next to it, and the document opens in any XML reader to read beside it.
+4. To make the RDF again, follow [How the RDF is made](../legalruleml/examples/README.md#how-the-rdf-is-made).
+5. To propose a scheme afresh, give the proposer the metamodel as its source vocabulary and the namespace `http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#`. It needs a language model the worker is configured with.
 
 ## Parts older than the above
 

@@ -7,8 +7,13 @@ The source vocabulary of the MORK mapping pack from LegalRuleML to LATTICE, whic
 | File | What it is |
 |---|---|
 | [`rdfs/`](rdfs) | the LegalRuleML metamodel, twelve RDFS files in RDF/XML |
+| [`examples/`](examples) | two LegalRuleML documents and the RDF each gives, an OASIS example and a clean-room one, with their provenance |
+| [`xslt/`](xslt) | the OASIS stylesheet that makes that RDF |
+| [`trial/`](trial) | the proposal trials of the mapping pack, with a sample source in the metamodel's terms |
 
 The files in `rdfs/` are copies of <https://docs.oasis-open.org/legalruleml/legalruleml-core-spec/v1.0/os/rdfs/>, taken on 2026-10-29 and unmodified apart from their line endings, which the repository stores as LF, part of the [LegalRuleML Core Specification Version 1.0](https://docs.oasis-open.org/legalruleml/legalruleml-core-spec/v1.0/os/legalruleml-core-spec-v1.0-os.html), an OASIS Standard of 30 August 2021.
+
+The files in `examples/` and `xslt/` that are OASIS's are copies of other files of the same specification, taken on 2026-11-25 and unmodified, as [`examples/README.md`](examples/README.md) lists, and the notice below applies to them and to the RDF made from them.
 
 Copyright © OASIS Open 2021. All Rights Reserved.
 

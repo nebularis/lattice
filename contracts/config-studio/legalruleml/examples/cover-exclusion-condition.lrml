@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+<!-- A clean-room LegalRuleML document in the normal syntax, written by the project from generic meaning (see README.md beside it). -->
+<lrml:LegalRuleML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="https://example.org/lattice/legalruleml/cover#"
+  xmlns:lrml="http://docs.oasis-open.org/legalruleml/ns/v1.0/"
+  xmlns:ruleml="http://ruleml.org/spec"
+  xsi:schemaLocation="http://docs.oasis-open.org/legalruleml/ns/v1.0/ https://docs.oasis-open.org/legalruleml/legalruleml-core-spec/v1.0/os/xsd-schema/normal/lrml-normal.xsd"
+  xml:base="https://example.org/lattice/legalruleml/cover">
+  <lrml:hasStatements>
+    <lrml:Statements key="cover-terms">
+      <lrml:hasQualification>
+        <lrml:Override over="#exclusion" under="#cover"/>
+      </lrml:hasQualification>
+      <!-- The cover. When insured property is damaged by an insured event, and the condition holds, the insurer role owes an indemnity. -->
+      <lrml:hasStatement>
+        <lrml:PrescriptiveStatement key="cover">
+          <lrml:hasTemplate>
+            <ruleml:Rule key=":cover-rule" closure="universal">
+              <ruleml:if>
+                <ruleml:And>
+                  <ruleml:formula>
+                    <ruleml:Atom>
+                      <ruleml:op><ruleml:Rel iri=":damagedByInsuredEvent"/></ruleml:op>
+                      <ruleml:arg index="1"><ruleml:Var>claim</ruleml:Var></ruleml:arg>
+                    </ruleml:Atom>
+                  </ruleml:formula>
+                  <ruleml:formula>
+                    <ruleml:Atom>
+                      <ruleml:op><ruleml:Rel iri=":conditionMet"/></ruleml:op>
+                      <ruleml:arg index="1"><ruleml:Var>claim</ruleml:Var></ruleml:arg>
+                    </ruleml:Atom>
+                  </ruleml:formula>
+                </ruleml:And>
+              </ruleml:if>
+              <ruleml:then>
+                <lrml:SuborderList>
+                  <ruleml:formula index="1">
+                    <lrml:Obligation>
+                      <ruleml:formula>
+                        <ruleml:Atom>
+                          <ruleml:op><ruleml:Rel iri=":indemnify"/></ruleml:op>
+                          <ruleml:arg index="1"><ruleml:Var>claim</ruleml:Var></ruleml:arg>
+                        </ruleml:Atom>
+                      </ruleml:formula>
+                    </lrml:Obligation>
+                  </ruleml:formula>
+                </lrml:SuborderList>
+              </ruleml:then>
+            </ruleml:Rule>
+          </lrml:hasTemplate>
+        </lrml:PrescriptiveStatement>
+      </lrml:hasStatement>
+      <!-- The exclusion. A claim for loss that the insured caused on purpose is not indemnified, and this overrides the cover. -->
+      <lrml:hasStatement>
+        <lrml:PrescriptiveStatement key="exclusion">
+          <lrml:hasTemplate>
+            <ruleml:Rule key=":exclusion-rule" closure="universal">
+              <ruleml:if>
+                <ruleml:Atom>
+                  <ruleml:op><ruleml:Rel iri=":causedOnPurposeByInsured"/></ruleml:op>
+                  <ruleml:arg index="1"><ruleml:Var>claim</ruleml:Var></ruleml:arg>
+                </ruleml:Atom>
+              </ruleml:if>
+              <ruleml:then>
+                <lrml:SuborderList>
+                  <ruleml:formula index="1">
+                    <lrml:Prohibition>
+                      <ruleml:formula>
+                        <ruleml:Atom>
+                          <ruleml:op><ruleml:Rel iri=":indemnify"/></ruleml:op>
+                          <ruleml:arg index="1"><ruleml:Var>claim</ruleml:Var></ruleml:arg>
+                        </ruleml:Atom>
+                      </ruleml:formula>
+                    </lrml:Prohibition>
+                  </ruleml:formula>
+                </lrml:SuborderList>
+              </ruleml:then>
+            </ruleml:Rule>
+          </lrml:hasTemplate>
+        </lrml:PrescriptiveStatement>
+      </lrml:hasStatement>
+      <!-- The condition. The cover applies only where the premium for the period of the loss has been paid. -->
+      <lrml:hasStatement>
+        <lrml:ConstitutiveStatement key="condition">
+          <lrml:hasTemplate>
+            <ruleml:Rule key=":condition-rule" closure="universal">
+              <ruleml:if>
+                <ruleml:Atom>
+                  <ruleml:op><ruleml:Rel iri=":premiumPaidForPeriodOfLoss"/></ruleml:op>
+                  <ruleml:arg index="1"><ruleml:Var>claim</ruleml:Var></ruleml:arg>
+                </ruleml:Atom>
+              </ruleml:if>
+              <ruleml:then>
+                <ruleml:Atom>
+                  <ruleml:op><ruleml:Rel iri=":conditionMet"/></ruleml:op>
+                  <ruleml:arg index="1"><ruleml:Var>claim</ruleml:Var></ruleml:arg>
+                </ruleml:Atom>
+              </ruleml:then>
+            </ruleml:Rule>
+          </lrml:hasTemplate>
+        </lrml:ConstitutiveStatement>
+      </lrml:hasStatement>
+    </lrml:Statements>
+  </lrml:hasStatements>
+</lrml:LegalRuleML>

@@ -37,3 +37,11 @@ SPDX-License-Identifier = "MPL-2.0"
 path = ["tools/mork_transforms/tests/examples/policies/source.csv"]
 precedence = "aggregate"
 SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+# Copies of files of the OASIS LegalRuleML Core Specification 1.0, unmodified, so they carry no header of ours. Their notice is
+# in contracts/config-studio/legalruleml/README.md. The licence is the OASIS IPR Policy's, which has no SPDX identifier.
+[[annotations]]
+path = ["contracts/config-studio/legalruleml/examples/ex5-section29new-compact.lrml", "contracts/config-studio/legalruleml/examples/ex5-section29new-normal.lrml", "contracts/config-studio/legalruleml/xslt/triplifyMerger-ids-noxi.xsl"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright (c) OASIS Open 2021. All Rights Reserved."
+SPDX-License-Identifier = "LicenseRef-OASIS-IPR-Policy"

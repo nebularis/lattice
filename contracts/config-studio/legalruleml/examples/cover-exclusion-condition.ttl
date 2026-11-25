@@ -1,0 +1,107 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# The RDF of cover-exclusion-condition.lrml, made with Saxon-HE 12.5 by ../xslt/triplifyMerger-ids-noxi.xsl and read into Turtle. The document is the project's own
+# (see README.md). tools/test_config_studio_stage.py makes it again and checks that it is the same graph.
+@prefix : <https://example.org/lattice/legalruleml/cover#> .
+@prefix lrmlmm: <http://docs.oasis-open.org/legalruleml/ns/v1.0/metamodel#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rulemm: <http://docs.oasis-open.org/legalruleml/ns/v1.0/rule-metamodel#> .
+
+:condition a lrmlmm:ConstitutiveStatement ;
+    lrmlmm:hasTemplate :condition-rule .
+
+:condition-rule a rulemm:Rule ;
+    rulemm:closure <https://example.org/lattice/legalruleml/universal> ;
+    rulemm:if [ a rulemm:Atom ;
+            rulemm:args [ a rdf:List ;
+                    rdf:first [ a rulemm:Var ;
+                            rulemm:symbol "claim" ] ;
+                    rdf:rest () ] ;
+            rulemm:op [ a rulemm:Rel ;
+                    rulemm:symbol "" ;
+                    owl:sameAs :premiumPaidForPeriodOfLoss ] ] ;
+    rulemm:then [ a rulemm:Atom ;
+            rulemm:args [ a rdf:List ;
+                    rdf:first [ a rulemm:Var ;
+                            rulemm:symbol "claim" ] ;
+                    rdf:rest () ] ;
+            rulemm:op [ a rulemm:Rel ;
+                    rulemm:symbol "" ;
+                    owl:sameAs :conditionMet ] ] .
+
+:cover-rule a rulemm:Rule ;
+    rulemm:closure <https://example.org/lattice/legalruleml/universal> ;
+    rulemm:if [ a rulemm:And ;
+            rulemm:formula [ a rulemm:Atom ;
+                    rulemm:args [ a rdf:List ;
+                            rdf:first [ a rulemm:Var ;
+                                    rulemm:symbol "claim" ] ;
+                            rdf:rest () ] ;
+                    rulemm:op [ a rulemm:Rel ;
+                            rulemm:symbol "" ;
+                            owl:sameAs :conditionMet ] ],
+                [ a rulemm:Atom ;
+                    rulemm:args [ a rdf:List ;
+                            rdf:first [ a rulemm:Var ;
+                                    rulemm:symbol "claim" ] ;
+                            rdf:rest () ] ;
+                    rulemm:op [ a rulemm:Rel ;
+                            rulemm:symbol "" ;
+                            owl:sameAs :damagedByInsuredEvent ] ] ;
+            rulemm:formulas () ] ;
+    rulemm:then [ a lrmlmm:SuborderList ;
+            rulemm:formulas [ a rdf:List ;
+                    rdf:first [ a lrmlmm:Obligation ;
+                            rulemm:formula [ a rulemm:Atom ;
+                                    rulemm:args [ a rdf:List ;
+                                            rdf:first [ a rulemm:Var ;
+                                                    rulemm:symbol "claim" ] ;
+                                            rdf:rest () ] ;
+                                    rulemm:op [ a rulemm:Rel ;
+                                            rulemm:symbol "" ;
+                                            owl:sameAs :indemnify ] ] ] ;
+                    rdf:rest () ] ] .
+
+:cover-terms a lrmlmm:Statements ;
+    lrmlmm:hasQualification [ a lrmlmm:Override ;
+            lrmlmm:over :exclusion ;
+            lrmlmm:under :cover ] ;
+    rdf:first :cover ;
+    rdf:rest [ a rdf:List ;
+            rdf:first :exclusion ;
+            rdf:rest [ a rdf:List ;
+                    rdf:first :condition ;
+                    rdf:rest () ] ] .
+
+:exclusion-rule a rulemm:Rule ;
+    rulemm:closure <https://example.org/lattice/legalruleml/universal> ;
+    rulemm:if [ a rulemm:Atom ;
+            rulemm:args [ a rdf:List ;
+                    rdf:first [ a rulemm:Var ;
+                            rulemm:symbol "claim" ] ;
+                    rdf:rest () ] ;
+            rulemm:op [ a rulemm:Rel ;
+                    rulemm:symbol "" ;
+                    owl:sameAs :causedOnPurposeByInsured ] ] ;
+    rulemm:then [ a lrmlmm:SuborderList ;
+            rulemm:formulas [ a rdf:List ;
+                    rdf:first [ a lrmlmm:Prohibition ;
+                            rulemm:formula [ a rulemm:Atom ;
+                                    rulemm:args [ a rdf:List ;
+                                            rdf:first [ a rulemm:Var ;
+                                                    rulemm:symbol "claim" ] ;
+                                            rdf:rest () ] ;
+                                    rulemm:op [ a rulemm:Rel ;
+                                            rulemm:symbol "" ;
+                                            owl:sameAs :indemnify ] ] ] ;
+                    rdf:rest () ] ] .
+
+:cover a lrmlmm:PrescriptiveStatement ;
+    lrmlmm:hasTemplate :cover-rule .
+
+:exclusion a lrmlmm:PrescriptiveStatement ;
+    lrmlmm:hasTemplate :exclusion-rule .
+
+[] a lrmlmm:LegalRuleML ;
+    lrmlmm:hasStatements :cover-terms .
+
