@@ -41,13 +41,13 @@ No text of a rig, and no name, form number, amount, date, document identifier or
 
 ## 5. The check on this side
 
-A run writes a deny list of the rig's identifiers, titles, values and first sentences. As generated it also holds headings and common words, so it reports ordinary text and cannot gate a commit (TD-182). Until that is settled, anyone who has read a rig and then commits here derives a stricter list first, every entry of the generated list that matches no tracked line of the checkout, and runs the deny-terms check on the staged lines with it, beside the check the commit hook already runs:
+A run on a rig outside the checkout writes a deny list of the rig's identifiers, titles, values and first sentences, and leaves out every entry the checkout's tracked text already holds, since a heading or a common word would report ordinary text. Anyone who has read a rig and then commits here runs the deny-terms check on the staged lines with that list, beside the check the commit hook already runs:
 
 ```bash
-LATTICE_DENY_TERMS=<the stricter list> mise exec -- python tools/deny_terms.py
+LATTICE_DENY_TERMS=.local/v-rig/<rig digest>/deny-terms mise exec -- python tools/deny_terms.py
 ```
 
-A pass prints nothing about a finding and exits 0. The stricter list is a private file and stays in the ignored folder beside the run.
+A pass reports no finding and exits 0. The list is a private file and stays in the ignored folder beside the run. The check reads one list at a time (TD-157), so the two are run apart.
 
 ## 6. The order
 

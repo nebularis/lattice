@@ -56,6 +56,7 @@ Estimates are in tokens, for agent work, excluding review.
 | VR-6 | P4, findings as RDF with stable ids and the report rendered from them | VR-4 | 100k |
 | VR-7 | the seam for a read case, a representation graph from outside taken as a case | VR-2 | 40k |
 | VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | VR-4 | 80k |
+| VR-9 | projection P2 on the ledger's kernel, in place of the early ledger theory it copies: the theories it takes, every `value` line it writes, and the tests that name them | VR-5, and the ledger's LG-35 and LG-36 | 60k |
 
 ```mermaid
 flowchart LR
@@ -136,3 +137,27 @@ Each was answered on 2026-11-07, by the maintainer and by the consumer that read
 **VR-Q10. The reinsurance waterfall development.** Answered 2026-11-07, no dependency in the first six slices, and its placement is WPG-Q4's.
 
 **VR-Q11. Where the vocabulary lives, given that a consumer pins it at a tag.** Answered 2026-11-07, a standalone module `ontology/v-rig/`, released on its own, with its ADR drafted in VR-1.
+
+**VR-Q12. How P2 reaches the ledger's kernel.** Answered 2026-11-25, by the maintainer: it copies the kernel and the theory of its code equations, `Kernel.thy` and `Evaluation.thy`, and keeps a session whose parent is HOL. The ledger unit's LG-36 put the two code equations in a theory that imports the kernel alone, so nothing else is copied and no library theory is needed. Copying the theories that held them before would have had every run check about a thousand lines of their proofs.
+
+**VR-Q13. What P2 writes where a rig states no rounding or merge policy.** Answered 2026-11-25, by the maintainer: the exact split always, as a proportion (STD-340), whole units only where the rig states how a share is rounded and where an odd unit goes, and a draw beyond what is available only where the rig states the policy. The rest is said in words and bound to nothing, as a fact not stated already is.
+
+**VR-Q14. When VR-9 is built.** Answered 2026-11-25, by the maintainer: briefed now and built after the ledger's LG-35, which changes the kernel's events.
+
+VR-Q15 to VR-Q18 are in the [list of what a rig states](../sketches/v-rig-what-a-rig-states.md), and VR-Q19 in the [protocol](../notes/rig-run-protocol.md).
+
+## VR-9 in brief, 2026-11-25
+
+**What stands today.** `p2.py` takes the ledger theory of `spikes/isabelle-layers/`, copies it beside the generated theory, and writes three kinds of `value` line against it, the split of a layer's limit over its placements' shares, the residual of that split, and the draw of each event's loss on the primary layer. That theory is an early model the ledger's kernel has replaced, so P2's ledger results describe a model nobody maintains.
+
+**What changes.**
+
+- **The theories.** P2 finds `Kernel.thy` and `Evaluation.thy` through the catalogue reader (STD-273), copies both, and imports `Evaluation`. The session's parent stays HOL. The two built that way in 7 seconds on 2026-11-25.
+- **The split.** The kernel's `proportional` over the rationals gives each placement its exact share. Whole units are written only where the rig states the rounding and the residual rule, with the kernel's `ration` or `apportion` under the rule stated.
+- **The draw.** A loss within what is available is a `draw_on` along the account's path, and needs no policy, since a merge grants every request whole where the total fits. A loss beyond it is evaluated only where the rig states a merge policy, as a `policy` record P2 builds from what is stated.
+- **The names.** The kernel has a `residual` of its own with another signature, so no old name survives. `test_p2_p3.py` asserts the old names and the copied file, and its assertions change with the reason in the slice's Validation Pack, since an earlier slice's test is not loosened without one.
+- **P3 is untouched.** It writes the facts a rig states and computes no split.
+
+**What it waits on.** LG-35, since the kernel's events change with it. Whether a rig can state a merge policy at all is VR-Q17's answer and the format's next version.
+
+**Done when** P2 reads the kernel and its session builds on HOL alone, the tests name the kernel's functions, a run on the mini-rig is recorded in the pack, and no file under `ontology/ledger/` or `tools/proofs/` has changed. No Isabelle build is started without asking the maintainer.

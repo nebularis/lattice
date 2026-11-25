@@ -60,9 +60,27 @@ def resolve_out(rig: Rig, out: Path | str | None, root: Path | None = None) -> P
     return path
 
 
-def deny_terms(graph: Graph) -> list[str]:
+def tracked_text(root: Path) -> str:
+    """The text of every tracked file of the checkout, in lower case, to tell a rig's own words from words the
+    repository already holds."""
+    parts = []
+    for name in _git(root, "ls-files", "-z").stdout.split("\0"):
+        path = root / name
+        if not name or not path.is_file():
+            continue
+        try:
+            parts.append(path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, OSError):
+            continue
+    return "\n".join(parts).lower()
+
+
+def deny_terms(graph: Graph, tracked: str | None = None) -> list[str]:
     """One regular expression per line a staged change must not carry: every id, title, string value and body text of the
-    rig, escaped, longest first, so that no rig text reaches a tracked line."""
+    rig, escaped, longest first, so that no rig text reaches a tracked line. Given the checkout's tracked text, an entry
+    that text already holds is left out, since a heading or a common word would report ordinary text and the list could
+    gate no commit."""
+    words = set(re.findall(r"[a-z0-9]+", tracked)) if tracked is not None else set()
     terms: set[str] = set()
     for predicate in (VRIG.rigId, VRIG["title"], VRIG.text, VRIG["term"], VRIG.value, VRIG.expression, VRIG.referenceText, RDF.first):
         for obj in graph.objects(None, predicate):
@@ -70,11 +88,14 @@ def deny_terms(graph: Graph) -> list[str]:
                 continue
             text = str(obj)
             if len(text) >= 4 and not re.fullmatch(r"[\d.,:\- ]+", text):
+                lower = text.lower()
+                if tracked is not None and all(word in words for word in re.findall(r"[a-z0-9]+", lower)) and lower in tracked:
+                    continue
                 terms.add(re.escape(text))
     return sorted(terms, key=lambda t: (-len(t), t))
 
 
-def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict, projection=None, checks=None) -> dict[str, Path]:
+def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict, projection=None, checks=None, tracked: str | None = None) -> dict[str, Path]:
     out.mkdir(parents=True, exist_ok=True)
     if checks is not None:
         (out / "p1" / "shapes").mkdir(parents=True, exist_ok=True)
@@ -101,7 +122,9 @@ def write_outputs(rig: Rig, graph: Graph, out: Path, run_info: dict, projection=
     written["report"].write_text(render(graph, run_info), encoding="utf-8", newline="\n")
     header = ["# Generated from a rig by the v-rig tool. Feed it to the deny-terms check with",
               f"# LATTICE_DENY_TERMS={written['deny-terms']} mise run check:deny-terms", ""]
-    written["deny-terms"].write_text("\n".join(header + deny_terms(graph)) + "\n", encoding="utf-8", newline="\n")
+    if tracked is not None:
+        header.insert(2, "# An entry the checkout's tracked text already holds is left out.")
+    written["deny-terms"].write_text("\n".join(header + deny_terms(graph, tracked)) + "\n", encoding="utf-8", newline="\n")
     if projection is not None:
         written.update({"p1 source": out / "p1" / "source.ttl", "p1 layers": out / "p1" / "layers.ttl", "p1 compiled": out / "p1" / "compiled.sparql"})
     log.info("wrote %d file(s) under %s", len(written), out)

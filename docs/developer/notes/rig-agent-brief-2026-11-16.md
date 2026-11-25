@@ -4,6 +4,8 @@
 
 **For:** an agent new to this work, running under Copilot in VS Code. **Written on** `docs/placement-vehicles-structure` at the maintainer's request. **Slice:** VR-8 of the unit `v-rig` ([plan](../plans/v-rig.md), [status](../status/v-rig.md)), briefed 2026-11-16. The maintainer creates your branch from the commit that holds this brief.
 
+**Read this first, 2026-11-25.** Parts of this brief have been overtaken. The ledger's LG-24 is built, so what an account declares for a merge is stated on a merge policy that a definition names with `ldg:mergePolicy`, and every row section 5 held back has a term. Section 5's questions are built as ten, each asked of an account definition through its policy: `policy`, `merge-rule`, `rounding`, `residual-rule`, `rounding-treatment`, `order-criterion`, `order-check`, `unit-order`, `residual-allowed` and `mixed-position`. The rows `tie-rule`, `refuse-or-cut` and `whole-or-nothing` are values of the merge rule and have no question of their own. `held-rank` and `floor` remain gaps. Nobody is rewriting the Ledger README's formal statement any longer, and pointing P2 at the kernel is slice VR-9 of the plan. ADR-A131's addenda now run to 2026-11-24.
+
 You add competency questions to the verification rig's projection P1 and ask them of the synthetic mini-rig. Nothing else. No rig other than the mini-rig is read in this slice, and no layer gains a term.
 
 ## 1. Before anything else

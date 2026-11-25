@@ -12,7 +12,7 @@ A rig is costly to write and cheap to run. A run can be repeated whenever a laye
 
 **What a rig does not state.** A rig records what was agreed and what happened. It holds nothing about what might be placed, how a structure is chosen or what it should cost, as the applied insurance reference's phase 7 plan says of its own modules (P7-1).
 
-**How to read the tables.** *Carried in* says where a rig would state the fact. Front matter is the declared view of a document, and where a row adds the provision's locator the front matter also points at the clause that states it, so the declared view and the blind view can be compared. The last column says where the fact stands today. *Read* means the tracked scheme reads a key for it in format 1, as the synthetic mini-rig shows. *No key* means the layer has a term and the format has nothing to carry the fact. *No term* means no layer can hold it yet, so a rig that states it produces a finding, which is the result wanted. The dates and reporting rows are in the [dates sketch](v-rig-dates-periods-and-reporting.md) §3 and are not repeated.
+**How to read the tables.** *Carried in* says where a rig would state the fact. Front matter is the declared view of a document, and where a row adds the provision's locator the front matter also points at the clause that states it, so the declared view and the blind view can be compared. The last column says where the fact stands today. *Read* means the tracked scheme maps a key for it to a layer in format 1. *A key, not mapped* means rigs of format 1 state the fact under a key and the tracked scheme maps that key to nothing, so the fact stops at the representation. *No key* means the format has nothing to carry the fact. The tracked scheme maps eleven keys, `attachment`, `document`, `documents`, `limit`, `lines`, `name`, `period`, `role`, `share`, `summary` and `title`, and reads `drop_down` and `exhaustion` as readings. An earlier draft of this list marked five more rows as read, which the first run on a rig outside the repository showed to be wrong. *No term* means no layer can hold it yet, so a rig that states it produces a finding, which is the result wanted. The dates and reporting rows are in the [dates sketch](v-rig-dates-periods-and-reporting.md) §3 and are not repeated.
 
 ## 2. The facts
 
@@ -24,7 +24,7 @@ A rig is costly to write and cheap to run. A run can be repeated whenever a laye
 | the date of each document, apart from the date its terms take effect | front matter | an amendment that reaches back, LG-Q62 | no term |
 | each instant as a date and a time with its zone, or a rule for the instant a bare date means | every file that writes a date | positions that compare across agreements, ES-Q10, and the first run's one inconsistency | no key |
 | a reference from one provision to another, and from a provision to a defined word | the body | Wording's cross references, which the first run found none of | no key |
-| the form and the edition an agreement is written on | front matter | incorporation by edition | read |
+| the form and the edition an agreement is written on | front matter | incorporation by edition | a key, not mapped |
 
 ### 2.2 Parties and their capacities, for Party
 
@@ -39,7 +39,7 @@ A rig is costly to write and cheap to run. A run can be repeated whenever a laye
 
 | A statement of | Carried in | Serves | Today |
 |---|---|---|---|
-| the unit of every amount, on the amount | wherever an amount is written | the first run, where no quantity states its unit | read on the programme only |
+| the unit of every amount, on the amount | wherever an amount is written | the first run, where no quantity states its unit | a key on the programme, not mapped |
 | the smallest unit an amount is settled in | the programme file | rounding, a discrete unit's floor | no key |
 | what a share is a share of, the limit, the loss or the order | front matter and the programme file | STD-340, signed shares | no key. The mini-rig writes `0.6 x layer_limit` as a string |
 | two agreements of one structure in different units, with the rate and the date the terms fix | front matter, with the provision's locator | a draw arrives in its account's unit (ADR-A131's addendum of 2026-11-09), an attachment in one unit above a limit in another | no key |
@@ -51,16 +51,16 @@ A rig is costly to write and cheap to run. A run can be repeated whenever a laye
 | the period of each agreement, with its first and last instant | front matter | the first run, where no instrument has a period | read on the programme only |
 | the sections of an agreement, each with what it covers | front matter, a list of sections, each with its heading's locator | an endpoint narrowed to a section (ADR-A130 decision 4), evaluation units | no key |
 | each defined word, with the provision that defines it and what it means | the body, with the defined words listed in front matter | Instrument's 22 refusals in the first run | no key |
-| the terms of another document taken as one's own, by edition or as changed from time to time, with any condition on taking a change | front matter, with the provision's locator | ES-Q7 | read as `follows_form_of`, with no condition |
+| the terms of another document taken as one's own, by edition or as changed from time to time, with any condition on taking a change | front matter, with the provision's locator | ES-Q7 | a key, `follows_form_of`, not mapped, and with no condition |
 | a change of terms: the document that states it, its date, the instant it takes effect, each term it changes, and who agreed it for whom | a document of its own or a part of one, with front matter for each change | the supersession, LG-Q59 to LG-Q62, representation | no key |
 | where one's own terms prevail over terms taken from another document | front matter, with the provision's locator | a follower that differs from what it follows | no key |
-| the law that governs | front matter | a rule outside the terms where they are silent (ADR-A130 decision 3) | read |
+| the law that governs | front matter | a rule outside the terms where they are silent (ADR-A130 decision 3) | a key, not mapped |
 
 ### 2.5 What each agreement does alone, for Behaviour
 
 | A statement of | Carried in | Serves | Today |
 |---|---|---|---|
-| what places a loss within an agreement, for each section | front matter, by section | the dates sketch's `cover-basis` | read as one `trigger` for the whole agreement |
+| what places a loss within an agreement, for each section | front matter, by section | the dates sketch's `cover-basis` | a key, `trigger`, for the whole agreement, not mapped |
 | what makes several losses one, for example a span of hours or one cause | front matter, with the provision's locator | which draws are one request | no key |
 | what counts against a limit and what is paid beside it, for example costs | front matter, by limit | purposes, BHL-Q3 | no key |
 | an amount the insured bears first, and whether paying it counts towards anything above | front matter, by section | a guard on a balance (BHL-Q3), an account owned by another party (BHL-Q5) | no key |
@@ -72,7 +72,7 @@ Each row is asked of every limit, sublimit and aggregate a document states.
 
 | A statement of | Carried in | Serves | Today |
 |---|---|---|---|
-| its amount and unit | front matter, by limit | `ldg:statedAmount`, the unit of account | read |
+| its amount and unit | front matter, by limit | `ldg:statedAmount`, the unit of account | the amount is read, and the unit is not |
 | whether it is part of another limit or in addition to it | front matter, by limit | the parent edge, ADR-A131 decision 3 | no key |
 | what it is counted for each of, for example each insured, each place or each loss | front matter, by limit | the key dimension | no key |
 | the period it runs for, whether it renews, and when its book closes | front matter, by limit | PDD-15, the dates sketch's `aggregate-period` | no key |
@@ -108,8 +108,8 @@ The kinds are those of ADR-A130 decision 3. Ensemble is not built, so every row 
 
 | A statement of | Carried in | Serves | Today |
 |---|---|---|---|
-| the structure as placed: each layer with its attachment, its limit and the agreements on it | the programme file | AIR-7.0 | read |
-| whether a layer's attachment is the sum of the limits beneath or an amount of its own, and any gap or overlap between them | the programme file | attachment as one fact or two | read as one flag |
+| the structure as placed: each layer with its attachment, its limit and the agreements on it | the programme file | AIR-7.0 | read in part. A layer's number and its position are keys the scheme does not map |
+| whether a layer's attachment is the sum of the limits beneath or an amount of its own, and any gap or overlap between them | the programme file | attachment as one fact or two | a key, one flag, not mapped |
 | agreements of one structure whose periods differ | front matter of each agreement | an account for each period against a structure that spans them | no key |
 | how far each line is bound: offered, written, signed, in force, and from when for each party | the programme file, with the instant of each state | PDD-11 | no key |
 | a market's answer to a request, with how far it commits, how exact it is and how complete, each at the scope the market states it | a document of its own kind, with front matter | PRI-35, STD-344 | no key |
@@ -119,7 +119,7 @@ The kinds are those of ADR-A130 decision 3. Ensemble is not built, so every row 
 | A statement of | Carried in | Serves | Today |
 |---|---|---|---|
 | the order in which events became known, apart from the instant each took effect | the events file | a recorded and an effective position (STD-330), every backdated case of §3 | no key. The file's order is the only order |
-| a loss in its parts, what was paid, what is reserved, by whom and when | the events file | exhaustion by payment against exhaustion by incurred loss | read as one amount |
+| a loss in its parts, what was paid, what is reserved, by whom and when | the events file | exhaustion by payment against exhaustion by incurred loss | a key for one amount, not mapped |
 | a payment by a party other than the insurer of the agreement it counts against | the events file | the readings of K2 | no key |
 | an amount recovered, a limit reinstated and an amount returned, each with its kind | the events file | credit kinds, `ldg:restoredBy` | no key |
 | the peril, the place and the section a loss falls under | the events file | the first run, where no loss event carries a peril | no key |

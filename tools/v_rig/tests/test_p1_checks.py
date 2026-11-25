@@ -136,6 +136,15 @@ def test_the_questions_on_dates_and_on_what_an_account_declares_are_asked(graph,
     assert {name.split("/", 1)[1] for name in asked} <= names
 
 
+def test_the_questions_on_what_a_merge_policy_states_are_asked(graph, competency):
+    """The mini-rig states no merge policy, so each of these questions is asked and has no answer there."""
+    asked = {"ledger/policy", "ledger/merge-rule", "ledger/rounding", "ledger/residual-rule", "ledger/rounding-treatment", "ledger/order-criterion", "ledger/order-check", "ledger/unit-order", "ledger/residual-allowed", "ledger/mixed-position"}
+    assert asked <= set(competency.competency)
+    assert all(competency.competency[name] == 0 for name in asked)
+    names = {str(graph.value(locator, VRIG.keyPath)) for kind, locator, _, _, _ in competency.findings if kind == VRIG.EmptyQuery}
+    assert {name.split("/", 1)[1] for name in asked} <= names
+
+
 def test_an_empty_query_finding_is_located_at_the_file_that_asked(graph, competency):
     kinds = {kind for kind, *_ in competency.findings}
     assert kinds == {VRIG.EmptyQuery}

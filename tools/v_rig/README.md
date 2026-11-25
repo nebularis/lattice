@@ -18,7 +18,7 @@ The first lines a run prints are the rig digest, the format version, the checkou
 | `blind.ttl` | the blind view, documents reduced to their id with the body nodes of each body and rendering |
 | `findings.ttl` | P4, every finding of the run as a `vrig:Finding` under the identifier rule, and the run |
 | `run.json` | the run record, with counts |
-| `deny-terms` | one escaped regular expression per id, title, value and body text of the rig |
+| `deny-terms` | one escaped regular expression per id, title, value and body text of the rig. For a rig outside the checkout, an entry the checkout's tracked text already holds is left out, so the list can gate a commit |
 | `p1/source.ttl` | the mapping source, the representation plus one derived edge per fact, `<carrier> key:<name> <value>` |
 | `p1/layers.ttl` | P1, the representation projected onto the layers by the tracked scheme and the extensions |
 | `p1/compiled.sparql` | the compiled queries of every scheme that ran, for a reviewer |

@@ -20,7 +20,7 @@ from . import p3 as p3_module
 from .cases import input_bindings
 from . import readcase
 from .lift import RunInfo, lift, mark_readings
-from .out import OutError, counts, repository_root, resolve_out, write_outputs
+from .out import OutError, counts, repository_root, resolve_out, tracked_text, write_outputs
 from .rig import RigError, read_rig
 
 VECTOR_SCHEMA_VERSION = p3_module.VECTOR_SCHEMA_VERSION
@@ -95,7 +95,9 @@ def main(argv: list[str] | None = None) -> int:
             (out / "p2" / "build.log").write_text(output, encoding="utf-8", newline="\n")
             if not built:
                 print(f"v_rig: the P2 build failed, see {out / 'p2' / 'build.log'}", file=sys.stderr)
-        written = write_outputs(rig, graph, out, record, projection=projection, checks=checks)
+        outside = root.resolve() not in rig.root.resolve().parents
+        written = write_outputs(rig, graph, out, record, projection=projection, checks=checks,
+                                tracked=tracked_text(root) if outside else None)
         for path in p2_module.write_theory(theory_text, out) + p3_module.write_vectors(found_vectors, out):
             written[str(path.relative_to(out))] = path
     except (RigError, OutError, readcase.ReadCaseError) as error:

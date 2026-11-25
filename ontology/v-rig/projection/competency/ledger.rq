@@ -28,3 +28,33 @@ SELECT ?account ?purpose WHERE { ?account a ldg:AccountDefinition ; ldg:countsPu
 
 # question restoring-kinds: Which account definitions state the kinds of credit that restore them?
 SELECT ?account ?kind WHERE { ?account a ldg:AccountDefinition ; ldg:restoredBy ?kind . }
+
+# question policy: Which account definitions name the merge policy that governs requests competing on them?
+SELECT ?account ?policy WHERE { ?account a ldg:AccountDefinition ; ldg:mergePolicy ?policy . }
+
+# question merge-rule: Which account definitions name a merge policy that states its rule, and which rule?
+SELECT ?account ?policy ?rule WHERE { ?account a ldg:AccountDefinition ; ldg:mergePolicy ?policy . ?policy ldg:mergeRule ?rule . }
+
+# question rounding: Which account definitions name a merge policy that states how a share is rounded?
+SELECT ?account ?policy ?method WHERE { ?account a ldg:AccountDefinition ; ldg:mergePolicy ?policy . ?policy ldg:roundingMethod ?method . }
+
+# question residual-rule: Which account definitions name a merge policy that states how a unit left after a division is placed?
+SELECT ?account ?policy ?allocation WHERE { ?account a ldg:AccountDefinition ; ldg:mergePolicy ?policy . ?policy ldg:residualAllocation ?allocation . }
+
+# question rounding-treatment: Which account definitions name a merge policy that states how a difference left by rounding to the nearest is settled, and where a unit over is taken from?
+SELECT ?account ?policy ?difference ?recovery WHERE { ?account a ldg:AccountDefinition ; ldg:mergePolicy ?policy . ?policy ldg:roundingDifference ?difference . OPTIONAL { ?policy ldg:excessRecovery ?recovery } }
+
+# question order-criterion: Which account definitions name a merge policy that states what a request's rank is derived from?
+SELECT ?account ?policy ?criterion WHERE { ?account a ldg:AccountDefinition ; ldg:mergePolicy ?policy . ?policy ldg:rankCriterion ?criterion . }
+
+# question order-check: Which account definitions name a merge policy that states whether ranks are checked to be distinct before any rule runs?
+SELECT ?account ?policy ?required WHERE { ?account a ldg:AccountDefinition ; ldg:mergePolicy ?policy . ?policy ldg:requiresDistinctRanks ?required . }
+
+# question unit-order: Which account definitions name a merge policy that states what orders requests of one rank where a single unit is placed?
+SELECT ?account ?policy ?criterion WHERE { ?account a ldg:AccountDefinition ; ldg:mergePolicy ?policy . ?policy ldg:unitOrderCriterion ?criterion . }
+
+# question residual-allowed: Which account definitions name a merge policy that states whether a part may stay unplaced, and the account that takes it?
+SELECT ?account ?policy ?allowed ?residual WHERE { ?account a ldg:AccountDefinition ; ldg:mergePolicy ?policy . ?policy ldg:allowsResiduals ?allowed . OPTIONAL { ?policy ldg:residualAccount ?residual } }
+
+# question mixed-position: Which account definitions name a merge policy that states whether requests at one position must agree on purpose?
+SELECT ?account ?policy ?required WHERE { ?account a ldg:AccountDefinition ; ldg:mergePolicy ?policy . ?policy ldg:requiresSamePurpose ?required . }

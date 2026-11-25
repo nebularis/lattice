@@ -300,3 +300,51 @@ def test_a_key_is_the_text_its_author_wrote():
     assert front["condition"] == {"on": "exhaustion", "no": 2, "3": "three", "to": "b"}
     assert front["agreed"] is True
     assert canon.fact_digest("condition", front["condition"]) == canon.fact_digest("condition", {"3": "three", "no": 2, "on": "exhaustion", "to": "b"})
+
+
+def test_a_schedule_and_a_section_of_one_number_are_two_elements(tmp_path):
+    """A document with a Section 1 and a Schedule 1 lifts to two elements, each of one kind with a locator of its own.
+    Before, both took the section label 1, so one element carried two kinds."""
+    copy = tmp_path / "rig"
+    shutil.copytree(MINI_RIG, copy)
+    document = copy / "documents" / "xs2-001.md"
+    document.write_text(document.read_text(encoding="utf-8") + "\n## Schedule 1 Premises\n\nAn invented schedule.\n", encoding="utf-8", newline="\n")
+    lifted = lift(read_rig(copy), RUN)
+    numbered = [n for n in lifted.subjects(RDF.type, VRIG.BodyNode)
+                if str(lifted.value(lifted.value(n, VRIG.locator), VRIG.documentId)) == "xs2-001" and str(lifted.value(n, VRIG.number)) == "1"
+                and str(lifted.value(n, VRIG.kind)) in ("section", "schedule")]
+    assert sorted(str(lifted.value(n, VRIG.kind)) for n in numbered) == ["schedule", "section"]
+    assert all(len(list(lifted.objects(n, VRIG.kind))) == 1 for n in lifted.subjects(RDF.type, VRIG.BodyNode))
+    assert len({lifted.value(n, VRIG.locator) for n in numbered}) == 2
+
+
+def test_canonical_turtle_is_the_same_under_every_hash_seed():
+    """Predicates of namespaces the tool binds no prefix for are given one in the order of the namespaces, so the bytes
+    do not follow the order a set happens to iterate in. Run in child processes, since the seed is fixed at start."""
+    import os
+    import subprocess
+
+    script = (
+        "from rdflib import Graph, URIRef, Literal\n"
+        "from v_rig.lift import canonical_turtle\n"
+        "g = Graph()\n"
+        "for n in ('zeta', 'alpha', 'mid', 'beta', 'omega'):\n"
+        "    g.add((URIRef('https://example.org/s'), URIRef(f'https://example.org/{n}#p'), Literal(n)))\n"
+        "    g.add((URIRef(f'https://example.org/{n}#s'), URIRef(f'https://example.org/{n}#q'), URIRef(f'https://example.org/{n}#o')))\n"
+        "print(canonical_turtle(g))\n"
+    )
+    outputs = {subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, encoding="utf-8", check=True,
+                              env={**os.environ, "PYTHONHASHSEED": seed}).stdout for seed in ("0", "1", "7", "42", "123")}
+    assert len(outputs) == 1
+    assert "ns5:" in outputs.pop()
+
+
+def test_deny_list_leaves_out_what_the_checkout_already_holds(graph):
+    """Given the checkout's tracked text, an entry that text holds is left out, whatever the entry's case, and an entry it
+    does not hold stays. With no tracked text every entry stays, as for a rig inside the checkout."""
+    every = deny_terms(graph)
+    assert "Invented\\ Holdings\\ Limited" in every and "prim\\-001" in every
+    strict = deny_terms(graph, tracked="a line, in lower case as tracked_text gives it, that says invented holdings limited")
+    assert "Invented\\ Holdings\\ Limited" not in strict and "prim\\-001" in strict
+    assert len(strict) < len(every)
+

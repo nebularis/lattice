@@ -14,6 +14,7 @@ from decimal import Decimal
 from typing import Iterable
 
 from rdflib import RDF, XSD, Graph, Literal, Namespace, URIRef
+from rdflib.namespace import split_uri
 
 from . import canon
 from .markdown import Node, parse, references
@@ -67,6 +68,7 @@ class Lifter:
             self.graph.bind(prefix, namespace)
         self.run_node = URIRef(canon.run_iri(rig.digest))
         self.documents: dict[str, URIRef] = {}
+        self._sections: dict[tuple[str, str], set[str]] = {}
         self.programmes: dict[str, URIRef] = {}
         self.forms: dict[str, list[URIRef]] = {}
         self.body_index: dict[tuple[str, str, str, str], URIRef] = {}  # (doc, view, kind, number) -> node
@@ -179,6 +181,17 @@ class Lifter:
         count = self._children(document.id, root, nodes, view, view_node, section=None, clause=None, row_prefix="")
         log.info("lifted %d body node(s) of %s in view %s", count, document.id, view)
 
+    def _own_section(self, document_id: str, view: str, kind: str, label: str) -> str:
+        """A section label no earlier element of the view carries. A schedule and a section may share a number, and a
+        locator names one element, so the later of two takes its kind before the label, and a number after that."""
+        used = self._sections.setdefault((document_id, view), set())
+        own, n = label, 1
+        while own in used:
+            n += 1
+            own = f"{kind} {label}" if n == 2 else f"{kind} {label} ({n - 1})"
+        used.add(own)
+        return own
+
     def _children(self, document_id: str, parent: URIRef, nodes: list[Node], view: str, view_node, *,
                   section, clause, row_prefix: str) -> int:
         count = 0
@@ -188,6 +201,8 @@ class Lifter:
                 label = node.number if node.number is not None else (node.title or node.kind)
                 if node.kind in ("section", "title") or section is None:
                     sec, cl = label if node.kind != "title" else None, None
+                    if sec is not None:
+                        sec = self._own_section(document_id, view, node.kind, str(sec))
                     row = f"{row_prefix}{ordinal}" if node.kind == "title" else None
                 else:
                     cl = f"{node.kind} {label}"
@@ -469,6 +484,17 @@ def canonical_turtle(graph: Graph) -> str:
     ordered = Graph()
     for prefix, namespace in PREFIXES.items():
         ordered.bind(prefix, namespace)
+    known = {str(namespace) for namespace in PREFIXES.values()} | {str(namespace) for _, namespace in ordered.namespaces()}
+    extra = set()
+    for predicate in set(graph.predicates()):
+        try:
+            namespace = split_uri(predicate)[0]
+        except ValueError:
+            continue
+        if namespace not in known:
+            extra.add(namespace)
+    for number, namespace in enumerate(sorted(extra), 1):
+        ordered.bind(f"ns{number}", namespace)
     for triple in sorted(graph, key=lambda t: (str(t[0]), str(t[1]), str(t[2]), getattr(t[2], "datatype", None) or "")):
         ordered.add(triple)
     return ordered.serialize(format="turtle")

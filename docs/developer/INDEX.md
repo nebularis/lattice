@@ -84,7 +84,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | temporal-binding-consumer-hardening | unit |  | built 2026-09-25 |  | [plan](plans/temporal-binding-consumer-hardening.md), [status](status/temporal-binding-consumer-hardening.md) |
 | toolchain-jdk25-python314 | unit |  | merged 2026-09-23 |  | [plan](plans/toolchain-jdk25-python314.md), [status](status/toolchain-jdk25-python314.md) |
 | v-rig-studio | multi-slice unit | VS | planned | VS-1 | [plan](plans/v-rig-studio.md), [status](status/v-rig-studio.md) |
-| v-rig | unit | VR | building 2026-11-25 | VR-8 | [plan](plans/v-rig.md), [status](status/v-rig.md), 7 Validation Packs |
+| v-rig | unit | VR | built 2026-11-25 | VR-8 | [plan](plans/v-rig.md), [status](status/v-rig.md), 8 Validation Packs |
 | validation-pause-handover | unit |  | dropped 2026-09-20 |  | [status](status/validation-pause-handover.md) |
 | validation-status | unit |  | merged 2026-09-20 |  | [status](status/validation-status.md) |
 | vocabulary-temporal-binding | unit |  | built 2026-09-25 | VTB-1 | [status](status/vocabulary-temporal-binding.md) |
@@ -604,7 +604,8 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | VR-5 | P2 and P3, the generated theory and the test vectors | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
 | VR-6 | P4, findings as RDF with stable ids and the report rendered from them | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
 | VR-7 | the seam for a read case | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
-| VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | v-rig | building 2026-11-25 |  | docs/developer/status/v-rig.md#board |
+| VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | v-rig | built 2026-11-25 |  | docs/developer/status/v-rig.md#board |
+| VR-9 | projection P2 on the ledger's kernel, in place of the early ledger theory it copies | v-rig | briefed 2026-11-25 | LG-35 | docs/developer/status/v-rig.md#board |
 | VTB-1 | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |

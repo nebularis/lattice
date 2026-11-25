@@ -5,7 +5,7 @@
 **Unit ID:** `v-rig`
 **Plan:** [v-rig.md](../plans/v-rig.md)
 **ADR:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), accepted 2026-11-16
-**Status:** building 2026-11-25. VR-1 to VR-7 built, ADR-A153 accepted and the module's four release tags created. The unit awaits the maintainer's review and a first run on a rig, which follows the ledger's LG-9.
+**Status:** built 2026-11-25. VR-1 to VR-7 built, ADR-A153 accepted and the module's four release tags created. VR-8 is building and VR-9 is briefed. A first run on a rig outside the repository was made on 2026-11-25. The unit awaits the maintainer's review of VR-1 to VR-7.
 
 ## Board
 
@@ -18,10 +18,14 @@
 | VR-5 | P2 and P3, the generated theory and the test vectors | merged 2026-11-08, built 2026-11-08 |  |
 | VR-6 | P4, findings as RDF with stable ids and the report rendered from them | merged 2026-11-08, built 2026-11-08 |  |
 | VR-7 | the seam for a read case | merged 2026-11-08, built 2026-11-08 |  |
-| VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | building 2026-11-25, briefed 2026-11-16 |  |
+| VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | built 2026-11-25, building 2026-11-25, briefed 2026-11-16 |  |
+| VR-9 | projection P2 on the ledger's kernel, in place of the early ledger theory it copies | briefed 2026-11-25 | LG-35 |
 
 ## History
 
+- 2026-11-25: VR-8 built. Eighteen questions in all, ten of them on what a merge policy states, and three faults of the tool the first run found, fixed with a test each: a key read as a boolean, a locator shared by a schedule and a section, and prefixes numbered in the order a set gave. The deny list a run on a rig outside the checkout writes now leaves out what the checkout's tracked text holds, which closes TD-182. The suite passes with 79. The [Validation Pack](../validation/VR-8.md) records the checks and one probe.
+- 2026-11-25: the ledger unit's session took VR-8 over, at the maintainer's word, from the session that marked it building that morning, which the maintainer has closed. It adds the ten questions on what a merge policy states, which the brief held back until the ledger's LG-24 was built. VR-9 has its row and its brief in the plan, with VR-Q12 to VR-Q14 answered.
+- 2026-11-25: a second reading of the first run confirmed its counts and found two faults of the tool. Two body elements share one locator where a schedule and a section carry the same number, and the layer graph's prefixes differ between two runs of one rig, though the graphs are the same. It also showed that the list of what a rig states had marked rows as read whose keys the tracked scheme does not map, which was corrected the same day. The tracked scheme maps eleven keys.
 - 2026-11-25: a [protocol](../notes/rig-run-protocol.md) proposed, at the maintainer's request, for what passes between a rig's owner and this repository: what the owner takes, the six things that come back and the form of each, what never crosses, and the check on a commit here. VR-Q19 is open in it. The first run on a rig outside the repository gave its counts to the maintainer the same day. TD-182 records that the deny list a run writes is too broad to gate a commit, and CAP-109 is the tool's entry in the index.
 - 2026-11-25: a fault in the lifter found by the first attempt on a rig outside the repository, and fixed by the ledger unit's session at the maintainer's request. YAML 1.1 reads a key written `on`, `yes` or `no` as a boolean, and the canonical form then failed to sort a mapping whose keys were of two kinds. A key is now read as the text its author wrote, in `rig.py`, with one test, and the suite passes with 75. The first attempt also found that a manifest must state `format_version`, which the tool says in its refusal. With both settled the tool ran on that rig to the end.
 - 2026-11-25: a [sketch](../sketches/v-rig-what-a-rig-states.md) added at the maintainer's request, outside any slice, by the ledger unit's session. It lists the kinds of statement a rig must hold, layer by layer, the cases that tell the open ledger and ensemble options apart, and twelve places where a decision in one of the two layers fixes the other, seven of them raised nowhere yet. VR-Q15 to VR-Q18 are open in it. It is meant to be complete before a rig is next written, since a rig is costly to write and cheap to run.
