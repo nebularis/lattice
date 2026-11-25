@@ -435,6 +435,30 @@ Left out, each with where it lives: cost estimates at size (BL-10), generated te
 
 **SVA-Q16. Does `POST …/transforms` go?** (a) Deprecated when runs are built, removed a release later. (b) Kept beside runs. Leaning (a). **Answered 2026-11-12, (a) for the studio. A waiting transform route returns once a sidecar architecture is defined, which the `xslt-sidecar` unit plans.**
 
+**The surface canvas, asked 2026-11-25 before SVA-S1.** Section 9 was written when a projection was a carrier, its role bindings and the mapping it lowers to. A projection now states one of five things on its result-target binding, an expression (`srf:derivedAs`), a constructed node (`srf:constructedAs`), a join (`srf:joinedAs`), an expansion (`srf:expandedAs`) or a node for each member, and the surface compile job lowers and compiles each into a MORK scheme. Today the surface part is edited in the generic form beside the drawing, with a hop-by-hop control for a promotion's read path, and nothing draws a contract.
+
+**SVA-Q57. What does SVA-S1 build?** (a) The canvas draws every kind of contract, promotion, index and each projection kind, and edits by clicking what has a path or a property, a promotion's read path, an index's paths, a role binding's property and an expansion's members path. Each projection kind's own statement is drawn and still edited in the form, and editors of their own follow as slices. (b) As (a), with an editor on the canvas for every projection statement in SVA-S1. (c) Promotions and indexes only, as section 9 had them, with projections in a later slice. (a) keeps SVA-S1 within its size and gives SVA-S3 every contract drawn. (b) is several slices' work in one. (c) leaves the contracts the compile job now runs undrawn. Leaning (a), with two slices planned after SVA-S1, one for an expression editor and one for the construction, join and expansion editors.
+
+**SVA-Q58. What is the canvas drawn from?** (a) The configuration as authored, so an edit shows at once, with what a contract instantiates read from the latest finished surface compilation and marked stale when the part or the baseline has changed since, as the persistence canvas marks it. (b) The compiled artefacts only, as the persistence canvas draws the compiled profile. (c) The configuration only. (b) cannot show an edit until a compilation finishes, which a canvas that edits cannot live with. (c) restates the lowering in the browser. Leaning (a). The browser draws what the author stated and never computes what it lowers to.
+
+**SVA-Q59. How is each kind drawn?** One grammar for every kind, left to right: the carrier class, then what is read from it, then what is written. A promotion draws each hop of its read path to the promoted property. An index draws its paths. A projection draws each evidence binding as an edge from the carrier to its property, required solid and candidate dashed, and its result-target binding as the edge it writes. On that edge sits what the kind states:
+
+| Kind | Drawn on the result edge |
+|---|---|
+| derivation | the expression as one line of infix text with its datatype, for example `round(commitment × margin, 2) : decimal` |
+| graph construction | a box for the constructed node with its class, its identity (for each instance or by a key, the key's bindings named) and each property it writes, joined to the binding it is written from |
+| join | a box for the second carrier, with an edge for each pair of the key, its comparison and datatype, and the link it writes with its two cardinality rules |
+| expansion | the members path, drawn as its steps with a closure marked on its hop, to the member class |
+| a node for each member | as an expansion, with the node's class, its stable name and what it writes from the member |
+
+(a) This grammar, with an expression as text. (b) As (a), with an expression drawn as a tree of nodes. (c) Each kind drawn in a layout of its own. (a) keeps one reading order across kinds and keeps an expression small. (b) shows an expression's structure, which an editor needs and a reader rarely does. Leaning (a), with the expression editor's slice showing the tree.
+
+**SVA-Q60. How is a path built by clicking?** (a) In path mode, the canvas shows the class at the end of the path with its properties, from the class graph the ontology view draws, outgoing for a forward hop and incoming for an inverse hop. A click on a property adds the hop, and a datatype property ends the path. An expansion's hop takes a closure, one-or-more or zero-or-more, from a toggle on the hop. Undo removes the last hop. (b) The whole class graph is shown, and a path is clicked out across it. (a) shows only what a next hop can be, so a large ontology stays readable. Leaning (a). It writes what the hop-by-hop control writes, `srf:readProperty` for one forward hop and `srf:hasPathStep` otherwise, and the SHACL path for a members path.
+
+**SVA-Q61. Where are a contract's findings shown?** (a) On the element they concern, from the findings the form already shows, a shape's focus node and path placing each on a binding, an edge or a box, and a finding whose focus is the contract on the contract. (b) In a list beside the canvas only. Leaning (a). A finding the canvas cannot place stays in the form's list.
+
+**SVA-Q62. What does a projection show of what it instantiates?** (a) A box at the right for the MORK scheme it lowers to, read from the compile job's `projections` group, with the number of its mappings and its review findings, that opens the scheme in the mapping canvas, read only. The mapping canvas draws a scheme of the mapping part, so SVA-S1 lets it draw one held by a compile job. (b) The lowered scheme drawn again on the surface canvas. (c) Nothing until SVA-S3. Leaning (a). The mapping canvas already draws a scheme, and the review findings are what an author must act on.
+
 ## 13. Slices
 
 The [plan](../plans/studio-visual-authoring.md) lists them. Phase R, the run protocol, comes first since three panes rest on it. Phases B and O need no backend change beyond one route and can proceed beside it.
