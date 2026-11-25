@@ -3,7 +3,7 @@
 # Sketch: a projection backend, from a Surface projection contract to queries a step runs
 
 **Unit:** `studio-visual-authoring` (SVA), slice SVA-S2d, raised on 2026-11-23 when the maintainer chose that projections are built in this unit, design first
-**Status:** sketch. SVA-Q24 to SVA-Q49 answered by the maintainer between 2026-11-23 and 2026-11-25. Derivations, graph constructions, joins and expansions are built
+**Status:** sketch. SVA-Q24 to SVA-Q49 answered by the maintainer between 2026-11-23 and 2026-11-25. Derivations, graph constructions, joins and expansions are built. SVA-Q50 to SVA-Q56 raised on 2026-11-25 for the node constructed for each member (SVA-S2j), which waits for the maintainer
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md), slices SVA-S2d and SVA-S2c
 **Builds on:** ADR-A16, ADR-A17, ADR-A18, ADR-A19, ADR-A20, ADR-A23 and ADR-A41 (all Accepted), ADR-A154 with its addendum of 2026-11-20, and `tools/mork_rdf`
 
@@ -301,6 +301,54 @@ What the first example gives, over four bundles, is a statement for each of the 
 
 **Choices the answers did not settle.** An expansion on candidate evidence is not guarded, so a node that lacks the property reaches no member and is reported by `CollectionEmpty` as an empty collection does, where a join on candidate evidence says nothing for a node that lacks the values. The answers say only that a missing property is reported as an excluded instance is, which a required binding gives, and an empty collection as information. The compiler raises the review for every assertion that carries a path directly beneath a source-node datum, whatever the path, since it sees no contract, so a hand-written scheme of that shape takes it as well. A members path that is one property reaches the same statements as a plain assertion, and the contract states it as an expansion all the same. A closure over a cycle makes a node its own ancestor, which SPARQL's path semantics allow and nothing reports. A path that reads the result property of its own binding is not refused.
 
+### 2.5 A node for each member, the case and where it stops (SVA-S2j, 2026-11-25)
+
+SVA-Q44 answered that an expansion writes a statement on the instance and mints nothing, and that "a node for each member, expansion combined with graph construction, is planned as a slice of its own". In its simplest generic form each instance holds a collection, and each member of it becomes a node of another class, linked from the instance, carrying what the member and the instance give. For example, each `ex:Bundle` holds a list of `ex:items`, and each member of the list becomes one `ex:Line`, linked from the bundle by `ex:hasLine`, writing the member as `ex:ofItem` and the bundle's `ex:bundleCode` as `ex:bundleCode`. No value spelled into an identifier is involved where the member is an existing node and the bundle code is a code and not a personal value.
+
+What the contract states today, and what the case needs:
+
+| What the case needs | What the contract has |
+|---|---|
+| the members of the collection | an expansion statement, stated on the result-target binding with `srf:expandedAs` (`srf:P18` to `srf:P20`) |
+| a node for each of them, with a class, an identity and written values | a constructed node, stated on the result-target binding with `srf:constructedAs` (`srf:P10` to `srf:P13`) |
+| the two on one binding | nothing. `srf:P10` says only a graph construction states a construction, `srf:P18` says only an expansion states an expansion, and a contract has one projection kind |
+| the identity of a node made from a member | `srf:PerInstance` and `srf:ByKey`, whose key names required-evidence bindings (`srf:P13`). An evidence binding reads a property of the instance, so no key part can read the member |
+| a value written from the member | `srf:fromBinding`, which names an evidence binding of the instance (`srf:P12`). Nothing writes the member, or a property of it |
+| the member that is already an IRI | SVA-Q44 (a) says a member is a node or a literal and nothing is minted. A node minted for each member is what (b) says, and it names no case where the member is the node |
+
+What `mork_rdf` compiles today fits most of the output. A source-node root over the bundle, a contextual datum beneath it that mints and types the line and is glued to the bundle by an inverse R-Box match, a guard on the instance's required evidence and an assertion beneath the datum for each written value are the cases of sections 2.2 and 2.4. What no case does is take the member as a variable the datum's identity and its assertions share. A reference reads one value for each solution, and the query that writes the node must bind the same member in the identity, the link and the value, which is one reference with a name the others read, and that is a new term in MORK.
+
+**The example, a sketch and not built.** Placeholder names, and the new terms (`srf:keyMember`, `srf:fromMember`, `srf:constructedFrom`) are placeholders too:
+
+```turtle
+ex:bl-code a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:bundleCode .
+ex:bl-items a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:items .
+ex:bl-link a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ; srf:bindsProperty ex:hasLine ;
+    srf:expandedAs ex:bl-expansion ; srf:constructedAs ex:bl-node .
+ex:bl-expansion a srf:ExpansionStatement ; srf:expandsFrom ex:bl-items ; srf:expansionSource srf:ListMembers .
+ex:bl-node a srf:ConstructedNode ; srf:constructedClass ex:Line ;
+    srf:nodeIdentity srf:ByKey ; srf:keyBinding ex:bl-code ; srf:keyMember true ;
+    srf:writes [ srf:writesProperty ex:ofItem ; srf:fromMember true ] ,
+               [ srf:writesProperty ex:bundleCode ; srf:fromBinding ex:bl-code ] .
+```
+
+The scheme would be the construction's, a source-node root, a contextual datum with the guard, an identity template and an assertion for each value, with the member bound once by the path. The query that writes the node and the link, with the prefixed names standing for the full IRIs `mork_rdf` writes:
+
+```sparql
+BASE <https://example.org/lattice/surface/bundle-line/out/>
+CONSTRUCT { ?t3 rdf:type ex:Line . ?f1 ex:hasLine ?t3 . }
+WHERE {
+  ?f1 rdf:type ex:Bundle .
+  FILTER (EXISTS { ?f1 ex:bundleCode ?any2 . })
+  FILTER (EXISTS { ?f1 ex:items ?any3 . })
+  ?f1 ex:bundleCode ?v4 .
+  ?f1 ex:items/(rdf:rest*)/rdf:first ?m5 .
+  BIND (IRI(CONCAT("bundle-line/Line/", ENCODE_FOR_URI(STR(?v4)), "/", ENCODE_FOR_URI(STR(?m5)))) AS ?t3)
+}
+```
+
+**Where it stops.** The case needs choices about what "for each" means, what an identity may read, how two statements share a binding, what the node writes from a member and what happens to a member that is an IRI. The answers above settle none of them, and SVA-Q50 to SVA-Q56 in section 3 ask each. The slice builds nothing until they are answered. Nothing here depends on the two choices of SVA-S2i still open (an expansion on candidate evidence for an instance that lacks the property, and a check for a node that reaches itself through a closure), and no option below changes how an expansion behaves.
+
 ## 3. Questions
 
 **SVA-Q24. Where is a derivation's operation stated?** (a) In the contract, an expression on the result-target binding over the evidence bindings. (b) In MORK alone, added by hand to the lowered mapping. (c) As an approved template the backend policy names, a reviewed query fragment with its parameters bound by the roles. (b) breaks ADR-A18's deterministic lowering and leaves the contract without its meaning. (c) uses `srf:approvedTemplate`, which exists, but holds query text where the contract states meaning. Leaning (a). **Answered 2026-11-23, (a).**
@@ -355,6 +403,20 @@ What the first example gives, over four bundles, is a statement for each of the 
 
 **SVA-Q49. How does an expansion state its members, and does a subgraph obtained by SHACL evaluation become a source?** The maintainer asked for list members and a transitive closure, each selectable, and raised a subgraph obtained by SHACL evaluation. That is two things. (d1) The members are the nodes a SHACL property path reaches from the instance. A list's members are `src:items/rdf:rest*/rdf:first` and a closure is `ex:broader+`, so one path covers both and more, in SHACL's own path vocabulary, which compiles to a SPARQL property path with no new engine. (d2) The members are the nodes that conform to a SHACL node shape, which needs a SHACL engine at run time, since a shape may recurse or use SHACL-SPARQL and does not reduce to one query in general. (a) Adopt (d1) as how an expansion states its members, with two named conveniences, a list's members and a property's transitive closure, which the lowering writes as their paths, and put (d2) in the backlog. (b) The closed choice of a list or a closure alone, and both of (d) in the backlog. (c) (d1) and (d2) both now. Leaning (a): the path is the selection, so no separate switch is needed, and (d2) carries cost and determinism questions of its own. **Answered 2026-11-25, (a), with (d2) dropped and not kept in the backlog.** An expansion selects a subgraph from an instance already identified, by a path, and (d2) would select several instances by conformance, which is not what an expansion is.
 
+**SVA-Q50. How do an expansion and a construction share one result-target binding?** (a) One statement names both, a constructed node that states `srf:constructedFrom` an expansion statement, so the node is made for each member of that expansion. (b) Both are stated on the binding, `srf:expandedAs` and `srf:constructedAs`, and the construction is read for each member the expansion reaches. (c) A projection kind of its own, with its own statement. (b) keeps each term's meaning and relaxes `srf:P10` and `srf:P18` to say that a construction and an expansion are stated together only on one binding, and a contract with one projection kind says which kind it is, which the sketch's name for the slice, expansion combined with graph construction, leaves open. (a) states the pairing in one place and adds a term. (c) breaks SVA-Q28 (c), which counts four kinds. Leaning (b) with the contract an expansion projection, so the one new law is that a construction on an expansion's binding is stated with an expansion statement on the same binding. It is the maintainer's to decide, since it changes two published laws.
+
+**SVA-Q51. What does "for each instance" mean for a node made from a member?** (a) One node for each instance and member, so a member that two instances hold gives two nodes, and `srf:PerInstance` reads as the pair. (b) One node for each member wherever it occurs, so two instances holding one member share one node, which is a merge and is what `srf:ByKey` already states for a key. (c) The contract states it, as SVA-Q32 requires, with `srf:PerInstance` meaning (a) and `srf:ByKey` meaning (b) or (a) according to the key. Leaning (c), since SVA-Q32 refused an implicit identity, and the pair is the one reading of a node for each instance that loses no member. A node for each instance of a list that repeats a member gives one node, since the query writes a set, so a node is a node for each distinct member and not each position. The contract cannot state a node for each position without a numbering that SPARQL's list path does not give.
+
+**SVA-Q52. What may a key read?** (a) The instance's required-evidence bindings alone, as `srf:P13` states, so no key part reads a member, and a node for each member is `srf:PerInstance` only. (b) The instance's bindings and the member, the member a part of the key stated by a flag on the node, so a key is the bundle's code and the member, or the member alone. (c) The member alone. (b) is the one reading that gives a node for each member wherever it occurs and a node for each instance and member from one pair of terms. (a) cannot merge. (c) loses the instance and gives a node that a second bundle would also write, which is a different meaning from a node for each instance. Leaning (b), with the law that a key states at least one part and that the member is at most one part, and the key spelled into the identifier as before. A key that reads a member of unstable identity is a hazard, see SVA-Q55.
+
+**SVA-Q53. What does a node write from its member?** (a) The member itself, as the value of a property, a flag `srf:fromMember` on a written value, beside `srf:fromBinding`. (b) A property of the member, read by a path from it, which is evidence from a second carrier and is a join or a lookup of the member and not an expansion. (c) Both. (b) needs the second carrier's properties stated as evidence, as a join states them, and writes what a promotion over the link could read, so it risks the stale copy SVA-Q37 refused. Leaning (a), with the instance's values written as today, and a value of the member's own properties reached by a read path over the link or by a later case. Whether the member is a node or a literal changes what the property's range is, which `srf:P1` must read when a vocabulary declares one.
+
+**SVA-Q54. Is a member that is an IRI the node, or a reason to mint one?** (a) A node is always minted, from the identity SVA-Q51 and SVA-Q52 state, and the member is written as a value, so the IRI is spelled into the minted identifier. (b) A third identity, `srf:MemberNode`, makes the member itself the node, so the construction types the member and writes on it and mints nothing, which is how a source-node identity writes on the instance. It applies only where the members are IRIs, and a literal or blank-node member is a run-time check's report. (c) Both, the contract stating which. (b) enriches a node the source already names, so two instances holding one member write on one node, which is a merge by another route and a write onto the world's own node. (a) is the reading SVA-Q44 gives for a minted node and adds an identifier that is a function of another identifier. Leaning (a), (b) left until a contract needs it, since (b) widens what an expansion may write onto and has its own questions. Under (a) a member that is a literal spelled into an identifier is the personal-value hazard of SVA-Q32, which Surface cannot check.
+
+**SVA-Q55. What happens to a member that has no stable text?** A list's member may be a blank node, and a blank node has no identifier a key can spell, so a node whose identity reads one gives a different identifier on each run. (a) A check, `MemberUnnamed`, names each instance with a blank-node member, the instance writes nothing for that member, and the rest of its members are written. (b) The instance writes nothing at all, as an instance that lacks a required value does (SVA-Q33). (c) The identity reads a position and not the member, which needs a numbering SPARQL's path does not give. Leaning (a), the member being the unit of the expansion, and the report a warning since a source of blank members would otherwise write nothing and say nothing. It is part of the question whether a member that is a literal is spelled as its lexical form with its datatype, as a key part does elsewhere.
+
+**SVA-Q56. Which decisions change?** Leaning, as for SVA-Q34, SVA-Q41 and SVA-Q48: an addendum to ADR-A18 (a construction that states an expansion lowers into a scheme whose contextual datum is guarded and reads the member), an addendum to ADR-A23 (`mork_rdf` compiles it, with the one term that names the member, the reports the answers above choose, and the `MappingReview` and `EngineeringReview` findings both of its parts already carry), new laws in the Surface register after P20, and minor versions of the Surface and MORK modules for their new terms, each released by `mise run version:bump` at the merge. ADR-A41 needs no addendum. The amendments to ADR-A18 and ADR-A23 are the maintainer's to decide.
+
 ## 4. Slices
 
 Every projection kind is built in this unit (SVA-Q28 (c)). A slice for graph construction, join or expansion starts by adding its case to this sketch, with the contract it lowers, the scheme and the query, and pauses for the maintainer where the case raises a question the answers above do not settle.
@@ -366,6 +428,7 @@ Every projection kind is built in this unit (SVA-Q28 (c)). A slice for graph con
 | SVA-S2g | graph construction projections, from contract to compiled scheme, with an example | an example's projection compiles and runs to its expected graph |
 | SVA-S2h | join projections, with the mapping review ADR-A41 asks for recorded as a finding, and an example | an example's join compiles and runs to its expected rows |
 | SVA-S2i | expansion projections, with the engineering review recorded as a finding, and an example | an example's expansion compiles and runs to its expected rows |
+| SVA-S2j | a node constructed for each member of an expansion, with an example. Paused at section 2.5 for SVA-Q50 to SVA-Q56 | an example's expansion constructs a node for each member and runs to its expected graph |
 | SVA-S2c | the surface compile job lowers and compiles projections, the facility sample gains them, and a step's projection part runs as a second run of the Python worker (SVA-Q29) | a step over the sample shows each projection's rows, equal to its compiled scheme run over the world after |
 
 ## 5. Placement
