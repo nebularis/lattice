@@ -16,7 +16,7 @@ import pyoxigraph as ox
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, XSD
 
-from . import paths
+from . import paths, skolem
 from .guards import GuardError, compile_guard, required_paths
 from .model import (MORK, REFERENCE_GRAPH, SKOS, CompiledMapping, CompiledQuery, CompileError, Finding, Severity, local)
 from .read import Kind, Reading, Spec, Yielded, _named, effective_confidence, iter_roots, read, resolve
@@ -41,6 +41,20 @@ def _string(text: str) -> str:
     return Literal(text).n3()
 
 
+def _blank(member: str) -> str:
+    """Whether a member is a blank node. The run names a source's blank nodes by the skolem rule (README §12.2), so a blank
+    node reaches a query as a skolem IRI there and as itself on an engine that was given the source as it is."""
+    return f"(isBlank({member}) || STRSTARTS(STR({member}), {_string(skolem.PREFIX)}))"
+
+
+def _spelled(term: str) -> str:
+    """A member, or the value that names it, as the text an identifier spells (README §7.12). A node is its IRI. A literal is its
+    lexical form, and a literal of another datatype than a string adds the datatype after two carets, so `1` the integer and `1`
+    the string are two names."""
+    return (f"IF(isLiteral({term}) && DATATYPE({term}) != {_term(XSD.string)}, "
+            f"CONCAT(STR({term}), \"^^\", STR(DATATYPE({term}))), STR({term}))")
+
+
 @dataclass
 class _Frame:
     """One step of a query's context: the mapping, its focus variable, its target term and what binds them."""
@@ -53,6 +67,9 @@ class _Frame:
     identity_refs: list = field(default_factory=list)  # the paths the identity reads, for the IdentityUnbound check
     restrict: list = field(default_factory=list)  # what limits the frame's solutions after it matches, so a check can leave it out
     join: Optional[tuple] = None      # a join's (patterns reading the parent's values, the variables they bind), kept for its checks
+    member: Optional[str] = None      # the variable a datum made for each member binds it to, once, for its identity, link and values (§7.12)
+    member_text: Optional[str] = None  # what spells the member in an identifier, the member or the value of its name property
+    merges: bool = False              # the identity reads the member, so instances that share a member share the node
 
 
 class _Compiler:
@@ -61,6 +78,7 @@ class _Compiler:
         self.queries: list[CompiledQuery] = []
         self.findings: list[Finding] = []
         self._var = 0
+        self._member: Optional[_Frame] = None  # the frame whose identity is being formed, for a MemberExpression to read (§7.12)
         # A relative IRI an identity forms resolves against the base (SPARQL 1.1 §17.4.2.8).
         self.prologue = f"BASE {paths.iri(base)}\n"
 
@@ -155,6 +173,11 @@ class _Compiler:
         if (node, RDF.type, MORK.LiteralExpression) in g:
             value = next(iter(g.objects(node, MORK.dataInline)), Literal(""))
             return _string(str(value))
+        if (node, RDF.type, MORK.MemberExpression) in g:
+            if self._member is None:
+                raise _Refusal("MemberOutside", f"{node.n3()} is a member expression, which only the identity of a datum that states mork:memberRef reads")
+            self._member.merges = True
+            return f"ENCODE_FOR_URI({self._member.member_text})" if in_iri else self._member.member_text
         if (node, RDF.type, MORK.RefExpression) in g:
             text = next(iter(g.objects(node, MORK.dataRef)), None)
             if text is None:
@@ -212,6 +235,10 @@ class _Compiler:
         if spec.identity_rule == MORK.SourceNodeIdentity:
             frame.target = frame.focus  # the node itself, so nothing is minted, bound or typed
             return
+        if spec.identity_rule == MORK.MemberIdentity and frame.member is not None:
+            frame.target = frame.member  # the member itself, so nothing is minted
+            frame.merges = True
+            return
         if spec.individual_iri is not None:
             frame.target = _term(spec.individual_iri)
             return
@@ -223,7 +250,16 @@ class _Compiler:
             # A reference or lookup that is the whole identity is taken as it is, and one inside a concatenation or an
             # interpolation is encoded for an IRI, as RML treats a column and a template (README §6).
             whole = any((spec.identity, RDF.type, k) in self.g for k in (MORK.RefExpression, MORK.LookupExpression))
-            expression = self.expression(spec.identity, frame.focus, frame.identity, frame.identity_refs, not whole)
+            self._member = frame if frame.member is not None else None
+            try:
+                expression = self.expression(spec.identity, frame.focus, frame.identity, frame.identity_refs, not whole)
+            finally:
+                self._member = None
+        elif frame.member is not None:
+            # The default identity of a datum made for each member is one node for each instance and member, the hash of the
+            # instance and then the member, spelled.
+            stem = spec.concept_name or local(spec.node)
+            expression = f"CONCAT({_string(self.base + stem + '/')}, SHA256(STR({frame.focus})), \"/\", ENCODE_FOR_URI({frame.member_text}))"
         elif spec.name_template:
             expression = self._name_template(spec.name_template, frame.focus, frame.identity, frame.identity_refs)
         elif spec.concept_name and spec.concept_name.startswith("#"):
@@ -283,6 +319,25 @@ class _Compiler:
         """A contextual datum's frame: the parent's focus, followed along its concept's `mork:path` when it names one."""
         path_text = next((str(p) for c in sorted(self.g.objects(spec.node, MORK.mappingFor), key=str) for p in self.g.objects(c, MORK.path)), None)
         frame = _Frame(spec, parent.focus, "")
+        if spec.member_ref is not None:
+            # A datum made for each member keeps its parent's focus. Its guard tests the parent's node, and the members are
+            # bound once, so the identity, the link and each value beneath it read the same one (README §7.12).
+            frame.match += self.guard(spec, frame.focus)
+            frame.member = self.var("m")
+            frame.match.append(f"{parent.focus} {paths.write(spec.member_ref)} {frame.member} .")
+            if spec.identity_rule == MORK.MemberIdentity:
+                frame.match.append(f"FILTER (isIRI({frame.member}) && !{_blank(frame.member)})")
+            else:
+                named = frame.member
+                if spec.member_name is not None:
+                    named = self.var("n")
+                    frame.match.append(f"{frame.member} {_term(spec.member_name)} {named} .")
+                else:
+                    frame.match.append(f"FILTER (!{_blank(frame.member)})")
+                frame.member_text = self.var("s")
+                frame.match.append(f"BIND ({_spelled(named)} AS {frame.member_text})")
+            self.identity(spec, frame)
+            return frame
         if path_text is not None:
             try:
                 path = paths.parse(path_text, self.r.prefixes)
@@ -432,9 +487,12 @@ class _Compiler:
         if frame.identity_refs:
             refs = " ".join(f"{frame.focus} {r} ?any_{i} ." for i, r in enumerate(frame.identity_refs))
             self.check(chain, "IdentityUnbound", f"({frame.focus} AS ?focus)", self.where(chain, [f"FILTER NOT EXISTS {{ {refs} }}"], last_identity=False))
-            if frame.target.startswith("?"):
-                self.check(chain, "IdentityAmbiguous", f"({frame.focus} AS ?focus)", self.where(chain), f"\nGROUP BY {frame.focus}\nHAVING (COUNT(DISTINCT {frame.target}) > 1)")
+        if (frame.identity_refs or frame.member is not None) and frame.target.startswith("?") and frame.target != frame.member:
+            # A datum made for each member gives one node for each member, so it is one focus node and one member that must give one.
+            grouped = f"{frame.focus} {frame.member}" if frame.member is not None else frame.focus
+            self.check(chain, "IdentityAmbiguous", f"({frame.focus} AS ?focus)", self.where(chain), f"\nGROUP BY {grouped}\nHAVING (COUNT(DISTINCT {frame.target}) > 1)")
         self.construction(chain)
+        self.members(chain)
         self.joined(chain)
         for child in spec.children:
             if child not in self.r.specs:
@@ -458,7 +516,7 @@ class _Compiler:
             for path in missing:
                 self.check(chain, "InstanceExcluded", f"({frame.focus} AS ?focus) ({_string(path)} AS ?value)",
                            self.where(chain[:-1], [f"FILTER NOT EXISTS {{ {frame.focus} {path} ?any }}"]))
-        if frame.identity_refs:
+        if frame.identity_refs or frame.merges:
             self.findings.append(Finding("MappingReview", str(spec.node), "its identity is read from the source, so it merges every instance that shares the value and a reviewer should confirm the merge is meant", Severity.WARNING))
 
     # --- joins (README §7.10) ----------------------------------------------------------------------------------------
@@ -733,6 +791,10 @@ class _Compiler:
             else:
                 self._kind_check(chain, spec, prop_iri, raw, list(patterns))
                 self.disagreement(chain, spec, raw, patterns)
+        elif spec.data_member:
+            if parent.member is None:
+                raise _Refusal("MemberOutside", "mork:dataMember writes the member of the datum it sits beneath, and that datum states no mork:memberRef")
+            value = parent.member
         elif rows:
             raise _Refusal("NoValue", "correspondences translate the values mork:dataRef reads, and this mapping has none")
         elif spec.data_inline is not None:
@@ -753,7 +815,7 @@ class _Compiler:
         assertion excludes whole nodes, each named with the required value it lacks, and a node the guard admits that holds the
         property the path starts from and reaches nothing is reported as information, while a node that lacks the property is
         silent. A node that reaches itself through a closure the path walks is reported by name. The number of statements a node gives depends on the data, so the
-        compiler records an engineering review (ADR-A41) as a finding that names the source."""
+        compiler records the engineering review ADR-A41 asks of an expansion, as the finding `ExpansionReview` that names the source."""
         parent = chain[-1]
         source = paths.write(spec.data_ref)
         if spec.guard is not None:
@@ -764,29 +826,56 @@ class _Compiler:
             for path in missing:
                 self.check(chain, "InstanceExcluded", f"({parent.focus} AS ?focus) ({_string(path)} AS ?value)",
                            self.where(chain, [f"FILTER NOT EXISTS {{ {parent.focus} {path} ?any }}"]), node=spec)
-        # A node that holds nothing at the path's first step lacks the property and is silent. Only a node that holds it and
-        # reaches no node by the whole path has an empty collection.
-        start = paths.write(paths.entry(spec.data_ref))
-        self.check(chain, "CollectionEmpty", f"({parent.focus} AS ?focus) ({_string(source)} AS ?value)",
-                   self.where(chain, self.guard(spec, parent.focus) + [f"FILTER EXISTS {{ {parent.focus} {start} ?held }}",
-                                                                       f"FILTER NOT EXISTS {{ {parent.focus} {source} ?any }}"]),
+        self.collection_checks(chain, spec, spec.data_ref, parent.focus)
+        self.findings.append(Finding("ExpansionReview", str(spec.node), f"it restates the relation at {source} as a statement for each node the path reaches, so the number of statements for one node depends on the data and a reviewer should confirm that the target can take it", Severity.WARNING))
+
+    def collection_checks(self, chain: list[_Frame], spec: Spec, ref, focus: str) -> None:
+        """The checks of a path that reaches a collection, over the frames of `chain` whose last holds `focus`, the node the path
+        starts from (§7.11). A node that holds nothing at the path's first step lacks the property and is silent. Only a node that
+        holds it and reaches no node by the whole path has an empty collection. A node that reaches itself through a closure the
+        path walks is its own member, which a hierarchy or a list does not have, and is named once with the closure, whichever
+        node reaches it. The guard is `spec`'s, which is tested on the node the path starts from."""
+        source = paths.write(ref)
+        start = paths.write(paths.entry(ref))
+        self.check(chain, "CollectionEmpty", f"({focus} AS ?focus) ({_string(source)} AS ?value)",
+                   self.where(chain, self.guard(spec, focus) + [f"FILTER EXISTS {{ {focus} {start} ?held }}",
+                                                                f"FILTER NOT EXISTS {{ {focus} {source} ?any }}"]),
                    node=spec, severity=Severity.INFO)
-        # A node that reaches itself through a closure the path walks is its own member, which a hierarchy or a list does not
-        # have. Each such node is named once, with the closure, whichever node reaches it.
-        for before, step in paths.closures(spec.data_ref):
+        for before, step in paths.closures(ref):
             reach = paths.write(paths.Mod(step, "*"))
             reach = reach if before is None else f"{paths.write(before)}/{reach}"
             node = self.var("n")
             self.check(chain, "ClosureCycle", f"({node} AS ?focus) ({_string(paths.write(paths.Mod(step, '+')))} AS ?value)",
-                       self.where(chain, self.guard(spec, parent.focus) + [f"{parent.focus} {reach} {node} .", f"{node} {paths.write(paths.Mod(step, '+'))} {node} ."]),
+                       self.where(chain, self.guard(spec, focus) + [f"{focus} {reach} {node} .", f"{node} {paths.write(paths.Mod(step, '+'))} {node} ."]),
                        node=spec)
-        self.findings.append(Finding("EngineeringReview", str(spec.node), f"it restates the relation at {source} as a statement for each node the path reaches, so the number of statements for one node depends on the data and a reviewer should confirm that the target can take it", Severity.WARNING))
+
+    def members(self, chain: list[_Frame]) -> None:
+        """What a datum made for each member needs beyond its own queries (README §7.12). The checks of its path are an
+        expansion's, a member that has no name, or is no node of the source where the member is the node, is reported by name and
+        skipped while the node's other members are written, and the number of nodes one instance gives depends on the data, which
+        takes the review ADR-A41 asks of an expansion."""
+        frame = chain[-1]
+        spec = frame.spec
+        if frame.member is None:
+            return
+        before, parent = chain[:-1], chain[-2]
+        self.collection_checks(before, spec, spec.member_ref, parent.focus)
+        member = self.var("m")
+        pattern = [*self.guard(spec, parent.focus), f"{parent.focus} {paths.write(spec.member_ref)} {member} ."]
+        if spec.identity_rule == MORK.MemberIdentity:
+            code, test = "MemberNotIri", f"FILTER (!isIRI({member}) || {_blank(member)})"
+        elif spec.member_name is not None:
+            code, test = "MemberUnnamed", f"FILTER NOT EXISTS {{ {member} {_term(spec.member_name)} ?name }}"
+        else:
+            code, test = "MemberUnnamed", f"FILTER {_blank(member)}"
+        self.check(before, code, f"({parent.focus} AS ?focus) ({member} AS ?value)", self.where(before, pattern + [test]), node=spec)
+        self.findings.append(Finding("ExpansionReview", str(spec.node), f"it makes a node for each node {paths.write(spec.member_ref)} reaches, so the number of nodes for one instance depends on the data and a reviewer should confirm that the target can take it", Severity.WARNING))
 
     def disagreement(self, chain: list[_Frame], spec: Spec, value: str, patterns: list) -> None:
         """For an assertion on a node whose identity is read from the source, a check naming each node that two instances
         give different values for the property, one row for each value (README §7.9)."""
         parent = chain[-1]
-        if not parent.identity_refs or not parent.target.startswith("?") or len(chain) < 2 or chain[-2].spec.kind is not Kind.SOURCE_NODE:
+        if not (parent.identity_refs or parent.merges) or not parent.target.startswith("?") or len(chain) < 2 or chain[-2].spec.kind is not Kind.SOURCE_NODE:
             return
         if paths.write(spec.data_ref) in parent.identity_refs:
             return  # a value the identity reads is the same for every instance that shares the node
@@ -880,6 +969,8 @@ class _Compiler:
         result = self.var("value")
         patterns.append(f"BIND ({expression} AS {result})")
         self.construct(chain, [f"{parent.target} {prop} {result} ."], patterns, node=spec)
+        # The engineering review ADR-A41 asks of a derivation, recorded as a finding that names the property it writes.
+        self.findings.append(Finding("DerivationReview", str(spec.node), f"it writes {prop} as a value computed by an expression, so a reviewer should confirm the expression and the datatype of its result", Severity.WARNING))
         for written in bound:
             absent = f"FILTER NOT EXISTS {{ {parent.focus} {written} ?any }}"
             self.check(chain, "OperandMissing", f"({parent.focus} AS ?focus) ({_string(written)} AS ?value)",

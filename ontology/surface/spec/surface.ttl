@@ -678,14 +678,15 @@ srf:ConstructedNode a owl:Class ;
 		[ a owl:Restriction ; owl:onProperty srf:nodeIdentity ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:writes ; owl:minCardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "The node a graph construction projection writes for an instance of its carrier, with the class it is typed with, its identity and the values it carries." ;
-	fnd:utility "State it once, on the result-target role binding of a graph construction with constructedAs, and name it by an IRI. Give it one constructedClass, one nodeIdentity, a keyBinding for each part of its key where its identity is ByKey, and a writes for each value it carries, at least one. The class it is typed with decides the projection's signature scope (srf:P1)." .
+	fnd:utility "State it once, on the result-target role binding of a graph construction with constructedAs, and name it by an IRI. An expansion states one too, on the binding that states its expansion statement, and the node is then made for each member (srf:P22). Give it one constructedClass, one nodeIdentity, a keyBinding for each part of its key where its identity is ByKey, and a writes for each value it carries, at least one. The class it is typed with decides the projection's signature scope (srf:P1)." .
 
 srf:WrittenValue a owl:Class ;
 	rdfs:subClassOf
 		[ a owl:Restriction ; owl:onProperty srf:writesProperty ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:fromBinding ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ;
-	rdfs:comment "One value a constructed node carries, the property it is written as and the evidence role binding it is read from." ;
-	fnd:utility "Name each written value by a blank node or an IRI, as srf:writes takes it. A node writes each property once." .
+		[ a owl:Restriction ; owl:onProperty srf:fromBinding ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:fromMember ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "One value a constructed node carries, the property it is written as and either the evidence role binding it is read from or, for a node made for each member of an expansion, the member itself." ;
+	fnd:utility "Name each written value by a blank node or an IRI, as srf:writes takes it. A node writes each property once. State exactly one of fromBinding and fromMember (srf:P25)." .
 
 srf:IdentityChoice a owl:Class ;
 	rdfs:comment "What makes two constructed nodes the same node. Its individuals are in the vocabulary." .
@@ -702,8 +703,18 @@ srf:constructedClass a owl:ObjectProperty, owl:FunctionalProperty ;
 
 srf:nodeIdentity a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:ConstructedNode ; rdfs:range srf:IdentityChoice ;
-	rdfs:comment "Whether a constructed node is made for each instance of the carrier or for each value of a key." ;
-	fnd:utility "State it, never leave it implicit. PerInstance gives each instance its own node, which merges nothing. ByKey merges the instances that share the values of the key bindings, which takes a mapping review (ADR-A41) and brings a run-time check for a node whose instances disagree on a value." .
+	rdfs:comment "Whether a constructed node is made for each instance of the carrier or for each value of a key, or, for a node made for each member of an expansion, is the member itself." ;
+	fnd:utility "State it, never leave it implicit. PerInstance gives each instance its own node, or each instance and member its own node under an expansion, which merges nothing. ByKey merges the instances that share the values of the key, which takes a mapping review (ADR-A41) and brings a run-time check for a node whose instances disagree on a value. MemberNode, under an expansion alone, makes the member the node (srf:P23)." .
+
+srf:keyMember a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ConstructedNode ; rdfs:range xsd:boolean ;
+	rdfs:comment "Whether the member an expansion reaches is a part of the key a keyed constructed node is made for, after its key bindings." ;
+	fnd:utility "State it true on a keyed node of an expansion that is made for each distinct member, with or without key bindings beside it, at least one part in all (srf:P24). The member is spelled into the identifier, so a member with no stable text is reported at run time and skipped." .
+
+srf:memberName a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ConstructedNode ; rdfs:range rdf:Property ;
+	rdfs:comment "A property of the members of an expansion whose value is known to be unique for them, which the identity of a constructed node spells in place of the member." ;
+	fnd:utility "Name it where the members have a code or a name that never changes, which a blank node may have too. A member without a value of it is reported and skipped. A node that is the member itself states none (srf:P24)." .
 
 srf:keyBinding a owl:ObjectProperty ;
 	rdfs:domain srf:ConstructedNode ; rdfs:range srf:ProjectionRoleBinding ;
@@ -721,7 +732,12 @@ srf:writesProperty a owl:ObjectProperty, owl:FunctionalProperty ;
 srf:fromBinding a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:WrittenValue ; rdfs:range srf:ProjectionRoleBinding ;
 	rdfs:comment "The candidate-evidence or required-evidence role binding of the same contract a written value is read from." ;
-	fnd:utility "A required-evidence binding gates the node, since an instance without it contributes nothing. A candidate-evidence binding writes what it finds (srf:P12)." .
+	fnd:utility "A required-evidence binding gates the node, since an instance without it contributes nothing. A candidate-evidence binding writes what it finds (srf:P12). A node of an expansion may state fromMember in its place (srf:P25)." .
+
+srf:fromMember a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:WrittenValue ; rdfs:range xsd:boolean ;
+	rdfs:comment "Whether a written value is the member the constructed node of an expansion is made for, a node or a literal, written as it is." ;
+	fnd:utility "State it true in place of fromBinding, on a node of an expansion alone (srf:P23, srf:P25). A value of the member's own properties is never copied by the construction. Model it with a join from the node to the member where it is wanted." .
 
 srf:JoinStatement a owl:Class ;
 	rdfs:subClassOf

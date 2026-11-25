@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-25. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-25. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** the review findings renamed and the derivation's added, then SVA-S2j, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** paused after SVA-S2j for the maintainer, who weighs its six choices and accepts the addenda to ADR-A18, ADR-A23 and ADR-A41. SVA-S2c, the studio wiring of every projection kind, comes next. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -65,7 +65,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2g | graph construction projections | built 2026-11-24 | SVA-S2f |
 | SVA-S2h | join projections | built 2026-11-24, building 2026-11-24 | SVA-S2f |
 | SVA-S2i | expansion projections | built 2026-11-25 | SVA-S2f |
-| SVA-S2j | expansion combined with graph construction | building 2026-11-25 | SVA-S2i |
+| SVA-S2j | expansion combined with graph construction | built 2026-11-25 | SVA-S2i |
 | SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
@@ -276,3 +276,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-25: the maintainer answered SVA-S2i's choices. On candidate evidence an instance that lacks the source property is silent and only an empty collection is reported, as for a join. A closure that makes a node reach itself is reported, and a law refuses a path that reads its own result property. The other five choices stand, and the addenda on expansions are accepted once their text matches. Built as SVA-S2i's follow-up. The maintainer asked why the finding is named `EngineeringReview`: it is ADR-A41's wording, which also asks an engineering review of a derivation, and no derivation records one yet.
 - 2026-11-25: SVA-S2i's follow-up built and reviewed, its checks re-run. On candidate evidence only an instance holding the property with an empty collection is reported, `ClosureCycle` reports a node that reaches itself through a closure or a list that loops, and `srf:P21` refuses a path that reads its own result property. The addenda on expansions to ADR-A18 and ADR-A23 marked accepted, as the maintainer approved.
 - 2026-11-25: the maintainer approved renaming `EngineeringReview` by projection kind, `DerivationReview` and `ExpansionReview`, with `MappingReview` kept for joins and keyed constructions, and adding the derivation's review ADR-A41 asks for. SVA-Q50 to SVA-Q56 answered: both statements on one binding, the contract stating a node for each instance and member or by key, a key that may read the member, a node writing the member itself with a member's own values modelled by a join, the contract choosing between a minted node and the member as the node, and a member's stable name selectable from a property of the members, with `MemberUnnamed` for a member without one.
+- 2026-11-25: the review findings renamed by projection kind, `DerivationReview` added to every compiled derivation and `ExpansionReview` for an expansion, with a Proposed addendum to ADR-A41. SVA-S2j built, [Validation Pack](../validation/SVA-S2j.md). An expansion states a construction beside it on one binding, with a node for each instance and member, one by a key that may read the member, or the member itself as the node, a stable name selectable from a member's property, `MemberUnnamed` for a member without one, and a member's own values written by a join. MORK gains five terms with `mork:memberRef` binding the member once. Six choices and three Proposed addenda wait for the maintainer.

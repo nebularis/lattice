@@ -76,6 +76,13 @@ as its identity, and beneath it one assertion of the result property whose refer
 restated as a statement on the instance and nothing is minted (``_lower_expansion``). It is guarded by every
 required-evidence binding of the contract's own carrier. Every projection kind now lowers into a scheme.
 
+**A node for each member lowers into a scheme too.** An expansion that also states a construction on its result-target binding
+(``srf:P22``) makes the constructed node for each member its path reaches. ``_lower_construction`` writes the contextual datum as
+it does for a graph construction, with the path as ``mork:memberRef``, which binds the member once so that the identity, the link
+and each value read the same one. A node for each instance and member states no identity template, a keyed node's template ends
+in a ``mork:MemberExpression`` where the key states the member, ``srf:MemberNode`` takes ``mork:MemberIdentity`` so the member is
+the node, a stable name is ``mork:memberName``, and a value written from the member is ``mork:dataMember``.
+
 **Dependency graph.** ``link_dependencies`` recognises exactly two declared
 cross-references within one lowering batch: a projection role binding's
 ``bindsCarrier`` naming another contract's own carrier, and a role binding's
@@ -233,7 +240,7 @@ def lower_projection(contract: ProjectionContract) -> Graph:
     graph.bind("sh", SH)
 
     if contract.construction is not None:
-        _lower_construction(graph, minter, contract, contract.construction)
+        _lower_construction(graph, minter, contract, contract.construction, contract.expansion)
         return graph
     if contract.join is not None:
         _lower_join(graph, minter, contract, contract.join)
@@ -312,8 +319,14 @@ def _lower_derivation(graph: Graph, minter: Minter, contract: ProjectionContract
     graph.add((assertion, MORK.valueExpression, _lower_expression(graph, minter, expression, "0", role_index)))
 
 
-def _lower_construction(graph: Graph, minter: Minter, contract: ProjectionContract, node: ConstructedNode) -> None:
-    """A graph construction as a mapping scheme (ADR-A18).
+def _lower_construction(
+    graph: Graph,
+    minter: Minter,
+    contract: ProjectionContract,
+    node: ConstructedNode,
+    expansion: Optional[ExpansionStatement] = None,
+) -> None:
+    """A graph construction as a mapping scheme (ADR-A18), or, with an expansion, a node for each member its path reaches.
 
     The root iterates the carrier class and is identified by the source node, as a derivation's is, so nothing is minted
     for the instance. Beneath it a contextual datum mints and types the constructed node and is glued to the instance by
@@ -326,6 +339,12 @@ def _lower_construction(graph: Graph, minter: Minter, contract: ProjectionContra
     their properties. Both carry the contract's key and the class in the identifier, so two contracts never reach one
     node. A keyed node merges every instance that shares the key, which a reader of the scheme finds in its identity
     template and ``mork_rdf`` reports as a mapping review.
+
+    For a node made for each member the datum states the expansion's path as ``mork:memberRef``. A node for each instance and
+    member is named by the default, the instance and then the member, a keyed node by its template, the key's values and then the
+    member where the key states it, and ``srf:MemberNode`` states ``mork:MemberIdentity`` and no template, name or class name,
+    since the member is the node. A member name is carried as ``mork:memberName``, and a value written from the member is an
+    assertion that states ``mork:dataMember``.
     """
     scheme = minter.lowered_scheme()
     concept = minter.lowered_carrier_concept()
@@ -362,6 +381,10 @@ def _lower_construction(graph: Graph, minter: Minter, contract: ProjectionContra
     graph.add((datum, MORK.broaderApplicative, root))
     graph.add((datum, MORK.exactTBoxMatch, node.constructed_class))
     graph.add((datum, MORK.inverseRBoxMatch, node.link.binds_property))
+    if expansion is not None:
+        graph.add((datum, MORK.memberRef, Literal(expansion.path_text)))
+        if node.member_name is not None:
+            graph.add((datum, MORK.memberName, node.member_name))
 
     required = sorted(
         {str(b.binds_property) for b in contract.roles(SRF.RequiredEvidenceRole) if b.binds_property is not None}
@@ -376,7 +399,9 @@ def _lower_construction(graph: Graph, minter: Minter, contract: ProjectionContra
             graph.add((constraint, SH.path, URIRef(path)))
             graph.add((constraint, SH.minCount, Literal(1)))
 
-    if node.keyed:
+    if node.member_node:
+        graph.add((datum, MORK.identityRule, MORK.MemberIdentity))
+    elif node.keyed:
         _lower_key_identity(graph, minter, datum, stem, node)
     else:
         graph.add((datum, MORK.conceptName, Literal(stem)))
@@ -387,7 +412,10 @@ def _lower_construction(graph: Graph, minter: Minter, contract: ProjectionContra
         graph.add((assertion, RDF.type, MORK.DataMapping))
         graph.add((assertion, MORK.mappingScheme, scheme))
         graph.add((assertion, MORK.exactRBoxMatch, written.property))
-        graph.add((assertion, MORK.dataRef, Literal(f"<{written.binding.binds_property}>")))
+        if written.from_member:
+            graph.add((assertion, MORK.dataMember, Literal(True)))
+        else:
+            graph.add((assertion, MORK.dataRef, Literal(f"<{written.binding.binds_property}>")))
 
 
 def _own_required(contract: ProjectionContract) -> List[str]:
@@ -573,6 +601,16 @@ def _lower_key_identity(graph: Graph, minter: Minter, datum: URIRef, stem: str, 
         graph.add((reference, RDF.type, MORK.RefExpression))
         graph.add((reference, MORK.dataRef, Literal(f"<{binding.binds_property}>")))
         parts.append(reference)
+    if node.key_member:
+        # The member is the last part of the key, spelled by the compiler, which reads the property that names it where there is one.
+        if node.key:
+            separator = minter.lowered_identity_part(len(parts))
+            graph.add((separator, RDF.type, MORK.LiteralExpression))
+            graph.add((separator, MORK.dataInline, Literal("/")))
+            parts.append(separator)
+        member = minter.lowered_identity_part(len(parts))
+        graph.add((member, RDF.type, MORK.MemberExpression))
+        parts.append(member)
 
     right = parts[-1]
     for position in range(len(parts) - 2, -1, -1):

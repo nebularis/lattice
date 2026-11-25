@@ -804,7 +804,9 @@ ENGINES = ["oxigraph", "rdflib"]
 
 def test_a_derivation_compiles_to_one_construct_writing_on_the_carrier():
     compiled = compile_scheme(parse("arr-mapping.ttl"), "http://example.org/mapping#Arr", base=BASE, at=AT)
-    assert not compiled.findings
+    (review,) = compiled.findings
+    assert (review.code, review.severity, review.mapping) == ("DerivationReview", Severity.WARNING, MM + "Map_Arr")
+    assert "annualRecurringRevenue" in review.message
     (construct,) = compiled.constructs
     assert " ".join(construct.text.split()) == " ".join(ARR_QUERY.split())
     assert [q.code for q in compiled.checks] == ["OperandMissing", "OperandMissing", "ValueUndefined"]
@@ -917,7 +919,7 @@ OPERATIONS = [
 def test_each_operation_gives_its_value_on_each_engine(engine, body, value, datatype):
     g = Graph().parse(data=VALUES_HEAD + body, format="turtle")
     compiled = compile_scheme(g, MM + "S", base=BASE, at=AT)
-    assert not compiled.errors and not [f for f in compiled.findings if f.severity is not Severity.INFO]
+    assert not compiled.errors and {f.code for f in compiled.findings if f.severity is not Severity.INFO} <= {"DerivationReview"}
     written, reported = evaluate(engine, compiled, Graph().parse(data=VALUES_SOURCE, format="turtle"))
     if value is None:
         assert not written and {(code, focus) for code, focus, _ in reported} == {("ValueUndefined", REC + "x")}

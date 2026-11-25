@@ -190,6 +190,8 @@ def _message(code: Optional[str]) -> str:
         "JoinManyMatches": "the values of the focus node together find several nodes where the join allows at most one link for a node, so no link was written, and each match is named",
         "CollectionEmpty": "the focus node holds the property the path starts from and the path reaches no node from it, so the expansion wrote no statement for it",
         "ClosureCycle": "the node reaches itself through the closure, so it is its own member and the expansion writes it as one",
+        "MemberUnnamed": "the member has no name to spell, no value of the property that names the members or, where none is named, it is a blank node, so no node was made for it and the instance's other members were written",
+        "MemberNotIri": "the member is the node and it is no node of the source, a literal or a blank node, so nothing was written on it and the instance's other members were written",
         "Unguarded": "no guard of the mappings that share this node's path admits it, so none of them mapped it",
         "SkolemCanonical": "these blank nodes are in a cycle, shared, or reached from no named node, so they are named by their component's canonical labels, which change whenever the component does",
         "Uncovered": "the node's class is a declared source entity that no compiled root iterates, so nothing was made from it",

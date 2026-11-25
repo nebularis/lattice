@@ -85,7 +85,7 @@ WHERE {{
 }}"""
     assert " ".join(construct.text.split()) == " ".join(expected.split())
     assert sorted(q.code for q in mapping.checks) == ["ClosureCycle", "CollectionEmpty", "InstanceExcluded"]
-    assert [(f.code, f.severity) for f in mapping.findings] == [("EngineeringReview", Severity.WARNING)]
+    assert [(f.code, f.severity) for f in mapping.findings] == [("ExpansionReview", Severity.WARNING)]
     assert not mapping.errors
 
 
@@ -113,8 +113,8 @@ def test_a_list_keeps_a_repeated_member_once_since_the_construct_writes_a_set(en
     assert written == {(REC + "b5", CONTAINS, REC + "i1")}
 
 
-def test_the_engineering_review_names_the_source_and_every_expansion_takes_one():
-    (review,) = [f for f in compiled(bundle()).findings if f.code == "EngineeringReview"]
+def test_the_expansion_review_names_the_source_and_every_expansion_takes_one():
+    (review,) = [f for f in compiled(bundle()).findings if f.code == "ExpansionReview"]
     assert "http://example.org/src#items" in review.message and review.severity is Severity.WARNING
 
 
@@ -153,7 +153,7 @@ def test_the_same_scheme_compiles_to_the_same_text_whatever_the_order_of_its_tri
 
 
 def test_an_assertion_that_is_not_beneath_a_source_node_datum_is_not_an_expansion():
-    """A datum that mints its node, with an assertion beneath it, takes no engineering review and no empty-collection check."""
+    """A datum that mints its node, with an assertion beneath it, takes no expansion review and no empty-collection check."""
     plain = Graph().parse(data=PREFIXES + """
 mm:Plain a mork:MappingScheme .
 src:Bundle a mork:Entity .
@@ -164,7 +164,7 @@ mm:Map_Label a mork:DataMapping ; mork:mappingScheme mm:Plain ; mork:exactRBoxMa
 """, format="turtle")
     mapping = compile_scheme(plain, "http://example.org/mapping#Plain", base=BASE, at=AT)
     assert not mapping.errors
-    assert not [f for f in mapping.findings if f.code == "EngineeringReview"]
+    assert not [f for f in mapping.findings if f.code == "ExpansionReview"]
     assert "CollectionEmpty" not in {q.code for q in mapping.checks}
 
 

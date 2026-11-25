@@ -1,0 +1,143 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/surface/bundle-line#> .
+
+# An expansion projection that also constructs a node. A bundle holds a list of
+# items, and each member of the list becomes one line of the bundle, a node of its
+# own that is linked from the bundle, writes the member as the item it is of and
+# carries the bundle's code. An expansion alone restates a relation as statements
+# on the instance and mints nothing, and a graph construction alone makes one node
+# for the instance. Together they make a node for each member.
+#
+# The contract states both on the result target, which binds the link from the
+# bundle to each line. The expansion statement says which members are reached, the
+# members of the list the bundle's items hold, and the constructed node says what is
+# made for each. Its identity is the contract's choice, as for any constructed node.
+# Here it is keyed, by the bundle's code and the member, so two bundles with one
+# code that hold one item share the line, and a list that repeats an item gives one
+# line for it. A line for each bundle and member, the member alone and the member
+# itself as the node are the other choices srf:nodeIdentity and srf:keyMember state.
+#
+# A bundle that lacks its code or its list, both required values, contributes
+# nothing and is reported. A bundle whose list is empty writes nothing and is
+# reported as information. A member that is a blank node has no name an identifier
+# can spell, so it is reported and skipped while the bundle's other members are
+# written. A key is spelled into an identifier, so a stable name for the members
+# (srf:memberName) is preferable where the items have one.
+#
+# This contract lowers into a MORK mapping scheme (ADR-A18). It does not emit
+# SPARQL, SHACL, or anything else itself.
+
+# --- the carrier and the vocabulary it is read and written in -------------------
+
+ex:Bundle a owl:Class .
+ex:Item a owl:Class .
+ex:Line a owl:Class .
+
+ex:bundleCode a owl:DatatypeProperty ;
+    rdfs:domain ex:Bundle .
+
+ex:items a owl:ObjectProperty ;
+    rdfs:domain ex:Bundle .
+
+ex:hasLine a owl:ObjectProperty ;
+    rdfs:domain ex:Bundle ;
+    rdfs:range ex:Line .
+
+ex:ofItem a owl:ObjectProperty ;
+    rdfs:domain ex:Line ;
+    rdfs:range ex:Item .
+
+# --- generation profile ------------------------------------------------------
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/2" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 .
+
+# --- the projection contract -------------------------------------------------
+
+ex:bl-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+ex:bl-code a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:bundleCode .
+
+ex:bl-items a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:items .
+
+# The result target binds the link from the bundle to each line, and states both
+# what is expanded and what is constructed for each member.
+ex:bl-link a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:hasLine ;
+    srf:expandedAs ex:bl-expansion ;
+    srf:constructedAs ex:bl-node .
+
+# The members: the members of the list the items binding reads.
+ex:bl-expansion a srf:ExpansionStatement ;
+    srf:expandsFrom ex:bl-items ;
+    srf:expansionSource srf:ListMembers .
+
+# The node made for each member. Its key is the bundle's code and the member. It
+# writes the member as the item the line is of, and the bundle's code.
+ex:bl-node a srf:ConstructedNode ;
+    srf:constructedClass ex:Line ;
+    srf:nodeIdentity srf:ByKey ;
+    srf:keyBinding ex:bl-code ;
+    srf:keyMember true ;
+    srf:writes [ srf:writesProperty ex:ofItem ; srf:fromMember true ] ,
+               [ srf:writesProperty ex:bundleCode ; srf:fromBinding ex:bl-code ] .
+
+ex:bl-backend-policy a srf:ProjectionBackendPolicy ;
+    srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
+    srf:deterministicOnly true ;
+    srf:llmCompletionPolicy srf:NoLLMCompletion .
+
+ex:bundle-line-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:bundle-line-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "bundle-line" ;
+    srf:carrier ex:Bundle ;
+    srf:projectionKind srf:ExpansionProjection ;
+    srf:hasRoleBinding ex:bl-subject, ex:bl-code, ex:bl-items, ex:bl-link ;
+    srf:targetNamespace "https://example.org/lattice/surface/bundle-line/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:profile-v1 ;
+    srf:backendPolicy ex:bl-backend-policy .
+
+# --- instances ---------------------------------------------------------------
+
+ex:item-1 a ex:Item .
+ex:item-2 a ex:Item .
+ex:item-3 a ex:Item .
+
+# A bundle of three items gives three lines, and a bundle with another code gives its
+# own line for an item it shares. A bundle whose list is empty
+# gives none and is reported as information, and one with no list or no code is
+# excluded and reported.
+ex:bundle-1 a ex:Bundle ;
+    ex:bundleCode "B1" ;
+    ex:items ( ex:item-1 ex:item-2 ex:item-3 ) .
+
+ex:bundle-2 a ex:Bundle ;
+    ex:bundleCode "B2" ;
+    ex:items ( ex:item-3 ) .
+
+ex:bundle-3 a ex:Bundle ;
+    ex:bundleCode "B3" ;
+    ex:items () .
+
+ex:bundle-4 a ex:Bundle ;
+    ex:bundleCode "B4" .

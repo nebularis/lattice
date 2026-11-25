@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# A node for each member, as the lowering of a Surface projection writes it (README §7.12). Each member of a bundle's list of items
+# gives one line, linked from the bundle, and the line is identified by the bundle's code and the member. The line writes the member
+# as the item it is of and the bundle's code. The code and the list are required values, so a bundle without either is excluded and
+# reported.
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix src:  <http://example.org/src#> .
+@prefix tgt:  <http://example.org/tgt#> .
+@prefix mm:   <http://example.org/mapping#> .
+
+mm:BundleLine a mork:MappingScheme .
+
+src:Bundle a mork:Entity .
+mm:Concept_Bundle a mork:DataConcept ; mork:representedAs src:Bundle .
+
+mm:Map_Bundle a mork:DataMapping , mork:Datum ;
+    mork:mappingScheme mm:BundleLine ;
+    mork:mappingFor mm:Concept_Bundle ;
+    mork:identityRule mork:SourceNodeIdentity ;
+    mork:compositeNarrowerMapping mm:Map_Line .
+
+# The datum is made for each node the path reaches. The member is bound once, so the identity, the link and each value read it.
+mm:Map_Line a mork:DataMapping ;
+    mork:mappingScheme mm:BundleLine ;
+    mork:broaderApplicative mm:Map_Bundle ;
+    mork:exactTBoxMatch tgt:Line ;
+    mork:inverseRBoxMatch tgt:hasLine ;
+    mork:memberRef "<http://example.org/src#items>/<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>*/<http://www.w3.org/1999/02/22-rdf-syntax-ns#first>" ;
+    mork:appliesWhen mm:LineGuard ;
+    mork:identityTemplateMapping mm:LineIdentity ;
+    mork:compositeNarrowerMapping mm:Map_OfItem , mm:Map_BundleCode .
+
+mm:LineGuard a sh:NodeShape ;
+    sh:property [ sh:path src:bundleCode ; sh:minCount 1 ] , [ sh:path src:items ; sh:minCount 1 ] .
+
+mm:LineIdentity a mork:ConcatExpression ; mork:concatLeft mm:Id_Stem ; mork:concatRight mm:Id_Rest .
+mm:Id_Rest a mork:ConcatExpression ; mork:concatLeft mm:Id_Code ; mork:concatRight mm:Id_Tail .
+mm:Id_Tail a mork:ConcatExpression ; mork:concatLeft mm:Id_Slash ; mork:concatRight mm:Id_Member .
+mm:Id_Stem a mork:LiteralExpression ; mork:dataInline "bundle-line/Line/" .
+mm:Id_Code a mork:RefExpression ; mork:dataRef "<http://example.org/src#bundleCode>" .
+mm:Id_Slash a mork:LiteralExpression ; mork:dataInline "/" .
+mm:Id_Member a mork:MemberExpression .
+
+mm:Map_OfItem a mork:DataMapping ;
+    mork:mappingScheme mm:BundleLine ;
+    mork:exactRBoxMatch tgt:ofItem ;
+    mork:dataMember true .
+
+mm:Map_BundleCode a mork:DataMapping ;
+    mork:mappingScheme mm:BundleLine ;
+    mork:exactRBoxMatch tgt:bundleCode ;
+    mork:dataRef "<http://example.org/src#bundleCode>" .

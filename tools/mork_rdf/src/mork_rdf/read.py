@@ -76,6 +76,10 @@ class Spec:
     link_cardinality: Optional[URIRef] = None   # mork:linkCardinality, how many nodes a parent finds in all
     reports_unmatched: Optional[bool] = None    # mork:reportsUnmatched
     unmatched_severity: Optional[URIRef] = None # mork:unmatchedSeverity
+    member_ref: Optional[object] = None         # mork:memberRef, the path from the parent's node to the nodes a datum is made for (§7.12)
+    member_ref_text: Optional[str] = None
+    member_name: Optional[URIRef] = None        # mork:memberName, the property whose value names a member
+    data_member: bool = False                   # mork:dataMember, an assertion whose value is the member itself
 
     @property
     def parent(self) -> Optional[URIRef]:
@@ -220,7 +224,7 @@ def _identity(g: Graph, node) -> Optional[URIRef]:
     candidates = list(g.objects(node, MORK.identityTemplateMapping)) + list(g.subjects(MORK.resolvesIdentityFor, node))
     for candidate in sorted(candidates, key=str):
         if any((candidate, RDF.type, t) in g for t in (MORK.TemplateExpression, MORK.ConcatExpression, MORK.InterpolationExpression,
-                                                       MORK.LiteralExpression, MORK.RefExpression, MORK.LookupExpression)):
+                                                       MORK.LiteralExpression, MORK.RefExpression, MORK.LookupExpression, MORK.MemberExpression)):
             return candidate
     return None
 
@@ -321,6 +325,12 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
         except paths.PathError as error:
             findings.append(Finding("BadPath", str(node), str(error)))
             continue
+        member_ref_text = _text(g, node, MORK.memberRef)
+        try:
+            member_ref = parse_path(member_ref_text, declared) if member_ref_text is not None else None
+        except paths.PathError as error:
+            findings.append(Finding("BadPath", str(node), str(error)))
+            continue
         weighting = _one(g, node, MORK.weighting)
         specs[node] = Spec(
             node=node,
@@ -356,6 +366,10 @@ def read(g: Graph, scheme: URIRef, at: datetime, target_vocabulary: Optional[Gra
             link_cardinality=_iri(g, node, MORK.linkCardinality),
             unmatched_severity=_iri(g, node, MORK.unmatchedSeverity),
             reports_unmatched=flag.toPython() if isinstance(flag := _one(g, node, MORK.reportsUnmatched), Literal) and isinstance(flag.toPython(), bool) else None,
+            member_ref=member_ref,
+            member_ref_text=member_ref_text,
+            member_name=_iri(g, node, MORK.memberName),
+            data_member=isinstance(flag := _one(g, node, MORK.dataMember), Literal) and flag.toPython() is True,
         )
 
     # --- templates (§8) ----------------------------------------------------------------------------------------------
@@ -437,6 +451,10 @@ def _merge(g: Graph, instance: Spec, template: Spec, specs: dict) -> Spec:
         link_cardinality=pick(instance.link_cardinality, template.link_cardinality),
         unmatched_severity=pick(instance.unmatched_severity, template.unmatched_severity),
         reports_unmatched=pick(instance.reports_unmatched, template.reports_unmatched),
+        member_ref=pick(instance.member_ref, template.member_ref),
+        member_ref_text=pick(instance.member_ref_text, template.member_ref_text),
+        member_name=pick(instance.member_name, template.member_name),
+        data_member=instance.data_member or template.data_member,
     )
 
 
@@ -447,7 +465,7 @@ def _classify(g: Graph, spec: Spec, specs: dict) -> tuple[Kind, Optional[Finding
     for box, name in ((s.tbox, "T-Box"), (s.rbox, "R-Box"), (s.abox, "A-Box")):
         if "narrow" in box:
             return Kind.DATUM, Finding("NarrowMatch", node, f"a narrow {name} match says the target is narrower than the source, so a compiled mapping would claim more than the source says")
-    has_value = spec.data_ref is not None or spec.data_inline is not None or "exact" in s.abox or "broad" in s.abox
+    has_value = spec.data_ref is not None or spec.data_inline is not None or spec.data_member or "exact" in s.abox or "broad" in s.abox
     rbox = s.rbox.get("exact") or s.rbox.get("inverse") or s.rbox.get("broad")
     if (spec.node, RDF.type, MORK.Lookup) in g or spec.lookup_path is not None:
         if rbox is None or "exact" not in s.tbox or spec.data_ref is None:
@@ -461,6 +479,12 @@ def _classify(g: Graph, spec: Spec, specs: dict) -> tuple[Kind, Optional[Finding
         return Kind.CONTEXT, None
     if spec.joins:
         return Kind.JOIN, _join_finding(spec, rbox)
+    if spec.member_ref is not None:
+        return Kind.CONTEXTUAL, _member_finding(spec, rbox, specs)
+    if spec.data_member:
+        if spec.data_ref is not None or spec.data_inline is not None or s.abox or rbox is None or spec.parent is None:
+            return Kind.ASSERTION, Finding("MemberValueIncomplete", node, "a mapping that states mork:dataMember writes the member as its value with an R-Box match beneath a datum that states mork:memberRef, and states no other value")
+        return Kind.ASSERTION, None
     if spec.identity_rule is not None:
         if spec.identity_rule != MORK.SourceNodeIdentity:
             return Kind.SOURCE_NODE, Finding("IdentityRuleUnknown", node, f"{spec.identity_rule.n3()} is not an identity rule the compiler knows. It knows mork:SourceNodeIdentity")
@@ -499,6 +523,21 @@ def _classify(g: Graph, spec: Spec, specs: dict) -> tuple[Kind, Optional[Finding
     if s.abox:
         return Kind.CORRESPONDENCE, Finding("CorrespondenceUnused", node, "a correspondence is a row of its parent assertion's table, and this one has no parent", Severity.WARNING)
     return Kind.DATUM, Finding("Unclassified", node, "matches no case of the compiler: no T-Box, R-Box or A-Box match, and no datum")
+
+
+def _member_finding(spec: Spec, rbox, specs: dict) -> Optional[Finding]:
+    """Why a datum that states `mork:memberRef` is no datum made for each member, or None where it is one (§7.12)."""
+    node = str(spec.node)
+    if rbox is None:
+        return Finding("NoGluingProperty", node, "a datum made for each member names the property that joins it to its parent with an R-Box match")
+    parent = specs.get(spec.parent) if spec.parent is not None else None
+    if parent is None or parent.identity_rule != MORK.SourceNodeIdentity or parent.parents:
+        return Finding("MemberIncomplete", node, "a datum made for each member sits beneath a root datum that takes mork:SourceNodeIdentity, since the members are those of the node it iterates")
+    if spec.identity_rule not in (None, MORK.MemberIdentity):
+        return Finding("IdentityRuleUnknown", node, f"{spec.identity_rule.n3()} is not an identity rule a datum made for each member takes. It takes mork:MemberIdentity or none")
+    if spec.identity_rule == MORK.MemberIdentity and (spec.identity is not None or spec.member_name is not None or spec.concept_name or spec.individual_iri is not None):
+        return Finding("MemberIncomplete", node, "a datum whose node is the member states no identity template, member name, concept name or individual IRI, since it mints nothing")
+    return None
 
 
 def _join_finding(spec: Spec, rbox) -> Optional[Finding]:

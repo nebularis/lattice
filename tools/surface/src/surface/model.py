@@ -241,10 +241,12 @@ def operand_datatype(operand: Operand) -> Optional[URIRef]:
 
 @dataclass(frozen=True)
 class WrittenValue:
-    """One value a constructed node carries (``srf:writes``): the property it is written as, and the evidence binding it is read from."""
+    """One value a constructed node carries (``srf:writes``): the property it is written as, and either the evidence binding it is
+    read from or, for a node made for each member of an expansion, the member itself (``srf:fromMember``, law ``srf:P25``)."""
 
     property: URIRef
-    binding: RoleBinding
+    binding: Optional[RoleBinding] = None
+    from_member: bool = False
 
 
 @dataclass(frozen=True)
@@ -263,10 +265,19 @@ class ConstructedNode:
     writes: Tuple[WrittenValue, ...]
     #: The result-target role binding that states the node, which binds the property linking the instance to it.
     link: RoleBinding
+    #: Whether the member is a part of the key, after the key bindings (``srf:keyMember``, a node of an expansion only).
+    key_member: bool = False
+    #: The property of the members whose value names a member in the identity (``srf:memberName``), or None for the member itself.
+    member_name: Optional[URIRef] = None
 
     @property
     def keyed(self) -> bool:
         return str(self.identity) == str(SRF.ByKey)
+
+    @property
+    def member_node(self) -> bool:
+        """Whether the member itself is the node (``srf:MemberNode``), so nothing is minted."""
+        return str(self.identity) == str(SRF.MemberNode)
 
 
 @dataclass(frozen=True)
@@ -838,13 +849,15 @@ class SurfaceGraphAnalyser:
         stated = [(b, self.g.value(b.iri, SRF.constructedAs, any=False)) for b in bindings]
         stated = [(b, n) for b, n in stated if n is not None]
         is_construction = str(projection_kind) == str(SRF.GraphConstructionProjection)
+        is_expansion = str(projection_kind) == str(SRF.ExpansionProjection)
         for binding, _ in stated:
-            if str(binding.role_kind) != str(SRF.ResultTargetRole) or not is_construction:
+            # An expansion states a construction beside its expansion statement, on the one binding (law srf:P22).
+            if str(binding.role_kind) != str(SRF.ResultTargetRole) or not (is_construction or is_expansion):
                 raise ContractError(
                     f"{iri} states a construction on {binding.iri}, which is not the result-target role binding "
-                    f"of a graph construction (law srf:P10)"
+                    f"of a graph construction or of an expansion (laws srf:P10, srf:P22)"
                 )
-        if not is_construction:
+        if not is_construction and not (is_expansion and stated):
             return None
         if not stated:
             raise ContractError(
@@ -863,15 +876,25 @@ class SurfaceGraphAnalyser:
         if constructed_class is None:
             raise ContractError(f"{node} states no class for the node it constructs (law srf:P11)")
         identity = self._iri(node, SRF.nodeIdentity, required=False)
-        if identity is None or str(identity) not in (str(SRF.PerInstance), str(SRF.ByKey)):
-            raise ContractError(f"{node} states no identity, a node for each instance or for each value of a key (law srf:P11)")
+        allowed = (SRF.PerInstance, SRF.ByKey) + ((SRF.MemberNode,) if is_expansion else ())
+        if identity is None or str(identity) not in (str(i) for i in allowed):
+            raise ContractError(f"{node} states no identity, a node for each instance or for each value of a key, or the member itself for a node of an expansion (laws srf:P11, srf:P23)")
 
         key_iris = sorted((k for k in self.g.objects(node, SRF.keyBinding)), key=str)
         keyed = str(identity) == str(SRF.ByKey)
-        if keyed and not key_iris:
-            raise ContractError(f"{node} is keyed and names no key binding (law srf:P11)")
-        if not keyed and key_iris:
-            raise ContractError(f"{node} is a node for each instance and names a key binding (law srf:P11)")
+        flag = self.g.value(node, SRF.keyMember, any=False)
+        key_member = isinstance(flag, Literal) and flag.toPython() is True
+        member_name = self._iri(node, SRF.memberName, required=False)
+        if not is_expansion and (flag is not None or member_name is not None):
+            raise ContractError(f"{node} states a key member or a member name and is not a node of an expansion (law srf:P23)")
+        if flag is not None and not isinstance(flag, Literal):
+            raise ContractError(f"{node} states a key member that is not a boolean (law srf:P24)")
+        if keyed and not key_iris and not key_member:
+            raise ContractError(f"{node} is keyed and names no key binding and no key member (laws srf:P11, srf:P24)")
+        if not keyed and (key_iris or key_member):
+            raise ContractError(f"{node} is not keyed and names a key binding or a key member (laws srf:P11, srf:P24)")
+        if str(identity) == str(SRF.MemberNode) and member_name is not None:
+            raise ContractError(f"{node} is the member itself and names a member name, which it never spells (law srf:P24)")
         key: List[RoleBinding] = []
         for value in key_iris:
             binding = by_iri.get(str(value))
@@ -887,8 +910,14 @@ class SurfaceGraphAnalyser:
         for written in self.g.objects(node, SRF.writes):
             prop = self._iri(written, SRF.writesProperty, required=False)
             source = self._iri(written, SRF.fromBinding, required=False)
-            if prop is None or source is None:
-                raise ContractError(f"{node} writes a value that states no property or no evidence binding (law srf:P12)")
+            from_member = self.g.value(written, SRF.fromMember, any=False)
+            if from_member is not None and not (is_expansion and isinstance(from_member, Literal) and from_member.toPython() is True):
+                raise ContractError(f"{node} writes {prop} from the member, which only a node of an expansion does, and states it true (laws srf:P23, srf:P25)")
+            if prop is None or (source is None) == (from_member is None):
+                raise ContractError(f"{node} writes a value that states no property, or not exactly one of an evidence binding and the member (laws srf:P12, srf:P25)")
+            if from_member is not None:
+                writes.append(WrittenValue(property=prop, from_member=True))
+                continue
             binding = by_iri.get(str(source))
             if binding is None or str(binding.role_kind) not in EVIDENCE_ROLES or binding.binds_property is None:
                 raise ContractError(
@@ -909,6 +938,8 @@ class SurfaceGraphAnalyser:
             key=tuple(key),
             writes=tuple(writes),
             link=link,
+            key_member=key_member,
+            member_name=member_name,
         )
 
     def _join_statement(

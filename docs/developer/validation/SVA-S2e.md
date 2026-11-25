@@ -48,6 +48,10 @@ A derivation projection states its operation as a typed expression on its result
 
 Each but the last was run by the delegated developer and again by the reviewer. `check:mork` rewrites `ontology/mork/mtp/data/pins.lock.json`, which was restored, so its pins wait for `mise run build:mtp` at the merge.
 
+## Follow-up, 2026-11-25: the derivation's review
+
+The maintainer decided on 2026-11-25 that the review findings are named by the projection kind they review. A compiled derivation, which ADR-A41 asks an engineering review of and which this slice's lowering carries into a scheme, is recorded by `mork_rdf` as the finding `DerivationReview`, a warning on the assertion that names the property it writes. The lowering of this slice is unchanged. The finding is raised by `mork_rdf`'s compiler (SVA-S2f's slice, in the follow-up of the same day), and ADR-A41 has a Proposed addendum that names the three findings.
+
 ## Placement
 
 T0. Surface, MORK and their compilers are open substrate.

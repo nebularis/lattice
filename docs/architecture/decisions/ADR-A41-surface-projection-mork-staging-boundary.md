@@ -25,3 +25,9 @@ Lower Projection contracts only through a graph-reference job into an immutable 
 **Status of this addendum:** Accepted by the maintainer on 2026-11-24.
 
 A graph construction that gives one node for each value of a key merges the instances that share the key, as a join relates them, and a reviewer's judgement is needed where that merge is made. A keyed construction therefore requires mapping review, recorded as a finding in the way a join's is. A construction that gives a node for each instance merges nothing and requires none. The decision above is otherwise unchanged.
+
+## Addendum (2026-11-25): the findings are named by the projection kind they review
+
+**Status of this addendum:** Proposed.
+
+The engineering review the decision asks of a derivation and of an expansion names who reviews and not what is reviewed, and a compiler records a review as a finding that names its subject. The engineering review is therefore recorded as `DerivationReview` for a derivation and as `ExpansionReview` for an expansion, and the mapping review is recorded as `MappingReview`, for a join and for a keyed graph construction. Each is a warning of the compilation, raised every time. The reviews asked for, and who makes them, are unchanged, and so is the rest of the decision.

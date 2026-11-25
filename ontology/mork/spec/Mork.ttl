@@ -274,7 +274,7 @@ mork:IdentifiableElement a owl:Class ;
 
 mork:IdentityRule a owl:Class ;
     rdfs:label "identity rule" ;
-    rdfs:comment "A rule that gives a datum its identity without a template or a name. Its one individual is SourceNodeIdentity." .
+    rdfs:comment "A rule that gives a datum its identity without a template or a name. Its individuals are SourceNodeIdentity and MemberIdentity." .
 
 mork:InclusionIntent a owl:Class ;
     rdfs:label "inclusion intent" ;
@@ -370,6 +370,15 @@ mork:MappingScheme a owl:Class ;
     rdfs:label "mapping scheme" ;
     rdfs:comment "a scheme that captures mappings between concepts, from a RepresentationScheme to an OntologicalScheme" ;
     rdfs:subClassOf skos:ConceptScheme .
+
+mork:MemberExpression a owl:Class ;
+    rdfs:label "member expression" ;
+    rdfs:comment "The member a datum that states memberRef is made for, spelled for an IRI, in the datum's identity template. It is the member, or the value of the property memberName names where the datum states one. A literal is its lexical form, with its datatype after two carets where it is not xsd:string." ;
+    rdfs:subClassOf mork:TemplateExpression .
+
+mork:MemberIdentity a mork:IdentityRule, owl:NamedIndividual ;
+    rdfs:label "member identity" ;
+    rdfs:comment "The datum's node is the member it is made for, a node of the source. Nothing is minted, and the member is typed, linked from its parent and written on." .
 
 mork:Membership a owl:Class ;
     rdfs:label "membership" ;
@@ -1065,6 +1074,12 @@ mork:dataInline a owl:DatatypeProperty ;
     rdfs:comment "Data written in the mapping itself and not read from a source, for example a constant or the literal text of a template expression." ;
     rdfs:subPropertyOf mork:data .
 
+mork:dataMember a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "data member" ;
+    rdfs:comment "Whether an assertion writes the member of the datum it sits beneath, as its value. The member is a node or a literal, written as it is. An assertion that states it states no dataRef or dataInline." ;
+    rdfs:domain mork:DataMapping ;
+    rdfs:range xsd:boolean .
+
 mork:dataRef a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:comment "A reference to the data in the source, for example a path or a column. A mapping has at most one." ;
     rdfs:subPropertyOf mork:data .
@@ -1610,6 +1625,11 @@ mork:memberConcept a owl:ObjectProperty ;
     rdfs:comment "The concept a community membership is of." ;
     rdfs:domain mork:CommunityMembership .
 
+mork:memberName a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:label "member name" ;
+    rdfs:comment "A property of the members of a datum that states memberRef, whose value is known to be unique for them. The datum's identity spells that value in place of the member. A member that holds none is reported by MemberUnnamed and no node is made for it." ;
+    rdfs:domain mork:Datum .
+
 mork:memberOf a owl:ObjectProperty ;
     rdfs:label "member property of" ;
     rdfs:comment "Defines the object as a component property (i.e., member) of the subject, primarily to describe Representation elements using a clear vocabulary. This property is the inverse of memberProperty." ;
@@ -1620,6 +1640,12 @@ mork:memberProperty a owl:ObjectProperty ;
     rdfs:label "member property" ;
     rdfs:comment "Defines the subject as a component property (i.e., member) of the object. This specialisation of compositeNarrower provides a clear vocabulary for describing member properties (i.e., associations via property) within Representation schemes.\n\nNote that memberProperty is both asymmetric and irreflexive."^^xsd:string ;
     rdfs:subPropertyOf mork:compositeNarrower .
+
+mork:memberRef a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "member reference" ;
+    rdfs:comment "The path from a datum's parent's node to the nodes the datum is made for, one node of the datum for each node it reaches. Each is bound once, as the member, which the datum's identity, its link and each value beneath it read. In a source of RDF it is a SPARQL 1.1 property path, as dataRef is." ;
+    rdfs:domain mork:Datum ;
+    rdfs:range xsd:string .
 
 mork:missingOrUnrelatedMatch a owl:ObjectProperty ;
     rdfs:label "missing or unrelated match" ;

@@ -105,11 +105,14 @@ classDiagram
     class ConceptScheme
     class DataConcept
     class DataMapping {
+        dataMember (xsd:boolean)
         deprecationReason (xsd:string)
         narrowerMapping
         placeholderMapping
     }
     class Datum {
+        memberName
+        memberRef (xsd:string)
         reportsUnmatched (xsd:boolean)
     }
     class DeferredContext
@@ -359,6 +362,7 @@ A datum makes a target node, and the node needs an identity. The mapping states 
 | Statement | Target node |
 |---|---|
 | `mork:identityRule` with `mork:SourceNodeIdentity` | the node the datum iterates, its source node. Nothing is minted and no type is written |
+| `mork:identityRule` with `mork:MemberIdentity` | the member the datum is made for (5.4). Nothing is minted, and the member is typed and written on |
 | `mork:individualIRI` | that IRI, for every record |
 | an A-Box match | the named individual |
 | `mork:identityTemplateMapping` to a template expression, or an expression that `mork:resolvesIdentityFor` the datum | the IRI the expression forms |
@@ -367,7 +371,7 @@ A datum makes a target node, and the node needs an identity. The mapping states 
 
 A template expression is a small algebra over strings, and the identity of a datum is usually one. A `mork:LiteralExpression` is a constant, a `mork:RefExpression` reads a source value, a `mork:ConcatExpression` joins two expressions, a `mork:InterpolationExpression` fills the placeholders of a template string and a `mork:LookupExpression` finds a concept of a scheme whose property equals a source value. The expressions form a monoid under concatenation, so any two compose.
 
-<!-- start: {"generated": "class-diagram", "part": "Lookups and template expressions", "classes": ["mork:Lookup", "mork:TemplateExpression", "mork:LiteralExpression", "mork:RefExpression", "mork:ConcatExpression", "mork:InterpolationExpression", "mork:Interpolation", "mork:LookupExpression", "mork:TemplateBinding"]} -->
+<!-- start: {"generated": "class-diagram", "part": "Lookups and template expressions", "classes": ["mork:Lookup", "mork:TemplateExpression", "mork:LiteralExpression", "mork:RefExpression", "mork:ConcatExpression", "mork:InterpolationExpression", "mork:Interpolation", "mork:LookupExpression", "mork:MemberExpression", "mork:TemplateBinding"]} -->
 
 **Lookups and template expressions**
 
@@ -386,6 +390,7 @@ classDiagram
     class LiteralExpression
     class Lookup
     class LookupExpression
+    class MemberExpression
     class OrderedCollection
     class RefExpression
     class TemplateBinding {
@@ -406,6 +411,7 @@ classDiagram
     TemplateExpression <|-- InterpolationExpression
     TemplateExpression <|-- LiteralExpression
     TemplateExpression <|-- LookupExpression
+    TemplateExpression <|-- MemberExpression
     TemplateExpression <|-- RefExpression
 ```
 
@@ -529,6 +535,8 @@ classDiagram
     direction LR
     class DataMapping
     class Datum {
+        memberName
+        memberRef (xsd:string)
         reportsUnmatched (xsd:boolean)
     }
     class FindingSeverity
@@ -578,6 +586,48 @@ mm:CustomerCode a mork:JoinCondition ;
     mork:parentRef "src:customerCode" ;
     mork:ownRef "src:code" ;
     mork:lookupComparison mork:TermComparison .
+```
+
+A datum can be made once for each node a path reaches, the members of a collection such as an RDF list. A datum that states `mork:memberRef` sits beneath a root datum with `mork:SourceNodeIdentity` and keeps its parent's focus node. It also binds each node the path reaches from that node, once, as the member, so that its identity, its link to its parent and every value beneath it read the same one. Without that binding, each reference would read the collection on its own and the identity and the values would pair every member with every other.
+
+Three things read the member. A `mork:MemberExpression` in the datum's identity template is the member, spelled for an IRI. `mork:dataMember true` on an assertion beneath the datum writes the member itself, a node or a literal, as the assertion's value. A datum that states no identity template has the identity of one node for each parent node and member, the base, the name and a hash of the parent's node, then the member. A node is spelled by its IRI, and a literal by its lexical form, with its datatype after two carets where the datatype is not `xsd:string`, so the integer 7 and the string "7" are two names. A source's blank nodes are named by the skolem rule (12.2), and a blank node, which has no identifier a name can spell, is no member the datum is made for.
+
+`mork:memberName` names a property of the members whose value is known to be unique for them, and the identity then spells that value in place of the member. A member that holds no value of it is no member the datum is made for. Under `mork:identityRule mork:MemberIdentity` the datum's node is the member itself, so the datum types the member, links its parent to it and writes beneath it, and mints nothing. That applies only where the members are nodes of the source, and a literal or a blank member is no member the datum is made for.
+
+A member the datum is not made for is reported and the parent's other members are written. `MemberUnnamed` names the parent and the member that has no name to spell, and `MemberNotIri` the parent and the member that is no node where the member is the node. The datum is guarded as any datum is, by a guard tested on the parent's node, so a parent that lacks a required value contributes nothing. A list that repeats a member gives one node for it, since the queries write a set.
+
+A bundle that holds a list of items shows it. Each member of the list is one line, linked from the bundle, whose identity is the bundle's code and the member and which writes the member as the item it is of.
+
+```turtle-example
+mm:BundleLine a mork:MappingScheme .
+
+mm:Concept_Bundle a mork:DataConcept ; mork:representedAs src:Bundle .
+
+mm:Map_Bundle a mork:DataMapping , mork:Datum ;
+    mork:mappingScheme mm:BundleLine ;
+    mork:mappingFor mm:Concept_Bundle ;
+    mork:identityRule mork:SourceNodeIdentity ;
+    mork:compositeNarrowerMapping mm:Map_Line .
+
+mm:Map_Line a mork:DataMapping ;
+    mork:mappingScheme mm:BundleLine ;
+    mork:broaderApplicative mm:Map_Bundle ;
+    mork:exactTBoxMatch tgt:Line ;
+    mork:inverseRBoxMatch tgt:hasLine ;
+    mork:memberRef "src:items/rdf:rest*/rdf:first" ;
+    mork:identityTemplateMapping mm:LineIdentity ;
+    mork:compositeNarrowerMapping mm:Map_OfItem .
+
+mm:LineIdentity a mork:ConcatExpression ;
+    mork:concatLeft mm:LineStem ;
+    mork:concatRight mm:LineMember .
+mm:LineStem a mork:LiteralExpression ; mork:dataInline "Line/" .
+mm:LineMember a mork:MemberExpression .
+
+mm:Map_OfItem a mork:DataMapping ;
+    mork:mappingScheme mm:BundleLine ;
+    mork:exactRBoxMatch tgt:ofItem ;
+    mork:dataMember true .
 ```
 
 ### 5.5 Templates
@@ -2002,7 +2052,7 @@ Superclasses and restrictions are written in **Subclass of.** and **Equivalent t
 
 #### `mork:IdentityRule`
 
-**Definition.** A rule that gives a datum its identity without a template or a name. Its one individual is SourceNodeIdentity.
+**Definition.** A rule that gives a datum its identity without a template or a name. Its individuals are SourceNodeIdentity and MemberIdentity.
 
 **Label.** identity rule
 
@@ -2019,6 +2069,14 @@ Superclasses and restrictions are written in **Subclass of.** and **Equivalent t
 **Definition.** How many nodes a join may find, for one value of a parent node under joinCardinality and for the parent in all under linkCardinality. Its individuals are AtMostOneMatch and AnyNumberOfMatches.
 
 **Label.** join cardinality
+
+#### `mork:MemberExpression`
+
+**Definition.** The member a datum that states memberRef is made for, spelled for an IRI, in the datum's identity template. It is the member, or the value of the property memberName names where the datum states one. A literal is its lexical form, with its datatype after two carets where it is not xsd:string.
+
+**Label.** member expression
+
+**Subclass of.** `mork:TemplateExpression`
 
 <!-- end -->
 
@@ -3703,6 +3761,16 @@ The object properties of MORK first, then those of Executable.
 
 **Characteristics.** functional
 
+#### `mork:memberName`
+
+**Definition.** A property of the members of a datum that states memberRef, whose value is known to be unique for them. The datum's identity spells that value in place of the member. A member that holds none is reported by MemberUnnamed and no node is made for it.
+
+**Label.** member name
+
+**Domain.** `mork:Datum`
+
+**Characteristics.** functional
+
 #### `mork:linkCardinality`
 
 **Definition.** How many nodes a join may find for one parent node in all, whatever value found them, AtMostOneMatch or AnyNumberOfMatches. A parent whose values together find several writes no link under AtMostOneMatch. Unset is equivalent to AnyNumberOfMatches.
@@ -4957,6 +5025,30 @@ The datatype properties of MORK first, then those of Executable.
 
 **Characteristics.** functional
 
+#### `mork:memberRef`
+
+**Definition.** The path from a datum's parent's node to the nodes the datum is made for, one node of the datum for each node it reaches. Each is bound once, as the member, which the datum's identity, its link and each value beneath it read. In a source of RDF it is a SPARQL 1.1 property path, as dataRef is.
+
+**Label.** member reference
+
+**Domain.** `mork:Datum`
+
+**Range.** `xsd:string`
+
+**Characteristics.** functional
+
+#### `mork:dataMember`
+
+**Definition.** Whether an assertion writes the member of the datum it sits beneath, as its value. The member is a node or a literal, written as it is. An assertion that states it states no dataRef or dataInline.
+
+**Label.** data member
+
+**Domain.** `mork:DataMapping`
+
+**Range.** `xsd:boolean`
+
+**Characteristics.** functional
+
 #### `mork:reportsUnmatched`
 
 **Definition.** Whether a join reports a parent node that holds the values it compares and finds no node. A join datum states it. A parent that lacks the values is never reported.
@@ -5049,6 +5141,7 @@ MORK's individuals are the compilation modes, serialisation formats, lookup comp
 | Individual | Type | Label | Definition |
 |---|---|---|---|
 | `mork:SourceNodeIdentity` | `mork:IdentityRule`, `owl:NamedIndividual` | source node identity | The datum's node is the source node it iterates. Nothing is minted and no type is written, so the assertions beneath the datum write on the source node. |
+| `mork:MemberIdentity` | `mork:IdentityRule`, `owl:NamedIndividual` | member identity | The datum's node is the member it is made for, a node of the source. Nothing is minted, and the member is typed, linked from its parent and written on. |
 | `mork:LessThan` | `mork:ComparisonOperator`, `owl:NamedIndividual` | less than | The left compared operand is less than the right. |
 | `mork:LessThanOrEqual` | `mork:ComparisonOperator`, `owl:NamedIndividual` | less than or equal | The left compared operand is less than or equal to the right. |
 | `mork:EqualTo` | `mork:ComparisonOperator`, `owl:NamedIndividual` | equal to | The two compared operands are equal. |
@@ -5946,6 +6039,7 @@ The Axiom Index is generated from this section.
 | `mork:LookupExpression` | Class | Subclass of `mork:lookupScheme` some `skos:ConceptScheme`, `mork:lookupSource` some `mork:TemplateExpression`, `mork:TemplateExpression`. |
 | `mork:MappingReview` | Class |  |
 | `mork:MappingScheme` | Class | Subclass of `skos:ConceptScheme`. |
+| `mork:MemberExpression` | Class | Subclass of `mork:TemplateExpression`. |
 | `mork:Membership` | Class | Subclass of `mork:Representation`. |
 | `mork:NormativeReferenceItent` | Class | Subclass of `mork:IntentNode`. |
 | `mork:Objectification` | Class | Subclass of `mork:DataConcept`. Equivalent to (`mork:broadConceptRole` min 1 `skos:Concept`) and (`mork:narrowConceptRole` min 1 `skos:Concept`). |
@@ -6126,6 +6220,7 @@ The Axiom Index is generated from this section.
 | `mork:matchedConcepts` | Object property | Domain `mork:CommunityMatch`. |
 | `mork:matchesCommunity` | Object property | Domain `mork:CommunityMatch`. Range `mork:SemanticCommunity`. |
 | `mork:memberConcept` | Object property | Domain `mork:CommunityMembership`. |
+| `mork:memberName` | Object property | Domain `mork:Datum`. Functional. |
 | `mork:memberOf` | Object property | Inverse of `mork:memberProperty`. Subproperty of `mork:compositeBroader`. |
 | `mork:memberProperty` | Object property | Subproperty of `mork:compositeNarrower`. |
 | `mork:missingOrUnrelatedMatch` | Object property | Subproperty of `skos:relatedMatch`. |
@@ -6215,6 +6310,7 @@ The Axiom Index is generated from this section.
 | `mork:dagTemplateFrequency` | Datatype property | Domain `mork:DAGTemplate`. Range `xsd:integer`. Functional. |
 | `mork:data` | Datatype property | Subproperty of `owl:topDataProperty`. |
 | `mork:dataInline` | Datatype property | Subproperty of `mork:data`. |
+| `mork:dataMember` | Datatype property | Domain `mork:DataMapping`. Range `xsd:boolean`. Functional. |
 | `mork:dataRef` | Datatype property | Functional. Subproperty of `mork:data`. |
 | `mork:deprecationReason` | Datatype property | Domain `mork:DataMapping`. Range `xsd:string`. |
 | `mork:detectionAlgorithm` | Datatype property | Domain `mork:CommunityScheme`. Range `xsd:string`. Functional. |
@@ -6247,6 +6343,7 @@ The Axiom Index is generated from this section.
 | `mork:mappingVersion` | Datatype property | Domain `mork:MappingScheme`. Range `xsd:string`. |
 | `mork:matchConfidence` | Datatype property | Domain `mork:CommunityMatch`. Range `xsd:decimal`. Functional. |
 | `mork:matchScore` | Datatype property | Domain `mork:CommunityMatch`. Range `xsd:decimal`. Functional. |
+| `mork:memberRef` | Datatype property | Domain `mork:Datum`. Range `xsd:string`. Functional. |
 | `mork:name` | Datatype property | Range `xsd:string`. Subproperty of `owl:topDataProperty`. |
 | `mork:observationTimestamp` | Datatype property | Domain `mork:SectionObservation`. Range `xsd:dateTime`. Functional. |
 | `mork:orderedItems` | Datatype property | Subproperty of `mork:itemsConstrained`. |
@@ -6326,6 +6423,7 @@ The Axiom Index is generated from this section.
 | `mork:LessThan` | Individual | Type `mork:ComparisonOperator`, `owl:NamedIndividual`. |
 | `mork:LessThanOrEqual` | Individual | Type `mork:ComparisonOperator`, `owl:NamedIndividual`. |
 | `mork:LexicalComparison` | Individual | Type `mork:LookupComparison`, `owl:NamedIndividual`. |
+| `mork:MemberIdentity` | Individual | Type `mork:IdentityRule`, `owl:NamedIndividual`. |
 | `mork:MorkOntologyScheme` | Individual | Type `mork:OntologicalScheme`, `owl:NamedIndividual`. |
 | `mork:NotEqualTo` | Individual | Type `mork:ComparisonOperator`, `owl:NamedIndividual`. |
 | `mork:OwlNothing` | Individual | Type `mork:OwlAxiom`, `owl:NamedIndividual`. |
@@ -6372,7 +6470,9 @@ Section 6 states no restriction table, so no `shapes/structural.ttl` is generate
 | `mork:ArithmeticDatatypeShape`, `mork:QuotientDatatypeShape`, `mork:RoundingDatatypeShape`, `mork:TypedLiteralDatatypeShape` | a result datatype that is not the one the node gives: the widest of an arithmetic node's operands, with a quotient at least decimal, the operand's under rounding, and a typed literal's own |
 | `mork:ValueExpressionAcyclicityShape` | a value expression that is an operand of itself, directly or through others |
 | `mork:ValueExpressionAssertionShape` | a mapping whose value expression is not a typed value expression, and a mapping that states a value expression beside `mork:dataRef` or `mork:dataInline` |
-| `mork:SourceNodeIdentityShape` | a datum with a source node identity that states another identity, names a class to type the node with, iterates nothing, or states an identity rule that is not `mork:SourceNodeIdentity` |
+| `mork:SourceNodeIdentityShape` | a datum with a source node identity that states another identity, names a class to type the node with, iterates nothing, or states an identity rule that is neither `mork:SourceNodeIdentity` nor `mork:MemberIdentity` |
+| `mork:MemberDatumShape` | a datum made for each member that states a member reference that is empty, not a string or stated twice, a member name that is not an IRI or is stated twice, an identity rule other than `mork:MemberIdentity`, no R-Box match to write its link with, another identity beside `mork:MemberIdentity`, or no root datum with `mork:SourceNodeIdentity` above it |
+| `mork:MemberPlacementShape` | a member name on a mapping with no member reference, and an assertion with `mork:dataMember` beneath no datum that states a member reference or beside a `mork:dataRef` or `mork:dataInline` |
 | `mork:JoinConditionShape` | a join condition that states no `mork:parentRef` or no `mork:ownRef`, or states one twice, or that is empty or not a string, or states a comparison that is not one of the three or a datatype twice |
 | `mork:JoinDatumShape` | a join datum that states no join cardinality of the two, no `mork:reportsUnmatched` that is a boolean, a link cardinality that is not one of the two or is stated twice, an unmatched severity that is not a warning or information or is stated twice, an identity rule other than `mork:SourceNodeIdentity`, no R-Box match to write its link with, or a condition that is not a `mork:JoinCondition` |
 | `mork:JoinPlacementShape` | a datum that states a join cardinality, a link cardinality, `mork:reportsUnmatched` or an unmatched severity and no `mork:joinsOn`, so it is no join |
@@ -6743,12 +6843,12 @@ mork:ValueExpressionAssertionShape a sh:NodeShape ;
 mork:SourceNodeIdentityShape a sh:NodeShape ;
 	sh:targetSubjectsOf mork:identityRule ;
 	sh:sparql [
-		sh:message "A datum states an identity rule that is not mork:SourceNodeIdentity." ;
+		sh:message "A datum states an identity rule that is neither mork:SourceNodeIdentity nor mork:MemberIdentity." ;
 		sh:select """
 			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
 			SELECT $this ?value WHERE {
 				$this mork:identityRule ?value .
-				FILTER (?value != mork:SourceNodeIdentity)
+				FILTER (?value NOT IN (mork:SourceNodeIdentity, mork:MemberIdentity))
 			}
 		"""
 	] ;
@@ -6757,7 +6857,8 @@ mork:SourceNodeIdentityShape a sh:NodeShape ;
 		sh:select """
 			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
 			SELECT $this ?value WHERE {
-				$this ?property ?value .
+				$this mork:identityRule mork:SourceNodeIdentity ;
+					?property ?value .
 				FILTER (?property IN (mork:individualIRI, mork:identityTemplateMapping, mork:conceptFQNameTemplate, mork:conceptNameTemplate,
 					mork:conceptName, mork:exactABoxMatch, mork:broadABoxCategoryMatch, mork:narrowABoxCategoryMatch))
 			}
@@ -6778,7 +6879,8 @@ mork:SourceNodeIdentityShape a sh:NodeShape ;
 		sh:select """
 			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
 			SELECT $this ?value WHERE {
-				$this ?property ?value .
+				$this mork:identityRule mork:SourceNodeIdentity ;
+					?property ?value .
 				FILTER (?property IN (mork:deferredMapping, mork:exactTBoxMatch, mork:broadTBoxCategoryMatch, mork:narrowTBoxCategoryMatch))
 			}
 		"""
@@ -6788,8 +6890,77 @@ mork:SourceNodeIdentityShape a sh:NodeShape ;
 		sh:select """
 			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
 			SELECT $this WHERE {
-				$this mork:identityRule ?rule .
+				$this mork:identityRule mork:SourceNodeIdentity .
 				FILTER (NOT EXISTS { $this a mork:Datum } || NOT EXISTS { $this mork:mappingFor ?concept })
+			}
+		"""
+	] .
+
+mork:MemberDatumShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:memberRef ;
+	sh:property [ sh:path mork:memberRef ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ;
+		sh:message "A datum states at most one mork:memberRef, a path that is a string and not empty." ] ;
+	sh:property [ sh:path mork:memberName ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A datum made for each member states at most one mork:memberName, a property named by an IRI." ] ;
+	sh:property [ sh:path mork:identityRule ; sh:in ( mork:MemberIdentity ) ;
+		sh:message "A datum made for each member states no identity rule but mork:MemberIdentity." ] ;
+	sh:sparql [
+		sh:message "A datum made for each member states no R-Box match to write the link from its parent with." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS {
+					$this ?property ?value .
+					FILTER (?property IN (mork:exactRBoxMatch, mork:inverseRBoxMatch, mork:broadRBoxCategoryMatch))
+				}
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum whose node is the member states another identity, by a template, a name, an IRI or an A-Box match, or a member name, and it mints nothing." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:identityRule mork:MemberIdentity ;
+					?property ?value .
+				FILTER (?property IN (mork:individualIRI, mork:identityTemplateMapping, mork:conceptFQNameTemplate, mork:conceptNameTemplate,
+					mork:conceptName, mork:exactABoxMatch, mork:broadABoxCategoryMatch, mork:narrowABoxCategoryMatch, mork:memberName))
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum made for each member is not beneath a root datum with mork:SourceNodeIdentity, whose node it takes the members of." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS {
+					?parent (mork:compositeNarrowerMapping|^mork:compositeBroaderMapping|^mork:broaderApplicative) $this ;
+						mork:identityRule mork:SourceNodeIdentity .
+				}
+			}
+		"""
+	] .
+
+mork:MemberPlacementShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:memberName , mork:dataMember ;
+	sh:sparql [
+		sh:message "A mapping states mork:memberName and no mork:memberRef, so it has no members." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this mork:memberName ?name .
+				FILTER NOT EXISTS { $this mork:memberRef ?path }
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "An assertion states mork:dataMember beneath no datum that states mork:memberRef, or states a value beside it." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this mork:dataMember true .
+				FILTER (NOT EXISTS { ?parent (mork:compositeNarrowerMapping|^mork:compositeBroaderMapping|^mork:broaderApplicative) $this ; mork:memberRef ?path }
+					|| EXISTS { $this mork:dataRef ?value } || EXISTS { $this mork:dataInline ?value })
 			}
 		"""
 	] .
@@ -6882,6 +7053,7 @@ Not applicable.
 ## 12. Release Notes
 
 - **Unreleased**.
+  - no effect. A datum may be made for each node a path reaches, the members of a collection. New: `mork:MemberExpression`, `mork:MemberIdentity` and the properties `mork:memberRef`, `mork:memberName` and `mork:dataMember`, with shapes for a datum made for each member and for the placement of a member name and `mork:dataMember`. `mork:SourceNodeIdentityShape` now allows `mork:MemberIdentity` and states its rules for `mork:SourceNodeIdentity` alone.
   - no effect. A datum may take a node of a second class of the source by equality of values, a join. New: `mork:JoinCondition` and `mork:JoinCardinality` with its individuals `mork:AtMostOneMatch` and `mork:AnyNumberOfMatches`, and the properties `mork:joinsOn`, `mork:parentRef`, `mork:ownRef`, `mork:joinCardinality` (how many nodes one value finds), `mork:linkCardinality` (how many one parent finds in all, any number where unset), `mork:reportsUnmatched` and `mork:unmatchedSeverity` (a warning where unset), with shapes that refuse a join datum that states no cardinality, no `mork:reportsUnmatched`, another identity or no R-Box match, a condition that lacks a path or states a comparison that is not one of the three, and a cardinality, a link cardinality, `mork:reportsUnmatched` or an unmatched severity with no condition. A condition states its own comparison and datatype, with `mork:lookupComparison` and `mork:lookupDatatype`, and one that states no comparison means a term comparison. A join datum states neither property and a shape refuses one that does, so a datum's comparison is never a fallback. A mapping that states none of them means what it meant before, and a lookup is unchanged.
   - no effect. Typed value expressions sit beside the template expressions, which stay a monoid over strings. New: `mork:ValueExpression` with `mork:TypedRefExpression`, `mork:TypedLiteralExpression`, `mork:ArithmeticExpression` and its `mork:SumExpression`, `mork:DifferenceExpression`, `mork:ProductExpression` and `mork:QuotientExpression`, `mork:RoundingExpression` and `mork:ChoiceExpression`, `mork:ComparisonOperator` with its six individuals, and the properties `mork:valueExpression`, `mork:resultDatatype`, `mork:leftOperand`, `mork:rightOperand`, `mork:typedValue`, `mork:roundedOperand`, `mork:roundingScale`, `mork:comparisonOperator`, `mork:comparedLeft`, `mork:comparedRight`, `mork:whenTrue` and `mork:whenFalse`. New shapes refuse an untyped operand, a non-numeric operand of arithmetic, a result datatype the operands do not give, a choice missing a branch, a cycle and a mapping with two values.
   - no effect. A datum may take the source node it iterates as its identity. New: `mork:IdentityRule`, its individual `mork:SourceNodeIdentity` and `mork:identityRule`, with a shape that refuses a datum with that identity that states another identity, names a class to type the node with or iterates nothing. A datum that states no identity rule means what it meant before.

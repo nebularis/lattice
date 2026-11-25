@@ -329,6 +329,7 @@ Multiple types are joined with `+`: `M+MD`, `C+RE`. A CURIE whose local name beg
 | `EI` | `mork:InterpolationExpression` |  |
 | `EK` | `mork:LookupExpression` |  |
 | `EB` | `mork:TemplateBinding` | positional form `[name expr]` |
+| `EM` | `mork:MemberExpression` | the member of a datum made for each member |
 
 **Typed value expression** (a numeric value is built from these, not from the string template expressions)
 
@@ -764,6 +765,14 @@ Kind: *object* takes an IRI, inline node or payload, *data* takes a literal type
 | `lkc` | `mork:linkCardinality` | object |  |
 | `usv` | `mork:unmatchedSeverity` | object |  |
 
+**Member**
+
+| Code | Property | Kind | Literal type |
+|---|---|---|---|
+| `mrf` | `mork:memberRef` | data | xsd:string |
+| `mnm` | `mork:memberName` | object |  |
+| `dmb` | `mork:dataMember` | data | xsd:boolean |
+
 **Compiled mapping**
 
 | Code | Property | Kind | Literal type |
@@ -932,6 +941,7 @@ Reserved tokens begin with `.` and are valid only in object position.
 | `.ge` | `mork:GreaterThanOrEqual` |
 | `.gt` | `mork:GreaterThan` |
 | `.src` | `mork:SourceNodeIdentity` |
+| `.mem` | `mork:MemberIdentity` |
 | `.amo` | `mork:AtMostOneMatch` |
 | `.any` | `mork:AnyNumberOfMatches` |
 | `.err` | `mork:ErrorFinding` |

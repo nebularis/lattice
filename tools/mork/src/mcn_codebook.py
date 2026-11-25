@@ -154,6 +154,7 @@ _type("EC", "mork:ConcatExpression", "Expression")
 _type("EI", "mork:InterpolationExpression", "Expression")
 _type("EK", "mork:LookupExpression", "Expression")
 _type("EB", "mork:TemplateBinding", "Expression", "positional form [name expr]")
+_type("EM", "mork:MemberExpression", "Expression", "the member of a datum made for each member")
 
 # -- Typed value expression --
 _type("V", "mork:ValueExpression", "ValueExpression", "abstract; prefer the specific codes")
@@ -558,6 +559,11 @@ _prop("rpu", "mork:reportsUnmatched", kind=KIND_DATA, datatype="xsd:boolean", gr
 _prop("lkc", "mork:linkCardinality", group="Join")
 _prop("usv", "mork:unmatchedSeverity", group="Join")
 
+# -- Member --
+_prop("mrf", "mork:memberRef", kind=KIND_DATA, datatype="xsd:string", group="Member")
+_prop("mnm", "mork:memberName", group="Member")
+_prop("dmb", "mork:dataMember", kind=KIND_DATA, datatype="xsd:boolean", group="Member")
+
 # -- Compiled mapping --
 _prop("hq", "mork:hasCompiledQuery", group="Compiled mapping")
 _prop("hf", "mork:hasCompileFinding", group="Compiled mapping")
@@ -822,6 +828,7 @@ RESERVED: Dict[str, str] = {
     ".ge": "mork:GreaterThanOrEqual",
     ".gt": "mork:GreaterThan",
     ".src": "mork:SourceNodeIdentity",
+    ".mem": "mork:MemberIdentity",
     ".amo": "mork:AtMostOneMatch",
     ".any": "mork:AnyNumberOfMatches",
     ".err": "mork:ErrorFinding",

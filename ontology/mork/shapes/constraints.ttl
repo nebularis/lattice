@@ -362,12 +362,12 @@ mork:ValueExpressionAssertionShape a sh:NodeShape ;
 mork:SourceNodeIdentityShape a sh:NodeShape ;
 	sh:targetSubjectsOf mork:identityRule ;
 	sh:sparql [
-		sh:message "A datum states an identity rule that is not mork:SourceNodeIdentity." ;
+		sh:message "A datum states an identity rule that is neither mork:SourceNodeIdentity nor mork:MemberIdentity." ;
 		sh:select """
 			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
 			SELECT $this ?value WHERE {
 				$this mork:identityRule ?value .
-				FILTER (?value != mork:SourceNodeIdentity)
+				FILTER (?value NOT IN (mork:SourceNodeIdentity, mork:MemberIdentity))
 			}
 		"""
 	] ;
@@ -376,7 +376,8 @@ mork:SourceNodeIdentityShape a sh:NodeShape ;
 		sh:select """
 			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
 			SELECT $this ?value WHERE {
-				$this ?property ?value .
+				$this mork:identityRule mork:SourceNodeIdentity ;
+					?property ?value .
 				FILTER (?property IN (mork:individualIRI, mork:identityTemplateMapping, mork:conceptFQNameTemplate, mork:conceptNameTemplate,
 					mork:conceptName, mork:exactABoxMatch, mork:broadABoxCategoryMatch, mork:narrowABoxCategoryMatch))
 			}
@@ -397,7 +398,8 @@ mork:SourceNodeIdentityShape a sh:NodeShape ;
 		sh:select """
 			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
 			SELECT $this ?value WHERE {
-				$this ?property ?value .
+				$this mork:identityRule mork:SourceNodeIdentity ;
+					?property ?value .
 				FILTER (?property IN (mork:deferredMapping, mork:exactTBoxMatch, mork:broadTBoxCategoryMatch, mork:narrowTBoxCategoryMatch))
 			}
 		"""
@@ -407,8 +409,77 @@ mork:SourceNodeIdentityShape a sh:NodeShape ;
 		sh:select """
 			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
 			SELECT $this WHERE {
-				$this mork:identityRule ?rule .
+				$this mork:identityRule mork:SourceNodeIdentity .
 				FILTER (NOT EXISTS { $this a mork:Datum } || NOT EXISTS { $this mork:mappingFor ?concept })
+			}
+		"""
+	] .
+
+mork:MemberDatumShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:memberRef ;
+	sh:property [ sh:path mork:memberRef ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ;
+		sh:message "A datum states at most one mork:memberRef, a path that is a string and not empty." ] ;
+	sh:property [ sh:path mork:memberName ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "A datum made for each member states at most one mork:memberName, a property named by an IRI." ] ;
+	sh:property [ sh:path mork:identityRule ; sh:in ( mork:MemberIdentity ) ;
+		sh:message "A datum made for each member states no identity rule but mork:MemberIdentity." ] ;
+	sh:sparql [
+		sh:message "A datum made for each member states no R-Box match to write the link from its parent with." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS {
+					$this ?property ?value .
+					FILTER (?property IN (mork:exactRBoxMatch, mork:inverseRBoxMatch, mork:broadRBoxCategoryMatch))
+				}
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum whose node is the member states another identity, by a template, a name, an IRI or an A-Box match, or a member name, and it mints nothing." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this ?value WHERE {
+				$this mork:identityRule mork:MemberIdentity ;
+					?property ?value .
+				FILTER (?property IN (mork:individualIRI, mork:identityTemplateMapping, mork:conceptFQNameTemplate, mork:conceptNameTemplate,
+					mork:conceptName, mork:exactABoxMatch, mork:broadABoxCategoryMatch, mork:narrowABoxCategoryMatch, mork:memberName))
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "A datum made for each member is not beneath a root datum with mork:SourceNodeIdentity, whose node it takes the members of." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				FILTER NOT EXISTS {
+					?parent (mork:compositeNarrowerMapping|^mork:compositeBroaderMapping|^mork:broaderApplicative) $this ;
+						mork:identityRule mork:SourceNodeIdentity .
+				}
+			}
+		"""
+	] .
+
+mork:MemberPlacementShape a sh:NodeShape ;
+	sh:targetSubjectsOf mork:memberName , mork:dataMember ;
+	sh:sparql [
+		sh:message "A mapping states mork:memberName and no mork:memberRef, so it has no members." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this mork:memberName ?name .
+				FILTER NOT EXISTS { $this mork:memberRef ?path }
+			}
+		"""
+	] ;
+	sh:sparql [
+		sh:message "An assertion states mork:dataMember beneath no datum that states mork:memberRef, or states a value beside it." ;
+		sh:select """
+			PREFIX mork: <http://www.nebularis.org/ontologies/Mork#>
+			SELECT $this WHERE {
+				$this mork:dataMember true .
+				FILTER (NOT EXISTS { ?parent (mork:compositeNarrowerMapping|^mork:compositeBroaderMapping|^mork:broaderApplicative) $this ; mork:memberRef ?path }
+					|| EXISTS { $this mork:dataRef ?value } || EXISTS { $this mork:dataInline ?value })
 			}
 		"""
 	] .

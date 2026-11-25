@@ -38,9 +38,13 @@ Each was run by the delegated developer and again by the reviewer.
 
 ## Left open
 
-- Two engine differences, pinned by a test and described in `mork_rdf`'s README: a decimal product's lexical form, `354.00` on rdflib and `354` on Oxigraph, and a double divided by zero, infinity on Oxigraph and an error on rdflib, which the compiled guard hides. Neither is yet a finding in the triple-stores domain.
+- Two engine differences, pinned by a test and described in `mork_rdf`'s README: a decimal product's lexical form, `354.00` on rdflib and `354` on Oxigraph, and a double divided by zero, infinity on Oxigraph and an error on rdflib, which the compiled guard hides. Both are recorded in the triple-stores domain as TSD-77 and TSD-78.
 - A carrier with several values for an operand gets one result for each combination. No check reports it.
 - A result datatype outside the four numeric ones is not cast.
+
+## Follow-up, 2026-11-25: the derivation's review
+
+The maintainer decided on 2026-11-25 that the review findings are named by the projection kind they review. The derivation this slice compiles, which recorded no finding when it was built, now records `DerivationReview`, a warning on the assertion that names the property it writes, which is where ADR-A41's engineering review of a derivation is recorded. The compiled query and the checks are unchanged. Two tests changed. The compile test of the ARR scheme expects the one finding instead of none, and the test of each operation allows `DerivationReview` as the one warning. `mork_rdf`'s README names the finding in section 7.8 and in its table of findings.
 
 ## Placement
 

@@ -3,7 +3,7 @@
 # Sketch: a projection backend, from a Surface projection contract to queries a step runs
 
 **Unit:** `studio-visual-authoring` (SVA), slice SVA-S2d, raised on 2026-11-23 when the maintainer chose that projections are built in this unit, design first
-**Status:** sketch. SVA-Q24 to SVA-Q56 answered by the maintainer between 2026-11-23 and 2026-11-25. Derivations, graph constructions, joins and expansions are built, and a node for each member is being built
+**Status:** sketch. SVA-Q24 to SVA-Q56 answered by the maintainer between 2026-11-23 and 2026-11-25. Derivations, graph constructions, joins, expansions and a node for each member are built
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md), slices SVA-S2d and SVA-S2c
 **Builds on:** ADR-A16, ADR-A17, ADR-A18, ADR-A19, ADR-A20, ADR-A23 and ADR-A41 (all Accepted), ADR-A154 with its addendum of 2026-11-20, and `tools/mork_rdf`
 
@@ -31,7 +31,7 @@ A naming hazard: in MORK, `mork:ProjectionMapping` is a generative mapping that 
 
 **`mork_rdf` writes onto the focus node.** A new identity rule, the source node itself, lets an assertion write the result property on the carrier without minting or typing a datum. The expression compiles to SPARQL arithmetic in a `BIND`, its operands each bound by a reference's path, and a carrier missing an operand writes nothing, which a check reports.
 
-**The studio compiles and runs it.** The surface compile job lowers each projection and compiles its scheme with `mork_rdf`, beside the promotions' maintenance, and records the engineering review ADR-A41 asks of a derivation as a finding the author sees. A step's projection part runs the compiled scheme over the world before and after with `mork_rdf`'s driver, which is the Python worker's under ADR-A154's addendum.
+**The studio compiles and runs it.** The surface compile job lowers each projection and compiles its scheme with `mork_rdf`, beside the promotions' maintenance, and records the engineering review ADR-A41 asks of a derivation as a finding the author sees, `DerivationReview` (named so on 2026-11-25, with `ExpansionReview` for an expansion and `MappingReview` for a join and a keyed construction). A step's projection part runs the compiled scheme over the world before and after with `mork_rdf`'s driver, which is the Python worker's under ADR-A154's addendum.
 
 ### 2.1 Worked example, ARR
 
@@ -68,7 +68,7 @@ WHERE {
 }
 ```
 
-As `mork_rdf` writes it (SVA-S2f, built 2026-11-24), the prefixed names above stand for the full IRIs it writes, and it casts the product to the expression's result datatype. Beside it come one check for each operand the expression reads, naming a carrier that lacks it, and one naming a carrier whose expression is undefined, as a quotient by zero is.
+As `mork_rdf` writes it (SVA-S2f, built 2026-11-24), the prefixed names above stand for the full IRIs it writes, and it casts the product to the expression's result datatype. Beside it come one check for each operand the expression reads, naming a carrier that lacks it, and one naming a carrier whose expression is undefined, as a quotient by zero is. It also records `DerivationReview`, a warning on the assertion that names the property it writes, which is where ADR-A41's engineering review of a derivation is recorded as a finding (added 2026-11-25).
 
 ### 2.2 Graph construction, the case and where it stops (SVA-S2g, 2026-11-24)
 
@@ -295,7 +295,7 @@ WHERE {
 }
 ```
 
-The checks are queries of their own and are not shown. `InstanceExcluded` names each bundle the guard excludes with the required value it lacks, as for a construction and a join. `CollectionEmpty` is new, emitted for an assertion that writes on the source node with a path, and names each bundle the guard admits that holds the property the path starts from and whose path reaches no member, with the path, as information, so an instance that lacks the property is silent. `ClosureCycle` is new as well, emitted where the path walks a closure, and names each node that reaches itself through it, with the closure, as a warning. A list's members walk `rdf:rest*`, so a list that loops back is reported by one of its cells. The compiler also records `EngineeringReview`, a warning on the assertion that names the path and says the number of statements for one node depends on the data, which is where ADR-A41's engineering review of an expansion is recorded as a finding in this slice. `MappingReview` is the merge's finding and an expansion does not carry it. The studio's review requirement reads only the projection kind today and does not yet act on either finding (the same open point as for a keyed construction and a join).
+The checks are queries of their own and are not shown. `InstanceExcluded` names each bundle the guard excludes with the required value it lacks, as for a construction and a join. `CollectionEmpty` is new, emitted for an assertion that writes on the source node with a path, and names each bundle the guard admits that holds the property the path starts from and whose path reaches no member, with the path, as information, so an instance that lacks the property is silent. `ClosureCycle` is new as well, emitted where the path walks a closure, and names each node that reaches itself through it, with the closure, as a warning. A list's members walk `rdf:rest*`, so a list that loops back is reported by one of its cells. The compiler also records `ExpansionReview`, a warning on the assertion that names the path and says the number of statements for one node depends on the data, which is where ADR-A41's engineering review of an expansion is recorded as a finding in this slice. `MappingReview` is the merge's finding and an expansion does not carry it. The studio's review requirement reads only the projection kind today and does not yet act on either finding (the same open point as for a keyed construction and a join).
 
 What the first example gives, over four bundles, is a statement for each of the three members of the first, one for the second, nothing for the third, whose list is empty and which is reported as information, and nothing for the fourth, which has no list and is excluded and reported. The second, over a chain of three categories, gives two statements for the narrowest and one for the middle category, and the broadest holds no broader relation, so it is silent. Where a relation loops, such as a first category that is broader than the third, each of the three is reported as a node that reaches itself.
 
@@ -305,20 +305,22 @@ What the first example gives, over four bundles, is a statement for each of the 
 
 SVA-Q44 answered that an expansion writes a statement on the instance and mints nothing, and that "a node for each member, expansion combined with graph construction, is planned as a slice of its own". In its simplest generic form each instance holds a collection, and each member of it becomes a node of another class, linked from the instance, carrying what the member and the instance give. For example, each `ex:Bundle` holds a list of `ex:items`, and each member of the list becomes one `ex:Line`, linked from the bundle by `ex:hasLine`, writing the member as `ex:ofItem` and the bundle's `ex:bundleCode` as `ex:bundleCode`. No value spelled into an identifier is involved where the member is an existing node and the bundle code is a code and not a personal value.
 
-What the contract states today, and what the case needs:
+What the contract had, and what the case needed, as the maintainer's answers of 2026-11-25 (SVA-Q50 to SVA-Q56) settled it:
 
-| What the case needs | What the contract has |
-|---|---|
-| the members of the collection | an expansion statement, stated on the result-target binding with `srf:expandedAs` (`srf:P18` to `srf:P21`) |
-| a node for each of them, with a class, an identity and written values | a constructed node, stated on the result-target binding with `srf:constructedAs` (`srf:P10` to `srf:P13`) |
-| the two on one binding | nothing. `srf:P10` says only a graph construction states a construction, `srf:P18` says only an expansion states an expansion, and a contract has one projection kind |
-| the identity of a node made from a member | `srf:PerInstance` and `srf:ByKey`, whose key names required-evidence bindings (`srf:P13`). An evidence binding reads a property of the instance, so no key part can read the member |
-| a value written from the member | `srf:fromBinding`, which names an evidence binding of the instance (`srf:P12`). Nothing writes the member, or a property of it |
-| the member that is already an IRI | SVA-Q44 (a) says a member is a node or a literal and nothing is minted. A node minted for each member is what (b) says, and it names no case where the member is the node |
+| What the case needs | What the contract had | As answered |
+|---|---|---|
+| the members of the collection, and a node for each | an expansion statement (`srf:P18` to `srf:P21`) and a constructed node (`srf:P10` to `srf:P13`), each on the result-target binding, each stated by a kind of its own | both on the one binding, `srf:expandedAs` and `srf:constructedAs`, the contract an expansion, and `srf:P10` and `srf:P18` relaxed (SVA-Q50 (b)) |
+| what "for each" means | `srf:PerInstance` and `srf:ByKey` | the contract states it. `srf:PerInstance` is one node for each instance and member and `srf:ByKey` one for each value of the key, and a list that repeats a member gives one node (SVA-Q51 (c)) |
+| a key that reads the member | key bindings, required evidence of the instance (`srf:P13`) | the instance's bindings and the member, `srf:keyMember`, the member at most one part and at least one part in all (SVA-Q52 (b)) |
+| a value written from the member | `srf:fromBinding`, an evidence binding of the instance | `srf:fromMember` beside it, and a value of the member's own properties is never copied, a join from the node to it models it where it is wanted (SVA-Q53 (a)) |
+| the member that is already an IRI | nothing | a closed choice in the identity, a node minted for each member or the member itself the node, `srf:MemberNode` (SVA-Q54 (c)) |
+| a member with no stable text | nothing | a property of the members the contract names, `srf:memberName`, spelled in place of the member, and `MemberUnnamed` for a member that lacks it or is a blank node where none is named (SVA-Q55 (a)) |
 
-What `mork_rdf` compiles today fits most of the output. A source-node root over the bundle, a contextual datum beneath it that mints and types the line and is glued to the bundle by an inverse R-Box match, a guard on the instance's required evidence and an assertion beneath the datum for each written value are the cases of sections 2.2 and 2.4. What no case does is take the member as a variable the datum's identity and its assertions share. A reference reads one value for each solution, and the query that writes the node must bind the same member in the identity, the link and the value, which is one reference with a name the others read, and that is a new term in MORK.
+What `mork_rdf` compiled before fits most of the output. A source-node root over the bundle, a contextual datum beneath it that mints and types the line and is glued to the bundle by an inverse R-Box match, a guard on the instance's required evidence and an assertion beneath the datum for each written value are the cases of sections 2.2 and 2.4. What no case did was take the member as a variable the datum's identity and its assertions share. A reference reads one value for each solution, so an identity and a value that each read the list would pair every member with every other, and the query that writes the node must bind the same member in the identity, the link and the value. That is the one new MORK term, `mork:memberRef`, which binds the member once. The terms that read the member, and the individual that makes it the node, come with it (below).
 
-**The example, a sketch and not built.** Placeholder names, and the new terms (`srf:keyMember`, `srf:fromMember`, `srf:constructedFrom`) are placeholders too:
+**As built (SVA-S2j, 2026-11-25).** The example is `ontology/surface/examples/bundle-line-construction-projection.ttl`, keyed by the bundle's code and the member. A contract states the expansion and the construction on the result-target binding, with `srf:expandedAs` and `srf:constructedAs`, and the contract's kind is an expansion. The node states `srf:nodeIdentity` as `srf:PerInstance`, `srf:ByKey` or the new `srf:MemberNode`, `srf:keyMember true` where the member is a part of the key, `srf:memberName` for a stable name, and each written value states `srf:fromMember true` or `srf:fromBinding`. New laws `srf:P22` to `srf:P25` and a shape for each part check it, `srf:P10`, `srf:P11`, `srf:P12` and `srf:P18` are relaxed to say what the pairing allows, and `srf:P1` reads the scope of the class of the node.
+
+The contract, as in the example:
 
 ```turtle
 ex:bl-code a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:bundleCode .
@@ -332,22 +334,54 @@ ex:bl-node a srf:ConstructedNode ; srf:constructedClass ex:Line ;
                [ srf:writesProperty ex:bundleCode ; srf:fromBinding ex:bl-code ] .
 ```
 
-The scheme would be the construction's, a source-node root, a contextual datum with the guard, an identity template and an assertion for each value, with the member bound once by the path. The query that writes the node and the link, with the prefixed names standing for the full IRIs `mork_rdf` writes:
+Lowered, abridged, with each node's name shortened to its place in the scheme. The scheme is a graph construction's, with the datum stating the expansion's path as `mork:memberRef`. MORK gains `mork:memberRef`, `mork:MemberExpression`, `mork:dataMember`, `mork:memberName` and the individual `mork:MemberIdentity`. A key reads the member through `mork:MemberExpression`, the last part of its template, a value written from the member is an assertion with `mork:dataMember true`, and the guard names every required-evidence binding:
+
+```turtle
+exec:scheme_root a mork:DataMapping, mork:Datum ; mork:mappingScheme exec:scheme ; mork:mappingFor exec:scheme_carrier ;
+    mork:identityRule mork:SourceNodeIdentity ; mork:compositeNarrowerMapping exec:scheme_node .
+exec:scheme_node a mork:DataMapping ; mork:mappingScheme exec:scheme ; mork:broaderApplicative exec:scheme_root ;
+    mork:exactTBoxMatch ex:Line ; mork:inverseRBoxMatch ex:hasLine ;
+    mork:memberRef "<.../items>/<rdf:rest>*/<rdf:first>" ;
+    mork:appliesWhen exec:scheme_guard ; mork:identityTemplateMapping exec:scheme_identity_0 ;
+    mork:compositeNarrowerMapping exec:scheme_write_0 , exec:scheme_write_1 .
+exec:scheme_identity_0 a mork:ConcatExpression ; mork:concatLeft exec:scheme_identity_part_0 ; mork:concatRight exec:scheme_identity_1 .
+exec:scheme_identity_part_0 a mork:LiteralExpression ; mork:dataInline "bundle-line/Line/" .
+exec:scheme_identity_1 a mork:ConcatExpression ; mork:concatLeft exec:scheme_identity_part_1 ; mork:concatRight exec:scheme_identity_2 .
+exec:scheme_identity_part_1 a mork:RefExpression ; mork:dataRef "<.../bundleCode>" .
+exec:scheme_identity_2 a mork:ConcatExpression ; mork:concatLeft exec:scheme_identity_part_2 ; mork:concatRight exec:scheme_identity_part_3 .
+exec:scheme_identity_part_2 a mork:LiteralExpression ; mork:dataInline "/" .
+exec:scheme_identity_part_3 a mork:MemberExpression .
+exec:scheme_write_0 a mork:DataMapping ; mork:exactRBoxMatch ex:bundleCode ; mork:dataRef "<.../bundleCode>" .
+exec:scheme_write_1 a mork:DataMapping ; mork:exactRBoxMatch ex:ofItem ; mork:dataMember true .
+```
+
+A node for each instance and member states no template and `mork:conceptName`, and MORK's default is the hash of the instance and then the member. The member as the node states `mork:identityRule mork:MemberIdentity` and no template, name or member name. A stable name is `mork:memberName` on the datum.
+
+Compiled, the query that writes the node and the link, with the prefixed names standing for the full IRIs `mork_rdf` writes. The member is bound once, the pattern after it leaves a blank member out, and the spelling is bound once as well, so the identity reads it. A blank node reaches the query as itself or, in a run, as a skolem IRI, and the filter reads both. The query for each value repeats the guard and the identity, whole, and adds the value's own pattern, and the one for the member writes `?t6 ex:ofItem ?m4`:
 
 ```sparql
 BASE <https://example.org/lattice/surface/bundle-line/out/>
-CONSTRUCT { ?t3 rdf:type ex:Line . ?f1 ex:hasLine ?t3 . }
+CONSTRUCT { ?t6 rdf:type ex:Line . ?f1 ex:hasLine ?t6 . }
 WHERE {
   ?f1 rdf:type ex:Bundle .
-  FILTER (EXISTS { ?f1 ex:bundleCode ?any2 . })
-  FILTER (EXISTS { ?f1 ex:items ?any3 . })
-  ?f1 ex:bundleCode ?v4 .
-  ?f1 ex:items/(rdf:rest*)/rdf:first ?m5 .
-  BIND (IRI(CONCAT("bundle-line/Line/", ENCODE_FOR_URI(STR(?v4)), "/", ENCODE_FOR_URI(STR(?m5)))) AS ?t3)
+  FILTER (((EXISTS { ?f1 ex:bundleCode ?any2 . })) && ((EXISTS { ?f1 ex:items ?any3 . })))
+  ?f1 ex:items/(rdf:rest*)/rdf:first ?m4 .
+  FILTER (!(isBlank(?m4) || STRSTARTS(STR(?m4), "urn:mork-rdf:skolem:v1:")))
+  BIND (IF(isLiteral(?m4) && DATATYPE(?m4) != xsd:string, CONCAT(STR(?m4), "^^", STR(DATATYPE(?m4))), STR(?m4)) AS ?s5)
+  ?f1 ex:bundleCode ?v7 .
+  BIND (IRI(CONCAT("bundle-line/Line/", CONCAT(ENCODE_FOR_URI(STR(?v7)), CONCAT("/", ENCODE_FOR_URI(?s5))))) AS ?t6)
 }
 ```
 
-**Where it stops.** The case needs choices about what "for each" means, what an identity may read, how two statements share a binding, what the node writes from a member and what happens to a member that is an IRI. The answers above settle none of them, and SVA-Q50 to SVA-Q56 in section 3 ask each. The slice builds nothing until they are answered. Nothing here depends on the two choices of SVA-S2i still open (an expansion on candidate evidence for an instance that lacks the property, and a check for a node that reaches itself through a closure), and no option below changes how an expansion behaves.
+**The checks.** The datum takes `InstanceExcluded` for each bundle the guard excludes, as a construction does, and `CollectionEmpty` and `ClosureCycle` for its path, as an expansion does. `MemberUnnamed` is new. It names each bundle and each member that has no name to spell, a blank node where no `srf:memberName` is stated or a member without the named value, as a warning, and the other members are written. `MemberNotIri` is new as well, for the member as the node, and names each literal or blank member, which is left out. `IdentityAmbiguous` groups by the bundle and the member. `ValueDisagrees` is read for a node whose identity reads the member without the bundle, so two bundles that hold one member and give it different codes are reported.
+
+**The findings.** The datum records `ExpansionReview`, a warning that names the path, since the number of nodes for one bundle depends on the data. It records `MappingReview` where its identity reads the member without the focus node, or the member is the node, since each merges the bundles that share a member. A key of the bundle's code and the member takes both, since the bundles that share the code and the member share the node, and a node for each bundle and member takes the first alone. The studio's review requirement reads only the projection kind today, and does not yet act on either (the same open point as for a keyed construction, a join and an expansion).
+
+**Choices the answers did not settle.** A literal member is spelled with its lexical form and, where its datatype is not `xsd:string`, the datatype after two carets, so the integer 7 and the string "7" are two names and a code stays plain. The answer said "lexical form with its datatype, as a key part does elsewhere", and a key part in `mork_rdf` spells the lexical form alone, so the built rule adds the datatype for a member and for a name where it matters and leaves a string unchanged. A language tag is not spelled. A stable name is spelled in the same way. The five MORK terms are more than the one the answer to SVA-Q56 names. `mork:memberRef` is that one, and the term that reads the member in an identity (`mork:MemberExpression`), the one that writes it (`mork:dataMember`), the property that names it (`mork:memberName`) and the identity that makes it the node (`mork:MemberIdentity`) follow from SVA-Q53 to SVA-Q55. The member as the node takes `MappingReview`, which SVA-Q56 does not say, since it merges the bundles that share a member and writes on a node the source names. A blank node is blank where it is a blank node or a skolem IRI, since the run names a source's blank nodes by the skolem rule, and the skolem prefix is the one `mork_rdf` writes. A member under a stable name that is a blank node is written as the value of a node that states `srf:fromMember`, which copies a blank node into the output and is left for a contract that needs it to decide. A check reports a member without the named value even where the member is a literal, which can hold no property.
+
+**The join that writes a member's property.** A value of the member's own properties is never copied by the construction (SVA-Q53). The test `test_a_join_from_the_constructed_nodes_writes_a_members_own_property_where_it_is_wanted` shows the join SVA-S2h built over the constructed nodes. A contract whose carrier is `ex:Line` joins the line's `ex:ofItem` to the `ex:recordOf` of the `ex:ItemRecord` that describes the item, and writes the link `ex:describedBy`, so a read path from a line reaches the record's `ex:description` and nothing is copied. Run over the constructed lines and the records, it gives a link for each line whose item has a record, and the record's description is reached through it.
+
+What the example gives, over four bundles, is a line for each of the three items of the first bundle, one for the single item of the second, nothing for the third, whose list is empty and which is reported as information, and nothing for the fourth, which has no list and is excluded and reported. The same item in two bundles with different codes gives two lines.
 
 ## 3. Questions
 
@@ -395,7 +429,7 @@ WHERE {
 
 **SVA-Q45. What does an empty or missing source write?** (a) Nothing in both cases, with an instance that lacks the property excluded and reported by `InstanceExcluded` on required evidence, and an empty collection reported by a new check, since a collection that holds no member is a source the reviewer should see. (b) As (a) and the empty collection silent, so only a missing property is reported. (c) An empty collection writes a stated marker, such as `rdf:nil`, which states what the source said and is a value some consumers would read as a member. Leaning (a), and the maintainer decides whether the empty collection's report is a warning or information, as SVA-S2h's unmatched report was. **Answered 2026-11-24, (a).** An empty collection is reported as information.
 
-**SVA-Q46. Does the contract bound the expansion, and what does the engineering review record?** (a) The contract states no limit, and the finding on the scheme, a new code since `MappingReview` is the merge's, records that the number of statements for an instance depends on the data and names the source. (b) The contract may state a maximum number of members, `srf:expansionLimit`, an integer, and a source with more is reported and writes the first members in list order. (c) As (b) and a source with more writes nothing for that instance. ADR-A41's engineering review has no code yet, since `MappingReview` is the merge's finding for a join and a keyed construction, so an expansion adds its own. Leaning (a), the limit being a later slice when a use shows its meaning, since (b) and (c) name an order and a refusal that are modelling choices of their own. **Answered 2026-11-24, (a).** An expansion carries an `EngineeringReview` finding of its own, as ADR-A41 asks.
+**SVA-Q46. Does the contract bound the expansion, and what does the engineering review record?** (a) The contract states no limit, and the finding on the scheme, a new code since `MappingReview` is the merge's, records that the number of statements for an instance depends on the data and names the source. (b) The contract may state a maximum number of members, `srf:expansionLimit`, an integer, and a source with more is reported and writes the first members in list order. (c) As (b) and a source with more writes nothing for that instance. ADR-A41's engineering review has no code yet, since `MappingReview` is the merge's finding for a join and a keyed construction, so an expansion adds its own, `ExpansionReview` (first named `EngineeringReview`, renamed on 2026-11-25 so the findings are named by the projection kind they review). Leaning (a), the limit being a later slice when a use shows its meaning, since (b) and (c) name an order and a refusal that are modelling choices of their own. **Answered 2026-11-24, (a).** An expansion carries an `EngineeringReview` finding of its own, as ADR-A41 asks.
 
 **SVA-Q47. Which terms does the contract gain?** The case needs a way to state on the result-target binding what is expanded, from which evidence binding and from what source shape. Leaning the shape of SVA-S2g and SVA-S2h, a statement node reached by an `srf:expandedAs` on the result-target binding, with a closed choice of source shape as individuals, and laws beside P10 to P17 that check it is set once, on a result-target binding, names an evidence binding of its own contract and is stated for the kind. The names are placeholders and the term a hierarchy needs, if SVA-Q42 chooses (c), would differ. MORK needs none if (a) of SVA-Q43 and (a) of SVA-Q44 are chosen, since the path and the assertion exist, and gains one check for the empty collection. It is the maintainer's to decide, since it adds terms to two published modules. **Answered 2026-11-24, as leaned.**
 
@@ -415,7 +449,7 @@ WHERE {
 
 **SVA-Q55. What happens to a member that has no stable text?** A list's member may be a blank node, and a blank node has no identifier a key can spell, so a node whose identity reads one gives a different identifier on each run. (a) A check, `MemberUnnamed`, names each instance with a blank-node member, the instance writes nothing for that member, and the rest of its members are written. (b) The instance writes nothing at all, as an instance that lacks a required value does (SVA-Q33). (c) The identity reads a position and not the member, which needs a numbering SPARQL's path does not give. Leaning (a), the member being the unit of the expansion, and the report a warning since a source of blank members would otherwise write nothing and say nothing. It is part of the question whether a member that is a literal is spelled as its lexical form with its datatype, as a key part does elsewhere. **Answered 2026-11-25, (a), with a stable name selectable.** The contract may name a property of the members that is known to be unique for them, and the identity spells that property's value in place of the member, so an unnamed member is the unusual case. A member that lacks the property, or is a blank node where none is named, is reported by `MemberUnnamed` and skipped.
 
-**SVA-Q56. Which decisions change?** Leaning, as for SVA-Q34, SVA-Q41 and SVA-Q48: an addendum to ADR-A18 (a construction that states an expansion lowers into a scheme whose contextual datum is guarded and reads the member), an addendum to ADR-A23 (`mork_rdf` compiles it, with the one term that names the member, the reports the answers above choose, and the `MappingReview` and `EngineeringReview` findings both of its parts already carry), new laws in the Surface register after P20, and minor versions of the Surface and MORK modules for their new terms, each released by `mise run version:bump` at the merge. ADR-A41 needs no addendum. The amendments to ADR-A18 and ADR-A23 are the maintainer's to decide. **Answered 2026-11-25, as leaned.**
+**SVA-Q56. Which decisions change?** Leaning, as for SVA-Q34, SVA-Q41 and SVA-Q48: an addendum to ADR-A18 (a construction that states an expansion lowers into a scheme whose contextual datum is guarded and reads the member), an addendum to ADR-A23 (`mork_rdf` compiles it, with the one term that names the member, the reports the answers above choose, and the `MappingReview` and `ExpansionReview` findings both of its parts already carry), new laws in the Surface register after P20, and minor versions of the Surface and MORK modules for their new terms, each released by `mise run version:bump` at the merge. ADR-A41 needs no addendum. The amendments to ADR-A18 and ADR-A23 are the maintainer's to decide. **Answered 2026-11-25, as leaned.**
 
 ## 4. Slices
 
@@ -428,7 +462,7 @@ Every projection kind is built in this unit (SVA-Q28 (c)). A slice for graph con
 | SVA-S2g | graph construction projections, from contract to compiled scheme, with an example | an example's projection compiles and runs to its expected graph |
 | SVA-S2h | join projections, with the mapping review ADR-A41 asks for recorded as a finding, and an example | an example's join compiles and runs to its expected rows |
 | SVA-S2i | expansion projections, with the engineering review recorded as a finding, and an example | an example's expansion compiles and runs to its expected rows |
-| SVA-S2j | a node constructed for each member of an expansion, with an example. Paused at section 2.5 for SVA-Q50 to SVA-Q56 | an example's expansion constructs a node for each member and runs to its expected graph |
+| SVA-S2j | a node constructed for each member of an expansion, with an example. Built 2026-11-25 as section 2.5 shows | an example's expansion constructs a node for each member and runs to its expected graph |
 | SVA-S2c | the surface compile job lowers and compiles projections, the facility sample gains them, and a step's projection part runs as a second run of the Python worker (SVA-Q29) | a step over the sample shows each projection's rows, equal to its compiled scheme run over the world after |
 
 ## 5. Placement

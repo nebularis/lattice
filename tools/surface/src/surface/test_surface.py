@@ -1731,10 +1731,12 @@ class ConstructionShapeTests(unittest.TestCase):
         self.assertIn("ConstructedPropertyOnceShape", self.violations(graph))
 
     def test_a_written_value_with_no_property_or_no_binding_is_refused(self) -> None:
-        for body in ("srf:fromBinding ex:os-name", "srf:writesProperty ex:other"):
+        # A value that names no binding names neither source, which the shape of the source of a value refuses since a node of an
+        # expansion may name the member instead (srf:P25).
+        for body, shape in (("srf:fromBinding ex:os-name", "WrittenValueShape"), ("srf:writesProperty ex:other", "WrittenValueSourceShape")):
             with self.subTest(body=body):
                 graph = order_with(add=f"ex:os-node srf:writes [ {body} ] .")
-                self.assertIn("WrittenValueShape", self.violations(graph))
+                self.assertIn(shape, self.violations(graph))
 
     def test_a_value_written_from_what_is_not_an_evidence_binding_is_refused(self) -> None:
         for source in ("os-subject", "os-link", "unknown"):
@@ -3112,7 +3114,7 @@ WHERE {{
 }}"""
         self.assertEqual(" ".join(construct.text.split()), " ".join(expected.split()))
         self.assertEqual(sorted(q.code for q in compiled.checks), ["ClosureCycle", "CollectionEmpty", "InstanceExcluded"])
-        self.assertEqual([(f.code, f.severity) for f in compiled.findings], [("EngineeringReview", mork_rdf.Severity.WARNING)])
+        self.assertEqual([(f.code, f.severity) for f in compiled.findings], [("ExpansionReview", mork_rdf.Severity.WARNING)])
         self.assertFalse(compiled.errors)
 
     def test_the_closure_compiles_to_one_path_and_an_empty_check_and_no_exclusion(self) -> None:
@@ -3126,7 +3128,7 @@ WHERE {{
 }}"""
         self.assertEqual(" ".join(construct.text.split()), " ".join(expected.split()))
         self.assertEqual(sorted(q.code for q in compiled.checks), ["ClosureCycle", "CollectionEmpty"])
-        self.assertEqual([f.code for f in compiled.findings], ["EngineeringReview"])
+        self.assertEqual([f.code for f in compiled.findings], ["ExpansionReview"])
 
     def test_the_bundle_example_runs_to_its_expected_graph_on_each_engine(self) -> None:
         compiled = self.compile(bundle_graph())
@@ -3230,16 +3232,566 @@ WHERE {{
                 written, _ = self.evaluate(engine, compiled, source)
                 self.assertEqual(written, {(BUNDLE_ITEMS + "bundle-1", self.CONTAINS, BUNDLE_ITEMS + item) for item in ("item-1", "item-2")})
 
-    def test_an_expansion_carries_the_engineering_review_and_no_mapping_review(self) -> None:
+    def test_an_expansion_carries_the_expansion_review_and_no_mapping_review(self) -> None:
         for build in (bundle_graph, list_path_graph, candidate_bundle_graph):
             with self.subTest(build=build.__name__):
                 findings = self.compile(build()).findings
-                self.assertEqual([(f.code, f.severity) for f in findings], [("EngineeringReview", mork_rdf.Severity.WARNING)])
+                self.assertEqual([(f.code, f.severity) for f in findings], [("ExpansionReview", mork_rdf.Severity.WARNING)])
                 self.assertIn(f"{BUNDLE_ITEMS}items", findings[0].message)
 
     def test_compiling_the_lowered_scheme_is_the_same_whatever_the_order_of_the_contract(self) -> None:
         reference = self.compile(bundle_graph()).text()
         triples = sorted(bundle_graph())
+        for seed in range(3):
+            shuffled = list(triples)
+            random.Random(seed).shuffle(shuffled)
+            graph = Graph()
+            for triple in shuffled:
+                graph.add(triple)
+            self.assertEqual(self.compile(graph).text(), reference)
+
+
+BUNDLE_LINE = "https://example.org/lattice/surface/bundle-line#"
+LINE_EXAMPLE = "bundle-line-construction-projection.ttl"
+XSD_NS = "http://www.w3.org/2001/XMLSchema#"
+
+
+def line_graph() -> Graph:
+    return load(LINE_EXAMPLE)
+
+
+def line_with(remove=(), add="") -> Graph:
+    """The bundle and line example with some triples removed, given as (subject, predicate, object) local names with the object a
+    local name, a term or None for any, and some Turtle added."""
+    graph = line_graph()
+    for subject, predicate, obj in remove:
+        target = obj if obj is None or isinstance(obj, (URIRef, Literal)) else URIRef(BUNDLE_LINE + obj)
+        graph.remove((URIRef(BUNDLE_LINE + subject), predicate, target))
+    if add:
+        graph.parse(
+            data=f"""
+            @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix ex: <{BUNDLE_LINE}> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            {add}
+            """,
+            format="turtle",
+        )
+    return graph
+
+
+KEY_OF_THE_EXAMPLE = [("bl-node", SRF.nodeIdentity, SRF.ByKey), ("bl-node", SRF.keyBinding, "bl-code"), ("bl-node", SRF.keyMember, None)]
+
+
+def line_per_instance_graph() -> Graph:
+    """A node for each bundle and member, which names no key."""
+    return line_with(remove=KEY_OF_THE_EXAMPLE, add="ex:bl-node srf:nodeIdentity srf:PerInstance .")
+
+
+def line_without_member_graph() -> Graph:
+    """The key of the bundle's code alone, so every member of a bundle is written on its one node."""
+    return line_with(remove=[("bl-node", SRF.keyMember, None)])
+
+
+def line_member_alone_graph() -> Graph:
+    """The key of the member alone, so every bundle that holds a member shares its node."""
+    return line_with(remove=[("bl-node", SRF.keyBinding, "bl-code")])
+
+
+def line_member_node_graph() -> Graph:
+    """The member itself is the node."""
+    return line_with(remove=KEY_OF_THE_EXAMPLE, add="ex:bl-node srf:nodeIdentity srf:MemberNode .")
+
+
+def line_named_graph() -> Graph:
+    """The example spelling the members' stable name, ex:sku, in place of the members."""
+    return line_with(add="ex:bl-node srf:memberName ex:sku .")
+
+
+def line_contract(graph: Graph):
+    return read_projection_contracts(graph, only=BUNDLE_LINE + "bundle-line-projection")[0]
+
+
+class MemberModelTests(unittest.TestCase):
+    """The analyser applies laws srf:P22 to srf:P25 as the shapes do (SVA-S2j)."""
+
+    def refused(self, graph: Graph) -> str:
+        with self.assertRaises(ContractError) as caught:
+            line_contract(graph)
+        return str(caught.exception)
+
+    def test_the_example_parses_its_expansion_its_node_its_key_and_its_values(self) -> None:
+        contract = line_contract(line_graph())
+        self.assertIsNone(contract.expression)
+        self.assertIsNone(contract.join)
+        self.assertEqual(contract.expansion.iri, URIRef(BUNDLE_LINE + "bl-expansion"))
+        node = contract.construction
+        self.assertEqual(node.iri, URIRef(BUNDLE_LINE + "bl-node"))
+        self.assertEqual(node.constructed_class, URIRef(BUNDLE_LINE + "Line"))
+        self.assertTrue(node.keyed and node.key_member and not node.member_node)
+        self.assertEqual([b.iri for b in node.key], [URIRef(BUNDLE_LINE + "bl-code")])
+        self.assertEqual([(w.property, w.from_member) for w in node.writes], [(URIRef(BUNDLE_LINE + "bundleCode"), False), (URIRef(BUNDLE_LINE + "ofItem"), True)])
+        self.assertEqual(node.link.iri, contract.expansion.link.iri)
+        self.assertEqual(node.link.binds_property, URIRef(BUNDLE_LINE + "hasLine"))
+
+    def test_each_choice_of_identity_parses(self) -> None:
+        self.assertEqual(line_contract(line_per_instance_graph()).construction.identity, SRF.PerInstance)
+        without = line_contract(line_without_member_graph()).construction
+        self.assertTrue(without.keyed and not without.key_member and len(without.key) == 1)
+        alone = line_contract(line_member_alone_graph()).construction
+        self.assertTrue(alone.keyed and alone.key_member and alone.key == ())
+        self.assertTrue(line_contract(line_member_node_graph()).construction.member_node)
+        self.assertEqual(line_contract(line_named_graph()).construction.member_name, URIRef(BUNDLE_LINE + "sku"))
+
+    def test_a_keyed_node_that_names_no_part_of_a_key_is_refused(self) -> None:
+        graph = line_with(remove=[("bl-node", SRF.keyBinding, "bl-code"), ("bl-node", SRF.keyMember, None)])
+        self.assertIn("srf:P24", self.refused(graph))
+
+    def test_a_node_for_each_instance_or_the_member_itself_that_names_a_key_part_is_refused(self) -> None:
+        for identity in ("PerInstance", "MemberNode"):
+            with self.subTest(identity=identity):
+                graph = line_with(remove=[("bl-node", SRF.nodeIdentity, SRF.ByKey)], add=f"ex:bl-node srf:nodeIdentity srf:{identity} .")
+                self.assertIn("srf:P24", self.refused(graph))
+
+    def test_the_member_itself_that_names_a_member_name_is_refused(self) -> None:
+        graph = line_with(remove=KEY_OF_THE_EXAMPLE, add="ex:bl-node srf:nodeIdentity srf:MemberNode ; srf:memberName ex:sku .")
+        self.assertIn("srf:P24", self.refused(graph))
+
+    def test_a_value_that_names_a_binding_and_the_member_or_neither_is_refused(self) -> None:
+        graph = line_with(remove=[("bl-node", SRF.writes, None)], add="ex:bl-node srf:writes [ srf:writesProperty ex:ofItem ; srf:fromMember true ; srf:fromBinding ex:bl-code ] .")
+        self.assertIn("srf:P25", self.refused(graph))
+        graph = line_with(remove=[("bl-node", SRF.writes, None)], add="ex:bl-node srf:writes [ srf:writesProperty ex:ofItem ] .")
+        self.assertIn("srf:P25", self.refused(graph))
+
+    def test_a_member_term_on_a_graph_construction_is_refused(self) -> None:
+        for add in ("ex:os-node srf:keyMember true .", "ex:os-node srf:memberName ex:sku ."):
+            with self.subTest(add=add):
+                with self.assertRaises(ContractError):
+                    order_contract(order_with(add=add))
+        graph = order_with(remove=[("os-node", SRF.nodeIdentity, SRF.ByKey), ("os-node", SRF.keyBinding, "os-code")], add="ex:os-node srf:nodeIdentity srf:MemberNode .")
+        with self.assertRaises(ContractError):
+            order_contract(graph)
+
+    def test_a_graph_construction_that_states_an_expansion_is_refused(self) -> None:
+        graph = order_with(add="ex:os-link srf:expandedAs ex:os-expansion . ex:os-expansion a srf:ExpansionStatement .")
+        with self.assertRaises(ContractError):
+            order_contract(graph)
+
+    def test_a_construction_on_a_projection_of_another_kind_is_refused(self) -> None:
+        graph = line_with(remove=[("bundle-line-projection", SRF.projectionKind, None)], add="ex:bundle-line-projection srf:projectionKind srf:JoinProjection .")
+        with self.assertRaises(ContractError):
+            line_contract(graph)
+
+    def test_an_expansion_that_states_no_construction_is_unchanged(self) -> None:
+        self.assertIsNone(expansion_contract(bundle_graph()).construction)
+        self.assertIsNone(expansion_contract(category_graph(), "category-ancestors-projection", CATEGORY_ANCESTORS).construction)
+        self.assertIsNotNone(order_contract(order_graph()).construction)
+        self.assertIsNone(order_contract(order_graph()).expansion)
+
+
+class MemberShapeTests(unittest.TestCase):
+    """The shapes of ontology/surface refuse what the analyser refuses, with no code beside them (SVA-S2j)."""
+
+    def violations(self, graph: Graph) -> set:
+        return {name.rsplit("#", 1)[-1] for name in shape_violations(graph, SURFACE_SHAPES)}
+
+    def test_the_example_and_each_choice_of_identity_conform(self) -> None:
+        for build in (line_graph, line_per_instance_graph, line_without_member_graph, line_member_alone_graph, line_member_node_graph, line_named_graph):
+            with self.subTest(build=build.__name__):
+                self.assertEqual(self.violations(build()), set())
+
+    def test_an_expansion_with_no_construction_and_the_other_kinds_still_conform(self) -> None:
+        for graph in (bundle_graph(), category_graph(), order_graph(), join_graph()):
+            self.assertEqual(self.violations(graph), set())
+
+    def test_a_construction_on_an_expansion_that_is_not_beside_its_statement_is_refused(self) -> None:
+        graph = line_with(remove=[("bl-link", SRF.expandedAs, None)])
+        self.assertIn("ConstructionPlacementShape", self.violations(graph))
+        self.assertIn("ExpansionRequiredShape", self.violations(graph))
+
+    def test_a_construction_on_a_projection_of_another_kind_is_refused(self) -> None:
+        graph = line_with(remove=[("bundle-line-projection", SRF.projectionKind, None)], add="ex:bundle-line-projection srf:projectionKind srf:JoinProjection .")
+        self.assertIn("ConstructionPlacementShape", self.violations(graph))
+
+    def test_an_expansion_on_a_graph_construction_is_refused(self) -> None:
+        graph = order_with(add="ex:os-link srf:expandedAs ex:os-expansion . ex:os-expansion a srf:ExpansionStatement ; srf:expandsFrom ex:os-code ; srf:expansionSource srf:ListMembers .")
+        self.assertIn("ExpansionPlacementShape", self.violations(graph))
+
+    def test_a_key_that_names_no_part_or_a_part_beside_a_node_for_each_instance_is_refused(self) -> None:
+        self.assertIn("ConstructedKeyShape", self.violations(line_with(remove=[("bl-node", SRF.keyBinding, "bl-code"), ("bl-node", SRF.keyMember, None)])))
+        graph = line_with(remove=[("bl-node", SRF.nodeIdentity, SRF.ByKey)], add="ex:bl-node srf:nodeIdentity srf:PerInstance .")
+        self.assertIn("ConstructedKeyShape", self.violations(graph))
+        graph = line_with(remove=[("bl-node", SRF.nodeIdentity, SRF.ByKey), ("bl-node", SRF.keyBinding, "bl-code")], add="ex:bl-node srf:nodeIdentity srf:MemberNode .")
+        self.assertIn("ConstructedKeyShape", self.violations(graph))
+
+    def test_the_member_as_the_node_that_names_a_member_name_is_refused(self) -> None:
+        graph = line_with(remove=KEY_OF_THE_EXAMPLE, add="ex:bl-node srf:nodeIdentity srf:MemberNode ; srf:memberName ex:sku .")
+        self.assertIn("ConstructedMemberNodeShape", self.violations(graph))
+
+    def test_a_member_term_outside_an_expansion_is_refused(self) -> None:
+        for add in ("ex:os-node srf:keyMember true .", "ex:os-node srf:memberName ex:sku .", "ex:os-node srf:writes [ srf:writesProperty ex:other ; srf:fromMember true ] ."):
+            with self.subTest(add=add):
+                self.assertIn("ConstructedMemberPlacementShape", {name.rsplit("#", 1)[-1] for name in shape_violations(order_with(add=add), SURFACE_SHAPES)})
+        graph = order_with(remove=[("os-node", SRF.nodeIdentity, SRF.ByKey), ("os-node", SRF.keyBinding, "os-code")], add="ex:os-node srf:nodeIdentity srf:MemberNode .")
+        self.assertIn("ConstructedMemberPlacementShape", {name.rsplit("#", 1)[-1] for name in shape_violations(graph, SURFACE_SHAPES)})
+
+    def test_a_key_member_that_is_not_true_or_stated_twice_is_refused(self) -> None:
+        graph = line_with(remove=[("bl-node", SRF.keyMember, None)], add="ex:bl-node srf:keyMember false .")
+        self.assertIn("ConstructedNodeShape", self.violations(graph))
+        self.assertIn("ConstructedNodeShape", self.violations(line_with(add="ex:bl-node srf:memberName ex:sku , ex:code .")))
+
+    def test_a_written_value_that_names_a_binding_and_the_member_or_neither_is_refused(self) -> None:
+        both = line_with(remove=[("bl-node", SRF.writes, None)], add="ex:bl-node srf:writes [ srf:writesProperty ex:ofItem ; srf:fromMember true ; srf:fromBinding ex:bl-code ] .")
+        self.assertIn("WrittenValueSourceShape", self.violations(both))
+        neither = line_with(remove=[("bl-node", SRF.writes, None)], add="ex:bl-node srf:writes [ srf:writesProperty ex:ofItem ] .")
+        self.assertIn("WrittenValueSourceShape", self.violations(neither))
+        false = line_with(remove=[("bl-node", SRF.writes, None)], add="ex:bl-node srf:writes [ srf:writesProperty ex:ofItem ; srf:fromMember false ] .")
+        self.assertIn("WrittenValueShape", self.violations(false))
+
+    def test_the_laws_the_shapes_discharge_and_the_identity_are_in_the_vocabulary(self) -> None:
+        vocabulary = parse_files([str(ROOT / "ontology" / "surface" / "vocab" / "surface-vocab.ttl")])
+        for law in ("P22", "P23", "P24", "P25"):
+            self.assertIn((SRF[law], RDF.type, SRF.Law), vocabulary)
+        self.assertIn((SRF.MemberNode, RDF.type, SRF.IdentityChoice), vocabulary)
+
+
+class MemberLoweringTests(unittest.TestCase):
+    """Surface-to-MORK lowering of a node for each member (ADR-A18)."""
+
+    def lowered(self, graph: Graph):
+        contract = line_contract(graph)
+        return contract, lower_projection(contract)
+
+    def datum(self, low: Graph, contract):
+        root = lowered_head(contract)
+        (datum,) = low.objects(root, MORK.compositeNarrowerMapping)
+        return root, datum
+
+    def test_the_example_lowers_into_a_scheme_whose_datum_is_made_for_each_member(self) -> None:
+        contract, low = self.lowered(line_graph())
+        (scheme,) = set(low.subjects(RDF.type, MORK.MappingScheme))
+        root, datum = self.datum(low, contract)
+        self.assertEqual(low.value(root, MORK.identityRule), MORK.SourceNodeIdentity)
+        self.assertEqual(str(low.value(datum, MORK.memberRef)), LIST_PATH.replace(BUNDLE_ITEMS, BUNDLE_LINE))
+        self.assertEqual(low.value(datum, MORK.exactTBoxMatch), URIRef(BUNDLE_LINE + "Line"))
+        self.assertEqual(low.value(datum, MORK.inverseRBoxMatch), URIRef(BUNDLE_LINE + "hasLine"))
+        self.assertIsNone(low.value(datum, MORK.memberName))
+        self.assertIsNone(low.value(datum, MORK.identityRule))
+        self.assertEqual({str(low.value(g, SH.path)) for g in low.objects(low.value(datum, MORK.appliesWhen), SH.property)}, {BUNDLE_LINE + "bundleCode", BUNDLE_LINE + "items"})
+        self.assertEqual(low.value(contract.iri, SRF.producesMapping), root)
+        self.assertEqual(low.value(datum, MORK.mappingScheme), scheme)
+
+    def test_the_key_ends_in_the_member_and_the_values_are_a_reference_and_the_member(self) -> None:
+        contract, low = self.lowered(line_graph())
+        _, datum = self.datum(low, contract)
+        expression = low.value(datum, MORK.identityTemplateMapping)
+        kinds, refs = [], []
+        while (right := low.value(expression, MORK.concatRight)) is not None:
+            left = low.value(expression, MORK.concatLeft)
+            kinds.append((str(low.value(left, RDF.type)), str(low.value(left, MORK.dataInline) or low.value(left, MORK.dataRef) or "")))
+            expression = right
+        kinds.append((str(low.value(expression, RDF.type)), ""))
+        self.assertEqual(
+            kinds,
+            [(str(MORK.LiteralExpression), "bundle-line/Line/"), (str(MORK.RefExpression), f"<{BUNDLE_LINE}bundleCode>"), (str(MORK.LiteralExpression), "/"), (str(MORK.MemberExpression), "")],
+        )
+        writes = sorted((str(low.value(a, MORK.exactRBoxMatch)), str(low.value(a, MORK.dataRef) or low.value(a, MORK.dataMember))) for a in low.objects(datum, MORK.compositeNarrowerMapping))
+        self.assertEqual(writes, [(BUNDLE_LINE + "bundleCode", f"<{BUNDLE_LINE}bundleCode>"), (BUNDLE_LINE + "ofItem", "true")])
+
+    def test_a_node_for_each_instance_and_member_states_no_identity_template(self) -> None:
+        contract, low = self.lowered(line_per_instance_graph())
+        _, datum = self.datum(low, contract)
+        self.assertIsNone(low.value(datum, MORK.identityTemplateMapping))
+        self.assertEqual(str(low.value(datum, MORK.conceptName)), "bundle-line/Line")
+        self.assertIsNotNone(low.value(datum, MORK.memberRef))
+
+    def test_the_member_alone_is_a_template_of_the_stem_and_the_member(self) -> None:
+        contract, low = self.lowered(line_member_alone_graph())
+        _, datum = self.datum(low, contract)
+        expression = low.value(datum, MORK.identityTemplateMapping)
+        self.assertEqual(str(low.value(low.value(expression, MORK.concatLeft), MORK.dataInline)), "bundle-line/Line/")
+        self.assertEqual(low.value(low.value(expression, MORK.concatRight), RDF.type), MORK.MemberExpression)
+
+    def test_the_member_as_the_node_states_the_member_identity_and_no_name_or_template(self) -> None:
+        contract, low = self.lowered(line_member_node_graph())
+        _, datum = self.datum(low, contract)
+        self.assertEqual(low.value(datum, MORK.identityRule), MORK.MemberIdentity)
+        for term in (MORK.identityTemplateMapping, MORK.conceptName, MORK.memberName):
+            self.assertIsNone(low.value(datum, term))
+
+    def test_a_stable_name_is_carried_as_the_members_name(self) -> None:
+        contract, low = self.lowered(line_named_graph())
+        _, datum = self.datum(low, contract)
+        self.assertEqual(low.value(datum, MORK.memberName), URIRef(BUNDLE_LINE + "sku"))
+
+    def test_every_lowered_scheme_is_accepted_by_the_shapes_of_mork(self) -> None:
+        for build in (line_graph, line_per_instance_graph, line_without_member_graph, line_member_alone_graph, line_member_node_graph, line_named_graph):
+            with self.subTest(build=build.__name__):
+                self.assertEqual(shape_violations(self.lowered(build())[1], MORK_SHAPES), set())
+
+    def test_lowering_is_deterministic_and_the_same_with_the_triples_permuted(self) -> None:
+        for build in (line_graph, line_per_instance_graph, line_member_alone_graph, line_member_node_graph, line_named_graph):
+            reference = canonical.hash_graph(lower_projection(line_contract(build())))
+            self.assertEqual(canonical.hash_graph(lower_projection(line_contract(build()))), reference)
+            triples = sorted(build())
+            for seed in range(5):
+                shuffled = list(triples)
+                random.Random(seed).shuffle(shuffled)
+                graph = Graph()
+                for triple in shuffled:
+                    graph.add(triple)
+                self.assertEqual(canonical.hash_graph(lower_projection(line_contract(graph))), reference)
+
+    def test_the_other_kinds_lower_as_before(self) -> None:
+        for graph, contract in ((bundle_graph(), expansion_contract(bundle_graph())), (order_graph(), order_contract(order_graph()))):
+            root, datum = lowered_head(contract), None
+            low = lower_projection(contract)
+            self.assertEqual(set(low.subjects(MORK.memberRef, None)), set())
+            self.assertEqual(set(low.subjects(MORK.dataMember, None)), set())
+            self.assertEqual(low.value(root, MORK.identityRule), MORK.SourceNodeIdentity)
+
+
+ITEM_NAMES = 'ex:item-1 ex:sku "A1" . ex:item-2 ex:sku "A 2" . ex:item-3 ex:sku "A3" .'
+
+
+@unittest.skipIf(mork_rdf is None, "mork_rdf is not installed")
+class MemberCompilationTests(unittest.TestCase):
+    """The lowered scheme compiles with `mork_rdf` and runs to the graph the contract states on each engine (SVA-S2j)."""
+
+    BASE = "https://example.org/lattice/surface/bundle-line/out/"
+    HAS_LINE = BUNDLE_LINE + "hasLine"
+    OF_ITEM = BUNDLE_LINE + "ofItem"
+    CODE = BUNDLE_LINE + "bundleCode"
+    TYPE = str(RDF.type)
+    ENGINES = ("oxigraph", "rdflib")
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        if str(ROOT / "tools") not in sys.path:
+            sys.path.insert(0, str(ROOT / "tools"))
+
+    def compile(self, graph: Graph):
+        low = lower_projection(line_contract(graph))
+        (scheme,) = set(low.subjects(RDF.type, MORK.MappingScheme))
+        return mork_rdf.compile_scheme(low, scheme, base=self.BASE, at=datetime.fromisoformat("2026-11-25T00:00:00+00:00"))
+
+    def evaluate(self, engine: str, compiled, source: Graph):
+        if engine == "oxigraph":
+            out = mork_rdf.run(compiled, source)
+            return {(str(s), str(p), str(o)) for s, p, o in out.graph}, {(f.code, f.focus, f.value) for f in out.findings}
+        from rdflib import Dataset
+
+        dataset = Dataset()
+        for triple in source:
+            dataset.default_graph.add(triple)
+        written = {(str(s), str(p), str(o)) for q in compiled.constructs for s, p, o in dataset.query(q.text)}
+        reported = {(q.code, str(r["focus"]), None if r["value"] is None else str(r["value"])) for q in compiled.checks for r in dataset.query(q.text)}
+        return written, reported
+
+    def source(self, extra: str = "") -> Graph:
+        graph = line_graph()
+        if extra:
+            graph.parse(data=f"@prefix ex: <{BUNDLE_LINE}> . @prefix xsd: <{XSD_NS}> . {extra}", format="turtle")
+        return graph
+
+    def line(self, code: str, member: str, stem: str = "bundle-line/Line") -> str:
+        from urllib.parse import quote
+
+        return f"{self.BASE}{stem}/{quote(code, safe='')}/{quote(member, safe='')}"
+
+    def lines(self, *pairs) -> set:
+        bundles = {"B1": BUNDLE_LINE + "bundle-1", "B2": BUNDLE_LINE + "bundle-2"}
+        out = set()
+        for code, item in pairs:
+            member = BUNDLE_LINE + item
+            node = self.line(code, member)
+            out |= {(node, self.TYPE, BUNDLE_LINE + "Line"), (bundles[code], self.HAS_LINE, node), (node, self.OF_ITEM, member), (node, self.CODE, code)}
+        return out
+
+    def test_the_example_compiles_to_the_query_the_case_shows(self) -> None:
+        compiled = self.compile(line_graph())
+        node = next(q for q in compiled.constructs if q.mapping.endswith("_node"))
+        expected = f"""BASE <{self.BASE}>
+CONSTRUCT {{ ?t6 <{self.TYPE}> <{BUNDLE_LINE}Line> . ?f1 <{self.HAS_LINE}> ?t6 . }}
+WHERE {{
+  ?f1 <{self.TYPE}> <{BUNDLE_LINE}Bundle> .
+  FILTER (((EXISTS {{ ?f1 <{BUNDLE_LINE}bundleCode> ?any2 . }})) && ((EXISTS {{ ?f1 <{BUNDLE_LINE}items> ?any3 . }})))
+  ?f1 <{BUNDLE_LINE}items>/(<{RDF_REST}>*)/<{RDF_FIRST}> ?m4 .
+  FILTER (!(isBlank(?m4) || STRSTARTS(STR(?m4), "urn:mork-rdf:skolem:v1:")))
+  BIND (IF(isLiteral(?m4) && DATATYPE(?m4) != <{XSD_NS}string>, CONCAT(STR(?m4), "^^", STR(DATATYPE(?m4))), STR(?m4)) AS ?s5)
+  ?f1 <{BUNDLE_LINE}bundleCode> ?v7 .
+  BIND (IRI(CONCAT("bundle-line/Line/", CONCAT(ENCODE_FOR_URI(STR(?v7)), CONCAT("/", ENCODE_FOR_URI(?s5))))) AS ?t6)
+}}"""
+        self.assertEqual(" ".join(node.text.split()), " ".join(expected.split()))
+        self.assertEqual(len(compiled.constructs), 3)
+        self.assertEqual(sorted(q.code for q in compiled.checks), ["ClosureCycle", "CollectionEmpty", "IdentityAmbiguous", "IdentityUnbound", "InstanceExcluded", "InstanceExcluded", "MemberUnnamed"])
+        self.assertFalse(compiled.errors)
+
+    def test_the_example_runs_to_its_expected_graph_on_each_engine(self) -> None:
+        compiled = self.compile(line_graph())
+        expected = self.lines(("B1", "item-1"), ("B1", "item-2"), ("B1", "item-3"), ("B2", "item-3"))
+        for engine in self.ENGINES:
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, self.source())
+                self.assertEqual(written, expected)
+                self.assertEqual({r for r in reported if r[0] in ("InstanceExcluded", "CollectionEmpty")}, {
+                    ("InstanceExcluded", BUNDLE_LINE + "bundle-4", f"<{BUNDLE_LINE}items>"),
+                    ("CollectionEmpty", BUNDLE_LINE + "bundle-3", f"<{BUNDLE_LINE}items>/(<{RDF_REST}>*)/<{RDF_FIRST}>"),
+                })
+
+    def test_the_example_carries_the_expansion_review_and_the_mapping_review_of_a_key(self) -> None:
+        findings = self.compile(line_graph()).findings
+        self.assertEqual([(f.code, f.severity) for f in findings], [("ExpansionReview", mork_rdf.Severity.WARNING), ("MappingReview", mork_rdf.Severity.WARNING)])
+        self.assertTrue(all(f.mapping.endswith("_node") for f in findings))
+
+    def test_a_node_for_each_instance_and_member_is_one_for_each_pair_and_takes_no_mapping_review(self) -> None:
+        import hashlib
+        from urllib.parse import quote
+
+        compiled = self.compile(line_per_instance_graph())
+        self.assertEqual([f.code for f in compiled.findings], ["ExpansionReview"])
+        node = lambda bundle, item: f"{self.BASE}bundle-line/Line/{hashlib.sha256((BUNDLE_LINE + bundle).encode()).hexdigest()}/{quote(BUNDLE_LINE + item, safe='')}"
+        pairs = [("bundle-1", "item-1"), ("bundle-1", "item-2"), ("bundle-1", "item-3"), ("bundle-2", "item-3")]
+        for engine in self.ENGINES:
+            with self.subTest(engine=engine):
+                written, _ = self.evaluate(engine, compiled, self.source())
+                self.assertEqual({s for s, p, o in written if p == self.TYPE}, {node(b, i) for b, i in pairs})
+                self.assertNotEqual(node("bundle-1", "item-3"), node("bundle-2", "item-3"))
+                self.assertIn((node("bundle-2", "item-3"), self.OF_ITEM, BUNDLE_LINE + "item-3"), written)
+
+    def test_a_key_of_the_code_alone_writes_every_member_on_the_one_node_of_the_code(self) -> None:
+        compiled = self.compile(line_without_member_graph())
+        for engine in self.ENGINES:
+            with self.subTest(engine=engine):
+                written, _ = self.evaluate(engine, compiled, self.source())
+                node = f"{self.BASE}bundle-line/Line/B1"
+                self.assertEqual({(s, o) for s, p, o in written if p == self.OF_ITEM and s == node}, {(node, BUNDLE_LINE + i) for i in ("item-1", "item-2", "item-3")})
+                self.assertEqual({s for s, p, o in written if p == self.TYPE}, {node, f"{self.BASE}bundle-line/Line/B2"})
+        self.assertEqual([f.code for f in compiled.findings], ["ExpansionReview", "MappingReview"])
+
+    def test_a_key_of_the_member_alone_shares_the_node_of_a_member_two_bundles_hold(self) -> None:
+        from urllib.parse import quote
+
+        compiled = self.compile(line_member_alone_graph())
+        shared = f"{self.BASE}bundle-line/Line/{quote(BUNDLE_LINE + 'item-3', safe='')}"
+        for engine in self.ENGINES:
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, self.source())
+                self.assertEqual({o for s, p, o in written if s == shared and p == self.CODE}, {"B1", "B2"})
+                self.assertEqual({(f, v) for c, f, v in reported if c == "ValueDisagrees"}, {(shared, "B1"), (shared, "B2")})
+        self.assertEqual([f.code for f in compiled.findings], ["ExpansionReview", "MappingReview"])
+
+    def test_the_member_as_the_node_is_typed_and_written_on_and_nothing_is_minted(self) -> None:
+        compiled = self.compile(line_member_node_graph())
+        for engine in self.ENGINES:
+            with self.subTest(engine=engine):
+                written, _ = self.evaluate(engine, compiled, self.source())
+                self.assertEqual({s for s, p, o in written if p == self.TYPE}, {BUNDLE_LINE + i for i in ("item-1", "item-2", "item-3")})
+                self.assertIn((BUNDLE_LINE + "bundle-2", self.HAS_LINE, BUNDLE_LINE + "item-3"), written)
+                self.assertIn((BUNDLE_LINE + "item-3", self.CODE, "B1"), written)
+                self.assertFalse([s for s, p, o in written if s.startswith(self.BASE)])
+        self.assertEqual([f.code for f in compiled.findings], ["ExpansionReview", "MappingReview"])
+
+    def test_the_member_as_the_node_reports_a_literal_and_a_blank_member_and_skips_them(self) -> None:
+        compiled = self.compile(line_member_node_graph())
+        odd = self.source('ex:bundle-5 a ex:Bundle ; ex:bundleCode "B5" ; ex:items ( ex:item-1 7 [ a ex:Item ] ) .')
+        for engine in self.ENGINES:
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, odd)
+                rows = {r for r in reported if r[0] == "MemberNotIri" and r[1] == BUNDLE_LINE + "bundle-5"}
+                self.assertEqual(len(rows), 2)
+                self.assertIn("7", {r[2] for r in rows})
+                self.assertIn((BUNDLE_LINE + "bundle-5", self.HAS_LINE, BUNDLE_LINE + "item-1"), written)
+                self.assertEqual(len([1 for s, p, o in written if s == BUNDLE_LINE + "bundle-5"]), 1)
+
+    def test_a_stable_name_is_spelled_in_place_of_the_member_and_a_member_without_one_is_reported_and_skipped(self) -> None:
+        compiled = self.compile(line_named_graph())
+        named = self.source(ITEM_NAMES)
+        partial = self.source('ex:item-1 ex:sku "A1" . ex:item-3 ex:sku "A3" .')
+        for engine in self.ENGINES:
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, named)
+                self.assertEqual({s for s, p, o in written if p == self.TYPE}, {self.line("B1", "A1"), self.line("B1", "A 2"), self.line("B1", "A3"), self.line("B2", "A3")})
+                self.assertTrue(self.line("B1", "A 2").endswith("/B1/A%202"))
+                self.assertEqual({r for r in reported if r[0] == "MemberUnnamed"}, set())
+                written, reported = self.evaluate(engine, compiled, partial)
+                self.assertEqual({s for s, p, o in written if p == self.TYPE}, {self.line("B1", "A1"), self.line("B1", "A3"), self.line("B2", "A3")})
+                self.assertEqual({(r[1], r[2]) for r in reported if r[0] == "MemberUnnamed"}, {(BUNDLE_LINE + "bundle-1", BUNDLE_LINE + "item-2")})
+
+    def test_a_blank_member_is_reported_and_skipped_while_the_other_members_are_written(self) -> None:
+        compiled = self.compile(line_graph())
+        odd = self.source('ex:bundle-5 a ex:Bundle ; ex:bundleCode "B5" ; ex:items ( ex:item-1 [ a ex:Item ] ex:item-2 ) .')
+        for engine in self.ENGINES:
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, odd)
+                nodes = {s for s, p, o in written if p == self.TYPE and "/B5/" in s}
+                self.assertEqual(nodes, {self.line("B5", BUNDLE_LINE + "item-1"), self.line("B5", BUNDLE_LINE + "item-2")})
+                self.assertEqual([r[1] for r in reported if r[0] == "MemberUnnamed"], [BUNDLE_LINE + "bundle-5"])
+
+    def test_a_join_from_the_constructed_nodes_writes_a_members_own_property_where_it_is_wanted(self) -> None:
+        """A value of a member's own properties is never copied by the construction (SVA-Q53). A join over the constructed nodes
+        links each line to the record that holds the property, so the property is reached through the link and goes stale nowhere."""
+        records = f"""
+        @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+        @prefix fnd: <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+        @prefix xsd: <{XSD_NS}> .
+        @prefix ex: <{BUNDLE_LINE}> .
+        ex:profile-v1 a srf:SurfaceProfile ; srf:generatorVersion "x" ; srf:canonicalisationVersion "srf-canon/2" ;
+            srf:entailmentRegime srf:NoEntailment ; srf:namingNormalisation srf:SanitisedLocalName ;
+            srf:symbolMode srf:PunnedSymbols ; srf:permittedStackDepth 0 .
+        ex:lp-subject a srf:ProjectionRoleBinding ; srf:roleKind srf:EvaluationSubjectRole .
+        ex:lp-item a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:ofItem .
+        ex:lp-record a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsCarrier ex:ItemRecord ; srf:bindsProperty ex:recordOf .
+        ex:lp-link a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ; srf:bindsProperty ex:describedBy ; srf:joinedAs ex:lp-join .
+        ex:lp-join a srf:JoinStatement ; srf:joinsOn [ srf:joinLeft ex:lp-item ; srf:joinRight ex:lp-record ] ; srf:joinMatches srf:AtMostOne .
+        ex:lp-policy a srf:ProjectionBackendPolicy ; srf:allowedBackend srf:SparqlBackend ; srf:deterministicOnly true ; srf:llmCompletionPolicy srf:NoLLMCompletion .
+        ex:line-record-projection a srf:ProjectionContract ; fnd:hasIdentity ex:line-record-identity ; fnd:hasGovernanceState fnd:Active ;
+            srf:contractKey "line-record" ; srf:carrier ex:Line ; srf:projectionKind srf:JoinProjection ;
+            srf:hasRoleBinding ex:lp-subject, ex:lp-item, ex:lp-record, ex:lp-link ;
+            srf:targetNamespace "https://example.org/lattice/surface/line-record/exec#"^^xsd:anyURI ;
+            srf:realisationMode srf:Materialised ; srf:surfaceProfile ex:profile-v1 ; srf:backendPolicy ex:lp-policy .
+        """
+        graph = Graph().parse(data=records, format="turtle")
+        self.assertEqual(shape_violations(graph, SURFACE_SHAPES), set())
+        (join,) = read_projection_contracts(graph, only=BUNDLE_LINE + "line-record-projection")
+        low = lower_projection(join)
+        (scheme,) = set(low.subjects(RDF.type, MORK.MappingScheme))
+        joined = mork_rdf.compile_scheme(low, scheme, base="https://example.org/lattice/surface/line-record/out/", at=datetime.fromisoformat("2026-11-25T00:00:00+00:00"))
+        self.assertFalse(joined.errors)
+        constructed = self.compile(line_graph())
+        for engine in self.ENGINES:
+            with self.subTest(engine=engine):
+                written, _ = self.evaluate(engine, constructed, self.source())
+                world = self.source()
+                world.parse(data=f"@prefix ex: <{BUNDLE_LINE}> . ex:rec-3 a ex:ItemRecord ; ex:recordOf ex:item-3 ; ex:description \"third\" . ex:rec-1 a ex:ItemRecord ; ex:recordOf ex:item-1 ; ex:description \"first\" .", format="turtle")
+                for s, p, o in written:
+                    world.add((URIRef(s), URIRef(p), URIRef(o) if o.startswith("http") else Literal(o)))
+                links, _ = self.evaluate(engine, joined, world)
+                described = BUNDLE_LINE + "describedBy"
+                self.assertEqual(
+                    {(s, o) for s, p, o in links if p == described},
+                    {(self.line("B1", BUNDLE_LINE + "item-1"), BUNDLE_LINE + "rec-1"), (self.line("B1", BUNDLE_LINE + "item-3"), BUNDLE_LINE + "rec-3"), (self.line("B2", BUNDLE_LINE + "item-3"), BUNDLE_LINE + "rec-3")},
+                )
+                self.assertFalse([1 for s, p, o in written if p == BUNDLE_LINE + "description"])
+
+    def test_the_same_graph_comes_back_on_a_repeat_and_with_the_triples_of_the_source_permuted(self) -> None:
+        compiled = self.compile(line_graph())
+        reference = self.evaluate("oxigraph", compiled, self.source())[0]
+        triples = sorted(self.source())
+        for seed in range(2):
+            shuffled = list(triples)
+            random.Random(seed).shuffle(shuffled)
+            graph = Graph()
+            for triple in shuffled:
+                graph.add(triple)
+            for engine in self.ENGINES:
+                self.assertEqual(self.evaluate(engine, compiled, graph)[0], reference)
+
+    def test_compiling_the_lowered_scheme_is_the_same_whatever_the_order_of_the_contract(self) -> None:
+        reference = self.compile(line_graph()).text()
+        triples = sorted(line_graph())
         for seed in range(3):
             shuffled = list(triples)
             random.Random(seed).shuffle(shuffled)

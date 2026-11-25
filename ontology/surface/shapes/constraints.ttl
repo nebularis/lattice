@@ -733,15 +733,17 @@ srf:ConstructionLinkPropertyRequiredShape a sh:NodeShape ;
 srf:ConstructionPlacementShape a sh:NodeShape ;
 	sh:targetClass srf:ProjectionRoleBinding ;
 	sh:sparql [
-		sh:message "A role binding states a constructed node and is not the result-target role binding of a graph construction. Discharges srf:P10." ;
+		sh:message "A role binding states a constructed node and is not the result-target role binding of a graph construction or of an expansion that states its expansion statement on the same binding. Discharges srf:P10 and srf:P22." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
 				$this srf:constructedAs ?node .
 				FILTER NOT EXISTS {
 					$this srf:roleKind srf:ResultTargetRole .
-					?contract srf:hasRoleBinding $this ;
-						srf:projectionKind srf:GraphConstructionProjection .
+					?contract srf:hasRoleBinding $this .
+					{ ?contract srf:projectionKind srf:GraphConstructionProjection }
+					UNION
+					{ ?contract srf:projectionKind srf:ExpansionProjection . $this srf:expandedAs ?statement }
 				}
 			}
 		"""
@@ -763,7 +765,7 @@ srf:ConstructionNodeTypedShape a sh:NodeShape ;
 srf:ConstructedNodeReachedShape a sh:NodeShape ;
 	sh:targetClass srf:ConstructedNode ;
 	sh:sparql [
-		sh:message "A constructed node is not stated by the result-target role binding of any graph construction, so no contract constructs it. Discharges srf:P10." ;
+		sh:message "A constructed node is not stated by the result-target role binding of any graph construction or expansion, so no contract constructs it. Discharges srf:P10." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
@@ -776,16 +778,17 @@ srf:ConstructedNodeReachedShape a sh:NodeShape ;
 srf:ConstructedKeyShape a sh:NodeShape ;
 	sh:targetClass srf:ConstructedNode ;
 	sh:sparql [
-		sh:message "A constructed node by key names no key binding, or a constructed node for each instance names one. Discharges srf:P11." ;
+		sh:message "A constructed node by key names no key binding and no key member, or a constructed node for each instance, or the member itself, names one. Discharges srf:P11 and srf:P24." ;
 		sh:select """
 			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
 			SELECT $this WHERE {
 				{
 					$this srf:nodeIdentity srf:ByKey .
-					FILTER NOT EXISTS { $this srf:keyBinding ?key }
+					FILTER (NOT EXISTS { $this srf:keyBinding ?key } && NOT EXISTS { $this srf:keyMember ?member })
 				} UNION {
-					$this srf:nodeIdentity srf:PerInstance ;
-						srf:keyBinding ?key .
+					$this srf:nodeIdentity ?identity ;
+						srf:keyBinding|srf:keyMember ?part .
+					FILTER (?identity IN (srf:PerInstance, srf:MemberNode))
 				}
 			}
 		"""
@@ -841,6 +844,50 @@ srf:ConstructedKeyEvidenceShape a sh:NodeShape ;
 					?value srf:roleKind srf:RequiredEvidenceRole ;
 						srf:bindsProperty ?property .
 				}
+			}
+		"""
+	] .
+
+srf:ConstructedMemberPlacementShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A constructed node states a key member, a member name or the member itself as its identity, or writes a value from the member, and is not stated beside an expansion statement on one binding. Discharges srf:P23." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				{ $this srf:keyMember ?value } UNION { $this srf:memberName ?value }
+				UNION { $this srf:nodeIdentity srf:MemberNode . BIND (srf:MemberNode AS ?value) }
+				UNION { $this srf:writes/srf:fromMember ?value }
+				FILTER NOT EXISTS {
+					?binding srf:constructedAs $this ;
+						srf:expandedAs ?statement .
+				}
+			}
+		"""
+	] .
+
+srf:ConstructedMemberNodeShape a sh:NodeShape ;
+	sh:targetClass srf:ConstructedNode ;
+	sh:sparql [
+		sh:message "A constructed node that is the member itself names a key binding, a key member or a member name, though it spells nothing. Discharges srf:P24." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:nodeIdentity srf:MemberNode ;
+					srf:keyBinding|srf:keyMember|srf:memberName ?value .
+			}
+		"""
+	] .
+
+srf:WrittenValueSourceShape a sh:NodeShape ;
+	sh:targetObjectsOf srf:writes ;
+	sh:sparql [
+		sh:message "A written value states neither an evidence role binding nor the member it is read from, or states both. It states exactly one of them. Discharges srf:P25." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				FILTER ((NOT EXISTS { $this srf:fromBinding ?binding } && NOT EXISTS { $this srf:fromMember ?member })
+					|| (EXISTS { $this srf:fromBinding ?binding } && EXISTS { $this srf:fromMember ?member }))
 			}
 		"""
 	] .

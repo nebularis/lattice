@@ -110,6 +110,10 @@ The tests that changed with the follow-up are the compile test of the bundle (a 
 - A node for each member, which combines an expansion with a graph construction, is a slice of its own after this kind (SVA-Q44).
 - The index missed the questions this slice asked about how a source-node assertion compiles and about the SHACL path forms, and answered them from the sketch and the mork_rdf README. `mise run graph:ask -- misses --near` at the handoff lists them.
 
+## Follow-up, 2026-11-25: the finding renamed
+
+The maintainer decided on 2026-11-25 that the review findings are named by the projection kind they review, since ADR-A41's "engineering review" named who reviews and not what. The finding this pack calls `EngineeringReview` is `ExpansionReview`, with the same code path, severity (a warning), message and rule, and a compiled derivation records `DerivationReview` where it recorded none. `MappingReview` stays for a join and a keyed construction. The rows and sentences above keep the name they were written with. The tests that changed are the expansion tests of `mork_rdf` (`test_expansion.py`) and Surface (`test_surface.py`), which expect `ExpansionReview`. ADR-A41 gains a Proposed addendum that names the three findings, and the accepted addenda to ADR-A18 and ADR-A23 name `ExpansionReview` where they named the finding. The open point below, whether the studio's review requirement acts on the finding, is unchanged.
+
 ## Placement
 
 T0. Surface, MORK, `mork_rdf` and the two examples are open substrate, and the examples are generic.
