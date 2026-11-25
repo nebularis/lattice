@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-25. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-25. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -65,7 +65,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2g | graph construction projections | built 2026-11-24 | SVA-S2f |
 | SVA-S2h | join projections | built 2026-11-24, building 2026-11-24 | SVA-S2f |
 | SVA-S2i | expansion projections | built 2026-11-25, building 2026-11-24 | SVA-S2f |
-| SVA-S2j | expansion combined with graph construction | planned | SVA-S2i |
+| SVA-S2j | expansion combined with graph construction | building 2026-11-25 | SVA-S2i |
 | SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
@@ -271,3 +271,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-24: the maintainer answered SVA-Q42 to SVA-Q48. An expansion expands a collection or a transitive closure, each selectable, from an RDF list or the transitive relation, each member restated as a statement on the instance, nothing written for an empty or missing source with an empty collection reported as information, no bound with an `EngineeringReview` finding, the terms and decisions as leaned. A node for each member is planned as SVA-S2j before SVA-S2c. A join condition no longer falls back to the datum's comparison, built with SVA-S2i. SVA-Q49, whether members are stated by a SHACL path and whether conformance to a shape is a source, is put to the maintainer.
 - 2026-11-25: the maintainer answered SVA-Q49 (a). An expansion states its members as a SHACL property path from the instance, with a list's members and a property's transitive closure as named conveniences the lowering writes as their paths. Members chosen by conformance to a shape are dropped, not kept in the backlog, since an expansion selects a subgraph from an instance already identified. SVA-S2i resumes, with the join condition's comparison fallback removed first.
 - 2026-11-25: SVA-S2i built, [Validation Pack](../validation/SVA-S2i.md). A join condition now states its own comparison or none, with no fallback. An expansion states its members as a SHACL path from the instance, or as a list's members or a transitive closure written as their paths, under laws P18 to P20, and lowers to one assertion `mork_rdf` already compiles, with `CollectionEmpty` and an `EngineeringReview` finding. Seven choices the answers did not settle wait for the maintainer, two of them unlike the join's.
+- 2026-11-25: SVA-S2j started. SVA-S2i's choices and the addenda on expansions stay open for the maintainer.
