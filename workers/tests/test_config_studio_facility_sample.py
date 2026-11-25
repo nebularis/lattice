@@ -253,9 +253,15 @@ def test_surface_validates_and_compiles_both_contracts():
     assert findings(g, SH.Violation) == []
     g = run("compile", "surface")
     assert g.value(JOB, CST.conforms) == Literal(True)
-    assert findings(g, SH.Violation) == [] and findings(g, SH.Warning) == []
+    assert findings(g, SH.Violation) == []
+    # The six projections each record the review their kind asks, as a warning on the contract, and nothing else is reported.
+    assert sorted((code, focus.rsplit("#", 1)[-1]) for code, focus in findings(g, SH.Warning)) == sorted([
+        ("DerivationReview", "facility-margin-projection"), ("ExpansionReview", "facility-covenant-test-projection"),
+        ("ExpansionReview", "facility-refinancing-projection"), ("MappingReview", "borrower-exposure-projection"),
+        ("MappingReview", "facility-branch-projection"), ("MappingReview", "facility-covenant-test-projection"),
+    ])
     files = artefacts(g, JOB)
-    assert {group for _, _, group in files.values()} == {"drawdown-sector", "borrower-sector", "maintenance"}
+    assert {group for _, _, group in files.values()} == {"drawdown-sector", "borrower-sector", "maintenance", "projections"}
     promotion = Graph().parse(data=files["drawdown-sector/assertions.ttl"][1], format="turtle")
     exec_ns = Namespace("https://example.org/lending/exec#")
     # Both drawdowns are drawn under a facility whose borrower works in food processing.

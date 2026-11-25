@@ -242,8 +242,8 @@ def test_a_run_that_cannot_start_is_one_failed_frame_as_the_contract_s_example_i
 @pytest.mark.parametrize("change", [
     {"run": None}, {"job": None}, {"kind": None}, {"target": None}, {"deadline": None},
     {"run": "urn:lattice:studio:run:not-a-uuid"}, {"job": "urn:lattice:studio:job:not-a-uuid"}, {"job": "urn:lattice:studio:ws:" + "0" * 8 + "-0000-4000-8000-000000000001"},
-    {"deadline": "tomorrow"}, {"deadline": "2026-11-20T10:07:00"}, {"kind": "simulate", "target": "persistence"},
-    {"kind": "sample", "target": "persistence"}, {"kind": "other", "target": "mapping"}, {"run": ""},
+    {"deadline": "tomorrow"}, {"deadline": "2026-11-20T10:07:00"}, {"kind": "simulate", "target": "mapping"},
+    {"kind": "sample", "target": "persistence"}, {"kind": "sample", "target": "projection"}, {"kind": "other", "target": "mapping"}, {"run": ""},
 ])
 def test_a_message_that_fails_the_checks_is_refused_without_requeuing_and_nothing_is_published_or_read(compile_job, change):
     reads: list[str] = []

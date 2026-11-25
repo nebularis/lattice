@@ -79,6 +79,31 @@
       "drawdown-sector"
     ]
   },
+  "facility-surface-step-projection.trig": {
+    "contracts": {
+      "drawdown-sector": {
+        "after": [
+          "<https://example.org/lending#drawdown-1> <https://example.org/lending/exec#drawdownSector> <https://example.org/lending#FoodProcessing> <urn:lattice:studio:promoted:urn:g:facilities> .",
+          "<https://example.org/lending#drawdown-2> <https://example.org/lending/exec#drawdownSector> <https://example.org/lending#FoodProcessing> <urn:lattice:studio:promoted:urn:g:facilities> .",
+          "<https://example.org/lending#drawdown-3> <https://example.org/lending/exec#drawdownSector> <https://example.org/lending#Retail> <urn:lattice:studio:promoted:urn:g:facilities> ."
+        ],
+        "asserted": [],
+        "before": [
+          "<https://example.org/lending#drawdown-1> <https://example.org/lending/exec#drawdownSector> <https://example.org/lending#FoodProcessing> <urn:lattice:studio:promoted:urn:g:facilities> .",
+          "<https://example.org/lending#drawdown-2> <https://example.org/lending/exec#drawdownSector> <https://example.org/lending#FoodProcessing> <urn:lattice:studio:promoted:urn:g:facilities> .",
+          "<https://example.org/lending#drawdown-3> <https://example.org/lending/exec#drawdownSector> <https://example.org/lending#Retail> <urn:lattice:studio:promoted:urn:g:facilities> ."
+        ],
+        "retracted": []
+      }
+    },
+    "reached": [],
+    "sources": [
+      "urn:g:facilities"
+    ],
+    "touched": [
+      "drawdown-sector"
+    ]
+  },
   "facility-surface-step-repay.trig": {
     "contracts": {
       "drawdown-sector": {

@@ -299,3 +299,27 @@ def test_the_contract_defines_the_surface_step_and_its_parts() -> None:
     assert ";" not in section, "the contract's prose has no semicolons"
     for identifier in ("SVA-", "TD-", "STD-", "PRI-", "ADR-", "BL-"):
         assert identifier not in section, identifier
+
+
+# --- the projection step (SVA-S2c) -------------------------------------------------------------------------
+
+
+def test_the_vocabulary_declares_the_projection_target_a_projection_run_names() -> None:
+    g = Graph().parse(CONTRACT / "studio-vocabulary.ttl")
+    assert (CST.Projection, RDF.type, CST.Target) in g and g.value(CST.Projection, RDFS.comment) is not None
+    assert "cst:Projection" in g.value(CST.SimulationStep, RDFS.comment)
+
+
+def test_the_contract_defines_the_projection_step_and_its_parts() -> None:
+    readme = (CONTRACT / "README.md").read_text(encoding="utf-8")
+    assert "### A projection step" in readme
+    section = readme[readme.index("### A projection step"):readme.index("### Delivery to the tab")]
+    for text in ("lattice.studio.runs.rdf", "projections/manifest.json", "`artefact`", "`report`", "`delta`", "`outcome`", "rows-before.trig", "rows-after.trig",
+                 "facility-surface-step-projection.trig", "wrong worker", "`engine`", "UTF-8 bytes"):
+        assert text in section or text in readme, text
+    assert ";" not in section, "the contract's prose has no semicolons"
+    for identifier in ("SVA-", "TD-", "STD-", "PRI-", "ADR-", "BL-"):
+        assert identifier not in section, identifier
+    assert "| `simulate` | `projection` |" in readme
+    assert "cst:Projection" in readme
+    assert (CONTRACT / "samples" / "facility-surface-step-projection.trig").is_file()

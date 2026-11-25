@@ -69,6 +69,7 @@ class _Frame:
     join: Optional[tuple] = None      # a join's (patterns reading the parent's values, the variables they bind), kept for its checks
     member: Optional[str] = None      # the variable a datum made for each member binds it to, once, for its identity, link and values (§7.12)
     member_text: Optional[str] = None  # what spells the member in an identifier, the member or the value of its name property
+    member_named: Optional[str] = None  # the variable that holds the member's stable name, where the datum states mork:memberName
     merges: bool = False              # the identity reads the member, so instances that share a member share the node
 
 
@@ -331,6 +332,7 @@ class _Compiler:
                 named = frame.member
                 if spec.member_name is not None:
                     named = self.var("n")
+                    frame.member_named = named
                     frame.match.append(f"{frame.member} {_term(spec.member_name)} {named} .")
                 else:
                     frame.match.append(f"FILTER (!{_blank(frame.member)})")
@@ -795,6 +797,10 @@ class _Compiler:
             if parent.member is None:
                 raise _Refusal("MemberOutside", "mork:dataMember writes the member of the datum it sits beneath, and that datum states no mork:memberRef")
             value = parent.member
+            if parent.member_named is not None:
+                # A blank member that has a stable name is written as the name's value and never copied as a blank node (README §7.12).
+                value = self.var("w")
+                patterns.append(f"BIND (IF({_blank(parent.member)}, {parent.member_named}, {parent.member}) AS {value})")
         elif rows:
             raise _Refusal("NoValue", "correspondences translate the values mork:dataRef reads, and this mapping has none")
         elif spec.data_inline is not None:

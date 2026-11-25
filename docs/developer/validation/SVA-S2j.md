@@ -82,9 +82,19 @@ Part A's own run, before Part B, was `check:mork-rdf` 287 passed, `check:python-
 ## Left open
 
 - Whether the studio's review requirement acts on `ExpansionReview`, `DerivationReview` and `MappingReview`, which SVA-S2c decides. It reads only the projection kind today, and the workers' policy and the contracts under `contracts/` still name `engineering_review` and `mapping_review`.
-- A blank member that carries a stable name and is written by `srf:fromMember` copies a blank node into the output. No test shows it, and a contract that needs it decides.
+- A blank member that carries a stable name and is written by `srf:fromMember` was left open and is decided in the follow-up below.
 - A language tag on a literal member is not spelled, so two members that differ only by tag share a name.
 - A key that reads the member of a list is spelled into an identifier, as any key is, and Surface cannot check that the member's text is stable.
+
+## Follow-up, 2026-11-25: a blank member with a stable name is written as its name
+
+The maintainer decided on 2026-11-25 that a member that is a blank node and has a stable name, when a constructed node's value is written from it with `srf:fromMember`, is written as its stable name's value and never copied as a blank node. A blank member without a stable name stays as built, reported by `MemberUnnamed` or `MemberNotIri` and skipped.
+
+- **Built in the compile only.** The datum keeps the variable that holds the name, and an assertion that states `mork:dataMember` binds its value as the name where the member is blank and as the member otherwise. The lowering carries nothing new, since `mork:memberName` and `mork:dataMember` already say it. The test is `test_a_blank_member_with_a_name_is_written_as_the_name_and_never_as_a_blank_node` in `test_member.py`, on Oxigraph and rdflib, which shows the name's value written for the blank member and the IRI written for the member that is a node, and no skolem IRI in the output.
+- **Text.** The Surface README's section on a node for each member, `mork_rdf`'s README section 7.12, the sketch's section 2.5 and the accepted addenda to ADR-A18 (decision 3) and ADR-A23 (decision 1) each gained a sentence.
+- **Choice not settled.** The name's value is written whatever its kind, a literal or a node, since the maintainer's wording says "its stable name's value".
+- **Checks.** `mise run check:mork-rdf` 333 passed, 2 more than the 331 before, one for each engine.
+- **The left-open point on the studio's review requirement** is built in [SVA-S2c](SVA-S2c.md), which reads the three review findings from the compilation.
 
 ## Placement
 

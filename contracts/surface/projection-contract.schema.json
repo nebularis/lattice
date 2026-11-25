@@ -8,7 +8,7 @@
   "properties": {
     "contractId": {"type": "string", "minLength": 1},
     "carrier": {"type": "string", "format": "uri"},
-    "projectionKind": {"enum": ["derivation", "join", "expansion"]},
+    "projectionKind": {"enum": ["derivation", "join", "expansion", "graph_construction"]},
     "roleBindings": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/roleBinding"}},
     "backendPolicy": {"$ref": "#/$defs/backendPolicy"}
   },

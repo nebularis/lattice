@@ -453,9 +453,51 @@ def _compile_surface(result: _Result, config: Graph, baseline: Graph, root: str,
             result.finding(SH.Warning, str(warning), "SurfaceWarning", contract.iri)
         for name, text in sorted(files.items()):
             result.artefact(f"{contract.key}/{name}.ttl", "text/turtle", text, contract.key)
+    if _compile_projections(result, source, root, now):
+        failed = True
     result.conforms(not failed)
     if not failed:
         _maintenance_artefacts(result, contracts)
+
+
+_COMPILE_SEVERITY = {"error": SH.Violation, "warning": SH.Warning, "info": SH.Info}
+
+
+def _compile_projections(result: _Result, source: Graph, root: str, now: str) -> bool:
+    """Lowers every projection contract of the configuration with Surface's lowering and compiles each scheme with `mork_rdf`, holding each compiled
+    form as an artefact of the group `projections` beside the manifest that names them (`config_studio_projections`). The compiler's findings are the
+    job's, with their severities, on the contract, so `DerivationReview`, `ExpansionReview` and `MappingReview` are warnings. A contract that cannot
+    be lowered or compiled is a violation that names it. A configuration with no projection adds nothing. Returns whether a violation was found."""
+    from . import config_studio_projections as projections
+    from surface.model import ContractError
+
+    try:
+        compiled = projections.lower_and_compile(source, source, datetime.fromisoformat(now.replace("Z", "+00:00")))
+    except ContractError as error:
+        result.finding(SH.Violation, str(error), type(error).__name__)
+        return True
+    failed = False
+    for item in compiled:
+        if item.refusal is not None:
+            result.finding(SH.Violation, f"the projection {item.key} could not be compiled: {item.refusal}", "ProjectionRefused", item.iri)
+            failed = True
+            continue
+        if item.compiled is None:
+            result.finding(SH.Info, f"the projection {item.key} states nothing to write, so it has no compiled form", "ProjectionNotCompiled", item.iri)
+            continue
+        for finding in item.compiled.findings:
+            severity = _COMPILE_SEVERITY.get(finding.severity.value, SH.Info)
+            result.finding(severity, finding.message, finding.code, item.iri)
+            failed = failed or severity == SH.Violation
+    entries = projections.manifest(item for item in compiled if item.refusal is None)
+    if entries:
+        from mork_rdf import to_rdf
+
+        by_scheme = {item.scheme: item.compiled for item in compiled if item.compiled is not None and item.refusal is None}
+        for entry in entries:
+            result.artefact(entry["path"], "text/turtle", to_rdf(by_scheme[entry["scheme"]]).serialize(format="turtle"), projections.PROJECTIONS)
+        result.artefact(projections.MANIFEST, "application/json", projections.manifest_text(entries), projections.PROJECTIONS)
+    return failed
 
 
 MAINTENANCE = "maintenance"

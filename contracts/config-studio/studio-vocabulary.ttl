@@ -174,6 +174,7 @@ cst:Defer a cst:ReviewDecision ; rdfs:comment "The proposal is set aside for lat
 cst:Meaning a cst:Target ; rdfs:comment "The meaning configuration, stated meaning in ins:, validated with Instrument's shapes." .
 cst:Review a cst:Target ; rdfs:comment "The review configuration, proposals and their decisions." .
 cst:Mapping a cst:Target ; rdfs:comment "The mapping configuration, MORK mapping schemes and the guards they name, validated with MORK's shapes." .
+cst:Projection a cst:Target ; rdfs:comment "The projection part of a surface step, a run of kind simulate over the compile job of the surface part. It is no configuration part of its own, since the projections are contracts of the surface part, and names the run that answers them." .
 
 cst:DocumentTemplate a owl:Class ;
     rdfs:comment "The sections a document drafted from it holds, and what each may hold." .
@@ -317,7 +318,7 @@ cst:compileJob a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain [ a ow
 cst:Run a owl:Class ; rdfs:subClassOf cst:Job ;
     rdfs:comment "A run of a finished compile job's artefacts over an input that is not saved. It is accepted at once, stores nothing, is never listed and cannot be read again, and its result reaches the browser as frames (ADR-A154). Its cst:kind is cst:SampleRun or cst:SimulationStep." .
 cst:SampleRun a cst:JobKind ; rdfs:comment "A run of the compiled mapping part over a sample source, a run of kind sample. Its cst:target is cst:Mapping." .
-cst:SimulationStep a cst:JobKind ; rdfs:comment "One step of a simulator over a sample world, a run of kind simulate. Its cst:target is cst:Persistence or cst:Surface." .
+cst:SimulationStep a cst:JobKind ; rdfs:comment "One step of a simulator over a sample world, a run of kind simulate. Its cst:target is cst:Persistence, cst:Surface or cst:Projection." .
 cst:deadline a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain cst:Run ; rdfs:range xsd:dateTime ;
     rdfs:comment "The absolute time by which the run must have ended. After it the broker drops a request no worker took, a worker stops the execution, and the accepting service instance ends the run with a failed frame." .
 

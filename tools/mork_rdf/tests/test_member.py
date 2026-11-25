@@ -282,6 +282,27 @@ def test_a_blank_member_with_a_name_is_named_by_it(engine):
     assert not [r for r in only("MemberUnnamed", reported) if r[1] == REC + "b8"]
 
 
+@pytest.mark.parametrize("engine", ENGINES)
+def test_a_blank_member_with_a_name_is_written_as_the_name_and_never_as_a_blank_node(engine):
+    odd = source('rec:b8 a src:Bundle ; src:bundleCode "B8" ; src:items ( [ src:sku "Z9" ] rec:i1 ) .' + NAMES)
+    written, _ = evaluate(engine, compiled(variant(*NAMED)), odd)
+    assert (line("B8", "Z9"), TGT + "ofItem", "Z9") in written
+    assert (line("B8", "A1"), TGT + "ofItem", I["i1"]) in written
+    values = {o for s, p, o in written if p == TGT + "ofItem" and s.startswith(f"{BASE}bundle-line/Line/B8/")}
+    assert values == {"Z9", I["i1"]}
+    assert not [o for _, _, o in written if "skolem" in o]
+
+
+def test_a_compiled_node_for_each_member_reads_back_with_the_severity_each_check_reports_its_rows_as():
+    """A check of information is part of the text the digest reads, so a description that dropped its severity could not be read back."""
+    from mork_rdf import from_rdf, to_rdf
+
+    mapping = compiled(variant())
+    assert {q.severity for q in mapping.checks} == {Severity.INFO, Severity.WARNING}
+    again = from_rdf(Graph().parse(data=to_rdf(mapping).serialize(format="turtle"), format="turtle"))
+    assert again == mapping and again.digest == mapping.digest
+
+
 # --- a member that has no name -------------------------------------------------------------------------------------------
 
 

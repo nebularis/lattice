@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: MPL-2.0
-"""A mapping's sample run over an RDF source, answered by the studio's Python worker (ADR-A154, addendum of 2026-11-20).
+"""A mapping's sample run over an RDF source, and a surface step's projection part, answered by the studio's Python worker (ADR-A154, addenda of
+2026-11-20 and 2026-11-25).
 
 The run worker of the contract is two workers with one protocol. This is the one that runs `mork_rdf`'s driver, for a sample in Turtle or
-N-Triples, from a queue of its own. `RdfRunWorker.handle` keeps every rule of a run the Java run worker keeps, in the same order:
+N-Triples and for a `simulate` run of target `projection`, from a queue of its own. A `simulate` run of another target is the Java run worker's, and
+gets the failed frame that says it went to the wrong worker. `RdfRunWorker.handle` keeps every rule of a run the Java run worker keeps, in the same order:
 
 1. the headers and the request are checked before anything is done (PRI-75), and a message that fails is refused without requeuing
 2. a message the broker marks as redelivered is never run, and gets the failed frame saying a worker stopped, and is acknowledged
@@ -43,7 +45,7 @@ _UUID = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 _RUN_IRI = re.compile(rf"urn:lattice:studio:run:{_UUID}")
 _JOB_IRI = re.compile(rf"urn:lattice:studio:job:{_UUID}")
 # The pairs a run takes, as the service accepts them. This queue carries one of them.
-_TARGETS = {"sample": {"mapping"}, "simulate": {"persistence", "surface"}}
+_TARGETS = {"sample": {"mapping"}, "simulate": {"persistence", "surface", "projection"}}
 _SEVERITY = {"error": frames.Severity.VIOLATION, "warning": frames.Severity.WARNING}
 
 
@@ -101,6 +103,8 @@ class _Request:
     run: str
     job: str
     deadline: datetime
+    kind: str = "sample"
+    target: str = "mapping"
 
 
 class RdfRunWorker:
@@ -125,11 +129,17 @@ class RdfRunWorker:
             # The service sends the failed frame of a run that passed its deadline.
             return Outcome.ACK
         media = (message.content_type or "").split(";", 1)[0].strip().lower()
-        if media not in RDF_SAMPLES:
+        step = request.kind == "simulate"
+        if step and request.target != "projection":
+            return _publish(sink, request.run, frames.failed(
+                request.run, f"A {request.target} step is run by the run worker, so this run went to the wrong worker and was not started."))
+        if step and media != "application/trig":
+            return _publish(sink, request.run, frames.failed(request.run, "A step is sent as application/trig, so this run was not started."))
+        if not step and media not in RDF_SAMPLES:
             return _publish(sink, request.run, frames.failed(
                 request.run, "A sample that is not Turtle or N-Triples is run by the run worker, so this run went to the wrong worker and was not started."))
         if len(message.body) > MAX_INPUT_BYTES:
-            return _publish(sink, request.run, frames.failed(request.run, "The sample is over 5 MiB, so this run was not started."))
+            return _publish(sink, request.run, frames.failed(request.run, f"The {'step' if step else 'sample'} is over 5 MiB, so this run was not started."))
         budget = (request.deadline - now).total_seconds()
         done = threading.Event()
         stop = threading.Event()
@@ -161,10 +171,13 @@ class RdfRunWorker:
         except Exception:
             LOG.warning("the compile job of a run could not be read", exc_info=True)
             return frames.failed(request.run, "The compile job could not be read, so this run was not started.")
+        step = request.kind == "simulate"
         try:
             sample = body.decode("utf-8")
         except UnicodeDecodeError:
-            return frames.failed(request.run, "The sample is not UTF-8 text, so this run was not started.")
+            return frames.failed(request.run, f"The {'step' if step else 'sample'} is not UTF-8 text, so this run was not started.")
+        if step:
+            return projection_step(job, request, sample, stop)
         return frames.of(request.run, execute(job, request.job, media, sample, stop))
 
     @staticmethod
@@ -182,15 +195,25 @@ class RdfRunWorker:
             raise ValueError("header job is not a job IRI")
         if target not in _TARGETS.get(kind, set()):
             raise ValueError("headers kind and target are not a pair a run takes")
-        if kind != "sample":
-            raise ValueError("header kind is not one this queue carries")
         try:
             at = datetime.fromisoformat(deadline)
         except ValueError:
             raise ValueError("header deadline is not a dateTime with a time zone") from None
         if at.tzinfo is None:
             raise ValueError("header deadline is not a dateTime with a time zone")
-        return _Request(run, job, at)
+        return _Request(run, job, at, kind, target)
+
+
+def projection_step(job: Graph, request: _Request, trig: str, stop: threading.Event) -> list[dict[str, Any]]:
+    """The frames of a projection step over the compile job `job`, or the one failed frame of a step that cannot be run. The driver runs with the
+    sink of a sample run, which stops the run at the next query it would write once `stop` is set."""
+    from .config_studio_projection_step import StepFailed, execute as run_step
+
+    try:
+        parts = run_step(job, request.job, trig, request.run, engine(), lambda: _StoppableRecorder(stop))
+    except StepFailed as failure:
+        return frames.failed(request.run, str(failure))
+    return frames.of_step(request.run, parts)
 
 
 def _publish(sink: FrameSink, run: str, run_frames: list[dict[str, Any]]) -> Outcome:

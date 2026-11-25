@@ -1399,6 +1399,10 @@ public final class StudioApi {
         "persistence", new RunKind("simulate", "persistence", org.nebularis.lattice.studio.jobs.Topology.RUNS_INTERACTIVE_ROUTING_KEY, null,
             Cst.SimulationStep, SIMULATE_LIMIT, List.of(TRIG)),
         "surface", new RunKind("simulate", "surface", org.nebularis.lattice.studio.jobs.Topology.RUNS_INTERACTIVE_ROUTING_KEY, null,
+            Cst.SimulationStep, SIMULATE_LIMIT, List.of(TRIG)),
+        // The projection part of a surface step is answered by the studio's Python worker with mork_rdf's driver, from the queue of its other runs,
+        // over the compile job of the surface part and the same body a surface step has (ADR-A154, addendum of 2026-11-25).
+        "projection", new RunKind("simulate", "surface", org.nebularis.lattice.studio.jobs.Topology.RUNS_RDF_ROUTING_KEY, null,
             Cst.SimulationStep, SIMULATE_LIMIT, List.of(TRIG)));
     private static final String RUN_PREFIX = "urn:lattice:studio:run:";
     /** How long past a run's deadline a waiting request waits for its last frame, so the failed one the service sends at the deadline is heard. */
@@ -1423,7 +1427,7 @@ public final class StudioApi {
         Map<String, String> q = query(req.query());
         RunKind kind = runKind(q.get("kind"), q.get("target"));
         if (kind == null) {
-            return ApiResponse.text(400, "kind and target are sample and mapping, or simulate and persistence or surface");
+            return ApiResponse.text(400, "kind and target are sample and mapping, or simulate and persistence, surface or projection");
         }
         String tab = q.get("tab");
         if (!org.nebularis.lattice.studio.events.BrokerAuth.isTab(tab)) {

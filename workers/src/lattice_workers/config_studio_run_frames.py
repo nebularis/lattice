@@ -92,6 +92,34 @@ def of(run: str, result: Result) -> list[dict[str, Any]]:
     return frames
 
 
+@dataclass(frozen=True)
+class Part:
+    """One part of a simulator step's result: its role, media type and text, with the `group` and `path` of an artefact where it has them."""
+
+    role: str
+    media_type: str
+    text: str
+    group: Optional[str] = None
+    path: Optional[str] = None
+
+
+def of_step(run: str, parts: list[Part]) -> list[dict[str, Any]]:
+    """The frames of a simulator step's parts, which keep the order they are given in, each cut into frames as a sample run's are, and a succeeded
+    last frame. A step that needs more than `MAX_FRAMES` frames is one failed frame instead."""
+    frames: list[dict[str, Any]] = []
+    index = 0
+    for part in parts:
+        index = _part(frames, run, index, part.role, part.media_type, part.group, 0 if part.group is not None else None, part.path, part.text)
+        if len(frames) >= MAX_FRAMES:
+            break
+    if len(frames) + 1 > MAX_FRAMES:
+        return failed(run, TOO_LARGE)
+    last = _frame(run, len(frames), True)
+    last["status"] = "succeeded"
+    frames.append(last)
+    return frames
+
+
 def encode(frame: dict[str, Any]) -> str:
     """A frame as the JSON text published as a CloudEvent's data."""
     return json.dumps(frame, ensure_ascii=False, separators=(",", ":"))

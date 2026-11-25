@@ -1,0 +1,71 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The input of a simulate run of target projection, and of target surface, for the facility sample's surface part. The step is the TriG of a surface step, so the
+# surface run and the projection run of one step take the same body. The sample world is the graphs that are not reserved, as it was before the edit, and the edit is
+# the quads a write added and removed, in <urn:lattice:studio:step/added/{graph}> and <urn:lattice:studio:step/removed/{graph}>, where {graph} is the edited graph's IRI
+# percent-encoded as ENCODE_FOR_URI does.
+#
+# The world holds what the six projections of the surface part read. The edit changes five of them. facility-1's margin changes, so the derivation writes another
+# weighted commitment. The second drawdown's amount changes, so its schedule does. facility-3 changes its borrower, so the exposure of acme-foods loses a facility and
+# fjord-retail's gains one. facility-2 is booked at a branch the world does not hold, so its link to a branch is retracted and the join reports it unmatched, and
+# facility-3 now refinances facility-1, so the chain the refinancing expansion restates is a link longer. The covenant tests are not changed. Every IRI is a placeholder under example.org.
+
+@prefix cst: <https://www.nebularis.org/neuro-semantic/lattice/config-studio#> .
+@prefix ex:  <https://example.org/lending#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix pat: <https://www.nebularis.org/neuro-semantic/lattice/persistence-store#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:g:meta/6> {
+    ex:facility-1 pat:epoch "1"^^xsd:long ; pat:seq "2"^^xsd:long ; pat:head <urn:rev:facility-1/2> .
+}
+
+<urn:g:vocabulary> {
+    ex:FoodProcessing a skos:Concept ; skos:broader ex:Manufacturing ; skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 ; skos:prefLabel "Food processing"@en .
+    ex:Retail a skos:Concept ; skos:broader ex:Consumer ; skos:inScheme ex:SectorScheme2026 , ex:SectorScheme2027 ; skos:prefLabel "Retail"@en .
+}
+
+<urn:g:borrower/acme-foods> {
+    ex:acme-foods a ex:Borrower ; ex:borrowerSector ex:FoodProcessing .
+}
+
+<urn:g:borrower/fjord-retail> {
+    ex:fjord-retail a ex:Borrower ; ex:borrowerSector ex:Retail .
+}
+
+<urn:g:branches> {
+    ex:branch-london a ex:Branch ; ex:branchCode "LDN" .
+    ex:branch-frankfurt a ex:Branch ; ex:branchCode "FRA" .
+}
+
+<urn:g:facilities> {
+    ex:facility-1 a ex:Facility ; ex:facilityReference "FAC-2026-001" ; ex:borrower ex:acme-foods ; ex:hasDrawdown ex:drawdown-1 , ex:drawdown-2 ;
+        ex:commitment 120000000.0 ; ex:margin 3.25 ; ex:bookingBranchCode "LDN" ; ex:covenants ( ex:leverage-cover ex:interest-cover ) .
+    ex:facility-2 a ex:Facility ; ex:facilityReference "FAC-2026-002" ; ex:borrower ex:fjord-retail ; ex:hasDrawdown ex:drawdown-3 ;
+        ex:commitment 50000000.0 ; ex:margin 2.75 ; ex:bookingBranchCode "FRA" ; ex:refinances ex:facility-3 ; ex:covenants ( ex:interest-cover ) .
+    ex:facility-3 a ex:Facility ; ex:facilityReference "FAC-2026-003" ; ex:borrower ex:acme-foods ; ex:margin 3.0 ; ex:bookingBranchCode "LDN" .
+    ex:drawdown-1 a ex:Drawdown ; ex:drawnUnder ex:facility-1 ; ex:drawnAmount 40000000.0 ; ex:drawdownDate "2026-03-15"^^xsd:date .
+    ex:drawdown-2 a ex:Drawdown ; ex:drawnUnder ex:facility-1 ; ex:drawnAmount 25000000.0 ; ex:drawdownDate "2026-09-01"^^xsd:date .
+    ex:drawdown-3 a ex:Drawdown ; ex:drawnUnder ex:facility-2 ; ex:drawnAmount 10000000.0 ; ex:drawdownDate "2026-05-20"^^xsd:date .
+}
+
+<urn:lattice:studio:step> {
+    <urn:lattice:studio:step> a cst:SimulationStepRequest ;
+        cst:forPart cst:Surface ;
+        cst:transactionTime "2026-04-02T09:30:00Z"^^xsd:dateTime .
+}
+
+<urn:lattice:studio:step/removed/urn%3Ag%3Afacilities> {
+    ex:facility-1 ex:margin 3.25 .
+    ex:drawdown-2 ex:drawnAmount 25000000.0 .
+    ex:facility-3 ex:borrower ex:acme-foods .
+    ex:facility-2 ex:bookingBranchCode "FRA" .
+}
+
+<urn:lattice:studio:step/added/urn%3Ag%3Afacilities> {
+    ex:facility-1 ex:margin 3.5 .
+    ex:drawdown-2 ex:drawnAmount 30000000.0 .
+    ex:facility-3 ex:borrower ex:fjord-retail ;
+        ex:refinances ex:facility-1 .
+    ex:facility-2 ex:bookingBranchCode "NYC" .
+}

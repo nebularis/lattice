@@ -49,7 +49,7 @@ Built from the status records on 26 branches, the units' own state from this tre
 | [insurml-alignment](plans/insurml-alignment.md) | epic | planned | IMA-0.1 | 24 planned |  |
 | knowledge-index | unit | building 2026-10-26 |  | no board |  |
 | [lattice-tutorial](plans/lattice-tutorial.md) | multi-slice unit | building 2026-11-06 | TUT-0 | 5 built, 4 briefed, 1 merged, 1 building | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
-| [ledger](plans/ledger.md) | unit | built 2026-11-09 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · merged 2026-11-18 on spi/worktree-s · verified 2026-11-16 on spi/sql-backend · built 2026-11-12 on docs/placement-vehicles-structure-h0e5v9 · built 2026-11-13 on ledger/lg-19-cloud-run · built 2026-11-16 on fm/ledger-proofs-on-the-target-kernel, ledger/lg-22-cloud-run · built 2026-11-23 on spi/multi-store-architecture, spi/worktree-s2 · built 2026-11-24 on docs/placement-vehicles-structure | LG-2 | 19 merged, 8 verified, 5 planned, 2 briefed, 1 built, 1 blocked | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
+| [ledger](plans/ledger.md) | unit | built 2026-11-09 · merged 2026-10-27 on fml/isabelle-layers, vyd-win, vyd-win2, vyvid-migration · merged 2026-11-18 on spi/worktree-s · verified 2026-11-16 on spi/sql-backend · built 2026-11-12 on docs/placement-vehicles-structure-h0e5v9 · built 2026-11-13 on ledger/lg-19-cloud-run · built 2026-11-16 on fm/ledger-proofs-on-the-target-kernel, ledger/lg-22-cloud-run · built 2026-11-23 on spi/multi-store-architecture, spi/worktree-s2 · built 2026-11-25 on docs/placement-vehicles-structure | LG-2 | 19 merged, 8 verified, 5 planned, 2 built, 2 briefed, 1 blocked | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
 | [mork-transforms](plans/mork-transforms.md) | multi-slice unit | built 2026-10-30 |  | no board |  |
 | [normative-rule-substrate](plans/normative-rule-substrate.md) | multi-slice unit | blocked | NRS-2 | 7 blocked, 4 planned, 2 dropped |  |
 | [ontology-remediation](plans/ontology-remediation.md) | phase | built 2026-10-28 | OR-0 | 21 built |  |
@@ -66,10 +66,11 @@ Built from the status records on 26 branches, the units' own state from this tre
 | rdf-sparql-patterns-status | unit | built 2026-09-22 | RSP-1 | 2 built, 1 planned |  |
 | [studio-publication](plans/studio-publication.md) | multi-slice unit in four phases | built 2026-10-31 | PB-1 | 17 built |  |
 | [studio-quality](plans/studio-quality.md) | multi-slice unit | built 2026-10-31 | SQ-1 | 4 planned, 2 built |  |
-| [studio-visual-authoring](plans/studio-visual-authoring.md) | multi-slice unit | built 2026-11-25 | SVA-R0 | 50 built, 12 planned | claude/modest-ramanujan-cgvs0p |
+| [studio-visual-authoring](plans/studio-visual-authoring.md) | multi-slice unit | built 2026-11-25 | SVA-R0 | 51 built, 11 planned | claude/modest-ramanujan-cgvs0p |
 | [studio-worker-liveness](plans/studio-worker-liveness.md) | multi-slice unit | built 2026-11-06 | WL-0 | 10 built |  |
 | [temporal-binding-consumer-hardening](plans/temporal-binding-consumer-hardening.md) | unit | built 2026-09-25 |  | no board |  |
 | [v-rig-studio](plans/v-rig-studio.md) | multi-slice unit | planned | VS-1 | 7 planned |  |
+| [v-rig](plans/v-rig.md) | unit | merged 2026-11-08 |  | 7 merged, 1 building | docs/placement-vehicles-structure |
 | vocabulary-temporal-binding | unit | built 2026-09-25 | VTB-1 | 2 built, 2 verified |  |
 | [vyvid-migration](plans/vyvid-migration.md) | multi-slice unit | built 2026-11-09 · verified 2026-11-06 on claude/adoring-torvalds-ce7ffe, vyd-win, vyd-win2 · built 2026-11-12 on docs/placement-vehicles-structure, fm/ledger-proofs-on-the-target-kernel, spi/multi-store-architecture, spi/sql-backend, spi/worktree-s, spi/worktree-s2 | VM-0 | 9 merged, 4 built | docs/placement-vehicles-structure, spi/multi-store-architecture, spi/worktree-s, spi/worktree-s2 |
 | [windows-portability](plans/windows-portability.md) | unit | built 2026-11-07 | XP-0 | 8 built |  |
@@ -366,6 +367,7 @@ gantt
     LG-29 the record and the key of an :lg29, 2026-11-23, 2026-11-24
     LG-30 the corrections the review of :lg30, 2026-11-23, 2026-11-24
     LG-32 a benchmark of a balance read :lg32, 2026-11-23, 2026-11-24
+    LG-36 the kernel code equations in :lg36, 2026-11-25, 2026-11-26
     LG-7 the ledger laws mechanised in :done, lg7, 2026-11-08, 2026-11-09
     LG-8 the proofs widened on :done, lg8, 2026-11-09, 2026-11-16
     LG-9 the target kernel in the :done, lg9, 2026-11-16, 2026-11-19
@@ -525,6 +527,7 @@ gantt
     SVA-S2 the surface simulation :svas2, 2026-11-23, 2026-11-24
     SVA-S2a a promotion kept by the :svas2a, 2026-11-23, 2026-11-24
     SVA-S2b the first instance of a class :svas2b, 2026-11-23, 2026-11-24
+    SVA-S2c projections lowered and run in :svas2c, 2026-11-25, 2026-11-26
     SVA-S2d a sketch of a projection :svas2d, 2026-11-23, 2026-11-24
     SVA-S2e the projection expression :svas2e, 2026-11-23, 2026-11-24
     SVA-S2f mork rdf compiles a :svas2f, 2026-11-24, 2026-11-25
@@ -555,6 +558,23 @@ gantt
     WL-7 the status warning :wl7, 2026-11-05, 2026-11-06
     WL-8 a run that leaves no process :wl8, 2026-11-06, 2026-11-07
     WL-9 a late Failed never replaces :wl9, 2026-11-06, 2026-11-07
+```
+
+```mermaid
+%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
+gantt
+    title V-rig
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    section v-rig
+    VR-1 the module ontology v-rig :done, vr1, 2026-11-08, 2026-11-09
+    VR-2 the synthetic mini-rig :done, vr2, 2026-11-08, 2026-11-09
+    VR-3 the tracked mapping scheme and :done, vr3, 2026-11-08, 2026-11-09
+    VR-4 P1 :done, vr4, 2026-11-08, 2026-11-09
+    VR-5 P2 and P3 :done, vr5, 2026-11-08, 2026-11-09
+    VR-6 P4 :done, vr6, 2026-11-08, 2026-11-09
+    VR-7 the seam for a read case :done, vr7, 2026-11-08, 2026-11-09
+    VR-8 competency questions on dates :active, vr8, 2026-11-16, 2026-11-25
 ```
 
 ```mermaid
@@ -955,14 +975,14 @@ Branches with a commit `main` lacks, from the same reading.
 | Branch | Tip | Ahead of main | Upstream | Moves |
 |---|---|---|---|---|
 | `ccs-trunk` | 2026-11-04 | 703 | pushed | FM-4 |
-| `claude/modest-ramanujan-cgvs0p` | 2026-11-25 | 151 | pushed | PM-5, SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-D1, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P1c, SVA-P2, SVA-P3, SVA-P3a, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S2a, SVA-S2b, SVA-S2c, SVA-S2d, SVA-S2e, SVA-S2f, SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j, SVA-S3, SVA-U1, SVA-V1, SVA-X1, SVA-X2, SVA-X3, SVA-X4 |
-| `docs/placement-vehicles-structure` | 2026-11-25 | 131 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
+| `claude/modest-ramanujan-cgvs0p` | 2026-11-25 | 153 | pushed | PM-5, SVA-B1, SVA-B2a, SVA-B2b, SVA-B2c, SVA-B2d, SVA-B3, SVA-B4, SVA-B5, SVA-D1, SVA-H1, SVA-M1, SVA-M2a, SVA-M2b, SVA-M2c, SVA-M2d, SVA-M2e, SVA-M3a, SVA-M3b, SVA-M4, SVA-O1, SVA-O2, SVA-O2a, SVA-O3, SVA-O4, SVA-O5, SVA-O6, SVA-O7, SVA-P1, SVA-P1a, SVA-P1b, SVA-P1c, SVA-P2, SVA-P3, SVA-P3a, SVA-P4, SVA-P5, SVA-R0, SVA-R1, SVA-R2, SVA-R3, SVA-R4, SVA-R4a, SVA-R5, SVA-S1, SVA-S2, SVA-S2a, SVA-S2b, SVA-S2c, SVA-S2d, SVA-S2e, SVA-S2f, SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j, SVA-S3, SVA-U1, SVA-V1, SVA-X1, SVA-X2, SVA-X3, SVA-X4 |
+| `docs/placement-vehicles-structure` | 2026-11-25 | 135 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-36, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8, VR-8 |
 | `fm/ledger-proofs-on-the-target-kernel` | 2026-11-16 | 11 | pushed | no mark |
 | `fml/isabelle-layers` | 2026-11-04 | 684 | pushed | no mark |
 | `getting-started-vyd` | 2026-11-09 | 3 | pushed | no mark |
 | `persistence-mbt` | 2026-09-23 | 191 | pushed | board not on the grammar, 26 rows. Run `mise run work:normalise -- --apply` and `mise run work:rename -- --apply` there |
 | `realign/config-authoring-studio` | 2026-11-03 | 816 | pushed | CCS-8a, CCS-9b.3, CCS-9b.4, CCS-9c, CCS-9d, FM-4 |
-| `spi/multi-store-architecture` | 2026-11-25 | 157 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F17, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I10, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5, MSA-I5a, MSA-I6, MSA-I7, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
+| `spi/multi-store-architecture` | 2026-11-25 | 158 | pushed | ADM-0, ADM-1, ADM-2, ADM-3, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F17, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I10, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5, MSA-I5a, MSA-I6, MSA-I7, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `spi/sql-backend` | 2026-11-17 | 3 | pushed | no mark |
 | `spi/worktree-s` | 2026-11-19 | 69 | pushed | AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-7, LG-9, MSA-F1, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
 | `spi/worktree-s2` | 2026-11-23 | 125 | pushed | ADM-0, ADM-1, ADM-2, AOR-12, AOR-13, AOR-2, AOR-3, AOR-3b, AOR-4, AOR-5, AOR-6, AOR-7, AOR-8, AOR-9, CCS-0, CCS-1, CCS-2, FMH-1.1, FMH-1.2, FMH-1.2a, FMH-1.2b, FMH-1.2c, FMH-2, FMH-2.0, FMH-2.1, FMH-2.2, FMH-2.3, FMH-2.4a, FMH-2.4b, FMH-2.5, FMH-2.6, FMH-2.6b, FMH-2.6e, FMH-2.6f, FMH-2.8c, FMH-HO2, FMH-W65, LG-11, LG-12, LG-2, LG-20, LG-23, LG-24, LG-25, LG-26, LG-27, LG-28, LG-29, LG-30, LG-31, LG-32, LG-33, LG-34, LG-35, LG-7, LG-9, MSA-F1, MSA-F10, MSA-F11, MSA-F12, MSA-F13, MSA-F14, MSA-F15, MSA-F16, MSA-F2, MSA-F3, MSA-F4, MSA-F5, MSA-F6, MSA-F7, MSA-F8, MSA-F9, MSA-I1, MSA-I11, MSA-I12, MSA-I13, MSA-I14, MSA-I2, MSA-I3, MSA-I4, MSA-I5a, MSA-I6, MSA-I9, OD-0, OD-1, OD-2, OD-3, OD-4, OD-5, OD-6, OD-7, OD-DOC1, OD-ELC1, OD-MC1, OD-RC1, OD-RC2, OD-RC3, OD-REL1, OD-VER1, TUT-0, VM-0, VM-1, VM-2, VM-3, VM-4, VM-5, VM-6, VM-7, VM-8 |
@@ -1026,7 +1046,7 @@ flowchart LR
 
 <!-- BEGIN GENERATED work-board-decisions. Written by `mise run build:roadmap` from the status records on every branch. Edit a status record, never this region. -->
 
-Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 120 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
+Read from the registers in this tree: 35 Proposed decisions, 20 pending design decisions, 121 rows of [technical debt](technical-debt.md), and 40 slices named only in prose, listed by unit in the identifier exceptions baseline.
 
 ### 9.1 Proposed decisions
 
@@ -1145,7 +1165,6 @@ Every unit whose Status line reads merged, tagged or dropped and that no branch 
 | surface-mork-unified-projection | unit | merged 2026-09-22 | 0 | 2026-09-22 |
 | surface-outstanding-items | unit | merged 2026-09-22 | 0 | 2026-09-22 |
 | [toolchain-jdk25-python314](plans/toolchain-jdk25-python314.md) | unit | merged 2026-09-23 | 0 | 2026-09-23 |
-| [v-rig](plans/v-rig.md) | unit | merged 2026-11-08 | 8 | 2026-11-16 |
 | validation-pause-handover | unit | dropped 2026-09-20 | 0 | 2026-09-20 |
 | validation-status | unit | merged 2026-09-20 | 0 | 2026-09-20 |
 
@@ -1170,22 +1189,6 @@ gantt
     MSC-3 Jena in the compilers :done, msc3, 2026-10-27, 2026-10-29
     MSC-4 benchmark persistence-store-p :done, msc4, 2026-10-27, 2026-10-29
     MSC-5 TSD-42 and TSD-43 on Jena :done, msc5, 2026-10-27, 2026-10-29
-```
-
-```mermaid
-%%{init: {"themeVariables": {"taskBkgColor": "#f2c14e", "taskBorderColor": "#b8860b", "taskTextColor": "#000000", "activeTaskBkgColor": "#4e9af1", "activeTaskBorderColor": "#1f5fbf", "activeTaskBorderColor": "#1f5fbf", "doneTaskBkgColor": "#8fcf8f", "doneTaskBorderColor": "#2f7d32", "critBkgColor": "#f28b82", "critBorderColor": "#b23a30", "taskTextDarkColor": "#000000", "taskTextLightColor": "#000000"}}}%%
-gantt
-    title V-rig
-    dateFormat YYYY-MM-DD
-    axisFormat %d %b
-    section v-rig
-    VR-1 the module ontology v-rig :done, vr1, 2026-11-08, 2026-11-09
-    VR-2 the synthetic mini-rig :done, vr2, 2026-11-08, 2026-11-09
-    VR-3 the tracked mapping scheme and :done, vr3, 2026-11-08, 2026-11-09
-    VR-4 P1 :done, vr4, 2026-11-08, 2026-11-09
-    VR-5 P2 and P3 :done, vr5, 2026-11-08, 2026-11-09
-    VR-6 P4 :done, vr6, 2026-11-08, 2026-11-09
-    VR-7 the seam for a read case :done, vr7, 2026-11-08, 2026-11-09
 ```
 
 <!-- END GENERATED work-board-completed -->

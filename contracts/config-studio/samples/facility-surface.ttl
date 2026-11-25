@@ -76,3 +76,228 @@ ex:borrower-sector-index a srf:IndexContract ;
     srf:indexForm srf:NominalClass , srf:MembershipAssertion , srf:ClosureRelation ;
     srf:namingPolicy srf:LocalNameFromValue ;
     srf:closureBasis skos:broader .
+
+# --- the projections, one of each kind ----------------------------------------------------------------
+#
+# Each projection lowers into a MORK mapping scheme that the surface compile job compiles with mork_rdf, and a projection step runs over the
+# sample world. They are clean-room and generic to lending facilities. The carrier data is the baseline's, and the properties a projection writes
+# are the target terms it names, which hold no declaration of their own.
+
+# A derivation, the commitment weighted by the margin, which is a facility's size and its price in one figure.
+
+ex:fm-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+ex:fm-commitment a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:commitment ;
+    srf:bindsDatatype xsd:decimal .
+
+ex:fm-margin a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:margin ;
+    srf:bindsDatatype xsd:decimal .
+
+ex:fm-target a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:marginWeightedCommitment ;
+    srf:bindsDatatype xsd:decimal ;
+    srf:derivedAs ex:fm-expression .
+
+ex:fm-expression a srf:ProductExpression ;
+    srf:resultDatatype xsd:decimal ;
+    srf:leftOperand ex:fm-commitment ;
+    srf:rightOperand ex:fm-margin .
+
+ex:facility-margin-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:facility-margin-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "facility-margin" ;
+    srf:carrier ex:Facility ;
+    srf:projectionKind srf:DerivationProjection ;
+    srf:hasRoleBinding ex:fm-subject , ex:fm-commitment , ex:fm-margin , ex:fm-target ;
+    srf:targetNamespace "https://example.org/lending/projection/facility-margin/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:facility-surface-profile ;
+    srf:backendPolicy ex:projection-backend-policy .
+
+ex:projection-backend-policy a srf:ProjectionBackendPolicy ;
+    srf:allowedBackend srf:SparqlBackend , srf:NativeIrBackend ;
+    srf:deterministicOnly true ;
+    srf:llmCompletionPolicy srf:NoLLMCompletion .
+
+# A graph construction with one node for each instance, a schedule for each drawdown.
+
+ex:ds-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+ex:ds-amount a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:drawnAmount .
+
+ex:ds-date a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:drawdownDate .
+
+ex:ds-link a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:hasSchedule ;
+    srf:constructedAs ex:ds-node .
+
+ex:ds-node a srf:ConstructedNode ;
+    srf:constructedClass ex:RepaymentSchedule ;
+    srf:nodeIdentity srf:PerInstance ;
+    srf:writes [ srf:writesProperty ex:scheduledAmount ; srf:fromBinding ex:ds-amount ] ,
+               [ srf:writesProperty ex:scheduleStart ; srf:fromBinding ex:ds-date ] .
+
+ex:drawdown-schedule-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:drawdown-schedule-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "drawdown-schedule" ;
+    srf:carrier ex:Drawdown ;
+    srf:projectionKind srf:GraphConstructionProjection ;
+    srf:hasRoleBinding ex:ds-subject , ex:ds-amount , ex:ds-date , ex:ds-link ;
+    srf:targetNamespace "https://example.org/lending/projection/drawdown-schedule/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:facility-surface-profile ;
+    srf:backendPolicy ex:projection-backend-policy .
+
+# A graph construction by key, one exposure node for each borrower, shared by the borrower's facilities.
+
+ex:be-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+ex:be-borrower a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:borrower .
+
+ex:be-link a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:hasBorrowerExposure ;
+    srf:constructedAs ex:be-node .
+
+ex:be-node a srf:ConstructedNode ;
+    srf:constructedClass ex:BorrowerExposure ;
+    srf:nodeIdentity srf:ByKey ;
+    srf:keyBinding ex:be-borrower ;
+    srf:writes [ srf:writesProperty ex:exposureOf ; srf:fromBinding ex:be-borrower ] .
+
+ex:borrower-exposure-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:borrower-exposure-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "borrower-exposure" ;
+    srf:carrier ex:Facility ;
+    srf:projectionKind srf:GraphConstructionProjection ;
+    srf:hasRoleBinding ex:be-subject , ex:be-borrower , ex:be-link ;
+    srf:targetNamespace "https://example.org/lending/projection/borrower-exposure/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:facility-surface-profile ;
+    srf:backendPolicy ex:projection-backend-policy .
+
+# A join, the branch a facility is booked at, found by the code each states.
+
+ex:fb-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+ex:fb-code a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:bookingBranchCode .
+
+ex:fb-match a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsCarrier ex:Branch ;
+    srf:bindsProperty ex:branchCode .
+
+ex:fb-link a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:bookedAt ;
+    srf:joinedAs ex:fb-join .
+
+ex:fb-join a srf:JoinStatement ;
+    srf:joinsOn [ srf:joinLeft ex:fb-code ; srf:joinRight ex:fb-match ] ;
+    srf:joinMatches srf:AtMostOne .
+
+ex:facility-branch-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:facility-branch-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "facility-branch" ;
+    srf:carrier ex:Facility ;
+    srf:projectionKind srf:JoinProjection ;
+    srf:hasRoleBinding ex:fb-subject , ex:fb-code , ex:fb-match , ex:fb-link ;
+    srf:targetNamespace "https://example.org/lending/projection/facility-branch/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:facility-surface-profile ;
+    srf:backendPolicy ex:projection-backend-policy .
+
+# An expansion, the facilities a facility refinances directly or through others.
+
+ex:fr-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+ex:fr-refinances a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:CandidateEvidenceRole ;
+    srf:bindsProperty ex:refinances .
+
+ex:fr-link a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:refinancesInChain ;
+    srf:expandedAs ex:fr-expansion .
+
+ex:fr-expansion a srf:ExpansionStatement ;
+    srf:expandsFrom ex:fr-refinances ;
+    srf:expansionSource srf:TransitiveClosure .
+
+ex:facility-refinancing-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:facility-refinancing-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "facility-refinancing" ;
+    srf:carrier ex:Facility ;
+    srf:projectionKind srf:ExpansionProjection ;
+    srf:hasRoleBinding ex:fr-subject , ex:fr-refinances , ex:fr-link ;
+    srf:targetNamespace "https://example.org/lending/projection/facility-refinancing/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:facility-surface-profile ;
+    srf:backendPolicy ex:projection-backend-policy .
+
+# A node for each member, a covenant test for each covenant a facility lists, keyed by the facility's reference and the covenant.
+
+ex:ct-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+ex:ct-reference a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:facilityReference .
+
+ex:ct-covenants a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:covenants .
+
+ex:ct-link a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:hasCovenantTest ;
+    srf:expandedAs ex:ct-expansion ;
+    srf:constructedAs ex:ct-node .
+
+ex:ct-expansion a srf:ExpansionStatement ;
+    srf:expandsFrom ex:ct-covenants ;
+    srf:expansionSource srf:ListMembers .
+
+ex:ct-node a srf:ConstructedNode ;
+    srf:constructedClass ex:CovenantTest ;
+    srf:nodeIdentity srf:ByKey ;
+    srf:keyBinding ex:ct-reference ;
+    srf:keyMember true ;
+    srf:writes [ srf:writesProperty ex:testsCovenant ; srf:fromMember true ] ,
+               [ srf:writesProperty ex:testedFacilityReference ; srf:fromBinding ex:ct-reference ] .
+
+ex:facility-covenant-test-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:facility-covenant-test-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "facility-covenant-test" ;
+    srf:carrier ex:Facility ;
+    srf:projectionKind srf:ExpansionProjection ;
+    srf:hasRoleBinding ex:ct-subject , ex:ct-reference , ex:ct-covenants , ex:ct-link ;
+    srf:targetNamespace "https://example.org/lending/projection/facility-covenant-test/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:facility-surface-profile ;
+    srf:backendPolicy ex:projection-backend-policy .

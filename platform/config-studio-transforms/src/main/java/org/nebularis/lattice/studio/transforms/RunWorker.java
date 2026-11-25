@@ -49,7 +49,7 @@ final class RunWorker implements Function<Message, Outcome>, AutoCloseable {
     static final int MAX_INPUT_BYTES = 5 * 1024 * 1024;
     private static final long STEP_GRACE_MILLIS = 1_000;
     private static final Pattern RUN_IRI = Pattern.compile("urn:lattice:studio:run:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
-    private static final Map<String, Set<String>> TARGETS = Map.of("sample", Set.of("mapping"), "simulate", Set.of("persistence", "surface"));
+    private static final Map<String, Set<String>> TARGETS = Map.of("sample", Set.of("mapping"), "simulate", Set.of("persistence", "surface", "projection"));
     private static final Set<String> RDF_SAMPLES = Set.of("text/turtle", "application/n-triples");
 
     private record Request(String run, String job, String kind, String target, Instant deadline) {
@@ -91,6 +91,9 @@ final class RunWorker implements Function<Message, Outcome>, AutoCloseable {
             return Outcome.ACK;
         }
         boolean step = request.kind().equals("simulate");
+        if (request.target().equals("projection")) {
+            return publish(request.run(), RunFrames.failed(request.run(), "A projection step is run by the studio's Python worker, so this run went to the wrong worker and was not started."));
+        }
         String type = message.contentType() == null ? "" : message.contentType().split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
         if (!step && RDF_SAMPLES.contains(type)) {
             return publish(request.run(), RunFrames.failed(request.run(), "A Turtle or N-Triples sample is run by the studio's Python worker, so this run went to the wrong worker and was not started."));

@@ -184,8 +184,8 @@ def test_the_vocabulary_graph_of_a_step_holds_its_concepts_as_the_configuration_
         assert set(vocabulary.triples((concept, None, None))) == set(base.triples((concept, None, None))), concept
 
 
-def test_the_steps_are_the_seven_the_tests_name():
-    assert STEPS == [f"facility-surface-step-{n}.trig" for n in ("borrower", "drawdown", "first", "repay", "sector", "subtype", "vocabulary")]
+def test_the_steps_are_the_eight_the_tests_name():
+    assert STEPS == [f"facility-surface-step-{n}.trig" for n in ("borrower", "drawdown", "first", "projection", "repay", "sector", "subtype", "vocabulary")]
 
 
 def test_the_invalidation_names_the_contract_for_the_first_instance_of_its_carrier(declarations, base):
@@ -224,7 +224,7 @@ def test_the_job_holds_the_writers_operations_and_a_manifest_that_names_them(sur
     assert entries[1]["fill"] == "drawdown-sector-fill-all.rq" and entries[1]["readSet"] == "drawdown-sector-read-set.rq"
     for path in ("maintenance/partition-clear.rq", "maintenance/drawdown-sector-fill-all.rq", "maintenance/drawdown-sector-read-set.rq"):
         assert surface_job[path][2] == "maintenance"
-    assert {group for _, _, group in surface_job.values()} == {"drawdown-sector", "borrower-sector", "maintenance"}
+    assert {group for _, _, group in surface_job.values()} == {"drawdown-sector", "borrower-sector", "maintenance", "projections"}
 
 
 def test_the_run_workers_fixtures_are_what_the_compiler_gives(surface_job, declarations, base):

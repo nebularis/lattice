@@ -177,6 +177,28 @@ class RunsRouteTest {
     }
 
     @Test
+    void aProjectionStepOverACompiledSurfacePartGoesToTheRdfQueueWithADeadlineOf15SecondsAndTakesTrig() {
+        String job = compileJob("surface", true);
+        ApiResponse r = post("kind=simulate&target=projection&tab=tp&job=" + id(job), "application/trig", "ex:a {}");
+        assertEquals(202, r.status(), text(r));
+        RunMessage m = f.bus.runs().get(f.bus.runs().size() - 1);
+        assertEquals(Topology.RUNS_RDF_ROUTING_KEY, m.routingKey());
+        assertEquals("simulate", m.kind());
+        assertEquals("projection", m.target());
+        assertEquals(15_000, m.expirationMillis());
+        assertEquals("application/trig", m.contentType());
+        Resource node = Fixture.model(r).getResource(m.run());
+        assertEquals(Cst.SimulationStep, node.getPropertyResourceValue(Cst.kind));
+        assertEquals(Cst.target("projection"), node.getPropertyResourceValue(Cst.target));
+        int sent = f.bus.runs().size();
+        assertEquals(409, post("kind=simulate&target=projection&tab=tp&job=" + id(compileJob("mapping", true)), "application/trig", "").status(), "a compilation of another part");
+        assertEquals(409, post("kind=simulate&target=projection&tab=tp&job=" + id(compileJob("surface", false)), "application/trig", "").status(), "an unfinished one");
+        assertEquals(415, post("kind=simulate&target=projection&tab=tp&job=" + id(job), "text/turtle", "").status());
+        assertEquals(400, post("kind=simulate&target=projection&tab=tp&job=" + id(job) + "&deadline=2026-11-16T10:00:16Z", "application/trig", "").status());
+        assertEquals(sent, f.bus.runs().size(), "none of them is published");
+    }
+
+    @Test
     void aGivenDeadlineSetsTheExpirationAndIsRefusedInThePastOrBeyondTheKindsMaximum() {
         String job = compileJob("mapping", true);
         assertEquals(202, sample(job, "&deadline=2026-11-16T10:00:30Z").status());

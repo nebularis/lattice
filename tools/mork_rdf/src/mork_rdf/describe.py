@@ -17,6 +17,7 @@ PREFIX = "urn:mork-rdf:compiled:"
 _BOX = {"abox": MORK.InstanceOutput, "tbox": MORK.TerminologyOutput}
 _MODE = {"draft": MORK.DraftMode, "review": MORK.ReviewMode, "production": MORK.ProductionMode}
 _SEVERITY = {s: MORK[f"{s.value.capitalize()}Finding"] for s in Severity}
+_ROW_SEVERITY = {Severity.INFO: SH.Info, Severity.WARNING: SH.Warning, Severity.ERROR: SH.Violation}
 
 
 def iri(compiled: CompiledMapping) -> URIRef:
@@ -57,6 +58,9 @@ def to_rdf(compiled: CompiledMapping) -> Graph:
             g.add((query, MORK.readsOutputOf, URIRef(r)))
         if q.code:
             g.add((query, MORK.checkCode, Literal(q.code)))
+        if q.kind == "check":
+            # What each row the check returns is reported as, which the query's text records and so its digest reads (README §11).
+            g.add((query, SH.severity, _ROW_SEVERITY[q.severity]))
         if q.head:
             prop, axiom, combination = (URIRef(t) for t in q.head)
             g.add((query, MORK.closureProperty, prop))
@@ -86,6 +90,7 @@ def from_rdf(g: Graph, node: URIRef | str | None = None) -> CompiledMapping:
     node = URIRef(node) if node is not None else next(g.subjects(RDF.type, MORK.CompiledMapping))
     one = lambda s, p: g.value(s, p)
     boxes = {v: k for k, v in _BOX.items()}
+    rows = {v: k for k, v in _ROW_SEVERITY.items()}
     queries = []
     for query in sorted(g.objects(node, MORK.hasCompiledQuery), key=lambda q: int(one(q, MORK.queryIndex))):
         kind = str(one(query, MORK.queryKind))
@@ -101,6 +106,7 @@ def from_rdf(g: Graph, node: URIRef | str | None = None) -> CompiledMapping:
             reads=tuple(sorted(str(r) for r in g.objects(query, MORK.readsOutputOf))),
             stratum=int(one(query, MORK.stratum)),
             head=head,
+            severity=rows.get(one(query, SH.severity), Severity.WARNING),
         ))
     severities = {v: k for k, v in _SEVERITY.items()}
     findings = []

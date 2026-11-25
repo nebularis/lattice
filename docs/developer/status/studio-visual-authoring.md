@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-25. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-25. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** a blank member's stable name written in its place, then SVA-S2c, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** a pause, for the maintainer's answers on SVA-S2c (where the pane that sends the projection run goes, the choices its Validation Pack lists, and ADR-A154's addendum). The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -66,7 +66,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2h | join projections | built 2026-11-24, building 2026-11-24 | SVA-S2f |
 | SVA-S2i | expansion projections | built 2026-11-25 | SVA-S2f |
 | SVA-S2j | expansion combined with graph construction | built 2026-11-25 | SVA-S2i |
-| SVA-S2c | projections lowered and run in a surface step | building 2026-11-25 | SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j |
+| SVA-S2c | projections lowered and run in a surface step | built 2026-11-25 | SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
@@ -279,3 +279,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-25: the review findings renamed by projection kind, `DerivationReview` added to every compiled derivation and `ExpansionReview` for an expansion, with a Proposed addendum to ADR-A41. SVA-S2j built, [Validation Pack](../validation/SVA-S2j.md). An expansion states a construction beside it on one binding, with a node for each instance and member, one by a key that may read the member, or the member itself as the node, a stable name selectable from a member's property, `MemberUnnamed` for a member without one, and a member's own values written by a join. MORK gains five terms with `mork:memberRef` binding the member once. Six choices and three Proposed addenda wait for the maintainer.
 - 2026-11-25: the maintainer accepted SVA-S2j's six choices as leaned, asked that a blank member with a stable name be written as its stable name's value and never copied as a blank node, and accepted the addenda to ADR-A18 (a node for each member), ADR-A23 (`mork_rdf` compiles it) and ADR-A41 (the reviews named by projection kind). SVA-S2c started.
 - 2026-11-25: SVA-S2c marked building.
+- 2026-11-25: SVA-S2c built, with SVA-S2j's choice 6. The compile job lowers and compiles every projection kind, a step's projection part is a `projection` run the Python worker answers, the facility sample has one projection of each kind, and ADR-A154 has a Proposed addendum. The pane is not built, since the studio has no surface pane yet, and the plan gives it to SVA-S3 until the maintainer decides. A defect in how `mork_rdf` describes a check's severity was found and fixed. TD-261 closed, TD-264 and TD-265 opened.
+- 2026-11-25: SVA-S2c built.

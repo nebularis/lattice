@@ -35,7 +35,7 @@
         },
         "role": {
           "enum": ["check", "request", "report", "artefact", "delta", "outcome"],
-          "description": "What the part is. report and artefact are defined by the contract. check, request, delta and outcome are the four parts of a persistence step, and a surface step has artefact, delta and outcome parts, each defined by the contract"
+          "description": "What the part is. report and artefact are defined by the contract. check, request, delta and outcome are the four parts of a persistence step, a surface step has artefact, delta and outcome parts, and a projection step has artefact, report, delta and outcome parts, each defined by the contract"
         },
         "mediaType": {"type": "string", "minLength": 1, "description": "The media type of the part's text, for example text/turtle"},
         "path": {"type": "string", "minLength": 1, "description": "The artefact's relative path, with / separators, as cst:path gives it"},

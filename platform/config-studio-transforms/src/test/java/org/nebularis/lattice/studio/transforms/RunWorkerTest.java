@@ -292,6 +292,17 @@ class RunWorkerTest {
     }
 
     @Test
+    void aProjectionStepThatReachedThisWorkerIsOneFailedFrameThatSaysItWentToTheWrongWorkerAndTheJobIsNotRead() throws Exception {
+        QueueWorker steps = queue("simulate", 2, jobs());
+        String run = "urn:lattice:studio:run:cccccccc-5a47-4d0e-9b1a-6c7d8e9f0a1b";
+        steps.deliver(message(9, false, headers(run, "simulate", "projection", NOW.plusSeconds(15)), "application/trig", ""));
+        awaitSettled(9);
+        assertOneFailedFrame(sink.of(run), "wrong worker");
+        assertEquals(0, jobReads.get());
+        assertEquals(List.of("publish:" + run, "ack:9"), sink.log.stream().filter(e -> e.endsWith(run) || e.equals("ack:9")).toList());
+    }
+
+    @Test
     void aSurfaceStepPublishesTheRowsTheChangeAndTheContractsItTouchedAndIsAcknowledgedAfterThem() throws Exception {
         QueueWorker steps = queue("simulate", 2, job -> {
             jobReads.incrementAndGet();
