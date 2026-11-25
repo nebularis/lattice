@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-25. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-25. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** the maintainer's acceptance of ADR-A155, and a choice of the next slice. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** SVA-S1's design questions, for the maintainer to answer before the canvas is built. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -55,7 +55,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P1c | a general class of landing place | built 2026-11-19, building 2026-11-19 | SVA-P1a |
 | SVA-P4 | the persistence simulator pane | built 2026-11-19, building 2026-11-19 | SVA-R4, SVA-P1, SVA-P3a |
 | SVA-P5 | an object generated from the boundary shape | built 2026-11-19, building 2026-11-19 | SVA-P4 |
-| SVA-S1 | the surface canvas | planned | SVA-O2 |
+| SVA-S1 | the surface canvas | building 2026-11-25 | SVA-O2 |
 | SVA-S2 | the surface simulation executor | built 2026-11-23, building 2026-11-23 | SVA-P3 |
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | built 2026-11-23, building 2026-11-23 | SVA-S2 |
 | SVA-S2b | the first instance of a class names its contracts | built 2026-11-23, building 2026-11-23 | SVA-S2 |
@@ -287,3 +287,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-25: the maintainer chose to fetch the OASIS files and allowed the host. SVA-D1 built: the OASIS example ex5 in its compact and normal forms and the triplifier stylesheet, copied unmodified with their notice, a clean-room LegalRuleML document of a cover, an exclusion and a condition, and the RDF of both made by the stylesheet on Saxon-HE and held equal by a test. The run worker's test sink no longer races.
 - 2026-11-25: SVA-D1 built.
 - 2026-11-25: the maintainer accepted SVA-D1's placement and asked for a decision and a root for the licence texts. ADR-A155 is Proposed, and `LICENSES/` holds the texts of MPL-2.0, CC-BY-SA-4.0, MIT and the OASIS notice, held by `mise run check:licences`, which `mise run check` runs.
+- 2026-11-25: SVA-S1 marked building, design questions first.
+- 2026-11-25: the maintainer accepted ADR-A155 and chose SVA-S1 next, starting with the design questions on how the canvas draws and edits each kind of contract.

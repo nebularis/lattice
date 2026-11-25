@@ -2,8 +2,8 @@
 
 # ADR-A155: The texts of the licences the repository's files name
 
-**Status:** Proposed
-**Date:** 2026-11-25 (proposed)
+**Status:** Accepted
+**Date:** 2026-11-25 (proposed), 2026-11-25 (accepted)
 **Related:** [ADR-A121](ADR-A121-repository-catalogue.md) (the catalogue declares each root), [ADR-A77](ADR-A77-repository-topology-and-documentation-governance.md) (a new root needs an accepted decision)
 **Unit:** [`studio-visual-authoring`](../../developer/plans/studio-visual-authoring.md)
 
