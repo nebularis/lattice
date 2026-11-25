@@ -17,32 +17,6 @@ section \<open>The path as a list (R1, was LX1)\<close>
 lemma path_self [simp]: "a \<in> path parent a"
   by (simp add: path_def)
 
-text \<open>The path unfolded one step. It is the code equation for a path, so what reads a path
-  evaluates, and the walk it gives stops where the parent function has no cycle, which a tree's
-  has not. That the walk is the path is LX1 below.\<close>
-
-lemma path_step [code]:
-  "path parent a = (case parent a of None \<Rightarrow> {a} | Some b \<Rightarrow> insert a (path parent b))"
-proof (cases "parent a")
-  case None
-  have "x = a" if "(a, x) \<in> (up parent)\<^sup>*" for x
-    using that None by (cases rule: converse_rtranclE) (auto simp: up_def)
-  then show ?thesis by (auto simp: path_def None)
-next
-  case (Some b)
-  have "(a, x) \<in> (up parent)\<^sup>* \<longleftrightarrow> x = a \<or> (b, x) \<in> (up parent)\<^sup>*" for x
-  proof
-    assume "(a, x) \<in> (up parent)\<^sup>*"
-    then show "x = a \<or> (b, x) \<in> (up parent)\<^sup>*"
-      using Some by (cases rule: converse_rtranclE) (auto simp: up_def)
-  next
-    assume "x = a \<or> (b, x) \<in> (up parent)\<^sup>*"
-    moreover have "(a, b) \<in> up parent" using Some by (simp add: up_def)
-    ultimately show "(a, x) \<in> (up parent)\<^sup>*" by (auto intro: converse_rtrancl_into_rtrancl)
-  qed
-  then show ?thesis by (auto simp: path_def Some)
-qed
-
 lemma path_in_tree:
   assumes tr: "tree A parent" and a: "a \<in> A"
   shows "path parent a \<subseteq> A"

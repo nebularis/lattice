@@ -7,17 +7,8 @@
    Hand-written on the Kernel extracted from ontology/ledger/README.md section 10. *)
 
 theory Allocation
-imports Kernel
+imports Evaluation
 begin
-
-section \<open>Evaluation\<close>
-
-text \<open>Whether a rank is injective on a finite set of keys, as a merge that checks its order asks,
-  evaluates through the list of the keys.\<close>
-
-lemma inj_on_code [code]: "inj_on f (set xs) \<longleftrightarrow> distinct (map f (remdups xs))"
-  by (simp add: distinct_map)
-
 
 section \<open>Examples, before any theorem\<close>
 

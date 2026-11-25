@@ -3,7 +3,7 @@
 # Ledger — Status
 
 **Unit ID:** `ledger`
-**Status:** building 2026-11-25. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
+**Status:** built 2026-11-25. LG-0 and LG-1 built, verified and committed. LG-5 part built ahead of its dependency. LG-7, LG-2 and LG-8 built.
 **Last updated:** 2026-11-19
 **Plan:** [ledger.md](../plans/ledger.md)
 **Validation Packs:** [LG-0](../validation/LG-0.md), [LG-1](../validation/LG-1.md), [LG-7](../validation/LG-7.md), [LG-2](../validation/LG-2.md), [LG-9](../validation/LG-9.md), [LG-20](../validation/LG-20.md), [LG-24](../validation/LG-24.md), [LG-23](../validation/LG-23.md), [LG-11](../validation/LG-11.md), [LG-25](../validation/LG-25.md), [LG-26](../validation/LG-26.md), [LG-27](../validation/LG-27.md), [LG-28](../validation/LG-28.md), [LG-12](../validation/LG-12.md)
@@ -103,6 +103,8 @@ The rework built on machine S, LG-11, LG-25 to LG-28 and LG-12, was read against
 No break showed the implementation wrong. Three showed a law, a removal or a boundary that no test holds, and LG-30 adds a test for each and runs the three probes again. Our recommendation to the maintainer is that LG-26, LG-27, LG-28 and LG-12 can be verified, LG-28 with the note that LG-29 changes its account key, and that LG-11, LG-25 and LG-32 wait for LG-30's tests.
 
 **2026-11-24, the addendum accepted, its cases scheduled, and the unit held.** The maintainer accepted ADR-A131's addendum of 2026-11-24 as worded. Its four conformance cases are worked by hand and no slice held them, so LG-34 gains them, each as an example with a test that computes its result, and its estimate moves from 130k to 140k tokens. The maintainer asked for a pass over the whole project's documentation once CCS, AIR and FML have landed, after LG-28's pack was found describing a key LG-29 had changed, which is BL-22. The unit is held at the maintainer's word while the multi-store unit's agent works on the same machine, so LG-35 is not started.
+
+**2026-11-25, LG-36 built.** `Evaluation.thy` holds the two code equations and imports the kernel alone. `Allocation.thy` imports it, and `Draws.thy` no longer states the path's equation. The kernel and the new theory build on HOL alone in 7 seconds, and the proof gate passes with 83 claims. A probe found that the injectivity equation is needed by no evaluation in the session, since HOL's definition evaluates, so only the path's equation is what a session that evaluates must have. The [Validation Pack](../validation/LG-36.md) records the runs and the probes. STD-340 was ratified by the maintainer the same day.
 
 **2026-11-25, LG-36 added and marked building.** The maintainer lifted the hold for this one slice and kept the machine idle for its build. The rig's projection P2 is to read the kernel, and the two code equations that make a rank's injectivity and a path evaluate sit in `Allocation.thy` and `Draws.thy`, the second of which imports a library theory. LG-36 moves them to a theory that imports the kernel alone. LG-35 and LG-34 stay held.
 
@@ -259,7 +261,7 @@ Results sections. In short:
 | LG-33 | the form of a query for absence, a probe and a finding for TD-178, taken at the end of the unit | planned |  |
 | LG-34 | the laws and the examples of an account under a later version, and the four conformance cases of ADR-A131's addendum of 2026-11-24 as examples with tests | briefed | LG-29, LG-35 |
 | LG-35 | the kernel and its proofs for a supersession | briefed | LG-28 |
-| LG-36 | the kernel's code equations in a theory of their own, importing the kernel alone | building 2026-11-25 |  |
+| LG-36 | the kernel's code equations in a theory of their own, importing the kernel alone | built 2026-11-25, building 2026-11-25 |  |
 - 2026-11-19: on machine S, per the brief of 2026-11-19, on `spi/worktree-s`, committing locally only. LG-11 marked building.
 - 2026-11-19: LG-11 built. The three conversion properties and their shape are gone from the README and its extracted documents, `revolving-facility.ttl` draws in sterling and cites each conversion as a record outside the ledger, and the conversion mutation is gone from `tools/test_ledger.py`, 40 passed. The proofs name no conversion term and pass.
 - 2026-11-19: LG-25 marked building, after MSA-I5a's agreement lemma landed in the ledger's proof session with every proof green.

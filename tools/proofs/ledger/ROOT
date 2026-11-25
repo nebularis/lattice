@@ -9,6 +9,7 @@ session Ledger = LatticeBase +
     LatticeShared
   theories
     Kernel
+    Evaluation
     Allocation
     Draws
     Rounding
