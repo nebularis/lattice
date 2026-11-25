@@ -3,11 +3,16 @@
 
 from __future__ import annotations
 
+import csv
+import json
+import re
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
 from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib.compare import isomorphic
 from rdflib.namespace import OWL, RDF, RDFS
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -49,8 +54,8 @@ def test_every_sample_is_listed_without_its_parts_and_staged_merged(staged: Path
     samples = sorted(str(s) for s in listing.subjects(RDF.type, CST.Sample))
     assert samples == [
         f"urn:lattice:studio:sample:{n}"
-        for n in ("builder", "employment", "facility", "legalruleml-mappings", "lending", "lending-eligibility", "library-imports", "odrl-mappings", "policies-transforms", "quantities", "saas",
-                  "vocabulary-bindings")
+        for n in ("axioms", "builder", "employment", "facility", "legalruleml-mappings", "lending", "lending-eligibility", "library-imports", "odrl-mappings", "policies-csv",
+                  "policies-transforms", "policies-yaml", "quantities", "saas", "species-mappings", "vocabulary-bindings")
     ]
     assert not list(listing.objects(None, CST.part))
     lending = Graph().parse(staged / "samples" / "lending.ttl")
@@ -206,3 +211,141 @@ def test_a_document_that_declares_no_single_named_ontology_is_skipped_and_counte
     assert staged == 1
     assert skipped == {"declaring no single named ontology": 1}
     assert len(list((tmp_path / "out").iterdir())) == 2
+
+
+# --- The samples' README (SVA-D1) ----------------------------------------------------------------------------------------------------
+
+MORK = Namespace("http://www.nebularis.org/ontologies/Mork#")
+SKOS_EXAMPLE = URIRef("http://www.w3.org/2004/02/skos/core#example")
+
+
+def _folders() -> tuple[Path, Path]:
+    catalogue = lattice_repo_catalogue.load(lattice_repo_catalogue.find_root())
+    return catalogue.root / catalogue.area("contracts") / "config-studio" / "samples", catalogue.root / catalogue.area("tools") / "mork_transforms" / "tests" / "examples" / "policies"
+
+
+def _slug(heading: str) -> str:
+    """The anchor a Markdown renderer gives a heading: lower case, punctuation dropped, spaces as hyphens."""
+    return re.sub(r"\s", "-", re.sub(r"[^\w\s-]", "", heading.strip().lower()))
+
+
+def _anchors(path: Path) -> set[str]:
+    in_fence, found = False, set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("```"):
+            in_fence = not in_fence
+        elif not in_fence and (m := re.match(r"#{1,6}\s+(.*)", line)):
+            found.add(_slug(m.group(1)))
+    return found
+
+
+def test_every_file_the_samples_readme_links_exists_and_every_file_of_the_folder_is_linked() -> None:
+    samples, _ = _folders()
+    readme = samples / "README.md"
+    text = readme.read_text(encoding="utf-8")
+    targets = re.findall(r"\]\(([^)\s]+)\)", text)
+    assert targets, "the README links its documents"
+    linked: set[Path] = set()
+    for target in targets:
+        if re.match(r"[a-z][a-z0-9+.-]*:", target):
+            continue
+        name, _, fragment = target.partition("#")
+        path = (readme.parent / name).resolve() if name else readme
+        assert path.exists(), f"{target} is linked and does not exist"
+        if fragment and path.suffix == ".md":
+            assert fragment in _anchors(path), f"{target} names a heading that {path.name} does not have"
+        linked.add(path)
+    folder = {p.resolve() for p in samples.rglob("*") if p.is_file() and p.name not in ("README.md", "samples.ttl") and "__pycache__" not in p.parts}
+    assert not (folder - linked), f"files of the samples folder that the README does not link: {sorted(p.name for p in folder - linked)}"
+
+
+def test_every_studio_sample_the_samples_readme_names_is_listed_and_loads_and_every_listed_sample_is_named(staged: Path) -> None:
+    samples, _ = _folders()
+    text = (samples / "README.md").read_text(encoding="utf-8")
+    named: dict[str, str] = {}
+    for line in re.findall(r"^\*\*Studio sample:\*\* (.+)$", text, flags=re.MULTILINE):
+        for label, key in re.findall(r"([A-Z][^()`]*?) \(`([a-z0-9-]+)`\)", line):
+            named[key] = label
+        if not re.search(r"\(`[a-z0-9-]+`\)", line):
+            assert line.startswith("none"), f"a Studio sample line that names no sample says none: {line}"
+    listing = Graph().parse(staged / "samples.ttl")
+    listed = {str(s)[len("urn:lattice:studio:sample:"):]: str(listing.value(s, RDFS.label)) for s in listing.subjects(RDF.type, CST.Sample)}
+    assert set(named) == set(listed), "the README names each studio sample once or more, and no other"
+    for key, label in named.items():
+        assert listed[key] == label, f"the README calls {key} {label!r} and samples.ttl calls it {listed[key]!r}"
+        loaded = Graph().parse(staged / "samples" / f"{key}.ttl")
+        assert len(loaded) > 0, f"sample {key} loads empty"
+    # The README's own table lists each sample by its key too.
+    for key in listed:
+        assert f"`{key}`" in text
+
+
+def test_the_imports_folder_resolves_two_imports_the_second_by_a_file_of_an_unrelated_name_and_leaves_one_missing() -> None:
+    samples, _ = _folders()
+    folder = samples / "imports"
+    imports = {str(o) for o in Graph().parse(folder / "base.ttl").objects(None, OWL.imports)}
+    assert len(imports) == 3
+    root = ET.parse(folder / "catalog-v001.xml").getroot()
+    entries = {e.get("name"): e.get("uri") for e in root if e.tag.endswith("}uri")}
+    declared = {}
+    for file in sorted(folder.glob("*.ttl")):
+        for ontology in Graph().parse(file).subjects(RDF.type, OWL.Ontology):
+            declared[str(ontology)] = file.name
+    resolved = {iri: entries[iri] for iri in imports if iri in entries}
+    assert len(resolved) == 2 and set(entries) == set(resolved), "the catalog names two of the three imports and no other"
+    for iri, file in resolved.items():
+        assert (folder / file).is_file() and declared[iri] == file, f"{iri} is declared by the file the catalog names"
+    unrelated = [iri for iri, file in resolved.items() if iri.rsplit("/", 1)[-1] not in file]
+    assert len(unrelated) == 1, "one resolved file is named by nothing in its ontology's IRI"
+    (missing,) = imports - set(resolved)
+    assert missing not in declared, "no dropped file declares the third import"
+
+
+def test_the_species_sample_runs_in_two_strata_with_a_closure_over_its_own_example() -> None:
+    from mork_rdf import compile_scheme, run
+
+    samples, _ = _folders()
+    mapping = Graph().parse(samples / "species-mappings.ttl")
+    scheme = "https://example.org/zoo/mapping#Scheme"
+    compiled = compile_scheme(mapping, scheme, base="https://example.org/zoo/out/", at=__import__("datetime").datetime(2026, 11, 25, tzinfo=__import__("datetime").timezone.utc))
+    assert not compiled.errors and compiled.strata == 2 and len(compiled.closures) == 1
+    examples = list(mapping.subject_objects(SKOS_EXAMPLE))
+    assert len(examples) == 1, "the scheme's representation scheme carries one example source"
+    result = run(compiled, Graph().parse(data=str(examples[0][1]), format="turtle"))
+    assert {(f.code, str(f.value)) for f in result.findings} == {("LookupUnresolved", "Dodo")}
+
+
+def test_the_odrl_turtle_source_beside_the_json_ld_holds_the_triples_of_the_trials_copy() -> None:
+    samples, _ = _folders()
+    odrl = samples.parent / "odrl"
+    assert (odrl / "software-licence.odrl.jsonld").is_file()
+    assert isomorphic(Graph().parse(odrl / "software-licence.odrl.ttl"), Graph().parse(odrl / "trial" / "software-licence.ttl"))
+
+
+def test_the_csv_and_yaml_sources_hold_the_policies_of_the_json_source_and_each_scheme_reads_what_they_name() -> None:
+    import yaml
+
+    _, policies = _folders()
+    original = json.loads((policies / "source.json").read_text(encoding="utf-8"))
+    assert yaml.safe_load((policies / "source.yaml").read_text(encoding="utf-8")) == original
+    with (policies / "source.csv").open(encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+    assert rows == [{"policy": p["number"], "holder": p["holder"], "cover": c["code"]} for p in original["policies"] for c in p["covers"]]
+    scheme = Graph().parse(policies / "csv.mork.ttl")
+    assert {str(o) for o in scheme.objects(None, MORK.dataRef)} <= set(rows[0]), "each column the CSV scheme names is a column of the source"
+    assert (URIRef("urn:example:source/csv#Source"), MORK["format"], MORK.CSV) in scheme
+    assert (URIRef("urn:example:source/yaml#Source"), MORK["format"], MORK.YAML) in Graph().parse(policies / "yaml.mork.ttl")
+
+
+@pytest.mark.parametrize("name", ["csv", "yaml"])
+def test_a_scheme_over_csv_or_yaml_compiles_to_rml_alone_as_the_sample_pane_lists_it_waiting(name: str) -> None:
+    from lattice_workers import config_studio_jobs as jobs
+
+    root = lattice_repo_catalogue.find_root()
+    _, policies = _folders()
+    job = URIRef(f"urn:lattice:studio:job:{name}")
+    done = jobs.run_job(job, "compile", "mapping", Graph().parse(policies / f"{name}.mork.ttl"), Graph(), root, "2026-11-25T00:00:00Z")
+    assert (job, jobs.CST.conforms, Literal(True)) in done
+    artefacts = {str(done.value(a, jobs.CST.path)): str(done.value(a, jobs.CST.group)) for a in done.subjects(RDF.type, jobs.CST.Artefact)}
+    assert artefacts["mapping.rml.ttl"] == f"urn:example:mapping/{name}#Scheme"
+    assert not any(path.endswith((".xsl", ".jolt.json")) for path in artefacts), "no transform reads the format, so the RML form is the only one"

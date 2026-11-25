@@ -30,3 +30,10 @@ SPDX-License-Identifier = "MPL-2.0"
 path = ["tools/persistence/tests/fixtures/ir/builder-goldens.json"]
 precedence = "aggregate"
 SPDX-License-Identifier = "MPL-2.0"
+
+# The CSV source of the policies examples. CSV has no comment syntax, so a header line would be read back as a row, and the licence
+# is declared here. It is the licence the other examples of that folder carry.
+[[annotations]]
+path = ["tools/mork_transforms/tests/examples/policies/source.csv"]
+precedence = "aggregate"
+SPDX-License-Identifier = "CC-BY-SA-4.0"

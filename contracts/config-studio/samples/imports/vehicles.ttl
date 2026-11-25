@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# An import of the sample folder "imports", found through the catalog by its own name, vehicles.ttl.
+
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix veh:  <https://example.org/import-folder/vehicles#> .
+
+<https://example.org/import-folder/vehicles> a owl:Ontology ;
+    rdfs:label "Vehicles" .
+
+veh:Vehicle a owl:Class ; rdfs:label "Vehicle" .
+veh:Van a owl:Class ; rdfs:label "Van" ; rdfs:subClassOf veh:Vehicle .
+veh:Lorry a owl:Class ; rdfs:label "Lorry" ; rdfs:subClassOf veh:Vehicle .

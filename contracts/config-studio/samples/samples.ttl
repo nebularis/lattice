@@ -81,3 +81,23 @@
     rdfs:comment "A small library baseline that imports LATTICE's vocabulary layer, which imports the foundation layer, and a subject scheme bound to a catalogue entry's subject. Hold its imports to see the import graph draw a stated import, a binding and an edge derived from the foundation term the baseline uses." ;
     cst:part [ cst:fileName "library-baseline.ttl" ] ,
              [ cst:fileName "library-vocabulary.ttl" ] .
+
+<urn:lattice:studio:sample:policies-csv> a cst:Sample ;
+    rdfs:label "Policies from CSV" ;
+    rdfs:comment "The policies mapping read from a CSV source, one row for each policy and cover. No runtime reads a CSV source yet, so the scheme compiles to RML and the Sample pane lists that form as waiting, with Run off. Paste the text of source.csv as the sample to see it." ;
+    cst:part [ cst:fileName "../../../tools/mork_transforms/tests/examples/policies/csv.mork.ttl" ] .
+
+<urn:lattice:studio:sample:policies-yaml> a cst:Sample ;
+    rdfs:label "Policies from YAML" ;
+    rdfs:comment "The policies mapping read from a YAML source, the JSON document written as YAML. No runtime reads a YAML source yet, so the scheme compiles to RML and the Sample pane lists that form as waiting, with Run off. Paste the text of source.yaml as the sample to see it." ;
+    cst:part [ cst:fileName "../../../tools/mork_transforms/tests/examples/policies/yaml.mork.ttl" ] .
+
+<urn:lattice:studio:sample:species-mappings> a cst:Sample ;
+    rdfs:label "Species, an RDF mapping in two strata" ;
+    rdfs:comment "A mapping over an RDF source that makes a class for each species record and then looks an animal's class up by name, so a run takes two strata, and creates a property whose domain is a union of those classes, a closure that runs after the strata. The scheme carries its example source, which the Sample pane offers." ;
+    cst:part [ cst:fileName "species-mappings.ttl" ] .
+
+<urn:lattice:studio:sample:axioms> a cst:Sample ;
+    rdfs:label "Fleet axioms" ;
+    rdfs:comment "A baseline that states, on purpose, what the Baseline view's axiom forms read. Restrictions in each quantifier, an equivalent class that is an intersection, disjointness, a key, labels in two languages, a datatype restriction and property characteristics, each in a section of its own when its class or property is selected." ;
+    cst:part [ cst:fileName "axioms-baseline.ttl" ] .

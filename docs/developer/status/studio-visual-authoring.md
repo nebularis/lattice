@@ -283,3 +283,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-25: SVA-S2c built.
 - 2026-11-25: the maintainer gave the pane that sends the projection run to SVA-S3, accepted SVA-S2c's fourteen choices as built and ADR-A154's addendum on the projection run, and agreed the facility sample's projections are placed T1.
 - 2026-11-25: SVA-D1 marked building.
+- 2026-11-25: SVA-D1 built in part. The samples README, its test, the folder of imports with a catalog, the RDF mapping in two strata, the CSV and YAML sources, the ODRL Turtle and an axioms sample are in. The LegalRuleML documents wait for the maintainer, since the OASIS host is not reachable from the session and the repository has no triplifier. TD-266 and TD-267 opened.

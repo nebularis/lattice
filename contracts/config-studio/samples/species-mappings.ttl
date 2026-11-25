@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The sample "Species, an RDF mapping in two strata". One scheme over an RDF source, which the SPARQL backend compiles and the Sample pane
+# runs over the example source the scheme carries (press "Use the Turtle example", then Run).
+#
+# A species record makes a class, so the run takes two strata. The species mapping creates a class for each species record in stratum 0,
+# and the animal mapping looks a class up by the species name its record states, which reads what stratum 0 made, so it runs in
+# stratum 1. The property mapping creates the property `knows` and asserts its domain over the classes the creation made and over
+# tgt:Animal. That domain is a union that can be stated only once every class exists, so it is a closure query, which runs once the strata
+# that create the classes are done and whose output the run keeps as stratum 1 of the mapping.
+# A record naming a species no record creates, here the dodo, is reported as unresolved. Every IRI is a placeholder under example.org.
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix src:  <https://example.org/zoo/src#> .
+@prefix tgt:  <https://example.org/zoo/tgt#> .
+@prefix mm:   <https://example.org/zoo/mapping#> .
+
+mm:Scheme a mork:MappingScheme ;
+    rdfs:label "Zoo records to classes and animals" ;
+    sh:declare [ sh:prefix "src" ; sh:namespace "https://example.org/zoo/src#"^^xsd:anyURI ] .
+
+# The source is RDF, so its own terms are the representations and each is declared an entity. The example is what the pane offers.
+mm:Records a mork:RepresentationScheme ; mork:format mork:RDF ; rdfs:label "Zoo records" ;
+    skos:example """@prefix src: <https://example.org/zoo/src#> .
+@prefix rec: <https://example.org/zoo/records/> .
+
+rec:s1 a src:Species ; src:name "Falcon" .
+rec:s2 a src:Species ; src:name "Owl" .
+rec:a7 a src:Animal ; src:species "Falcon" .
+rec:a8 a src:Animal ; src:species "Dodo" .
+""" .
+
+src:Species a mork:Entity .
+src:Animal a mork:Entity .
+mm:SpeciesConcept a mork:DataConcept ; skos:inScheme mm:Records ; mork:representedAs src:Species .
+mm:AnimalConcept a mork:DataConcept ; skos:inScheme mm:Records ; mork:representedAs src:Animal .
+
+# Stratum 0. A class for each species record, named by the record's name, below tgt:Animal.
+mm:CreateSpecies a mork:DataMapping ; mork:mappingScheme mm:Scheme ; mork:mappingFor mm:SpeciesConcept ;
+    mork:broadTBoxCategoryMatch tgt:Animal ; mork:conceptNameTemplate "${src:name}" .
+mm:Yield_Species a mork:DeferredContext ; mork:mappingScheme mm:Scheme ; mork:yieldConcept mm:CreateSpecies .
+
+# Stratum 1. An animal, typed with the class its species record made, found by a lookup over the species name.
+mm:Animal a mork:Datum ; mork:mappingScheme mm:Scheme ; mork:mappingFor mm:AnimalConcept ; mork:conceptName "animal" ;
+    mork:exactTBoxMatch tgt:Animal ; mork:referenceDataMapping mm:AnimalSpecies .
+mm:AnimalSpecies a mork:Lookup ; mork:mappingScheme mm:Scheme ; mork:exactRBoxMatch rdf:type ;
+    mork:exactTBoxMatch mm:Yield_Species ; mork:dataRef "src:species" ; mork:dataInline "" .
+
+# The closure. A property whose domain is the union of the classes stratum 0 made and tgt:Animal.
+mm:Knows a mork:DataMapping ; mork:mappingScheme mm:Scheme ; mork:broadRBoxCategoryMatch owl:topObjectProperty ;
+    mork:conceptName "#knows" ; mork:assertsPropertyDomains mm:Yield_Species , tgt:Animal .

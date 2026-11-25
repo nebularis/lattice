@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The root ontology of the sample folder "imports". Make a workspace from it with "Your own Turtle", then drop the whole folder onto the
+# import dialog of the Baseline view. The ontology imports three documents. A catalog in the folder resolves two of them, one to a file
+# named as the import is and one to a file of an unrelated name, and the third has no file and no catalog entry, so the dialog reports it
+# missing. Every IRI is a placeholder under example.org.
+
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix fleet: <https://example.org/import-folder/base#> .
+@prefix veh:  <https://example.org/import-folder/vehicles#> .
+@prefix dep:  <https://example.org/import-folder/depots#> .
+
+<https://example.org/import-folder/base> a owl:Ontology ;
+    rdfs:label "Fleet" ;
+    owl:imports <https://example.org/import-folder/vehicles> ,
+                <https://example.org/import-folder/depots> ,
+                <https://example.org/import-folder/calendar> .
+
+fleet:Fleet a owl:Class ; rdfs:label "Fleet" .
+fleet:comprises a owl:ObjectProperty ; rdfs:label "comprises" ; rdfs:domain fleet:Fleet ; rdfs:range veh:Vehicle .
+fleet:basedAt a owl:ObjectProperty ; rdfs:label "based at" ; rdfs:domain fleet:Fleet ; rdfs:range dep:Depot .

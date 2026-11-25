@@ -1,0 +1,71 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# The baseline of the sample "Fleet axioms". It states on purpose what the Baseline view's axiom forms read, so that selecting a class shows
+# each construct in a section of its own. A restriction in each quantifier (ex:Van and ex:Lorry), an equivalent class that is an intersection
+# holding a restriction (ex:ElectricVan), disjointness, a key and labels in two languages (ex:Vehicle), and a datatype restriction and
+# property characteristics (ex:weight, ex:hasAxle). Every IRI is a placeholder under example.org.
+
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/axioms#> .
+
+<https://example.org/axioms> a owl:Ontology ;
+    rdfs:label "Fleet axioms" .
+
+ex:Vehicle a owl:Class ;
+    rdfs:label "Vehicle"@en , "Véhicule"@fr ;
+    rdfs:comment "A machine that carries people or goods on a road." ;
+    skos:definition "A road vehicle with an axle and a registration." ;
+    owl:hasKey ( ex:registration ) .
+
+ex:Axle a owl:Class ; rdfs:label "Axle" .
+ex:HeavyAxle a owl:Class ; rdfs:label "Heavy axle" ; rdfs:subClassOf ex:Axle .
+ex:Power a owl:Class ; rdfs:label "Power source" .
+
+ex:Van a owl:Class ;
+    rdfs:label "Van" ;
+    rdfs:subClassOf ex:Vehicle ,
+        [ a owl:Restriction ; owl:onProperty ex:hasAxle ; owl:someValuesFrom ex:Axle ] ,
+        [ a owl:Restriction ; owl:onProperty ex:hasAxle ; owl:maxCardinality "2"^^xsd:nonNegativeInteger ] ;
+    owl:disjointWith ex:Lorry .
+
+ex:Lorry a owl:Class ;
+    rdfs:label "Lorry" ;
+    rdfs:subClassOf ex:Vehicle ,
+        [ a owl:Restriction ; owl:onProperty ex:hasAxle ; owl:allValuesFrom ex:HeavyAxle ] ,
+        [ a owl:Restriction ; owl:onProperty ex:hasAxle ; owl:minQualifiedCardinality "3"^^xsd:nonNegativeInteger ; owl:onClass ex:HeavyAxle ] .
+
+ex:ElectricVan a owl:Class ;
+    rdfs:label "Electric van" ;
+    owl:equivalentClass [ owl:intersectionOf ( ex:Van [ a owl:Restriction ; owl:onProperty ex:poweredBy ; owl:hasValue ex:electricity ] ) ] .
+
+ex:electricity a ex:Power ; rdfs:label "electricity" .
+
+ex:hasAxle a owl:ObjectProperty ;
+    rdfs:label "has axle" ;
+    rdfs:domain ex:Vehicle ;
+    rdfs:range ex:Axle ;
+    owl:inverseOf ex:axleOf .
+
+ex:axleOf a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label "axle of" ;
+    rdfs:domain ex:Axle ;
+    rdfs:range ex:Vehicle .
+
+ex:poweredBy a owl:ObjectProperty ;
+    rdfs:label "powered by" ;
+    rdfs:domain ex:Vehicle ;
+    rdfs:range ex:Power .
+
+ex:registration a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label "registration" ;
+    rdfs:domain ex:Vehicle ;
+    rdfs:range xsd:string .
+
+ex:weight a owl:DatatypeProperty ;
+    rdfs:label "weight in kilograms" ;
+    rdfs:domain ex:Vehicle ;
+    rdfs:range [ a rdfs:Datatype ; owl:onDatatype xsd:integer ; owl:withRestrictions ( [ xsd:minInclusive 1 ] [ xsd:maxInclusive 44000 ] ) ] .

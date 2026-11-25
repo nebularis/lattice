@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# An import of the sample folder "imports", found through the catalog and by nothing else, since its name says nothing of the
+# ontology it holds. Its IRI is https://example.org/import-folder/depots.
+
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dep:  <https://example.org/import-folder/depots#> .
+
+<https://example.org/import-folder/depots> a owl:Ontology ;
+    rdfs:label "Depots" .
+
+dep:Depot a owl:Class ; rdfs:label "Depot" .
+dep:YardDepot a owl:Class ; rdfs:label "Yard depot" ; rdfs:subClassOf dep:Depot .

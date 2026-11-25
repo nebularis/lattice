@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+policies:
+  - number: P-1
+    holder: Ann "Annie" Lee
+    covers:
+      - code: FIRE
+      - code: FLOOD
+  - number: P-2
+    holder: Bo
+    covers:
+      - code: FIRE
+      - code: QUAKE
