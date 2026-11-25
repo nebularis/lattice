@@ -15,13 +15,14 @@ Nothing lets an operator ask a running component what it holds or whether it is 
 ## Outcome
 
 - **A read side.** For each component it covers, what the component holds and whether it is working, from one command. For the studio's writer that is its group membership, the partitions it holds, the offset last stored for each and whether its thread is alive.
+- **A configuration side.** Added 2026-11-25. A component's settings that a deployment may change, such as how often the studio's writer tries again, how long it waits and when its circuit breaker opens (MSA-F17 of the [multi-store plan](multi-store-architecture.md)), are named, given defaults and changed by a route the deployment chooses.
 - **An act side.** Named repairs, each safe to run twice, each stating what it removes before it removes it. The first reconciles a broker with the topology contract, which unbinds and deletes what the contract no longer declares.
 
 ## Out of scope
 
 - Monitoring, alerting and dashboards. This unit answers a question asked, and watches nothing.
 - Repairs to the graph store's data. A repair here touches coordination state only, which can be rebuilt (PRI-52).
-- Deployment and scaling of components.
+- Deployment and scaling of components. How a deployment delivers a changed setting is its own choice, and this unit makes each choice possible and imposes none.
 
 ## Order and dependencies
 
@@ -34,9 +35,11 @@ It is planned on 2026-11-19 and built later, at the maintainer's word. ADM-1 rea
 | ADM-0 | design | a sketch that answers ADM-Q1 to ADM-Q3 with their options and what each costs | none |
 | ADM-1 | read | the studio writer's health: group membership, partitions held, offset last stored for each, thread alive | ADM-0, MSA-F10 |
 | ADM-2 | repair | a broker reconciled with the topology contract, listing what it would remove before removing it | ADM-0 |
+| ADM-3 | design | a sketch of component configuration that answers ADM-Q4, with the settings MSA-F17 needs as its first case | ADM-0 |
 
 ## Questions for the maintainer
 
 - **ADM-Q1, what form it takes.** A command-line tool that reads the contracts and talks to the broker and the store, an endpoint on each service, or both with the tool calling the endpoints. The first needs no change to a service and cannot see inside a process, such as a thread's state.
 - **ADM-Q2, who may run a repair.** Whether a repair needs a principal and leaves a record, and where that record is kept.
 - **ADM-Q3, which components it covers first** after the studio's writer and its broker.
+- **ADM-Q4, how a setting reaches a running component.** Added 2026-11-25, from the maintainer. Three routes have to be possible, and a deployment picks. A configuration file beside the component, read at start. The deployment's own mechanism, such as Chef, Puppet, Capistrano or Helm, changing that file and restarting the service, with nothing of ours in the way. And for the studio, a module for component administration, a sidecar that loads a change on demand, and a control plane that publishes changes securely. The question is which of these the first slice builds, what a component does with a setting it cannot apply without a restart, and who may publish a change and where that is recorded, which meets ADM-Q2.

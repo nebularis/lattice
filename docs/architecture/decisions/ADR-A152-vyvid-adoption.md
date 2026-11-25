@@ -39,6 +39,19 @@ LATTICE maintains about 500 lines for its index and board, the extractor for qua
 
 **Adds to decision 2's trust.** A cloud environment's pasted setup script writes the user configuration, naming the domains with `trust = "own"` and this repository in Вивід's `trusted_repositories`, so a committed `vyvid.toml` is trusted on any branch there with no `vyd trust`. We accept that a hostile branch is then trusted, since its hooks, instructions and skills reach the agent in that session anyway. A hash in the script would go stale on every change to `vyvid.toml`. The grant is pasted rather than held in `tools/claude-cloud-setup.sh`, so the repository does not vouch for itself. A person's machine is unchanged and still needs `vyd trust`.
 
+## Addendum of 2026-11-25: the triple-store page follows the domain's main branch
+
+**Status:** Proposed 2026-11-25, for the maintainer
+
+**Narrows decision 7.** Decision 7 pins the page at the record's old path to a tag of the domain. The page now links the domain's `main` branch, which is also what the index reads, so a reader sees one text of a finding by either route. Findings are added and seldom changed, and a page pinned to a tag was wrong for every finding recorded after it.
+
+1. **The page links `main`.** Each section links its finding by heading, and the page's opening links the three documents.
+2. **A tag is named only for a change of meaning.** Where a finding is corrected, or marked as remedied in a release of the store it is about, the domain moves its version, and a LATTICE document that relied on the earlier text links the tag that holds it.
+3. **When the domain moves its version is the domain's rule,** stated in its own README. Whether LATTICE follows `main` or a tag is this decision. The tool needs nothing new, since it already reads a domain's clone as it stands.
+4. **A finding with no section on the page has no note for LATTICE yet.** The page says so, and no section is written only to keep a list complete.
+
+**What it costs.** A finding's heading is its link, so a heading reworded in the domain breaks the page's link to it until the page follows, and nothing here checks that today. A reader of an old LATTICE release follows its links to today's text of a finding and not the text of that release's day.
+
 ## Provenance
 
 The sketch [vyvid-migration](../../developer/sketches/vyvid-migration.md) holds the facts, the table of what moves and what stays, and the answered questions VM-Q1 to VM-Q6. The plan [vyvid-migration](../../developer/plans/vyvid-migration.md) holds the decisions and the slices VM-1 to VM-6. Вивід's own plan names the switch as its slice VYD-2b.

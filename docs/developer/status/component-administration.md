@@ -13,6 +13,7 @@
 | ADM-0 | a sketch that answers ADM-Q1 to ADM-Q3 with their options and what each costs | planned |  |
 | ADM-1 | the studio writer's health read: group membership, partitions held, offset last stored for each, thread alive | planned | ADM-0, MSA-F10 |
 | ADM-2 | a broker reconciled with the topology contract, listing what it would remove before removing it | planned | ADM-0 |
+| ADM-3 | a sketch of component configuration, how a setting reaches a running component by a file, a deployment's own tool, or a studio module with a sidecar and a control plane (ADM-Q4), with MSA-F17's settings as its first case | planned | ADM-0 |
 
 **Next action:** none until the maintainer says to start. ADM-0 is first.
 

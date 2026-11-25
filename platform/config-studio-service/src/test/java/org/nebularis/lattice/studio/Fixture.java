@@ -36,8 +36,10 @@ final class Fixture {
     /** How many queries the store has been asked, which a test reads to say how many reads a request made. */
     static final java.util.concurrent.atomic.AtomicInteger QUERIES = new java.util.concurrent.atomic.AtomicInteger();
 
-    final StudioStore store = textual(org.apache.jena.rdfconnection.RDFConnection.connect(
-        org.apache.jena.query.DatasetFactory.createTxnMem()));
+    /** The connection under the store, which a test wraps to stand a second writer on the same dataset. */
+    final org.apache.jena.rdfconnection.RDFConnection raw = org.apache.jena.rdfconnection.RDFConnection.connect(
+        org.apache.jena.query.DatasetFactory.createTxnMem());
+    final StudioStore store = textual(raw);
     /** The operations the stage tool wrote, loaded once. */
     static final StudioOperations OPS = StudioOperations.load(Path.of(System.getProperty("studio.assets"), "persistence"), 1L);
     static final org.nebularis.lattice.studio.store.Maintenance MAINTENANCE = org.nebularis.lattice.studio.store.Maintenance.load(Path.of(System.getProperty("studio.assets"), "maintenance"));
