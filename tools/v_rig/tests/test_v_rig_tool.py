@@ -289,3 +289,14 @@ def test_locator_string_and_identifiers():
     assert canon.finding_iri("UnresolvedReference", "doc a", s, None) == \
         canon.finding_iri("UnresolvedReference", "doc a", s, "")
     assert canon.finding_iri("UnresolvedReference", "doc a", s, None) != canon.finding_iri("ProseOnlyMeaning", "doc a", s, None)
+
+
+def test_a_key_is_the_text_its_author_wrote():
+    """YAML 1.1 reads `on` and `no` as booleans. A key is a name, so it stays text, a value written `yes` stays a
+    boolean, and a mapping whose keys YAML would read as mixed kinds still has a digest."""
+    from v_rig.rig import split_front_matter
+
+    front, _, _ = split_front_matter("---\nid: a\ncondition:\n  on: exhaustion\n  no: 2\n  3: three\n  to: b\nagreed: yes\n---\nbody\n")
+    assert front["condition"] == {"on": "exhaustion", "no": 2, "3": "three", "to": "b"}
+    assert front["agreed"] is True
+    assert canon.fact_digest("condition", front["condition"]) == canon.fact_digest("condition", {"3": "three", "no": 2, "on": "exhaustion", "to": "b"})

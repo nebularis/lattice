@@ -20,6 +20,22 @@ SUPPORTED_FORMAT_VERSIONS = ("1",)
 DROPPED_KEYS = ("provenance",)
 
 
+class _KeysAsWritten(yaml.SafeLoader):
+    """A mapping's key is the text its author wrote. YAML 1.1 reads `on`, `yes` and `no` as booleans and `1` as a
+    number, and a key is a name, never a value, so a key is kept as its scalar's own text. A merge key is left alone."""
+
+    def construct_mapping(self, node, deep=False):
+        if isinstance(node, yaml.MappingNode):
+            for key, _ in node.value:
+                if isinstance(key, yaml.ScalarNode) and key.tag not in ("tag:yaml.org,2002:str", "tag:yaml.org,2002:merge"):
+                    key.tag = "tag:yaml.org,2002:str"
+        return super().construct_mapping(node, deep=deep)
+
+
+def _load(text: str):
+    return yaml.load(text, Loader=_KeysAsWritten)  # noqa: S506, a SafeLoader subclass
+
+
 class RigError(Exception):
     """A rig the tool refuses, by the key and value that made it."""
 
@@ -97,7 +113,7 @@ def split_front_matter(text: str) -> tuple[dict, str, int]:
         return {}, text, 1
     for index in range(1, len(lines)):
         if lines[index].strip() == "---":
-            front = yaml.safe_load("\n".join(lines[1:index])) or {}
+            front = _load("\n".join(lines[1:index])) or {}
             return _mapping(front, "the front matter"), "\n".join(lines[index + 1:]), index + 2
     raise RigError("the front matter is not closed")
 
@@ -108,7 +124,7 @@ def read_rig(root: Path | str) -> Rig:
     if not manifest_path.is_file():
         raise RigError(f"no manifest.yaml under {root}")
     digests: dict[str, str] = {}
-    manifest = _mapping(yaml.safe_load(_read_text(root, "manifest.yaml", digests)) or {}, "the manifest")
+    manifest = _mapping(_load(_read_text(root, "manifest.yaml", digests)) or {}, "the manifest")
     if "format_version" not in manifest:
         raise RigError("the manifest has no format_version key, and the supported versions are "
                        + ", ".join(SUPPORTED_FORMAT_VERSIONS))
@@ -135,7 +151,7 @@ def read_rig(root: Path | str) -> Rig:
 
     programmes: list[Programme] = []
     for relative in manifest.get("programmes") or []:
-        mapping = _mapping(yaml.safe_load(_read_text(root, str(relative), digests)) or {}, f"{relative}")
+        mapping = _mapping(_load(_read_text(root, str(relative), digests)) or {}, f"{relative}")
         programme_id = str(mapping.get("id", Path(str(relative)).stem))
         programmes.append(Programme(programme_id, str(relative), mapping))
         log.info("read programme %s", programme_id)
@@ -143,7 +159,7 @@ def read_rig(root: Path | str) -> Rig:
     events = None
     if manifest.get("events"):
         relative = str(manifest["events"])
-        mapping = _mapping(yaml.safe_load(_read_text(root, relative, digests)) or {}, relative)
+        mapping = _mapping(_load(_read_text(root, relative, digests)) or {}, relative)
         events = Events(relative, tuple(_mapping(e, "an event") for e in mapping.get("events") or []))
         log.info("read %d event(s)", len(events.events))
 
