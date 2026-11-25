@@ -10,6 +10,8 @@ mise run v-rig -- --rig <path to a rig> [--extension <ttl>]... [--out <ignored p
 
 The first lines a run prints are the rig digest, the format version, the checkout's commit and substrate release, and the versions of the vocabulary and the canonicalisation rules. Outputs go to `.local/v-rig/<rig digest>/` in the checkout unless `--out` names another path, and either is refused where git does not ignore it or where it lies under the rig.
 
+**The format.** A rig's `manifest.yaml` states `format_version`, and the tool refuses a manifest that omits it or names a version it does not support, which today is 1. A mapping's key is read as the text its author wrote, so a key written `on`, `yes` or `no` is a name and never a boolean. A value is read as YAML reads it.
+
 | File | Holds |
 |---|---|
 | `ir.ttl` | the whole representation, both views, the run and the lifter's own findings |
