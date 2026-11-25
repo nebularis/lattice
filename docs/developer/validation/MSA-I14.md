@@ -310,3 +310,19 @@ A unit lowered to SPARQL writes its receipt first, under the joint guard of ever
 **Cost, observed once and not a benchmark.** Thirty listed rows among 5,000 others took 0.01 s on Oxigraph, 0.11 s on Jena and 31.5 s on rdflib.
 
 **Not covered.** Fuseki over TDB2 and Oxigraph on disk were not run, the generated operations were not used, and no finding is recorded in the store discovery record yet.
+
+## Addendum of 2026-11-24, R2 as option (a) of MSA-Q29 restates it
+
+**The invariant.** Only an answer of applied is final. A command answered as applied was applied (`AppliedIsFinal`), and none is answered as not applied once it has applied (`NoRefusalAfterApplied`, an action property). A command answered as not applied may apply later, on a resend. X7 and X8 gain the two properties, and no existing configuration changes.
+
+| ID | Given, when, then | Level | Property | Pass criterion | Kind |
+|---|---|---|---|---|---|
+| I14-T75 `X7_RefusedThenAppliesFinal` | Given one writer in stream order and a change sent before its creation, with a resend, when the resend applies, then no answer of applied is wrong and no refusal follows an apply | L2 | `AppliedIsFinal`, `NoRefusalAfterApplied` | "No error has been found" | positive |
+| I14-T76 `X7_AnyWholeAnswerFinal` | Given two writers that start from any position, no token and the planning read of receipts, when a writer answers from a plan older than the other's apply, then a command is answered as not applied after it applied | L2 | `NoRefusalAfterApplied` | the action property is violated | negative |
+| I14-T77 `X7_AnyFencedAnswerFinal` | as I14-T76 with the token | L2 | `AppliedIsFinal`, `NoRefusalAfterApplied` | "No error has been found" | positive |
+| I14-T78 `X8_AnyWholeAnswerFinal` | as I14-T76 with a workspace and its part | L2 | `NoRefusalAfterApplied` | the action property is violated | negative |
+| I14-T79 `X8_AnyFencedAnswerFinal` | as I14-T78 with the token | L2 | `AppliedIsFinal`, `NoRefusalAfterApplied`, `WholeCommands` | "No error has been found" | positive |
+
+**The one command.** `mise run check:models-multi-store -- "X*Final"`, which ends `models: 5 as expected, 0 failed, 0 skipped, 0 stopped`. Run on 2026-11-24 on macOS. The base tier is now 145 configurations.
+
+**Not covered.** `PartitionOrder` is left out of the two X8 configurations, since a writer that takes the stream from any position breaks it first, with the token too (`X7_AnyFencedAnswerOrderSets`). In stream order the stronger `AnswersAgree` already holds wherever no refused command applies later, so no stream-order configuration was added beyond I14-T75.

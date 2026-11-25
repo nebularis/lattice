@@ -353,6 +353,13 @@ AppliedOnce == \A i, j \in DOMAIN applied : i # j => applied[i] # applied[j]
 \* applied was not, then or later, and so no command is answered both ways.
 AnswersAgree == saidYes \subseteq Applied /\ saidNo \cap Applied = {}
 
+\* R2 as option (a) of MSA-Q29 restates it. Only an answer of applied is
+\* final. A command answered as applied was applied, and none is answered as
+\* not applied once it has applied. One answered as not applied may apply
+\* later, on a resend.
+AppliedIsFinal == saidYes \subseteq Applied
+NoRefusalAfterApplied == [][(saidNo' \ saidNo) \cap Applied' = {}]_vars
+
 \* R4. The commands take effect in the order the partition gives them.
 PartitionOrder == \A i, j \in DOMAIN applied : i < j => applied[i] < applied[j]
 

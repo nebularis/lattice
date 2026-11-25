@@ -194,4 +194,9 @@ configuration = [
   { name = "X4_FencedTimeouts_P3", module = "X4_AuthorityCutover", config = "X4_FencedTimeouts_P3.cfg", tier = "wide", expect = "no error", distinct = 3436, depth = 22, tlc_time = "01s", wall_s = 1.7, peak_heap_mb = 49 },
   { name = "X4_FencedTimeouts_P4", module = "X4_AuthorityCutover", config = "X4_FencedTimeouts_P4.cfg", tier = "wide", expect = "no error", distinct = 7903, depth = 27, tlc_time = "01s", wall_s = 2.2, peak_heap_mb = 72 },
   { name = "X4_FencedTimeouts_W3", module = "X4_AuthorityCutover", config = "X4_FencedTimeouts_W3.cfg", tier = "wide", expect = "no error", distinct = 33797, depth = 25, tlc_time = "06s", wall_s = 6.7, peak_heap_mb = 209 },
+  { name = "X7_RefusedThenAppliesFinal", module = "X7_WorkspaceBatch", config = "X7_RefusedThenAppliesFinal.cfg", tier = "base", expect = "no error", distinct = 16, depth = 16, tlc_time = "00s", wall_s = 0.8, peak_heap_mb = 15 },
+  { name = "X7_AnyWholeAnswerFinal", module = "X7_WorkspaceBatch", config = "X7_AnyWholeAnswerFinal.cfg", tier = "base", expect = "violated", property = "NoRefusalAfterApplied", kind = "action", distinct = 11170, depth = 16, tlc_time = "00s", wall_s = 1.0, peak_heap_mb = 22 },
+  { name = "X7_AnyFencedAnswerFinal", module = "X7_WorkspaceBatch", config = "X7_AnyFencedAnswerFinal.cfg", tier = "base", expect = "no error", distinct = 13258, depth = 24, tlc_time = "01s", wall_s = 1.4, peak_heap_mb = 25 },
+  { name = "X8_AnyWholeAnswerFinal", module = "X8_BatchParts", config = "X8_AnyWholeAnswerFinal.cfg", tier = "base", expect = "violated", property = "NoRefusalAfterApplied", kind = "action", distinct = 20554, depth = 16, tlc_time = "00s", wall_s = 1.2, peak_heap_mb = 32 },
+  { name = "X8_AnyFencedAnswerFinal", module = "X8_BatchParts", config = "X8_AnyFencedAnswerFinal.cfg", tier = "base", expect = "no error", distinct = 29631, depth = 30, tlc_time = "01s", wall_s = 1.6, peak_heap_mb = 40 },
 ]
