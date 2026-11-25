@@ -333,6 +333,47 @@ Instrument and Wording each declare an `Amendment`, for the act and for the chan
 
 **Answered 2026-11-24, (a).** Decided by the maintainer. A supersession names later versions of any definitions of one owner whose versions state one recurrence, or none, which is what LG-29 built. Its rule and LG-Q57's are promoted in ADR-A131's addendum of 2026-11-24, which the maintainer accepted that day.
 
+### Four questions LG-35 raised before any proof, 2026-11-25
+
+Reading the two bounds against the kernel found four points the addenda do not decide. Each history below was run on the [model](../../../tools/models/ledger-versions-in-force/versions_in_force_model.py) under R3, or evaluated on the kernel, on 2026-11-25. The first version states 10 unless a row says otherwise.
+
+**LG-Q59. How a credit is cut where it takes effect under a version that has ended.** The addendum of 2026-11-23 counts a credit towards a version's bound where it took effect before that version's successor, and leaves open how it is cut. Today a credit is cut once, when it is recorded, at the ceilings of its path against the recorded balance. In the history below the first version has a ceiling of 10: 5 at 50, a version of 20 from 100, 12 at 120, a credit of 8 at 90, then 11 at 95.
+
+| Option | What it is | On that history | Cost |
+|---|---|---|---|
+| (a) | cut as today, at the ceilings of the latest version in force when it is recorded, and counted towards each ended version's bound by what was applied | the credit applies 8 and the 11 is granted. Before 100, 16 is drawn and 8 restored under a version that states 10 | nothing new. The kernel's credit is unchanged |
+| (b) | cut also at the room each ended version had when it ended, as a draw is held to each | the credit applies 5 and the 11 is refused, since 23 would be drawn of 20 | for each backdated credit, one fold by effective position for each ended version on each account of its path, a cut record of four statements where one binds, and a third bound to prove |
+| (c) | applied as today, and counted towards an ended version's bound only as far as that version had room | the credit applies 8 and the 11 is refused by the first version's bound | the law for an ended version stops being a sum of the records, so a record for each such credit and version |
+
+*Leaning (a).* The layer does the same with no version at all. On 5 at 50, 4 at 120, a credit of 8 at 90, then 9 at 95, with one version that states 10, every step is granted, and 14 is drawn and 8 restored before 100. A credit is posted once against the recorded balance (STD-294), and settling again by effective day is a reading a report asks for. Option (b) would hold an account more strictly under a version that ended than under one that did not.
+
+**LG-Q60. A supersession whose position leaves the version it ends over its amount.** 10 at 50, a credit of 10 at 120, then 5 at 60, each granted against the recorded balance. Then a version of 15 from 100. Before 100, 15 is drawn of 10, since the credit that paid for the second draw took effect at 120. The model reports the second bound broken by the supersession, with no draw refused, so the bound does not hold of every account as the addendum says it does.
+
+| Option | What it is | Consequence | Cost |
+|---|---|---|---|
+| (a) | the supersession is refused, as one that states less than is drawn is | the second bound holds of every account at every revision. A change of terms the parties agreed cannot be recorded from that position until a posting corrects what took effect before it | one fold by effective position for each account the supersession reaches, when it is recorded, and a reason for the refusal, the eighth or a ninth |
+| (b) | it is recorded. A draw effective before the position is refused while the ended version is over, and the bound reads: what took effect before a successor's position is within the ended version's amount, or no draw effective before that position has been recorded since | nothing the parties agreed is refused. The first backdated draw after it is held to the bound, and from that draw on the bound holds | the law for an ended version is its sum and one test for a draw recorded after the supersession and effective before it |
+
+*Leaning (b).* What took effect before a position is a reading by effective day, and the layer already lets one fall below zero where postings are recorded out of their effective order, as the kernel's own instance of a debit recorded last and effective second shows. The ended version being over is that reading, and (b) refuses the only thing that would make it worse.
+
+**LG-Q61. A balance above its ceiling.** The kernel's credit gives an account on the path the lesser of what was applied and its room, and where an account's balance is above its ceiling that room is below zero. Evaluated on the kernel: a parent that states 10 under a ceiling of 8 and a child of 5, after a draw of 1 at the child, hold 9 and 4. A credit of 1 at the child applies 1, lowers the parent to 8 and records a cut of 2. The state needs no later version, since nothing refuses a ceiling below a stated amount, and a later version reaches it more easily, by a ceiling below the balance the account holds.
+
+| Option | What it is | Consequence | Cost |
+|---|---|---|---|
+| (a) | a definition whose ceiling is below its stated amount is refused, and so is a supersession that leaves a balance above its ceiling | the kernel's credit stands. A ceiling that only limits how far a credit restores, below the stated amount, cannot be stated | a constraint at design time, a check for each account a supersession reaches, and a reason for the refusal |
+| (b) | an account on the path takes nothing where its balance is at or above its ceiling, never less than nothing | a credit never lowers a balance. A balance above its ceiling stays until draws bring it under, and nothing is refused | one `max` in the kernel's credit, which changes no result where every balance is within its ceiling, and the proofs that name it |
+
+*Leaning (b).* A ceiling says a credit may not raise a balance above it, and a credit that lowers one says something no term states.
+
+**LG-Q62. A later version in force from a position before the one it supersedes.** Nothing refuses it. For example a version of 15 from 200 is recorded, then a version of 20 from 100. The second version then ends at a position before it began.
+
+| Option | What it is | Consequence | Cost |
+|---|---|---|---|
+| (a) | refused. A supersession's position is at or after the position each version it supersedes is in force from | the versions of an account are in one order, by succession and by position alike. A change of terms meant to reach back before the last one is stated as a later version of both | a law over the records, one comparison for each version a supersession names |
+| (b) | allowed, and the version in force at a position is found by position | every fold selects a version by position, which LG-Q48 decided against | one more join in every law that reads a stated amount |
+
+*Leaning (a).* Two supersessions at one position stay allowed, since the first version of the two is then in force at no position and bounds nothing.
+
 ## 5. What LG-29, LG-34 and LG-35 build
 
 The work is three slices, since one of 350k tokens across the vocabulary, the laws and the proofs is more than a review can hold. The kernel goes first, since a proof may still refute a detail of the rule and the laws cite its theorems.
