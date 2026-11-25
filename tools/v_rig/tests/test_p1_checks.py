@@ -125,6 +125,17 @@ def test_questions_with_no_answer_are_findings_and_answered_ones_are_not(graph, 
     assert not {"parties", "wording", "shares", "typed", "events", "amounts", "values"} & names
 
 
+def test_the_questions_on_dates_and_on_what_an_account_declares_are_asked(graph, competency):
+    """The mini-rig states no amendment, no recording time, no ledger profile and nothing an account declares
+    beyond its amount, so each of these questions is asked and has no answer there."""
+    asked = {"foundation/recorded-and-effective", "instrument/amendment-effect", "instrument/amendment-source",
+             "ledger/closing", "ledger/period", "ledger/ceiling", "ledger/purposes", "ledger/restoring-kinds"}
+    assert asked <= set(competency.competency)
+    assert all(competency.competency[name] == 0 for name in asked)
+    names = {str(graph.value(locator, VRIG.keyPath)) for kind, locator, _, _, _ in competency.findings if kind == VRIG.EmptyQuery}
+    assert {name.split("/", 1)[1] for name in asked} <= names
+
+
 def test_an_empty_query_finding_is_located_at_the_file_that_asked(graph, competency):
     kinds = {kind for kind, *_ in competency.findings}
     assert kinds == {VRIG.EmptyQuery}

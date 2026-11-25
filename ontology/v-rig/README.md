@@ -1216,6 +1216,8 @@ None. The module imports no other.
 
 ## 12. Release Notes
 
+- **Unreleased**.
+  - *No effect.* The competency queries ask eight more questions of a projected case: when an amendment's effect holds from and what states it, which things carry both the time they hold from and when they were recorded, which ledger profiles state when their accounts' books close, and which account definitions state a recurring period, a credit ceiling, the purposes they count and the kinds of credit that restore them.
 - **0.1.0**.
   - First version. Located nodes and locators, views, carriers (document, programme, event, record, layer, placement), facts in three states with readings, formulas and ordered lists, input bindings, body nodes with defined terms and prose-only nodes, references, runs, findings and the closed set of finding kinds. Structural shapes generated from section 6 and the fact-state constraint (section 7). The canonicalisation rules of section 9, versioned `v1`.
 

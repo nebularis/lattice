@@ -13,3 +13,18 @@ SELECT ?part ?whole WHERE { ?part a ldg:AccountDefinition ; ldg:partOf ?whole . 
 
 # question owners: Which account definitions say what kind of owner they admit?
 SELECT ?account ?kind WHERE { ?account a ldg:AccountDefinition ; ldg:admitsOwnerKind ?kind . }
+
+# question closing: Which ledger profiles state the recurrence at whose boundaries their accounts' books close?
+SELECT ?profile ?recurrence WHERE { ?profile a ldg:LedgerProfile ; ldg:closingRecurrence ?recurrence . }
+
+# question period: Which account definitions state a recurrence whose periods each have an account of their own?
+SELECT ?account ?recurrence WHERE { ?account a ldg:AccountDefinition ; ldg:periodRecurrence ?recurrence . }
+
+# question ceiling: Which account definitions state a ceiling above which a credit may not restore them?
+SELECT ?account ?ceiling WHERE { ?account a ldg:AccountDefinition ; ldg:creditCeiling ?ceiling . }
+
+# question purposes: Which account definitions state a purpose that, when a draw names it, also debits them outside their path?
+SELECT ?account ?purpose WHERE { ?account a ldg:AccountDefinition ; ldg:countsPurpose ?purpose . }
+
+# question restoring-kinds: Which account definitions state the kinds of credit that restore them?
+SELECT ?account ?kind WHERE { ?account a ldg:AccountDefinition ; ldg:restoredBy ?kind . }

@@ -10,3 +10,6 @@ SELECT ?instrument ?scope WHERE { ?instrument a ins:Instrument ; fnd:hasTemporal
 
 # question identities: Which versioned things name their persistent identity?
 SELECT ?thing ?identity WHERE { ?thing fnd:hasIdentity ?identity . }
+
+# question recorded-and-effective: Which things carry both the time from which they hold and evidence of when they were recorded?
+SELECT ?thing ?from ?recorded WHERE { ?thing fnd:hasTemporalScope ?scope ; fnd:hasEvidence ?evidence . ?scope fnd:validFrom ?from . ?evidence fnd:recordedAt ?recorded . }
