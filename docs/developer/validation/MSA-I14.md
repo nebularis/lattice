@@ -326,3 +326,17 @@ A unit lowered to SPARQL writes its receipt first, under the joint guard of ever
 **The one command.** `mise run check:models-multi-store -- "X*Final"`, which ends `models: 5 as expected, 0 failed, 0 skipped, 0 stopped`. Run on 2026-11-24 on macOS. The base tier is now 145 configurations.
 
 **Not covered.** `PartitionOrder` is left out of the two X8 configurations, since a writer that takes the stream from any position breaks it first, with the token too (`X7_AnyFencedAnswerOrderSets`). In stream order the stronger `AnswersAgree` already holds wherever no refused command applies later, so no stream-order configuration was added beyond I14-T75.
+
+## Addendum of 2026-11-25, two aggregates and a batch planned again
+
+**The invariant.** With a workspace and its part, a batch refused for a moved revision is planned again and its commands still take effect whole, once and in the partition's order. X8 gains the script `Sets`, two changes of the description, a save of the part and a third change, since its script `SetSave` never reached a planning again.
+
+| ID | Given, when, then | Level | Property | Pass criterion | Kind |
+|---|---|---|---|---|---|
+| I14-T80 `X8_OrderSetsNoToken` | Given a live workspace, the script `Sets`, three writers, two crashes, no token and one planning again, when a batch is refused for a moved revision, then every property holds | L2 | `WholeCommands`, `AppliedOnce`, `AnswersAgree`, `PartitionOrder` | "No error has been found" | positive |
+| I14-T81 `X8_OrderSetsNoTokenNoRetry` | as I14-T80 with no planning again, when the refused batch is answered at once, then a change is answered as not applied and applies later | L2 | `AnswersAgree` | the invariant is violated | negative |
+| I14-T82 `X8_OrderSetsTokenNoRetry` | as I14-T81 with the token | L2 | the four of I14-T80 | "No error has been found" | positive |
+
+**The one command.** `mise run check:models-multi-store -- "X8_OrderSets*"`, which ends `models: 3 as expected, 0 failed, 0 skipped, 0 stopped`. Run on 2026-11-25 on macOS under a heap of 576 MB, which the two runs with no error filled. The base tier is now 148 configurations.
+
+**The probes' finding.** I14-P1 and I14-P2 are recorded as TSD-76 in the `triple-stores` domain, written on 2026-11-25 and not yet committed there.

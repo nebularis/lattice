@@ -718,10 +718,10 @@ On Windows, in PowerShell, the variable is set with `$env:TLA2TOOLS_JAR = '<path
 - It runs TLC with `-deadlock`, since every model terminates, in a copy of this directory under `.build/formal/tlc/multi-store-protocols/<configuration>/`, where TLC writes its states, any trace, its temporary files and its GC log.
 - It prints, for each configuration, the verdict, the distinct and generated states, the depth, TLC's time, the wall time and the peak heap, then one line of totals. Where the distinct states differ from the manifest's, the line says so. A configuration fails only where TLC's verdict differs from the manifest's. A skip, a stop and a run that runs out of heap are reported and do not fail.
 
-A pass of the base tier prints the runner's tests, `27 passed`, then a line with the heap budget, then for each of the 145 configurations a `RUN` line and a `PASS` line. Seventy-six `PASS` lines read "no error" and sixty-nine name the property violated, each as the manifest expects. It ends with the line below and exits 0.
+A pass of the base tier prints the runner's tests, `27 passed`, then a line with the heap budget, then for each of the 148 configurations a `RUN` line and a `PASS` line. Seventy-eight `PASS` lines read "no error" and seventy name the property violated, each as the manifest expects. It ends with the line below and exits 0.
 
 ```text
-models: 145 as expected, 0 failed, 0 skipped, 0 stopped
+models: 148 as expected, 0 failed, 0 skipped, 0 stopped
 ```
 
 On a machine of 8 GB the budget is at most 2 GB, which every base configuration fits, the largest heap given being 576 MB. The wide tier on such a machine skips each configuration whose heap exceeds the budget, with both figures, and exits 0 unless a verdict differs.
@@ -950,6 +950,9 @@ The `X8_*` and `X9_*` configurations were run the same way, on macOS on 2026-11-
 | `X8_AnyWholeAnswer` | `AnswersAgree` violated | 8,739 | 4,220 | 10 | 00s | 0.8 s | 21 MB | The trace of `X7_AnyWholeAnswer`. The change is answered as not applied by a writer that took it alone, and applies in the batch of the writer that took the creation with it. |
 | `X8_AnyWholeAnswerFinal` | `NoRefusalAfterApplied` violated | 45,910 | 20,554 | 16 | 00s | 1.2 s | 32 MB | The trace of `X7_AnyWholeAnswerFinal`. `PartitionOrder` is left out of this configuration and the next, since a writer that takes the stream from any position breaks it first. |
 | `X8_AnyFencedAnswerFinal` | no error | 67,866 | 29,631 | 30 | 01s | 1.6 s | 40 MB | none |
+| `X8_OrderSetsNoToken` | no error | 4,709,596 | 1,001,592 | 39 | 10s | 11.2 s | 571 MB | none. Two changes, a save of the part and a third change, so a batch refused for a moved revision is planned again once |
+| `X8_OrderSetsNoTokenNoRetry` | `AnswersAgree` violated | 97,325 | 33,115 | 16 | 01s | 1.4 s | 46 MB | Two writers hold the first two changes. Writer 1 applies the first. Writer 2's request finds the first with a receipt and the second planned from a revision that has moved, and with no planning again answers the second as not applied. Writer 1 then applies it. |
+| `X8_OrderSetsTokenNoRetry` | no error | 1,608,651 | 423,701 | 39 | 03s | 3.9 s | 570 MB | none. The epoch refuses the older writer before it answers |
 | `X8_All` | no error | 1,419,409 | 402,080 | 37 | 03s | 3.9 s | 252 MB | none |
 | `X8_AllRead` | no error | 4,941,047 | 1,062,388 | 39 | 10s | 10.9 s | 253 MB | none |
 

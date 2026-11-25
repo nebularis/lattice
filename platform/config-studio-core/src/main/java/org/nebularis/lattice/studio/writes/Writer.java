@@ -940,8 +940,10 @@ public final class Writer {
          * deleted meanwhile stays deleted. Everything on the job node but what {@link #WORKER_PREDICATES} names must be as
          * the service wrote it, so an update cannot move a job to another workspace or point it at another graph. A job that
          * succeeded keeps its status and results: a second worker that took the job for lost may write {@code Failed} after the
-         * first has finished, and the update is dropped, with no receipt and no event. The writes of a workspace are applied in
-         * order, so the check cannot race.
+         * first has finished, and the update is dropped, with no receipt and no event. The check reads the job before the
+         * request, so it holds only while every writer starts from the offset the store holds and takes the stream in order.
+         * Two writers with applies in flight on one partition can still overwrite a job that succeeded, until the condition
+         * is in the update's guard (TD-181).
          */
         private Reply jobUpdate(int index, Command c) {
             String jobIri = Graphs.job(c.job());

@@ -199,4 +199,7 @@ configuration = [
   { name = "X7_AnyFencedAnswerFinal", module = "X7_WorkspaceBatch", config = "X7_AnyFencedAnswerFinal.cfg", tier = "base", expect = "no error", distinct = 13258, depth = 24, tlc_time = "01s", wall_s = 1.4, peak_heap_mb = 25 },
   { name = "X8_AnyWholeAnswerFinal", module = "X8_BatchParts", config = "X8_AnyWholeAnswerFinal.cfg", tier = "base", expect = "violated", property = "NoRefusalAfterApplied", kind = "action", distinct = 20554, depth = 16, tlc_time = "00s", wall_s = 1.2, peak_heap_mb = 32 },
   { name = "X8_AnyFencedAnswerFinal", module = "X8_BatchParts", config = "X8_AnyFencedAnswerFinal.cfg", tier = "base", expect = "no error", distinct = 29631, depth = 30, tlc_time = "01s", wall_s = 1.6, peak_heap_mb = 40 },
+  { name = "X8_OrderSetsNoToken", module = "X8_BatchParts", config = "X8_OrderSetsNoToken.cfg", tier = "base", expect = "no error", distinct = 1001592, depth = 39, tlc_time = "10s", wall_s = 11.2, peak_heap_mb = 571 },
+  { name = "X8_OrderSetsNoTokenNoRetry", module = "X8_BatchParts", config = "X8_OrderSetsNoTokenNoRetry.cfg", tier = "base", expect = "violated", property = "AnswersAgree", kind = "invariant", distinct = 33115, depth = 16, tlc_time = "01s", wall_s = 1.4, peak_heap_mb = 46 },
+  { name = "X8_OrderSetsTokenNoRetry", module = "X8_BatchParts", config = "X8_OrderSetsTokenNoRetry.cfg", tier = "base", expect = "no error", distinct = 423701, depth = 39, tlc_time = "03s", wall_s = 3.9, peak_heap_mb = 570 },
 ]

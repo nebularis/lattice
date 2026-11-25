@@ -38,7 +38,7 @@ CONSTANTS
     Guard,       \* "Whole", "WholeAnswer", "Fenced" or "FencedAnswer"
     Delivery,    \* "Stream" or "Any"
     Receipts,    \* "Cleared", "SpareBatch" or "Kept"
-    Script,      \* the commands on the stream, "CreateSaveDel", "CreateSetSaveDel" or "SetSave"
+    Script,      \* the commands on the stream, "CreateSaveDel", "CreateSetSaveDel", "SetSave" or "Sets"
     Resend,      \* BOOLEAN, the stream ends with a second delivery of command 1
     Live0,       \* BOOLEAN, the workspace is live at the start, else it has no row
     BatchMax,    \* the most commands in a batch
@@ -49,7 +49,7 @@ CONSTANTS
 ASSUME Guard \in {"Whole", "WholeAnswer", "Fenced", "FencedAnswer"}
 ASSUME Delivery \in {"Stream", "Any"}
 ASSUME Receipts \in {"Cleared", "SpareBatch", "Kept"}
-ASSUME Script \in {"CreateSaveDel", "CreateSetSaveDel", "SetSave"}
+ASSUME Script \in {"CreateSaveDel", "CreateSetSaveDel", "SetSave", "Sets"}
 ASSUME Resend \in BOOLEAN
 ASSUME Live0 \in BOOLEAN
 ASSUME BatchMax \in Nat \ {0}
@@ -62,6 +62,7 @@ ASSUME Retries \in Nat
 Commands == CASE Script = "CreateSaveDel" -> <<"Create", "SavePart", "DelWs">>
               [] Script = "CreateSetSaveDel" -> <<"Create", "Set", "SavePart", "DelWs">>
               [] Script = "SetSave" -> <<"Set", "SavePart", "Set">>
+              [] Script = "Sets" -> <<"Set", "Set", "SavePart", "Set">>
 K == Len(Commands)
 Cmd == 1..K                          \* the command ids
 P == IF Resend THEN K + 1 ELSE K     \* the stream's positions
