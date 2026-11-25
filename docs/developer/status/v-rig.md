@@ -5,7 +5,7 @@
 **Unit ID:** `v-rig`
 **Plan:** [v-rig.md](../plans/v-rig.md)
 **ADR:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md), accepted 2026-11-16
-**Status:** merged 2026-11-08. VR-1 to VR-7 built, ADR-A153 accepted and the module's four release tags created. The unit awaits the maintainer's review and a first run on a rig, which follows the ledger's LG-9.
+**Status:** building 2026-11-25. VR-1 to VR-7 built, ADR-A153 accepted and the module's four release tags created. The unit awaits the maintainer's review and a first run on a rig, which follows the ledger's LG-9.
 
 ## Board
 
@@ -18,10 +18,11 @@
 | VR-5 | P2 and P3, the generated theory and the test vectors | merged 2026-11-08, built 2026-11-08 |  |
 | VR-6 | P4, findings as RDF with stable ids and the report rendered from them | merged 2026-11-08, built 2026-11-08 |  |
 | VR-7 | the seam for a read case | merged 2026-11-08, built 2026-11-08 |  |
-| VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | briefed 2026-11-16 |  |
+| VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | building 2026-11-25, briefed 2026-11-16 |  |
 
 ## History
 
+- 2026-11-25: VR-8 marked building, at the maintainer's word that this session is the agent the brief names. LG-24 is built, so the rows of part B the brief deferred to it can now be asked, which waits on the maintainer as the brief says.
 - 2026-11-16: the dates sketch corrected before VR-8 starts. Its search of 2026-11-13 missed `ldg:periodRecurrence`, which states a recurring period with one account for each (PDD-15, decided (a) on 2026-10-28). The question `period` joins the askable ones, now five, and `aggregate-period` is narrowed to a single period that does not recur and to an amount that runs for the agreement's own period, neither of which the term states. The brief and the plan say five.
 - 2026-11-16: VR-8 added and briefed at the maintainer's request, for an agent the maintainer assigns, in the [brief](../notes/rig-agent-brief-2026-11-16.md). It takes step 1 of the dates sketch's order of work and adds questions for the ledger's decided design, on the mini-rig only. It needs neither a rig nor the ledger's LG-9, so it starts ahead of the first run.
 - 2026-11-16: the maintainer accepted ADR-A153. The module's four tags exist on the remote. The maintainer leans to a first run on a rig after the ledger's LG-9, since projection P2 copies the ledger theory of `spikes/isabelle-layers/`, an early model that the target kernel replaces, so P2's and P3's ledger results would describe a superseded model. P1 does not read that theory. Pointing P2 at the kernel's home once LG-9 moves it is work for a slice not yet named.
