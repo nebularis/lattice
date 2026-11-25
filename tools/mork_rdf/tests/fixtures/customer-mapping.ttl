@@ -26,7 +26,6 @@ mm:Map_Order a mork:DataMapping , mork:Datum ;
 # values the order must hold to join.
 mm:Map_Customer a mork:DataMapping , mork:Datum ;
     mork:mappingScheme mm:OrderCustomer ;
-    mork:broaderApplicative mm:Map_Order ;
     mork:mappingFor mm:Concept_Customer ;
     mork:identityRule mork:SourceNodeIdentity ;
     mork:inverseRBoxMatch tgt:placedFor ;
@@ -34,7 +33,7 @@ mm:Map_Customer a mork:DataMapping , mork:Datum ;
     mork:joinsOn mm:CustomerCode ;
     mork:joinCardinality mork:AtMostOneMatch ;
     mork:reportsUnmatched true ;
-    mork:lookupComparison mork:TermComparison .
+    mork:broaderApplicative mm:Map_Order .
 
 mm:CustomerGuard a sh:NodeShape ;
     sh:property [ sh:path src:customerCode ; sh:minCount 1 ] .

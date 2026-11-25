@@ -1,0 +1,102 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/surface/category-ancestors#> .
+
+# An expansion projection over a hierarchy. A category has a broader category,
+# and a consumer that asks for every ancestor of a category must follow the
+# relation as far as it goes. The projection restates each ancestor of a category
+# as a statement on the category, ex:hasAncestor, so the one relation becomes one
+# statement for each ancestor. Each ancestor is an existing node and nothing is
+# minted for it.
+#
+# The contract states what is expanded on its result target. The statement says
+# which evidence binding it expands from, here the broader relation, and that the
+# members are the nodes the relation reaches by one or more steps. The lowering
+# writes that as the SHACL property path ex:broader+.
+#
+# The evidence is candidate evidence, since a category at the top of the
+# hierarchy has no broader category and is no defect. It writes nothing and is
+# reported as information. The number of statements for a category depends on the
+# depth of the hierarchy, so the compilation records an engineering review.
+#
+# This contract lowers into a MORK mapping scheme (ADR-A18). It does not emit
+# SPARQL, SHACL, or anything else itself.
+
+# --- the carrier and the vocabulary it is read and written in -------------------
+
+ex:Category a owl:Class .
+
+ex:broader a owl:ObjectProperty ;
+    rdfs:domain ex:Category ;
+    rdfs:range ex:Category .
+
+ex:hasAncestor a owl:ObjectProperty ;
+    rdfs:domain ex:Category ;
+    rdfs:range ex:Category .
+
+# --- generation profile ------------------------------------------------------
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/2" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 .
+
+# --- the projection contract -------------------------------------------------
+
+ex:ca-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+# The category's broader relation, which the ancestors are reached by.
+ex:ca-broader a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:CandidateEvidenceRole ;
+    srf:bindsProperty ex:broader .
+
+# The result target binds the property each ancestor is written as, and states
+# what is expanded.
+ex:ca-ancestor a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:hasAncestor ;
+    srf:expandedAs ex:ca-expansion .
+
+# The expansion statement: what the broader relation reaches by one or more steps.
+ex:ca-expansion a srf:ExpansionStatement ;
+    srf:expandsFrom ex:ca-broader ;
+    srf:expansionSource srf:TransitiveClosure .
+
+ex:ca-backend-policy a srf:ProjectionBackendPolicy ;
+    srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
+    srf:deterministicOnly true ;
+    srf:llmCompletionPolicy srf:NoLLMCompletion .
+
+ex:category-ancestors-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:category-ancestors-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "category-ancestors" ;
+    srf:carrier ex:Category ;
+    srf:projectionKind srf:ExpansionProjection ;
+    srf:hasRoleBinding ex:ca-subject, ex:ca-broader, ex:ca-ancestor ;
+    srf:targetNamespace "https://example.org/lattice/surface/category-ancestors/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:profile-v1 ;
+    srf:backendPolicy ex:ca-backend-policy .
+
+# --- instances ---------------------------------------------------------------
+
+# A chain of three categories. The narrowest has two ancestors and the middle
+# one has one. The broadest has none, and is reported as information.
+ex:category-a a ex:Category .
+
+ex:category-b a ex:Category ;
+    ex:broader ex:category-a .
+
+ex:category-c a ex:Category ;
+    ex:broader ex:category-b .

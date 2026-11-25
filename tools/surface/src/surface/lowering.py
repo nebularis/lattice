@@ -67,7 +67,14 @@ the second carrier's node from the source as its own, states each equality of va
 of its pair, how many nodes a value may name, how many links an instance may have, and how an instance with no match is
 reported, and is glued to the instance by the link
 (``_lower_join``). It is guarded by every required-evidence binding of the contract's own carrier, and writes the link and
-nothing else. The expansion keeps the bare lowering until its own statement exists.
+nothing else.
+
+**An expansion lowers into a scheme too.** It states the members it restates on its result-target binding (``srf:P18`` to
+``srf:P20``), as a SHACL property path from the instance, or as one of two named sources the lowering writes as their paths,
+a list's members and a property's transitive closure. ``lower_projection`` writes a scheme whose root takes the source node
+as its identity, and beneath it one assertion of the result property whose reference is the path, so each member is
+restated as a statement on the instance and nothing is minted (``_lower_expansion``). It is guarded by every
+required-evidence binding of the contract's own carrier. Every projection kind now lowers into a scheme.
 
 **Dependency graph.** ``link_dependencies`` recognises exactly two declared
 cross-references within one lowering batch: a projection role binding's
@@ -89,7 +96,7 @@ from urllib.parse import quote
 from rdflib import Graph, Literal, URIRef
 
 from .expression import ARITHMETIC_KINDS, CHOICE, ROUNDING, TYPED_LITERAL
-from .model import ConstructedNode, Contract, Expression, JoinStatement, ProjectionContract, RoleBinding
+from .model import ConstructedNode, Contract, ExpansionStatement, Expression, JoinStatement, ProjectionContract, RoleBinding
 from .namespaces import MORK, RDF, SH, SRF
 from .naming import Minter, local_name
 
@@ -193,9 +200,14 @@ def _record_contract(graph: Graph, minter: Minter, contract: ProjectionContract,
 
 
 def lowers_to_scheme(contract: ProjectionContract) -> bool:
-    """Whether a projection lowers into a mapping scheme, which today is a derivation that states its expression, a
-    graph construction that states its node and a join that states its relation."""
-    return contract.expression is not None or contract.construction is not None or contract.join is not None
+    """Whether a projection lowers into a mapping scheme, which is every kind that states what it writes: a derivation that
+    states its expression, a graph construction its node, a join its relation and an expansion its members."""
+    return (
+        contract.expression is not None
+        or contract.construction is not None
+        or contract.join is not None
+        or contract.expansion is not None
+    )
 
 
 def lowered_head(contract: ProjectionContract) -> URIRef:
@@ -207,8 +219,8 @@ def lowered_head(contract: ProjectionContract) -> URIRef:
 def lower_projection(contract: ProjectionContract) -> Graph:
     """Write what a projection contract lowers into.
 
-    A derivation, a graph construction and a join lower into a mapping scheme (``_lower_derivation``, ``_lower_construction``,
-    ``_lower_join``). Every other kind lowers into one bare
+    A derivation, a graph construction, a join and an expansion lower into a mapping scheme (``_lower_derivation``,
+    ``_lower_construction``, ``_lower_join``, ``_lower_expansion``). A contract that states none of them lowers into one bare
     ``mork:DataMapping`` per contract. Every role binding and every backend-policy field becomes a parameter binding,
     so nothing the contract declared is lost in translation and a later compiler stage can read it back without
     re-parsing the Surface declaration graph.
@@ -225,6 +237,9 @@ def lower_projection(contract: ProjectionContract) -> Graph:
         return graph
     if contract.join is not None:
         _lower_join(graph, minter, contract, contract.join)
+        return graph
+    if contract.expansion is not None:
+        _lower_expansion(graph, minter, contract, contract.expansion)
         return graph
     if contract.expression is not None:
         _lower_derivation(graph, minter, contract)
@@ -477,6 +492,64 @@ def _lower_join(graph: Graph, minter: Minter, contract: ProjectionContract, join
         else:
             graph.add((condition, MORK.lookupComparison, MORK.CastComparison))
             graph.add((condition, MORK.lookupDatatype, pair.datatype))
+
+
+def _lower_expansion(graph: Graph, minter: Minter, contract: ProjectionContract, expansion: ExpansionStatement) -> None:
+    """An expansion as a mapping scheme (ADR-A18).
+
+    The root iterates the carrier class and is identified by the source node, as a derivation's is, so nothing is minted
+    for the instance and nothing for a member. Beneath it one assertion writes the property the result-target binding binds
+    on the instance, with the members' path as its reference, so it writes one statement for each node the path reaches. The
+    path is the contract's own SHACL path, or the one a named source gives (``srf:ListMembers``, ``srf:TransitiveClosure``),
+    written in full IRIs. The compiled query is the assertion's, so an instance with no members writes nothing.
+
+    The assertion is guarded by every required-evidence binding of the contract's own carrier, so an instance that lacks one
+    contributes nothing and is reported. An expansion on candidate evidence has no guard, and an instance with no members is
+    reported as an empty collection whichever way it came to have none.
+    """
+    scheme = minter.lowered_scheme()
+    concept = minter.lowered_carrier_concept()
+    root = minter.lowered_root()
+    assertion = minter.lowered_assertion()
+
+    graph.add((scheme, RDF.type, MORK.MappingScheme))
+    graph.add((concept, RDF.type, MORK.DataConcept))
+    graph.add((concept, MORK.representedAs, contract.carrier))
+
+    graph.add((root, RDF.type, MORK.DataMapping))
+    graph.add((root, RDF.type, MORK.Datum))
+    graph.add((root, MORK.mappingScheme, scheme))
+    graph.add((root, MORK.mappingFor, concept))
+    graph.add((root, MORK.identityRule, MORK.SourceNodeIdentity))
+    graph.add((root, MORK.compositeNarrowerMapping, assertion))
+    graph.add(
+        (
+            root,
+            MORK.mappingNote,
+            Literal(
+                f"Lowered from a srf:ProjectionContract "
+                f"(projection kind {local_name(str(contract.projection_kind))}) into a mapping scheme. "
+                f"Backend-specific compilation (ADR-A19, ADR-A23) has not yet run."
+            ),
+        )
+    )
+    _record_contract(graph, minter, contract, root)
+
+    graph.add((assertion, RDF.type, MORK.DataMapping))
+    graph.add((assertion, MORK.mappingScheme, scheme))
+    graph.add((assertion, MORK.exactRBoxMatch, expansion.link.binds_property))
+    graph.add((assertion, MORK.dataRef, Literal(expansion.path_text)))
+
+    required = _own_required(contract)
+    if required:
+        guard = minter.lowered_guard()
+        graph.add((assertion, MORK.appliesWhen, guard))
+        graph.add((guard, RDF.type, SH.NodeShape))
+        for index, path in enumerate(required):
+            constraint = minter.lowered_guard_property(index)
+            graph.add((guard, SH.property, constraint))
+            graph.add((constraint, SH.path, URIRef(path)))
+            graph.add((constraint, SH.minCount, Literal(1)))
 
 
 def _lower_key_identity(graph: Graph, minter: Minter, datum: URIRef, stem: str, node: ConstructedNode) -> None:

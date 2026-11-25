@@ -3,7 +3,7 @@
 # Sketch: a projection backend, from a Surface projection contract to queries a step runs
 
 **Unit:** `studio-visual-authoring` (SVA), slice SVA-S2d, raised on 2026-11-23 when the maintainer chose that projections are built in this unit, design first
-**Status:** sketch. SVA-Q24 to SVA-Q49 answered by the maintainer between 2026-11-23 and 2026-11-25. Derivations, graph constructions and joins are built, and expansions are being built
+**Status:** sketch. SVA-Q24 to SVA-Q49 answered by the maintainer between 2026-11-23 and 2026-11-25. Derivations, graph constructions, joins and expansions are built
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md), slices SVA-S2d and SVA-S2c
 **Builds on:** ADR-A16, ADR-A17, ADR-A18, ADR-A19, ADR-A20, ADR-A23 and ADR-A41 (all Accepted), ADR-A154 with its addendum of 2026-11-20, and `tools/mork_rdf`
 
@@ -232,24 +232,30 @@ The checks are queries of their own and are not shown. `InstanceExcluded` names 
 
 **Choices the answers did not settle.** Each pair compares its two values as a lookup compares them. The lowering states a term comparison on the pair's condition where its right binding states no datatype, and a cast of the order's value to the datatype where it states one, which the contract's `srf:bindsDatatype` gives, so the comparison is never SPARQL's value equality (TSD-64). A term or cast comparison shares one variable between the two patterns and a lexical one is a filter, which is the cost the lookup already documents. Each pair states its own, so a key may compare a string pair and an integer pair, and a pair may cast one side, as a string `"42"` the order holds against the integer `42` the customer holds. A left binding that states a datatype has a right one to cast it to. A guard on the datum is tested on the order and not on the customer, which is the one place a guard's focus is the parent's. It holds the order's required evidence and never the customer's beyond the key, so a required value of the second carrier other than the key goes unchecked, and nothing is built for it.
 
+A condition that states no comparison means a term comparison. The datum states neither `mork:lookupComparison` nor `mork:lookupDatatype`, a shape refuses a datum that does and the compiler refuses it by name (`JoinDatumComparison`), so nothing is inherited from the datum or from a lookup's default (decided by the maintainer on 2026-11-24, after the first build read the datum's as a fallback).
+
 What the example gives, over three orders where two name one customer and one names a code no customer holds, is two links, and the third order reported with its code. A code that two customers hold, under at most one, gives no link for that code and a report naming each customer. Under any number it gives a link for each. An order with two codes that each name one customer has two links, and under at most one link it has none and the report names both customers.
 
-### 2.4 Expansion, the case and where it stops (SVA-S2i, 2026-11-24)
+### 2.4 Expansion, the case and where it stops (SVA-S2i, 2026-11-25)
 
-An expansion projection restates one relation as several, which is the one thing Surface's README says of it (`srf:ExpansionProjection`, "mapping intent that restates one relation as several"). ADR-A41 asks it an engineering review, as it asks a derivation, and names no other rule. That sentence admits at least three readings, and the case cannot be written until one is chosen.
+An expansion projection restates one relation as several, which is the one thing Surface's README says of it (`srf:ExpansionProjection`, "mapping intent that restates one relation as several"). ADR-A41 asks it an engineering review, as it asks a derivation, and names no other rule. That sentence admitted three readings, and the maintainer chose two of them on 2026-11-24 and 2026-11-25 (SVA-Q42, SVA-Q43, SVA-Q49). An expansion restates a collection, an RDF list or a repeated property, as one statement for each member, or a hierarchy, a node reached by a transitive relation, as one statement for each ancestor. A SHACL property path from the instance selects the members in both, and a subgraph obtained by SHACL evaluation is not a source.
 
-What exists, read on 2026-11-24:
+What existed, read on 2026-11-24:
 
-| What the expansion needs | What the contract has |
+| What the expansion needs | What the contract had |
 |---|---|
-| what is expanded and what it is expanded into | nothing. The term has a one-line comment and no law, no shape and no example, and the lowering gives it the bare mapping, which ADR-A18's addendum of 2026-11-24 leaves for an expansion alone |
+| what is expanded and what it is expanded into | nothing. The term had a one-line comment and no law, no shape and no example, and the lowering gave it the bare mapping, which ADR-A18's addendum of 2026-11-24 left for an expansion alone |
 | the written relation or relations | the result-target binding's property, which a derivation reads as the value's property, a construction as the link and a join as the link |
-| how many statements one instance may give | nothing, and this is what the engineering review of ADR-A41 would weigh |
-| what an empty or missing source writes | nothing, as SVA-Q33 and SVA-Q38 settle for a missing required value and a missing match, and an empty collection has no answer there |
+| how many statements one instance may give | nothing, and this is what the engineering review of ADR-A41 weighs |
+| what an empty or missing source writes | nothing, as SVA-Q33 and SVA-Q38 settle for a missing required value and a missing match, and an empty collection had no answer there |
 
-What `mork_rdf` compiles today fits most readings of the output. A root datum over the carrier with a source-node identity, a guard (SVA-S2g) and the reports of an excluded instance (SVA-S2g) carry over. A path that reaches the members of an RDF list, `src:items/rdf:rest*/rdf:first`, is a reference a datum or an assertion can read (the `mork_rdf` README, section 4.2), so one reference gives one value for each member and the CONSTRUCT writes a set. What it does not do is state the members as the contract's meaning, report an empty source, or bound the number of statements one instance writes. The `MappingReview` warning of SVA-S2g and SVA-S2h is the mapping review's finding. The engineering review ADR-A41 asks of an expansion has no code, and SVA-Q46 asks what it records.
+What `mork_rdf` compiles fits the output with no mapping kind of its own. A root datum over the carrier with a source-node identity and an assertion beneath it that writes on that node is a case it already compiled, and a path that reaches the members of an RDF list, `src:items/rdf:rest*/rdf:first`, is a reference an assertion reads (the `mork_rdf` README, section 4.2), so one reference gives one value for each member and the CONSTRUCT writes a set. What it did not do was report an empty source, so it gains one check, and record the engineering review, so it gains one finding.
 
-**The example, under the leanings below.** A bundle holds a list of items, and each member of the list is restated as a `contains` link from the bundle, so the one relation, the list, becomes several, one statement for each member. No value spelled into an identifier is involved, since each item is an existing node and the expansion mints none.
+**The example, as answered.** A bundle holds a list of items, and each member of the list is restated as a `contains` link from the bundle, so the one relation, the list, becomes several, one statement for each member. No value spelled into an identifier is involved, since each item is an existing node and the expansion mints none. A second example, of a transitive closure, restates each category's ancestors, reached by a broader relation, as a `hasAncestor` statement on the category. The terms were placeholders in the first draft, and `exists` found none of them, so they stand as `srf:ExpansionStatement`, `srf:expandedAs`, `srf:expandsFrom`, `srf:expansionSource` with the individuals `srf:ListMembers` and `srf:TransitiveClosure`, and `srf:membersPath` for a path the contract states itself.
+
+**As built (SVA-S2i, 2026-11-25).** The examples are `ontology/surface/examples/bundle-items-expansion-projection.ttl` and `category-ancestors-expansion-projection.ttl`. A contract states the expansion on the result-target binding with `srf:expandedAs`. The statement is a `srf:ExpansionStatement` that names one `srf:expandsFrom` evidence binding of the contract's own carrier and states its members as exactly one of a named source and a `srf:membersPath`. A path is a SHACL property path of the forms `sh:path` takes, a property, a sequence, an alternative, an inverse, zero or more and one or more, and must read the property of the binding it expands from. Laws `srf:P18` to `srf:P20` and a shape for each part check it, and `srf:P1` says that an expansion reads its scope from the property it writes. The lowering writes each named source as its path and keeps the path a contract states.
+
+The contract, as in the first example:
 
 ```turtle
 ex:bd-items a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:items .
@@ -258,9 +264,42 @@ ex:bd-contains a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ;
 ex:bd-expansion a srf:ExpansionStatement ; srf:expandsFrom ex:bd-items ; srf:expansionSource srf:ListMembers .
 ```
 
-The names `srf:expandedAs`, `srf:ExpansionStatement`, `srf:expandsFrom` and `srf:expansionSource` are placeholders for the terms SVA-Q47 asks about, and no term was declared. `exists` finds none of them. The scheme would be a source-node root over `ex:Bundle`, guarded on `ex:items`, with one assertion of `ex:contains` whose reference is the path above, and the query one CONSTRUCT over `?f1 ex:items/rdf:rest*/rdf:first ?member`. It is not written here, because SVA-Q42 to SVA-Q46 change it. For example, a hierarchy reading needs a closure path and no list, and a node for each member needs the identity of SVA-Q32.
+The same members stated as a path, which lowers to the same scheme, and the closure of the second example:
 
-**Where the case stops.** SVA-S2i builds nothing until SVA-Q42 to SVA-Q48 are answered. The first alone decides the contract's vocabulary, the lowering's scheme and the check each law would need.
+```turtle
+ex:bd-expansion a srf:ExpansionStatement ; srf:expandsFrom ex:bd-items ;
+    srf:membersPath ( ex:items [ sh:zeroOrMorePath rdf:rest ] rdf:first ) .
+ex:ca-expansion a srf:ExpansionStatement ; srf:expandsFrom ex:ca-broader ; srf:expansionSource srf:TransitiveClosure .
+```
+
+Lowered, abridged, with each node's name shortened to its place in the scheme. The root is a source-node datum over the bundle, and one assertion beneath it writes the property on the bundle with the path as its reference. The guard names every required-evidence binding of the bundle, so a bundle without a list contributes nothing, and an expansion on candidate evidence has none. No datum is minted and nothing is typed:
+
+```turtle
+exec:scheme_root a mork:DataMapping, mork:Datum ; mork:mappingScheme exec:scheme ; mork:mappingFor exec:scheme_carrier ;
+    mork:identityRule mork:SourceNodeIdentity ; mork:compositeNarrowerMapping exec:scheme_assertion .
+exec:scheme_assertion a mork:DataMapping ; mork:mappingScheme exec:scheme ; mork:exactRBoxMatch ex:contains ;
+    mork:dataRef "<.../items>/<rdf:rest>*/<rdf:first>" ; mork:appliesWhen exec:scheme_guard .
+exec:scheme_guard a sh:NodeShape ; sh:property exec:scheme_guard_0 .
+exec:scheme_guard_0 sh:path ex:items ; sh:minCount 1 .
+```
+
+Compiled, the query that writes each member, with the prefixed names standing for the full IRIs `mork_rdf` writes. The closure compiles to one pattern, `?f1 ex:broader+ ?v2`, with no guard on candidate evidence:
+
+```sparql
+BASE <https://example.org/lattice/surface/bundle-items/out/>
+CONSTRUCT { ?f1 ex:contains ?v3 . }
+WHERE {
+  ?f1 rdf:type ex:Bundle .
+  FILTER (EXISTS { ?f1 ex:items ?any2 . })
+  ?f1 ex:items/(rdf:rest*)/rdf:first ?v3 .
+}
+```
+
+The checks are queries of their own and are not shown. `InstanceExcluded` names each bundle the guard excludes with the required value it lacks, as for a construction and a join. `CollectionEmpty` is new, emitted for an assertion that writes on the source node with a path, and names each bundle the guard admits whose path reaches no member, with the path, as information. The compiler also records `EngineeringReview`, a warning on the assertion that names the path and says the number of statements for one node depends on the data, which is where ADR-A41's engineering review of an expansion is recorded as a finding in this slice. `MappingReview` is the merge's finding and an expansion does not carry it. The studio's review requirement reads only the projection kind today and does not yet act on either finding (the same open point as for a keyed construction and a join).
+
+What the first example gives, over four bundles, is a statement for each of the three members of the first, one for the second, nothing for the third, whose list is empty and which is reported as information, and nothing for the fourth, which has no list and is excluded and reported. The second, over a chain of three categories, gives two statements for the narrowest and one for the middle category, and the broadest is reported as information.
+
+**Choices the answers did not settle.** An expansion on candidate evidence is not guarded, so a node that lacks the property reaches no member and is reported by `CollectionEmpty` as an empty collection does, where a join on candidate evidence says nothing for a node that lacks the values. The answers say only that a missing property is reported as an excluded instance is, which a required binding gives, and an empty collection as information. The compiler raises the review for every assertion that carries a path directly beneath a source-node datum, whatever the path, since it sees no contract, so a hand-written scheme of that shape takes it as well. A members path that is one property reaches the same statements as a plain assertion, and the contract states it as an expansion all the same. A closure over a cycle makes a node its own ancestor, which SPARQL's path semantics allow and nothing reports. A path that reads the result property of its own binding is not refused.
 
 ## 3. Questions
 

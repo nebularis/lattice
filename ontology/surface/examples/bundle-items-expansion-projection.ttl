@@ -1,0 +1,110 @@
+# SPDX-License-Identifier: MPL-2.0
+
+@prefix srf:  <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix fnd:  <https://www.nebularis.org/neuro-semantic/lattice/foundation#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:   <https://example.org/lattice/surface/bundle-items#> .
+
+# An expansion projection. A bundle holds a list of items, and the list is one
+# relation, so a consumer that asks which items a bundle contains must walk the
+# list. The projection restates each member of the list as a statement on the
+# bundle, ex:contains, so the one relation becomes one statement for each member.
+# Each item is an existing node and nothing is minted for it.
+#
+# The contract states what is expanded on its result target, which binds the
+# property each member is written as. The statement says which evidence binding
+# it expands from, here the bundle's items, and that the members are the members
+# of the RDF list that property holds. The lowering writes that as the SHACL
+# property path ex:items/rdf:rest*/rdf:first.
+#
+# A bundle that lacks ex:items, a required value, contributes nothing and is
+# reported. A bundle whose list is empty writes nothing and is reported as
+# information. The number of statements for a bundle depends on the data, so the
+# compilation records an engineering review.
+#
+# This contract lowers into a MORK mapping scheme (ADR-A18). It does not emit
+# SPARQL, SHACL, or anything else itself.
+
+# --- the carrier and the vocabulary it is read and written in -------------------
+
+ex:Bundle a owl:Class .
+ex:Item a owl:Class .
+
+ex:items a owl:ObjectProperty ;
+    rdfs:domain ex:Bundle .
+
+ex:contains a owl:ObjectProperty ;
+    rdfs:domain ex:Bundle ;
+    rdfs:range ex:Item .
+
+# --- generation profile ------------------------------------------------------
+
+ex:profile-v1 a srf:SurfaceProfile ;
+    fnd:hasIdentity ex:profile-identity ;
+    srf:generatorVersion "lattice-surface-compiler/0.1.0" ;
+    srf:canonicalisationVersion "srf-canon/2" ;
+    srf:entailmentRegime srf:NoEntailment ;
+    srf:namingNormalisation srf:SanitisedLocalName ;
+    srf:symbolMode srf:PunnedSymbols ;
+    srf:permittedStackDepth 0 .
+
+# --- the projection contract -------------------------------------------------
+
+ex:bd-subject a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:EvaluationSubjectRole .
+
+# The bundle's list of items, which the members are reached by.
+ex:bd-items a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:RequiredEvidenceRole ;
+    srf:bindsProperty ex:items .
+
+# The result target binds the property each member is written as, and states what
+# is expanded.
+ex:bd-contains a srf:ProjectionRoleBinding ;
+    srf:roleKind srf:ResultTargetRole ;
+    srf:bindsProperty ex:contains ;
+    srf:expandedAs ex:bd-expansion .
+
+# The expansion statement: the members of the list the items binding reads.
+ex:bd-expansion a srf:ExpansionStatement ;
+    srf:expandsFrom ex:bd-items ;
+    srf:expansionSource srf:ListMembers .
+
+ex:bd-backend-policy a srf:ProjectionBackendPolicy ;
+    srf:allowedBackend srf:SparqlBackend, srf:NativeIrBackend ;
+    srf:deterministicOnly true ;
+    srf:llmCompletionPolicy srf:NoLLMCompletion .
+
+ex:bundle-items-projection a srf:ProjectionContract ;
+    fnd:hasIdentity ex:bundle-items-identity ;
+    fnd:hasGovernanceState fnd:Active ;
+    srf:contractKey "bundle-items" ;
+    srf:carrier ex:Bundle ;
+    srf:projectionKind srf:ExpansionProjection ;
+    srf:hasRoleBinding ex:bd-subject, ex:bd-items, ex:bd-contains ;
+    srf:targetNamespace "https://example.org/lattice/surface/bundle-items/exec#"^^xsd:anyURI ;
+    srf:realisationMode srf:Materialised ;
+    srf:surfaceProfile ex:profile-v1 ;
+    srf:backendPolicy ex:bd-backend-policy .
+
+# --- instances ---------------------------------------------------------------
+
+ex:item-1 a ex:Item .
+ex:item-2 a ex:Item .
+ex:item-3 a ex:Item .
+
+# A bundle of three items gives three statements, and one of a single item gives
+# one. A bundle whose list is empty gives none and is reported as information.
+# A bundle with no list at all is excluded and reported.
+ex:bundle-1 a ex:Bundle ;
+    ex:items ( ex:item-1 ex:item-2 ex:item-3 ) .
+
+ex:bundle-2 a ex:Bundle ;
+    ex:items ( ex:item-3 ) .
+
+ex:bundle-3 a ex:Bundle ;
+    ex:items () .
+
+ex:bundle-4 a ex:Bundle .

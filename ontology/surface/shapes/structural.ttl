@@ -98,7 +98,8 @@ srf:ProjectionRoleBindingShape a sh:NodeShape ;
 	sh:property [ sh:path srf:bindsDatatype ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:derivedAs ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:constructedAs ; sh:maxCount 1 ] ;
-	sh:property [ sh:path srf:joinedAs ; sh:maxCount 1 ] .
+	sh:property [ sh:path srf:joinedAs ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:expandedAs ; sh:maxCount 1 ] .
 
 srf:ProjectionBackendPolicyShape a sh:NodeShape ;
 	sh:targetClass srf:ProjectionBackendPolicy ;
@@ -168,6 +169,15 @@ srf:JoinPairShape a sh:NodeShape ;
 		sh:message "A join pair names exactly one left role binding. Discharges srf:P15." ] ;
 	sh:property [ sh:path srf:joinRight ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
 		sh:message "A join pair names exactly one right role binding. Discharges srf:P15." ] .
+
+srf:ExpansionStatementShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:property [ sh:path srf:expandsFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "An expansion statement names exactly one binding to expand from. Discharges srf:P19." ] ;
+	sh:property [ sh:path srf:expansionSource ; sh:maxCount 1 ; sh:in ( srf:ListMembers srf:TransitiveClosure ) ;
+		sh:message "An expansion statement states at most one named source, srf:ListMembers or srf:TransitiveClosure. Discharges srf:P20." ] ;
+	sh:property [ sh:path srf:membersPath ; sh:maxCount 1 ;
+		sh:message "An expansion statement states at most one members path. Discharges srf:P20." ] .
 
 srf:WrittenValueShape a sh:NodeShape ;
 	sh:targetObjectsOf srf:writes ;

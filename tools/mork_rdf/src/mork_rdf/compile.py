@@ -465,12 +465,16 @@ class _Compiler:
 
     def _comparisons(self, spec: Spec) -> list:
         """How a join compares each condition's two values, the lookup's comparisons (§7.3), as (comparison, datatype) in the
-        order of the conditions. A condition's own comparison and datatype are read, then the datum's, then a lookup's default.
-        A cast with no datatype to cast to is read as lexical, as a lookup reads it."""
+        order of the conditions. A condition states its own comparison and datatype, and one that states no comparison is a term
+        comparison, never read from the datum or from a lookup's default. A cast with no datatype to cast to is read as lexical,
+        as a lookup reads it."""
         out = []
+        for datum_level in (MORK.lookupComparison, MORK.lookupDatatype):
+            if (spec.node, datum_level, None) in self.g:
+                raise _Refusal("JoinDatumComparison", f"a join datum states no {_term(datum_level)}, since each mork:JoinCondition states its own")
         for condition in spec.joins:
-            comparison = condition[4] or spec.comparison
-            datatype = condition[5] or spec.lookup_datatype
+            comparison = condition[4] or MORK.TermComparison
+            datatype = condition[5]
             if comparison == MORK.CastComparison and datatype is None:
                 self.findings.append(Finding("JoinLexical", str(spec.node), f"the condition on {condition[1]} is compared lexically, since no mork:lookupDatatype names the type to cast to", Severity.INFO))
                 comparison = MORK.LexicalComparison
@@ -739,6 +743,30 @@ class _Compiler:
                 self.findings.append(Finding("BroadMatch", str(spec.node), "asserts a broader individual than the source names", Severity.WARNING))
         triple = f"{value} {prop} {parent.target} ." if inverse else f"{parent.target} {prop} {value} ."
         self.construct(chain, [triple], patterns, node=spec)
+        if spec.data_ref is not None and not rows and len(chain) == 1 and parent.spec.kind is Kind.SOURCE_NODE:
+            self.expansion(chain, spec)
+
+    def expansion(self, chain: list[_Frame], spec: Spec) -> None:
+        """What an assertion that writes onto the source node itself needs beyond its own query (README §7.11). It restates the
+        relation its path reaches as one statement on the node for each node the path reaches, which is an expansion. The query
+        is the assertion's, so a node whose path reaches nothing writes nothing, and the checks say which. A guard on the
+        assertion excludes whole nodes, each named with the required value it lacks, and a node the guard admits whose path
+        reaches nothing is reported as information. The number of statements a node gives depends on the data, so the
+        compiler records an engineering review (ADR-A41) as a finding that names the source."""
+        parent = chain[-1]
+        source = paths.write(spec.data_ref)
+        if spec.guard is not None:
+            try:
+                missing = required_paths(self.g, spec.guard, _term)
+            except GuardError:
+                missing = []  # the guard's own refusal says why
+            for path in missing:
+                self.check(chain, "InstanceExcluded", f"({parent.focus} AS ?focus) ({_string(path)} AS ?value)",
+                           self.where(chain, [f"FILTER NOT EXISTS {{ {parent.focus} {path} ?any }}"]), node=spec)
+        self.check(chain, "CollectionEmpty", f"({parent.focus} AS ?focus) ({_string(source)} AS ?value)",
+                   self.where(chain, self.guard(spec, parent.focus) + [f"FILTER NOT EXISTS {{ {parent.focus} {source} ?any }}"]),
+                   node=spec, severity=Severity.INFO)
+        self.findings.append(Finding("EngineeringReview", str(spec.node), f"it restates the relation at {source} as a statement for each node the path reaches, so the number of statements for one node depends on the data and a reviewer should confirm that the target can take it", Severity.WARNING))
 
     def disagreement(self, chain: list[_Frame], spec: Spec, value: str, patterns: list) -> None:
         """For an assertion on a node whose identity is read from the source, a check naming each node that two instances

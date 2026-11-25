@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: CC-BY-SA-4.0
+# An expansion, as the lowering of a Surface projection writes it (README §7.11). Each bundle's list of items is restated as
+# one statement on the bundle for each member. The list is a required value, so a bundle without one is excluded and
+# reported, and a bundle whose list is empty writes nothing and is reported as information.
+
+@prefix mork: <http://www.nebularis.org/ontologies/Mork#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix src:  <http://example.org/src#> .
+@prefix tgt:  <http://example.org/tgt#> .
+@prefix mm:   <http://example.org/mapping#> .
+
+mm:BundleItems a mork:MappingScheme .
+
+src:Bundle a mork:Entity .
+mm:Concept_Bundle a mork:DataConcept ; mork:representedAs src:Bundle .
+
+mm:Map_Bundle a mork:DataMapping , mork:Datum ;
+    mork:mappingScheme mm:BundleItems ;
+    mork:mappingFor mm:Concept_Bundle ;
+    mork:identityRule mork:SourceNodeIdentity ;
+    mork:compositeNarrowerMapping mm:Map_Contains .
+
+# The members are the nodes the path reaches from the bundle, one statement for each.
+mm:Map_Contains a mork:DataMapping ;
+    mork:mappingScheme mm:BundleItems ;
+    mork:exactRBoxMatch tgt:contains ;
+    mork:dataRef "<http://example.org/src#items>/<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>*/<http://www.w3.org/1999/02/22-rdf-syntax-ns#first>" ;
+    mork:appliesWhen mm:BundleGuard .
+
+mm:BundleGuard a sh:NodeShape ;
+    sh:property [ sh:path src:items ; sh:minCount 1 ] .

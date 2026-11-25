@@ -494,7 +494,8 @@ srf:ProjectionRoleBinding a owl:Class ;
 		[ a owl:Restriction ; owl:onProperty srf:bindsDatatype ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:derivedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:constructedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:joinedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+		[ a owl:Restriction ; owl:onProperty srf:joinedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:expandedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class." ;
 	fnd:utility "Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline srf:PathStep applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well." .
 
@@ -768,3 +769,34 @@ srf:joinLinks a owl:ObjectProperty, owl:FunctionalProperty ;
 	rdfs:domain srf:JoinStatement ; rdfs:range srf:JoinCardinality ;
 	rdfs:comment "How many links one instance may have, whichever of its values found the instances. A statement that states none means AnyNumber." ;
 	fnd:utility "Leave it out where an instance may be linked to every instance its values find. AtMostOne says an instance whose values together find several writes no link and is reported with each." .
+
+srf:ExpansionStatement a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:expandsFrom ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:expansionSource ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:membersPath ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The relation an expansion projection restates as a statement for each member, the evidence binding it expands from and the SHACL property path from an instance to its members, which a named source may give." ;
+	fnd:utility "State it once, on the result-target role binding of an expansion with expandedAs, and name it by an IRI. Give it one expandsFrom and either one expansionSource, ListMembers or TransitiveClosure, or one membersPath. The property the binding binds is the one each member is written as, and where an authored vocabulary declares it the projection reaches the authored signature (srf:P1)." .
+
+srf:ExpansionSource a owl:Class ;
+	rdfs:comment "A named way an expansion reaches its members, which the lowering writes as a SHACL property path over the property of the binding the expansion expands from. Its individuals are in the vocabulary." .
+
+srf:expandedAs a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:ExpansionStatement ;
+	rdfs:comment "The members an expansion projection restates, stated on its result-target role binding, which binds the property each member is written as." ;
+	fnd:utility "Set it on the result-target role binding of an expansion, once, and nowhere else (srf:P18). The property that binding binds is the one each member is written as on the instance." .
+
+srf:expandsFrom a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ExpansionStatement ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "The candidate-evidence or required-evidence role binding of the same contract whose property the members are reached by." ;
+	fnd:utility "It binds a property and names no carrier but the contract's own (srf:P19). A required-evidence binding excludes and reports an instance that lacks the property." .
+
+srf:expansionSource a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ExpansionStatement ; rdfs:range srf:ExpansionSource ;
+	rdfs:comment "A named way the members are reached, over the property of the binding the statement expands from." ;
+	fnd:utility "State it or a membersPath, never both (srf:P20). ListMembers reaches the members of an RDF list the property holds, and TransitiveClosure the nodes the property reaches by one or more steps." .
+
+srf:membersPath a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ExpansionStatement ;
+	rdfs:comment "The SHACL property path from an instance of the contract's carrier to the nodes an expansion restates, in the forms sh:path takes." ;
+	fnd:utility "State it or an expansionSource, never both (srf:P20). Use a property, a sequence, an alternative, an inverse, zero or more or one or more. The path reads the property of the binding the statement expands from, and sh:zeroOrOnePath is not a form an expansion states." .

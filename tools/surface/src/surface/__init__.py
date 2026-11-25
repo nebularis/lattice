@@ -17,6 +17,7 @@ Module map, following the layout ``tools/mork/src/mork2rml.py`` establishes:
 ``expression``  the closed vocabulary of a derivation's expression and its typing rules
 ``lowering``    the lowering of a contract into a MORK mapping graph or scheme (ADR-A18)
 ``naming``      identifier minting and injectivity checking
+``shaclpath``   a SHACL property path, as an expansion states its members
 ``canonical``   canonicalisation and content hashing
 ``serialise``   deterministic Turtle output and file loading
 ``compile``     ``SurfaceCompiler`` — the algebra map from contract to symbols
@@ -39,6 +40,7 @@ __all__ = [
     "naming",
     "parity",
     "serialise",
+    "shaclpath",
 ]
 
 GENERATOR_VERSION = "lattice-surface-compiler/0.2.0"

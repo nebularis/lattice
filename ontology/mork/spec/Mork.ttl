@@ -327,7 +327,7 @@ mork:JoinCardinality a owl:Class ;
 
 mork:JoinCondition a owl:Class ;
     rdfs:label "join condition" ;
-    rdfs:comment "One equality a join datum states, the value at parentRef from its parent's node equal to the value at ownRef from the node it finds. A datum with a composite key states one for each part of the key. A condition states how its two values are compared with lookupComparison and lookupDatatype, and where it states none the datum's own are read." ;
+    rdfs:comment "One equality a join datum states, the value at parentRef from its parent's node equal to the value at ownRef from the node it finds. A datum with a composite key states one for each part of the key. A condition states how its two values are compared with lookupComparison and lookupDatatype, and one that states no comparison means a term comparison." ;
     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty mork:ownRef ; owl:someValuesFrom xsd:string ], [ a owl:Restriction ; owl:onProperty mork:parentRef ; owl:someValuesFrom xsd:string ] .
 
 mork:LessThan a mork:ComparisonOperator, owl:NamedIndividual ;

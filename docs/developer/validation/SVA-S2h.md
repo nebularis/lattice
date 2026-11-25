@@ -22,7 +22,7 @@ The maintainer answered seven points on joins. Each is built as follows.
 
 1. **Candidate evidence with no match.** An instance that holds the compared values and finds no match is reported by `JoinUnmatched` as information, through `mork:unmatchedSeverity mork:InfoFinding`. An instance that lacks the values stays silent. Required evidence is unchanged, a warning. The lowering always writes `mork:reportsUnmatched true`.
 2. **The guard's limit** is stated in the Surface README's join section, `mork_rdf`'s README section 7.10, the MORK README's join text and ADR-A18's join addendum. Nothing is built for it.
-3. **A datatype per pair.** The pair's datatype is its right binding's, the second carrier's, and the instance's value is cast to it. A left binding that states a datatype has a right one (`srf:P17`), so a pair may cast one side and the pairs of a statement may differ. Each `mork:JoinCondition` carries its `mork:lookupComparison` and `mork:lookupDatatype`, and a condition that states none reads the datum's, then a lookup's default.
+3. **A datatype per pair.** The pair's datatype is its right binding's, the second carrier's, and the instance's value is cast to it. A left binding that states a datatype has a right one (`srf:P17`), so a pair may cast one side and the pairs of a statement may differ. Each `mork:JoinCondition` carries its `mork:lookupComparison` and `mork:lookupDatatype`. The first build read the datum's for a condition that stated none, then a lookup's default, and the maintainer removed that fallback on 2026-11-24 (see the end of this pack).
 4. **The default.** `srf:joinMatches` may be omitted and then means `srf:AtMostOne`, stated in its definition. The shape no longer requires it, and MORK's still does for `mork:joinCardinality`. The lowering writes it always.
 5. **Two rules.** `srf:joinMatches` and `mork:joinCardinality` count per value. `srf:joinLinks` and `mork:linkCardinality` limit the links of an instance, any number where omitted, and the lowering writes it always. Under at most one link an instance whose values together find several writes no link and `JoinManyMatches` names each match.
 6. **The addenda** are updated and their status stays Proposed.
@@ -87,6 +87,10 @@ The maintainer answered seven points on joins. Each is built as follows.
 | `mise run check:published-decisions`, `check:owl-profile` | passed |
 
 `check:mork` rewrote `ontology/mork/mtp/data/pins.lock.json`, which was restored, so its pins wait for `mise run build:mtp` at the merge. No version was bumped, so Surface and MORK wait for `mise run version:bump` at the merge, with the earlier slices' changes.
+
+## The removed fallback, 2026-11-24
+
+The maintainer decided that a `mork:JoinCondition` no longer falls back to its datum's comparison. A condition states its comparison and datatype, or states none, which means a term comparison and is never inherited. `mork:lookupComparison` and `mork:lookupDatatype` are removed from a join datum in MORK's README, `mork_rdf`'s reader and compiler read none from the datum, and a MORK shape (`mork:JoinDatumShape`) refuses a join datum that states either. The compiler also refuses one by name, `JoinDatumComparison`. The lowering already wrote each comparison on the condition and none on the datum. The fixture `customer-mapping.ttl` and `test_join.py` relied on the fallback and now state each comparison on a condition, with one case that states none. `mork_rdf` has 263 tests, the 260 of the build above and three for the refusal. A condition that states a datatype and no comparison reads the datatype nowhere, since it is a term comparison. This is documented and not refused.
 
 ## Left open
 

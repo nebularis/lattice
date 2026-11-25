@@ -40,6 +40,7 @@ from .expression import (
     is_numeric,
     promoted,
 )
+from . import shaclpath
 from .namespaces import FND, QNT, RDF, SRF, VOC, XSD
 
 
@@ -317,6 +318,31 @@ class JoinStatement:
 
 
 @dataclass(frozen=True)
+class ExpansionStatement:
+    """The relation an expansion projection restates (``srf:ExpansionStatement``, laws ``srf:P18`` to ``srf:P20``).
+
+    ``evidence`` is the evidence binding the statement expands from, which binds the property the members are reached by.
+    ``path`` is the SHACL property path from an instance to its members, as the contract states it or as a named source
+    (``srf:ListMembers``, ``srf:TransitiveClosure``) gives it, and ``source`` is that named source, or None where the
+    contract states the path itself. ``required`` is whether the evidence is required, which makes an instance without it
+    excluded and reported, and not merely one with no members.
+    """
+
+    iri: URIRef
+    evidence: RoleBinding
+    path: "shaclpath.PathNode"
+    source: Optional[URIRef]
+    required: bool
+    #: The result-target role binding that states the expansion, which binds the property each member is written as.
+    link: RoleBinding
+
+    @property
+    def path_text(self) -> str:
+        """The path as a MORK mapping reads it."""
+        return shaclpath.text(self.path)
+
+
+@dataclass(frozen=True)
 class BackendPolicy:
     """The declared backend eligibility and LLM-participation policy a projection lowers under."""
 
@@ -353,6 +379,8 @@ class ProjectionContract:
     construction: Optional[ConstructedNode] = None
     #: The relation a join states on its result-target role binding (law ``srf:P14``).
     join: Optional[JoinStatement] = None
+    #: The relation an expansion states on its result-target role binding (law ``srf:P18``).
+    expansion: Optional[ExpansionStatement] = None
 
     def roles(self, kind: URIRef) -> List[RoleBinding]:
         return [b for b in self.role_bindings if str(b.role_kind) == str(kind)]
@@ -747,6 +775,7 @@ class SurfaceGraphAnalyser:
         expression = self._derived_expression(iri, projection_kind, bindings)
         construction = self._constructed_node(iri, projection_kind, bindings)
         join = self._join_statement(iri, projection_kind, bindings)
+        expansion = self._expansion_statement(iri, projection_kind, bindings)
 
         policy_iri = self._iri(iri, SRF.backendPolicy, required=False)
         budget = self._literal(iri, SRF.populationBudget, required=False)
@@ -764,6 +793,7 @@ class SurfaceGraphAnalyser:
             expression=expression,
             construction=construction,
             join=join,
+            expansion=expansion,
         )
 
     def _derived_expression(
@@ -962,6 +992,78 @@ class SurfaceGraphAnalyser:
             links=links,
             second_carrier=pairs[0].right.binds_carrier,
             required=str(pairs[0].left.role_kind) == str(SRF.RequiredEvidenceRole),
+            link=link,
+        )
+
+    def _expansion_statement(
+        self, iri: URIRef, projection_kind: URIRef, bindings: Sequence[RoleBinding]
+    ) -> Optional[ExpansionStatement]:
+        """The relation an expansion states on its result-target binding, and none for any other kind (laws srf:P18 to srf:P20)."""
+        stated = [(b, self.g.value(b.iri, SRF.expandedAs, any=False)) for b in bindings]
+        stated = [(b, e) for b, e in stated if e is not None]
+        is_expansion = str(projection_kind) == str(SRF.ExpansionProjection)
+        for binding, _ in stated:
+            if str(binding.role_kind) != str(SRF.ResultTargetRole) or not is_expansion:
+                raise ContractError(
+                    f"{iri} states an expansion on {binding.iri}, which is not the result-target role binding of an expansion (law srf:P18)"
+                )
+        if not is_expansion:
+            return None
+        if not stated:
+            raise ContractError(f"{iri} is an expansion and states no expansion statement on its result-target role binding (law srf:P18)")
+        link, statement = stated[0]
+        if link.binds_property is None:
+            raise ContractError(
+                f"{iri} states an expansion on {link.iri}, which binds no property to write each member as (law srf:P18)"
+            )
+        if not isinstance(statement, URIRef) or str(SRF.ExpansionStatement) not in self._types(statement):
+            raise ContractError(f"{iri} states an expansion that is not a srf:ExpansionStatement named by an IRI (law srf:P18)")
+
+        carrier = self._iri(iri, SRF.carrier)
+        by_iri = {str(b.iri): b for b in bindings}
+        sources = list(self.g.objects(statement, SRF.expandsFrom))
+        if len(sources) != 1:
+            raise ContractError(f"{statement} names {len(sources)} bindings it expands from and not exactly one (law srf:P19)")
+        evidence = by_iri.get(str(sources[0]))
+        if evidence is None or str(evidence.role_kind) not in EVIDENCE_ROLES or evidence.binds_property is None:
+            raise ContractError(
+                f"{statement} expands from {sources[0]}, which is not an evidence role binding of {iri} that binds a property (law srf:P19)"
+            )
+        if evidence.binds_carrier is not None and str(evidence.binds_carrier) != str(carrier):
+            raise ContractError(
+                f"{statement} expands from {evidence.iri}, which names {evidence.binds_carrier} and not the carrier of {iri} (law srf:P19)"
+            )
+
+        named = list(self.g.objects(statement, SRF.expansionSource))
+        stated_paths = list(self.g.objects(statement, SRF.membersPath))
+        if len(named) + len(stated_paths) != 1:
+            raise ContractError(
+                f"{statement} states {len(named)} named sources and {len(stated_paths)} paths, and must state exactly one of them (law srf:P20)"
+            )
+        source: Optional[URIRef] = None
+        if named:
+            source = named[0] if isinstance(named[0], URIRef) else None
+            if str(source) == str(SRF.ListMembers):
+                path = shaclpath.list_members(evidence.binds_property)
+            elif str(source) == str(SRF.TransitiveClosure):
+                path = shaclpath.transitive_closure(evidence.binds_property)
+            else:
+                raise ContractError(f"{statement} states a source that is not srf:ListMembers or srf:TransitiveClosure (law srf:P20)")
+        else:
+            try:
+                path = shaclpath.read_path(self.g, stated_paths[0])
+            except shaclpath.PathError as error:
+                raise ContractError(f"{statement} states a members path that is not one an expansion states: {error} (law srf:P20)") from error
+            if evidence.binds_property not in shaclpath.properties(path):
+                raise ContractError(
+                    f"{statement} states a members path that does not read {evidence.binds_property}, the property of {evidence.iri} it expands from (law srf:P20)"
+                )
+        return ExpansionStatement(
+            iri=statement,
+            evidence=evidence,
+            path=path,
+            source=source,
+            required=str(evidence.role_kind) == str(SRF.RequiredEvidenceRole),
             link=link,
         )
 

@@ -207,8 +207,10 @@ rec:o2 a src:Order ; src:customerCode 1 .
 
 
 def comparison(kind: str, datatype: str = "") -> Graph:
-    extra = f"    mork:lookupDatatype {datatype} ;\n" if datatype else ""
-    return variant("    mork:lookupComparison mork:TermComparison .", f"{extra}    mork:lookupComparison mork:{kind} .")
+    """The fixture with its one condition stating a comparison, and a datatype where one is given. A condition that states
+    none is a term comparison."""
+    extra = f" ;\n    mork:lookupDatatype {datatype}" if datatype else ""
+    return variant(CODE_OWN, f'mork:ownRef "<http://example.org/src#code>" ;\n    mork:lookupComparison mork:{kind}{extra} .')
 
 
 @pytest.mark.parametrize("engine", ENGINES)
@@ -379,22 +381,19 @@ TWO_CONDITIONS = ("    mork:joinsOn mm:CustomerCode ;", "    mork:joinsOn mm:Cus
 CODE_AS_TERM = (CODE_OWN, 'mork:ownRef "<http://example.org/src#code>" ; mork:lookupComparison mork:TermComparison .')
 
 
-def mixed(own_comparisons: bool) -> Graph:
-    """A key of a string pair and an integer pair. Each condition states its own comparison, as the lowering writes them
-    and the datum states none, or the datum casts to integer and the string pair states a term comparison beside it."""
-    if own_comparisons:
-        graph = variants(TWO_CONDITIONS, ("    mork:reportsUnmatched true ;\n    mork:lookupComparison mork:TermComparison .", "    mork:reportsUnmatched true ."), CODE_AS_TERM)
-        return graph.parse(data=NUMBER % "; mork:lookupComparison mork:CastComparison ; mork:lookupDatatype xsd:integer ", format="turtle")
-    graph = variants(TWO_CONDITIONS, ("    mork:lookupComparison mork:TermComparison .", "    mork:lookupComparison mork:CastComparison ;\n    mork:lookupDatatype xsd:integer ."), CODE_AS_TERM)
-    return graph.parse(data=NUMBER % "", format="turtle")
+def mixed(states_term: bool) -> Graph:
+    """A key of a string pair and an integer pair. Each condition states its own comparison, as the lowering writes them,
+    and the string pair either states a term comparison or states none, which means the same."""
+    graph = variants(TWO_CONDITIONS, CODE_AS_TERM) if states_term else variants(TWO_CONDITIONS)
+    return graph.parse(data=NUMBER % "; mork:lookupComparison mork:CastComparison ; mork:lookupDatatype xsd:integer ", format="turtle")
 
 
-@pytest.mark.parametrize("own", [True, False])
+@pytest.mark.parametrize("states_term", [True, False])
 @pytest.mark.parametrize("engine", ENGINES)
-def test_a_composite_key_compares_a_string_pair_and_an_integer_pair_each_as_it_says(engine, own):
-    """Both ways give one answer. The code is compared as the same term, and the order's number, a string where the customer
-    holds an integer, is cast to integer. An order whose number is already an integer joins too."""
-    mapping = compiled(mixed(own))
+def test_a_composite_key_compares_a_string_pair_and_an_integer_pair_each_as_it_says(engine, states_term):
+    """Both ways give one answer. The code is compared as the same term, stated or not, and the order's number, a string where
+    the customer holds an integer, is cast to integer. An order whose number is already an integer joins too."""
+    mapping = compiled(mixed(states_term))
     assert not [f for f in mapping.findings if f.code == "JoinLexical"]
     # Only the number is cast, in the query and in the count beneath it, and always to integer.
     assert re.findall(r"STRDT\(STR\(\?v\d+\), <([^>]+)>\)", mapping.constructs[0].text) == ["http://www.w3.org/2001/XMLSchema#integer"] * 2
@@ -405,7 +404,7 @@ def test_a_composite_key_compares_a_string_pair_and_an_integer_pair_each_as_it_s
 
 @pytest.mark.parametrize("engine", ENGINES)
 def test_a_pair_that_is_compared_as_a_term_does_not_join_a_string_and_an_integer(engine):
-    graph = variants(TWO_CONDITIONS, ("    mork:lookupComparison mork:TermComparison .", "    mork:lookupComparison mork:TermComparison ."), CODE_AS_TERM)
+    graph = variants(TWO_CONDITIONS, CODE_AS_TERM)
     graph.parse(data=NUMBER % "", format="turtle")
     written, _ = evaluate(engine, compiled(graph), Graph().parse(data=MIXED_SOURCE, format="turtle"))
     assert written == {(REC + "b", LINK, REC + "c2")}
@@ -433,6 +432,15 @@ def test_a_cast_with_no_datatype_is_read_as_lexical_for_its_condition_only_and_s
 ])
 def test_the_shapes_of_mork_refuse_a_breach_of_a_limit_a_severity_or_a_condition_comparison(old, new):
     assert "MorkShape" in {f.code for f in compiled(variant(old, new)).findings}
+
+
+@pytest.mark.parametrize("line", ["mork:lookupComparison mork:TermComparison", "mork:lookupComparison mork:CastComparison", "mork:lookupDatatype xsd:integer"])
+def test_a_join_datum_that_states_a_comparison_or_a_datatype_is_refused_by_the_shapes_and_by_the_compiler(line):
+    """A comparison belongs to a condition, and a datum's is never read as a fallback."""
+    mapping = compiled(variant("    mork:reportsUnmatched true ;", "    mork:reportsUnmatched true ;\n    " + line + " ;"))
+    assert "MorkShape" in {f.code for f in mapping.findings}
+    assert "JoinDatumComparison" in {f.code for f in mapping.errors}
+    assert not mapping.constructs
 
 
 def test_a_link_cardinality_or_a_severity_with_no_condition_is_refused_since_it_is_no_join():

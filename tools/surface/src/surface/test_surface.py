@@ -1269,9 +1269,16 @@ class ProjectionLoweringTests(unittest.TestCase):
         for note in low.objects(None, MORK.mappingNote):
             self.assertNotIn(str(contract.iri), str(note))
 
+    @staticmethod
+    def bare_contract():
+        """A projection of a kind none of the four statements covers, which is the one thing that still lowers to a bare mapping."""
+        text = LoweringDependencyTests.SCENARIO.replace("srf:projectionKind srf:ExpansionProjection", "srf:projectionKind ex:OtherKind")
+        text = text.replace(" ; srf:expandedAs ex:expansion .", " .")
+        (contract,) = read_projection_contracts(Graph().parse(data=text, format="turtle"))
+        return contract
+
     def test_a_bare_mapping_names_its_contract_by_producesMapping_too(self) -> None:
-        graph = Graph().parse(data=LoweringDependencyTests.SCENARIO, format="turtle")
-        (contract,) = read_projection_contracts(graph)
+        contract = self.bare_contract()
         low = lower_projection(contract)
         self.assertEqual(set(low.objects(contract.iri, SRF.producesMapping)), {lowered_head(contract)})
         for note in low.objects(None, MORK.mappingNote):
@@ -1313,9 +1320,9 @@ class ProjectionLoweringTests(unittest.TestCase):
             self.assertEqual(canonical.hash_graph(lower_projection(contract)), reference)
 
     def test_a_projection_of_another_kind_keeps_the_bare_mapping(self) -> None:
-        """An expansion states no statement yet, so it keeps the bare mapping a derivation, a construction and a join have left."""
-        graph = Graph().parse(data=LoweringDependencyTests.SCENARIO, format="turtle")
-        (contract,) = read_projection_contracts(graph)
+        """Every kind the layer declares states what it writes and lowers into a scheme, so only a kind it does not declare keeps
+        the bare mapping a derivation, a construction, a join and an expansion have left."""
+        contract = self.bare_contract()
         low = lower_projection(contract)
         mappings = set(low.subjects(RDF.type, MORK.DataMapping))
         self.assertEqual(mappings, {lowered_head(contract)})
@@ -1432,7 +1439,10 @@ class LoweringDependencyTests(unittest.TestCase):
             srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:derivedValue .
         ex:household-evidence a srf:ProjectionRoleBinding ;
             srf:roleKind srf:CandidateEvidenceRole ; srf:bindsCarrier ex:Household .
-        ex:target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole .
+        ex:target a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ;
+            srf:bindsProperty ex:contained ; srf:expandedAs ex:expansion .
+        ex:expansion a srf:ExpansionStatement ;
+            srf:expandsFrom ex:evidence ; srf:expansionSource srf:TransitiveClosure .
 
         ex:projection a srf:ProjectionContract ;
             srf:contractKey "eligibility-check" ; srf:carrier ex:Applicant ;
@@ -1448,6 +1458,11 @@ class LoweringDependencyTests(unittest.TestCase):
         self.graph = Graph().parse(data=self.SCENARIO, format="turtle")
 
     def _mapping_for(self, combined: Graph, contract_iri: str) -> URIRef:
+        """The node that stands for a contract: the one it names with ``srf:producesMapping`` where it lowers into a scheme,
+        and the bare mapping that is for it otherwise."""
+        produced = combined.value(URIRef(contract_iri), SRF.producesMapping)
+        if produced is not None:
+            return produced
         return next(
             mapping
             for mapping in combined.subjects(RDF.type, MORK.DataMapping)
@@ -2702,6 +2717,482 @@ WHERE {{
     def test_compiling_the_lowered_scheme_is_the_same_whatever_the_order_of_the_contract(self) -> None:
         reference = self.compile(join_graph()).text()
         triples = sorted(join_graph())
+        for seed in range(3):
+            shuffled = list(triples)
+            random.Random(seed).shuffle(shuffled)
+            graph = Graph()
+            for triple in shuffled:
+                graph.add(triple)
+            self.assertEqual(self.compile(graph).text(), reference)
+
+
+BUNDLE_ITEMS = "https://example.org/lattice/surface/bundle-items#"
+BUNDLE_EXAMPLE = "bundle-items-expansion-projection.ttl"
+CATEGORY_ANCESTORS = "https://example.org/lattice/surface/category-ancestors#"
+CATEGORY_EXAMPLE = "category-ancestors-expansion-projection.ttl"
+
+RDF_REST = "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest"
+RDF_FIRST = "http://www.w3.org/1999/02/22-rdf-syntax-ns#first"
+#: What the two named sources are, written as paths in full IRIs (SVA-Q49).
+LIST_PATH = f"<{BUNDLE_ITEMS}items>/<{RDF_REST}>*/<{RDF_FIRST}>"
+CLOSURE_PATH = f"<{CATEGORY_ANCESTORS}broader>+"
+
+
+def bundle_graph() -> Graph:
+    return load(BUNDLE_EXAMPLE)
+
+
+def category_graph() -> Graph:
+    return load(CATEGORY_EXAMPLE)
+
+
+def bundle_with(remove=(), add="") -> Graph:
+    """The bundle example with some triples removed, given as (subject, predicate, object) local names with the object a local
+    name, a term or None for any, and some Turtle added."""
+    graph = bundle_graph()
+    for subject, predicate, obj in remove:
+        target = obj if obj is None or isinstance(obj, (URIRef, Literal)) else URIRef(BUNDLE_ITEMS + obj)
+        graph.remove((URIRef(BUNDLE_ITEMS + subject), predicate, target))
+    if add:
+        graph.parse(
+            data=f"""
+            @prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix ex: <{BUNDLE_ITEMS}> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            {add}
+            """,
+            format="turtle",
+        )
+    return graph
+
+
+def members_path_graph(path: str) -> Graph:
+    """The bundle example stating its members as a SHACL path of its own, in Turtle, and no named source."""
+    return bundle_with(remove=[("bd-expansion", SRF.expansionSource, None)], add=f"ex:bd-expansion srf:membersPath {path} .")
+
+
+def list_path_graph() -> Graph:
+    """The path a list's members are, stated by the contract and not named."""
+    return members_path_graph("( ex:items [ sh:zeroOrMorePath rdf:rest ] rdf:first )")
+
+
+def candidate_bundle_graph() -> Graph:
+    """The bundle example on candidate evidence, so no instance is excluded."""
+    return bundle_with(remove=[("bd-items", SRF.roleKind, None)], add="ex:bd-items srf:roleKind srf:CandidateEvidenceRole .")
+
+
+def expansion_contract(graph: Graph, key: str = "bundle-items-projection", namespace: str = BUNDLE_ITEMS):
+    return read_projection_contracts(graph, only=namespace + key)[0]
+
+
+class ExpansionModelTests(unittest.TestCase):
+    """The analyser applies laws srf:P18 to srf:P20 as the shapes do."""
+
+    def test_the_bundle_example_parses_its_evidence_its_source_and_its_property(self) -> None:
+        contract = expansion_contract(bundle_graph())
+        expansion = contract.expansion
+        self.assertIsNone(contract.expression)
+        self.assertIsNone(contract.construction)
+        self.assertIsNone(contract.join)
+        self.assertEqual(expansion.iri, URIRef(BUNDLE_ITEMS + "bd-expansion"))
+        self.assertEqual(expansion.evidence.iri, URIRef(BUNDLE_ITEMS + "bd-items"))
+        self.assertEqual(expansion.source, SRF.ListMembers)
+        self.assertTrue(expansion.required)
+        self.assertEqual(expansion.link.binds_property, URIRef(BUNDLE_ITEMS + "contains"))
+        self.assertEqual(expansion.path_text, LIST_PATH)
+
+    def test_the_category_example_is_a_transitive_closure_on_candidate_evidence(self) -> None:
+        expansion = expansion_contract(category_graph(), "category-ancestors-projection", CATEGORY_ANCESTORS).expansion
+        self.assertEqual(expansion.source, SRF.TransitiveClosure)
+        self.assertFalse(expansion.required)
+        self.assertEqual(expansion.path_text, CLOSURE_PATH)
+
+    def test_a_path_the_contract_states_is_the_path_a_named_source_gives(self) -> None:
+        stated = expansion_contract(list_path_graph()).expansion
+        self.assertIsNone(stated.source)
+        self.assertEqual(stated.path_text, LIST_PATH)
+        closure = members_path_graph("[ sh:oneOrMorePath ex:items ]")
+        self.assertEqual(expansion_contract(closure).expansion.path_text, f"<{BUNDLE_ITEMS}items>+")
+
+    def test_each_form_of_a_path_is_read_and_written_in_full_iris(self) -> None:
+        items = f"<{BUNDLE_ITEMS}items>"
+        parts = f"<{BUNDLE_ITEMS}parts>"
+        cases = {
+            "ex:items": items,
+            "( ex:items ex:parts )": f"{items}/{parts}",
+            "[ sh:alternativePath ( ex:items ex:parts ) ]": f"{items}|{parts}",
+            "[ sh:inversePath ex:items ]": f"^{items}",
+            "[ sh:zeroOrMorePath ex:items ]": f"{items}*",
+            "[ sh:oneOrMorePath ex:items ]": f"{items}+",
+            "[ sh:zeroOrMorePath [ sh:inversePath ex:items ] ]": f"(^{items})*",
+            "( [ sh:alternativePath ( ex:items ex:parts ) ] ex:parts )": f"({items}|{parts})/{parts}",
+        }
+        for path, expected in cases.items():
+            with self.subTest(path=path):
+                self.assertEqual(expansion_contract(members_path_graph(path)).expansion.path_text, expected)
+
+    def test_the_statement_is_the_same_whatever_the_order_of_the_triples(self) -> None:
+        for build, key, namespace in ((bundle_graph, "bundle-items-projection", BUNDLE_ITEMS), (list_path_graph, "bundle-items-projection", BUNDLE_ITEMS), (category_graph, "category-ancestors-projection", CATEGORY_ANCESTORS)):
+            reference = expansion_contract(build(), key, namespace).expansion
+            triples = sorted(build())
+            for seed in range(5):
+                shuffled = list(triples)
+                random.Random(seed).shuffle(shuffled)
+                graph = Graph()
+                for triple in shuffled:
+                    graph.add(triple)
+                self.assertEqual(expansion_contract(graph, key, namespace).expansion, reference)
+
+    def refused(self, graph: Graph, law: str) -> None:
+        with self.assertRaisesRegex(ContractError, law):
+            read_projection_contracts(graph)
+
+    def test_an_expansion_with_no_statement_is_refused(self) -> None:
+        self.refused(bundle_with(remove=[("bd-contains", SRF.expandedAs, None)]), "srf:P18")
+
+    def test_a_statement_on_a_binding_that_is_not_a_result_target_is_refused(self) -> None:
+        self.refused(bundle_with(add="ex:bd-items srf:expandedAs ex:bd-expansion ."), "srf:P18")
+
+    def test_a_statement_on_a_projection_of_another_kind_is_refused(self) -> None:
+        self.refused(join_with(add="ex:oc-link srf:expandedAs ex:oc-join ."), "srf:P18")
+        self.refused(arr_with(add="ex:arr-target srf:expandedAs ex:arr-expression ."), "srf:P18")
+
+    def test_a_result_that_binds_no_property_is_refused(self) -> None:
+        self.refused(bundle_with(remove=[("bd-contains", SRF.bindsProperty, None)]), "srf:P18")
+
+    def test_a_statement_that_is_not_an_expansion_statement_is_refused(self) -> None:
+        self.refused(bundle_with(remove=[("bd-expansion", RDF.type, SRF.ExpansionStatement)]), "srf:P18")
+
+    def test_a_statement_that_expands_from_none_or_two_bindings_is_refused(self) -> None:
+        self.refused(bundle_with(remove=[("bd-expansion", SRF.expandsFrom, None)]), "srf:P19")
+        graph = bundle_with(add="ex:bd-other a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:parts . ex:bundle-items-projection srf:hasRoleBinding ex:bd-other . ex:bd-expansion srf:expandsFrom ex:bd-other .")
+        self.refused(graph, "srf:P19")
+
+    def test_a_binding_that_is_not_an_evidence_binding_that_binds_a_property_is_refused(self) -> None:
+        for source in ("bd-subject", "bd-contains", "unknown"):
+            with self.subTest(source=source):
+                self.refused(bundle_with(remove=[("bd-expansion", SRF.expandsFrom, None)], add=f"ex:bd-expansion srf:expandsFrom ex:{source} ."), "srf:P19")
+        self.refused(bundle_with(remove=[("bd-items", SRF.bindsProperty, None)]), "srf:P19")
+
+    def test_a_binding_that_names_a_second_carrier_is_refused(self) -> None:
+        self.refused(bundle_with(add="ex:bd-items srf:bindsCarrier ex:Item ."), "srf:P19")
+
+    def test_a_statement_that_names_both_a_source_and_a_path_or_neither_is_refused(self) -> None:
+        self.refused(bundle_with(add="ex:bd-expansion srf:membersPath ex:items ."), "srf:P20")
+        self.refused(bundle_with(remove=[("bd-expansion", SRF.expansionSource, None)]), "srf:P20")
+
+    def test_a_source_the_choice_does_not_name_is_refused(self) -> None:
+        self.refused(bundle_with(remove=[("bd-expansion", SRF.expansionSource, None)], add="ex:bd-expansion srf:expansionSource ex:Elsewhere ."), "srf:P20")
+
+    def test_a_path_of_a_form_an_expansion_does_not_state_is_refused(self) -> None:
+        for path in ("[ sh:zeroOrOnePath ex:items ]", "[ ]", "( ex:items )", "[ sh:alternativePath ( ex:items ) ]", "[ sh:inversePath ex:items ; sh:oneOrMorePath ex:items ]", '"items"'):
+            with self.subTest(path=path):
+                self.refused(members_path_graph(path), "srf:P20")
+
+    def test_a_path_that_does_not_read_the_evidence_property_is_refused(self) -> None:
+        self.refused(members_path_graph("ex:parts"), "srf:P20")
+        self.refused(members_path_graph("( ex:parts ex:contains )"), "srf:P20")
+
+
+class ExpansionShapeTests(unittest.TestCase):
+    """The shapes of ontology/surface refuse what the analyser refuses, with no code beside them."""
+
+    def violations(self, graph: Graph) -> set:
+        return {name.rsplit("#", 1)[-1] for name in shape_violations(graph, SURFACE_SHAPES)}
+
+    def test_the_examples_and_their_variants_conform(self) -> None:
+        graphs = [bundle_graph(), category_graph(), list_path_graph(), candidate_bundle_graph()]
+        graphs += [members_path_graph(path) for path in ("ex:items", "( ex:items ex:parts )", "[ sh:alternativePath ( ex:items ex:parts ) ]", "[ sh:inversePath ex:items ]", "[ sh:oneOrMorePath ex:items ]", "( [ sh:alternativePath ( ex:items ex:parts ) ] ex:parts )")]
+        for graph in graphs:
+            self.assertEqual(self.violations(graph), set())
+
+    def test_an_expansion_with_no_statement_is_refused(self) -> None:
+        graph = bundle_with(remove=[("bd-contains", SRF.expandedAs, None)])
+        self.assertIn("ExpansionRequiredShape", self.violations(graph))
+        self.assertIn("ExpansionStatementReachedShape", self.violations(graph))
+
+    def test_a_statement_on_a_binding_that_is_not_a_result_target_is_refused(self) -> None:
+        self.assertIn("ExpansionPlacementShape", self.violations(bundle_with(add="ex:bd-items srf:expandedAs ex:bd-expansion .")))
+        self.assertIn("ExpansionPlacementShape", self.violations(arr_with(add="ex:arr-target srf:expandedAs ex:arr-expression .")))
+
+    def test_a_statement_on_a_projection_of_another_kind_is_refused(self) -> None:
+        graph = bundle_with(remove=[("bundle-items-projection", SRF.projectionKind, None)], add="ex:bundle-items-projection srf:projectionKind srf:JoinProjection .")
+        self.assertIn("ExpansionPlacementShape", self.violations(graph))
+
+    def test_two_statements_on_one_binding_are_refused(self) -> None:
+        graph = bundle_with(add="ex:bd-contains srf:expandedAs ex:bd-other . ex:bd-other a srf:ExpansionStatement .")
+        self.assertIn("ProjectionRoleBindingShape", self.violations(graph))
+
+    def test_a_result_that_binds_no_property_is_refused(self) -> None:
+        self.assertIn("ExpansionLinkPropertyRequiredShape", self.violations(bundle_with(remove=[("bd-contains", SRF.bindsProperty, None)])))
+
+    def test_a_statement_that_is_no_expansion_statement_is_refused(self) -> None:
+        self.assertIn("ExpansionStatementTypedShape", self.violations(bundle_with(remove=[("bd-expansion", RDF.type, SRF.ExpansionStatement)])))
+
+    def test_a_statement_that_expands_from_none_or_two_bindings_is_refused(self) -> None:
+        self.assertIn("ExpansionStatementShape", self.violations(bundle_with(remove=[("bd-expansion", SRF.expandsFrom, None)])))
+        graph = bundle_with(add="ex:bd-other a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ; srf:bindsProperty ex:parts . ex:bundle-items-projection srf:hasRoleBinding ex:bd-other . ex:bd-expansion srf:expandsFrom ex:bd-other .")
+        self.assertIn("ExpansionStatementShape", self.violations(graph))
+
+    def test_a_binding_that_is_not_an_evidence_binding_that_binds_a_property_is_refused(self) -> None:
+        for source in ("bd-subject", "bd-contains", "unknown"):
+            with self.subTest(source=source):
+                graph = bundle_with(remove=[("bd-expansion", SRF.expandsFrom, None)], add=f"ex:bd-expansion srf:expandsFrom ex:{source} .")
+                self.assertIn("ExpansionEvidenceShape", self.violations(graph))
+        self.assertIn("ExpansionEvidenceShape", self.violations(bundle_with(remove=[("bd-items", SRF.bindsProperty, None)])))
+
+    def test_a_binding_that_names_a_second_carrier_is_refused(self) -> None:
+        self.assertIn("ExpansionEvidenceShape", self.violations(bundle_with(add="ex:bd-items srf:bindsCarrier ex:Item .")))
+
+    def test_a_statement_that_names_both_a_source_and_a_path_or_neither_is_refused(self) -> None:
+        self.assertIn("ExpansionMembersShape", self.violations(bundle_with(add="ex:bd-expansion srf:membersPath ex:items .")))
+        self.assertIn("ExpansionMembersShape", self.violations(bundle_with(remove=[("bd-expansion", SRF.expansionSource, None)])))
+
+    def test_a_source_the_choice_does_not_name_or_two_of_them_are_refused(self) -> None:
+        graph = bundle_with(remove=[("bd-expansion", SRF.expansionSource, None)], add="ex:bd-expansion srf:expansionSource ex:Elsewhere .")
+        self.assertIn("ExpansionStatementShape", self.violations(graph))
+        self.assertIn("ExpansionStatementShape", self.violations(bundle_with(add="ex:bd-expansion srf:expansionSource srf:TransitiveClosure .")))
+
+    def test_a_path_of_a_form_an_expansion_does_not_state_is_refused(self) -> None:
+        for path in ("[ sh:zeroOrOnePath ex:items ]", "[ ]", "( ex:items )", "[ sh:alternativePath ( ex:items ) ]", "[ sh:inversePath ex:items ; sh:oneOrMorePath ex:items ]", '"items"', "( ex:items [ sh:zeroOrOnePath ex:parts ] )"):
+            with self.subTest(path=path):
+                self.assertIn("ExpansionPathShape", self.violations(members_path_graph(path)))
+
+    def test_a_path_that_does_not_read_the_evidence_property_is_refused(self) -> None:
+        self.assertIn("ExpansionPathReadsEvidenceShape", self.violations(members_path_graph("ex:parts")))
+        self.assertNotIn("ExpansionPathReadsEvidenceShape", self.violations(members_path_graph("( ex:parts [ sh:inversePath ex:items ] )")))
+
+    def test_the_laws_the_shapes_discharge_are_in_the_vocabulary(self) -> None:
+        vocabulary = parse_files([str(ROOT / "ontology" / "surface" / "vocab" / "surface-vocab.ttl")])
+        for law in ("P18", "P19", "P20"):
+            self.assertIn((SRF[law], RDF.type, SRF.Law), vocabulary)
+        for source in ("ListMembers", "TransitiveClosure"):
+            self.assertIn((SRF[source], RDF.type, SRF.ExpansionSource), vocabulary)
+
+
+class ExpansionLoweringTests(unittest.TestCase):
+    """Surface-to-MORK lowering of an expansion (ADR-A18)."""
+
+    def lowered(self, graph: Graph, key: str = "bundle-items-projection", namespace: str = BUNDLE_ITEMS):
+        contract = expansion_contract(graph, key, namespace)
+        return contract, lower_projection(contract)
+
+    def parts(self, low: Graph, contract):
+        root = lowered_head(contract)
+        (assertion,) = low.objects(root, MORK.compositeNarrowerMapping)
+        return root, assertion
+
+    def test_the_expansion_lowers_into_a_scheme_a_source_node_root_and_one_assertion_whose_reference_is_the_path(self) -> None:
+        contract, low = self.lowered(bundle_graph())
+        (scheme,) = set(low.subjects(RDF.type, MORK.MappingScheme))
+        root, assertion = self.parts(low, contract)
+        self.assertEqual(low.value(root, MORK.identityRule), MORK.SourceNodeIdentity)
+        self.assertEqual(low.value(low.value(root, MORK.mappingFor), MORK.representedAs), URIRef(BUNDLE_ITEMS + "Bundle"))
+        self.assertEqual(low.value(assertion, MORK.mappingScheme), scheme)
+        self.assertEqual(low.value(assertion, MORK.exactRBoxMatch), URIRef(BUNDLE_ITEMS + "contains"))
+        self.assertEqual(low.value(assertion, MORK.dataRef), Literal(LIST_PATH))
+        self.assertEqual(set(low.objects(contract.iri, SRF.producesMapping)), {root})
+        # Nothing is minted or typed, so no datum sits beneath the root and the assertion names no class and no value expression.
+        self.assertIsNone(low.value(assertion, MORK.exactTBoxMatch))
+        self.assertIsNone(low.value(assertion, MORK.valueExpression))
+        self.assertEqual(set(low.objects(assertion, MORK.compositeNarrowerMapping)), set())
+
+    def test_the_closure_lowers_to_its_path_and_a_stated_path_lowers_to_the_same_scheme_as_the_source_it_equals(self) -> None:
+        contract, low = self.lowered(category_graph(), "category-ancestors-projection", CATEGORY_ANCESTORS)
+        self.assertEqual(low.value(self.parts(low, contract)[1], MORK.dataRef), Literal(CLOSURE_PATH))
+        named = self.lowered(bundle_graph())[1]
+        stated = self.lowered(list_path_graph())[1]
+        self.assertEqual(canonical.hash_graph(stated), canonical.hash_graph(named))
+
+    def test_the_guard_holds_the_required_evidence_of_the_instance(self) -> None:
+        contract, low = self.lowered(bundle_graph())
+        _, assertion = self.parts(low, contract)
+        guard = low.value(assertion, MORK.appliesWhen)
+        paths = {(low.value(c, SH.path), low.value(c, SH.minCount)) for c in low.objects(guard, SH.property)}
+        self.assertEqual(paths, {(URIRef(BUNDLE_ITEMS + "items"), Literal(1))})
+
+    def test_an_expansion_on_candidate_evidence_is_guarded_by_nothing(self) -> None:
+        for graph, key, namespace in ((candidate_bundle_graph(), "bundle-items-projection", BUNDLE_ITEMS), (category_graph(), "category-ancestors-projection", CATEGORY_ANCESTORS)):
+            contract, low = self.lowered(graph, key, namespace)
+            self.assertIsNone(low.value(self.parts(low, contract)[1], MORK.appliesWhen))
+
+    def test_the_lowered_scheme_is_one_the_mork_shapes_accept(self) -> None:
+        for graph, key, namespace in ((bundle_graph(), "bundle-items-projection", BUNDLE_ITEMS), (list_path_graph(), "bundle-items-projection", BUNDLE_ITEMS), (candidate_bundle_graph(), "bundle-items-projection", BUNDLE_ITEMS), (category_graph(), "category-ancestors-projection", CATEGORY_ANCESTORS)):
+            self.assertEqual(shape_violations(self.lowered(graph, key, namespace)[1], MORK_SHAPES), set())
+
+    def test_lowering_is_deterministic_and_the_same_with_the_triples_permuted(self) -> None:
+        for build, key, namespace in ((bundle_graph, "bundle-items-projection", BUNDLE_ITEMS), (list_path_graph, "bundle-items-projection", BUNDLE_ITEMS), (category_graph, "category-ancestors-projection", CATEGORY_ANCESTORS)):
+            reference = canonical.hash_graph(lower_projection(expansion_contract(build(), key, namespace)))
+            self.assertEqual(canonical.hash_graph(lower_projection(expansion_contract(build(), key, namespace))), reference)
+            triples = sorted(build())
+            for seed in range(5):
+                shuffled = list(triples)
+                random.Random(seed).shuffle(shuffled)
+                graph = Graph()
+                for triple in shuffled:
+                    graph.add(triple)
+                self.assertEqual(canonical.hash_graph(lower_projection(expansion_contract(graph, key, namespace))), reference)
+
+    def test_an_expansion_is_not_a_bare_mapping(self) -> None:
+        contract, low = self.lowered(bundle_graph())
+        self.assertEqual(set(low.subjects(MORK.mappingFor, contract.iri)), set())
+        self.assertTrue(set(low.subjects(RDF.type, MORK.MappingScheme)))
+
+    def test_the_other_kinds_are_not_affected(self) -> None:
+        (derivation,) = read_projection_contracts(arr_graph())
+        self.assertIsNone(derivation.expansion)
+        self.assertIsNone(join_contract(join_graph()).expansion)
+        self.assertIsNone(order_contract(order_graph()).expansion)
+
+
+@unittest.skipIf(mork_rdf is None, "mork_rdf is not installed")
+class ExpansionCompilationTests(unittest.TestCase):
+    """The lowered scheme compiles with `mork_rdf` and runs to the graph the contract states (SVA-S2i)."""
+
+    BASE = "https://example.org/lattice/surface/bundle-items/out/"
+    CATEGORY_BASE = "https://example.org/lattice/surface/category-ancestors/out/"
+    CONTAINS = BUNDLE_ITEMS + "contains"
+    HAS_ANCESTOR = CATEGORY_ANCESTORS + "hasAncestor"
+    #: The path as the compiler writes it back, which a check names.
+    WRITTEN_LIST = f"<{BUNDLE_ITEMS}items>/(<{RDF_REST}>*)/<{RDF_FIRST}>"
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        if str(ROOT / "tools") not in sys.path:
+            sys.path.insert(0, str(ROOT / "tools"))
+
+    def compile(self, graph: Graph, key: str = "bundle-items-projection", namespace: str = BUNDLE_ITEMS, base: str = BASE):
+        low = lower_projection(expansion_contract(graph, key, namespace))
+        (scheme,) = set(low.subjects(RDF.type, MORK.MappingScheme))
+        return mork_rdf.compile_scheme(low, scheme, base=base, at=datetime.fromisoformat("2026-11-25T00:00:00+00:00"))
+
+    def evaluate(self, engine: str, compiled, source: Graph):
+        if engine == "oxigraph":
+            out = mork_rdf.run(compiled, source)
+            return {(str(s), str(p), str(o)) for s, p, o in out.graph}, {(f.code, f.focus, f.value) for f in out.findings}
+        from rdflib import Dataset
+
+        dataset = Dataset()
+        for triple in source:
+            dataset.default_graph.add(triple)
+        written = {(str(s), str(p), str(o)) for q in compiled.constructs for s, p, o in dataset.query(q.text)}
+        reported = {(q.code, str(r["focus"]), None if r["value"] is None else str(r["value"])) for q in compiled.checks for r in dataset.query(q.text)}
+        return written, reported
+
+    def test_the_example_compiles_to_the_query_the_case_shows(self) -> None:
+        compiled = self.compile(bundle_graph())
+        (construct,) = compiled.constructs
+        type_ = str(RDF.type)
+        expected = f"""BASE <{self.BASE}>
+CONSTRUCT {{ ?f1 <{self.CONTAINS}> ?v3 . }}
+WHERE {{
+  ?f1 <{type_}> <{BUNDLE_ITEMS}Bundle> .
+  FILTER (((EXISTS {{ ?f1 <{BUNDLE_ITEMS}items> ?any2 . }})))
+  ?f1 <{BUNDLE_ITEMS}items>/(<{RDF_REST}>*)/<{RDF_FIRST}> ?v3 .
+}}"""
+        self.assertEqual(" ".join(construct.text.split()), " ".join(expected.split()))
+        self.assertEqual(sorted(q.code for q in compiled.checks), ["CollectionEmpty", "InstanceExcluded"])
+        self.assertEqual([(f.code, f.severity) for f in compiled.findings], [("EngineeringReview", mork_rdf.Severity.WARNING)])
+        self.assertFalse(compiled.errors)
+
+    def test_the_closure_compiles_to_one_path_and_an_empty_check_and_no_exclusion(self) -> None:
+        compiled = self.compile(category_graph(), "category-ancestors-projection", CATEGORY_ANCESTORS, self.CATEGORY_BASE)
+        (construct,) = compiled.constructs
+        expected = f"""BASE <{self.CATEGORY_BASE}>
+CONSTRUCT {{ ?f1 <{self.HAS_ANCESTOR}> ?v2 . }}
+WHERE {{
+  ?f1 <{RDF.type}> <{CATEGORY_ANCESTORS}Category> .
+  ?f1 <{CATEGORY_ANCESTORS}broader>+ ?v2 .
+}}"""
+        self.assertEqual(" ".join(construct.text.split()), " ".join(expected.split()))
+        self.assertEqual(sorted(q.code for q in compiled.checks), ["CollectionEmpty"])
+        self.assertEqual([f.code for f in compiled.findings], ["EngineeringReview"])
+
+    def test_the_bundle_example_runs_to_its_expected_graph_on_each_engine(self) -> None:
+        compiled = self.compile(bundle_graph())
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, bundle_graph())
+                self.assertEqual(
+                    written,
+                    {(BUNDLE_ITEMS + "bundle-1", self.CONTAINS, BUNDLE_ITEMS + item) for item in ("item-1", "item-2", "item-3")}
+                    | {(BUNDLE_ITEMS + "bundle-2", self.CONTAINS, BUNDLE_ITEMS + "item-3")},
+                )
+                # The fourth bundle has no list, so it is excluded with the property it lacks, and the third has an empty one.
+                self.assertEqual(
+                    reported,
+                    {
+                        ("InstanceExcluded", BUNDLE_ITEMS + "bundle-4", f"<{BUNDLE_ITEMS}items>"),
+                        ("CollectionEmpty", BUNDLE_ITEMS + "bundle-3", self.WRITTEN_LIST),
+                    },
+                )
+
+    def test_the_category_example_runs_to_a_statement_for_each_ancestor_on_each_engine(self) -> None:
+        compiled = self.compile(category_graph(), "category-ancestors-projection", CATEGORY_ANCESTORS, self.CATEGORY_BASE)
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, category_graph())
+                self.assertEqual(
+                    written,
+                    {
+                        (CATEGORY_ANCESTORS + "category-b", self.HAS_ANCESTOR, CATEGORY_ANCESTORS + "category-a"),
+                        (CATEGORY_ANCESTORS + "category-c", self.HAS_ANCESTOR, CATEGORY_ANCESTORS + "category-b"),
+                        (CATEGORY_ANCESTORS + "category-c", self.HAS_ANCESTOR, CATEGORY_ANCESTORS + "category-a"),
+                    },
+                )
+                self.assertEqual(reported, {("CollectionEmpty", CATEGORY_ANCESTORS + "category-a", f"<{CATEGORY_ANCESTORS}broader>+")})
+
+    def test_the_empty_collection_is_information_and_the_exclusion_a_warning(self) -> None:
+        compiled = self.compile(bundle_graph())
+        self.assertEqual({q.code: q.severity for q in compiled.checks}, {"InstanceExcluded": mork_rdf.Severity.WARNING, "CollectionEmpty": mork_rdf.Severity.INFO})
+        out = mork_rdf.run(compiled, bundle_graph())
+        self.assertEqual(
+            {(f.code, f.focus): f.severity for f in out.findings},
+            {("InstanceExcluded", BUNDLE_ITEMS + "bundle-4"): mork_rdf.Severity.WARNING, ("CollectionEmpty", BUNDLE_ITEMS + "bundle-3"): mork_rdf.Severity.INFO},
+        )
+
+    def test_on_candidate_evidence_a_bundle_with_no_list_is_reported_as_an_empty_collection_and_none_is_excluded(self) -> None:
+        compiled = self.compile(candidate_bundle_graph())
+        self.assertNotIn("InstanceExcluded", {q.code for q in compiled.checks})
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, reported = self.evaluate(engine, compiled, bundle_graph())
+                self.assertEqual(len(written), 4)
+                self.assertEqual(
+                    reported,
+                    {("CollectionEmpty", BUNDLE_ITEMS + "bundle-3", self.WRITTEN_LIST), ("CollectionEmpty", BUNDLE_ITEMS + "bundle-4", self.WRITTEN_LIST)},
+                )
+
+    def test_a_path_the_contract_states_compiles_to_the_query_the_source_it_equals_does(self) -> None:
+        self.assertEqual([q.text for q in self.compile(list_path_graph()).queries], [q.text for q in self.compile(bundle_graph()).queries])
+
+    def test_an_alternative_and_an_inverse_path_run_as_their_sparql_paths(self) -> None:
+        graph = members_path_graph("[ sh:alternativePath ( ex:items [ sh:inversePath ex:partOf ] ) ]")
+        source = Graph().parse(
+            data=f"""@prefix ex: <{BUNDLE_ITEMS}> .
+            ex:bundle-1 a ex:Bundle ; ex:items ex:item-1 .
+            ex:item-2 ex:partOf ex:bundle-1 .""",
+            format="turtle",
+        )
+        # The statement names ex:items, so the guard asks for it, and an alternative reads ex:items beside the inverse of ex:partOf.
+        compiled = self.compile(graph)
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                written, _ = self.evaluate(engine, compiled, source)
+                self.assertEqual(written, {(BUNDLE_ITEMS + "bundle-1", self.CONTAINS, BUNDLE_ITEMS + item) for item in ("item-1", "item-2")})
+
+    def test_an_expansion_carries_the_engineering_review_and_no_mapping_review(self) -> None:
+        for build in (bundle_graph, list_path_graph, candidate_bundle_graph):
+            with self.subTest(build=build.__name__):
+                findings = self.compile(build()).findings
+                self.assertEqual([(f.code, f.severity) for f in findings], [("EngineeringReview", mork_rdf.Severity.WARNING)])
+                self.assertIn(f"{BUNDLE_ITEMS}items", findings[0].message)
+
+    def test_compiling_the_lowered_scheme_is_the_same_whatever_the_order_of_the_contract(self) -> None:
+        reference = self.compile(bundle_graph()).text()
+        triples = sorted(bundle_graph())
         for seed in range(3):
             shuffled = list(triples)
             random.Random(seed).shuffle(shuffled)

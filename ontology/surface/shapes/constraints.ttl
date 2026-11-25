@@ -1008,3 +1008,156 @@ srf:JoinDatatypeShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+srf:ExpansionRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "An expansion projection states no expansion statement on its result-target role binding. Discharges srf:P18." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:ExpansionProjection .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:ResultTargetRole ;
+						srf:expandedAs ?statement .
+				}
+			}
+		"""
+	] .
+
+srf:ExpansionLinkPropertyRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "The result-target role binding of an expansion binds no property, so there is no property to write each member as. Discharges srf:P18." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:ExpansionProjection ;
+					srf:hasRoleBinding ?binding .
+				?binding srf:roleKind srf:ResultTargetRole .
+				FILTER NOT EXISTS { ?binding srf:bindsProperty ?property }
+			}
+		"""
+	] .
+
+srf:ExpansionPlacementShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states an expansion statement and is not the result-target role binding of an expansion. Discharges srf:P18." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:expandedAs ?statement .
+				FILTER NOT EXISTS {
+					$this srf:roleKind srf:ResultTargetRole .
+					?contract srf:hasRoleBinding $this ;
+						srf:projectionKind srf:ExpansionProjection .
+				}
+			}
+		"""
+	] .
+
+srf:ExpansionStatementTypedShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states as its expansion statement a term that is not a srf:ExpansionStatement named by an IRI. Discharges srf:P18." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:expandedAs ?value .
+				FILTER (!isIRI(?value) || NOT EXISTS { ?value a srf:ExpansionStatement })
+			}
+		"""
+	] .
+
+srf:ExpansionStatementReachedShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "An expansion statement is not stated by the result-target role binding of any expansion, so no contract expands by it. Discharges srf:P18." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:ExpansionStatement .
+				FILTER NOT EXISTS { ?binding srf:expandedAs $this }
+			}
+		"""
+	] .
+
+srf:ExpansionEvidenceShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "The binding an expansion statement expands from is not a candidate-evidence or required-evidence role binding of the stating contract that binds a property, or it names a carrier other than the contract's own. Discharges srf:P19." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				?link srf:expandedAs $this .
+				?contract srf:hasRoleBinding ?link ;
+					srf:carrier ?own .
+				$this srf:expandsFrom ?value .
+				OPTIONAL { ?value srf:bindsCarrier ?other }
+				FILTER (NOT EXISTS {
+					?contract srf:hasRoleBinding ?value .
+					?value srf:roleKind ?role ;
+						srf:bindsProperty ?property .
+					FILTER (?role IN (srf:RequiredEvidenceRole, srf:CandidateEvidenceRole))
+				} || (BOUND(?other) && ?other != ?own))
+			}
+		"""
+	] .
+
+srf:ExpansionMembersShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "An expansion statement states neither a named source nor a members path, or states both. It states exactly one of them. Discharges srf:P20." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:ExpansionStatement .
+				FILTER ((NOT EXISTS { $this srf:expansionSource ?source } && NOT EXISTS { $this srf:membersPath ?path })
+					|| (EXISTS { $this srf:expansionSource ?source } && EXISTS { $this srf:membersPath ?path }))
+			}
+		"""
+	] .
+
+srf:ExpansionPathShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "A members path is not a SHACL property path of the forms an expansion states, a property, a sequence or an alternative of at least two paths, an inverse, zero or more or one or more. Discharges srf:P20." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX sh: <http://www.w3.org/ns/shacl#>
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			SELECT $this ?value WHERE {
+				$this srf:membersPath ?root .
+				?root (sh:inversePath|sh:zeroOrMorePath|sh:oneOrMorePath|(sh:alternativePath/rdf:rest*/rdf:first)|(rdf:rest*/rdf:first))* ?value .
+				FILTER (isLiteral(?value) || (isBlank(?value) && (
+					EXISTS { ?value sh:zeroOrOnePath ?other }
+					|| (IF(EXISTS { ?value sh:inversePath ?other }, 1, 0)
+						+ IF(EXISTS { ?value sh:zeroOrMorePath ?other }, 1, 0)
+						+ IF(EXISTS { ?value sh:oneOrMorePath ?other }, 1, 0)
+						+ IF(EXISTS { ?value sh:alternativePath ?other }, 1, 0)
+						+ IF(EXISTS { ?value rdf:first ?other }, 1, 0)) != 1
+					|| (EXISTS { ?value sh:alternativePath ?other } && NOT EXISTS { ?value sh:alternativePath/rdf:rest/rdf:first ?other })
+					|| (EXISTS { ?value rdf:first ?other } && NOT EXISTS { ?value rdf:rest/rdf:first ?other }))))
+			}
+		"""
+	] .
+
+srf:ExpansionPathReadsEvidenceShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "A members path does not read the property of the binding the expansion statement expands from. Discharges srf:P20." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX sh: <http://www.w3.org/ns/shacl#>
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			SELECT $this ?value WHERE {
+				$this srf:membersPath ?root ;
+					srf:expandsFrom/srf:bindsProperty ?value .
+				FILTER NOT EXISTS {
+					?root (sh:inversePath|sh:zeroOrMorePath|sh:oneOrMorePath|(sh:alternativePath/rdf:rest*/rdf:first)|(rdf:rest*/rdf:first))* ?value .
+				}
+			}
+		"""
+	] .

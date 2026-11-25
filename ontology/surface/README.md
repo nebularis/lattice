@@ -236,6 +236,32 @@ ex:oc-join a srf:JoinStatement ;
 
 For a worked instance graph, see `ontology/surface/examples/order-customer-join-projection.ttl`. It lowers into a MORK mapping scheme (ADR-A18) whose root takes each order as its own identity, with beneath it the customer, taken from the source where its code equals the order's and glued to the order by the link, guarded by the order's required values.
 
+#### Expansion
+
+A join relates an instance to an instance already there. An expansion restates one relation of an instance as a statement for each node the relation reaches, so the one relation becomes several. Consider a bundle that holds a list of items, where each item is to be linked from the bundle directly. The list is one relation, and the contract states how its members are reached.
+
+```turtle-example
+@prefix srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#> .
+@prefix ex:  <https://example.org/lattice/surface/bundle-items#> .
+
+ex:bd-items a srf:ProjectionRoleBinding ; srf:roleKind srf:RequiredEvidenceRole ;
+	srf:bindsProperty ex:items .
+ex:bd-contains a srf:ProjectionRoleBinding ; srf:roleKind srf:ResultTargetRole ;
+	srf:bindsProperty ex:contains ; srf:expandedAs ex:bd-expansion .
+
+ex:bd-expansion a srf:ExpansionStatement ;
+	srf:expandsFrom ex:bd-items ;
+	srf:expansionSource srf:ListMembers .
+```
+
+- **The expansion is stated on the result-target binding.** The binding binds the property each member is written as, here `ex:contains`, and `srf:expandedAs` names the statement of what is expanded. A role keeps its one meaning, so `srf:P2` and `srf:P3` stand. Only an expansion states one (`srf:P18`).
+- **The statement names the evidence it expands from and how the members are reached.** `srf:expandsFrom` names an evidence binding of the contract's own carrier (`srf:P19`). The members are the nodes a SHACL property path reaches from the instance, which `srf:membersPath` states in SHACL's own path vocabulary, a property, a sequence, an alternative, an inverse, zero or more and one or more, and the path reads the property of the binding it expands from (`srf:P20`). Two named sources stand for the paths that are asked for most, and the lowering writes each as its path. `srf:ListMembers` is the members of an RDF list, `<property>/rdf:rest*/rdf:first`, and `srf:TransitiveClosure` is what a relation reaches by one or more steps, `<property>+`. A statement states a named source or a path, never both.
+- **Each member is a statement on the instance and nothing is minted.** The property the binding binds links the instance to each member where the member is a node, and carries it where it is a literal. A node for each member, which would combine an expansion with a graph construction, is not stated by this kind.
+- **A source that gives no member writes nothing, and the report says which kind of nothing.** On required evidence an instance without the property is excluded and reported, as in a graph construction. An instance that holds the property and reaches no member, such as an empty list or a category with no ancestor, writes nothing and is reported as information, since it is a source a reviewer may want to see. On candidate evidence nothing excludes an instance, and one that reaches no member is reported the same way.
+- **The contract states no bound.** The number of statements for one instance depends on the data, so a closure over a deep hierarchy writes a statement for each ancestor of each instance. The review ADR-A41 asks of an expansion is an engineering review, recorded as a finding of the compilation every time, that says the count depends on the data and names the source.
+
+For a worked instance graph of each named source, see `ontology/surface/examples/bundle-items-expansion-projection.ttl` and `ontology/surface/examples/category-ancestors-expansion-projection.ttl`. Each lowers into a MORK mapping scheme (ADR-A18) whose root takes each instance as its own identity, with beneath it one assertion of the property whose reference is the path, guarded by the instance's required values.
+
 #### Choosing an index form
 
 The permitted forms trade off differently, supporting choices about population size and retrieval patterns.
@@ -999,7 +1025,8 @@ srf:ProjectionRoleBinding a owl:Class ;
 		[ a owl:Restriction ; owl:onProperty srf:bindsDatatype ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:derivedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
 		[ a owl:Restriction ; owl:onProperty srf:constructedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
-		[ a owl:Restriction ; owl:onProperty srf:joinedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+		[ a owl:Restriction ; owl:onProperty srf:joinedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:expandedAs ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
 	rdfs:comment "One named role a projection contract binds to a property and, where the role's evidence comes from a different class than the contract's own carrier, to that class." ;
 	fnd:utility "Name the role a property or carrier plays explicitly, rather than leaving a compiler to infer it from position — the same discipline srf:PathStep applies to a read path, extended to intents with more than one moving part. Every projection names at least an evaluation-subject and a result-target role; a join or derivation names candidate-evidence or required-evidence roles as well." .
 ```
@@ -1337,6 +1364,51 @@ srf:joinLinks a owl:ObjectProperty, owl:FunctionalProperty ;
 	fnd:utility "Leave it out where an instance may be linked to every instance its values find. AtMostOne says an instance whose values together find several writes no link and is reported with each." .
 ```
 
+### 6.18 Projection expansions
+
+An expansion projection states the members it restates, in the way a join states its relation. The statement is on the result-target role binding with `srf:expandedAs`, so the binding keeps its one meaning, the place the projection's result is written, and the result of an expansion is a statement on the instance for each member, where a derivation's is a value, a construction's a node and a join's a link. The binding binds the property each member is written as. The statement names the evidence binding it expands from, and the members are the nodes a SHACL property path reaches from the instance, stated as a path or as one of two named sources.
+
+#### `srf:ExpansionStatement`
+
+**Definition.** The relation an expansion projection restates as a statement for each member, the evidence binding it expands from and the SHACL property path from an instance to its members, which a named source may give.
+
+**Utility.** State it once, on the result-target role binding of an expansion with `srf:expandedAs`, and name it by an IRI. Give it one `srf:expandsFrom` and either one `srf:expansionSource`, `srf:ListMembers` or `srf:TransitiveClosure`, or one `srf:membersPath`. The property the binding binds is the one each member is written as, and where an authored vocabulary declares it the projection reaches the authored signature (`srf:P1`).
+
+```turtle-spec
+srf:ExpansionStatement a owl:Class ;
+	rdfs:subClassOf
+		[ a owl:Restriction ; owl:onProperty srf:expandsFrom ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:expansionSource ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ,
+		[ a owl:Restriction ; owl:onProperty srf:membersPath ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] ;
+	rdfs:comment "The relation an expansion projection restates as a statement for each member, the evidence binding it expands from and the SHACL property path from an instance to its members, which a named source may give." ;
+	fnd:utility "State it once, on the result-target role binding of an expansion with expandedAs, and name it by an IRI. Give it one expandsFrom and either one expansionSource, ListMembers or TransitiveClosure, or one membersPath. The property the binding binds is the one each member is written as, and where an authored vocabulary declares it the projection reaches the authored signature (srf:P1)." .
+
+srf:ExpansionSource a owl:Class ;
+	rdfs:comment "A named way an expansion reaches its members, which the lowering writes as a SHACL property path over the property of the binding the expansion expands from. Its individuals are in the vocabulary." .
+```
+
+```turtle-spec
+srf:expandedAs a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ProjectionRoleBinding ; rdfs:range srf:ExpansionStatement ;
+	rdfs:comment "The members an expansion projection restates, stated on its result-target role binding, which binds the property each member is written as." ;
+	fnd:utility "Set it on the result-target role binding of an expansion, once, and nowhere else (srf:P18). The property that binding binds is the one each member is written as on the instance." .
+
+srf:expandsFrom a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ExpansionStatement ; rdfs:range srf:ProjectionRoleBinding ;
+	rdfs:comment "The candidate-evidence or required-evidence role binding of the same contract whose property the members are reached by." ;
+	fnd:utility "It binds a property and names no carrier but the contract's own (srf:P19). A required-evidence binding excludes and reports an instance that lacks the property." .
+
+srf:expansionSource a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ExpansionStatement ; rdfs:range srf:ExpansionSource ;
+	rdfs:comment "A named way the members are reached, over the property of the binding the statement expands from." ;
+	fnd:utility "State it or a membersPath, never both (srf:P20). ListMembers reaches the members of an RDF list the property holds, and TransitiveClosure the nodes the property reaches by one or more steps." .
+
+srf:membersPath a owl:ObjectProperty, owl:FunctionalProperty ;
+	rdfs:domain srf:ExpansionStatement ;
+	rdfs:comment "The SHACL property path from an instance of the contract's carrier to the nodes an expansion restates, in the forms sh:path takes." ;
+	fnd:utility "State it or an expansionSource, never both (srf:P20). Use a property, a sequence, an alternative, an inverse, zero or more or one or more. The path reads the property of the binding the statement expands from, and sh:zeroOrOnePath is not a form an expansion states." .
+```
+
 ## 7. Index forms
 
 | Form | Emits | Needs an enumerable population | Retrieval | Entailment required |
@@ -1453,6 +1525,9 @@ srf:ByKey a srf:IdentityChoice ; rdfs:comment "One constructed node for each val
 srf:AtMostOne a srf:JoinCardinality ; rdfs:comment "At most one instance. Where one value finds several, or under joinLinks one instance finds several in all, no link is written and each match is reported." .
 srf:AnyNumber a srf:JoinCardinality ; rdfs:comment "Any number of instances, and a link is written to each." .
 
+srf:ListMembers a srf:ExpansionSource ; rdfs:comment "The members of the RDF list the expansion's evidence property holds, reached by the path property/rdf:rest*/rdf:first. An empty list reaches none." .
+srf:TransitiveClosure a srf:ExpansionSource ; rdfs:comment "The nodes the expansion's evidence property reaches by one or more steps, reached by the path property+, so a category's ancestors by a broader relation." .
+
 srf:RmlBackend a srf:CompilerBackend ; rdfs:comment "RML/R2RML triples-map compilation." .
 srf:SparqlBackend a srf:CompilerBackend ; rdfs:comment "SPARQL query compilation." .
 srf:ShaclBackend a srf:CompilerBackend ; rdfs:comment "SHACL shape compilation." .
@@ -1491,7 +1566,7 @@ srf:R3 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Invali
 srf:R4 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Materialisation idempotence. Re-running a materialisation over an unchanged read set adds no triples." .
 srf:R5 a srf:Law ; srf:lawRegister srf:RuntimeConformance ; rdfs:comment "Closure well-foundedness. The declared closure basis is acyclic over the declared scope, established by traversing it." .
 
-srf:P1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Projection conservativity. A local-signature projection is conservative on the same terms as an index; a source-signature projection composes under the same rule as X1 and X6. A graph construction reads its scope from the class of its constructed node: a class minted in the contract's own target namespace is local-signature, and a class an authored vocabulary declares reaches the authored signature, so the nodes it writes and the values on them are indistinguishable from authored facts once emitted and the projection is source-signature. A join writes only the link its result-target role binding binds, and reads its scope from that property in the same way." .
+srf:P1 a srf:Law ; srf:lawRegister srf:SemanticLaw ; rdfs:comment "Projection conservativity. A local-signature projection is conservative on the same terms as an index; a source-signature projection composes under the same rule as X1 and X6. A graph construction reads its scope from the class of its constructed node: a class minted in the contract's own target namespace is local-signature, and a class an authored vocabulary declares reaches the authored signature, so the nodes it writes and the values on them are indistinguishable from authored facts once emitted and the projection is source-signature. A join writes only the link its result-target role binding binds, and reads its scope from that property in the same way. An expansion writes only the statements its result-target role binding binds, one for each member, and reads its scope from that property in the same way." .
 srf:P2 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "Every projection contract declares exactly one projection kind and at least an evaluation-subject and a result-target role binding; a join or derivation kind additionally declares at least one candidate-evidence or required-evidence role binding." .
 srf:P3 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A projection contract declares at most one evaluation-subject, result-target, and closure-basis role binding; candidate-evidence, required-evidence, and transform-dependency role bindings may repeat." .
 srf:P4 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A backend policy names no compiler backend in both allowedBackend and deniedBackend." .
@@ -1511,6 +1586,10 @@ srf:P14 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A join 
 srf:P15 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "A join statement states at least one pair, at most one match count and at most one link count, each AtMostOne or AnyNumber, and means AtMostOne and AnyNumber where it states none. Each pair names exactly one left and exactly one right role binding." .
 srf:P16 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "The left binding of a join pair is a candidate-evidence or required-evidence role binding of the same contract that binds a property and names no carrier but the contract's own. The right binding is one that binds a property and names a carrier other than the contract's own, and every right binding of one statement names the same carrier." .
 srf:P17 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "The two bindings of a join pair, and the bindings of every pair of one statement, are of one evidence role kind, so a join is on required evidence or on candidate evidence and never on a mix. Each pair states its own datatype, the right binding's, to which the left value is cast. A left binding that states a datatype has a right binding that states one, and the pairs of one statement need not agree." .
+
+srf:P18 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "An expansion projection states exactly one expansion statement, with expandedAs on its result-target role binding, and that binding binds the property each member is written as. No other projection kind states an expansion. Every expansion statement is reached from such a statement." .
+srf:P19 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "An expansion statement names exactly one binding to expand from, a candidate-evidence or required-evidence role binding of the same contract that binds a property and names no carrier but the contract's own." .
+srf:P20 a srf:Law ; srf:lawRegister srf:StaticConstraint ; rdfs:comment "An expansion statement states its members as exactly one of a named source, ListMembers or TransitiveClosure, and a members path. A members path is a SHACL property path of the forms a sh:path takes, a property, a sequence, an alternative, an inverse, zero or more or one or more and not zero or one, and it reads the property of the binding the statement expands from." .
 ```
 
 ## 10. Shapes
@@ -1616,7 +1695,8 @@ srf:ProjectionRoleBindingShape a sh:NodeShape ;
 	sh:property [ sh:path srf:bindsDatatype ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:derivedAs ; sh:maxCount 1 ] ;
 	sh:property [ sh:path srf:constructedAs ; sh:maxCount 1 ] ;
-	sh:property [ sh:path srf:joinedAs ; sh:maxCount 1 ] .
+	sh:property [ sh:path srf:joinedAs ; sh:maxCount 1 ] ;
+	sh:property [ sh:path srf:expandedAs ; sh:maxCount 1 ] .
 
 srf:ProjectionBackendPolicyShape a sh:NodeShape ;
 	sh:targetClass srf:ProjectionBackendPolicy ;
@@ -1686,6 +1766,15 @@ srf:JoinPairShape a sh:NodeShape ;
 		sh:message "A join pair names exactly one left role binding. Discharges srf:P15." ] ;
 	sh:property [ sh:path srf:joinRight ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
 		sh:message "A join pair names exactly one right role binding. Discharges srf:P15." ] .
+
+srf:ExpansionStatementShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:property [ sh:path srf:expandsFrom ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ;
+		sh:message "An expansion statement names exactly one binding to expand from. Discharges srf:P19." ] ;
+	sh:property [ sh:path srf:expansionSource ; sh:maxCount 1 ; sh:in ( srf:ListMembers srf:TransitiveClosure ) ;
+		sh:message "An expansion statement states at most one named source, srf:ListMembers or srf:TransitiveClosure. Discharges srf:P20." ] ;
+	sh:property [ sh:path srf:membersPath ; sh:maxCount 1 ;
+		sh:message "An expansion statement states at most one members path. Discharges srf:P20." ] .
 
 srf:WrittenValueShape a sh:NodeShape ;
 	sh:targetObjectsOf srf:writes ;
@@ -2704,6 +2793,159 @@ srf:JoinDatatypeShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+srf:ExpansionRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "An expansion projection states no expansion statement on its result-target role binding. Discharges srf:P18." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:ExpansionProjection .
+				FILTER NOT EXISTS {
+					$this srf:hasRoleBinding ?binding .
+					?binding srf:roleKind srf:ResultTargetRole ;
+						srf:expandedAs ?statement .
+				}
+			}
+		"""
+	] .
+
+srf:ExpansionLinkPropertyRequiredShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionContract ;
+	sh:sparql [
+		sh:message "The result-target role binding of an expansion binds no property, so there is no property to write each member as. Discharges srf:P18." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:projectionKind srf:ExpansionProjection ;
+					srf:hasRoleBinding ?binding .
+				?binding srf:roleKind srf:ResultTargetRole .
+				FILTER NOT EXISTS { ?binding srf:bindsProperty ?property }
+			}
+		"""
+	] .
+
+srf:ExpansionPlacementShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states an expansion statement and is not the result-target role binding of an expansion. Discharges srf:P18." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this srf:expandedAs ?statement .
+				FILTER NOT EXISTS {
+					$this srf:roleKind srf:ResultTargetRole .
+					?contract srf:hasRoleBinding $this ;
+						srf:projectionKind srf:ExpansionProjection .
+				}
+			}
+		"""
+	] .
+
+srf:ExpansionStatementTypedShape a sh:NodeShape ;
+	sh:targetClass srf:ProjectionRoleBinding ;
+	sh:sparql [
+		sh:message "A role binding states as its expansion statement a term that is not a srf:ExpansionStatement named by an IRI. Discharges srf:P18." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				$this srf:expandedAs ?value .
+				FILTER (!isIRI(?value) || NOT EXISTS { ?value a srf:ExpansionStatement })
+			}
+		"""
+	] .
+
+srf:ExpansionStatementReachedShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "An expansion statement is not stated by the result-target role binding of any expansion, so no contract expands by it. Discharges srf:P18." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:ExpansionStatement .
+				FILTER NOT EXISTS { ?binding srf:expandedAs $this }
+			}
+		"""
+	] .
+
+srf:ExpansionEvidenceShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "The binding an expansion statement expands from is not a candidate-evidence or required-evidence role binding of the stating contract that binds a property, or it names a carrier other than the contract's own. Discharges srf:P19." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this ?value WHERE {
+				?link srf:expandedAs $this .
+				?contract srf:hasRoleBinding ?link ;
+					srf:carrier ?own .
+				$this srf:expandsFrom ?value .
+				OPTIONAL { ?value srf:bindsCarrier ?other }
+				FILTER (NOT EXISTS {
+					?contract srf:hasRoleBinding ?value .
+					?value srf:roleKind ?role ;
+						srf:bindsProperty ?property .
+					FILTER (?role IN (srf:RequiredEvidenceRole, srf:CandidateEvidenceRole))
+				} || (BOUND(?other) && ?other != ?own))
+			}
+		"""
+	] .
+
+srf:ExpansionMembersShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "An expansion statement states neither a named source nor a members path, or states both. It states exactly one of them. Discharges srf:P20." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			SELECT $this WHERE {
+				$this a srf:ExpansionStatement .
+				FILTER ((NOT EXISTS { $this srf:expansionSource ?source } && NOT EXISTS { $this srf:membersPath ?path })
+					|| (EXISTS { $this srf:expansionSource ?source } && EXISTS { $this srf:membersPath ?path }))
+			}
+		"""
+	] .
+
+srf:ExpansionPathShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "A members path is not a SHACL property path of the forms an expansion states, a property, a sequence or an alternative of at least two paths, an inverse, zero or more or one or more. Discharges srf:P20." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX sh: <http://www.w3.org/ns/shacl#>
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			SELECT $this ?value WHERE {
+				$this srf:membersPath ?root .
+				?root (sh:inversePath|sh:zeroOrMorePath|sh:oneOrMorePath|(sh:alternativePath/rdf:rest*/rdf:first)|(rdf:rest*/rdf:first))* ?value .
+				FILTER (isLiteral(?value) || (isBlank(?value) && (
+					EXISTS { ?value sh:zeroOrOnePath ?other }
+					|| (IF(EXISTS { ?value sh:inversePath ?other }, 1, 0)
+						+ IF(EXISTS { ?value sh:zeroOrMorePath ?other }, 1, 0)
+						+ IF(EXISTS { ?value sh:oneOrMorePath ?other }, 1, 0)
+						+ IF(EXISTS { ?value sh:alternativePath ?other }, 1, 0)
+						+ IF(EXISTS { ?value rdf:first ?other }, 1, 0)) != 1
+					|| (EXISTS { ?value sh:alternativePath ?other } && NOT EXISTS { ?value sh:alternativePath/rdf:rest/rdf:first ?other })
+					|| (EXISTS { ?value rdf:first ?other } && NOT EXISTS { ?value rdf:rest/rdf:first ?other }))))
+			}
+		"""
+	] .
+
+srf:ExpansionPathReadsEvidenceShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "A members path does not read the property of the binding the expansion statement expands from. Discharges srf:P20." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX sh: <http://www.w3.org/ns/shacl#>
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			SELECT $this ?value WHERE {
+				$this srf:membersPath ?root ;
+					srf:expandsFrom/srf:bindsProperty ?value .
+				FILTER NOT EXISTS {
+					?root (sh:inversePath|sh:zeroOrMorePath|sh:oneOrMorePath|(sh:alternativePath/rdf:rest*/rdf:first)|(rdf:rest*/rdf:first))* ?value .
+				}
+			}
+		"""
+	] .
 ```
 
 ## 11. Canonicalisation, identity, and invalidation
@@ -2744,6 +2986,8 @@ Non-domain examples are authored in:
 - `ontology/surface/examples/saas-subscription-arr-projection.ttl` — a derivation projection stating the product of two required-evidence bindings as its expression, lowered under a deterministic-only backend policy
 - `ontology/surface/examples/order-supplier-construction-projection.ttl` — a graph construction projection stating a supplier for each supplier code, with its class, its key, and the code and name it writes, lowered under a deterministic-only backend policy
 - `ontology/surface/examples/order-customer-join-projection.ttl` — a join projection linking each order to the customer whose code it names, stating the equality of the two codes and that a code names at most one customer, lowered under a deterministic-only backend policy
+- `ontology/surface/examples/bundle-items-expansion-projection.ttl` — an expansion projection restating the members of each bundle's list of items as a `contains` statement on the bundle, lowered under a deterministic-only backend policy
+- `ontology/surface/examples/category-ancestors-expansion-projection.ttl` — an expansion projection restating each category's ancestors, reached by a broader relation, as a `hasAncestor` statement on the category, lowered under a deterministic-only backend policy
 
 Deliberate-defect fixtures are authored in `ontology/surface/test/`.
 
@@ -2759,6 +3003,8 @@ ex:index-1 a srf:IndexContract ;
 ## 14. Release notes
 
 - **Unreleased**.
+  - no effect. An expansion projection states the members it restates. New: `srf:ExpansionStatement` and `srf:ExpansionSource` with its two individuals `srf:ListMembers` and `srf:TransitiveClosure`, and the properties `srf:expandedAs`, `srf:expandsFrom`, `srf:expansionSource` and `srf:membersPath`. New laws `srf:P18` to `srf:P20`, with a shape for each part of them, and `srf:P1` says an expansion reads its scope from the property it writes.
+  - may invalidate. An expansion projection that states no expansion statement on its result-target role binding fails the new shape, and the compiler refuses to read it. A projection of another kind that states one fails too. The examples are an expansion of a list's members and one of a transitive closure.
   - no effect. A join projection states the relation it writes. New: `srf:JoinStatement`, `srf:JoinPair` and `srf:JoinCardinality` with its two individuals `srf:AtMostOne` and `srf:AnyNumber`, and the properties `srf:joinedAs`, `srf:joinsOn`, `srf:joinLeft`, `srf:joinRight`, `srf:joinMatches` and `srf:joinLinks`. New laws `srf:P14` to `srf:P17`, with a shape for each part of them, and `srf:P1` says a join reads its scope from the link it writes. A statement need not state either count. `srf:joinMatches`, how many instances of the second carrier one value may name and counted for each value, means `srf:AtMostOne` where it is left out. `srf:joinLinks`, how many links one instance may have, means `srf:AnyNumber`. Each pair states its own datatype, the right binding's, to which the left value is cast, so one key may compare a string pair and an integer pair. On candidate evidence an instance that holds the values and finds no match is reported as information.
   - may invalidate. A join projection that states no join statement on its result-target role binding fails the new shape, and the compiler refuses to read it. A projection of another kind that states one fails too. The example is a join, an order linked to the customer whose code it names.
   - no effect. A graph construction projection states the node it writes. New: `srf:ConstructedNode`, `srf:WrittenValue` and `srf:IdentityChoice` with its two individuals `srf:PerInstance` and `srf:ByKey`, and the properties `srf:constructedAs`, `srf:constructedClass`, `srf:nodeIdentity`, `srf:keyBinding`, `srf:writes`, `srf:writesProperty` and `srf:fromBinding`. New laws `srf:P10` to `srf:P13`, with a shape for each part of them, and `srf:P1` says how a constructed node's class decides its signature scope.
