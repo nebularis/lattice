@@ -85,7 +85,7 @@ ADR-A18's addendum of the same date lowers an expansion projection into a mappin
 
 ## Addendum (2026-11-25): mork_rdf compiles a node for each member
 
-**Status of this addendum:** Proposed.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-25.
 
 ADR-A18's addendum of the same date lowers an expansion that states a construction into a scheme whose contextual datum states the expansion's path. The datum, its guard, its identity and its assertions are cases `mork_rdf` compiles, except that none of them can read one member of the collection for the identity, the link and each value together, and the policy above does not count a vocabulary no compiler reads as complete.
 

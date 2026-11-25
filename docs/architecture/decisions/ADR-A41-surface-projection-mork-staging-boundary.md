@@ -28,6 +28,6 @@ A graph construction that gives one node for each value of a key merges the inst
 
 ## Addendum (2026-11-25): the findings are named by the projection kind they review
 
-**Status of this addendum:** Proposed.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-25.
 
 The engineering review the decision asks of a derivation and of an expansion names who reviews and not what is reviewed, and a compiler records a review as a finding that names its subject. The engineering review is therefore recorded as `DerivationReview` for a derivation and as `ExpansionReview` for an expansion, and the mapping review is recorded as `MappingReview`, for a join and for a keyed graph construction. Each is a warning of the compilation, raised every time. The reviews asked for, and who makes them, are unchanged, and so is the rest of the decision.

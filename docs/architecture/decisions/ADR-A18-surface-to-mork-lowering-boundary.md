@@ -91,7 +91,7 @@ The addendum of 2026-11-24 for joins leaves an expansion as a bare mapping, the 
 
 ## Addendum (2026-11-25): a node for each member, and a lowered expansion that constructs is a scheme
 
-**Status of this addendum:** Proposed.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-25.
 
 The addendum of the same date for expansions leaves a node for each member out, since a contract has one projection kind and the two statements it would combine were each stated by a kind of their own. This addendum states them together on one binding, so an expansion can construct a node for each member it reaches.
 
