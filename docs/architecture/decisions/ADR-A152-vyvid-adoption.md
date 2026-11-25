@@ -41,7 +41,7 @@ LATTICE maintains about 500 lines for its index and board, the extractor for qua
 
 ## Addendum of 2026-11-25: the triple-store page follows the domain's main branch
 
-**Status:** Proposed 2026-11-25, for the maintainer
+**Status:** Accepted 2026-11-25
 
 **Narrows decision 7.** Decision 7 pins the page at the record's old path to a tag of the domain. The page now links the domain's `main` branch, which is also what the index reads, so a reader sees one text of a finding by either route. Findings are added and seldom changed, and a page pinned to a tag was wrong for every finding recorded after it.
 

@@ -379,6 +379,37 @@ public final class IsolationProbes {
         }
     }
 
+    /**
+     * ISO-12. A unit of several operations in one request. Its first operation writes a receipt where every listed row is at the
+     * revision planned, and each later operation moves one row where the receipt exists. The unit must apply whole or not at all.
+     * The control leaves the receipt out of the later operations, so a row at its revision moves beside one that is not.
+     */
+    static void unitReceiptFirst(Client store, String form) throws Exception {
+        Tally t = new Tally("ISO-12", "fuseki", form, "one client");
+        boolean planned = form.equals("every row as planned");
+        boolean gated = !form.endsWith("members without the receipt");
+        for (int rep = 0; rep < REPS; rep++) {
+            String p = "urn:iso:12:" + form.hashCode() + ":" + rep + ":";
+            String m = iri(p, "m"), r = iri(p, "r"), a = iri(p, "a"), b = iri(p, "b"), seq = iri(p, "seq"), done = iri(p, "done"), unit = iri(p, "unit");
+            store.mustUpdate("INSERT DATA { GRAPH " + m + " { " + a + " " + seq + " 1 . " + b + " " + seq + " " + (planned ? 4 : 5) + " } }");
+            String has = "GRAPH " + r + " { " + unit + " " + done + " true } ";
+            String receipt = "INSERT { " + has + "} WHERE { "
+                + "FILTER NOT EXISTS { VALUES (?root ?at) { (" + a + " 1) (" + b + " 4) } FILTER NOT EXISTS { GRAPH " + m + " { ?root " + seq + " ?at } } } "
+                + "FILTER NOT EXISTS { GRAPH " + r + " { " + unit + " ?p ?o } } }";
+            String request = receipt;
+            for (String[] row : new String[][] {{a, "1"}, {b, "4"}}) {
+                long at = Long.parseLong(row[1]);
+                request += " ; DELETE { GRAPH " + m + " { " + row[0] + " " + seq + " " + at + " } } INSERT { GRAPH " + m + " { " + row[0] + " " + seq + " " + (at + 1)
+                    + " ; " + done + " true } } WHERE { " + (gated ? has : "") + "GRAPH " + m + " { " + row[0] + " " + seq + " " + at + " } }";
+            }
+            store.mustUpdate(request);
+            long receipts = store.number("SELECT (COUNT(*) AS ?n) WHERE { " + has + "}");
+            long moved = store.number("SELECT (COUNT(*) AS ?n) WHERE { GRAPH " + m + " { ?row " + done + " true } }");
+            boolean whole = receipts == 1 && moved == 2, none = receipts == 0 && moved == 0;
+            t.add(whole ? "whole" : none ? "nothing" : "in part, " + moved + " row(s) and " + receipts + " receipt(s)", planned ? !whole : !none);
+        }
+    }
+
     /** ISO-08. Receipts take positions. A relay that has seen every position up to its mark must never see a lower one appear later. */
     static void positions(Client store, String form) throws Exception {
         Tally t = new Tally("ISO-08", "fuseki", form, form.startsWith("position computed") ? "four clients" : "two clients");
@@ -700,6 +731,9 @@ public final class IsolationProbes {
             refusalRevision(store);
             writeSkew(store, "check by an earlier read");
             writeSkew(store, "check in the request");
+            unitReceiptFirst(store, "every row as planned");
+            unitReceiptFirst(store, "one row moved");
+            unitReceiptFirst(store, "one row moved, members without the receipt");
             dirtyReadInProcess(localDs);
             snapshotInProcess(localDs, "one read transaction");
             snapshotInProcess(localDs, "two read transactions");

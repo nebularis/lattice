@@ -595,6 +595,6 @@ Nothing in the registers rests on it.
 
 - **A unit of several operations can apply whole or not at all in one request.** Its receipt is written first under a guard over every row it touches, and each other operation requires that receipt, which is the form [ADR-A123](decisions/ADR-A123-typed-operation-ir.md)'s addendum of 2026-11-25 proposes.
 - **The guard over a list of rows is slow on rdflib.** Keep the listed rows and the store small in a test that runs there.
-- **It is observed in memory only.** Fuseki over TDB2, Oxigraph on disk and a request over HTTP are not probed, and a store that lets two concurrent updates both commit is not covered.
+- **It holds beyond memory for one client.** Fuseki over TDB2 by HTTP at Jena 5.1.0 and 6.2.0, and Oxigraph on disk, apply the unit whole or not at all. Two clients at once are not probed, and a store that lets two concurrent updates both commit is not covered.
 - **The probes** are `test_msa_i14_p1` and `test_msa_i14_p2` in `tools/persistence/tests/test_store_probes.py`, run by `mise run check:persistence-conformance`.
 

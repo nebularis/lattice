@@ -340,3 +340,14 @@ A unit lowered to SPARQL writes its receipt first, under the joint guard of ever
 **The one command.** `mise run check:models-multi-store -- "X8_OrderSets*"`, which ends `models: 3 as expected, 0 failed, 0 skipped, 0 stopped`. Run on 2026-11-25 on macOS under a heap of 576 MB, which the two runs with no error filled. The base tier is now 148 configurations.
 
 **The probes' finding.** I14-P1 and I14-P2 are recorded as TSD-80 in the `triple-stores` domain, written on 2026-11-25.
+
+## Addendum of 2026-11-25, the unit on Fuseki by HTTP and on Oxigraph on disk
+
+| ID | Given, when, then | Level | Property | Pass criterion | Kind |
+|---|---|---|---|---|---|
+| I14-P3 `test_msa_i14_p3_...` | Given Oxigraph's on-disk store and one client, when the unit's request is sent with every row as planned, one moved, one missing, or a row to create present, then it applies whole or not at all, and reads the same after the store is reopened | L4 | whole or nothing | 4 passed in the Oxigraph run, skipped in the others | positive and negative |
+| ISO-12 `unitReceiptFirst` | Given Fuseki over TDB2 by HTTP at Jena 5.1.0 and 6.2.0, when the unit's request is sent with every row as planned and with one row moved, then it applies whole or not at all in every repetition, and with members that do not require the receipt it applies in part in every repetition | L4 | whole or nothing | `PASS` on six rows, the control `always` | positive, with a control |
+
+**The commands.** `mise run check:persistence-conformance -- -k msa_i14`, which ended `25 passed, 8 skipped` on 2026-11-25, the skips being I14-P3 in the rdflib and Jena runs. `STORE_ISOLATION_QUICK=1 STORE_ISOLATION_ARMS=jena mise run check:store-isolation-probes`, which ended `isolation probes: 46 as expected, 0 failed, 0 skipped`, five repetitions a row.
+
+**Not covered.** Two clients at once on any store. Oxigraph on disk lets two concurrent updates both commit (TSD-73), which the unit's guard does not answer. The probes' full run of 20 repetitions and the PostgreSQL arm were not run for this addendum.

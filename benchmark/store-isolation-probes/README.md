@@ -19,6 +19,7 @@ A benchmark under [ADR-A124](../../docs/architecture/decisions/ADR-A124-benchmar
 | ISO-09 | A fenced store refuses every write that commits after the fence, so a copy taken after the fence holds every acknowledged write | X4's fenced cutover (`X4_Fenced`, `X4_FencedTimeouts` and their wide instances) |
 | ISO-10 | A refused guarded write can return the version it found, which differs from the version the writer expected | X6 with the refusal returning the revision (`X6_Closed`, `X6_StartOpen*`), Protocol A's refusal (`PA_OnRead*`) |
 | ISO-11 | A check of another row and a write made on it are not interleaved with another writer's, so two writers cannot each take one of the last two rows | Model A's `Atomic` against `SnapshotNoWWDetect`, and the catalogue's single-store transaction row, "isolated to the store's level" |
+| ISO-12 | A unit of several operations in one request, its receipt written first under a guard over every row, applies whole or not at all. Fuseki only | X5's and X7's `WholeAnswer` and `FencedAnswer` guards, and the unit of ADR-A123's addendum of 2026-11-25 |
 
 Each probe runs in several forms. A form that does what the model assumes is expected to show the anomaly in no repetition. A control, a form that breaks the assumption on purpose, for example a guard checked by an earlier read instead of in the request, is expected to show it in every repetition, which shows that the clients really did interleave as the probe says. On PostgreSQL a form also runs under each isolation level that changes its answer, and some forms show the anomaly at one level and not at another, as PostgreSQL documents.
 
@@ -35,6 +36,7 @@ Each probe runs in several forms. A form that does what the model assumes is exp
 | ISO-09 | the fence read in the write's transaction, read `FOR SHARE` | the fence checked by an earlier read, checked in the write's request |
 | ISO-10 | one statement with the version from its snapshot, a locking read before the guard, the version read by a later statement | the version read after the refusal |
 | ISO-11 | the check by an earlier read, in the write's statement | the check by an earlier read, in the request |
+| ISO-12 | not run | every row as planned, one row moved, and one row moved with members that do not require the receipt, the control |
 
 `EXPECTED` in [`check.py`](check.py) holds the expected answer of every row, and the report prints it beside what each store did.
 

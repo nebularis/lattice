@@ -477,9 +477,9 @@ The maintainer answered DR-Q1 on 2026-10-31 with an operation for imports and bu
 
 Built on the studio's branch as its slice DR-2 ([DR-2](../../developer/validation/DR-2.md)) and carried over onto the addendum above as DR-4.
 
-## Addendum, 2026-11-25: the unit, several operations that apply whole or not at all (proposed)
+## Addendum, 2026-11-25: the unit, several operations that apply whole or not at all (accepted 2026-11-25)
 
-**Proposed 2026-11-25, for the maintainer.** A caller that changes several aggregates for one command composes their operations into one request today, and each operation is guarded apart, so one can apply without the others. [ADR-A149](ADR-A149-publication-from-the-studio.md)'s addendum of 2026-11-25 decides that such a command applies whole or not at all, and that what makes it so is generated. This addendum gives the IR the construct.
+A caller that changes several aggregates for one command composes their operations into one request today, and each operation is guarded apart, so one can apply without the others. [ADR-A149](ADR-A149-publication-from-the-studio.md)'s addendum of 2026-11-25 decides that such a command applies whole or not at all, and that what makes it so is generated. This addendum gives the IR the construct.
 
 1. **A `Unit` is a typed value.** It holds an id, the operations it composes, in order, and its receipt operation. It is built by one function from operations the builders already give, and nothing in it is written as SPARQL by hand.
 2. **The unit's receipt is its first operation, and is generated.** A builder, `unit-receipt`, gives one operation that inserts the unit's receipt. Its `WHERE` is the joint guard, that every listed row is at its listed revision, that every row listed as absent has no version row, and that the unit has no receipt. The rows arrive in two request-time slots, `unitRows` and `unitAbsent`, as `VALUES` rows inside `FILTER NOT EXISTS`, so the guard is one pattern however many rows a unit has and gives one solution or none.
@@ -499,3 +499,4 @@ Built on the studio's branch as its slice DR-2 ([DR-2](../../developer/validatio
 
 Nothing here is built.
 
+**Probed 2026-11-25, after acceptance.** The form also holds on Fuseki over TDB2 by HTTP at Jena 5.1.0 and 6.2.0, and on Oxigraph on disk by one client. Two clients at once are still not probed.

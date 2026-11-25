@@ -177,7 +177,7 @@ Each pattern has every term bound, so it is one index lookup. On Fuseki a small 
 
 *Leaning (b), now, with (c) as where it goes.* Is it needed now? Yes, since MSA-I8 builds a write path and the plan holds it on this. Can it be simpler? (a) is less new code and does not meet the requirement. (c) is the same rule with more to build first.
 
-**Answered 2026-11-24, (c) built once as (b)'s lowering.** The persistence compiler gains a unit, its receipt first under the joint guard of every row and each later operation requiring that receipt, and the writer is generated from it. A shared `WHERE` across the operations is not possible, since two of them end in a sweep of a graph and two sweeps in one pattern multiply. Both probes of the lowering pass on rdflib, Oxigraph and Jena in memory (TSD-80). Points 1 and 2 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s Proposed addendum of 2026-11-25.
+**Answered 2026-11-24, (c) built once as (b)'s lowering.** The persistence compiler gains a unit, its receipt first under the joint guard of every row and each later operation requiring that receipt, and the writer is generated from it. A shared `WHERE` across the operations is not possible, since two of them end in a sweep of a graph and two sweeps in one pattern multiply. Both probes of the lowering pass on rdflib, Oxigraph and Jena in memory (TSD-80). Points 1 and 2 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s addendum of 2026-11-25.
 
 ## 6. The partition's order and a second writer, MSA-Q22
 
@@ -216,7 +216,7 @@ A command that carries the revision it expects is safe from this, since the late
 
 *Leaning (b).* The inversion is silent and falls on the commands that change access and delete content. The cost is one lookup. It is the weaker of the two leanings, since it rests on the broker's activation signal, which MSA-I9 did not probe for lateness.
 
-**Answered 2026-11-25, (b) with the planning read taking the batch's receipts and the token.** Models X5, X7, X8 and X9 changed the ground twice. Held to R2 as first written, the token bought nothing in any run, and the answers agreed with no token once the planning read took the receipts. Held to R2 as section 7a restates it, two writers that start from any position answer a command as not applied after it applied with no token, and never with it (`X7_AnyWholeAnswerFinal`, `X7_AnyFencedAnswerFinal`, and the same pair in X8). The token does not give R4 under such a delivery (`X7_AnyFencedAnswerOrderSets`), so R4 rests on a writer starting from the stored offset and taking the stream in order. The broker's activation signal is still not probed. Points 6 and 7 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s Proposed addendum of 2026-11-25.
+**Answered 2026-11-25, (b) with the planning read taking the batch's receipts and the token.** Models X5, X7, X8 and X9 changed the ground twice. Held to R2 as first written, the token bought nothing in any run, and the answers agreed with no token once the planning read took the receipts. Held to R2 as section 7a restates it, two writers that start from any position answer a command as not applied after it applied with no token, and never with it (`X7_AnyWholeAnswerFinal`, `X7_AnyFencedAnswerFinal`, and the same pair in X8). The token does not give R4 under such a delivery (`X7_AnyFencedAnswerOrderSets`), so R4 rests on a writer starting from the stored offset and taking the stream in order. The broker's activation signal is still not probed. Points 6 and 7 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s addendum of 2026-11-25.
 
 ## 7. What a command's answer is read from, MSA-Q23
 
@@ -236,7 +236,7 @@ Under (b) of section 5 the receipt is the command's first operation and everythi
 
 *Leaning (b).* The cost is that a principal's name outlives the workspace until retention runs. Where a deletion has to remove that too, retention for a deleted workspace is immediate once its deletion's receipt is older than the resend window, which is a setting and not a design change.
 
-**Answered 2026-11-24, (b).** Model X7 reproduces TD-172 with one writer, finds that (a) answers a sender's resend of a creation as not applied after its deletion, and finds no error under (b). Point 8 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s Proposed addendum of 2026-11-25.
+**Answered 2026-11-24, (b).** Model X7 reproduces TD-172 with one writer, finds that (a) answers a sender's resend of a creation as not applied after its deletion, and finds no error under (b). Point 8 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s addendum of 2026-11-25.
 
 ## 7a. What a refused command leaves, MSA-Q29
 
@@ -244,7 +244,7 @@ Added 2026-11-24. Nothing is recorded for a refusal, so a change sent before the
 
 **(a) Nothing, and R2 is restated.** Only an answer of applied is final. **(b) A receipt of the refusal,** read with the others, so a resend is answered as refused. It costs a write for each refusal and is not modelled. **(c) The sender's concern,** a new attempt takes a new command id.
 
-**Answered 2026-11-25, (a).** R2 now reads that a command answered as applied was applied, and none is answered as not applied once it has applied (`AppliedIsFinal`, `NoRefusalAfterApplied`). It holds with one writer and with the token under any delivery, and fails with two writers and no token, which is why section 6's answer keeps the token. Point 9 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s Proposed addendum of 2026-11-25.
+**Answered 2026-11-25, (a).** R2 now reads that a command answered as applied was applied, and none is answered as not applied once it has applied (`AppliedIsFinal`, `NoRefusalAfterApplied`). It holds with one writer and with the token under any delivery, and fails with two writers and no token, which is why section 6's answer keeps the token. Point 9 of [ADR-A149](../../../architecture/decisions/ADR-A149-publication-from-the-studio.md)'s addendum of 2026-11-25.
 
 ## 8. Identifiers
 

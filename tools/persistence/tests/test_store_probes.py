@@ -426,3 +426,32 @@ def test_msa_i14_p2_the_guard_over_a_list_holds_for_thirty_rows_among_a_thousand
     at = " ".join(f"(<urn:{name}> {seq})" for name, seq in rows.items())
     ds.update(_receipt(_FOR_ALL.format(at=at, absent="<urn:c>")))
     assert _RECEIPT in ds.graph(U("urn:r"))
+
+
+@pytest.mark.conformance
+@pytest.mark.parametrize(
+    "stored, whole",
+    [({"a": 1, "b": 4}, True), ({"a": 1, "b": 5}, False), ({"a": 1}, False), ({"a": 1, "b": 4, "c": 1}, False)],
+    ids=["every row as planned", "one row moved", "one row missing", "a row to create exists"],
+)
+def test_msa_i14_p3_the_unit_applies_whole_or_not_at_all_on_oxigraph_on_disk_and_is_there_after_a_reopen(tmp_path, stored, whole):
+    """I14-P1 and I14-P2 on Oxigraph's RocksDB store, by one client. It says nothing of two clients at once, where Oxigraph on disk
+    lets both updates commit (TSD-73)."""
+    if engines.CURRENT != "oxigraph":
+        pytest.skip("the on-disk store is Oxigraph's, and is probed in the Oxigraph run alone")
+    import pyoxigraph as ox
+
+    def read(store) -> tuple[bool, int]:
+        receipt = bool(store.query("ASK { GRAPH <urn:r> { <urn:unit> <urn:p> <urn:receipt> } }"))
+        moved = sum(1 for _ in store.query("SELECT ?row WHERE { GRAPH <urn:m> { ?row <urn:done> <urn:yes> } }"))
+        return receipt, moved
+
+    store = ox.Store(str(tmp_path / "store"))
+    listed = " ".join(f"<urn:{name}> <urn:seq> {seq} ." for name, seq in stored.items())
+    store.update(f"INSERT DATA {{ GRAPH <urn:m> {{ {listed} }} }}")
+    guard = _FOR_ALL.format(at="(<urn:a> 1) (<urn:b> 4)", absent="<urn:c>")
+    store.update(" ; ".join([_receipt(guard), _step("a", 1), _step("b", 4)]))
+    assert read(store) == ((True, 2) if whole else (False, 0))
+    store.flush()
+    del store
+    assert read(ox.Store(str(tmp_path / "store"))) == ((True, 2) if whole else (False, 0))

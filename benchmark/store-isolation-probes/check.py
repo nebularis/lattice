@@ -78,6 +78,8 @@ ASSUMPTIONS = {
                "X6 with the refusal returning the revision (`X6_Closed`, `X6_StartOpen*`), Protocol A's refusal (`PA_OnRead*`)"),
     "ISO-11": ("A check of another row and a write made on it are not interleaved with another writer's, so two writers cannot each take one of the last two rows",
                "Model A's `Atomic` against `SnapshotNoWWDetect`, the single-store transaction row of the catalogue, \"isolated to the store's level\""),
+    "ISO-12": ("A unit of several operations in one request, its receipt written first under a guard over every row, applies whole or not at all",
+               "X5's and X7's `WholeAnswer` and `FencedAnswer` guards, and the unit of ADR-A123's addendum of 2026-11-25 (TSD-80 in memory)"),
 }
 
 # What each store does, by probe, store, form and mode. A form expected `always` is a control unless the store's documentation
@@ -131,6 +133,9 @@ _expect("ISO-11", PG, "check by an earlier read", {RC: ALWAYS, RR: ALWAYS, SER: 
 _expect("ISO-11", PG, "check in the write's statement", {RC: ALWAYS, RR: ALWAYS, SER: NEVER})
 _expect("ISO-11", FUSEKI, "check by an earlier read", {"two clients": ALWAYS})
 _expect("ISO-11", FUSEKI, "check in the request", {"two clients": NEVER})
+_expect("ISO-12", FUSEKI, "every row as planned", {"one client": NEVER})
+_expect("ISO-12", FUSEKI, "one row moved", {"one client": NEVER})
+_expect("ISO-12", FUSEKI, "one row moved, members without the receipt", {"one client": ALWAYS})
 
 
 @dataclass
