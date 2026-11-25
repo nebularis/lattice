@@ -44,6 +44,7 @@ along the way.
 | `tools/` | executable reference implementations and developer toolchains. `tools/testing/` holds test-support packages, used only by tests, checks and benchmarks (ADR-A125) |
 | `benchmark/` | checks that measure, run on demand and never part of `check`. They fail on a wrong result, never on time (ADR-A124) |
 | `platform/`, `apps/`, `packages/`, `contracts/`, `deployment/`, `workers/`, `test/`, `spikes/` | services, applications, libraries, data contracts, the local environment, the worker runtime, end-to-end suites, experiments |
+| `LICENSES/` | the text of each licence a file's SPDX header or `REUSE.toml` names, as `<identifier>.txt` (ADR-A155) |
 | `docs/architecture/` | architecture documents and the ADRs, in `decisions/` |
 | `docs/developer/` | sketches, plans, status records, review requests, Validation Packs, the registers, and durable guidance |
 | `.claude/skills/` | the skills below |

@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** a pause, for the maintainer's review of SVA-D1 before it is pushed. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** the maintainer's acceptance of ADR-A155, and a choice of the next slice. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -286,3 +286,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-25: SVA-D1 built in part. The samples README, its test, the folder of imports with a catalog, the RDF mapping in two strata, the CSV and YAML sources, the ODRL Turtle and an axioms sample are in. The LegalRuleML documents wait for the maintainer, since the OASIS host is not reachable from the session and the repository has no triplifier. TD-266 and TD-267 opened.
 - 2026-11-25: the maintainer chose to fetch the OASIS files and allowed the host. SVA-D1 built: the OASIS example ex5 in its compact and normal forms and the triplifier stylesheet, copied unmodified with their notice, a clean-room LegalRuleML document of a cover, an exclusion and a condition, and the RDF of both made by the stylesheet on Saxon-HE and held equal by a test. The run worker's test sink no longer races.
 - 2026-11-25: SVA-D1 built.
+- 2026-11-25: the maintainer accepted SVA-D1's placement and asked for a decision and a root for the licence texts. ADR-A155 is Proposed, and `LICENSES/` holds the texts of MPL-2.0, CC-BY-SA-4.0, MIT and the OASIS notice, held by `mise run check:licences`, which `mise run check` runs.

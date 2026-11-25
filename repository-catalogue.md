@@ -202,6 +202,13 @@ name = "spikes"
 path = "spikes/"
 owns = "experiments"
 group = "services"
+
+[[roots]]
+name = "licences"
+path = "LICENSES/"
+owns = "the text of each licence a file names, one file for each identifier"
+adrs = ["ADR-A155"]
+row = "the text of each licence a file's SPDX header or `REUSE.toml` names, as `<identifier>.txt` (ADR-A155)"
 ```
 
 ## Tool packages
