@@ -6,7 +6,7 @@
 
 ## Invariant
 
-An expansion projection states the members it restates on its result-target role binding, a statement that names one evidence binding of the contract's own carrier and states its members as exactly one of a named source, a list's members or a property's transitive closure, and a SHACL property path from the instance. It lowers deterministically into a mapping scheme `mork_rdf` compiles with its existing cases and no mapping kind of its own. Each member is restated as one statement on the instance, the property the result-target binding binds, and nothing is minted. An instance contributes whole or not at all, since the guard on the assertion holds the instance's required evidence. An instance without the required property is excluded and reported. An instance the guard admits whose path reaches no member writes nothing and is reported as information. The contract states no bound on the number of statements, and the compilation records an engineering review as a finding that names the path. A path the contract states and the named source it equals lower to the same scheme.
+An expansion projection states the members it restates on its result-target role binding, a statement that names one evidence binding of the contract's own carrier and states its members as exactly one of a named source, a list's members or a property's transitive closure, and a SHACL property path from the instance. It lowers deterministically into a mapping scheme `mork_rdf` compiles with its existing cases and no mapping kind of its own. Each member is restated as one statement on the instance, the property the result-target binding binds, and nothing is minted. An instance contributes whole or not at all, since the guard on the assertion holds the instance's required evidence. An instance without the required property is excluded and reported. An instance the guard admits that holds the property and whose path reaches no member writes nothing and is reported as information. An expansion's members never read the property its own result-target binding writes (`srf:P21`). The contract states no bound on the number of statements, and the compilation records an engineering review as a finding that names the path. A path the contract states and the named source it equals lower to the same scheme.
 
 ## The removed fallback, Part A
 
@@ -28,7 +28,7 @@ The index held none of the placeholders (`exists ExpansionStatement`, `expandedA
 
 1. **A path the contract states is a term of its own, `srf:membersPath`, beside the named sources.** The answer says an expansion states its members as a SHACL path and that a list's members and a closure are two named conveniences the lowering writes as paths. It names no property for the path itself. A statement states exactly one of the named source and the path (`srf:P20`), so the path is the selection and no separate switch is needed.
 2. **The path reads the property of the evidence binding.** A path that does not name the property the statement expands from is refused (`srf:P20`), so the evidence binding is never decoration and a required binding's guard tests the property the path starts from. A path that reads other properties as well is allowed.
-3. **An expansion on candidate evidence is not guarded, and an instance that lacks the property is reported as an empty collection.** A join on candidate evidence says nothing for an instance that lacks the values. The answers say that a missing property is reported as an excluded instance is, which a required binding gives, and an empty collection as information. For candidate evidence they say nothing, and the compiler cannot tell a missing property from an empty collection without reading the path's first step, which an alternative or an inverse does not have. The report is `CollectionEmpty` as information for both.
+3. **An expansion on candidate evidence is not guarded.** This choice was changed by the maintainer on 2026-11-25 and the follow-up section after the checks records how. As first built, an instance that lacked the property was reported as an empty collection. A join on candidate evidence says nothing for an instance that lacks the values. The answers say that a missing property is reported as an excluded instance is, which a required binding gives, and an empty collection as information. For candidate evidence they say nothing, and the compiler cannot tell a missing property from an empty collection without reading the path's first step, which an alternative or an inverse does not have. The report is `CollectionEmpty` as information for both.
 4. **The compiler raises the engineering review for every assertion with a `mork:dataRef` directly beneath a source-node datum.** It sees a scheme and not the contract, so it cannot tell an expansion from a plain restatement, and a marker in MORK would be a term the answers did not ask for. A hand-written scheme of that shape takes the finding as well.
 5. **The finding is a warning.** It follows `MappingReview`. The answers say the finding records that the number of statements depends on the data and names the source, and not a severity.
 6. **`sh:zeroOrOnePath` is not a form an expansion states.** The answers list six forms. A path that is at most one node for each instance is no collection.
@@ -71,13 +71,42 @@ The index held none of the placeholders (`exists ExpansionStatement`, `expandedA
 
 `check:mork` rewrote `ontology/mork/mtp/data/pins.lock.json`, which was restored, so its pins wait for `mise run build:mtp` at the merge. No version was bumped, so Surface and MORK wait for `mise run version:bump` at the merge, with the earlier slices' changes.
 
+## Follow-up, the maintainer's answers of 2026-11-25
+
+The maintainer answered the seven choices on 2026-11-25. Choices 1, 2, 4, 5 and 6 stand as built. Two change, and the addenda to ADR-A18 and ADR-A23 gain both in their text and keep their Proposed status.
+
+- **Choice 3, a missing property on candidate evidence.** An instance that lacks the property is silent, as a join's is. `CollectionEmpty` reports only an instance that holds the property and whose path reaches no member, such as an empty list. The compiler reads the first step of the path to decide what holding the property means. A property is that step, an alternative is any of its parts, an inverse is the inverse of the property the sequence ends in, and a sequence is its first part and the part after one that may take no step. The new functions are `entry` and `closures` in `paths.py`. The rule holds for every assertion of that shape and so for a hand-written guarded scheme as well, where a node that lacks the property was reported before. Required evidence is unchanged, since the guard already admits only instances that hold it. The closure example no longer reports its broadest category, which holds no broader relation.
+- **Choice 7 (a), a run-time check for a cycle.** A new check `ClosureCycle`, a warning, is emitted for each closure the path walks, `*` or `+`. It selects each node that the focus reaches before the closure and by the closure and that reaches itself by one or more steps. The focus of a row is that node and the value is the closure as the compiler writes it. A list's members walk `rdf:rest*`, so a list that loops back is reported by the cell that reaches itself, and each expansion over a list takes one more walk of the list. The answers did not name the check or its severity, so `ClosureCycle` and a warning are choices for the maintainer to confirm.
+- **Choice 7 (b), the law.** `srf:P21` says an expansion's members never read the property its result-target binding writes, whether a path or a named source gives them. `ContractError` refuses it in the model check (`model.py`) and `srf:ExpansionPathWritesShape` in the shape, both over the path's properties. A named source reads the property of the evidence binding, so an evidence binding and a result binding that bind one property are refused too, which is the one case a named source can breach.
+- **The text.** The addenda of ADR-A18 and ADR-A23, section 2.4 of the projection backend sketch, Surface's README and its release notes under Unreleased, and the `mork_rdf` README, which gains `ClosureCycle` in section 7.11 and in its check tables, carry the two changes.
+
+| ID | Given / When / Then | Level | The break tried | The failure it gave |
+|---|---|---|---|---|
+| S2i-T17 | a bundle on candidate evidence, with a list, an empty list and no list / compiled and run on both engines / four statements, and only the bundle with the empty list reported, in Surface and in `mork_rdf` | L1 | | |
+| S2i-T18 | an alternative, an inverse of a sequence and a sequence that starts with an optional part, each on a node that holds a value at the first step and a node that holds none / run on both engines / only the node that holds the property is reported | L1 | | |
+| S2i-T19 | a chain of three categories closed into a cycle, with a fourth that reaches it, and the acyclic chain / run on both engines / the three that reach themselves are reported by name with the closure, the fourth is not, and the acyclic chain reports nothing | L1 | | |
+| S2i-T20 | a list whose cell is its own rest, and the proper lists / run on both engines / the cell is reported with `rdf:rest+` and the proper lists report nothing | L1 | | |
+| S2i-T21 | members that read the result property, as a sequence, an alternative, an inverse closure and a closure, and an evidence binding that binds the result property / read and validated / each refused by `srf:P21` and by `ExpansionPathWritesShape`, and a path that reads another property beside the evidence's is allowed | L1 | | |
+
+| Command | Result after the follow-up |
+|---|---|
+| `mise run check:python-root` | 313 tests, OK, and the phase 8 conformance passed. Five are new, in Surface's expansion tests |
+| `mise run check:mork-rdf` | 287 passed, 12 more than the 275 before, all in `test_expansion.py` |
+| `mise run check:mork` | 464 passed |
+| `mise run check:mork-compilers` | 195 passed, 39 subtests |
+| `mise run check:ontology-catalog` | 1319 passed, consistent, the 2 known defects |
+| `mise run check:owl-profile`, `check:published-decisions` | passed (5 and 6 tests) |
+| `literate_extract --check` for Surface and MORK | 4 and 3 artefacts consistent |
+| `mise run check:identifiers` | passed, 2387 identifiers, 0 unresolved |
+
+`check:mork` rewrote `ontology/mork/mtp/data/pins.lock.json` again, and it was restored.
+
+The tests that changed with the follow-up are the compile test of the bundle (a third check, `ClosureCycle`), the closure test of `mork_rdf` and of Surface (the broadest category is silent), the candidate-evidence test of Surface, and the severities test.
+
 ## Left open
 
 - Whether the studio's review requirement acts on `EngineeringReview` or on the contract. It reads only the projection kind today, so an expansion needs that policy to read the finding or the contract before SVA-S2c acts on it, as a join and a keyed construction do.
 - The compiler raises the review for every assertion of that shape, so a hand-written scheme that restates a plain property beneath a source-node datum takes the finding. A marker on the scheme that says it is an expansion would be a MORK term, which the answers did not ask for.
-- An expansion on candidate evidence reports a missing property as an empty collection, where a join on candidate evidence stays silent (choice 3).
-- A closure over a relation that has a cycle makes a node its own ancestor, which SPARQL's path semantics allow. Nothing reports it.
-- A path that reads the result property of its own binding is not refused. The compiled query reads only the source, so a run does not feed itself, and a second run over the world after reads the first's statements.
 - A node for each member, which combines an expansion with a graph construction, is a slice of its own after this kind (SVA-Q44).
 - The index missed the questions this slice asked about how a source-node assertion compiles and about the SHACL path forms, and answered them from the sketch and the mork_rdf README. `mise run graph:ask -- misses --near` at the handoff lists them.
 

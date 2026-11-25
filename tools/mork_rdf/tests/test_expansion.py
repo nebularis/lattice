@@ -84,7 +84,7 @@ WHERE {{
   ?f1 <{SRC}items>/(<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>*)/<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> ?v3 .
 }}"""
     assert " ".join(construct.text.split()) == " ".join(expected.split())
-    assert sorted(q.code for q in mapping.checks) == ["CollectionEmpty", "InstanceExcluded"]
+    assert sorted(q.code for q in mapping.checks) == ["ClosureCycle", "CollectionEmpty", "InstanceExcluded"]
     assert [(f.code, f.severity) for f in mapping.findings] == [("EngineeringReview", Severity.WARNING)]
     assert not mapping.errors
 
@@ -101,7 +101,7 @@ def test_a_bundle_without_a_list_is_excluded_and_an_empty_list_is_reported_as_in
     written, reported = evaluate(engine, mapping, source())
     assert not {s for s, _, _ in written} & {REC + "b3", REC + "b4"}
     assert reported == {("InstanceExcluded", REC + "b4", f"<{SRC}items>"), ("CollectionEmpty", REC + "b3", WRITTEN)}
-    assert {q.code: q.severity for q in mapping.checks} == {"InstanceExcluded": Severity.WARNING, "CollectionEmpty": Severity.INFO}
+    assert {q.code: q.severity for q in mapping.checks} == {"InstanceExcluded": Severity.WARNING, "CollectionEmpty": Severity.INFO, "ClosureCycle": Severity.WARNING}
     out = run(mapping, source())
     assert {(f.code, f.focus): f.severity for f in out.findings} == {("InstanceExcluded", REC + "b4"): Severity.WARNING, ("CollectionEmpty", REC + "b3"): Severity.INFO}
 
@@ -130,13 +130,13 @@ rec:c3 a src:Category ; src:broader rec:c2 .
 
 
 @pytest.mark.parametrize("engine", ENGINES)
-def test_a_transitive_closure_gives_a_statement_for_each_ancestor_and_the_top_is_reported_as_information(engine):
+def test_a_transitive_closure_gives_a_statement_for_each_ancestor_and_the_top_is_silent(engine):
     mapping = compiled(variant(LIST_LINE, f'mork:dataRef "{CLOSURE}" .').parse(data=PREFIXES + "mm:Concept_Bundle mork:representedAs src:Category .", format="turtle"))
     hierarchy = Graph().parse(data=HIERARCHY, format="turtle")
     written, reported = evaluate(engine, mapping, hierarchy)
     assert written == {(REC + "c2", CONTAINS, REC + "c1"), (REC + "c3", CONTAINS, REC + "c2"), (REC + "c3", CONTAINS, REC + "c1")}
-    assert reported == {("CollectionEmpty", REC + "c1", CLOSURE)}
-    assert sorted(q.code for q in mapping.checks) == ["CollectionEmpty"]
+    assert reported == set()
+    assert sorted(q.code for q in mapping.checks) == ["ClosureCycle", "CollectionEmpty"]
 
 
 
@@ -166,3 +166,69 @@ mm:Map_Label a mork:DataMapping ; mork:mappingScheme mm:Plain ; mork:exactRBoxMa
     assert not mapping.errors
     assert not [f for f in mapping.findings if f.code == "EngineeringReview"]
     assert "CollectionEmpty" not in {q.code for q in mapping.checks}
+
+
+CANDIDATE = f'mork:dataRef "{LIST}" .'
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_on_candidate_evidence_a_bundle_without_the_property_is_silent_and_an_empty_list_is_reported(engine):
+    """With no guard, a node that lacks the property the path starts from says nothing, and one that holds it, as an empty
+    list does, and reaches no member is reported."""
+    mapping = compiled(variant(LIST_LINE, CANDIDATE))
+    written, reported = evaluate(engine, mapping, source())
+    assert written == {(REC + "b1", CONTAINS, REC + m) for m in ("i1", "i2", "i3")} | {(REC + "b2", CONTAINS, REC + "i3")}
+    assert reported == {("CollectionEmpty", REC + "b3", WRITTEN)}
+    assert sorted(q.code for q in mapping.checks) == ["ClosureCycle", "CollectionEmpty"]
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+@pytest.mark.parametrize("path, reported_nodes", [
+    ("<http://example.org/src#items>/<http://example.org/src#next>|<http://example.org/src#extra>/<http://example.org/src#next>", {"b-alt", "b-seq"}),
+    ("^(<http://example.org/src#member>/<http://example.org/src#tail>)", {"b-inv"}),
+    ("<http://example.org/src#items>?/<http://example.org/src#next>/<http://example.org/src#next>", {"b-seq"}),
+])
+def test_the_property_a_path_starts_from_is_read_from_the_path_whatever_its_form(engine, path, reported_nodes):
+    """An alternative starts at any of its parts, an inverse at the inverse of the property the sequence ends in, and a
+    sequence at its first part and past a part that may take no step. A node that holds it and reaches nothing is reported, and
+    a node that holds nothing at the start is silent."""
+    mapping = compiled(variant(LIST_LINE, f'mork:dataRef "{path}" .'))
+    data = Graph().parse(data=PREFIXES + """
+rec:b-alt a src:Bundle ; src:extra rec:x .
+rec:b-inv a src:Bundle .
+rec:y src:tail rec:b-inv .
+rec:b-seq a src:Bundle ; src:items rec:p ; src:next rec:q .
+rec:b-none a src:Bundle .
+""", format="turtle")
+    _, reported = evaluate(engine, mapping, data)
+    subjects = {focus for code, focus, _ in reported if code == "CollectionEmpty"}
+    assert subjects == {REC + node for node in reported_nodes}
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_a_closure_that_reaches_itself_is_reported_by_node_and_an_acyclic_one_reports_nothing(engine):
+    mapping = compiled(variant(LIST_LINE, f'mork:dataRef "{CLOSURE}" .').parse(data=PREFIXES + "mm:Concept_Bundle mork:representedAs src:Category .", format="turtle"))
+    cyclic = Graph().parse(data=PREFIXES + """
+rec:a a src:Category ; src:broader rec:b .
+rec:b a src:Category ; src:broader rec:c .
+rec:c a src:Category ; src:broader rec:a .
+rec:d a src:Category ; src:broader rec:a .
+rec:e a src:Category .
+""", format="turtle")
+    _, reported = evaluate(engine, mapping, cyclic)
+    cycles = {focus for code, focus, _ in reported if code == "ClosureCycle"}
+    assert cycles == {REC + n for n in ("a", "b", "c")}
+    assert {value for code, _, value in reported if code == "ClosureCycle"} == {CLOSURE}
+    _, quiet = evaluate(engine, mapping, Graph().parse(data=HIERARCHY, format="turtle"))
+    assert not [row for row in quiet if row[0] == "ClosureCycle"]
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_a_list_that_loops_back_is_reported_by_the_cell_that_reaches_itself(engine):
+    mapping = compiled(bundle())
+    looped = Graph().parse(data=PREFIXES + """
+rec:b6 a src:Bundle ; src:items _:c1 .
+_:c1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> rec:i1 ; <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:c1 .
+""", format="turtle")
+    _, reported = evaluate(engine, mapping, looped)
+    assert [row for row in reported if row[0] == "ClosureCycle"] and not [row for row in evaluate(engine, mapping, source())[1] if row[0] == "ClosureCycle"]

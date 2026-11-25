@@ -750,8 +750,9 @@ class _Compiler:
         """What an assertion that writes onto the source node itself needs beyond its own query (README §7.11). It restates the
         relation its path reaches as one statement on the node for each node the path reaches, which is an expansion. The query
         is the assertion's, so a node whose path reaches nothing writes nothing, and the checks say which. A guard on the
-        assertion excludes whole nodes, each named with the required value it lacks, and a node the guard admits whose path
-        reaches nothing is reported as information. The number of statements a node gives depends on the data, so the
+        assertion excludes whole nodes, each named with the required value it lacks, and a node the guard admits that holds the
+        property the path starts from and reaches nothing is reported as information, while a node that lacks the property is
+        silent. A node that reaches itself through a closure the path walks is reported by name. The number of statements a node gives depends on the data, so the
         compiler records an engineering review (ADR-A41) as a finding that names the source."""
         parent = chain[-1]
         source = paths.write(spec.data_ref)
@@ -763,9 +764,22 @@ class _Compiler:
             for path in missing:
                 self.check(chain, "InstanceExcluded", f"({parent.focus} AS ?focus) ({_string(path)} AS ?value)",
                            self.where(chain, [f"FILTER NOT EXISTS {{ {parent.focus} {path} ?any }}"]), node=spec)
+        # A node that holds nothing at the path's first step lacks the property and is silent. Only a node that holds it and
+        # reaches no node by the whole path has an empty collection.
+        start = paths.write(paths.entry(spec.data_ref))
         self.check(chain, "CollectionEmpty", f"({parent.focus} AS ?focus) ({_string(source)} AS ?value)",
-                   self.where(chain, self.guard(spec, parent.focus) + [f"FILTER NOT EXISTS {{ {parent.focus} {source} ?any }}"]),
+                   self.where(chain, self.guard(spec, parent.focus) + [f"FILTER EXISTS {{ {parent.focus} {start} ?held }}",
+                                                                       f"FILTER NOT EXISTS {{ {parent.focus} {source} ?any }}"]),
                    node=spec, severity=Severity.INFO)
+        # A node that reaches itself through a closure the path walks is its own member, which a hierarchy or a list does not
+        # have. Each such node is named once, with the closure, whichever node reaches it.
+        for before, step in paths.closures(spec.data_ref):
+            reach = paths.write(paths.Mod(step, "*"))
+            reach = reach if before is None else f"{paths.write(before)}/{reach}"
+            node = self.var("n")
+            self.check(chain, "ClosureCycle", f"({node} AS ?focus) ({_string(paths.write(paths.Mod(step, '+')))} AS ?value)",
+                       self.where(chain, self.guard(spec, parent.focus) + [f"{parent.focus} {reach} {node} .", f"{node} {paths.write(paths.Mod(step, '+'))} {node} ."]),
+                       node=spec)
         self.findings.append(Finding("EngineeringReview", str(spec.node), f"it restates the relation at {source} as a statement for each node the path reaches, so the number of statements for one node depends on the data and a reviewer should confirm that the target can take it", Severity.WARNING))
 
     def disagreement(self, chain: list[_Frame], spec: Spec, value: str, patterns: list) -> None:

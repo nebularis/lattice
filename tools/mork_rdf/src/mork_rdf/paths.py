@@ -196,3 +196,87 @@ def _group(path: Path) -> str:
 def single(path: Path) -> str | None:
     """The IRI of a path that is one forward property, else None."""
     return path.value if isinstance(path, Iri) else None
+
+
+def _push(path: Path, inverted: bool = False) -> Path:
+    """The same path with every inverse pushed down to the property it reads, `^(a/b)` being `^b/^a` and `^^a` being `a`."""
+    if isinstance(path, Iri):
+        return Inverse(path) if inverted else path
+    if isinstance(path, Inverse):
+        return _push(path.path, not inverted)
+    if isinstance(path, Seq):
+        parts = tuple(_push(p, inverted) for p in (reversed(path.parts) if inverted else path.parts))
+        return Seq(parts)
+    if isinstance(path, Alt):
+        return Alt(tuple(_push(p, inverted) for p in path.parts))
+    if isinstance(path, Mod):
+        return Mod(_push(path.path, inverted), path.mod)
+    return NegSet(tuple((i != inverted, v) for i, v in path.members)) if inverted else path
+
+
+def _nullable(path: Path) -> bool:
+    """Whether the path may reach the node it starts from without a step."""
+    if isinstance(path, Mod):
+        return path.mod in ("*", "?") or _nullable(path.path)
+    if isinstance(path, Seq):
+        return all(_nullable(p) for p in path.parts)
+    if isinstance(path, Alt):
+        return any(_nullable(p) for p in path.parts)
+    if isinstance(path, Inverse):
+        return _nullable(path.path)
+    return False
+
+
+def _first_steps(path: Path) -> list[Path]:
+    if isinstance(path, Seq):
+        steps: list[Path] = []
+        for part in path.parts:
+            steps += _first_steps(part)
+            if not _nullable(part):
+                break
+        return steps
+    if isinstance(path, Alt):
+        return [step for part in path.parts for step in _first_steps(part)]
+    if isinstance(path, Mod):
+        return _first_steps(path.path)
+    return [path]
+
+
+def entry(path: Path) -> Path:
+    """The first step of a path, the path that a node holds a value at when it can start the path at all. A sequence starts
+    at its first part, and at the part after it where that part may take no step, an alternative at any of its parts, and an
+    inverse at the inverse of the property the sequence ends in. A node with no value at the entry reaches nothing from it,
+    which is a node that lacks the property and not a node whose collection is empty."""
+    steps = _first_steps(_push(path))
+    unique = list(dict.fromkeys(steps))
+    return unique[0] if len(unique) == 1 else Alt(tuple(unique))
+
+
+def closures(path: Path) -> list[tuple[Path | None, Path]]:
+    """Each closure a path walks, as (the path that reaches the node it starts from, or None where the path's own start is
+    that node, and the path the closure repeats). A closure is `*` or `+` over a path."""
+    found: list[tuple[Path | None, Path]] = []
+
+    def join(prefix: Path | None, step: Path) -> Path:
+        return step if prefix is None else Seq((prefix, step))
+
+    def walk(node: Path, prefix: Path | None) -> None:
+        if isinstance(node, Seq):
+            for i, part in enumerate(node.parts):
+                walk(part, join(prefix, Seq(node.parts[:i])) if i > 1 else (join(prefix, node.parts[0]) if i == 1 else prefix))
+        elif isinstance(node, Alt):
+            for part in node.parts:
+                walk(part, prefix)
+        elif isinstance(node, Mod):
+            if node.mod in ("*", "+"):
+                found.append((prefix, node.path))
+                walk(node.path, join(prefix, Mod(node.path, "*")))
+            else:
+                walk(node.path, prefix)
+
+    walk(_push(path), None)
+    unique: list[tuple[Path | None, Path]] = []
+    for site in found:
+        if site not in unique:
+            unique.append(site)
+    return unique

@@ -64,7 +64,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2f | `mork_rdf` compiles a derivation | built 2026-11-24, building 2026-11-24 | SVA-S2e |
 | SVA-S2g | graph construction projections | built 2026-11-24 | SVA-S2f |
 | SVA-S2h | join projections | built 2026-11-24, building 2026-11-24 | SVA-S2f |
-| SVA-S2i | expansion projections | built 2026-11-25, building 2026-11-24 | SVA-S2f |
+| SVA-S2i | expansion projections | built 2026-11-25 | SVA-S2f |
 | SVA-S2j | expansion combined with graph construction | building 2026-11-25 | SVA-S2i |
 | SVA-S2c | projections lowered and run in a surface step | planned | SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j |
 | SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
@@ -274,3 +274,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-25: SVA-S2j started. SVA-S2i's choices and the addenda on expansions stay open for the maintainer.
 - 2026-11-25: SVA-S2j stopped at its first step with nothing built. Its case, each member of a bundle's list becoming a line linked from the bundle, is section 2.5 of the projection backend sketch, with SVA-Q50 to SVA-Q56: how an expansion and a construction combine on one binding, what a node for each member means, what a key may read, what a node writes from its member, a member that is already an IRI or a blank node, and the decisions that change. `mork_rdf` would need a term to bind a member that the identity, the link and the value all read.
 - 2026-11-25: the maintainer answered SVA-S2i's choices. On candidate evidence an instance that lacks the source property is silent and only an empty collection is reported, as for a join. A closure that makes a node reach itself is reported, and a law refuses a path that reads its own result property. The other five choices stand, and the addenda on expansions are accepted once their text matches. Built as SVA-S2i's follow-up. The maintainer asked why the finding is named `EngineeringReview`: it is ADR-A41's wording, which also asks an engineering review of a derivation, and no derivation records one yet.
+- 2026-11-25: SVA-S2i's follow-up built and reviewed, its checks re-run. On candidate evidence only an instance holding the property with an empty collection is reported, `ClosureCycle` reports a node that reaches itself through a closure or a list that loops, and `srf:P21` refuses a path that reads its own result property. The addenda on expansions to ADR-A18 and ADR-A23 marked accepted, as the maintainer approved.

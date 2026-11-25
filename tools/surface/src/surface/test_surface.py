@@ -2788,7 +2788,7 @@ def expansion_contract(graph: Graph, key: str = "bundle-items-projection", names
 
 
 class ExpansionModelTests(unittest.TestCase):
-    """The analyser applies laws srf:P18 to srf:P20 as the shapes do."""
+    """The analyser applies laws srf:P18 to srf:P21 as the shapes do."""
 
     def test_the_bundle_example_parses_its_evidence_its_source_and_its_property(self) -> None:
         contract = expansion_contract(bundle_graph())
@@ -2895,6 +2895,16 @@ class ExpansionModelTests(unittest.TestCase):
         self.refused(members_path_graph("ex:parts"), "srf:P20")
         self.refused(members_path_graph("( ex:parts ex:contains )"), "srf:P20")
 
+    def test_members_that_read_the_property_the_result_writes_are_refused(self) -> None:
+        """An expansion cannot feed on its own output (law srf:P21), whether the path is stated or a named source gives it."""
+        for path in ("( ex:items ex:contains )", "[ sh:alternativePath ( ex:items ex:contains ) ]", "( ex:items [ sh:inversePath [ sh:oneOrMorePath ex:contains ] ] )", "( ex:items [ sh:zeroOrMorePath ex:contains ] )"):
+            with self.subTest(path=path):
+                self.refused(members_path_graph(path), "srf:P21")
+        self.refused(bundle_with(remove=[("bd-contains", SRF.bindsProperty, None)], add="ex:bd-contains srf:bindsProperty ex:items ."), "srf:P21")
+
+    def test_members_that_read_other_properties_beside_the_evidence_are_allowed(self) -> None:
+        self.assertEqual(expansion_contract(members_path_graph("( ex:items ex:parts )")).expansion.path_text, f"<{BUNDLE_ITEMS}items>/<{BUNDLE_ITEMS}parts>")
+
 
 class ExpansionShapeTests(unittest.TestCase):
     """The shapes of ontology/surface refuse what the analyser refuses, with no code beside them."""
@@ -2964,9 +2974,17 @@ class ExpansionShapeTests(unittest.TestCase):
         self.assertIn("ExpansionPathReadsEvidenceShape", self.violations(members_path_graph("ex:parts")))
         self.assertNotIn("ExpansionPathReadsEvidenceShape", self.violations(members_path_graph("( ex:parts [ sh:inversePath ex:items ] )")))
 
+    def test_members_that_read_the_property_the_result_writes_are_refused(self) -> None:
+        for path in ("( ex:items ex:contains )", "[ sh:alternativePath ( ex:items ex:contains ) ]", "( ex:items [ sh:inversePath [ sh:oneOrMorePath ex:contains ] ] )", "( ex:items [ sh:zeroOrMorePath ex:contains ] )"):
+            with self.subTest(path=path):
+                self.assertIn("ExpansionPathWritesShape", self.violations(members_path_graph(path)))
+        graph = bundle_with(remove=[("bd-contains", SRF.bindsProperty, None)], add="ex:bd-contains srf:bindsProperty ex:items .")
+        self.assertIn("ExpansionPathWritesShape", self.violations(graph))
+        self.assertNotIn("ExpansionPathWritesShape", self.violations(members_path_graph("( ex:items ex:parts )")))
+
     def test_the_laws_the_shapes_discharge_are_in_the_vocabulary(self) -> None:
         vocabulary = parse_files([str(ROOT / "ontology" / "surface" / "vocab" / "surface-vocab.ttl")])
-        for law in ("P18", "P19", "P20"):
+        for law in ("P18", "P19", "P20", "P21"):
             self.assertIn((SRF[law], RDF.type, SRF.Law), vocabulary)
         for source in ("ListMembers", "TransitiveClosure"):
             self.assertIn((SRF[source], RDF.type, SRF.ExpansionSource), vocabulary)
@@ -3093,7 +3111,7 @@ WHERE {{
   ?f1 <{BUNDLE_ITEMS}items>/(<{RDF_REST}>*)/<{RDF_FIRST}> ?v3 .
 }}"""
         self.assertEqual(" ".join(construct.text.split()), " ".join(expected.split()))
-        self.assertEqual(sorted(q.code for q in compiled.checks), ["CollectionEmpty", "InstanceExcluded"])
+        self.assertEqual(sorted(q.code for q in compiled.checks), ["ClosureCycle", "CollectionEmpty", "InstanceExcluded"])
         self.assertEqual([(f.code, f.severity) for f in compiled.findings], [("EngineeringReview", mork_rdf.Severity.WARNING)])
         self.assertFalse(compiled.errors)
 
@@ -3107,7 +3125,7 @@ WHERE {{
   ?f1 <{CATEGORY_ANCESTORS}broader>+ ?v2 .
 }}"""
         self.assertEqual(" ".join(construct.text.split()), " ".join(expected.split()))
-        self.assertEqual(sorted(q.code for q in compiled.checks), ["CollectionEmpty"])
+        self.assertEqual(sorted(q.code for q in compiled.checks), ["ClosureCycle", "CollectionEmpty"])
         self.assertEqual([f.code for f in compiled.findings], ["EngineeringReview"])
 
     def test_the_bundle_example_runs_to_its_expected_graph_on_each_engine(self) -> None:
@@ -3142,28 +3160,57 @@ WHERE {{
                         (CATEGORY_ANCESTORS + "category-c", self.HAS_ANCESTOR, CATEGORY_ANCESTORS + "category-a"),
                     },
                 )
-                self.assertEqual(reported, {("CollectionEmpty", CATEGORY_ANCESTORS + "category-a", f"<{CATEGORY_ANCESTORS}broader>+")})
+                # The broadest category holds no broader relation, so it lacks the property and is silent, and no node reaches itself.
+                self.assertEqual(reported, set())
 
     def test_the_empty_collection_is_information_and_the_exclusion_a_warning(self) -> None:
         compiled = self.compile(bundle_graph())
-        self.assertEqual({q.code: q.severity for q in compiled.checks}, {"InstanceExcluded": mork_rdf.Severity.WARNING, "CollectionEmpty": mork_rdf.Severity.INFO})
+        self.assertEqual({q.code: q.severity for q in compiled.checks}, {"InstanceExcluded": mork_rdf.Severity.WARNING, "CollectionEmpty": mork_rdf.Severity.INFO, "ClosureCycle": mork_rdf.Severity.WARNING})
         out = mork_rdf.run(compiled, bundle_graph())
         self.assertEqual(
             {(f.code, f.focus): f.severity for f in out.findings},
             {("InstanceExcluded", BUNDLE_ITEMS + "bundle-4"): mork_rdf.Severity.WARNING, ("CollectionEmpty", BUNDLE_ITEMS + "bundle-3"): mork_rdf.Severity.INFO},
         )
 
-    def test_on_candidate_evidence_a_bundle_with_no_list_is_reported_as_an_empty_collection_and_none_is_excluded(self) -> None:
+    def test_on_candidate_evidence_a_bundle_with_no_list_is_silent_and_one_with_an_empty_list_is_reported_and_none_is_excluded(self) -> None:
         compiled = self.compile(candidate_bundle_graph())
         self.assertNotIn("InstanceExcluded", {q.code for q in compiled.checks})
         for engine in ("oxigraph", "rdflib"):
             with self.subTest(engine=engine):
                 written, reported = self.evaluate(engine, compiled, bundle_graph())
                 self.assertEqual(len(written), 4)
+                self.assertEqual(reported, {("CollectionEmpty", BUNDLE_ITEMS + "bundle-3", self.WRITTEN_LIST)})
+
+    def test_a_closure_that_reaches_itself_is_reported_by_the_node_and_an_acyclic_one_is_not(self) -> None:
+        compiled = self.compile(category_graph(), "category-ancestors-projection", CATEGORY_ANCESTORS, self.CATEGORY_BASE)
+        cyclic = category_graph()
+        cyclic.parse(
+            data=f"""@prefix ex: <{CATEGORY_ANCESTORS}> .
+            ex:category-a ex:broader ex:category-c .""",
+            format="turtle",
+        )
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                _, reported = self.evaluate(engine, compiled, cyclic)
                 self.assertEqual(
                     reported,
-                    {("CollectionEmpty", BUNDLE_ITEMS + "bundle-3", self.WRITTEN_LIST), ("CollectionEmpty", BUNDLE_ITEMS + "bundle-4", self.WRITTEN_LIST)},
+                    {("ClosureCycle", CATEGORY_ANCESTORS + f"category-{c}", f"<{CATEGORY_ANCESTORS}broader>+") for c in "abc"},
                 )
+                _, quiet = self.evaluate(engine, compiled, category_graph())
+                self.assertEqual(quiet, set())
+
+    def test_a_list_expansion_checks_the_list_for_a_cell_that_reaches_itself_and_a_proper_list_reports_none(self) -> None:
+        compiled = self.compile(bundle_graph())
+        looped = Graph().parse(
+            data=f"""@prefix ex: <{BUNDLE_ITEMS}> . @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            ex:bundle-5 a ex:Bundle ; ex:items _:cell . _:cell rdf:first ex:item-1 ; rdf:rest _:cell .""",
+            format="turtle",
+        )
+        for engine in ("oxigraph", "rdflib"):
+            with self.subTest(engine=engine):
+                _, reported = self.evaluate(engine, compiled, looped)
+                self.assertEqual({(code, value) for code, _, value in reported if code == "ClosureCycle"}, {("ClosureCycle", f"<{RDF_REST}>+")})
+                self.assertNotIn("ClosureCycle", {code for code, _, _ in self.evaluate(engine, compiled, bundle_graph())[1]})
 
     def test_a_path_the_contract_states_compiles_to_the_query_the_source_it_equals_does(self) -> None:
         self.assertEqual([q.text for q in self.compile(list_path_graph()).queries], [q.text for q in self.compile(bundle_graph()).queries])

@@ -319,7 +319,7 @@ class JoinStatement:
 
 @dataclass(frozen=True)
 class ExpansionStatement:
-    """The relation an expansion projection restates (``srf:ExpansionStatement``, laws ``srf:P18`` to ``srf:P20``).
+    """The relation an expansion projection restates (``srf:ExpansionStatement``, laws ``srf:P18`` to ``srf:P21``).
 
     ``evidence`` is the evidence binding the statement expands from, which binds the property the members are reached by.
     ``path`` is the SHACL property path from an instance to its members, as the contract states it or as a named source
@@ -998,7 +998,7 @@ class SurfaceGraphAnalyser:
     def _expansion_statement(
         self, iri: URIRef, projection_kind: URIRef, bindings: Sequence[RoleBinding]
     ) -> Optional[ExpansionStatement]:
-        """The relation an expansion states on its result-target binding, and none for any other kind (laws srf:P18 to srf:P20)."""
+        """The relation an expansion states on its result-target binding, and none for any other kind (laws srf:P18 to srf:P21)."""
         stated = [(b, self.g.value(b.iri, SRF.expandedAs, any=False)) for b in bindings]
         stated = [(b, e) for b, e in stated if e is not None]
         is_expansion = str(projection_kind) == str(SRF.ExpansionProjection)
@@ -1058,6 +1058,10 @@ class SurfaceGraphAnalyser:
                 raise ContractError(
                     f"{statement} states a members path that does not read {evidence.binds_property}, the property of {evidence.iri} it expands from (law srf:P20)"
                 )
+        if link.binds_property in shaclpath.properties(path):
+            raise ContractError(
+                f"{statement} states members that read {link.binds_property}, the property {link.iri} writes, so the expansion would feed on its own output (law srf:P21)"
+            )
         return ExpansionStatement(
             iri=statement,
             evidence=evidence,

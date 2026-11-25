@@ -1161,3 +1161,25 @@ srf:ExpansionPathReadsEvidenceShape a sh:NodeShape ;
 			}
 		"""
 	] .
+
+srf:ExpansionPathWritesShape a sh:NodeShape ;
+	sh:targetClass srf:ExpansionStatement ;
+	sh:sparql [
+		sh:message "An expansion statement's members read the property the result-target role binding that states it binds, so the expansion would feed on its own output. Discharges srf:P21." ;
+		sh:select """
+			PREFIX srf: <https://www.nebularis.org/neuro-semantic/lattice/surface#>
+			PREFIX sh: <http://www.w3.org/ns/shacl#>
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			SELECT $this ?value WHERE {
+				?link srf:expandedAs $this ;
+					srf:bindsProperty ?value .
+				{
+					$this srf:membersPath ?root .
+					?root (sh:inversePath|sh:zeroOrMorePath|sh:oneOrMorePath|(sh:alternativePath/rdf:rest*/rdf:first)|(rdf:rest*/rdf:first))* ?value .
+				} UNION {
+					$this srf:expansionSource ?source ;
+						srf:expandsFrom/srf:bindsProperty ?value .
+				}
+			}
+		"""
+	] .
