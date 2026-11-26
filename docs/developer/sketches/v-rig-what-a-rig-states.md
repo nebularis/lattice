@@ -191,6 +191,6 @@ VR-Q12 to VR-Q14 are kept for the slice that points projection P2 at the ledger'
 
 1. A run of projection P1 on the present rig, which needs no change to anything and says which rows of §2 its documents already state.
 2. The maintainer's answers to VR-Q15 to VR-Q18, given on 2026-11-26, and a pass over §2 and §4 with the run's findings beside them.
-3. The format's next version, a key for each row kept. Format 1 stays readable beside it, and every run record names the format version, since the present rig is kept as a baseline.
+3. The format's next version, a key for each row kept, drafted on 2026-11-26 in the [keys of format 2](v-rig-format-2-keys.md) with VR-Q20 to VR-Q22 open. Format 1 stays readable beside it, and every run record names the format version, since the present rig is kept as a baseline.
 4. The answers to ES-Q11 to ES-Q17, each in the brief of the first slice it bears on.
 5. The rig written once, to §2 and §3.

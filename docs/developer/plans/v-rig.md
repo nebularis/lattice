@@ -144,7 +144,7 @@ Each was answered on 2026-11-07, by the maintainer and by the consumer that read
 
 **VR-Q14. When VR-9 is built.** Answered 2026-11-25, by the maintainer: briefed now and built after the ledger's LG-35, which changes the kernel's events.
 
-VR-Q15 to VR-Q18 are in the [list of what a rig states](../sketches/v-rig-what-a-rig-states.md), and VR-Q19 in the [protocol](../notes/rig-run-protocol.md).
+VR-Q15 to VR-Q18 are in the [list of what a rig states](../sketches/v-rig-what-a-rig-states.md), VR-Q19 in the [protocol](../notes/rig-run-protocol.md), and VR-Q20 to VR-Q22 in the [keys of format 2](../sketches/v-rig-format-2-keys.md).
 
 ## VR-9 in brief, 2026-11-25
 
