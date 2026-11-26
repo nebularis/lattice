@@ -154,7 +154,7 @@ Each was answered on 2026-11-07, by the maintainer and by the consumer that read
 
 **VR-Q14. When VR-9 is built.** Answered 2026-11-25, by the maintainer: briefed now and built after the ledger's LG-35, which changes the kernel's events.
 
-VR-Q15 to VR-Q18 are in the [list of what a rig states](../sketches/v-rig-what-a-rig-states.md), VR-Q19 in the [protocol](../notes/rig-run-protocol.md), and VR-Q20 to VR-Q23 in the [keys of format 2](../sketches/v-rig-format-2-keys.md). VR-Q20 to VR-Q22 were answered on 2026-11-26, (a) each, and are now the addendum of that day to ADR-A153. VR-Q23 is open.
+VR-Q15 to VR-Q18 are in the [list of what a rig states](../sketches/v-rig-what-a-rig-states.md), VR-Q19 in the [protocol](../notes/rig-run-protocol.md), and VR-Q20 to VR-Q24 in the [keys of format 2](../sketches/v-rig-format-2-keys.md). VR-Q20 to VR-Q22 were answered on 2026-11-26, (a) each, and are now the addendum of that day to ADR-A153. VR-Q23 and VR-Q24 are open.
 
 ## VR-9 in brief, 2026-11-25
 
@@ -174,7 +174,7 @@ VR-Q15 to VR-Q18 are in the [list of what a rig states](../sketches/v-rig-what-a
 
 ## VR-10 to VR-12 in brief, 2026-11-26
 
-The [keys of format 2](../sketches/v-rig-format-2-keys.md) are the design, and its section 5 lists what is owed. It is three slices, since it touches the module, the tool and the scheme and holds more tests than one slice carries. None is built, and none starts before VR-Q23 is answered and the rig's owner has seen the draft, since a key the owner asks for is cheaper to add before the synthetic rig is written.
+The [keys of format 2](../sketches/v-rig-format-2-keys.md) are the design, and its section 5 lists what is owed. It is three slices, since it touches the module, the tool and the scheme and holds more tests than one slice carries. None is built, and none starts before VR-Q23 and VR-Q24 are answered and the rig's owner has seen the draft, since a key the owner asks for is cheaper to add before the synthetic rig is written.
 
 **VR-10, the format read.** Examples first: a graph of a fact with a value and a record of qualifiers, and one of a party declared for the rig, validated against the module's shapes before any code. Then `rig.py` accepts `format_version: 2` and reads the parties file, and `lift.py` gains four rules, a mapping holding `value` is the fact of that value with the rest as a record on it, `unknown` is read on every carrier and record, an id of a party, an agreement, a limit, a section or an event resolves as a document's does, and a pointer resolves to the body node at its locator or is an unresolved reference. A synthetic rig of format 2 is begun beside the mini-rig, which stays as it is for the tests of format 1, holding one document, one programme, the parties file and two events. *Done when* the mini-rig's tests pass unchanged, a rig of format 1 with its version changed to 2 lifts to the same facts, and the new rig lifts with every qualifier, id and pointer carried. The module changes only as VR-Q23 is answered.
 

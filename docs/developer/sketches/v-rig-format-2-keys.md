@@ -2,7 +2,7 @@
 
 # The rig format's next version, key by key
 
-**Unit:** `v-rig`, prefix VR ([plan](../plans/v-rig.md), [status](../status/v-rig.md)). **Status:** drafted 2026-11-26, at the maintainer's request, outside any slice. It names keys and holds no content of any rig. VR-Q20 to VR-Q22 were answered on 2026-11-26, (a) each, and VR-Q23 is open. Nothing here is built.
+**Unit:** `v-rig`, prefix VR ([plan](../plans/v-rig.md), [status](../status/v-rig.md)). **Status:** drafted 2026-11-26, at the maintainer's request, outside any slice. It names keys and holds no content of any rig. VR-Q20 to VR-Q22 were answered on 2026-11-26, (a) each, and VR-Q23 and VR-Q24 are open. Nothing here is built.
 
 ## 1. What this is
 
@@ -54,6 +54,8 @@ A reference from one provision to another stays in the body, where the tool alre
 | Key | On | Value | Was | Term |
 |---|---|---|---|---|
 | `parties` | parties file | a list of `id`, `name` and `kind` | new. Format 1 names a party by a string | `pty:Actor` |
+| `known_within` | a party of the parties file | a list of ids of documents and programmes within which the party has this id and no other (VR-Q24) | new | |
+| `maybe_same_as` | a party of the parties file | a list of ids of parties it may be, where the rig's writer cannot tell (VR-Q24) | new | |
 | `parties` | document | a list of `party`, `capacity` and `stated_in` | new | `pty:RoleOccupancy`, `pty:inRole` |
 | `composition` | document | a token, for example each for its own share or bound together, with `stated_in` | new | `pty:hasCompositionRule` |
 | `authorities` | document | a list of `holder`, `for`, `act`, `subject`, `bounds` and `stated_in` | new | Ensemble's K8, not built |
@@ -254,9 +256,30 @@ The competency questions do not change. A question that returns no row on a rig 
 
 **VR-Q23. How a party declared for the rig is carried in the representation.** The module has a carrier for a document, a programme and an event, each with the id the rig gives it, and a record for whatever a fact holds. A party declared once for the rig is none of these. (a) A class for a party, a carrier with the rig's id for it, as an event is. One class and one generic word, and the module's version moves with the property VR-Q22 adds. (b) One class for anything a rig declares at its own level, with the kind as a token, so that a later file of the same sort, for example the units a rig settles in, adds no class. It costs a token that a mapping must read before it knows what it holds. (c) No carrier of its own. The lifter copies each party into the programmes that name it, as a record, which needs no class and gives back what VR-Q21 (a) was chosen to avoid, one party as several nodes. *Leaning (a).* Party is a word as generic as programme, a second file of the sort is a guess today, and (b) can still replace (a) before the module's first release that carries either.
 
+**VR-Q24. How a rig states what it knows of a party's identity.** The answer to VR-Q21 has a party declared once, so that one party is one node. A rig's writer does not always know that. Two mentions in two documents may be one party or two, and a rig that gives them one id, or two, states more than its writer knows. Nothing in the draft lets a rig say so, and a question that counts the parties to a layer, or asks whose a line is, then answers with a confidence the rig does not have. A fact has three states (the plan's principle 3), and whether two parties are one is a fact.
+
+```mermaid
+flowchart LR
+  subgraph P1["programme one"]
+    A["party-01"]
+    B["party-02"]
+    C["party-03"]
+  end
+  subgraph P2["programme two"]
+    D["party-04"]
+    E["party-05"]
+  end
+  B -. "maybe the same" .- C
+  A -. "not stated" .- D
+```
+
+(a) Two keys on a party of the parties file. `known_within` lists the documents and programmes within which the party has this id and no other, so that two ids listed for one of them are two parties there. `maybe_same_as` lists the parties it may be, where the writer cannot tell. Across carriers no party lists, sameness is not stated, and no mapping may take two ids for two parties. In the drawing, the three parties of programme one each list it, two of them name each other as doubtful, and nothing is stated between the programmes. A writer who knows two ids are one party gives them one id, so the format needs no key for that. (b) `known_within` alone. A doubtful pair within one programme stays two parties and nothing says so. One key fewer, and the commonest doubt, one party written two ways, is silently counted twice. (c) No statement of where identity holds. Every pair of ids is taken as not known to be distinct until the rig states `distinct_from`, which is the honest default and costs a statement for each pair, 21 for the seven parties of one small programme and 1,225 for fifty, against seven and fifty entries under (a). *Leaning (a).* It states what is known in the fewest lines, the doubt is a fact a question can report beside its answer, and both keys are carried by what VR-10 already builds, since each is a list of ids.
+
+Under any option a party's `name` is never required, and a rig may list it as not known. A natural person may be given an identity within one document only, which `known_within` states without a key of its own. A question that counts parties or joins on one then says which of its rows rest on a doubtful pair or cross a carrier no party lists, which is VR-12's to write.
+
 ## 7. Order of work
 
-1. The maintainer's answers to VR-Q20 to VR-Q22, given on 2026-11-26, and to VR-Q23.
+1. The maintainer's answers to VR-Q20 to VR-Q22, given on 2026-11-26, and to VR-Q23 and VR-Q24.
 2. This draft goes to the rig's owner through the maintainer, who may ask for a key (the [protocol](../notes/rig-run-protocol.md), section 3).
 3. What section 5 lists is built as VR-10 to VR-12 of the [plan](../plans/v-rig.md), with the synthetic rig of format 2 begun first.
 4. The rig is written once, to the list and to these keys.
