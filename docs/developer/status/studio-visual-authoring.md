@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** the maintainer's live check of the guard, then SVA-S1's first part, the canvas drawing every kind with the targets and the findings. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** a pause, for the maintainer's answers on SVA-S1 part 1, then part 2, building a path by clicking. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -294,3 +294,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-26: SVA-X5 built. The secret-read guard matches a wildcard by path segment and only where a program opens what it names, never reads Grep's pattern as a path, takes its root from the call's working directory, refuses through the hook's JSON deny decision, and a guard that cannot run lets the call through with a warning. A live check in a session started in the checkout is left to the maintainer.
 - 2026-11-26: SVA-X5 built.
 - 2026-11-26: the maintainer confirmed SVA-X5 live, the guard's fix freeing the session that had been blocked.
+- 2026-11-26: SVA-S1 part 1 built. The surface canvas draws every kind of contract from the configuration as authored, the targets as types from the workspace's ontology, the lowered scheme from the latest surface compilation with its review findings, opened read only in the mapping canvas, and each finding on the element it concerns. The compiled form holds no mapping's terms, so the read-only scheme shows mappings by name, a question for the maintainer.

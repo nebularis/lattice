@@ -61,15 +61,20 @@ const ROUTED = (data: RoutedEdgeData): RoutedEdgeData => ({ ...data, className: 
 export function MappingCanvas(props: {
   workspace: string;
   scheme: Scheme;
-  graph: Graph;
+  /** The mapping part, which a scheme of the part is edited in. A scheme held by a compile job's artefact has none and is read only. */
+  graph?: Graph;
   prefixes: Record<string, string>;
   selected?: string;
   open: (node: string) => void;
-  add: (type: "Datum" | "DataMapping", parent?: string) => void;
-  edit: (change: (g: Graph) => Graph) => void;
+  add?: (type: "Datum" | "DataMapping", parent?: string) => void;
+  edit?: (change: (g: Graph) => Graph) => void;
   counts?: (mapping: string) => number | undefined;
   /** Whether the counts come from a run that is out of date. */
   countsStale?: boolean;
+  /** Draws the scheme and nothing more: no link is dragged and no menu offers an edit. */
+  readOnly?: boolean;
+  /** What a mapping says under its name, in place of the terms it writes, for a scheme that is held without them. */
+  describe?: (mapping: string) => string;
 }) {
   const { scheme, prefixes, selected } = props;
   const storageKey = `lattice-studio:mapping-canvas:${props.workspace}:${scheme.iri}`;
@@ -81,10 +86,10 @@ export function MappingCanvas(props: {
     }));
     const mappings: Node[] = scheme.mappings.map((m) => ({
       id: m.iri, type: "mapping", position: at,
-      data: { mapping: m, terms: written(m, prefixes).map((w) => `${w.box} ${w.term}`).join("  "), selected: m.iri === selected, count: props.counts?.(m.iri), stale: props.countsStale },
+      data: { mapping: m, terms: props.describe ? props.describe(m.iri) : written(m, prefixes).map((w) => `${w.box} ${w.term}`).join("  "), selected: m.iri === selected, count: props.counts?.(m.iri), stale: props.countsStale },
     }));
     return [...sources, ...mappings];
-  }, [scheme, prefixes, selected, props.counts, props.countsStale]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scheme, prefixes, selected, props.counts, props.countsStale, props.describe]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The source concepts are the rank before the first, in the order the scheme lists them, and a mapping's rank is its depth and its order its row.
   const hints = useMemo<LayoutHints>(() => ({
@@ -112,12 +117,12 @@ export function MappingCanvas(props: {
   const connect = (c: Connection) => {
     if (!c.source || !c.target) return;
     const isSource = scheme.sources.some((s) => s.iri === c.source);
-    props.edit((g) => (isSource ? setSource(g, c.target!, c.source!) : setParent(g, c.target!, c.source!) ?? g));
+    props.edit?.((g) => (isSource ? setSource(g, c.target!, c.source!) : setParent(g, c.target!, c.source!) ?? g));
   };
 
   const removeLink = (edge: Edge) => {
     const [kind, node] = edge.id.split("|") as ["parent" | "template" | "source", string];
-    props.edit((g) => unlink(g, kind, node));
+    props.edit?.((g) => unlink(g, kind, node));
   };
 
   const nodeMenu = (node: Node): MenuItem[] | undefined => {
@@ -125,12 +130,12 @@ export function MappingCanvas(props: {
     const m = (node.data as MappingData).mapping;
     return [
       { label: "Open in the editor", run: () => props.open(m.iri) },
-      { label: "Add a child datum", run: () => props.add("Datum", m.iri) },
-      { label: "Add a child data mapping", run: () => props.add("DataMapping", m.iri) },
+      { label: "Add a child datum", run: () => props.add?.("Datum", m.iri) },
+      { label: "Add a child data mapping", run: () => props.add?.("DataMapping", m.iri) },
       ...(m.parent ? [{ label: "Detach from its parent", run: () => removeLink({ id: `parent|${m.iri}`, source: m.parent!, target: m.iri }) }] : []),
       {
         label: "Delete the mapping", danger: true,
-        run: () => window.confirm(`Delete ${m.label}? Links to it are removed too. You can undo this.`) && props.edit((g) => g.edit((e) => e.remove(m.iri))),
+        run: () => window.confirm(`Delete ${m.label}? Links to it are removed too. You can undo this.`) && props.edit?.((g) => g.edit((e) => e.remove(m.iri))),
       },
     ];
   };
@@ -148,12 +153,12 @@ export function MappingCanvas(props: {
       storageKey={storageKey}
       height={Math.max(420, Math.min(900, (scheme.mappings.length + 2) * 28))}
       defaultViewport={{ x: COLUMN + 60, y: 16, zoom: 0.85 }}
-      onConnect={connect}
+      onConnect={props.readOnly ? undefined : connect}
       onNodeClick={(n) => n.type === "mapping" && props.open(n.id)}
-      nodeMenu={nodeMenu}
-      edgeMenu={(edge) => [{ label: `Remove the ${edge.id.split("|")[0]} link`, run: () => removeLink(edge), danger: true }]}
+      nodeMenu={props.readOnly ? undefined : nodeMenu}
+      edgeMenu={props.readOnly ? undefined : (edge) => [{ label: `Remove the ${edge.id.split("|")[0]} link`, run: () => removeLink(edge), danger: true }]}
       paneMenu={({ layOutAgain }) => [
-        { label: "Add a root datum", run: () => props.add("Datum") },
+        ...(props.readOnly ? [] : [{ label: "Add a root datum", run: () => props.add?.("Datum") }]),
         { label: "Lay the scheme out again", run: layOutAgain },
       ]}
     />

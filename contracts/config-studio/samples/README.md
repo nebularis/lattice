@@ -15,7 +15,7 @@ To open a studio sample, press **New workspace**, choose the card with the sampl
 | Policies from XML and JSON | `policies-transforms` | [runs, and mapping over XML and JSON](#policies-from-xml-and-json) |
 | Library, with imports | `library-imports` | [imports from LATTICE's documents](#library-with-imports) |
 | Fleet axioms | `axioms` | [the axiom forms](#fleet-axioms) |
-| Facility agreement, every part | `facility` | [drawing](#facility-agreement-the-drawing), [persistence](#facility-agreement-persistence-canvas-and-simulator), [surface](#facility-agreement-surface-steps) and [vocabulary, quantities and eligibility](#facility-agreement-vocabulary-quantities-and-eligibility) |
+| Facility agreement, every part | `facility` | [drawing](#facility-agreement-the-drawing), [persistence](#facility-agreement-persistence-canvas-and-simulator), [surface canvas](#facility-agreement-surface-canvas), [surface](#facility-agreement-surface-steps) and [vocabulary, quantities and eligibility](#facility-agreement-vocabulary-quantities-and-eligibility) |
 | Species, an RDF mapping in two strata | `species-mappings` | [an RDF mapping with strata and a closure](#species-an-rdf-mapping-in-two-strata) |
 | Policies from CSV | `policies-csv` | [a CSV source and the waiting RML form](#policies-from-csv-and-from-yaml) |
 | Policies from YAML | `policies-yaml` | [a YAML source and the waiting RML form](#policies-from-csv-and-from-yaml) |
@@ -231,7 +231,29 @@ The facility sample's surface part promotes a borrower's sector onto the facilit
 3. Read the answer. It holds the compile job's checks, each contract's rows before and after, the rows the edit asserted and retracted, and which contracts' read sets it touched, with the engine named.
 4. Send the others and compare. Each file's header says what its edit does, for example that the `repay` step removes every drawdown, that the `borrower` and `sector` steps change the sector the drawdowns' rows read, and that the `subtype` and `vocabulary` steps reach a drawdown through the class hierarchy.
 5. Send `facility-surface-step-projection.trig` as a `simulate` run of target `projection`. [A projection step](../README.md#a-projection-step) lists its parts, one for each of the six projections.
-6. The studio has no surface pane yet, so these steps are sent through the run request and are checked by the worker and service suites, `mise run check:workers` and `mise run check:config-studio`.
+6. The studio has no surface simulator pane yet, so these steps are sent through the run request and are checked by the worker and service suites, `mise run check:workers` and `mise run check:config-studio`.
+
+### Facility agreement, surface canvas
+
+**Demonstrates:** the surface canvas, which draws each contract of the facility sample's surface part from its carrier class, through what is read from it, to what is written. It draws the promotion over its three-hop read path, the index, and a projection of each kind, a derivation, two constructions, a join, an expansion and a node for each member. The targets a contract writes are drawn as types from the baseline, marked where it declares none, and a small box for each projection reads the lowered scheme from a surface compilation. The canvas edits nothing.
+
+**Documents:**
+
+- [`facility-surface.ttl`](facility-surface.ttl), the surface configuration the canvas draws
+- [`lending-baseline.ttl`](lending-baseline.ttl) and [`facility-baseline.ttl`](facility-baseline.ttl), the ontology the targets are read from. None of the terms the projections write is declared there, so each target is marked
+- [`compiled-surface-facility.json`](../../../apps/config-studio/e2e/fixtures/compiled-surface-facility.json), the `projections` group and the findings of the surface compilation, which the browser journeys' fake service serves and the worker's own test keeps equal to what the compiler gives
+
+**Studio sample:** Facility agreement, every part (`facility`)
+
+**Steps:**
+
+1. Make a workspace from the sample, open the Surface view and choose **Canvas** in the detail pane. Nothing is selected, so the canvas draws all eight contracts, and each projection's scheme box says there is no compilation yet.
+2. Select `facility-margin` in the list. The result edge reads `commitment × margin : decimal`, the two required evidence nodes are solid, and the target `marginWeightedCommitment` is marked undeclared. The form below the canvas edits the contract as before.
+3. Select `facility-branch`. A box for the second carrier, `Branch`, joins its code to the facility's by an edge marked `=`, and the join box states its two cardinality rules.
+4. Select `facility-covenant-test` to see the members path `covenants`, `rdf:rest *`, `rdf:first`, and the node made for each member with its identity and what it writes from the member. Select `facility-refinancing` to see a closure marked on a dashed hop.
+5. Press **Compile**. Each scheme box now gives its name, its mappings and its review findings, for example `MappingReview × 1` for the join. Click it to open the scheme in the mapping canvas, read only.
+6. Edit the surface part, for example add a promotion. The boxes are marked out of date until the next compilation.
+7. A click on a node of the canvas selects the matching node in the form. The findings the form shows for a node are drawn on the element they concern, for example the undeclared property on the result edge.
 
 ## Mapping
 

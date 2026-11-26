@@ -577,6 +577,28 @@ table.axiom-rows.nested th { position: static; }
 .landing-node.reference { border-style: dashed; }
 .landing-node.target { border-color: var(--persist); background: var(--persist-2); }
 .landing-node.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* The surface canvas (SVA-S1): a node for each part of a contract, the carrier, what is read, what is written and the lowered scheme. */
+.surface-node { height: auto; padding: 5px 10px 7px 12px; }
+.surface-node .surface-tag { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
+.surface-node .surface-tag .chip { height: 16px; font-size: 10px; text-transform: none; letter-spacing: 0; }
+.surface-node .surface-title { display: block; overflow-wrap: anywhere; }
+.surface-node .surface-line { overflow-wrap: anywhere; line-height: 1.35; }
+.surface-node .surface-finding { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 11px; }
+.surface-node.carrier { border-color: var(--surface-c); background: var(--surface-c2); }
+.surface-node.evidence { border-color: var(--border-strong); }
+.surface-node.class { border-style: dashed; background: var(--surface-2); }
+.surface-node.statement, .surface-node.entries { border-color: var(--surface-c); }
+.surface-node.target { border-color: var(--baseline-c); background: var(--baseline-c2); }
+.surface-node.target.marked { border-color: var(--warn); border-style: dashed; }
+.surface-node.scheme { border-color: var(--accent); cursor: pointer; }
+.surface-node.scheme.stale { border-style: dashed; opacity: 0.8; }
+.surface-node.found-warning { box-shadow: 0 0 0 2px var(--warn); }
+.surface-node.found-violation { box-shadow: 0 0 0 2px var(--bad); }
+.surface-node.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+.surface-findings { padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.surface-findings ul { margin: 0; padding: 0; list-style: none; }
+.surface-findings li { gap: 6px; padding: 2px 0; }
 .landing-kind { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--persist); }
 .landing-label { display: block; overflow-wrap: anywhere; }
 .landing-graph { font: 11px/1.4 var(--mono); color: var(--text-2); overflow-wrap: anywhere; white-space: normal; }

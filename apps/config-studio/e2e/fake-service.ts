@@ -147,6 +147,13 @@ const INS = "https://www.nebularis.org/neuro-semantic/lattice/instrument#";
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 const PREFIX = `@prefix cst: <${CST}> .\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n@prefix sh: <http://www.w3.org/ns/shacl#> .\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n`;
 
+/** The facility sample's surface compilation as the compiler gave it: its `projections` group and the findings of its report. */
+interface SurfaceCompilation {
+  conforms: boolean;
+  artefacts: { path: string; mediaType: string; group: string; content: string }[];
+  findings: { severity: string; code: string; focus: string; message: string }[];
+}
+
 interface Held {
   digest: string;
   label: string;
@@ -424,6 +431,14 @@ export class FakeService {
     if (mapped) {
       const written = mapped.compiled.map((a) => ` ; cst:artefact [ cst:path ${JSON.stringify(a.path)} ; cst:mediaType ${JSON.stringify(a.mediaType)} ; cst:group ${JSON.stringify(a.group)} ; cst:content ${JSON.stringify(a.content)} ]`).join("");
       return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms ${mapped.conforms} ; cst:report <urn:r> ; cst:finishedAt "2026-10-27T10:00:01Z"^^xsd:dateTime${written} .\n<urn:r> a sh:ValidationReport .\n`;
+    }
+    // A compilation of a surface part that holds projections gives the `projections` group and the findings of the facility sample's compilation, the file the
+    // worker's own test keeps equal to what the compiler gives (workers/tests/test_config_studio_compiled_fixture.py).
+    if (job.kind === "compile" && job.target === "surface" && job.body.includes("ProjectionContract")) {
+      const compiled = JSON.parse(readFileSync(join(import.meta.dirname, "fixtures/compiled-surface-facility.json"), "utf-8")) as SurfaceCompilation;
+      const written = compiled.artefacts.map((a) => ` ; cst:artefact [ cst:path ${JSON.stringify(a.path)} ; cst:mediaType ${JSON.stringify(a.mediaType)} ; cst:group ${JSON.stringify(a.group)} ; cst:content ${JSON.stringify(a.content)} ]`).join("");
+      const results = compiled.findings.map((f) => `<urn:r> sh:result [ sh:resultSeverity sh:${f.severity} ; sh:resultMessage ${JSON.stringify(f.message)} ; cst:code ${JSON.stringify(f.code)} ; sh:focusNode <${f.focus}> ] .`).join("\n");
+      return `${PREFIX}${head} ; cst:status cst:Succeeded ; cst:conforms ${compiled.conforms} ; cst:report <urn:r> ; cst:finishedAt "2026-10-27T10:00:01Z"^^xsd:dateTime${written} .\n<urn:r> a sh:ValidationReport .\n${results}\n`;
     }
     const refused = job.body.includes("NoErasure");
     const finding = refused
