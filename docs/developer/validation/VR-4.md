@@ -7,6 +7,8 @@
 **Plan and test cases:** [the plan](../plans/v-rig.md), VR-4 in detail, the Formal methods table's row for P1.
 **Decisions:** [ADR-A153](../../architecture/decisions/ADR-A153-verification-rig-module.md) decisions 5 and 6, [ADR-A83](../../architecture/decisions/ADR-A83-test-only-reasoning-engine-isolation.md) for the reasoner.
 
+**Corrected 2026-11-26.** The handoff below says the reasoner finds the mini-rig's projection inconsistent because of a date where a date and time is wanted. That was not the cause. The scheme projected each definition as bound in an instrument and as expressed in an element, which Instrument allows only of a term, and a search for the smallest inconsistent set found it. With those two rows removed the mini-rig's projection is consistent, bare dates and all. The date is still a shape violation. The counts below are the run's of 2026-11-08 and are left as they were.
+
 ## Invariant
 
 The projected layer graph is validated by every target layer's shapes, checked for consistency with the layers' specifications where a reasoner is available and reported as unchecked where not, and asked the tracked competency questions, and every answer that is not clean is a finding located at the node of the representation it came from or at the tracked file that asked.

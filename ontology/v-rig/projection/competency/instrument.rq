@@ -20,11 +20,14 @@ SELECT ?instrument ?quantity WHERE { ?instrument a ins:Instrument ; ?p ?quantity
 # question follows-form: Which instruments stand in a relation to another instrument, such as following its form or sitting above it?
 SELECT ?instrument ?other WHERE { ?instrument a ins:Instrument ; ?p ?other . ?other a ins:Instrument . FILTER (?instrument != ?other) }
 
-# question definitions: Which definitions are bound in an instrument and expressed in an element of its wording?
-SELECT ?definition ?instrument ?element WHERE { ?definition a ins:Definition ; ins:boundIn ?instrument ; ins:alsoExpressedIn ?element . }
+# question definitions: Which definitions arise under a term, and which element of a wording states that term?
+SELECT ?definition ?term ?element WHERE { ?definition a ins:Definition ; ins:arisesUnder ?term . ?term ins:expressedIn ?element . }
 
-# question terms: Which terms, other than definitions, are bound in an instrument?
-SELECT ?term ?instrument WHERE { ?term ins:boundIn ?instrument . FILTER NOT EXISTS { ?term a ins:Definition } }
+# question defined-words: Which definitions does the projection hold at all, with the word each defines where it is stated?
+SELECT ?definition ?word WHERE { ?definition a ins:Definition . OPTIONAL { ?definition ins:defines ?word } }
+
+# question terms: Which terms are bound in an instrument?
+SELECT ?term ?instrument WHERE { ?term ins:boundIn ?instrument . }
 
 # question amendment-effect: Which amendments state the time from which their effect holds?
 SELECT ?amendment ?from WHERE { ?amendment a ins:Amendment ; fnd:hasTemporalScope ?scope . ?scope fnd:validFrom ?from . }

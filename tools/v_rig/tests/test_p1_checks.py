@@ -153,6 +153,24 @@ def test_an_empty_query_finding_is_located_at_the_file_that_asked(graph, compete
         assert str(graph.value(locator, VRIG.view)) == str(VRIG.Declared)
 
 
+def test_the_mini_rigs_projection_is_consistent(graph, layers, modules):
+    """The scheme once projected a definition as bound in an instrument and as expressed in an element, which Instrument
+    allows only of a term, so every projection with a definition was inconsistent. The mini-rig has definitions, and its
+    projection is consistent with the layers' specifications."""
+    try:
+        from mork_compilers import reasoning
+        available = reasoning.available()
+    except ImportError:
+        available = False
+    result = p1_checks.ChecksResult()
+    p1_checks.check_consistency(graph, layers, result, modules)
+    if available:
+        assert result.consistent is True
+        assert not result.findings
+    else:
+        assert {kind for kind, *_ in result.findings} == {VRIG.ReasonerUnavailable}
+
+
 def test_consistency_is_checked_or_reported_unavailable(graph, layers, modules):
     result = p1_checks.ChecksResult()
     p1_checks.check_consistency(graph, layers, result, modules)

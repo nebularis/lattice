@@ -153,19 +153,9 @@ mm:Map_TextElement a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layer
 mm:Map_Definition a mork:DataMapping , mork:Datum ; mork:mappingScheme mm:Layers ;
     mork:mappingFor mm:C_DefinedTerm ; mork:deferredMapping mm:Cls_Definition ;
     mork:conceptFQNameTemplate "definition/{$vrig:locator}" ;
-    mork:compositeNarrowerMapping mm:Map_DefinitionLabel , mm:Map_DefinitionElement , mm:Map_DefinitionBoundIn .
+    mork:compositeNarrowerMapping mm:Map_DefinitionLabel .
 
 mm:Map_DefinitionLabel a mork:DataMapping ; mork:mappingScheme mm:Layers ; mork:exactRBoxMatch rdfs:label ; mork:dataRef "vrig:term" .
-
-mm:Map_DefinitionElement a mork:DataMapping ; mork:mappingScheme mm:Layers ;
-    mork:broaderApplicative mm:Map_Definition ; mork:mappingFor mm:C_Same ; mork:deferredMapping mm:Cls_Element ;
-    mork:inverseRBoxMatch ins:alsoExpressedIn ; mork:conceptFQNameTemplate "element/{$vrig:locator}" .
-
-mm:Map_DefinitionBoundIn a mork:DataMapping ; mork:mappingScheme mm:Layers ;
-    mork:broaderApplicative mm:Map_Definition ; mork:mappingFor mm:C_Scope ;
-    mork:appliesWhen [ a sh:NodeShape ; sh:property [ sh:path rdf:type ; sh:hasValue vrig:Document ] ] ;
-    mork:deferredMapping mm:Cls_Instrument ; mork:inverseRBoxMatch ins:boundIn ;
-    mork:conceptFQNameTemplate "instrument/{$vrig:rigId}" .
 
 # ---- a limit is an account definition with its stated amount, an attachment a quantity. A limit written as a
 # formula is neither, since its amount is not a number until its inputs are bound, which is a projection's work ----

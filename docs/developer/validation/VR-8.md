@@ -21,6 +21,8 @@ Projection P1 asks eighteen more competency questions of a projected case, each 
 - **Prefixes in a fixed order.** `canonical_turtle` binds a prefix for each namespace a predicate uses, in the order of the namespaces, where the serialiser had numbered them in the order a set gave.
 - **A deny list that can gate.** `deny_terms` leaves out an entry the checkout's tracked text holds, where the rig is outside the checkout. A rig inside the checkout keeps every entry.
 
+**After the build, 2026-11-26.** Tracing the one inconsistency of the first run changed the tracked scheme and two questions, which this slice's count of 46 does not include. `definitions` now asks for the term a definition arises under and the element that states the term, `terms` no longer sets definitions aside, and `defined-words` is new, so the questions number 47. The mini-rig's projection is consistent, which `test_the_mini_rigs_projection_is_consistent` holds, and the suite passes with 80.
+
 ## Test cases
 
 | ID | Given, when, then | Level | Positive or negative | Pass criterion |
