@@ -169,21 +169,13 @@ Seven rows were raised nowhere before this list. They are ES-Q11 to ES-Q17 of th
 
 ## 5. Questions for the maintainer
 
-**VR-Q15. What the next rig covers.** (a) The agreements, the structure and the events of §2.1 to §2.7 and §2.9, with no placing history. (b) Those and §2.8's placing, the states of each line and the market's answers. (c) Those and a vehicle that takes risk from the structure, as instruments and what they pay. *Leaning (b).* The placing rows are what phase 7's examples need, and they add documents of another kind, which is the costly part to add later. A vehicle is a further set of agreements and can be a rig of its own.
+**VR-Q15. What the next rig covers.** (a) The agreements, the structure and the events of §2.1 to §2.7 and §2.9, with no placing history. (b) Those and §2.8's placing, the states of each line and the market's answers. (c) Those and a vehicle that takes risk from the structure, as instruments and what they pay. *Leaning (b).* The placing rows are what phase 7's examples need, and they add documents of another kind, which is the costly part to add later. A vehicle is a further set of agreements and can be a rig of its own. Answered 2026-11-26, (b). Decided by the maintainer, who notes there may be no real placing documents to work from. The placing history is then invented, from published market forms and generic premises, as every other part of a rig is.
 
-**Answered 2026-11-26, (b).** Decided by the maintainer, who notes there may be no real placing documents to work from. The placing history is then invented, from published market forms and generic premises, as every other part of a rig is.
+**VR-Q16. Whether a rig holds agreements from outside insurance.** Ensemble's examples come from lending and construction as well. (a) Insurance only, with the other fields left to the examples ES-0 writes by hand. (b) One small structure from another field in the same rig. *Leaning (a).* The reading restrictions that make a rig costly apply to its sources, and ES-0's examples are invented from generic premises at no such cost. Answered 2026-11-26, (a). Decided by the maintainer. A rig is for checking insurance examples safely and lawfully.
 
-**VR-Q16. Whether a rig holds agreements from outside insurance.** Ensemble's examples come from lending and construction as well. (a) Insurance only, with the other fields left to the examples ES-0 writes by hand. (b) One small structure from another field in the same rig. *Leaning (a).* The reading restrictions that make a rig costly apply to its sources, and ES-0's examples are invented from generic premises at no such cost.
+**VR-Q17. How the format carries a fact no layer has a term for.** (a) A key for every row of §2, tracked, so a missing term is an unmapped key and a finding. (b) Keys only for rows a layer can hold, with the rest left in the text of the documents. *Leaning (a).* A fact that is only in the text reaches no finding, so a run cannot tell that the documents state it. Answered 2026-11-26, (a). Decided by the maintainer. The findings a missing term produces by design are listed once, by row, and are not triaged one by one.
 
-**Answered 2026-11-26, (a).** Decided by the maintainer. A rig is for checking insurance examples safely and lawfully.
-
-**VR-Q17. How the format carries a fact no layer has a term for.** (a) A key for every row of §2, tracked, so a missing term is an unmapped key and a finding. (b) Keys only for rows a layer can hold, with the rest left in the text of the documents. *Leaning (a).* A fact that is only in the text reaches no finding, so a run cannot tell that the documents state it.
-
-**Answered 2026-11-26, (a).** Decided by the maintainer. The findings a missing term produces by design are listed once, by row, and are not triaged one by one.
-
-**VR-Q18. Whether the recorded order of events is a key.** Today the events file's own order is the only order. (a) Each event states the instant it became known beside the instant it took effect. (b) The file's order stays the recorded order. *Leaning (a).* Every backdated case of §3 depends on the two being apart, and a file's order is lost by any tool that sorts it.
-
-**Answered 2026-11-26, (a).** Decided by the maintainer, since the ledger's open questions LG-Q59 to LG-Q62 all turn on it.
+**VR-Q18. Whether the recorded order of events is a key.** Today the events file's own order is the only order. (a) Each event states the instant it became known beside the instant it took effect. (b) The file's order stays the recorded order. *Leaning (a).* Every backdated case of §3 depends on the two being apart, and a file's order is lost by any tool that sorts it. Answered 2026-11-26, (a). Decided by the maintainer, since the ledger's open questions LG-Q59 to LG-Q62 all turn on it.
 
 VR-Q12 to VR-Q14 are kept for the slice that points projection P2 at the ledger's kernel.
 
@@ -191,6 +183,6 @@ VR-Q12 to VR-Q14 are kept for the slice that points projection P2 at the ledger'
 
 1. A run of projection P1 on the present rig, which needs no change to anything and says which rows of §2 its documents already state.
 2. The maintainer's answers to VR-Q15 to VR-Q18, given on 2026-11-26, and a pass over §2 and §4 with the run's findings beside them.
-3. The format's next version, a key for each row kept, drafted on 2026-11-26 in the [keys of format 2](v-rig-format-2-keys.md) with VR-Q20 to VR-Q22 open. Format 1 stays readable beside it, and every run record names the format version, since the present rig is kept as a baseline.
+3. The format's next version, a key for each row kept, drafted on 2026-11-26 in the [keys of format 2](v-rig-format-2-keys.md), with VR-Q20 to VR-Q22 answered the same day and VR-Q23 open, and planned as VR-10 to VR-12. Format 1 stays readable beside it, and every run record names the format version, since the present rig is kept as a baseline.
 4. The answers to ES-Q11 to ES-Q17, each in the brief of the first slice it bears on.
 5. The rig written once, to §2 and §3.

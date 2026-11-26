@@ -57,6 +57,9 @@ Estimates are in tokens, for agent work, excluding review.
 | VR-7 | the seam for a read case, a representation graph from outside taken as a case | VR-2 | 40k |
 | VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | VR-4 | 80k |
 | VR-9 | projection P2 on the ledger's kernel, in place of the early ledger theory it copies: the theories it takes, every `value` line it writes, and the tests that name them | VR-5, and the ledger's LG-35 and LG-36 | 60k |
+| VR-10 | the format's second version read: a fact written with qualifiers, `unknown` on every carrier and record, the parties file, ids and pointers resolved, on a synthetic rig of format 2 begun here | VR-2 | 150k |
+| VR-11 | the keys of format 2 declared in the tracked scheme, a mapping row for each key a layer has a term for, and a run that tells a mapped key, a key with no term and an unknown key apart | VR-10, VR-3, VR-6 | 170k |
+| VR-12 | the synthetic rig of format 2 grown to the fourteen cases of the list, and the competency questions asked of it | VR-11, VR-8 | 180k |
 
 ```mermaid
 flowchart LR
@@ -67,6 +70,13 @@ flowchart LR
   V3 --> V5["VR-5 P2 theory,<br/>P3 vectors"]
   V4 --> V6["VR-6 P4 findings"]
   V4 --> V8["VR-8 questions on dates<br/>and the ledger design"]
+  V5 --> V9["VR-9 P2 on the<br/>ledger's kernel"]
+  V2 --> V10["VR-10 format 2 read"]
+  V10 --> V11["VR-11 keys declared<br/>and mapped"]
+  V3 --> V11
+  V6 --> V11
+  V11 --> V12["VR-12 the fourteen cases"]
+  V8 --> V12
 ```
 
 ## Slices in detail
@@ -144,7 +154,7 @@ Each was answered on 2026-11-07, by the maintainer and by the consumer that read
 
 **VR-Q14. When VR-9 is built.** Answered 2026-11-25, by the maintainer: briefed now and built after the ledger's LG-35, which changes the kernel's events.
 
-VR-Q15 to VR-Q18 are in the [list of what a rig states](../sketches/v-rig-what-a-rig-states.md), VR-Q19 in the [protocol](../notes/rig-run-protocol.md), and VR-Q20 to VR-Q22 in the [keys of format 2](../sketches/v-rig-format-2-keys.md).
+VR-Q15 to VR-Q18 are in the [list of what a rig states](../sketches/v-rig-what-a-rig-states.md), VR-Q19 in the [protocol](../notes/rig-run-protocol.md), and VR-Q20 to VR-Q23 in the [keys of format 2](../sketches/v-rig-format-2-keys.md). VR-Q20 to VR-Q22 were answered on 2026-11-26, (a) each, and are now the addendum of that day to ADR-A153. VR-Q23 is open.
 
 ## VR-9 in brief, 2026-11-25
 
@@ -161,3 +171,15 @@ VR-Q15 to VR-Q18 are in the [list of what a rig states](../sketches/v-rig-what-a
 **What it waits on.** LG-35, since the kernel's events change with it. Whether a rig can state a merge policy at all is VR-Q17's answer and the format's next version.
 
 **Done when** P2 reads the kernel and its session builds on HOL alone, the tests name the kernel's functions, a run on the mini-rig is recorded in the pack, and no file under `ontology/ledger/` or `tools/proofs/` has changed. No Isabelle build is started without asking the maintainer.
+
+## VR-10 to VR-12 in brief, 2026-11-26
+
+The [keys of format 2](../sketches/v-rig-format-2-keys.md) are the design, and its section 5 lists what is owed. It is three slices, since it touches the module, the tool and the scheme and holds more tests than one slice carries. None is built, and none starts before VR-Q23 is answered and the rig's owner has seen the draft, since a key the owner asks for is cheaper to add before the synthetic rig is written.
+
+**VR-10, the format read.** Examples first: a graph of a fact with a value and a record of qualifiers, and one of a party declared for the rig, validated against the module's shapes before any code. Then `rig.py` accepts `format_version: 2` and reads the parties file, and `lift.py` gains four rules, a mapping holding `value` is the fact of that value with the rest as a record on it, `unknown` is read on every carrier and record, an id of a party, an agreement, a limit, a section or an event resolves as a document's does, and a pointer resolves to the body node at its locator or is an unresolved reference. A synthetic rig of format 2 is begun beside the mini-rig, which stays as it is for the tests of format 1, holding one document, one programme, the parties file and two events. *Done when* the mini-rig's tests pass unchanged, a rig of format 1 with its version changed to 2 lifts to the same facts, and the new rig lifts with every qualifier, id and pointer carried. The module changes only as VR-Q23 is answered.
+
+**VR-11, the keys declared and mapped.** The module gains the property by which a scheme declares a key of the format, with the statement of the fact it carries, and its version moves at the merge. The tracked scheme declares every key of the sketch's section 3, and maps each key whose term the index confirms, one row serving the bare and the qualified form. A row whose term an open question of another unit may move is left out, and its key stays declared with no term until the answer. The findings gain a kind for a key of the format with no term, reported once for the key, apart from a key the format does not know. *Done when* a run on the synthetic rig reports the three apart, and no key of format 1 has changed its mapping.
+
+**VR-12, the fourteen cases.** The synthetic rig grows to hold the fourteen cases of the [list](../sketches/v-rig-what-a-rig-states.md)'s section 3 in small, each invented from generic premises, and the competency questions are asked of it. A question that returned no row on the mini-rig because format 1 has no key for the fact is recorded with what it returns now. *Done when* each case is in the rig with the question it serves, and the Validation Pack states for each question whether it is answered, has no term, or has no key.
+
+No slice reads a rig but the two synthetic ones, and no layer gains a term.

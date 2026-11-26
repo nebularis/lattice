@@ -606,6 +606,9 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | VR-7 | the seam for a read case | v-rig | merged 2026-11-08 |  | docs/developer/status/v-rig.md#board |
 | VR-8 | competency questions on dates, periods and reporting and on the ledger's decided design, asked of the mini-rig | v-rig | built 2026-11-25 |  | docs/developer/status/v-rig.md#board |
 | VR-9 | projection P2 on the ledger's kernel, in place of the early ledger theory it copies | v-rig | briefed 2026-11-25 | LG-35 | docs/developer/status/v-rig.md#board |
+| VR-10 | the format's second version read, on a synthetic rig of format 2 | v-rig | planned |  | docs/developer/status/v-rig.md#board |
+| VR-11 | the keys of format 2 declared in the tracked scheme and mapped, with a key that has no term reported apart from an unknown key | v-rig | planned | VR-10 | docs/developer/status/v-rig.md#board |
+| VR-12 | the synthetic rig of format 2 grown to the fourteen cases, and the competency questions asked of it | v-rig | planned | VR-11 | docs/developer/status/v-rig.md#board |
 | VTB-1 | ADR-A85 proposal, architecture mirror, fixture/test/traceability skeleton | vocabulary-temporal-binding | built 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-2 | 12 fixtures (11 positive/negative + 1 consumer), `structural.ttl`, `constraints.ttl` | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
 | VTB-3 | `tools/vocabulary` resolver + determinism/precedence/conflict tests | vocabulary-temporal-binding | verified 2026-09-25 |  | docs/developer/status/vocabulary-temporal-binding.md#planned-slices |
