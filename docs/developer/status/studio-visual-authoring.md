@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** SVA-S1's design questions, for the maintainer to answer before the canvas is built. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** SVA-X5, the secret-read guard's fixes, then a pause, then SVA-S1's first part. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -82,6 +82,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-X2 | user-facing text under main's standard on naming decisions | built 2026-11-19, building 2026-11-19 |  |
 | SVA-X3 | the run queues on the contract-driven topology | planned | MSA-F4 on `main` |
 | SVA-X4 | this unit's debt rows renumbered past the other branches | built 2026-11-23, building 2026-11-23 |  |
+| SVA-X5 | the secret-read guard's false refusals and its failure when it cannot run | building 2026-11-26 |  |
 | SVA-D1 | sample documents for every capability, and the examples README | built 2026-11-25 |  |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | planned |  |
 
@@ -289,3 +290,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-25: the maintainer accepted SVA-D1's placement and asked for a decision and a root for the licence texts. ADR-A155 is Proposed, and `LICENSES/` holds the texts of MPL-2.0, CC-BY-SA-4.0, MIT and the OASIS notice, held by `mise run check:licences`, which `mise run check` runs.
 - 2026-11-25: SVA-S1 marked building, design questions first.
 - 2026-11-25: the maintainer accepted ADR-A155 and chose SVA-S1 next, starting with the design questions on how the canvas draws and edits each kind of contract.
+- 2026-11-26: the maintainer reported two faults of the secret-read guard, wildcards refused by matching the checkout's own path and every call refused once the script went missing, and chose that a guard that cannot run lets a call through with a warning. Planned and started SVA-X5 before SVA-S1's first part.
