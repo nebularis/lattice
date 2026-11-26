@@ -115,7 +115,7 @@ The reviewer ran these again on 2026-11-26: the guard's tests 337 passed, `check
 
 ## Left open
 
-- A live check in a session started in the checkout, that a call naming the folder is refused with the guard's reason and a harmless wildcard such as `git branch --list '*studio*'` is allowed.
+- None. The maintainer confirmed on 2026-11-26 that the fix worked live, in the session the old guard had blocked.
 
 - **A hook is never exercised by a live harness here.** The tests run the command through `sh` and the guard as a process. Whether a harness reads `permissionDecision` of `deny` on standard output at exit 0 as a refusal is the harness's documented behaviour and was not shown by a call refused in this session.
 - **The guard still cannot catch** a wildcard given to a program no list names, a wildcard in a value it takes for a name, a Grep `glob` without a slash (ripgrep matches it at any depth, the guard anchors it), a pattern whose `..` follows a wildcard segment, and the rest the docstring lists.
