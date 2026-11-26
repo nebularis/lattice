@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** SVA-X5, the secret-read guard's fixes, then a pause, then SVA-S1's first part. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** the maintainer's live check of the guard, then SVA-S1's first part, the canvas drawing every kind with the targets and the findings. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -82,7 +82,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-X2 | user-facing text under main's standard on naming decisions | built 2026-11-19, building 2026-11-19 |  |
 | SVA-X3 | the run queues on the contract-driven topology | planned | MSA-F4 on `main` |
 | SVA-X4 | this unit's debt rows renumbered past the other branches | built 2026-11-23, building 2026-11-23 |  |
-| SVA-X5 | the secret-read guard's false refusals and its failure when it cannot run | building 2026-11-26 |  |
+| SVA-X5 | the secret-read guard's false refusals and its failure when it cannot run | built 2026-11-26 |  |
 | SVA-D1 | sample documents for every capability, and the examples README | built 2026-11-25 |  |
 | SVA-V1 | the real-stack browser suite, the liveness suite and `mise run check` on the branch | planned |  |
 
@@ -291,3 +291,5 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-25: SVA-S1 marked building, design questions first.
 - 2026-11-25: the maintainer accepted ADR-A155 and chose SVA-S1 next, starting with the design questions on how the canvas draws and edits each kind of contract.
 - 2026-11-26: the maintainer reported two faults of the secret-read guard, wildcards refused by matching the checkout's own path and every call refused once the script went missing, and chose that a guard that cannot run lets a call through with a warning. Planned and started SVA-X5 before SVA-S1's first part.
+- 2026-11-26: SVA-X5 built. The secret-read guard matches a wildcard by path segment and only where a program opens what it names, never reads Grep's pattern as a path, takes its root from the call's working directory, refuses through the hook's JSON deny decision, and a guard that cannot run lets the call through with a warning. A live check in a session started in the checkout is left to the maintainer.
+- 2026-11-26: SVA-X5 built.

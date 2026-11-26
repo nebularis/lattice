@@ -67,3 +67,7 @@ What the builder ran on 2026-11-15, in autonomous mode:
 - The guard by hand, from input files. `cat ./.build/config-studio/infra/../infra/broker/password` as a Bash call, exit 2. `rm -f` of one file in the folder and `mise run studio:config` in one command, exit 0 and no output. A Grep with an absolute path to the folder, exit 2. Each refusal printed the one line naming `mise run studio:config`.
 - `ontology/mork/mtp/data/pins.lock.json` was not rewritten by any check.
 - Not run: `mise run check:config-studio` as a whole, the compose variants, Windows, and any run of the stack in a browser.
+
+## Follow-up, 2026-11-26
+
+SVA-X5 changed how the guard refuses and what it matches. It refuses through the hook's JSON deny decision and exits 0, matches a wildcard by path segment against the working directory and the repository root, and a guard that cannot run lets the call through with a warning. Where this pack says the guard exits 2, read [SVA-X5](SVA-X5.md).

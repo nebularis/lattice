@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if command -v mise >/dev/null 2>&1; then mise exec -- python \"$CLAUDE_PROJECT_DIR/tools/secret_read_guard.py\"; exit $?; fi; exit 0",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/tools/secret_read_guard.py\"; if [ ! -f \"$f\" ]; then w=\"the script is missing\"; elif ! command -v mise >/dev/null 2>&1; then w=\"mise is not found\"; elif o=$(mise exec -- python \"$f\"); then printf '%s' \"$o\"; exit 0; else w=\"the run exited non-zero\"; fi; printf '{\"systemMessage\": \"secret_read_guard did not run (%s), so this call was not checked\"}\\n' \"$w\"; echo \"secret_read_guard did not run ($w), so this call was not checked\" >&2; exit 0",
             "timeout": 5
           }
         ]
