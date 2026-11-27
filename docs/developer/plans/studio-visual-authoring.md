@@ -107,7 +107,7 @@ A slice's documents change in the slice. Estimates are in tokens.
 
 | Slice | What | Modules | Done when | Waits on | Estimate |
 |---|---|---|---|---|---|
-| SVA-S1 | the surface canvas, with a read path built by clicking from class to class | `apps/config-studio` | a path built on the canvas writes the triples the hop-by-hop control writes | SVA-O2 | 240k |
+| SVA-S1 | the surface canvas, with a read path built by clicking from class to class, built in four parts with a pause after each: the canvas drawing every kind with the targets and the findings, a path built by clicking, the expression editor with its tree rendering, then the construction, join and expansion editors. Part 3 starts by letting the class graph draw a property whose range is its own domain as a loop on its class, and gives the facility sample's `refinancesInChain` its range back | `apps/config-studio` | a path built on the canvas writes the triples the hop-by-hop control writes | SVA-O2 | 240k |
 | SVA-S2 | the executor: the clear and the fills of a source's family, a projection's compiled queries, the rows before and after, and the contracts whose read set an edit touched | `platform/config-studio-transforms`, `workers` | the rows equal those the surface compiler's own rebuild gives for the same world | SVA-P3 | 260k |
 | SVA-S3 | the simulator pane, on the shared sample world, sending a surface step's projection run beside its surface run and showing the parts of both | `apps/config-studio` | one edit in the persistence simulator shows the rows it retracts and asserts in the surface simulator | SVA-S1, SVA-S2, SVA-P4 | 200k |
 
