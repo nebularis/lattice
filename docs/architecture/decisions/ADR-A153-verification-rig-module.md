@@ -63,7 +63,7 @@ The addendum of 2026-11-26 has a rig declare a party once, so that one party is 
 
 ## Addendum (2026-11-27): a party is a carrier of the representation
 
-**Status of this addendum:** Proposed 2026-11-27, drafted from the maintainer's decision of that day. Nothing in it is built.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-27, and drafted the same day from the maintainer's decision. Nothing in it is built.
 
 The addendum of 2026-11-26 has a rig declare a party once and leaves open how the representation carries it. The module has a carrier for a document, a programme and an event, each with the id the rig gives it, and none for a party.
 

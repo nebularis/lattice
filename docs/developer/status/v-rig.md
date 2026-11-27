@@ -26,6 +26,7 @@
 
 ## History
 
+- 2026-11-27: the maintainer accepted the addendum to ADR-A153 on a party as a carrier, so the three addenda on the format's next version are accepted.
 - 2026-11-27: VR-Q23 answered by the maintainer, (a). A party declared for the rig is a carrier of its own class, with the rig's id and a locator that names the parties file. The rule is a third addendum to ADR-A153, drafted as Proposed. The maintainer accepted the addendum of 2026-11-26 and the addendum of this day on a party's identity. VR-10 to VR-12 now wait only on the rig's owner seeing the draft, and nothing is built.
 - 2026-11-27: VR-Q24 answered by the maintainer, (a). A party states the carriers within which its id is its only id and the parties it may be, a writer who knows two ids are one party gives one id, and where no carrier lists two ids together sameness is not stated. The rule is a second addendum to ADR-A153, drafted as Proposed. VR-10 carries the two lists and VR-12 holds a doubtful pair. VR-Q23 is open, and nothing is built.
 - 2026-11-26: VR-Q24 raised in the keys of format 2, at the maintainer's request. A rig's writer does not always know whether two mentions are one party, and the draft gave a rig no way to say so. The question offers two keys on a party, the carriers within which its id is its only id, and the parties it may be, so that a question can report the doubt beside its answer. Nothing is built.
