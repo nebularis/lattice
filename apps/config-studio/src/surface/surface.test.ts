@@ -65,9 +65,9 @@ describe("the drawing of each kind of contract", () => {
   it("draws a construction with its class, identity and each value joined to the binding it is written from", () => {
     const d = draw("drawdown-schedule-projection");
     const box = d.nodes.find((n) => n.kind === "statement")!;
-    expect(box.title).toBe("RepaymentSchedule");
-    expect(box.lines).toEqual(["identity: for each instance", "scheduledAmount ← drawn amount", "scheduleStart ← drawdown date"]);
-    expect(d.edges.filter((e) => e.kind === "write" && e.target === box.id).map((e) => e.label)).toEqual(["hasSchedule", "scheduledAmount", "scheduleStart"]);
+    expect(box.title).toBe("Repayment schedule");
+    expect(box.lines).toEqual(["identity: for each instance", "scheduled amount ← drawn amount", "schedule start ← drawdown date"]);
+    expect(d.edges.filter((e) => e.kind === "write" && e.target === box.id).map((e) => e.label)).toEqual(["has schedule", "scheduled amount", "schedule start"]);
     expect(d.targets.map((t) => [t.kind, t.iri.split("#")[1]])).toEqual([["class", "RepaymentSchedule"], ["property", "hasSchedule"], ["property", "scheduledAmount"], ["property", "scheduleStart"]]);
     expect(draw("borrower-exposure-projection").nodes.find((n) => n.kind === "statement")!.lines[0]).toBe("identity: by key (borrower)");
   });
@@ -77,7 +77,8 @@ describe("the drawing of each kind of contract", () => {
     expect(d.kind).toBe("join");
     expect(d.nodes.filter((n) => n.kind === "carrier").map((n) => [n.tag, n.title])).toEqual([["Join", "Facility"], ["Second carrier", "Branch"]]);
     expect(d.edges.find((e) => e.kind === "key")?.label).toBe("=");
-    expect(d.nodes.find((n) => n.kind === "statement")!.lines).toEqual(["one value finds: at most one", "one instance links: any number (default)"]);
+    // The sample states neither rule, so both are the vocabulary's defaults and the canvas says so.
+    expect(d.nodes.find((n) => n.kind === "statement")!.lines).toEqual(["one value finds: at most one (default)", "one instance links: any number (default)"]);
   });
 
   it("draws an expansion as its members path with the closure on its hop, dashed for candidate evidence", () => {
@@ -94,7 +95,7 @@ describe("the drawing of each kind of contract", () => {
     expect(labels(d).slice(0, 3)).toEqual(["covenants", "rdf:rest *", "rdf:first"]);
     expect(d.edges.find((e) => e.label === "rdf:rest *")?.closure).toBe("*");
     const box = d.nodes.find((n) => n.kind === "statement")!;
-    expect(box.lines).toEqual(["identity: by key (facility reference, the member)", "testedFacilityReference ← facility reference", "testsCovenant ← the member"]);
+    expect(box.lines).toEqual(["identity: by key (facility reference, the member)", "tested facility reference ← facility reference", "tests covenant ← the member"]);
     expect(titles(d, "class")).toEqual(["list", "list", "member"]);
   });
 
@@ -112,6 +113,57 @@ describe("the drawing of each kind of contract", () => {
     expect(all.nodes.filter((n) => n.id === id)).toHaveLength(1);
     expect(all.edges.filter((e) => e.target === id)).toHaveLength(2);
     expect(all.nodes.find((n) => n.id === id)!.rank).toBe(all.targetRank);
+  });
+});
+
+describe("the overview of all contracts", () => {
+  const ids = contractsOf(surface).map((c) => c.iri);
+  const kinds = (d: { nodes: { kind: string }[] }) => [...new Set(d.nodes.map((n) => n.kind))].sort();
+
+  it("shows carriers, contracts and targets only, with no hops, bindings, statements or scheme boxes", () => {
+    const boxes = (c: string) => ({ contract: c, title: "scheme", lines: [], state: "ready" as const, stale: false });
+    const d = drawContracts(surface, ids, terms, boxes, { overview: true });
+    expect(kinds(d)).toEqual(["carrier", "contract", "target"]);
+    expect(d.nodes.filter((n) => n.kind === "contract").map((n) => n.title)).toEqual(contractsOf(surface).map((c) => c.name));
+    // A class is one carrier node however many contracts read from it, and the join's second carrier is one too.
+    expect(d.nodes.filter((n) => n.kind === "carrier").map((n) => n.title).sort()).toEqual(["Borrower", "Branch", "Drawdown", "Facility"]);
+    expect(d.edges.every((e) => e.kind === "read" || e.kind === "write")).toBe(true);
+    expect(d.edges.some((e) => e.kind === "hop" || e.kind === "lowered" || e.kind === "key")).toBe(false);
+    expect(d.nodes.filter((n) => n.kind === "contract").every((n) => n.rank === 1)).toBe(true);
+    expect(d.edges.find((e) => e.target.endsWith("facility-branch-projection|overview") && e.dashed)).toMatchObject({ label: "second carrier" });
+  });
+
+  it("joins each contract to the terms it writes, which contracts that write the same term share", () => {
+    const d = drawContracts(surface, ids, terms, undefined, { overview: true });
+    const written = (name: string) => d.edges.filter((e) => e.kind === "write" && e.source === `${at(name)}|overview`).map((e) => e.target.split("|").pop()!.split("#").pop());
+    expect(written("drawdown-schedule-projection")).toEqual(["RepaymentSchedule", "hasSchedule", "scheduledAmount", "scheduleStart"]);
+    expect(written("drawdown-sector-promotion")).toEqual(["drawdownSector"]);
+    expect(written("borrower-sector-index")).toEqual([]);
+    expect(d.nodes.filter((n) => n.kind === "target").map((n) => n.id)).toHaveLength(new Set(d.nodes.map((n) => n.id)).size - d.nodes.filter((n) => n.kind !== "target").length);
+  });
+
+  it("expands the selected contract to its full drawing in place, and leaves the others as overview", () => {
+    const d = drawContracts(surface, ids, terms, undefined, { overview: true, expand: at("facility-branch-projection") });
+    const mine = d.nodes.filter((n) => n.contract === at("facility-branch-projection"));
+    expect(kinds({ nodes: mine })).toEqual(["carrier", "evidence", "statement"]);
+    expect(d.nodes.filter((n) => n.kind === "contract").map((n) => n.contract)).not.toContain(at("facility-branch-projection"));
+    expect(d.nodes.filter((n) => n.kind === "contract")).toHaveLength(ids.length - 1);
+    // The others never draw their parts, and the expanded contract's carrier stands for its class.
+    expect(d.nodes.filter((n) => n.kind === "evidence").every((n) => n.contract === at("facility-branch-projection"))).toBe(true);
+    expect(d.nodes.filter((n) => n.title === "Facility" && n.kind === "carrier")).toHaveLength(1);
+    expect(d.edges.filter((e) => e.kind === "read" && e.target.endsWith("|overview") && e.source === `${at("facility-branch-projection")}|carrier`)).not.toHaveLength(0);
+    // The targets stand one rank beyond the deepest part drawn.
+    expect(d.targetRank).toBe(3);
+  });
+
+  it("draws the lowered scheme box only for the expanded contract", () => {
+    const boxes = (c: string) => ({ contract: c, title: "scheme", lines: [], state: "ready" as const, stale: false });
+    expect(drawContracts(surface, ids, terms, boxes, { overview: true }).nodes.filter((n) => n.kind === "scheme")).toHaveLength(0);
+    expect(drawContracts(surface, ids, terms, boxes, { overview: true, expand: at("facility-branch-projection") }).nodes.filter((n) => n.kind === "scheme")).toHaveLength(1);
+  });
+
+  it("is the full drawing of every contract where it is not asked for", () => {
+    expect(kinds(drawContracts(surface, ids, terms))).toContain("evidence");
   });
 });
 
@@ -171,9 +223,20 @@ describe("the targets as types", () => {
   const declared = termsOf(ontologyOf(baseline, []));
   it("reads a declared property's range and marks an undeclared one", () => {
     expect(readTarget(declared, "property", at("commitment"))).toMatchObject({ declared: true, ranges: ["decimal"], disagrees: false });
-    expect(readTarget(declared, "property", at("marginWeightedCommitment"))).toMatchObject({ declared: false, ranges: [] });
+    expect(readTarget(declared, "property", at("bookedAt"))).toMatchObject({ declared: false, ranges: [] });
     expect(readTarget(declared, "class", at("Facility"))).toMatchObject({ declared: true, label: "Facility" });
-    expect(drawContracts(surface, [at("facility-margin-projection")], declared).nodes.find((n) => n.kind === "target")!.lines).toEqual(["not declared in the ontology"]);
+    expect(drawContracts(surface, [at("facility-branch-projection")], declared).nodes.find((n) => n.kind === "target")!.lines).toEqual(["not declared in the ontology"]);
+  });
+
+  it("shows the facility's targets in each of their three states, one undeclared and one whose range disagrees with the contract", () => {
+    const all = drawContracts(surface, contractsOf(surface).map((c) => c.iri), declared);
+    const targets = all.nodes.filter((n) => n.kind === "target").map((n) => n.target!);
+    expect(targets.filter((t) => !t.declared).map((t) => t.iri)).toEqual([at("bookedAt")]);
+    expect(targets.filter((t) => t.disagrees).map((t) => t.iri)).toEqual([at("marginWeightedCommitment")]);
+    expect(targets.filter((t) => t.declared && !t.disagrees)).toHaveLength(targets.length - 2);
+    // The disagreement is the declared range against the datatype the contract's result binding states.
+    expect(targets.find((t) => t.disagrees)).toMatchObject({ ranges: ["integer"], stated: ["decimal"] });
+    expect(all.nodes.find((n) => n.target?.disagrees)!.lines).toEqual(["range integer", "the contract states decimal"]);
   });
 
   it("marks where the declared range disagrees with the datatype the contract states", () => {
@@ -215,10 +278,45 @@ describe("the lowered scheme", () => {
     expect(boxesFor(projections, "out-of-date")(at("facility-margin-projection"))!.stale).toBe(true);
   });
 
-  it("gives the mapping canvas the scheme's mappings and how they nest", () => {
-    const { scheme, describe } = schemeOf(projections.schemes.find((s) => s.key === "facility-branch")!);
+  it("gives the mapping canvas the lowered scheme in full, with its terms and the compiled form's review findings on the mappings they concern", () => {
+    const found = projections.schemes.find((s) => s.key === "facility-branch")!;
+    expect(found.lowered).toBeDefined();
+    const { scheme, describe, annotate } = schemeOf(found);
+    expect(describe).toBeUndefined();
     expect(scheme.mappings.map((m) => [m.label, m.depth])).toEqual([["root", 0], ["node", 1]]);
-    expect(describe(scheme.mappings[1].iri)).toContain("MappingReview");
+    // The terms are the scheme's own, and the join's second carrier is a source concept of the scheme.
+    expect(scheme.mappings[1].targets.inverse).toEqual([at("bookedAt")]);
+    expect(scheme.mappings[0].targets.tbox).toEqual([]);
+    expect(scheme.sources.map((s) => [s.label, s.representedAs])).toEqual([["carrier", [at("Facility")]], ["second", [at("Branch")]]]);
+    expect(annotate!(scheme.mappings[1].iri)).toContain("MappingReview");
+    expect(annotate!(scheme.mappings[0].iri)).not.toContain("Review");
+    // A scheme that writes classes and properties shows each, with the compiled form's queries beside them.
+    const schedule = schemeOf(projections.schemes.find((s) => s.key === "drawdown-schedule")!);
+    expect(schedule.scheme.mappings.flatMap((m) => m.targets.tbox)).toEqual([at("RepaymentSchedule")]);
+    expect(schedule.scheme.mappings.flatMap((m) => m.targets.rbox)).toEqual([at("scheduleStart"), at("scheduledAmount")]);
+  });
+
+  it("counts a scheme's mappings from the lowered scheme where the job holds it", () => {
+    expect(boxesFor(projections, "current")(at("facility-covenant-test-projection"))?.lines[0]).toBe("4 mappings");
+  });
+
+  it("falls back to the mappings by name, with no terms, for a job that holds no lowered scheme", () => {
+    const without = readProjections({ artefacts: fixture.artefacts.filter((a) => !a.path.endsWith(".mork.ttl")) } as Job)!;
+    const found = without.schemes.find((s) => s.key === "facility-branch")!;
+    expect(found.lowered).toBeUndefined();
+    const { scheme, describe, annotate } = schemeOf(found);
+    expect(annotate).toBeUndefined();
+    expect(scheme.mappings.map((m) => [m.label, m.depth])).toEqual([["root", 0], ["node", 1]]);
+    expect(scheme.mappings.flatMap((m) => [...m.targets.tbox, ...m.targets.rbox, ...m.targets.inverse])).toEqual([]);
+    expect(describe!(scheme.mappings[1].iri)).toContain("MappingReview");
+    expect(boxesFor(without, "current")(at("facility-covenant-test-projection"))?.lines[0]).toBe("4 mappings");
+  });
+
+  it("falls back for a scheme whose lowered file does not read, and keeps the others", () => {
+    const broken = fixture.artefacts.map((a) => (a.path === "projections/scheme_facility-branch.mork.ttl" ? { ...a, content: "this is not turtle" } : a));
+    const read = readProjections({ artefacts: broken } as Job)!;
+    expect(read.schemes.find((s) => s.key === "facility-branch")!.lowered).toBeUndefined();
+    expect(read.schemes.find((s) => s.key === "facility-margin")!.lowered).toBeDefined();
   });
 });
 

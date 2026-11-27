@@ -219,9 +219,13 @@ describe("the facility sample", () => {
     const without = classGraph(g);
     const withShapes = classGraph(g, { shapes: true });
     expect(without.edges.map((e) => e.id)).toEqual([
+      lend("BorrowerExposure", "Borrower", "exposureOf"),
       lend("Drawdown", "Facility", "drawnUnder"),
+      lend("Drawdown", "RepaymentSchedule", "hasSchedule"),
       lend("Facility", "Borrower", "borrower"),
+      lend("Facility", "BorrowerExposure", "hasBorrowerExposure"),
       lend("Facility", "Branch", "arrangedBy"),
+      lend("Facility", "CovenantTest", "hasCovenantTest"),
       lend("Facility", "Drawdown", "hasDrawdown"),
       lend("Facility", "Lender", "lender"),
       lend("LoanApplication", "Borrower", "applicant"),
@@ -238,9 +242,9 @@ describe("the facility sample", () => {
       [lend("Facility", "Lender", "lender"), "domain-range", `${LENDING}FacilityShape`],
     ]);
     expect(withShapes.edges.filter((e) => e.origin === "shape")).toEqual([]);
-    expect(counts(without)).toEqual({ classes: 9, links: 9, byShape: 0 });
-    expect(counts(withShapes)).toEqual({ classes: 9, links: 9, byShape: 4 });
-    expect(classGraph(g).nodes.map((n) => n.label)).toEqual(["Borrower", "Branch", "Decision", "Drawdown", "Facility", "Guarantor", "Lender", "Loan application", "Party"]);
+    expect(counts(without)).toEqual({ classes: 12, links: 13, byShape: 0 });
+    expect(counts(withShapes)).toEqual({ classes: 12, links: 13, byShape: 4 });
+    expect(classGraph(g).nodes.map((n) => n.label)).toEqual(["Borrower", "Borrower exposure", "Branch", "Covenant test", "Decision", "Drawdown", "Facility", "Guarantor", "Lender", "Loan application", "Party", "Repayment schedule"]);
     // The datatype shape of a drawdown, and the ranges that are concepts, draw nothing.
     expect(withShapes.edges.some((e) => e.property === `${LENDING}drawnAmount` || e.property === `${LENDING}borrowerSector`)).toBe(false);
   });
@@ -249,6 +253,9 @@ describe("the facility sample", () => {
     const g = read("facility-baseline.ttl");
     expect(classGraph(g, { shapes: true }).edges.map((e) => [e.id, e.shape])).toEqual([
       [lend("Drawdown", "Facility", "drawnUnder"), undefined],
+      [lend("Drawdown", "RepaymentSchedule", "hasSchedule"), undefined],
+      [lend("Facility", "BorrowerExposure", "hasBorrowerExposure"), undefined],
+      [lend("Facility", "CovenantTest", "hasCovenantTest"), undefined],
       [lend("Facility", "Drawdown", "hasDrawdown"), `${LENDING}FacilityShape`],
       [lend("Facility", "Lender", "lender"), `${LENDING}FacilityShape`],
     ]);

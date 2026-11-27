@@ -63,3 +63,39 @@ The latest finished job of kind Compile and target Surface is read as the persis
 T0. The canvas, its pure part, the read only mode of the mapping canvas, the fixture and the samples README are the studio's open substrate, and nothing in them is a protected asset.
 
 The reviewer ran these again on 2026-11-26: the app's check with 587 tests in 37 files, `check:config-studio` exit 0 with 588 Python tests and the Java modules' 9, 254, 10 and 85 tests with none failing, and `check:identifiers` and `check:published-decisions` passed. The journeys on the fake service were run by the delegated developer only, 76 of 77 passing, the one failure the column handle's test that TD-257 records, which fails on the unchanged tree too.
+
+## Part 2, building a path by clicking, with the answers on part 1
+
+Built on 2026-11-27 in autonomous mode, from the maintainer's answers on part 1 and SVA-Q60 (a).
+
+### What changed
+
+- **The answers on part 1.** The compile job holds each lowered scheme as `projections/{scheme}.mork.ttl` beside its compiled form, and the manifest entry names it as `mork` (`config_studio_projections.py`, `_compile_projections`). The read only mapping canvas draws that scheme in full, with its terms, and puts the compiled form's queries and review findings on a line under each mapping it concerns (`annotate` of `MappingCanvas`). A job without the file is drawn as part 1 drew it. The all-contracts view is an overview of carriers, contracts and targets, and the contract selected in the list is drawn in full among them (`drawContracts` with `overview` and `expand`). The facility sample declares most targets, leaves `ex:bookedAt` undeclared and gives `ex:marginWeightedCommitment` the range `xsd:integer` against the `xsd:decimal` its contract states, and its join states neither cardinality rule. The fixture was written again with `LATTICE_WRITE_COMPILED_FIXTURE=1`.
+- **Path mode.** `surface/pathmode.ts` is the pure part and `ui/PathMode.tsx` the canvas. A **Build path** button on a promotion's or an index's carrier, on a binding's evidence node and on the members node of an expansion starts it. Each click is an edit of the surface part by `writePath` for a read path, and by the new `writeBindingProperty` and `writeMembersPath` beside it in `rdf/path.ts` for the other two places. The form and the canvas read the same graph, so neither keeps a path.
+- **Tests.** 21 vitest tests in `surface/pathmode.test.ts`, the new and changed tests of `surface.test.ts`, a worker test that the manifest names each `.mork.ttl` and that its graph is the lowering's output, and 2 journeys beside the changed part 1 journeys and a new one for the overview.
+
+### Triples written
+
+For each place the test compares the Turtle a click gives with the Turtle the writer gives for the same path, and they are equal. One forward hop is `srf:readProperty`. Two hops, one inverse, are two `srf:PathStep` nodes named `{contract}-step-0` and `-1` with `srf:stepIndex`, `srf:stepProperty` and `srf:stepDirection`, which is `writePath`'s output. An index path is written as a promotion's. A binding's property is `srf:bindsProperty`. A members path is the property for one hop, a list for a sequence, `sh:inversePath` around an inverse hop and `sh:oneOrMorePath` or `sh:zeroOrMorePath` around a hop with a closure.
+
+### Choices the brief did not settle
+
+1. **The manifest key** is `mork`, and the lowered file holds the lowering's whole graph, including its `srf:producesMapping` triple on the contract.
+2. **The fallback is per scheme.** A scheme whose file is missing or does not read is drawn from its compiled form, and the others from theirs.
+3. **The overview shares carriers by class.** The expanded contract's own carrier node stands for its class. A join's second carrier is a carrier of the overview, joined by a dashed edge. A contract that writes nothing, such as an index, has no target edge. A contract that states no carrier has no carrier edge.
+4. **The sample's ontology is the baseline.** The brief says "vocabulary". The canvas reads targets from the baseline, so the declarations are in `facility-baseline.ttl`. The disagreement is on the one target whose contract states a datatype. Declared terms now show their labels, so the canvas says "tests covenant" where it said `testsCovenant`, and the journeys were changed to match.
+5. **Where path mode starts.** The places are the carrier of a promotion or an index, an evidence node, and the members node of an expansion. A result binding's property is a target the contract writes and has no place.
+6. **A named source is written out on the first edit.** A statement states a source or a path, never both (`srf:P20`), so the first hop, undo or closure writes the path the source stands for as `srf:membersPath` and removes `srf:expansionSource`. Path mode says so. A members path in a form the canvas does not read is replaced by the first hop, and says so.
+7. **The first hop of a members path is not forced to the binding's property.** `srf:P20` requires the path to read it, and the canvas leaves a breach to the findings the form shows.
+8. **A class is unknown after a hop with no declared range.** Every property is then offered, marked `class unknown`. A forward property is offered of a class where a domain of it is the class or one above it, and under any class where it states none. Going back, a property is offered where a range is the class or one above it, and under any class where it states none. A datatype property is never offered going back.
+9. **Many properties.** Each direction draws 12 properties and a filter and **Draw them all** reach the rest, so a class that is not known leaves the canvas readable.
+10. **The closure toggle offers one or more and zero or more.** A hop read as zero or one is kept and drawn, and the toggle can replace it.
+11. **Selecting.** Starting path mode selects the node it writes in the form, so the form beside the canvas is the one that shows the path.
+
+### Results
+
+- `yarn workspace @lattice/config-studio run check` passed, 38 files and 617 tests.
+- `mise run test:config-studio` ran 80 journeys and 80 passed. A first run had one failure, the ontology drawing journey, whose counts of classes and links changed with the facility baseline's new declarations, and its expectations were updated. The browser used the build the installed Playwright does not name, reached through a directory of links in the scratch area as in part 1.
+- `mise run check:workers` passed, 380 tests. `mise run check:config-studio` exited 0 when run alone, with the same 617 browser-code tests. `mise run check:identifiers` and `mise run check:published-decisions` passed.
+
+The reviewer ran part 2's checks again on 2026-11-27: the app's check with 617 tests in 38 files, `check:workers` 380 passed, `check:config-studio` exit 0 with 588 Python tests and the Java modules' 9, 254, 10 and 85 tests with none failing, and `check:identifiers` and `check:published-decisions` passed. The journeys on the fake service, 80 of 80, were run by the delegated developer only.

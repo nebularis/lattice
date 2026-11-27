@@ -8,7 +8,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Handle, MarkerType, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
-import { Graph, compact } from "@lattice/authoring-domain";
+import { Route } from "lucide-react";
+import { Graph, PREFIXES, compact } from "@lattice/authoring-domain";
 import { api, awaitJob, jobId } from "../api";
 import { Canvas, RoutedEdge, type LayoutHints, type LayoutOptions, type RoutedEdgeData } from "../canvas/kit";
 import { concerns } from "../rdf/editors";
@@ -16,11 +17,12 @@ import type { Issue } from "../rdf/report";
 import { fingerprint, readCompiled as readSent, writeCompiled } from "../persistence/landing";
 import { noteCompiled, useCompilationEpoch } from "../persistence/compilation";
 import { readSurface, type SurfaceLoad } from "../surface/compilation";
-import { contractOf, contractsOf, drawContracts, type DrawEdge, type DrawNode } from "../surface/drawing";
+import { contractOf, contractsOf, drawContracts, type DrawEdge, type DrawNode, type PathPlace } from "../surface/drawing";
 import { placeFindings, worst } from "../surface/findings";
 import { boxesFor, schemeOf, staleMark } from "../surface/scheme";
 import { ontologyOf, termsOf } from "../surface/terms";
 import { MappingCanvas } from "./MappingCanvas";
+import { PathMode } from "./PathMode";
 import { Modal, SeverityIcon, Spinner, ago, go } from "./kit";
 import { useStudio } from "./Workspace";
 import { PARTS } from "../state";
@@ -29,14 +31,15 @@ import { PARTS } from "../state";
 const LAYOUT: LayoutOptions = { direction: "LR", columnGap: 130, rowGap: 30 };
 const EDGE_TYPES = { link: RoutedEdge };
 
-type BoxData = { node: DrawNode; issues: Issue[]; selected: boolean; stale: boolean };
+type BoxData = { node: DrawNode; issues: Issue[]; selected: boolean; stale: boolean; build?: (place: PathPlace) => void };
 
 const WIDTH = 224;
 /** The size the layout reserves, counting the rows a long line wraps to. */
 const sizeOf = (n: DrawNode) => {
   const width = n.kind === "statement" || n.kind === "entries" ? 252 : WIDTH;
+  const build = n.place ? 1 : 0;
   const rows = n.lines.reduce((sum, l) => sum + Math.max(1, Math.ceil(l.length / (width / 6.3))), 0) + Math.max(0, Math.ceil(n.title.length / (width / 7.5)) - 1);
-  return { width, height: 46 + 17 * rows };
+  return { width, height: 46 + 17 * rows + 22 * build };
 };
 
 function Box({ data }: NodeProps<Node<BoxData>>) {
@@ -61,6 +64,17 @@ function Box({ data }: NodeProps<Node<BoxData>>) {
       </div>
       <strong className="surface-title">{n.title}</strong>
       {n.lines.map((l, i) => <div key={i} className="small muted surface-line">{l}</div>)}
+      {n.place && data.build && (
+        <button
+          className="btn ghost sm surface-build nodrag" aria-label={`Build ${n.place.label} from ${n.title}`} title={`Build ${n.place.label} by clicking`}
+          onClick={(e) => {
+            e.stopPropagation();
+            data.build!(n.place!);
+          }}
+        >
+          <Route size={12} /> Build path
+        </button>
+      )}
       <Handle type="source" position={Position.Right} />
     </div>
   );
@@ -84,6 +98,7 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
   const [view, setView] = useState<"selected" | "all">("selected");
   const [focused, setFocused] = useState<string>();
   const [opened, setOpened] = useState<string>();
+  const [building, setBuilding] = useState<PathPlace>();
   const [load, setLoad] = useState<SurfaceLoad>({ state: "loading" });
   const [reload, setReload] = useState(0);
   const compiledElsewhere = useCompilationEpoch();
@@ -92,10 +107,11 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
 
   // The ontology is the baseline and the imports and dependencies the workspace holds, as the ontology view reads it.
   const baselineGraph = model.state.baseline?.graph;
-  const terms = useMemo(
-    () => termsOf(ontologyOf(baselineGraph ?? Graph.empty(), [...Object.values(model.heldGraphs), ...Object.values(model.dependencyGraphs)])),
+  const ontology = useMemo(
+    () => ontologyOf(baselineGraph ?? Graph.empty(), [...Object.values(model.heldGraphs), ...Object.values(model.dependencyGraphs)]),
     [baselineGraph, model.heldGraphs, model.dependencyGraphs],
   );
+  const terms = useMemo(() => termsOf(ontology), [ontology]);
 
   useEffect(() => {
     let live = true;
@@ -131,21 +147,29 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
     }
   };
 
-  const shown = view === "all" || !picked ? contracts.map((c) => c.iri) : [picked];
+  // All contracts is an overview, the carriers, the contracts and the targets, and the contract selected in the list is drawn in full among them.
+  const overview = view === "all" || !picked;
+  const expanded = overview ? picked : undefined;
+  const shown = overview ? contracts.map((c) => c.iri) : [picked!];
   const boxes = useMemo(
     () => (load.state === "ready" ? boxesFor(load.projections, status ?? "unknown") : boxesFor(load.state === "refused" ? "refused" : "none", "unknown")),
     [load, status],
   );
-  const drawn = useMemo(() => drawContracts(graph, shown, terms, boxes), [graph, shown.join("|"), terms, boxes]); // eslint-disable-line react-hooks/exhaustive-deps
+  const drawn = useMemo(() => drawContracts(graph, shown, terms, boxes, { overview, expand: expanded }), [graph, shown.join("|"), terms, boxes, overview, expanded]); // eslint-disable-line react-hooks/exhaustive-deps
   const placement = useMemo(() => placeFindings(drawn, issues), [drawn, issues]);
   const stillInList = useMemo(() => placement.unplaced.filter((i) => shown.some((c) => concerns(graph, c, i))), [placement, graph, shown.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Path mode starts from a place that holds a path or a property, and shows the node of the configuration it writes in the form beside it.
+  const begin = (place: PathPlace) => {
+    setBuilding(place);
+    studio.open("surface", place.node);
+  };
   const nodes = useMemo<Node[]>(
     () => drawn.nodes.map((n) => ({
       id: n.id, type: "box", position: { x: 0, y: 0 },
-      data: { node: n, issues: placement.byElement.get(n.id) ?? [], selected: n.id === focused || (n.select !== undefined && n.select === selected && n.kind !== "class"), stale: n.kind === "scheme" && boxes(n.scheme!)?.stale === true } satisfies BoxData,
+      data: { node: n, issues: placement.byElement.get(n.id) ?? [], selected: n.id === focused || (n.select !== undefined && n.select === selected && n.kind !== "class"), stale: n.kind === "scheme" && boxes(n.scheme!)?.stale === true, build: begin } satisfies BoxData,
     })),
-    [drawn, placement, focused, selected, boxes],
+    [drawn, placement, focused, selected, boxes], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const edges = useMemo<Edge[]>(
     () => drawn.edges.map((e): Edge<RoutedEdgeData> => {
@@ -168,12 +192,14 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
     const n = (node.data as BoxData).node;
     setFocused(n.id);
     if (n.kind === "scheme") return n.scheme && boxes(n.scheme)?.state === "ready" && setOpened(n.scheme);
+    if (n.kind === "contract") return n.select && studio.open("surface", n.select);
     if (n.kind === "target") return n.target?.declared && go("w", id, "baseline", n.target.iri);
     if (n.select) studio.open("surface", n.select);
   };
 
   const opening = opened && load.state === "ready" ? load.projections.schemes.find((s) => s.contract === opened) : undefined;
   const open = opening ? schemeOf(opening) : undefined;
+  const prefixes = useMemo(() => ({ ...PREFIXES, ...baselineGraph?.prefixes, ...graph.prefixes }), [baselineGraph, graph]);
   const placed = [...placement.byElement].flatMap(([element, list]) => list.map((issue) => ({ element, issue })));
   const label = (element: string) => drawn.nodes.find((n) => n.id === element)?.title ?? drawn.edges.find((e) => e.id === element)?.title.split("\n")[0] ?? "";
 
@@ -214,19 +240,23 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
         <p className="landing-note muted">That compilation was started elsewhere, so the canvas cannot tell whether the configuration has changed since. Compile here to keep track.</p>
       )}
       <div className="landing-body">
-        <Canvas
-          key={view === "all" || !picked ? "all" : picked}
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={NODE_TYPES}
-          edgeTypes={EDGE_TYPES}
-          routing
-          options={LAYOUT}
-          hints={hints}
-          storageKey={`lattice-studio:surface-canvas:${id}:${view === "all" || !picked ? "all" : picked}`}
-          height={shown.length > 1 ? 900 : 440}
-          onNodeClick={choose}
-        />
+        {building ? (
+          <PathMode place={building} ontology={ontology} onClose={() => setBuilding(undefined)} />
+        ) : (
+          <Canvas
+            key={overview ? `all|${expanded ?? ""}` : picked}
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={NODE_TYPES}
+            edgeTypes={EDGE_TYPES}
+            routing
+            options={LAYOUT}
+            hints={hints}
+            storageKey={`lattice-studio:surface-canvas:${id}:${overview ? `all|${expanded ?? ""}` : picked}`}
+            height={expanded ? 900 : shown.length > 1 ? 640 : 440}
+            onNodeClick={choose}
+          />
+        )}
         {(placed.length > 0 || stillInList.length > 0) && (
           <aside className="surface-findings" aria-label="Findings on the canvas">
             <ul>
@@ -239,9 +269,9 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
         )}
       </div>
       {opening && open && (
-        <Modal title={`Lowered scheme ${open.scheme.label}`} subtitle="Read only. This is the scheme the latest compilation made from the contract, as its compiled form records it." onClose={() => setOpened(undefined)} wide>
+        <Modal title={`Lowered scheme ${open.scheme.label}`} subtitle={opening.lowered ? "Read only. This is the scheme the latest compilation lowered the contract to, with the review findings of its compiled form on the mappings they concern." : "Read only. The compilation held no lowered scheme, so these are the mappings as its compiled form records them, by name."} onClose={() => setOpened(undefined)} wide>
           <div role="region" aria-label="Lowered scheme">
-            <MappingCanvas workspace={id} scheme={open.scheme} prefixes={{}} open={() => undefined} readOnly describe={open.describe} />
+            <MappingCanvas workspace={id} scheme={open.scheme} prefixes={prefixes} open={() => undefined} readOnly describe={open.describe} annotate={open.annotate} />
           </div>
         </Modal>
       )}

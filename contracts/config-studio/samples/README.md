@@ -235,25 +235,27 @@ The facility sample's surface part promotes a borrower's sector onto the facilit
 
 ### Facility agreement, surface canvas
 
-**Demonstrates:** the surface canvas, which draws each contract of the facility sample's surface part from its carrier class, through what is read from it, to what is written. It draws the promotion over its three-hop read path, the index, and a projection of each kind, a derivation, two constructions, a join, an expansion and a node for each member. The targets a contract writes are drawn as types from the baseline, marked where it declares none, and a small box for each projection reads the lowered scheme from a surface compilation. The canvas edits nothing.
+**Demonstrates:** the surface canvas, which draws each contract of the facility sample's surface part from its carrier class, through what is read from it, to what is written. It draws the promotion over its three-hop read path, the index, and a projection of each kind, a derivation, two constructions, a join, an expansion and a node for each member. All contracts are an overview of carriers, contracts and targets, and the contract selected in the list expands in place. The targets a contract writes are drawn as types from the baseline in three states, declared, undeclared and with a declared range that disagrees with the contract, and a small box for each projection reads the lowered scheme from a surface compilation. A path is built by clicking, in path mode.
 
 **Documents:**
 
 - [`facility-surface.ttl`](facility-surface.ttl), the surface configuration the canvas draws
-- [`lending-baseline.ttl`](lending-baseline.ttl) and [`facility-baseline.ttl`](facility-baseline.ttl), the ontology the targets are read from. None of the terms the projections write is declared there, so each target is marked
+- [`lending-baseline.ttl`](lending-baseline.ttl) and [`facility-baseline.ttl`](facility-baseline.ttl), the ontology the targets are read from. It declares most of the terms the projections write with their ranges, leaves `ex:bookedAt` undeclared and declares `ex:marginWeightedCommitment` with the range `xsd:integer` where its contract states `xsd:decimal`, each on purpose and each with a comment
 - [`compiled-surface-facility.json`](../../../apps/config-studio/e2e/fixtures/compiled-surface-facility.json), the `projections` group and the findings of the surface compilation, which the browser journeys' fake service serves and the worker's own test keeps equal to what the compiler gives
 
 **Studio sample:** Facility agreement, every part (`facility`)
 
 **Steps:**
 
-1. Make a workspace from the sample, open the Surface view and choose **Canvas** in the detail pane. Nothing is selected, so the canvas draws all eight contracts, and each projection's scheme box says there is no compilation yet.
-2. Select `facility-margin` in the list. The result edge reads `commitment × margin : decimal`, the two required evidence nodes are solid, and the target `marginWeightedCommitment` is marked undeclared. The form below the canvas edits the contract as before.
-3. Select `facility-branch`. A box for the second carrier, `Branch`, joins its code to the facility's by an edge marked `=`, and the join box states its two cardinality rules.
+1. Make a workspace from the sample, open the Surface view and choose **Canvas** in the detail pane. Nothing is selected, so the canvas is the overview of all eight contracts, with a carrier for each class they read from and the terms they write. Select a contract in the list, then **All contracts**, and that contract is drawn in full among the others.
+2. Select `facility-margin` in the list. The result edge reads `commitment × margin : decimal`, the two required evidence nodes are solid, and the target `margin weighted commitment` is marked `range disagrees`, since the ontology declares an integer range. The scheme box says there is no compilation yet. The form below the canvas edits the contract as before.
+3. Select `facility-branch`. A box for the second carrier, `Branch`, joins its code to the facility's by an edge marked `=`, and the join box states its two cardinality rules, both marked `(default)`. The target `bookedAt` is marked `undeclared`.
 4. Select `facility-covenant-test` to see the members path `covenants`, `rdf:rest *`, `rdf:first`, and the node made for each member with its identity and what it writes from the member. Select `facility-refinancing` to see a closure marked on a dashed hop.
-5. Press **Compile**. Each scheme box now gives its name, its mappings and its review findings, for example `MappingReview × 1` for the join. Click it to open the scheme in the mapping canvas, read only.
+5. Press **Compile**. Each scheme box now gives its name, its mappings and its review findings, for example `MappingReview × 1` for the join. Click it to open the lowered scheme in the mapping canvas, read only, with the terms each mapping writes and the review findings on the mappings they concern.
 6. Edit the surface part, for example add a promotion. The boxes are marked out of date until the next compilation.
 7. A click on a node of the canvas selects the matching node in the form. The findings the form shows for a node are drawn on the element they concern, for example the undeclared property on the result edge.
+8. To build a path, select `drawdown-sector` and press **Build path** on its carrier. Path mode shows the class at the end of the path, outgoing properties to its right and incoming ones to its left. **Undo** the three hops, then click `drawn under`, `borrower` and `legal name`. A datatype property ends the path. The form's hop-by-hop control below shows the same hops at once, and an edit there shows on the canvas. **Done** leaves the path as written.
+9. Select `facility-refinancing` and press **Build path** on its members node. The hop `refinances` has a toggle for one or more times and zero or more times, written as `sh:oneOrMorePath` or `sh:zeroOrMorePath`. The first edit writes the named source out as `srf:membersPath`.
 
 ## Mapping
 

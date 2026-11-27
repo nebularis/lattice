@@ -20,7 +20,7 @@ export interface Claim {
   paths?: string[];
 }
 
-export type NodeKind = "carrier" | "class" | "evidence" | "statement" | "entries" | "target" | "scheme";
+export type NodeKind = "carrier" | "contract" | "class" | "evidence" | "statement" | "entries" | "target" | "scheme";
 
 export interface DrawNode {
   id: string;
@@ -39,7 +39,24 @@ export interface DrawNode {
   target?: TargetInfo;
   /** For a scheme box, the contract it is the lowered scheme of. */
   scheme?: string;
+  /** Where path mode starts from this element, where it holds a path or a property (SVA-Q60). */
+  place?: PathPlace;
   claims: Claim[];
+}
+
+/**
+ * A place in the drawing that holds a path or a property, which path mode builds by clicking (SVA-Q60). A read path hangs off a promotion or an
+ * index, a binding's property is one property, and a members path is the statement of an expansion.
+ */
+export interface PathPlace {
+  kind: "read" | "binding" | "members";
+  /** The promotion or index of a read path, the binding of a property and the expansion statement of a members path. */
+  node: string;
+  /** The contract the place is in, and the class the path starts from, which is the contract's carrier, or the second carrier of a binding that names one. */
+  contract: string;
+  carrier?: string;
+  /** What the author sees it called. */
+  label: string;
 }
 
 export type EdgeKind = "read" | "hop" | "write" | "key" | "lowered";
@@ -83,6 +100,8 @@ export interface ContractDrawing {
   depth: number;
   /** The target the lowered scheme sits beside, which is the term the contract writes first. */
   primary?: string;
+  /** The classes the contract reads from, the carrier and where a join names one, its second carrier. */
+  carriers: string[];
 }
 
 export const CONTRACT_TYPES = [SRF("PromotionContract"), SRF("IndexContract"), SRF("ProjectionContract")];
@@ -122,6 +141,13 @@ const LABELS: Terms = {
   declared: () => false,
   rangesOf: () => [],
 };
+
+/** The classes a contract reads from, its carrier and the second carrier a binding names. */
+function carriersOf(g: Graph, contract: string): string[] {
+  const own = g.value(contract, SRF("carrier"));
+  const others = sorted(g.objects(contract, SRF("hasRoleBinding"))).map((b) => g.value(b, SRF("bindsCarrier"))).filter((c): c is string => c !== undefined && c !== own);
+  return [...(own ? [own] : []), ...new Set(others)];
+}
 
 const words = (iri: string) => localName(iri).replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
 const sorted = (terms: readonly Term[]) => terms.map((t) => t.value).sort();
@@ -190,10 +216,11 @@ export function drawContract(g: Graph, contract: string, terms: Terms): Contract
 
 // --- the shared parts ---------------------------------------------------------------------------------------------------------------
 
-function carrierNode(g: Graph, contract: string, name: string, terms: Terms, tag: string): DrawNode {
+function carrierNode(g: Graph, contract: string, name: string, terms: Terms, tag: string, reads?: PathPlace["kind"]): DrawNode {
   const carrier = g.value(contract, SRF("carrier"));
   return {
     id: `${contract}|carrier`, kind: "carrier", tag, title: carrier ? terms.label(carrier) : "…", lines: [name], rank: 0, contract, select: contract,
+    place: reads ? { kind: reads, node: contract, contract, carrier, label: "the read path" } : undefined,
     claims: [{ focus: contract }, ...(carrier ? [{ focus: carrier }] : [])],
   };
 }
@@ -246,7 +273,7 @@ function readHopsOf(g: Graph, contract: string, terms: Terms, steps: Step[], end
 function promotion(g: Graph, contract: string, name: string, terms: Terms): ContractDrawing {
   const steps = readPath(g, contract);
   const to = g.value(contract, SRF("promotesTo"));
-  const carrier = carrierNode(g, contract, name, terms, "Promotion");
+  const carrier = carrierNode(g, contract, name, terms, "Promotion", "read");
   const nodes: DrawNode[] = [carrier];
   const edges: DrawEdge[] = [];
   const end = `${contract}|promoted`;
@@ -259,12 +286,12 @@ function promotion(g: Graph, contract: string, name: string, terms: Terms): Cont
   // The last edge carries what is promoted, so a finding on promotesTo is drawn there, and the shared target node ends it.
   const last = edges[edges.length - 1];
   last.claims = [...last.claims, { focus: contract, paths: [SRF("promotesTo")] }];
-  return { contract, name, kind: "promotion", nodes, edges, targets: [{ kind: "property", iri: to ?? "", from: carrier.id, edge: { title: "" }, retarget: last.id }], depth: Math.max(0, steps.length - 1), primary: to };
+  return { contract, name, kind: "promotion", nodes, edges, targets: [{ kind: "property", iri: to ?? "", from: carrier.id, edge: { title: "" }, retarget: last.id }], depth: Math.max(0, steps.length - 1), primary: to, carriers: carriersOf(g, contract) };
 }
 
 function index(g: Graph, contract: string, name: string, terms: Terms): ContractDrawing {
   const steps = readPath(g, contract);
-  const carrier = carrierNode(g, contract, name, terms, "Index");
+  const carrier = carrierNode(g, contract, name, terms, "Index", "read");
   const nodes: DrawNode[] = [carrier];
   const edges: DrawEdge[] = [];
   const population = g.value(contract, SRF("valuePopulation"));
@@ -295,7 +322,7 @@ function index(g: Graph, contract: string, name: string, terms: Terms): Contract
   } else {
     readHopsOf(g, contract, terms, steps, { id: entries.id, carrierLabel: carrier.title, endLabel: entries.title }, nodes, edges);
   }
-  return { contract, name, kind: "index", nodes, edges, targets: [], depth: steps.length };
+  return { contract, name, kind: "index", nodes, edges, targets: [], depth: steps.length, carriers: carriersOf(g, contract) };
 }
 
 // --- a projection ----------------------------------------------------------------------------------------------------------------------
@@ -336,6 +363,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
     const label = b.property ? terms.label(b.property) : "…";
     nodes.push({
       id, kind: "evidence", tag: ROLE_WORDS[b.role], title: label, lines: b.datatype ? [`: ${datatypeName(b.datatype)}`] : [], rank: 1, contract, select: b.iri,
+      place: { kind: "binding", node: b.iri, contract, carrier: own ? second?.carrier : g.value(contract, SRF("carrier")), label: `the property of ${ROLE_WORDS[b.role]}` },
       claims: [{ focus: b.iri, paths: [SRF("bindsProperty"), SRF("bindsDatatype"), SRF("bindsCarrier")] }],
     });
     edges.push({
@@ -356,7 +384,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
     const claims = [...resultClaims, ...expressionNodes(g, root).map((e) => ({ focus: e }))];
     const line = expressionLine(text, result?.datatype);
     targets.push({ kind: "property", iri: linkProperty ?? "", stated: result?.datatype, from: carrier.id, edge: { label: line, title: `${carrier.title} is written ${linkLabel} as ${line}`, claims } });
-    return { contract, name, kind, nodes, edges, targets, depth, primary: linkProperty };
+    return { contract, name, kind, nodes, edges, targets, depth, primary: linkProperty, carriers: carriersOf(g, contract) };
   }
 
   // The members path of an expansion, step by step to the member class. Its first hop is the evidence the statement expands from.
@@ -368,12 +396,13 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
     const hops: Hop[] | undefined = states ? (membersPath(g, expansion) ?? undefined) : binding?.property ? sourceHops(source, binding.property) : undefined;
     const claims: Claim[] = [{ focus: expansion, paths: [SRF("expandsFrom"), SRF("expansionSource"), SRF("membersPath")] }, ...(binding ? [{ focus: binding.iri, paths: [SRF("bindsProperty"), SRF("roleKind")] }] : [])];
     const dashed = binding?.role !== "required";
+    const membersPlace: PathPlace = { kind: "members", node: expansion, contract, carrier: g.value(contract, SRF("carrier")), label: "the members path" };
     let from = carrier.id;
     let fromLabel = carrier.title;
     const path = hops ?? (binding?.property ? [{ property: binding.property, inverse: false } as Hop] : []);
     if (path.length === 0) {
       memberNode = `${contract}|member`;
-      nodes.push({ id: memberNode, kind: "class", tag: "Members", title: "…", lines: [], rank: 1, contract, select: expansion, claims: [] });
+      nodes.push({ id: memberNode, kind: "class", tag: "Members", title: "…", lines: [], rank: 1, contract, select: expansion, place: membersPlace, claims: [] });
       edges.push({ id: `${contract}|e|hop|0`, source: from, target: memberNode, kind: "hop", label: "no members path", title: `${name} states no members path`, dashed: true, contract, claims });
     }
     path.forEach((hop, i) => {
@@ -381,7 +410,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
       const next = path[i + 1];
       const toLabel = last ? memberClass(terms, hop) : next?.property === RDF("rest") || hop.property === RDF("rest") ? "list" : reached(hop, terms);
       const to = last ? `${contract}|member` : `${contract}|hop|${i}`;
-      nodes.push({ id: to, kind: "class", tag: last ? "Members" : "Reached", title: toLabel, lines: [], rank: i + 1, contract, select: expansion, claims: [] });
+      nodes.push({ id: to, kind: "class", tag: last ? "Members" : "Reached", title: toLabel, lines: [], rank: i + 1, contract, select: expansion, place: last ? membersPlace : undefined, claims: [] });
       edges.push({
         id: `${contract}|e|hop|${i}`, source: from, target: to, kind: "hop", label: hopLabel(terms, hop), title: hopTitle(terms, fromLabel, hop, toLabel), dashed,
         inverse: hop.inverse, closure: hop.closure, contract, claims: i === 0 ? claims : [],
@@ -456,7 +485,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
       const binding = bindings.find((b) => b.iri === w.from);
       written(w.property, binding?.datatype, "writes", `${w.property ? terms.label(w.property) : "…"} is written on the ${statement.title}`);
     }
-    return { contract, name, kind, nodes, edges, targets, depth, primary: linkProperty };
+    return { contract, name, kind, nodes, edges, targets, depth, primary: linkProperty, carriers: carriersOf(g, contract) };
   }
 
   if (kind === "join") {
@@ -489,7 +518,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
       });
     }
     if (linkProperty) targets.push({ kind: "property", iri: linkProperty, stated: result?.datatype, from: stmt.id, edge: { label: "writes", title: `${carrier.title} is linked to the ${stmt.title} by ${linkLabel}` } });
-    return { contract, name, kind, nodes, edges, targets, depth: 2, primary: linkProperty };
+    return { contract, name, kind, nodes, edges, targets, depth: 2, primary: linkProperty, carriers: carriersOf(g, contract) };
   }
 
   // An expansion that writes statements on the instance, or a construction or a derivation with nothing stated yet.
@@ -499,7 +528,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
   } else {
     targets.push({ kind: "property", iri: "", from, edge: { label: "…", title: `${name} states no result property yet`, claims: resultClaims, dashed: true } });
   }
-  return { contract, name, kind, nodes, edges, targets, depth, primary: linkProperty };
+  return { contract, name, kind, nodes, edges, targets, depth, primary: linkProperty, carriers: carriersOf(g, contract) };
 }
 
 const KIND_TAG: Record<ContractKind, string> = {
@@ -534,21 +563,29 @@ export interface Drawing {
 
 export const targetId = (kind: "property" | "class", iri: string) => `target|${kind}|${iri}`;
 
+export interface DrawOptions {
+  /** Draws every contract but `expand` as an overview, its carriers, itself and its targets, with no hops, bindings, statements or scheme box. */
+  overview?: boolean;
+  /** The contract an overview draws in full, in place. */
+  expand?: string;
+}
+
 /**
  * The drawing of `contracts`, which share the nodes on the right where they write the same term. Each target is read from the ontology, and the
- * lowered scheme of each projection stands beside the targets, joined to the term the contract writes first.
+ * lowered scheme of each projection stands beside the targets, joined to the term the contract writes first. As an overview each contract is a
+ * node between the classes it reads from and the terms it writes, and the contract `expand` names is drawn in full among them.
  */
-export function drawContracts(g: Graph, contracts: readonly string[], terms: Terms, schemes: (contract: string) => SchemeBox | undefined = () => undefined): Drawing {
+export function drawContracts(g: Graph, contracts: readonly string[], terms: Terms, schemes: (contract: string) => SchemeBox | undefined = () => undefined, options: DrawOptions = {}): Drawing {
   const drawn = [...contracts].map((c) => drawContract(g, c, terms));
-  const targetRank = Math.max(1, ...drawn.map((d) => d.depth + 1));
+  const full = (d: ContractDrawing) => !options.overview || d.contract === options.expand;
+  const targetRank = options.overview ? Math.max(2, ...drawn.filter(full).map((d) => d.depth + 1)) : Math.max(1, ...drawn.map((d) => d.depth + 1));
   const nodes: DrawNode[] = [];
   const edges: DrawEdge[] = [];
   const shared = new Map<string, { kind: "property" | "class"; iri: string; stated: Set<string> }>();
   const missing: DrawNode[] = [];
-  for (const d of drawn) {
-    nodes.push(...d.nodes);
-    edges.push(...d.edges);
-    for (const t of d.targets) {
+  const carriers = new Map<string, string>();
+  const join = (d: ContractDrawing, targets: readonly TargetRef[]) => {
+    for (const t of targets) {
       const id = t.iri === "" ? `${d.contract}|missing` : targetId(t.kind, t.iri);
       if (t.iri === "") {
         missing.push({ id, kind: "target", tag: "Property", title: "…", lines: ["not stated yet"], rank: targetRank, contract: d.contract, claims: [] });
@@ -562,6 +599,36 @@ export function drawContracts(g: Graph, contracts: readonly string[], terms: Ter
       if (hop) hop.target = id;
       else edges.push({ id: `${d.contract}|e|target|${t.from}|${id}`, source: t.from, target: id, kind: "write", label: t.edge.label, title: t.edge.title, dashed: t.edge.dashed ?? false, contract: d.contract, claims: t.edge.claims ?? [] });
     }
+  };
+  for (const d of drawn.filter(full)) {
+    nodes.push(...d.nodes);
+    edges.push(...d.edges);
+    if (d.carriers[0]) carriers.set(d.carriers[0], `${d.contract}|carrier`);
+    join(d, d.targets);
+  }
+  for (const d of drawn.filter((x) => !full(x))) {
+    const id = `${d.contract}|overview`;
+    nodes.push({ id, kind: "contract", tag: KIND_TAG[d.kind], title: d.name, lines: [], rank: 1, contract: d.contract, select: d.contract, claims: [{ focus: d.contract }] });
+    d.carriers.forEach((c, i) => {
+      let from = carriers.get(c);
+      if (!from) {
+        from = `carrier|${c}`;
+        carriers.set(c, from);
+        nodes.push({ id: from, kind: "carrier", tag: "Carrier", title: terms.label(c), lines: [], rank: 0, claims: [{ focus: c }] });
+      }
+      edges.push({
+        id: `${d.contract}|e|ov|carrier|${c}`, source: from, target: id, kind: "read", dashed: i > 0, label: i > 0 ? "second carrier" : undefined,
+        title: `${d.name} reads from ${terms.label(c)}`, contract: d.contract, claims: [],
+      });
+    });
+    const seen = new Set<string>();
+    const writes: TargetRef[] = [];
+    for (const t of d.targets) {
+      if (t.iri === "" || seen.has(targetId(t.kind, t.iri))) continue;
+      seen.add(targetId(t.kind, t.iri));
+      writes.push({ kind: t.kind, iri: t.iri, stated: t.stated, from: id, edge: { title: `${d.name} writes ${terms.label(t.iri)}` } });
+    }
+    join(d, writes);
   }
   const live = [...nodes];
   for (const [id, t] of shared) {
@@ -573,7 +640,7 @@ export function drawContracts(g: Graph, contracts: readonly string[], terms: Ter
   }
   live.push(...missing);
   // The lowered scheme of each projection, beside the targets.
-  for (const d of drawn) {
+  for (const d of drawn.filter(full)) {
     const box = d.kind !== "promotion" && d.kind !== "index" ? schemes(d.contract) : undefined;
     if (!box) continue;
     const id = `${d.contract}|scheme`;

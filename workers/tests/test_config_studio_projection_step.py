@@ -63,7 +63,26 @@ def test_the_compile_job_holds_a_compiled_form_for_each_projection_and_a_manifes
         from mork_rdf import from_rdf
 
         assert from_rdf(Graph().parse(data=text, format="turtle")).scheme == entry["scheme"]
-    assert {path for path in held if path.startswith("projections/")} == {e["path"] for e in entries} | {projections.MANIFEST}
+    assert {path for path in held if path.startswith("projections/")} == {e["path"] for e in entries} | {e["mork"] for e in entries} | {projections.MANIFEST}
+
+
+def test_the_manifest_names_each_lowered_scheme_and_the_file_is_the_graph_the_lowering_produced(compiled_job):
+    """Beside each compiled form the job holds the scheme the lowering made, before compilation, which the read only mapping canvas draws its terms
+    from. The test lowers each contract itself and compares the graphs, and reads the scheme back from the file."""
+    from rdflib.compare import isomorphic
+    from surface.lowering import lower_projection
+    from surface.model import read_projection_contracts
+
+    held = job_artefacts(compiled_job, JOB)
+    entries = json.loads(held[projections.MANIFEST][1])
+    contracts = {str(c.iri): c for c in read_projection_contracts(sample_config() + load(*BASELINE_FILES))}
+    for entry in entries:
+        assert entry["mork"] == f"projections/{projections.artefact_name(entry['scheme'])}.mork.ttl"
+        media, text, group = held[entry["mork"]]
+        assert (media, group) == ("text/turtle", projections.PROJECTIONS)
+        file = Graph().parse(data=text, format="turtle")
+        assert isomorphic(file, lower_projection(contracts[entry["contract"]]))
+        assert (URIRef(entry["scheme"]), RDF.type, URIRef("http://www.nebularis.org/ontologies/Mork#MappingScheme")) in file
 
 
 def test_the_review_findings_are_warnings_on_the_contract_each_kind_asks(compiled_job):

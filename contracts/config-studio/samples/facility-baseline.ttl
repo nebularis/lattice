@@ -107,6 +107,84 @@ ex:borrowerRegion a owl:ObjectProperty ;
     rdfs:domain ex:Borrower ;
     rdfs:range skos:Concept .
 
+# --- what the surface projections write ---------------------------------------------------------------
+#
+# The terms the facility's projection contracts write (facility-surface.ttl), so the surface canvas
+# shows a target in each of its three states. Most are declared with their ranges. Two are not, on
+# purpose, and say so here.
+
+ex:RepaymentSchedule a owl:Class ;
+    rdfs:label "Repayment schedule" ;
+    rdfs:comment "The schedule a projection constructs for each drawdown." .
+
+ex:BorrowerExposure a owl:Class ;
+    rdfs:label "Borrower exposure" ;
+    rdfs:comment "The exposure a projection constructs once for each borrower." .
+
+ex:CovenantTest a owl:Class ;
+    rdfs:label "Covenant test" ;
+    rdfs:comment "The test a projection constructs for each covenant a facility lists." .
+
+ex:hasSchedule a owl:ObjectProperty ;
+    rdfs:label "has schedule" ;
+    rdfs:domain ex:Drawdown ;
+    rdfs:range ex:RepaymentSchedule .
+
+ex:scheduledAmount a owl:DatatypeProperty ;
+    rdfs:label "scheduled amount" ;
+    rdfs:domain ex:RepaymentSchedule ;
+    rdfs:range xsd:decimal .
+
+ex:scheduleStart a owl:DatatypeProperty ;
+    rdfs:label "schedule start" ;
+    rdfs:domain ex:RepaymentSchedule ;
+    rdfs:range xsd:date .
+
+ex:hasBorrowerExposure a owl:ObjectProperty ;
+    rdfs:label "has borrower exposure" ;
+    rdfs:domain ex:Facility ;
+    rdfs:range ex:BorrowerExposure .
+
+ex:exposureOf a owl:ObjectProperty ;
+    rdfs:label "exposure of" ;
+    rdfs:domain ex:BorrowerExposure ;
+    rdfs:range ex:Borrower .
+
+# No range is declared, so path mode offers every property after it.
+ex:refinancesInChain a owl:ObjectProperty ;
+    rdfs:label "refinances in chain" ;
+    rdfs:domain ex:Facility .
+
+ex:hasCovenantTest a owl:ObjectProperty ;
+    rdfs:label "has covenant test" ;
+    rdfs:domain ex:Facility ;
+    rdfs:range ex:CovenantTest .
+
+ex:testsCovenant a owl:DatatypeProperty ;
+    rdfs:label "tests covenant" ;
+    rdfs:domain ex:CovenantTest ;
+    rdfs:range xsd:string .
+
+ex:testedFacilityReference a owl:DatatypeProperty ;
+    rdfs:label "tested facility reference" ;
+    rdfs:domain ex:CovenantTest ;
+    rdfs:range xsd:string .
+
+<https://example.org/lending/exec#drawdownSector> a owl:ObjectProperty ;
+    rdfs:label "drawdown sector" ;
+    rdfs:domain ex:Drawdown ;
+    rdfs:range skos:Concept .
+
+# Deliberate. The range disagrees with the xsd:decimal the facility-margin contract states for
+# the property it derives, so the canvas marks the target "range disagrees".
+ex:marginWeightedCommitment a owl:DatatypeProperty ;
+    rdfs:label "margin weighted commitment" ;
+    rdfs:domain ex:Facility ;
+    rdfs:range xsd:integer .
+
+# Deliberate. ex:bookedAt, which the facility-branch contract writes, is left undeclared here, so
+# the canvas marks the target "undeclared".
+
 # --- the facility's aggregate boundary -------------------------------------------------------------
 #
 # A facility owns its drawdowns, which have no life of their own. It only references its borrower,

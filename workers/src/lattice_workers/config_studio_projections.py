@@ -4,8 +4,9 @@ Jobs, and Runs, "A projection step"; ADR-A154, addendum of 2026-11-25).
 
 A projection contract is lowered with Surface's lowering into a MORK mapping scheme and the scheme is compiled with `mork_rdf`, a function of the
 contract, the declarations the job reads and the job's time, so a repeat gives the same files. The compiled form of each scheme is an artefact of the
-group `projections`, `{scheme}.compiled.ttl`, which `mork_rdf.from_rdf` reads back, and the group's `manifest.json` names each contract's key, its
-scheme and the file, in the order of the scheme's IRI. A projection step reads the manifest and nothing else of the job, since it has no compiler.
+group `projections`, `{scheme}.compiled.ttl`, which `mork_rdf.from_rdf` reads back, beside the lowered scheme itself, `{scheme}.mork.ttl`, the graph the
+lowering produced before compilation, which a reader draws the scheme's mappings and terms from. The group's `manifest.json` names each contract's key,
+its scheme and both files, in the order of the scheme's IRI. A projection step reads the manifest and nothing else of the job, since it has no compiler.
 Nothing here reads a clock or the broker."""
 
 from __future__ import annotations
@@ -30,7 +31,8 @@ SCHEME = URIRef(_MORK + "MappingScheme")
 @dataclass(frozen=True)
 class Compiled:
     """One projection contract after lowering and compilation. `scheme` and `compiled` are None for a contract that lowers into no scheme, which
-    states nothing to write, and `refusal` says why a contract could not be lowered or compiled."""
+    states nothing to write, and `refusal` says why a contract could not be lowered or compiled. `lowered` is the graph the lowering produced, which
+    the compiler read, and it is held beside the compiled form."""
 
     iri: URIRef
     key: str
@@ -38,6 +40,7 @@ class Compiled:
     scheme: Optional[str] = None
     compiled: Any = None
     refusal: Optional[str] = None
+    lowered: Optional[Graph] = None
 
 
 def base_for(namespace: str) -> str:
@@ -72,14 +75,17 @@ def lower_and_compile(source: Graph, vocabulary: Graph, at: datetime) -> list[Co
         except (ContractError, mork_rdf.CompileError, ValueError) as error:
             out.append(Compiled(contract.iri, contract.key, kind, refusal=str(error)))
             continue
-        out.append(Compiled(contract.iri, contract.key, kind, str(scheme), compiled))
+        out.append(Compiled(contract.iri, contract.key, kind, str(scheme), compiled, lowered=lowered))
     return out
 
 
 def manifest(compiled: Iterable[Compiled]) -> list[dict[str, str]]:
-    """The group's manifest, one entry for each contract that has a compiled form, ordered by the scheme's IRI."""
+    """The group's manifest, one entry for each contract that has a compiled form, ordered by the scheme's IRI. `mork` names the lowered scheme itself."""
     entries = [
-        {"key": c.key, "contract": str(c.iri), "kind": c.kind, "scheme": c.scheme, "path": f"{PROJECTIONS}/{artefact_name(c.scheme)}.compiled.ttl"}
+        {
+            "key": c.key, "contract": str(c.iri), "kind": c.kind, "scheme": c.scheme,
+            "path": f"{PROJECTIONS}/{artefact_name(c.scheme)}.compiled.ttl", "mork": f"{PROJECTIONS}/{artefact_name(c.scheme)}.mork.ttl",
+        }
         for c in compiled if c.scheme is not None and c.refusal is None
     ]
     return sorted(entries, key=lambda e: e["scheme"])

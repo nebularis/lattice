@@ -465,7 +465,7 @@ _COMPILE_SEVERITY = {"error": SH.Violation, "warning": SH.Warning, "info": SH.In
 
 def _compile_projections(result: _Result, source: Graph, root: str, now: str) -> bool:
     """Lowers every projection contract of the configuration with Surface's lowering and compiles each scheme with `mork_rdf`, holding each compiled
-    form as an artefact of the group `projections` beside the manifest that names them (`config_studio_projections`). The compiler's findings are the
+    form and each lowered scheme as artefacts of the group `projections` beside the manifest that names them (`config_studio_projections`). The compiler's findings are the
     job's, with their severities, on the contract, so `DerivationReview`, `ExpansionReview` and `MappingReview` are warnings. A contract that cannot
     be lowered or compiled is a violation that names it. A configuration with no projection adds nothing. Returns whether a violation was found."""
     from . import config_studio_projections as projections
@@ -493,9 +493,11 @@ def _compile_projections(result: _Result, source: Graph, root: str, now: str) ->
     if entries:
         from mork_rdf import to_rdf
 
-        by_scheme = {item.scheme: item.compiled for item in compiled if item.compiled is not None and item.refusal is None}
+        by_scheme = {item.scheme: item for item in compiled if item.compiled is not None and item.refusal is None}
         for entry in entries:
-            result.artefact(entry["path"], "text/turtle", to_rdf(by_scheme[entry["scheme"]]).serialize(format="turtle"), projections.PROJECTIONS)
+            item = by_scheme[entry["scheme"]]
+            result.artefact(entry["path"], "text/turtle", to_rdf(item.compiled).serialize(format="turtle"), projections.PROJECTIONS)
+            result.artefact(entry["mork"], "text/turtle", item.lowered.serialize(format="turtle"), projections.PROJECTIONS)
         result.artefact(projections.MANIFEST, "application/json", projections.manifest_text(entries), projections.PROJECTIONS)
     return failed
 

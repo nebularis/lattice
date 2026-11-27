@@ -19,7 +19,7 @@ const SOURCE_GAP = 40;
 const LAYOUT: LayoutOptions = { direction: "LR", columnGap: COLUMN, rowGap: ROW };
 const DECISION: Record<string, string> = { Accepted: "var(--ok)", Corrected: "var(--warn)", Rejected: "var(--bad)", Deferred: "var(--text-3)" };
 
-type MappingData = { mapping: MappingNode; terms: string; selected: boolean; count?: number; stale?: boolean };
+type MappingData = { mapping: MappingNode; terms: string; note?: string; selected: boolean; count?: number; stale?: boolean };
 type SourceData = { label: string; path: string };
 
 function MappingBox({ data }: NodeProps<Node<MappingData>>) {
@@ -37,6 +37,7 @@ function MappingBox({ data }: NodeProps<Node<MappingData>>) {
         )}
       </div>
       <div className="small muted canvas-terms">{data.terms || (m.template ? "through its template" : "writes nothing")}</div>
+      {data.note && <div className="small canvas-terms canvas-note" style={{ color: "var(--warn)" }}>{data.note}</div>}
       <Handle type="source" position={Position.Right} />
     </div>
   );
@@ -75,6 +76,8 @@ export function MappingCanvas(props: {
   readOnly?: boolean;
   /** What a mapping says under its name, in place of the terms it writes, for a scheme that is held without them. */
   describe?: (mapping: string) => string;
+  /** What a mapping says on a line of its own under the terms it writes, such as what compiled from it and the review findings on it. */
+  annotate?: (mapping: string) => string;
 }) {
   const { scheme, prefixes, selected } = props;
   const storageKey = `lattice-studio:mapping-canvas:${props.workspace}:${scheme.iri}`;
@@ -86,10 +89,10 @@ export function MappingCanvas(props: {
     }));
     const mappings: Node[] = scheme.mappings.map((m) => ({
       id: m.iri, type: "mapping", position: at,
-      data: { mapping: m, terms: props.describe ? props.describe(m.iri) : written(m, prefixes).map((w) => `${w.box} ${w.term}`).join("  "), selected: m.iri === selected, count: props.counts?.(m.iri), stale: props.countsStale },
+      data: { mapping: m, terms: props.describe ? props.describe(m.iri) : written(m, prefixes).map((w) => `${w.box} ${w.term}`).join("  "), note: props.annotate?.(m.iri) || undefined, selected: m.iri === selected, count: props.counts?.(m.iri), stale: props.countsStale },
     }));
     return [...sources, ...mappings];
-  }, [scheme, prefixes, selected, props.counts, props.countsStale, props.describe]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scheme, prefixes, selected, props.counts, props.countsStale, props.describe, props.annotate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The source concepts are the rank before the first, in the order the scheme lists them, and a mapping's rank is its depth and its order its row.
   const hints = useMemo<LayoutHints>(() => ({

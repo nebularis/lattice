@@ -666,20 +666,20 @@ test("the ontology drawing shows the classes of the baseline, what the shapes st
   const diagram = page.getByRole("region", { name: "Ontology diagram" });
   const nodes = diagram.locator(".react-flow__node-cls");
   await expect(nodes.filter({ hasText: "Facility" }).first()).toBeVisible();
-  // The sample's baseline declares nine classes, and nine properties link them.
+  // The sample's baseline declares twelve classes, and thirteen properties link them.
   const status = diagram.getByRole("status");
-  await expect(status).toHaveText("9 classes and 9 links drawn.");
+  await expect(status).toHaveText("12 classes and 13 links drawn.");
   await expect(diagram.getByRole("group", { name: "Ontology view" }).getByRole("button", { name: "Classes and properties" })).toHaveAttribute("aria-pressed", "true");
 
   // The facility's shape states four of those links, so none is added and four name the shape.
   await diagram.getByLabel("Include shapes").check();
-  await expect(status).toHaveText("9 classes and 9 links, 4 stated by shapes drawn.");
+  await expect(status).toHaveText("12 classes and 13 links, 4 stated by shapes drawn.");
   await expect(diagram.locator(".onto-edge-label.dashed")).toHaveCount(0);
   await expect(diagram.locator(".react-flow__edge title").filter({ hasText: "stated by ex:FacilityShape" })).toHaveCount(4);
 
   await diagram.getByRole("group", { name: "Ontology view" }).getByRole("button", { name: "Class hierarchy" }).click();
   await expect(diagram.getByLabel("Include shapes")).toHaveCount(0);
-  await expect(status).toHaveText("9 classes and 3 links drawn.");
+  await expect(status).toHaveText("12 classes and 3 links drawn.");
   await diagram.getByRole("group", { name: "Ontology view" }).getByRole("button", { name: "Classes and properties" }).click();
 
   await nodes.filter({ hasText: "Drawdown" }).first().click();
@@ -2305,37 +2305,44 @@ async function facilitySurfaceCanvas(page: Page, fake: FakeService): Promise<{ w
 const surfaceNode = (canvas: Locator, kind: string) => canvas.locator(`.surface-node.${kind}`);
 const pickContract = (page: Page, name: string) => page.locator(".list-item").filter({ hasText: name }).first().click();
 
-test("the surface canvas draws every contract of the facility sample together, and a selected derivation and join with their statements, targets and lowered schemes", async ({ page }) => {
+test("the surface canvas draws a selected derivation and join with their statements, targets and lowered schemes, and all contracts as an overview", async ({ page }) => {
   const fake = new FakeService();
   const { canvas } = await facilitySurfaceCanvas(page, fake);
-  // With nothing selected, every contract is drawn: a carrier for each of the eight and a second carrier for the join. Nothing has been compiled.
+  // With nothing selected, all contracts are an overview, a carrier for each class the eight contracts read from, a node for each contract and the terms
+  // they write, and no hop, binding, statement or scheme box. Nothing has been compiled.
   await expect(canvas.getByRole("group", { name: "Contracts shown" }).getByRole("button", { name: "All contracts" })).toHaveAttribute("aria-pressed", "true");
-  await expect(surfaceNode(canvas, "carrier")).toHaveCount(9);
-  await expect(surfaceNode(canvas, "scheme")).toHaveCount(6);
-  await expect(surfaceNode(canvas, "scheme").first()).toContainText("no compilation yet");
+  await expect(surfaceNode(canvas, "carrier")).toHaveCount(4);
+  await expect(surfaceNode(canvas, "contract")).toHaveCount(8);
+  await expect(surfaceNode(canvas, "target").first()).toBeVisible();
+  for (const kind of ["evidence", "statement", "entries", "scheme", "class"]) await expect(surfaceNode(canvas, kind)).toHaveCount(0);
   expect(fake.submitted.filter((s) => s.kind === "compile")).toEqual([]);
 
-  // The derivation, as one line of infix text with its datatype, and its target read from the ontology, which does not declare it.
+  // The derivation, as one line of infix text with its datatype, and its target read from the ontology, which declares it with another range.
   await pickContract(page, "facility-margin");
   await expect(canvas.getByRole("group", { name: "Contracts shown" }).getByRole("button", { name: "facility-margin" })).toHaveAttribute("aria-pressed", "true");
   await expect(surfaceNode(canvas, "carrier")).toHaveCount(1);
+  await expect(surfaceNode(canvas, "scheme")).toContainText("no compilation yet");
   await expect(canvas.locator(".onto-edge-label").filter({ hasText: "commitment × margin : decimal" })).toBeVisible();
   await expect(surfaceNode(canvas, "evidence")).toHaveText([/commitment/, /margin/]);
   await expect(canvas.locator(".onto-edge-label.dashed").filter({ hasNotText: "lowered to" })).toHaveCount(0);
-  const derived = surfaceNode(canvas, "target").filter({ hasText: "marginWeightedCommitment" });
-  await expect(derived).toContainText("not declared in the ontology");
+  const derived = surfaceNode(canvas, "target").filter({ hasText: "margin weighted commitment" });
+  await expect(derived).toContainText("range disagrees");
+  await expect(derived).toContainText("range integer");
+  await expect(derived).toContainText("the contract states decimal");
   // The form beside it edits the contract as it does today.
   await expect(page.getByRole("heading", { name: "facility-margin" })).toBeVisible();
 
-  // The join, a box for the second carrier, a pair of the key with its comparison, the link with its two rules, and the link declared by no one.
+  // The join, a box for the second carrier, a pair of the key with its comparison, the link with its two rules, both the vocabulary's defaults, and the link declared by no one.
   await pickContract(page, "facility-branch");
   await expect(surfaceNode(canvas, "carrier")).toHaveCount(2);
   await expect(surfaceNode(canvas, "carrier").filter({ hasText: "Second carrier" })).toContainText("Branch");
   await expect(canvas.locator(".onto-edge-label").filter({ hasText: /^=$/ })).toBeVisible();
   const statement = surfaceNode(canvas, "statement");
-  await expect(statement).toContainText("one value finds: at most one");
-  await expect(statement).toContainText("one instance links: any number");
-  await expect(surfaceNode(canvas, "target").filter({ hasText: "bookedAt" })).toContainText("not declared in the ontology");
+  await expect(statement).toContainText("one value finds: at most one (default)");
+  await expect(statement).toContainText("one instance links: any number (default)");
+  const booked = surfaceNode(canvas, "target").filter({ hasText: "bookedAt" });
+  await expect(booked).toContainText("not declared in the ontology");
+  await expect(booked).toContainText("undeclared");
 
   // A node on the canvas selects the matching node in the form.
   await surfaceNode(canvas, "evidence").filter({ hasText: "bookingBranchCode" }).click();
@@ -2351,15 +2358,36 @@ test("the surface canvas draws every contract of the facility sample together, a
   expect(fake.submitted.filter((s) => s.kind === "compile").map((s) => s.target)).toEqual(["surface"]);
   await expect(canvas.getByRole("alert")).toHaveCount(0);
 
-  // The scheme box opens the scheme in the mapping canvas, read only.
+  // The scheme box opens the scheme in the mapping canvas, read only, in full with its terms and the review finding on the mapping it concerns.
   await scheme.click();
   const dialog = page.getByRole("dialog", { name: /^Lowered scheme/ });
   await expect(dialog.locator(".react-flow__node-mapping")).toHaveCount(2);
   await expect(dialog.locator(".react-flow__node-mapping").filter({ hasText: "node" })).toContainText("MappingReview");
+  await expect(dialog.locator(".react-flow__node-mapping").filter({ hasText: "node" })).toContainText("bookedAt");
+  await expect(dialog.locator(".react-flow__node-source")).toHaveText([/carrier/, /second/]);
   await dialog.locator(".react-flow__node-mapping").first().click({ button: "right" });
   await expect(page.getByRole("menu")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
+});
+
+test("the overview of all contracts expands the contract selected in the list to its full drawing in place, and leaves the others as overview", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilitySurfaceCanvas(page, fake);
+  await pickContract(page, "facility-refinancing");
+  await canvas.getByRole("group", { name: "Contracts shown" }).getByRole("button", { name: "All contracts" }).click();
+  // Seven contracts stay overview, and the eighth is drawn with its members path, the member class and its target among them.
+  await expect(surfaceNode(canvas, "contract")).toHaveCount(7);
+  await expect(canvas.locator(".onto-edge-label.dashed").filter({ hasText: "refinances +" })).toBeVisible();
+  await expect(surfaceNode(canvas, "class")).toHaveText([/Members/]);
+  await expect(surfaceNode(canvas, "carrier").filter({ hasText: "facility-refinancing" })).toHaveCount(1);
+  // Selecting another contract in the overview expands that one, and the first goes back to a node.
+  await surfaceNode(canvas, "contract").filter({ hasText: "facility-branch" }).click();
+  await expect(page).toHaveURL(/facility-branch-projection$/);
+  await expect(surfaceNode(canvas, "class")).toHaveCount(0);
+  await expect(surfaceNode(canvas, "statement")).toContainText("one value finds");
+  await expect(surfaceNode(canvas, "contract")).toHaveCount(7);
+  await expect(surfaceNode(canvas, "contract").filter({ hasText: "facility-refinancing" })).toHaveCount(1);
 });
 
 test("the surface canvas draws a promotion over its read path, an index, the promoted properties and the node for each member, and puts a finding on the element it concerns", async ({ page }) => {
@@ -2369,7 +2397,7 @@ test("the surface canvas draws a promotion over its read path, an index, the pro
   // Each hop of the three-hop read path, from the drawdown to the promoted property.
   await expect(canvas.locator(".onto-edge-label").filter({ hasText: /^(drawn under|borrower|borrower sector)$/ })).toHaveCount(3);
   await expect(surfaceNode(canvas, "class")).toHaveText([/Facility/, /Borrower/]);
-  await expect(surfaceNode(canvas, "target")).toContainText("drawdownSector");
+  await expect(surfaceNode(canvas, "target")).toContainText("drawdown sector");
 
   await pickContract(page, "borrower-sector");
   await expect(surfaceNode(canvas, "entries")).toContainText("closure over broader");
@@ -2378,39 +2406,39 @@ test("the surface canvas draws a promotion over its read path, an index, the pro
   // A node for each member: the members path to the member, the node's class, its identity and what it writes from the member.
   await pickContract(page, "facility-covenant-test");
   await expect(canvas.locator(".onto-edge-label").filter({ hasText: "rdf:rest *" })).toBeVisible();
-  await expect(surfaceNode(canvas, "statement")).toContainText("CovenantTest");
+  await expect(surfaceNode(canvas, "statement")).toContainText("Covenant test");
   await expect(surfaceNode(canvas, "statement")).toContainText("identity: by key (facility reference, the member)");
-  await expect(surfaceNode(canvas, "statement")).toContainText("testsCovenant ← the member");
+  await expect(surfaceNode(canvas, "statement")).toContainText("tests covenant ← the member");
 
   // A closure is marked on its hop and a candidate evidence edge is dashed.
   await pickContract(page, "facility-refinancing");
   await expect(canvas.locator(".onto-edge-label.dashed").filter({ hasText: "refinances +" })).toBeVisible();
 
-  // A finding of the form is placed on the element it concerns. The derived property is declared by no baseline, which the form's findings say of the
+  // A finding of the form is placed on the element it concerns. The link a join writes is declared by no baseline, which the form's findings say of the
   // result binding's property, so the edge that writes it carries the finding and the list names it.
-  await pickContract(page, "facility-margin");
-  await expect(canvas.locator(".onto-edge-label").filter({ hasText: "⚠ commitment × margin : decimal" })).toBeVisible();
-  await expect(canvas.getByRole("complementary", { name: "Findings on the canvas" })).toContainText("marginWeightedCommitment is not declared in the baseline.");
+  await pickContract(page, "facility-branch");
+  await expect(canvas.locator(".onto-edge-label").filter({ hasText: "⚠ bookedAt" })).toBeVisible();
+  await expect(canvas.getByRole("complementary", { name: "Findings on the canvas" })).toContainText("bookedAt is not declared in the baseline.");
 });
 
 test("the surface canvas says it is out of date after an edit of the surface part, and is current again after a compilation", async ({ page }) => {
   const fake = new FakeService();
   const { canvas } = await facilitySurfaceCanvas(page, fake);
   await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await pickContract(page, "facility-margin");
   await expect(surfaceNode(canvas, "scheme").first()).toContainText("mappings");
   await expect(canvas.getByRole("alert")).toHaveCount(0);
 
   // An edit of the surface part, a new promotion.
   await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Details" }).click();
-  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.locator('button[aria-haspopup="menu"]', { hasText: "Add" }).click();
   await page.getByRole("menuitem", { name: /^Promotion contract/ }).click();
   await page.getByRole("button", { name: "Create" }).click();
   await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Canvas" }).click();
   await expect(canvas.getByRole("alert")).toContainText("out of date");
-  // The new promotion is the selected contract, so the canvas shows it alone. All contracts show the schemes.
-  await canvas.getByRole("group", { name: "Contracts shown" }).getByRole("button", { name: "All contracts" }).click();
+  // The picture still shows the last compilation's scheme, marked, and compiling reads the edit.
+  await pickContract(page, "facility-margin");
   await expect(surfaceNode(canvas, "scheme").filter({ hasText: "out of date" }).first()).toBeVisible();
-  // The picture still shows the last compilation's schemes, and compiling reads the edit.
   await expect(surfaceNode(canvas, "scheme").first()).toContainText("mappings");
   await canvas.getByRole("button", { name: "Compile", exact: true }).click();
   await expect(canvas.getByRole("alert")).toHaveCount(0);
@@ -2427,7 +2455,93 @@ test("a surface compilation started in the Build view is drawn, and the canvas s
   await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Canvas" }).click();
   const canvas = page.getByRole("region", { name: "Surface canvas" });
   await expect(canvas.getByText(/started elsewhere/)).toBeVisible();
+  await pickContract(page, "facility-margin");
   await expect(surfaceNode(canvas, "scheme").first()).toContainText("mappings");
+});
+
+// --- the surface canvas, building a path by clicking (SVA-S1 part 2) ----------------------------------------------------------------
+
+const pathMode = (canvas: Locator) => canvas.getByRole("region", { name: "Path mode" });
+const option = (canvas: Locator, property: string, direction: "forward" | "inverse" = "forward") =>
+  pathMode(canvas).locator(`.path-option[data-property="https://example.org/lending#${property}"][data-direction="${direction}"]`);
+/** The hops of the trail path mode shows, as the names it gives them. */
+const trail = (canvas: Locator) => pathMode(canvas).getByRole("list", { name: "Path so far" }).locator(".hop-name");
+/** The hops of the form's hop-by-hop control. */
+const formHops = (page: Page) => page.getByLabel("Read path", { exact: true }).locator(".edge");
+
+test("a promotion's read path is built by clicking from class to class, and the form's hop-by-hop control shows the same hops at once, and the other way round", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilitySurfaceCanvas(page, fake);
+  await pickContract(page, "drawdown-sector");
+  await expect(formHops(page)).toHaveText([/drawn under/, /borrower/, /borrower sector/]);
+
+  // Path mode starts from the carrier of the promotion, at the end of the path so far.
+  await surfaceNode(canvas, "carrier").getByRole("button", { name: /^Build the read path/ }).click();
+  await expect(trail(canvas)).toHaveText(["drawn under", "borrower", "borrower sector"]);
+  // The class reached has its properties, outgoing on one side and incoming on the other, and a datatype property is marked as ending the path.
+  for (const _ of [1, 2, 3]) await pathMode(canvas).getByRole("button", { name: "Undo the last hop" }).click();
+  await expect(trail(canvas)).toHaveCount(0);
+  await expect(formHops(page)).toHaveCount(0);
+  await expect(option(canvas, "drawnUnder")).toContainText("Facility");
+  await expect(option(canvas, "drawnAmount")).toContainText("ends the path");
+  await expect(option(canvas, "hasDrawdown", "inverse")).toContainText("Facility");
+  await expect(option(canvas, "drawnAmount", "inverse")).toHaveCount(0);
+
+  // A click on a property adds the hop and moves to the class it reaches. A property of a class above it is offered of the class too.
+  await option(canvas, "drawnUnder").click();
+  await expect(trail(canvas)).toHaveText(["drawn under"]);
+  await expect(formHops(page)).toHaveText([/drawn under/]);
+  await expect(option(canvas, "drawnUnder", "inverse")).toContainText("Drawdown");
+  await option(canvas, "borrower").click();
+  await expect(option(canvas, "legalName")).toContainText("ends the path");
+  await option(canvas, "legalName").click();
+  await expect(trail(canvas)).toHaveText(["drawn under", "borrower", "legal name"]);
+  await expect(formHops(page)).toHaveText([/drawn under/, /borrower/, /legal name/]);
+  // A datatype property ends the path, so no property is offered after it.
+  await expect(pathMode(canvas).locator(".path-option[data-property]")).toHaveCount(0);
+
+  // An edit in the form shows on the canvas.
+  await page.getByRole("button", { name: "Remove the last step" }).click();
+  await expect(trail(canvas)).toHaveText(["drawn under", "borrower"]);
+  await option(canvas, "borrower", "inverse").click();
+  await expect(formHops(page)).toHaveText([/drawn under/, /borrower/, /borrower/]);
+  await expect(page.getByLabel("Read path", { exact: true }).locator(".arrow").last()).toHaveText("←");
+  // The canvas wrote what the form writes, which a compilation of the part sends.
+  await pathMode(canvas).getByRole("button", { name: "Done" }).click();
+  await expect(pathMode(canvas)).toHaveCount(0);
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await expect.poll(() => fake.submitted.filter((s) => s.target === "surface").pop()?.body ?? "").toContain("srf:stepDirection srf:Inverse");
+  const body = fake.submitted.filter((s) => s.target === "surface").pop()!.body;
+  expect(body).not.toMatch(/drawdown-sector-promotion[^.]*srf:readProperty/);
+  // Leaving path mode kept what was written, and the picture draws it.
+  await expect(canvas.locator(".onto-edge-label").filter({ hasText: /^(drawn under|borrower|← borrower)$/ })).toHaveCount(3);
+});
+
+test("a closure is added to the facility's refinancing expansion's members path by a toggle on its hop, written as a SHACL path", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilitySurfaceCanvas(page, fake);
+  await pickContract(page, "facility-refinancing");
+  await surfaceNode(canvas, "class").filter({ hasText: "Members" }).getByRole("button", { name: /^Build the members path/ }).click();
+  // The expansion names a source, which stands for the property one or more times. The hop is drawn with its closure.
+  await expect(trail(canvas)).toHaveText(["refinances +"]);
+  await expect(pathMode(canvas).getByRole("button", { name: "One or more times: refinances" })).toHaveAttribute("aria-pressed", "true");
+  // Zero or more instead, and the path is stated as srf:membersPath in place of the named source.
+  await pathMode(canvas).getByRole("button", { name: "Zero or more times: refinances" }).click();
+  await expect(trail(canvas)).toHaveText(["refinances *"]);
+  await expect(pathMode(canvas).getByRole("button", { name: "Zero or more times: refinances" })).toHaveAttribute("aria-pressed", "true");
+  await expect(pathMode(canvas).getByRole("button", { name: "One or more times: refinances" })).toHaveAttribute("aria-pressed", "false");
+  await pathMode(canvas).getByRole("button", { name: "Done" }).click();
+  await expect(canvas.locator(".onto-edge-label.dashed").filter({ hasText: "refinances *" })).toBeVisible();
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await expect.poll(() => fake.submitted.filter((s) => s.target === "surface").pop()?.body ?? "").toContain("sh:zeroOrMorePath");
+  const body = fake.submitted.filter((s) => s.target === "surface").pop()!.body;
+  expect(body).not.toContain("srf:TransitiveClosure");
+  // The form of the statement states the path too, and the toggle takes it off.
+  await surfaceNode(canvas, "class").filter({ hasText: "Members" }).getByRole("button", { name: /^Build the members path/ }).click();
+  await pathMode(canvas).getByRole("button", { name: "Zero or more times: refinances" }).click();
+  await expect(trail(canvas)).toHaveText(["refinances"]);
+  await pathMode(canvas).getByRole("button", { name: "Done" }).click();
+  await expect(canvas.locator(".onto-edge-label").filter({ hasText: /^(⚠ )?refinances$/ })).toBeVisible();
 });
 
 // --- the persistence simulator (SVA-P4) ---------------------------------------------------------------------------------------------------

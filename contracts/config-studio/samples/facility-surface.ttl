@@ -214,8 +214,7 @@ ex:fb-link a srf:ProjectionRoleBinding ;
     srf:joinedAs ex:fb-join .
 
 ex:fb-join a srf:JoinStatement ;
-    srf:joinsOn [ srf:joinLeft ex:fb-code ; srf:joinRight ex:fb-match ] ;
-    srf:joinMatches srf:AtMostOne .
+    srf:joinsOn [ srf:joinLeft ex:fb-code ; srf:joinRight ex:fb-match ] .
 
 ex:facility-branch-projection a srf:ProjectionContract ;
     fnd:hasIdentity ex:facility-branch-identity ;

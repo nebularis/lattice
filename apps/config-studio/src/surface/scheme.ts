@@ -2,12 +2,14 @@
 // The lowered scheme of each projection contract (SVA-Q62), read from the `projections` group of the latest finished surface compilation. The
 // group holds `projections/manifest.json`, one entry for each scheme, and each scheme's compiled form, `mork_rdf`'s account of what it compiled.
 // The browser reads the scheme's name, how many mappings the compiled form holds and its review findings from them, and never lowers a contract
-// itself. A compiled form holds the mappings by name and the queries compiled from them and not the mappings' own terms, so the scheme drawn
-// from it has the mappings and how they nest, which the compiled form's context paths state, and no terms.
+// itself. A compiled form holds the mappings by name and the queries compiled from them and not the mappings' own terms. The job also holds the
+// lowered scheme itself beside each compiled form, `{scheme}.mork.ttl`, which the manifest names, and the scheme drawn from it has its mappings with
+// their terms and the compiled form's review findings on the mappings they concern. A job without that file, such as one compiled before the job
+// held it, draws the scheme as the compiled form gives it, the mappings by name as the context paths nest them and no terms.
 
 import { Graph, MORK, localName, type Term } from "@lattice/authoring-domain";
 import type { Job } from "../rdf/report";
-import type { Scheme, MappingNode } from "../rdf/mapping";
+import { schemesOf, type Scheme, type MappingNode } from "../rdf/mapping";
 import { freshness, type Freshness } from "../persistence/landing";
 import type { SchemeBox } from "./drawing";
 
@@ -35,6 +37,8 @@ export interface LoweredScheme {
   /** The mappings the compiled form names, each with the queries compiled from it. */
   mappings: Map<string, { queries: number; checks: number; parent?: string }>;
   findings: CompileFinding[];
+  /** The lowered scheme as the job holds it, with each mapping's terms, where the job holds it and it reads. */
+  lowered?: Scheme;
 }
 
 export interface Projections {
@@ -95,11 +99,22 @@ export function readCompiled(text: string): Pick<LoweredScheme, "mappings" | "fi
   return { mappings, findings };
 }
 
+/** The lowered scheme a manifest entry names, or undefined where the job holds no such file or it does not read, which draws the scheme as before. */
+function readLowered(job: Job, entry: { scheme: string; mork?: string }): Scheme | undefined {
+  const file = entry.mork ? job.artefacts.find((a) => a.path === entry.mork && a.group === GROUP) : undefined;
+  if (!file) return undefined;
+  try {
+    return schemesOf(Graph.parse(file.content)).find((s) => s.iri === entry.scheme);
+  } catch {
+    return undefined;
+  }
+}
+
 /** The projections a finished surface compilation holds, or undefined where it holds none, as a configuration with no projection does not. */
 export function readProjections(job: Job): Projections | undefined {
   const manifest = job.artefacts.find((a) => a.path === MANIFEST && a.group === GROUP);
   if (!manifest) return undefined;
-  let entries: { key: string; contract: string; kind: string; scheme: string; path: string }[];
+  let entries: { key: string; contract: string; kind: string; scheme: string; path: string; mork?: string }[];
   try {
     entries = JSON.parse(manifest.content) as typeof entries;
   } catch {
@@ -110,7 +125,7 @@ export function readProjections(job: Job): Projections | undefined {
     const file = job.artefacts.find((a) => a.path === e.path && a.group === GROUP);
     if (!file) continue;
     try {
-      schemes.push({ ...e, ...readCompiled(file.content) });
+      schemes.push({ key: e.key, contract: e.contract, kind: e.kind, scheme: e.scheme, path: e.path, ...readCompiled(file.content), lowered: readLowered(job, e) });
     } catch {
       // A compiled form that cannot be read is left out, and its contract says it has no scheme.
     }
@@ -118,13 +133,29 @@ export function readProjections(job: Job): Projections | undefined {
   return { schemes };
 }
 
-/** The scheme as the mapping canvas draws one, from what a compiled form holds: each mapping, how they nest and what each compiled to. */
-export function schemeOf(s: LoweredScheme): { scheme: Scheme; describe: (mapping: string) => string } {
+/** What the compiled form says of a mapping: the queries and checks compiled from it, and the review findings about it. */
+function compiledNote(s: LoweredScheme, mapping: string): string[] {
+  const v = s.mappings.get(mapping);
+  const about = s.findings.filter((f) => f.about === mapping && REVIEW_CODES.includes(f.code as never));
+  return [v?.queries ? `${v.queries} ${v.queries === 1 ? "query" : "queries"}` : "", v?.checks ? `${v.checks} ${v.checks === 1 ? "check" : "checks"}` : "", ...about.map((f) => f.code)].filter(Boolean);
+}
+
+/**
+ * The scheme as the mapping canvas draws one. Where the job holds the lowered scheme, it is that scheme in full, each mapping with the terms it writes
+ * and under it what compiled from it and the review findings on it (`annotate`). Where it does not, it is what the compiled form holds: each mapping
+ * by the name the lowering gave it, how they nest and what each compiled to (`describe`), with no terms.
+ */
+export function schemeOf(s: LoweredScheme): { scheme: Scheme; describe?: (mapping: string) => string; annotate?: (mapping: string) => string } {
   const prefix = `scheme_${s.key}_`;
   const label = (m: string) => {
     const name = localName(m);
     return name.startsWith(prefix) ? name.slice(prefix.length) : name;
   };
+  if (s.lowered) {
+    const named = <T extends { label: string; iri: string }>(n: T): T => ({ ...n, label: n.label === localName(n.iri) ? label(n.iri) : n.label });
+    const scheme: Scheme = { ...s.lowered, label: localName(s.scheme), mappings: s.lowered.mappings.map(named), sources: s.lowered.sources.map(named) };
+    return { scheme, annotate: (m) => compiledNote(s, m).join(", ") };
+  }
   const children = new Map<string, string[]>();
   for (const [m, v] of s.mappings) if (v.parent) children.set(v.parent, [...(children.get(v.parent) ?? []), m]);
   const ordered: MappingNode[] = [];
@@ -137,12 +168,7 @@ export function schemeOf(s: LoweredScheme): { scheme: Scheme; describe: (mapping
   };
   const roots = [...s.mappings.keys()].filter((m) => !s.mappings.get(m)!.parent).sort();
   roots.forEach((r) => visit(r, 0));
-  const describe = (m: string) => {
-    const v = s.mappings.get(m);
-    const about = s.findings.filter((f) => f.about === m && REVIEW_CODES.includes(f.code as never));
-    const parts = [v?.queries ? `${v.queries} ${v.queries === 1 ? "query" : "queries"}` : "", v?.checks ? `${v.checks} ${v.checks === 1 ? "check" : "checks"}` : "", ...about.map((f) => f.code)].filter(Boolean);
-    return parts.join(", ") || "nothing compiled from it";
-  };
+  const describe = (m: string) => compiledNote(s, m).join(", ") || "nothing compiled from it";
   return { scheme: { iri: s.scheme, label: localName(s.scheme), labelled: true, mappings: ordered, sources: [] }, describe };
 }
 
@@ -167,9 +193,10 @@ export function boxesFor(projections: Projections | "none" | "refused", freshnes
     const found = projections.schemes.find((s) => s.contract === contract);
     if (!found) return { contract, title: "Lowered scheme", lines: ["not in the latest compilation"], state: "absent", stale };
     const reviews = reviewCounts(found);
+    const count = found.lowered?.mappings.length ?? found.mappings.size;
     return {
       contract, title: localName(found.scheme), state: "ready", stale,
-      lines: [`${found.mappings.size} ${found.mappings.size === 1 ? "mapping" : "mappings"}`, ...(reviews.length ? reviews.map(([code, n]) => `${code} × ${n}`) : ["no review findings"])],
+      lines: [`${count} ${count === 1 ? "mapping" : "mappings"}`, ...(reviews.length ? reviews.map(([code, n]) => `${code} × ${n}`) : ["no review findings"])],
     };
   };
 }
