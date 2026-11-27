@@ -37,7 +37,7 @@ The catalogue gains a standalone module with no imports, which the import guard 
 
 ## Addendum (2026-11-26): a scheme declares the keys of the format it reads, a fact may be written with qualifiers, and a rig declares its parties once
 
-**Status of this addendum:** Proposed 2026-11-26, drafted from the maintainer's decisions of that day on the format's next version. Nothing in it is built, and the property it names is added to the module by the change that builds it, under the module's own version.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-27. It was drafted on 2026-11-26 from the maintainer's decisions of that day on the format's next version. Nothing in it is built, and the property it names is added to the module by the change that builds it, under the module's own version.
 
 The first format carries eleven keys the tracked scheme maps. Its next version carries a key for every kind of fact a rig is asked to state, whether or not a layer has a term for it, and many have none. Three rules follow, and decision 2 holds through each. A key is still a string, a token is still an uninterpreted literal, and a new key adds no term.
 
@@ -51,7 +51,7 @@ The first format carries eleven keys the tracked scheme maps. Its next version c
 
 ## Addendum (2026-11-27): a rig states where a party's identity holds
 
-**Status of this addendum:** Proposed 2026-11-27, drafted from the maintainer's decision of that day. Nothing in it is built.
+**Status of this addendum:** Accepted by the maintainer on 2026-11-27, and drafted the same day from the maintainer's decision. Nothing in it is built.
 
 The addendum of 2026-11-26 has a rig declare a party once, so that one party is one node. A rig's writer does not always know whether two mentions are one party. A rig that gives them one id, or two, then states more than its writer knows, and a question that counts parties answers with a confidence the rig does not have. Whether two parties are one is a fact, and decision 3 gives a fact three states.
 
@@ -60,4 +60,14 @@ The addendum of 2026-11-26 has a rig declare a party once, so that one party is 
 **Where no carrier lists two ids together, the rig does not say whether they are one party.** No mapping and no question takes them for two. A question that counts parties, or joins on one, says which of its rows rest on a doubtful pair or on a pair no carrier lists together.
 
 **Consequences.** Both statements are lists of ids, so the tool carries them by resolving an id, as it does for any other. A party's name is never required, and a rig may state it as not known. A party may be given an identity within one document only, by listing that document alone. A count of parties is exact only within a carrier every counted party lists and where no counted party names another as doubtful.
+
+## Addendum (2026-11-27): a party is a carrier of the representation
+
+**Status of this addendum:** Proposed 2026-11-27, drafted from the maintainer's decision of that day. Nothing in it is built.
+
+The addendum of 2026-11-26 has a rig declare a party once and leaves open how the representation carries it. The module has a carrier for a document, a programme and an event, each with the id the rig gives it, and none for a party.
+
+**A party declared for the rig is a carrier.** The module gains a class for a party, a carrier with the id the rig gives it, as an event is, and disjoint from a document, a programme, an event and a record. Its locator names the parties file, as an event's names the events file, so decision 4 holds with one more file a node is read from. Decision 2 holds, since party is a word as generic as programme, and the class says nothing of what a party is or does. What a rig states of a party, its kind among the rest, is a fact of it.
+
+**Consequences.** The module gains one class and moves its version when the class is built. A count of parties is a count of nodes, read with what the addendum of this day on a party's identity says of a doubtful pair. A second file of things a rig declares at its own level would need a class of its own.
 
