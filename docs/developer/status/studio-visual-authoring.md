@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** SVA-S1 part 3, the expression editor with its tree rendering, after a named source in path mode and the class graph's self-loop, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** a pause, for the maintainer's answers on SVA-S1 part 3, then part 4, the construction, join and expansion editors. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -299,3 +299,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-27: SVA-S1 part 2 built. A path is built by clicking for a promotion's read path, an index's paths, a role binding's property and an expansion's members path, writing what the hop-by-hop control writes, with a closure on a members path's hop. The compile job stores each lowered scheme, so the read-only scheme view shows its terms, the all-contracts view is an overview that expands the selected contract, the facility sample shows a target declared, undeclared and with a disagreeing range, and its join relies on both defaults.
 - 2026-11-27: the maintainer asked that part 3 start by letting the class graph draw a self-loop and give `refinancesInChain` its range back, added to the plan's SVA-S1 row, and asked why a named expansion source and a members path should not both be kept.
 - 2026-11-27: the maintainer chose that path mode never rewrites a named expansion source. It draws the path the name stands for, marked as given by the name, and an explicit action replaces the name with that path before it can be edited, so P20 holds. Part 3 started with it and the class graph's self-loop.
+- 2026-11-27: SVA-S1 part 3 built. An expression is edited as a tree on the canvas, beside its read-only infix line, with the rendering switchable, each edit one change of the configuration, its typing marked as edited by the rules the shapes state, and no operand that is not the contract's evidence or that would make a cycle offered. Path mode draws a named expansion source's path without rewriting it, with an action that replaces it, and the class graph draws a self-loop, so the facility sample's `refinancesInChain` has its range again.

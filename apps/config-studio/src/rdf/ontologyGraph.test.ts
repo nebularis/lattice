@@ -227,6 +227,7 @@ describe("the facility sample", () => {
       lend("Facility", "Branch", "arrangedBy"),
       lend("Facility", "CovenantTest", "hasCovenantTest"),
       lend("Facility", "Drawdown", "hasDrawdown"),
+      lend("Facility", "Facility", "refinancesInChain"),
       lend("Facility", "Lender", "lender"),
       lend("LoanApplication", "Borrower", "applicant"),
       lend("LoanApplication", "Branch", "branch"),
@@ -242,8 +243,8 @@ describe("the facility sample", () => {
       [lend("Facility", "Lender", "lender"), "domain-range", `${LENDING}FacilityShape`],
     ]);
     expect(withShapes.edges.filter((e) => e.origin === "shape")).toEqual([]);
-    expect(counts(without)).toEqual({ classes: 12, links: 13, byShape: 0 });
-    expect(counts(withShapes)).toEqual({ classes: 12, links: 13, byShape: 4 });
+    expect(counts(without)).toEqual({ classes: 12, links: 14, byShape: 0 });
+    expect(counts(withShapes)).toEqual({ classes: 12, links: 14, byShape: 4 });
     expect(classGraph(g).nodes.map((n) => n.label)).toEqual(["Borrower", "Borrower exposure", "Branch", "Covenant test", "Decision", "Drawdown", "Facility", "Guarantor", "Lender", "Loan application", "Party", "Repayment schedule"]);
     // The datatype shape of a drawdown, and the ranges that are concepts, draw nothing.
     expect(withShapes.edges.some((e) => e.property === `${LENDING}drawnAmount` || e.property === `${LENDING}borrowerSector`)).toBe(false);
@@ -257,7 +258,18 @@ describe("the facility sample", () => {
       [lend("Facility", "BorrowerExposure", "hasBorrowerExposure"), undefined],
       [lend("Facility", "CovenantTest", "hasCovenantTest"), undefined],
       [lend("Facility", "Drawdown", "hasDrawdown"), `${LENDING}FacilityShape`],
+      [lend("Facility", "Facility", "refinancesInChain"), undefined],
       [lend("Facility", "Lender", "lender"), `${LENDING}FacilityShape`],
     ]);
+  });
+
+  it("draws a property whose range is its own domain as one edge from the class to itself, and keeps it in the class's neighbourhood", () => {
+    const g = read("lending-baseline.ttl").merge(read("facility-baseline.ttl"));
+    const loop = classGraph(g).edges.filter((e) => e.source === e.target);
+    expect(loop).toEqual([{ id: lend("Facility", "Facility", "refinancesInChain"), source: `${LENDING}Facility`, target: `${LENDING}Facility`, property: `${LENDING}refinancesInChain`, origin: "domain-range", byShape: false }]);
+    // A class focused with one hop still draws it, and a class far from the facility does not.
+    const near = classGraph(g, { focus: `${LENDING}Facility`, hops: 1 });
+    expect(near.edges.filter((e) => e.source === e.target).map((e) => e.property)).toEqual([`${LENDING}refinancesInChain`]);
+    expect(classGraph(g, { focus: `${LENDING}Decision`, hops: 1 }).edges.some((e) => e.source === e.target)).toBe(false);
   });
 });

@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import { writePath, writeBindingProperty, writeMembersPath } from "../rdf/path";
 import { drawContract, type PathPlace } from "./drawing";
 import { readHops } from "./paths";
-import { addHop, optionsAt, reachedAfter, readPlace, setClosure, undoHop } from "./pathmode";
+import { addHop, givenByName, optionsAt, reachedAfter, readPlace, replaceNamedSource, setClosure, undoHop } from "./pathmode";
 import { ontologyOf } from "./terms";
 
 const sample = (n: string) => Graph.parse(readFileSync(new URL(`../../../../contracts/config-studio/samples/${n}`, import.meta.url), "utf-8"));
@@ -125,21 +125,63 @@ describe("a members path built by clicking", () => {
     expect(readHops(seq, seq.object(at("expansion"), SRF("membersPath"))!)).toEqual([forward("refinances"), { ...inverse("drawnUnder"), closure: "+" }]);
   });
 
-  it("writes out a named source as the path it stands for, in place of it, on the first edit", () => {
+  it("draws a named source as the path it stands for and edits nothing", () => {
     const place = members("stated");
-    expect(readPlace(bare, place).hops).toEqual([forward("covenants"), { property: RDF("rest"), inverse: false, closure: "*" }, { property: RDF("first"), inverse: false }]);
-    const g = setClosure(bare, place, 0, "+");
-    expect(g.value(at("stated"), SRF("expansionSource"))).toBeUndefined();
-    const root = g.object(at("stated"), SRF("membersPath"))!;
-    expect(readHops(g, root)).toEqual([{ ...forward("covenants"), closure: "+" }, { property: RDF("rest"), inverse: false, closure: "*" }, { property: RDF("first"), inverse: false }]);
+    const given = [forward("covenants"), { property: RDF("rest"), inverse: false, closure: "*" }, { property: RDF("first"), inverse: false }];
+    expect(readPlace(bare, place)).toMatchObject({ hops: given, readable: true, source: SRF("ListMembers") });
+    expect(givenByName(bare, place)).toBe(true);
+    // A click, an undo and a closure each leave the graph as it was, so the name is never rewritten.
+    expect(click(bare, place, forward("hasDrawdown")).toTurtle()).toBe(bare.toTurtle());
+    expect(undoHop(bare, place).toTurtle()).toBe(bare.toTurtle());
+    expect(setClosure(bare, place, 0, "+").toTurtle()).toBe(bare.toTurtle());
+    expect(bare.value(at("stated"), SRF("expansionSource"))).toBe(SRF("ListMembers"));
   });
 
-  it("adds a closure to the facility's refinancing expansion, which states the property one or more times", () => {
+  it("draws a transitive closure as the property one or more times, given by the name", () => {
+    const g = surface;
     const place = members("fr-expansion");
-    expect(readPlace(surface, place).hops).toEqual([{ ...forward("refinances"), closure: "+" }]);
-    const star = setClosure(surface, place, 0, "*");
+    expect(readPlace(g, place)).toMatchObject({ hops: [{ ...forward("refinances"), closure: "+" }], source: SRF("TransitiveClosure") });
+    expect(givenByName(g, place)).toBe(true);
+    expect(setClosure(g, place, 0, "*").toTurtle()).toBe(g.toTurtle());
+  });
+
+  it("replaces a named source with the path it stands for in one edit, after which exactly one of the two is stated and the path can be edited", () => {
+    const place = members("stated");
+    const g = replaceNamedSource(bare, place);
+    expect(g.value(at("stated"), SRF("expansionSource"))).toBeUndefined();
+    expect(g.objects(at("stated"), SRF("membersPath"))).toHaveLength(1);
+    const root = g.object(at("stated"), SRF("membersPath"))!;
+    expect(readHops(g, root)).toEqual([forward("covenants"), { property: RDF("rest"), inverse: false, closure: "*" }, { property: RDF("first"), inverse: false }]);
+    // The path is the one the writer gives for the same hops, so the form reads it as it reads any path.
+    expect(g.toTurtle()).toBe(writeMembersPath(bare, at("stated"), readPlace(bare, place).hops).toTurtle());
+    expect(givenByName(g, place)).toBe(false);
+    const edited = setClosure(g, place, 0, "+");
+    expect(edited.value(at("stated"), SRF("expansionSource"))).toBeUndefined();
+    expect(readPlace(edited, place).hops[0]).toEqual({ ...forward("covenants"), closure: "+" });
+    // Replacing again changes nothing, since no name is stated.
+    expect(replaceNamedSource(g, place).toTurtle()).toBe(g.toTurtle());
+  });
+
+  it("replaces the facility's transitive closure with its path, and then adds a closure to it", () => {
+    const place = members("fr-expansion");
+    const g = replaceNamedSource(surface, place);
+    expect(g.value(at("fr-expansion"), SRF("expansionSource"))).toBeUndefined();
+    expect(readPlace(g, place).hops).toEqual([{ ...forward("refinances"), closure: "+" }]);
+    const star = setClosure(g, place, 0, "*");
     expect(star.value(at("fr-expansion"), SRF("expansionSource"))).toBeUndefined();
     expect(drawContract(star, at("facility-refinancing-projection"), { label: (i) => i.split("#")[1], range: () => undefined, domain: () => undefined, isClass: () => false, declared: () => false, rangesOf: () => [] }).edges.find((e) => e.kind === "hop")).toMatchObject({ label: "refinances *", closure: "*" });
+  });
+
+  it("offers no replacement where the name stands for no path, and never states a name and a path together", () => {
+    const g = Graph.parse(`${PREFIXES} ex:lone a srf:ExpansionStatement ; srf:expandsFrom ex:none ; srf:expansionSource srf:TransitiveClosure . ex:none a srf:ProjectionRoleBinding .`);
+    const place = members("lone");
+    expect(readPlace(g, place).hops).toEqual([]);
+    expect(replaceNamedSource(g, place).toTurtle()).toBe(g.toTurtle());
+    // Every edit of a path leaves one of the two, for each place and each hop written.
+    const states = (x: Graph, n: string) => Number(x.value(at(n), SRF("expansionSource")) !== undefined) + Number(x.object(at(n), SRF("membersPath")) !== undefined);
+    expect(states(replaceNamedSource(bare, members("stated")), "stated")).toBe(1);
+    expect(states(click(bare, members("expansion"), forward("refinances")), "expansion")).toBe(1);
+    expect(states(bare, "stated")).toBe(1);
   });
 
   it("undoes the last hop, and removes the path with the first", () => {

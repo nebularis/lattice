@@ -386,6 +386,11 @@ function waypoints(c: Crossing, rank: Rank, lr: boolean): Anchor[] {
   return [{ p: pointAt(lr, before, c.lane), d }, { p: pointAt(lr, after, c.lane), d }];
 }
 
+/** The space between the far point of a loop and its label. */
+const LOOP_LABEL_GAP = 6;
+/** How many places a loop's label is tried along its side, on each side of the first. */
+const LOOP_LABEL_STEPS = 6;
+
 interface End { id: string; end: "s" | "t"; key: number }
 
 /**
@@ -401,7 +406,7 @@ interface End { id: string; end: "s" | "t"; key: number }
  * - Edges that leave or enter one side of a node share it, spread evenly between margins from its corners, in order of the position
  *   of their other end along the side's axis (the first waypoint where there is one, else the other node's centre), ties by id.
  * - An edge from a node to itself leaves and enters by the same side as a loop, the right in LR and the bottom in TB.
- * Labels are then placed greedily in order of id. A label takes the first of `LABEL_CANDIDATES` along its path whose box covers no
+ * Labels are then placed greedily in order of id. The label of a loop goes just beyond the loop's far point where that place is free. Otherwise a label takes the first of `LABEL_CANDIDATES` along its path whose box covers no
  * node and no label placed before. Where every candidate covers something it looks for a free place among finer fractions, nearest
  * the middle first, and where there is none it takes the candidate covering the least area, ties by the order of preference, so a
  * label is always placed. An edge shorter than its label along its own direction would be hidden by a label on it, so its label is put
@@ -525,6 +530,23 @@ export function routeEdges(nodes: ReadonlyMap<string, Box>, edges: readonly Rout
     if (!text) return r;
     const width = text.length * o.labelCharWidth + 2 * o.labelPadding;
     const edge = byId.get(r.id)!;
+    // A loop's label is just beyond its far point on the side the loop leaves by, since a label on the loop itself would cover the node the loop leaves.
+    // Where another label is there already it is moved along that side, to either side of the first place in turn, until it is clear.
+    if (edge.source === edge.target) {
+      const farPoint = curvePoint(r.curve, 0.5);
+      const n = NORMAL[r.sourceSide];
+      const across = n.x !== 0 ? o.labelHeight : width;
+      for (let step = 0; step <= LOOP_LABEL_STEPS * 2; step++) {
+        const shift = (step % 2 === 0 ? 1 : -1) * Math.ceil(step / 2) * (across + LOOP_LABEL_GAP);
+        const box: Box = n.x !== 0
+          ? { x: n.x > 0 ? farPoint.x + LOOP_LABEL_GAP : farPoint.x - LOOP_LABEL_GAP - width, y: farPoint.y - o.labelHeight / 2 + shift, width, height: o.labelHeight }
+          : { x: farPoint.x - width / 2 + shift, y: n.y > 0 ? farPoint.y + LOOP_LABEL_GAP : farPoint.y - LOOP_LABEL_GAP - o.labelHeight, width, height: o.labelHeight };
+        if (obstacles.every((node) => overlapArea(box, node) === 0) && placed.every((other) => overlapArea(box, other) === 0)) {
+          placed.push(box);
+          return { ...r, label: box };
+        }
+      }
+    }
     const beside = edge.source === edge.target ? undefined : besideEdge(r.curve, nodes.get(edge.source)!, nodes.get(edge.target)!, width, o.labelHeight, obstacles, placed);
     if (beside) {
       placed.push(beside);

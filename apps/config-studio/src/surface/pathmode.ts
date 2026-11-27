@@ -101,7 +101,11 @@ export function optionsAt(o: Baseline, at: string | undefined): { forward: PathO
   return { forward: forward.sort(order), inverse: inverse.sort(order) };
 }
 
-/** What a place states now. A members path in a form the canvas does not read has no hops and is not readable, and the first hop replaces it. */
+/**
+ * What a place states now. A members path in a form the canvas does not read has no hops and is not readable, and the first hop replaces it. An
+ * expansion that states a named source has the hops the name stands for and `source` says which. They are given by the name, so path mode edits none
+ * of them until `replaceNamedSource` writes them out as a path (`srf:P20`).
+ */
 export function readPlace(g: Graph, place: PathPlace): { hops: Hop[]; readable: boolean; source?: string } {
   if (place.kind === "read") return { hops: readPath(g, place.node).map((s) => ({ property: s.property, inverse: s.inverse })), readable: true };
   if (place.kind === "binding") {
@@ -112,7 +116,7 @@ export function readPlace(g: Graph, place: PathPlace): { hops: Hop[]; readable: 
     const hops = membersPath(g, place.node);
     return { hops: hops ?? [], readable: hops !== undefined };
   }
-  // A named source stands for a path, which is written out as the path on the first edit.
+  // A named source stands for a path, which is drawn as given by the name and never rewritten by an edit.
   const source = g.value(place.node, SRF("expansionSource"));
   const property = g.value(g.value(place.node, SRF("expandsFrom")) ?? "", SRF("bindsProperty"));
   return { hops: (property ? sourceHops(source, property) : undefined) ?? [], readable: true, source };
@@ -125,8 +129,22 @@ export function writeHops(g: Graph, place: PathPlace, hops: readonly Hop[]): Gra
   return writeMembersPath(g, place.node, hops.map((h) => ({ ...h })));
 }
 
+/** Whether the place's path is given by a named source, which path mode draws and never edits. */
+export const givenByName = (g: Graph, place: PathPlace): boolean => place.kind === "members" && readPlace(g, place).source !== undefined;
+
+/**
+ * The one action that lets a named source's path be edited. It removes `srf:expansionSource` and writes the path the name stands for as
+ * `srf:membersPath` in the same edit, so exactly one of the two is stated after it (`srf:P20`). It does nothing where no name is stated, or where the
+ * name stands for no path because the binding it expands from binds no property.
+ */
+export function replaceNamedSource(g: Graph, place: PathPlace): Graph {
+  const { hops, source } = readPlace(g, place);
+  return source !== undefined && hops.length > 0 ? writeMembersPath(g, place.node, hops.map((h) => ({ ...h }))) : g;
+}
+
 /** A click on a property of the class reached: adds the hop, and for a binding replaces the one property. A path that has ended in a value takes none. */
 export function addHop(g: Graph, place: PathPlace, start: string | undefined, o: Baseline, option: Pick<PathOption, "property" | "inverse">): Graph {
+  if (givenByName(g, place)) return g;
   const { hops } = readPlace(g, place);
   if (place.kind === "binding") return option.inverse ? g : writeHops(g, place, [{ property: option.property, inverse: false }]);
   if (reachedAfter(o, start, hops).value) return g;
@@ -135,12 +153,13 @@ export function addHop(g: Graph, place: PathPlace, start: string | undefined, o:
 
 /** Removes the last hop. */
 export function undoHop(g: Graph, place: PathPlace): Graph {
+  if (givenByName(g, place)) return g;
   return writeHops(g, place, readPlace(g, place).hops.slice(0, -1));
 }
 
 /** Sets the closure of one hop of a members path, one or more or zero or more, or none. Only a members path has one. */
 export function setClosure(g: Graph, place: PathPlace, index: number, closure: Closure | undefined): Graph {
-  if (place.kind !== "members") return g;
+  if (place.kind !== "members" || givenByName(g, place)) return g;
   const { hops } = readPlace(g, place);
   if (!hops[index]) return g;
   return writeHops(g, place, hops.map((h, i) => (i === index ? { ...h, closure } : h)));

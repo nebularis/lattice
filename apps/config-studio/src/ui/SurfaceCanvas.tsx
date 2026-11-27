@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Handle, MarkerType, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
-import { Route } from "lucide-react";
+import { Calculator, Route } from "lucide-react";
 import { Graph, PREFIXES, compact } from "@lattice/authoring-domain";
 import { api, awaitJob, jobId } from "../api";
 import { Canvas, RoutedEdge, type LayoutHints, type LayoutOptions, type RoutedEdgeData } from "../canvas/kit";
@@ -17,10 +17,11 @@ import type { Issue } from "../rdf/report";
 import { fingerprint, readCompiled as readSent, writeCompiled } from "../persistence/landing";
 import { noteCompiled, useCompilationEpoch } from "../persistence/compilation";
 import { readSurface, type SurfaceLoad } from "../surface/compilation";
-import { contractOf, contractsOf, drawContracts, type DrawEdge, type DrawNode, type PathPlace } from "../surface/drawing";
+import { bindingsOf, contractOf, contractsOf, drawContracts, type DrawEdge, type DrawNode, type PathPlace } from "../surface/drawing";
 import { placeFindings, worst } from "../surface/findings";
 import { boxesFor, schemeOf, staleMark } from "../surface/scheme";
 import { ontologyOf, termsOf } from "../surface/terms";
+import { ExpressionEditor } from "./ExpressionEditor";
 import { MappingCanvas } from "./MappingCanvas";
 import { PathMode } from "./PathMode";
 import { Modal, SeverityIcon, Spinner, ago, go } from "./kit";
@@ -99,6 +100,7 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
   const [focused, setFocused] = useState<string>();
   const [opened, setOpened] = useState<string>();
   const [building, setBuilding] = useState<PathPlace>();
+  const [editing, setEditing] = useState<string>();
   const [load, setLoad] = useState<SurfaceLoad>({ state: "loading" });
   const [reload, setReload] = useState(0);
   const compiledElsewhere = useCompilationEpoch();
@@ -161,8 +163,15 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
 
   // Path mode starts from a place that holds a path or a property, and shows the node of the configuration it writes in the form beside it.
   const begin = (place: PathPlace) => {
+    setEditing(undefined);
     setBuilding(place);
     studio.open("surface", place.node);
+  };
+  // The expression editor opens from a derivation's result edge or its label, and shows the binding that states the expression in the form beside it.
+  const edit = (target: { contract: string; binding?: string }) => {
+    setBuilding(undefined);
+    setEditing(target.contract);
+    studio.open("surface", target.binding ?? target.contract);
   };
   const nodes = useMemo<Node[]>(
     () => drawn.nodes.map((n) => ({
@@ -181,13 +190,20 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
         data: {
           label: level && e.label ? `${level === "Violation" ? "✖" : "⚠"} ${e.label}` : level ? (level === "Violation" ? "✖" : "⚠") : e.label,
           title: [e.title, ...found.map((i) => i.message)].join("\n"), dashed: e.dashed, className: "onto-edge", labelClass: "onto-edge-label",
+          onLabelClick: e.expression ? () => edit(e.expression!) : undefined,
         },
       };
     }),
-    [drawn, placement],
+    [drawn, placement], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const hints = useMemo<LayoutHints>(() => Object.fromEntries(drawn.nodes.map((n) => [n.id, { ...sizeOf(n), rank: n.rank }])), [drawn]);
 
+  const chooseEdge = (edge: Edge) => {
+    const found = drawn.edges.find((e) => e.id === edge.id)?.expression;
+    if (found) edit(found);
+  };
+  // The derivation drawn in full, which the editor opens for from the controls as from its edge.
+  const derivation = drawn.contracts.find((c) => c.kind === "derivation" && (c.contract === picked) && !overview);
   const choose = (node: Node) => {
     const n = (node.data as BoxData).node;
     setFocused(n.id);
@@ -227,6 +243,11 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
           {load.state === "none" && "There is no surface compilation yet, so the lowered schemes are not shown."}
           {load.state === "refused" && "The latest compilation was refused. Its findings are in Build."}
         </span>
+        {derivation && !editing && !building && (
+          <button className="btn sm" title="Edit the expression this derivation states" onClick={() => edit({ contract: derivation.contract, binding: bindingsOf(graph, derivation.contract).find((b) => b.role === "result")?.iri })}>
+            <Calculator size={13} /> Edit expression
+          </button>
+        )}
         <button className="btn sm" disabled={compiling || !graph.size} onClick={() => void compile()}>
           {compiling ? <Spinner size={12} /> : null} Compile
         </button>
@@ -242,6 +263,8 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
       <div className="landing-body">
         {building ? (
           <PathMode place={building} ontology={ontology} onClose={() => setBuilding(undefined)} />
+        ) : editing ? (
+          <ExpressionEditor contract={editing} terms={terms} onClose={() => setEditing(undefined)} />
         ) : (
           <Canvas
             key={overview ? `all|${expanded ?? ""}` : picked}
@@ -255,6 +278,7 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
             storageKey={`lattice-studio:surface-canvas:${id}:${overview ? `all|${expanded ?? ""}` : picked}`}
             height={expanded ? 900 : shown.length > 1 ? 640 : 440}
             onNodeClick={choose}
+            onEdgeClick={chooseEdge}
           />
         )}
         {(placed.length > 0 || stillInList.length > 0) && (

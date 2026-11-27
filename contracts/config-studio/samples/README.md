@@ -151,9 +151,9 @@ An author imports an ontology with its own imports resolved from a catalog, and 
 **Steps:**
 
 1. Make a workspace from the sample and open the Baseline view. Press **Diagram** in the detail pane.
-2. The drawing shows the classes of the baseline, and the status reads `9 classes and 9 links drawn.`
-3. Tick **Include shapes**. The facility's shape states four of the links, none is added, and the status reads `9 classes and 9 links, 4 stated by shapes drawn.` Hold the pointer over a link to read `stated by ex:FacilityShape`.
-4. Choose **Class hierarchy**. The status reads `9 classes and 3 links drawn.` Choose **Classes and properties** again.
+2. The drawing shows the classes of the baseline, and the status reads `12 classes and 14 links drawn.` The property `refinances in chain` has the facility as its domain and its range, so it is drawn as a loop on `Facility`.
+3. Tick **Include shapes**. The facility's shape states four of the links, none is added, and the status reads `12 classes and 14 links, 4 stated by shapes drawn.` Hold the pointer over a link to read `stated by ex:FacilityShape`.
+4. Choose **Class hierarchy**. The status reads `12 classes and 3 links drawn.` Choose **Classes and properties** again.
 5. Click the Drawdown class. The list selects it, and the status says the drawing is around Drawdown. **Hops around the selected class** takes more or fewer neighbours.
 6. Drag a class. Its links and their labels follow it, and the class stays where it was left after the page is loaded again.
 
@@ -235,7 +235,7 @@ The facility sample's surface part promotes a borrower's sector onto the facilit
 
 ### Facility agreement, surface canvas
 
-**Demonstrates:** the surface canvas, which draws each contract of the facility sample's surface part from its carrier class, through what is read from it, to what is written. It draws the promotion over its three-hop read path, the index, and a projection of each kind, a derivation, two constructions, a join, an expansion and a node for each member. All contracts are an overview of carriers, contracts and targets, and the contract selected in the list expands in place. The targets a contract writes are drawn as types from the baseline in three states, declared, undeclared and with a declared range that disagrees with the contract, and a small box for each projection reads the lowered scheme from a surface compilation. A path is built by clicking, in path mode.
+**Demonstrates:** the surface canvas, which draws each contract of the facility sample's surface part from its carrier class, through what is read from it, to what is written. It draws the promotion over its three-hop read path, the index, and a projection of each kind, a derivation, two constructions, a join, an expansion and a node for each member. All contracts are an overview of carriers, contracts and targets, and the contract selected in the list expands in place. The targets a contract writes are drawn as types from the baseline in three states, declared, undeclared and with a declared range that disagrees with the contract, and a small box for each projection reads the lowered scheme from a surface compilation. A path is built by clicking, in path mode, and an expression is edited as a line of text or as a tree.
 
 **Documents:**
 
@@ -255,7 +255,10 @@ The facility sample's surface part promotes a borrower's sector onto the facilit
 6. Edit the surface part, for example add a promotion. The boxes are marked out of date until the next compilation.
 7. A click on a node of the canvas selects the matching node in the form. The findings the form shows for a node are drawn on the element they concern, for example the undeclared property on the result edge.
 8. To build a path, select `drawdown-sector` and press **Build path** on its carrier. Path mode shows the class at the end of the path, outgoing properties to its right and incoming ones to its left. **Undo** the three hops, then click `drawn under`, `borrower` and `legal name`. A datatype property ends the path. The form's hop-by-hop control below shows the same hops at once, and an edit there shows on the canvas. **Done** leaves the path as written.
-9. Select `facility-refinancing` and press **Build path** on its members node. The hop `refinances` has a toggle for one or more times and zero or more times, written as `sh:oneOrMorePath` or `sh:zeroOrMorePath`. The first edit writes the named source out as `srf:membersPath`.
+9. Select `facility-refinancing` and press **Build path** on its members node. The expansion names `srf:TransitiveClosure`, so path mode draws the path the name stands for, `refinances +`, marked **given by the name**, and edits nothing. **Replace the named source with a path** removes `srf:expansionSource` and writes the path as `srf:membersPath` in one edit. The hop `refinances` then has a toggle for one or more times and zero or more times, written as `sh:oneOrMorePath` or `sh:zeroOrMorePath`.
+10. To edit an expression, select `facility-margin` and press **Edit expression**, or click the result edge `commitment × margin : decimal` or its label. The expression opens as that one line of text, which is read only. Choose **Tree** to draw one node for each expression node, each with its kind, its datatype and its operands as children. The choice of rendering is kept in this browser for the workspace.
+11. In the tree, change the **Kind** of the product to a quotient. Both operands stay and the line reads `commitment ÷ margin : decimal`. Set its **Datatype** to integer and the node marks that it states integer where its operands give decimal, with a button that states the datatype that agrees. Each change is one edit, so **Undo** in the toolbar takes it back.
+12. Each operand has an **Operand** choice of the contract's own evidence, which never offers its subject or its result, a new expression, a typed literal with its value and datatype, or an expression already in the tree that would not be an operand of itself. **Remove** leaves a placeholder. A rounding has a scale, which may be negative, and a choice has one of six comparisons. To build an expression, remove the root with **Remove**, and the editor offers **Add an expression**, then add a rounding, set its operand to a new sum, and set the sum's operands to the two evidence bindings.
 
 ## Mapping
 

@@ -91,6 +91,8 @@ export type RoutedEdgeData = {
   /** The class of the edge's group, and of its label, which takes " dashed" when the edge is. */
   className?: string;
   labelClass?: string;
+  /** Makes the label a button that does this, as a click on the edge itself does through the canvas's `onEdgeClick`. */
+  onLabelClick?: () => void;
 };
 
 /**
@@ -112,7 +114,11 @@ export function RoutedEdge(props: EdgeProps<Edge<RoutedEdgeData>>) {
       <BaseEdge id={props.id} path={path} markerStart={props.markerStart} markerEnd={props.markerEnd} style={props.style} interactionWidth={14} />
       {data.label && (
         <EdgeLabelRenderer>
-          <div className={data.dashed ? `${labelClass} dashed` : labelClass} title={data.title} style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}>
+          <div
+            className={`${data.dashed ? `${labelClass} dashed` : labelClass}${data.onLabelClick ? " clickable nodrag nopan" : ""}`} title={data.title}
+            style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}
+            {...(data.onLabelClick ? { role: "button", tabIndex: 0, onClick: data.onLabelClick, onKeyDown: (e: React.KeyboardEvent) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), data.onLabelClick!()) } : {})}
+          >
             {data.label}
           </div>
         </EdgeLabelRenderer>
@@ -155,6 +161,7 @@ export interface CanvasProps {
   fitViewUpTo?: number;
   onConnect?: (connection: Connection) => void;
   onNodeClick?: (node: Node) => void;
+  onEdgeClick?: (edge: Edge) => void;
   /** A menu provider returns nothing where there is no menu. A right click is still taken from the browser. */
   nodeMenu?: (node: Node) => MenuItem[] | undefined;
   edgeMenu?: (edge: Edge) => MenuItem[] | undefined;
@@ -267,6 +274,7 @@ export function Canvas(props: CanvasProps) {
         onNodeDragStop={() => setNodes((ns) => (keep(ns), ns))}
         onConnect={props.onConnect}
         onNodeClick={props.onNodeClick && ((_, n) => props.onNodeClick!(n))}
+        onEdgeClick={props.onEdgeClick && ((_, e) => props.onEdgeClick!(e))}
         onNodeContextMenu={(event, node) => open(event, props.nodeMenu?.(node))}
         onEdgeContextMenu={(event, edge) => open(event, props.edgeMenu?.(edge))}
         onPaneContextMenu={(event) => open(event, props.paneMenu?.({ layOutAgain }))}

@@ -99,3 +99,52 @@ For each place the test compares the Turtle a click gives with the Turtle the wr
 - `mise run check:workers` passed, 380 tests. `mise run check:config-studio` exited 0 when run alone, with the same 617 browser-code tests. `mise run check:identifiers` and `mise run check:published-decisions` passed.
 
 The reviewer ran part 2's checks again on 2026-11-27: the app's check with 617 tests in 38 files, `check:workers` 380 passed, `check:config-studio` exit 0 with 588 Python tests and the Java modules' 9, 254, 10 and 85 tests with none failing, and `check:identifiers` and `check:published-decisions` passed. The journeys on the fake service, 80 of 80, were run by the delegated developer only.
+
+## Part 3, the expression editor with its tree rendering, and two fixes
+
+Built on 2026-11-27 in autonomous mode, from SVA-Q57 (b) and SVA-Q59, and the two fixes the maintainer asked for first.
+
+### What changed
+
+- **A named expansion source is never rewritten in path mode.** Where an expansion states `srf:expansionSource`, path mode draws the path the name stands for as a chain of classes marked **given by the name**, and edits nothing. The hop, undo and closure functions of `surface/pathmode.ts` return the graph unchanged for it. One action, **Replace the named source with a path** (`replaceNamedSource`), removes `srf:expansionSource` and writes `srf:membersPath` in the same edit, so exactly one of the two is stated after every edit (`srf:P20`). The part 2 behaviour and its tests are replaced.
+- **The self-loop.** `classGraph` already kept an edge whose domain and range are one class. `ex:refinancesInChain` has its range `ex:Facility` again in `facility-baseline.ttl`, and the ontology view now shows 14 links where it showed 13, with a test of the loop in `ontologyGraph.test.ts`. Drawing it showed that the label of a loop covered the class it leaves, which `canvas/edges.test.ts` found for the facility drawing. `routeEdges` now puts a loop's label just beyond the loop's far point, moved along the side where another label is there, with a test.
+- **The expression editor.** `surface/expressionEdit.ts` holds the edits, `surface/typing.ts` the typing, `surface/expression.ts` the reading, and `ui/ExpressionEditor.tsx` the editor. It opens on the canvas from a click on a derivation's result edge or its label, or from **Edit expression** where the derivation is drawn in full. The canvas kit gained `onEdgeClick` and a clickable edge label. `contractOf` now also finds a contract by the nodes its result edge claims, so selecting a derivation's result binding selects its contract.
+- **Tests.** `surface/expression.test.ts` has 35 tests. The part 2 path mode tests were changed, `edges.test.ts` and `ontologyGraph.test.ts` gained one each, and `e2e/studio.spec.ts` has three new or rewritten journeys.
+
+### Triples each edit writes
+
+A new node is typed with its kind, states `srf:resultDatatype`, and is named in the baseline's namespace. A change of kind swaps the class and moves the operands by position. A rounding's scale is an `xsd:integer`, a choice's comparison is one of the six individuals, a literal states `srf:typedValue` with the datatype it states. An operand that goes takes with it each nested expression only it stated, so no node is left that `srf:P6` finds reached from nowhere. A refused edit returns the graph it was given, so undo history gains nothing.
+
+### Typing rules followed
+
+Those of the README's section 6.15, each as the shape that states it does, over the datatypes the direct operands state. An operand that states none has the datatype its own operands give.
+
+- Numeric is integer, decimal, float or double. A sum, difference or product has the wider operand datatype under promotion, a quotient the same and at least decimal, a rounding its operand's, a choice the datatype of both branches, which must agree with each other and with the one it states. A typed literal has the datatype of its value, a plain literal being a string.
+- Marked on a node: a missing part, a node or operand that states no datatype, a stated datatype that is not the one the rules give, an operand of arithmetic or rounding or of an ordering comparison that is not numeric, compared operands of different datatypes that are not both numeric, branches that disagree, a literal whose value is not of its datatype, an operand that is not evidence of the contract, a rounding with no scale, a choice with no comparison, and a result-target binding that states another datatype than the expression.
+- The marks were checked against the shapes. 400 expressions of every kind over integer, decimal, float, string and literal operands were validated with pySHACL against the Surface shapes, and for each of the six families of finding the shape and the browser agreed on every case, 0 disagreements. This was a one-off check, and the script is not in the repository. The facility derivation has no mark, and the vitest cases state each rule.
+
+### Choices the brief did not settle
+
+1. **The tree is HTML, not React Flow.** Each node holds controls, so the tree is nested boxes with connectors in the canvas area, in place of the drawing as path mode is.
+2. **The line is shown in both renderings.** The line mode is the line alone and the tree mode has the tree under the line.
+3. **A new node states `xsd:decimal`,** the README's own example datatype, and nothing changes a stated datatype but the author. A mark offers **Use** the datatype that agrees, which is one edit.
+4. **Operands move by position on a change of kind.** A sum's two operands become a product's, a rounding's operand a sum's left operand, a choice's compared operands a sum's. Those with no place go.
+5. **The operand menu also offers an expression already in the tree** that would not be an operand of itself or of its ancestors, which makes a node stated twice. This is how `srf:P9` has a choice to refuse. The brief's list has no such choice, and it can be taken out.
+6. **A typed literal's datatype is one of the four numeric ones,** and setting a literal node's datatype retypes its value, refusing a value not written as it.
+7. **Neutral names.** A minted node is named after the contract, as `FacilityMarginExpression` and `FacilityMarginConstant`, since its kind can change.
+8. **The brief's journey of the quotient** sees the datatype chip stay decimal, since a quotient of two decimals is decimal. The mark is shown by then stating integer.
+9. **A named source with no property to stand for, or a name the vocabulary does not know,** is drawn with no path and cannot be replaced in path mode. The form edits it.
+10. **A statement that states both a name and a path** is read as the path, and the first edit removes the name.
+11. **The remembered rendering** is `lattice-studio:expression-view:<workspace>` in the browser, and the line where the browser keeps nothing.
+
+### Unsure
+
+In the dense facility drawing the loop on `Facility` leaves by the same side as most links, so its curve is crowded and its label sits some way above it. A loop leaving by the top side would be clearer, and is a change to the kit's rule.
+
+### Results
+
+- `yarn workspace @lattice/config-studio run check` passed, 39 files and 657 tests.
+- `mise run test:config-studio` ran 81 journeys, 80 passed and 1 failed, the column handle test `a handle moves with the arrow keys`, which the part 1 results record as failing on the unchanged tree too. The new and rewritten journeys passed. The browser used the build the installed Playwright does not name, reached through a directory of links in the scratch area.
+- `mise run check:workers` passed, 380 tests. `mise run check:config-studio` exited 0 when run alone, with 588 Python tests and 657 browser-code tests. `mise run check:identifiers` and `mise run check:published-decisions` passed.
+
+The reviewer ran part 3's checks again on 2026-11-27: the app's check with 657 tests in 39 files, `check:config-studio` exit 0 with 588 Python tests and the Java modules' 9, 254, 10 and 85 tests with none failing, and `check:identifiers` and `check:published-decisions` passed. The journeys on the fake service were run by the delegated developer only, 80 of 81 passing, the one failure the column handle's test that TD-257 records.

@@ -150,10 +150,10 @@ ex:exposureOf a owl:ObjectProperty ;
     rdfs:domain ex:BorrowerExposure ;
     rdfs:range ex:Borrower .
 
-# No range is declared, so path mode offers every property after it.
 ex:refinancesInChain a owl:ObjectProperty ;
     rdfs:label "refinances in chain" ;
-    rdfs:domain ex:Facility .
+    rdfs:domain ex:Facility ;
+    rdfs:range ex:Facility .
 
 ex:hasCovenantTest a owl:ObjectProperty ;
     rdfs:label "has covenant test" ;

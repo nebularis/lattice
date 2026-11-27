@@ -132,6 +132,23 @@ describe("the sides an edge attaches by", () => {
     expect(curvePoint(r.curve, 0.5).x).toBeGreaterThan(100);
   });
 
+  it("puts the label of a loop just beyond the loop and clear of the node it leaves, on the side it leaves by", () => {
+    const label = "ex:refinancesInChain";
+    const [lr] = routeEdges(nodesOf({ a: box(0, 0) }), [edge("e", "a", "a", label)], { direction: "LR" });
+    const at = lr.label!;
+    // The node is 0 to 100 across and the loop leaves its right side, so the label starts to the right of the loop's far point and covers nothing of the node.
+    expect(at.x).toBeGreaterThan(curvePoint(lr.curve, 0.5).x);
+    expect(overlap(at, box(0, 0))).toBe(0);
+    expect(at.y + at.height / 2).toBeCloseTo(curvePoint(lr.curve, 0.5).y, 5);
+    const [tb] = routeEdges(nodesOf({ a: box(0, 0) }), [edge("e", "a", "a", label)], { direction: "TB" });
+    expect(tb.label!.y).toBeGreaterThan(curvePoint(tb.curve, 0.5).y);
+    expect(overlap(tb.label!, box(0, 0))).toBe(0);
+    // A second loop on the node leaves further out, and its label does not cover the first.
+    const two = routeEdges(nodesOf({ a: box(0, 0) }), [edge("e", "a", "a", label), edge("f", "a", "a", "ex:other")], { direction: "LR" });
+    expect(overlap(two[0].label!, two[1].label!)).toBe(0);
+    expect(two.every((r) => overlap(r.label!, box(0, 0)) === 0)).toBe(true);
+  });
+
   it("leaves out an edge whose node is not given", () => {
     expect(routeEdges(ns, [edge("e", "a", "ghost"), edge("f", "a", "b")]).map((r) => r.id)).toEqual(["f"]);
   });

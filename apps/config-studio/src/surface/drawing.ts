@@ -74,6 +74,8 @@ export interface DrawEdge {
   inverse?: boolean;
   closure?: "+" | "*" | "?";
   contract?: string;
+  /** On the edge that writes a derivation's value, where its expression is edited (SVA-Q57 (b)). `binding` is the result-target binding that states, or would state, `srf:derivedAs`. */
+  expression?: { contract: string; binding?: string };
   claims: Claim[];
 }
 
@@ -84,7 +86,7 @@ interface TargetRef {
   stated?: string;
   /** The node the shared target node is joined from, by a new edge. */
   from: string;
-  edge: { label?: string; title: string; claims?: Claim[]; dashed?: boolean };
+  edge: { label?: string; title: string; claims?: Claim[]; dashed?: boolean; expression?: { contract: string; binding?: string } };
   /** An edge already drawn to the end of the contract, which is pointed at the shared node in place of a new edge. */
   retarget?: string;
 }
@@ -128,7 +130,9 @@ export function contractOf(g: Graph, node: string, contracts: readonly ContractR
   if (contracts.some((c) => c.iri === node)) return node;
   for (const c of contracts) {
     const d = drawContract(g, c.iri, LABELS);
-    if (d.nodes.some((n) => n.claims.some((k) => k.focus === node)) || d.edges.some((e) => e.claims.some((k) => k.focus === node))) return c.iri;
+    // The edge that writes a derivation's value is made from its target, so the result binding and the expression nodes are claimed there.
+    const claimed = (claims: readonly Claim[] | undefined) => claims?.some((k) => k.focus === node) === true;
+    if (d.nodes.some((n) => claimed(n.claims)) || d.edges.some((e) => claimed(e.claims)) || d.targets.some((t) => claimed(t.edge.claims))) return c.iri;
   }
   return undefined;
 }
@@ -152,7 +156,7 @@ function carriersOf(g: Graph, contract: string): string[] {
 const words = (iri: string) => localName(iri).replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
 const sorted = (terms: readonly Term[]) => terms.map((t) => t.value).sort();
 
-interface Binding {
+export interface Binding {
   iri: string;
   role: "subject" | "required" | "candidate" | "dependency" | "closure" | "result" | "unknown";
   property?: string;
@@ -169,7 +173,7 @@ const ROLES: Record<string, Binding["role"]> = {
   ResultTargetRole: "result",
 };
 
-function bindingsOf(g: Graph, contract: string): Binding[] {
+export function bindingsOf(g: Graph, contract: string): Binding[] {
   return sorted(g.objects(contract, SRF("hasRoleBinding"))).map((iri) => ({
     iri,
     role: ROLES[localName(g.value(iri, SRF("roleKind")) ?? "")] ?? "unknown",
@@ -383,7 +387,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
     const text = readExpression(g, root, (iri) => terms.label(iri));
     const claims = [...resultClaims, ...expressionNodes(g, root).map((e) => ({ focus: e }))];
     const line = expressionLine(text, result?.datatype);
-    targets.push({ kind: "property", iri: linkProperty ?? "", stated: result?.datatype, from: carrier.id, edge: { label: line, title: `${carrier.title} is written ${linkLabel} as ${line}`, claims } });
+    targets.push({ kind: "property", iri: linkProperty ?? "", stated: result?.datatype, from: carrier.id, edge: { label: line, title: `${carrier.title} is written ${linkLabel} as ${line}`, claims, expression: { contract, binding: result?.iri } } });
     return { contract, name, kind, nodes, edges, targets, depth, primary: linkProperty, carriers: carriersOf(g, contract) };
   }
 
@@ -597,7 +601,7 @@ export function drawContracts(g: Graph, contracts: readonly string[], terms: Ter
       // The edge that writes it. A promotion's last hop already is that edge, so it is pointed at the shared node.
       const hop = t.retarget ? edges.find((e) => e.id === t.retarget) : undefined;
       if (hop) hop.target = id;
-      else edges.push({ id: `${d.contract}|e|target|${t.from}|${id}`, source: t.from, target: id, kind: "write", label: t.edge.label, title: t.edge.title, dashed: t.edge.dashed ?? false, contract: d.contract, claims: t.edge.claims ?? [] });
+      else edges.push({ id: `${d.contract}|e|target|${t.from}|${id}`, source: t.from, target: id, kind: "write", label: t.edge.label, title: t.edge.title, dashed: t.edge.dashed ?? false, contract: d.contract, expression: t.edge.expression, claims: t.edge.claims ?? [] });
     }
   };
   for (const d of drawn.filter(full)) {

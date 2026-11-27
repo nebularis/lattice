@@ -6,29 +6,38 @@
 
 import { Graph, SRF, XSD, localName, namedNode, type Term } from "@lattice/authoring-domain";
 
-export type ExprNode =
-  /** An evidence role binding of the contract, named by the property it binds. */
-  | { kind: "operand"; iri: string; label: string }
-  | { kind: "binary"; iri: string; op: Operator; left: ExprNode; right: ExprNode; datatype?: string }
+/** Where a node sits, the node that has it and the property that gives it, so an edit knows what to write. The expression's own slot is the binding's `srf:derivedAs`. */
+export interface Slot {
+  parent: string;
+  predicate: string;
+}
+
+export type ExprNode = (
+  /** An evidence role binding of the contract, named by the property it binds, with the datatype it states and, where the reader was told the contract's evidence, whether it is one. */
+  | { kind: "operand"; iri: string; label: string; property?: string; datatype?: string; role?: string; foreign?: boolean }
+  /** `type` is the class of the arithmetic kind and `datatype` the `srf:resultDatatype` the node states. */
+  | { kind: "binary"; iri: string; type: string; op: Operator; left: ExprNode; right: ExprNode; datatype?: string }
   | { kind: "round"; iri: string; operand: ExprNode; scale?: number; datatype?: string }
-  | { kind: "literal"; iri: string; value?: string; datatype?: string }
-  | { kind: "choice"; iri: string; comparison?: string; left: ExprNode; right: ExprNode; whenTrue: ExprNode; whenFalse: ExprNode; datatype?: string }
-  /** A part the contract does not state yet, or states in a way that cannot be read as an expression. `part` says which. */
-  | { kind: "missing"; part: string };
+  /** `datatype` is the stated result datatype, else the literal's own, and `valueDatatype` is the datatype of the literal as written. */
+  | { kind: "literal"; iri: string; value?: string; datatype?: string; statedDatatype?: string; valueDatatype?: string }
+  | { kind: "choice"; iri: string; comparison?: string; comparisonIri?: string; left: ExprNode; right: ExprNode; whenTrue: ExprNode; whenFalse: ExprNode; datatype?: string }
+  /** A part the contract does not state yet, or states in a way that cannot be read as an expression. `part` says which, and `iri` is the node that cannot be read, where there is one. */
+  | { kind: "missing"; part: string; iri?: string }
+) & { slot?: Slot };
 
 /** What the text writes where a part is missing. */
 export const PLACEHOLDER = "…";
 
-type Operator = "+" | "−" | "×" | "÷";
+export type Operator = "+" | "−" | "×" | "÷";
 
-const BINARY: Record<string, Operator> = {
+export const BINARY: Record<string, Operator> = {
   [SRF("SumExpression")]: "+",
   [SRF("DifferenceExpression")]: "−",
   [SRF("ProductExpression")]: "×",
   [SRF("QuotientExpression")]: "÷",
 };
 
-const COMPARISON: Record<string, string> = {
+export const COMPARISON: Record<string, string> = {
   [SRF("LessThan")]: "<",
   [SRF("LessThanOrEqual")]: "≤",
   [SRF("EqualTo")]: "=",
@@ -55,46 +64,63 @@ export function expressionNodes(g: Graph, root: string | undefined): string[] {
   return out;
 }
 
+export interface ReadOptions {
+  /** The contract's evidence bindings, the only bindings an operand may be (srf:P7). An operand that is another binding is marked foreign. */
+  evidence?: ReadonlySet<string>;
+  /** The result-target binding that states the expression, which is the expression's own slot. */
+  binding?: string;
+}
+
 /** The expression stated at `root`, which is the node `srf:derivedAs` names. `name` gives an operand's text. */
-export function readExpression(g: Graph, root: string | undefined, name: Namer): ExprNode {
+export function readExpression(g: Graph, root: string | undefined, name: Namer, options: ReadOptions = {}): ExprNode {
   const seen = new Set<string>();
-  const read = (node: Term | undefined, part: string): ExprNode => {
-    if (!node) return { kind: "missing", part };
+  const read = (node: Term | undefined, part: string, slot: Slot | undefined): ExprNode => {
+    if (!node) return { kind: "missing", part, slot };
     const iri = node.value;
     const types = g.types(node);
     // An evidence binding of the contract is an operand, named by the property it binds.
     if (types.includes(SRF("ProjectionRoleBinding"))) {
       const bound = g.value(node, SRF("bindsProperty"));
-      return bound ? { kind: "operand", iri, label: name(bound) } : { kind: "missing", part: `the property of ${localName(iri)}` };
+      if (!bound) return { kind: "missing", part: `the property of ${localName(iri)}`, iri, slot };
+      return {
+        kind: "operand", iri, label: name(bound), property: bound, datatype: g.value(node, SRF("bindsDatatype")), role: localName(g.value(node, SRF("roleKind")) ?? ""),
+        foreign: options.evidence ? !options.evidence.has(iri) : undefined, slot,
+      };
     }
-    if (seen.has(iri)) return { kind: "missing", part: `${localName(iri)}, which states itself` };
+    if (seen.has(iri)) return { kind: "missing", part: `${localName(iri)}, which states itself`, slot };
     seen.add(iri);
     const datatype = g.value(node, SRF("resultDatatype"));
     const done = <T extends ExprNode>(n: T): T => (seen.delete(iri), n);
+    const at = (predicate: string): Slot => ({ parent: iri, predicate });
     const arithmetic = types.find((t) => t in BINARY);
     if (arithmetic) {
-      return done({ kind: "binary", iri, op: BINARY[arithmetic], left: read(g.object(node, SRF("leftOperand")), "the left operand"), right: read(g.object(node, SRF("rightOperand")), "the right operand"), datatype });
+      return done({
+        kind: "binary", iri, type: arithmetic, op: BINARY[arithmetic], datatype, slot,
+        left: read(g.object(node, SRF("leftOperand")), "the left operand", at(SRF("leftOperand"))), right: read(g.object(node, SRF("rightOperand")), "the right operand", at(SRF("rightOperand"))),
+      });
     }
     if (types.includes(SRF("RoundingExpression"))) {
       const scale = g.value(node, SRF("roundingScale"));
-      return done({ kind: "round", iri, operand: read(g.object(node, SRF("roundedOperand")), "the rounded operand"), scale: scale === undefined || Number.isNaN(Number(scale)) ? undefined : Number(scale), datatype });
+      return done({ kind: "round", iri, operand: read(g.object(node, SRF("roundedOperand")), "the rounded operand", at(SRF("roundedOperand"))), scale: scale === undefined || Number.isNaN(Number(scale)) ? undefined : Number(scale), datatype, slot });
     }
     if (types.includes(SRF("TypedLiteralExpression"))) {
       const value = g.object(node, SRF("typedValue"));
-      return done({ kind: "literal", iri, value: value?.value, datatype: datatype ?? (value && "datatype" in value ? value.datatype.value : undefined) });
+      const own = value && "datatype" in value ? value.datatype.value : undefined;
+      return done({ kind: "literal", iri, value: value?.value, datatype: datatype ?? own, statedDatatype: datatype, valueDatatype: own, slot });
     }
     if (types.includes(SRF("ChoiceExpression"))) {
       const op = g.value(node, SRF("comparisonOperator"));
       return done({
-        kind: "choice", iri, comparison: op === undefined ? undefined : (COMPARISON[op] ?? localName(op)), datatype,
-        left: read(g.object(node, SRF("comparedLeft")), "the left compared operand"), right: read(g.object(node, SRF("comparedRight")), "the right compared operand"),
-        whenTrue: read(g.object(node, SRF("whenTrue")), "the true branch"), whenFalse: read(g.object(node, SRF("whenFalse")), "the false branch"),
+        kind: "choice", iri, comparison: op === undefined ? undefined : (COMPARISON[op] ?? localName(op)), comparisonIri: op, datatype, slot,
+        left: read(g.object(node, SRF("comparedLeft")), "the left compared operand", at(SRF("comparedLeft"))), right: read(g.object(node, SRF("comparedRight")), "the right compared operand", at(SRF("comparedRight"))),
+        whenTrue: read(g.object(node, SRF("whenTrue")), "the true branch", at(SRF("whenTrue"))), whenFalse: read(g.object(node, SRF("whenFalse")), "the false branch", at(SRF("whenFalse"))),
       });
     }
     // A node that is no expression the vocabulary knows, such as an expression with no kind yet.
-    return done({ kind: "missing", part: `the kind of ${localName(iri)}` });
+    return done({ kind: "missing", part: `the kind of ${localName(iri)}`, iri, slot });
   };
-  return read(root === undefined ? undefined : namedNode(root), "the expression");
+  const rootSlot = options.binding ? { parent: options.binding, predicate: SRF("derivedAs") } : undefined;
+  return read(root === undefined ? undefined : namedNode(root), "the expression", rootSlot);
 }
 
 /** Binding strength, so that a sum inside a product is bracketed and a product inside a sum is not. */

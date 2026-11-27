@@ -9,12 +9,12 @@
 import { useMemo, useState } from "react";
 import { Handle, MarkerType, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
 import { compact, localName, type Graph } from "@lattice/authoring-domain";
-import { Check, Undo2 } from "lucide-react";
+import { Check, Replace, Undo2 } from "lucide-react";
 import { Canvas, RoutedEdge, type LayoutHints, type LayoutOptions, type RoutedEdgeData } from "../canvas/kit";
 import type { Baseline } from "../rdf/baseline";
 import type { PathPlace } from "../surface/drawing";
 import type { Closure } from "../surface/paths";
-import { addHop, optionsAt, reachedAfter, readPlace, setClosure, undoHop, type PathOption } from "../surface/pathmode";
+import { addHop, optionsAt, reachedAfter, readPlace, replaceNamedSource, setClosure, undoHop, type PathOption } from "../surface/pathmode";
 import { useStudio } from "./Workspace";
 
 /** Incoming properties on the left, the class reached in the middle and outgoing properties on the right. */
@@ -24,13 +24,13 @@ const SIZE = { width: 232, height: 76 };
 /** More properties than this each way are drawn only where the author asks, so a class with many leaves the canvas readable. */
 const LIMIT = 12;
 
-type Data = { option?: PathOption; title: string; lines: string[]; current: boolean };
+type Data = { option?: PathOption; title: string; lines: string[]; current: boolean; given?: boolean };
 
 function Box({ data }: NodeProps<Node<Data>>) {
   const o = data.option;
   return (
     <div
-      className={`canvas-node surface-node path-option${o ? ` ${o.inverse ? "inverse" : "forward"}` : " reached"}${o?.group === "any" ? " any" : ""}${data.current ? " current" : ""}`}
+      className={`canvas-node surface-node path-option${o ? ` ${o.inverse ? "inverse" : "forward"}` : " reached"}${o?.group === "any" ? " any" : ""}${data.current ? " current" : ""}${data.given ? " given" : ""}`}
       data-direction={o ? (o.inverse ? "inverse" : "forward") : "class"}
       data-property={o?.property}
       data-title={data.title}
@@ -40,6 +40,7 @@ function Box({ data }: NodeProps<Node<Data>>) {
       <Handle type="target" position={Position.Left} />
       <div className="surface-tag">
         {o ? (o.inverse ? "Incoming" : "Outgoing") : "Reached"}
+        {data.given && <span className="chip surface-mark">given by the name</span>}
         {o?.group === "any" && !o.unknownClass && <span className="chip warn surface-mark">any class</span>}
         {o?.unknownClass && <span className="chip warn surface-mark">class unknown</span>}
         {o?.leads.kind === "value" && <span className="chip surface-mark">ends the path</span>}
@@ -90,7 +91,22 @@ export function PathMode({ place, ontology, onClose }: { place: PathPlace; ontol
   const total = every.forward.length + (place.kind === "binding" ? 0 : every.inverse.length);
   const found = matching(every.forward) + (place.kind === "binding" ? 0 : matching(every.inverse));
   const shown = offered.forward.length + (place.kind === "binding" ? 0 : offered.inverse.length);
+  // A path given by a named source is drawn as the chain of classes it stands for, with nothing to click, since path mode edits none of it.
+  const named = place.kind === "members" && source !== undefined;
+  const chain = useMemo(() => {
+    const classes: Node[] = [{ id: "c|0", type: "box", position: { x: 0, y: 0 }, data: { title: classLabel(place.carrier), lines: ["the carrier"], current: false, given: false } satisfies Data }];
+    const links: Edge<RoutedEdgeData>[] = [];
+    trail.forEach((h, i) => {
+      classes.push({ id: `c|${i + 1}`, type: "box", position: { x: 0, y: 0 }, data: { title: h.reaches, lines: [], current: false, given: true } satisfies Data });
+      links.push({
+        id: `h|${i}`, source: `c|${i}`, target: `c|${i + 1}`, type: "link", markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 }, style: { stroke: "var(--accent)", strokeWidth: 1.6, strokeDasharray: "6 4" },
+        data: { label: `${h.inverse ? "← " : ""}${h.label}${h.closure ? ` ${h.closure}` : ""}`, title: `${h.label} is given by ${source ? compact(source) : "the name"}`, dashed: true, className: "onto-edge", labelClass: "onto-edge-label" },
+      });
+    });
+    return { nodes: classes, edges: links };
+  }, [trail, place.carrier, source]); // eslint-disable-line react-hooks/exhaustive-deps
   const nodes = useMemo<Node[]>(() => {
+    if (named) return chain.nodes;
     const centre: Node = {
       id: "class", type: "box", position: { x: 0, y: 0 },
       data: { title: value ? "A value" : classLabel(at), lines: [value ? "the path ends here" : at === undefined ? "no class is declared here, so every property is offered" : "the class reached so far"], current: false } satisfies Data,
@@ -104,8 +120,8 @@ export function PathMode({ place, ontology, onClose }: { place: PathPlace; ontol
       } satisfies Data,
     });
     return [centre, ...offered.inverse.filter(() => place.kind !== "binding").map(box), ...offered.forward.map(box)];
-  }, [offered, at, value, place.kind, hops]); // eslint-disable-line react-hooks/exhaustive-deps
-  const edges = useMemo<Edge[]>(() => [
+  }, [offered, at, value, place.kind, hops, named, chain]); // eslint-disable-line react-hooks/exhaustive-deps
+  const edges = useMemo<Edge[]>(() => named ? chain.edges : [
     ...offered.inverse.filter(() => place.kind !== "binding").map((o): Edge<RoutedEdgeData> => ({
       id: `inv|${o.property}`, source: `inv|${o.property}`, target: "class", type: "link", markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 },
       style: { stroke: "var(--surface-c)", strokeWidth: 1.4 }, data: { title: `${o.label} points into ${classLabel(at)}`, className: "onto-edge", labelClass: "onto-edge-label" },
@@ -114,12 +130,15 @@ export function PathMode({ place, ontology, onClose }: { place: PathPlace; ontol
       id: `fwd|${o.property}`, source: "class", target: `fwd|${o.property}`, type: "link", markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 },
       style: { stroke: "var(--accent)", strokeWidth: 1.4 }, data: { title: `${classLabel(at)} has ${o.label}`, className: "onto-edge", labelClass: "onto-edge-label" },
     })),
-  ], [offered, at, place.kind]); // eslint-disable-line react-hooks/exhaustive-deps
-  const hints = useMemo<LayoutHints>(() => Object.fromEntries(nodes.map((n) => [n.id, { ...SIZE, rank: n.id === "class" ? 1 : n.id.startsWith("inv|") ? 0 : 2 }])), [nodes]);
+  ], [offered, at, place.kind, named, chain]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hints = useMemo<LayoutHints>(
+    () => Object.fromEntries(nodes.map((n) => [n.id, { ...SIZE, rank: n.id.startsWith("c|") ? Number(n.id.slice(2)) : n.id === "class" ? 1 : n.id.startsWith("inv|") ? 0 : 2 }])),
+    [nodes],
+  );
 
   const click = (n: Node) => {
     const option = (n.data as Data).option;
-    if (option) edit((g) => addHop(g, place, place.carrier, ontology, option));
+    if (option && !named) edit((g) => addHop(g, place, place.carrier, ontology, option));
   };
 
   const members = place.kind === "members";
@@ -127,7 +146,12 @@ export function PathMode({ place, ontology, onClose }: { place: PathPlace; ontol
     <div className="path-mode" role="region" aria-label="Path mode">
       <div className="path-mode-head row">
         <strong className="grow">Building {place.label}</strong>
-        <button className="btn sm" aria-label="Undo the last hop" disabled={hops.length === 0} onClick={() => edit((g) => undoHop(g, place))}><Undo2 size={13} /> Undo</button>
+        {named && (
+          <button className="btn sm" disabled={hops.length === 0} title={hops.length ? "Removes srf:expansionSource and writes this path as srf:membersPath, which can then be edited" : "The name stands for no path, since the binding it expands from binds no property"} onClick={() => edit((g) => replaceNamedSource(g, place))}>
+            <Replace size={13} /> Replace the named source with a path
+          </button>
+        )}
+        <button className="btn sm" aria-label="Undo the last hop" disabled={hops.length === 0 || named} onClick={() => edit((g) => undoHop(g, place))}><Undo2 size={13} /> Undo</button>
         <button className="btn sm primary" onClick={onClose}><Check size={13} /> Done</button>
       </div>
       <ol className="path-trail" aria-label="Path so far">
@@ -135,7 +159,7 @@ export function PathMode({ place, ontology, onClose }: { place: PathPlace; ontol
         {trail.map((h, i) => (
           <li key={i} className="path-trail-hop" data-hop={i}>
             <span className="arrow">{h.inverse ? "←" : "→"}</span> <span className="hop-name">{h.label}{h.closure ? ` ${h.closure}` : ""}</span>
-            {members && (
+            {members && !named && (
               <span className="path-closure" role="group" aria-label={`Closure of ${h.label}`}>
                 {(["+", "*"] as const).map((c) => (
                   <button
@@ -157,12 +181,12 @@ export function PathMode({ place, ontology, onClose }: { place: PathPlace; ontol
         {place.kind === "binding" && "A binding binds one property, so a click replaces it. It is written as srf:bindsProperty."}
         {place.kind === "read" && (hops.length === 1 && !hops[0].inverse ? "One forward hop is written as srf:readProperty." : hops.length ? `${hops.length} hops are written as srf:PathStep nodes.` : "No read path yet. Click a property to start it.")}
         {members && !readable && "The members path is stated in a form the canvas does not read, so the first hop replaces it. "}
-        {members && source && `The expansion names ${compact(source)}, which stands for the path drawn. The first edit writes that path out as srf:membersPath and drops the named source. `}
-        {members && readable && !source && (hops.length ? "The path is written as srf:membersPath, a list for a sequence, sh:inversePath for an inverse hop." : "No members path yet. Click a property to start it.")}
+        {named && `The expansion names ${compact(source!)}, and the path drawn is the one the name stands for, as the vocabulary defines it. Path mode edits nothing while the name is stated. Replace the named source with a path to write it out as srf:membersPath, drop the name and edit the path. `}
+        {members && readable && !named && (hops.length ? "The path is written as srf:membersPath, a list for a sequence, sh:inversePath for an inverse hop." : "No members path yet. Click a property to start it.")}
         {value && " The path has ended in a value."}
         {!value && at === undefined && place.kind !== "binding" && hops.length > 0 && " The last hop declares no range, so the class is unknown and every property is offered."}
       </p>
-      {total > 8 && (
+      {total > 8 && !named && (
         <label className="row small path-filter">
           Filter the properties
           <input className="input" type="search" aria-label="Filter the properties" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="a part of a name" />
@@ -171,7 +195,7 @@ export function PathMode({ place, ontology, onClose }: { place: PathPlace; ontol
         </label>
       )}
       <Canvas
-        key={`${place.node}|${at ?? "?"}|${value}|${hops.length}|${query}`}
+        key={`${place.node}|${at ?? "?"}|${value}|${hops.length}|${query}|${named}`}
         nodes={nodes}
         edges={edges}
         nodeTypes={NODE_TYPES}
@@ -179,7 +203,7 @@ export function PathMode({ place, ontology, onClose }: { place: PathPlace; ontol
         routing
         options={LAYOUT}
         hints={hints}
-        storageKey={`lattice-studio:surface-path:${id}:${place.node}:${at ?? "unknown"}:${value}`}
+        storageKey={`lattice-studio:surface-path:${id}:${place.node}:${at ?? "unknown"}:${value}${named ? ":named" : ""}`}
         height={460}
         onNodeClick={click}
       />

@@ -666,14 +666,19 @@ test("the ontology drawing shows the classes of the baseline, what the shapes st
   const diagram = page.getByRole("region", { name: "Ontology diagram" });
   const nodes = diagram.locator(".react-flow__node-cls");
   await expect(nodes.filter({ hasText: "Facility" }).first()).toBeVisible();
-  // The sample's baseline declares twelve classes, and thirteen properties link them.
+  // The sample's baseline declares twelve classes, and fourteen properties link them, one of which has the facility as its domain and its range.
   const status = diagram.getByRole("status");
-  await expect(status).toHaveText("12 classes and 13 links drawn.");
+  await expect(status).toHaveText("12 classes and 14 links drawn.");
+  // That property is drawn as a loop on its class, the edge leaving and entering the facility on the same side.
+  const loop = diagram.locator(".react-flow__edge").filter({ has: page.locator("title", { hasText: "ex:refinancesInChain, from Facility to Facility" }) });
+  await expect(loop).toHaveCount(1);
+  await expect(loop.locator("path.react-flow__edge-path")).toHaveAttribute("d", /./);
+  await expect(diagram.locator(".onto-edge-label").filter({ hasText: "ex:refinancesInChain" })).toBeVisible();
   await expect(diagram.getByRole("group", { name: "Ontology view" }).getByRole("button", { name: "Classes and properties" })).toHaveAttribute("aria-pressed", "true");
 
   // The facility's shape states four of those links, so none is added and four name the shape.
   await diagram.getByLabel("Include shapes").check();
-  await expect(status).toHaveText("12 classes and 13 links, 4 stated by shapes drawn.");
+  await expect(status).toHaveText("12 classes and 14 links, 4 stated by shapes drawn.");
   await expect(diagram.locator(".onto-edge-label.dashed")).toHaveCount(0);
   await expect(diagram.locator(".react-flow__edge title").filter({ hasText: "stated by ex:FacilityShape" })).toHaveCount(4);
 
@@ -961,7 +966,7 @@ test("a dragged class takes its edges and their labels with it, and the edges st
   const fake = new FakeService();
   const diagram = await openDiagramOfFacility(page, fake);
   const facility = diagram.locator(".react-flow__node-cls").filter({ hasText: "Facility" });
-  // Facility is the source of four links and the target of one.
+  // Facility is the source of four links and the target of one, besides the loop on itself.
   const links = [
     { title: "ex:drawnUnder, from Drawdown to Facility", end: "end" as const },
     { title: "ex:borrower, from Facility to Borrower", end: "start" as const },
@@ -2517,14 +2522,35 @@ test("a promotion's read path is built by clicking from class to class, and the 
   await expect(canvas.locator(".onto-edge-label").filter({ hasText: /^(drawn under|borrower|← borrower)$/ })).toHaveCount(3);
 });
 
-test("a closure is added to the facility's refinancing expansion's members path by a toggle on its hop, written as a SHACL path", async ({ page }) => {
+test("a named source is drawn in path mode as the path the name stands for and edits nothing, and one action replaces it with a path, which a closure is then added to as a SHACL path", async ({ page }) => {
   const fake = new FakeService();
   const { canvas } = await facilitySurfaceCanvas(page, fake);
   await pickContract(page, "facility-refinancing");
   await surfaceNode(canvas, "class").filter({ hasText: "Members" }).getByRole("button", { name: /^Build the members path/ }).click();
-  // The expansion names a source, which stands for the property one or more times. The hop is drawn with its closure.
+  // The expansion names a source, which stands for the property one or more times. The path is drawn, marked as given by the name, with nothing to edit.
   await expect(trail(canvas)).toHaveText(["refinances +"]);
+  await expect(pathMode(canvas)).toContainText("given by the name");
+  await expect(pathMode(canvas).getByRole("status")).toContainText("Path mode edits nothing while the name is stated");
+  await expect(pathMode(canvas).getByRole("group", { name: /^Closure of/ })).toHaveCount(0);
+  await expect(pathMode(canvas).getByRole("button", { name: "Undo the last hop" })).toBeDisabled();
+  await expect(pathMode(canvas).locator(".path-option[data-property]")).toHaveCount(0);
+  await expect(pathMode(canvas).locator(".path-option.given")).toHaveCount(1);
+  // Leaving path mode wrote nothing, so a compilation still sends the named source and no path.
+  await pathMode(canvas).getByRole("button", { name: "Done" }).click();
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await expect.poll(() => fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").length).toBe(1);
+  const before = fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").pop()!.body;
+  expect(before).toContain("srf:TransitiveClosure");
+  expect(before).not.toContain("sh:oneOrMorePath");
+  expect(before).not.toContain("srf:membersPath");
+
+  // The one action removes the named source and writes the path in the same edit, and only then can the path be edited.
+  await surfaceNode(canvas, "class").filter({ hasText: "Members" }).getByRole("button", { name: /^Build the members path/ }).click();
+  await pathMode(canvas).getByRole("button", { name: "Replace the named source with a path" }).click();
+  await expect(trail(canvas)).toHaveText(["refinances +"]);
+  await expect(pathMode(canvas)).not.toContainText("given by the name");
   await expect(pathMode(canvas).getByRole("button", { name: "One or more times: refinances" })).toHaveAttribute("aria-pressed", "true");
+  await expect(pathMode(canvas).getByRole("button", { name: "Replace the named source with a path" })).toHaveCount(0);
   // Zero or more instead, and the path is stated as srf:membersPath in place of the named source.
   await pathMode(canvas).getByRole("button", { name: "Zero or more times: refinances" }).click();
   await expect(trail(canvas)).toHaveText(["refinances *"]);
@@ -2533,8 +2559,9 @@ test("a closure is added to the facility's refinancing expansion's members path 
   await pathMode(canvas).getByRole("button", { name: "Done" }).click();
   await expect(canvas.locator(".onto-edge-label.dashed").filter({ hasText: "refinances *" })).toBeVisible();
   await canvas.getByRole("button", { name: "Compile", exact: true }).click();
-  await expect.poll(() => fake.submitted.filter((s) => s.target === "surface").pop()?.body ?? "").toContain("sh:zeroOrMorePath");
-  const body = fake.submitted.filter((s) => s.target === "surface").pop()!.body;
+  await expect.poll(() => fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").length).toBe(2);
+  const body = fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").pop()!.body;
+  expect(body).toContain("sh:zeroOrMorePath");
   expect(body).not.toContain("srf:TransitiveClosure");
   // The form of the statement states the path too, and the toggle takes it off.
   await surfaceNode(canvas, "class").filter({ hasText: "Members" }).getByRole("button", { name: /^Build the members path/ }).click();
@@ -2542,6 +2569,159 @@ test("a closure is added to the facility's refinancing expansion's members path 
   await expect(trail(canvas)).toHaveText(["refinances"]);
   await pathMode(canvas).getByRole("button", { name: "Done" }).click();
   await expect(canvas.locator(".onto-edge-label").filter({ hasText: /^(⚠ )?refinances$/ })).toBeVisible();
+});
+
+// --- the surface canvas, the expression editor (SVA-S1 part 3) ------------------------------------------------------------------------
+
+const EXPR = "https://example.org/lending#";
+const DERIVED_AS = "https://www.nebularis.org/neuro-semantic/lattice/surface#derivedAs";
+const editorOf = (canvas: Locator) => canvas.getByRole("region", { name: "Expression editor" });
+const lineOf = (canvas: Locator) => editorOf(canvas).getByRole("status", { name: "Expression as a line" }).locator("code");
+const exprNode = (canvas: Locator, slot: string) => editorOf(canvas).locator(`.expr-node[data-slot="${slot}"]`);
+const rootNode = (canvas: Locator) => exprNode(canvas, `${EXPR}fm-target|${DERIVED_AS}`);
+const undoEdit = (page: Page) => page.getByRole("button", { name: "Undo", exact: true }).click();
+
+test("the facility derivation opens in the expression editor from its result edge as a line, switches to a tree that is remembered, changes the product to a quotient, shows the datatype mark and the line change, and undoes it", async ({ page }) => {
+  const fake = new FakeService();
+  const { ws, canvas } = await facilitySurfaceCanvas(page, fake);
+  await pickContract(page, "facility-margin");
+  await expect(editorOf(canvas)).toHaveCount(0);
+
+  // A click on the result edge itself opens it, and so does a click on its label. It opens as the one line of text, which is read only.
+  const edge = canvas.locator(".react-flow__edge").filter({ has: page.locator("title", { hasText: "is written margin weighted commitment as commitment × margin : decimal" }) });
+  const point = await edge.locator("path.react-flow__edge-path").evaluate((p: SVGPathElement) => {
+    const at = p.getPointAtLength(p.getTotalLength() * 0.15);
+    const m = p.getScreenCTM()!;
+    return { x: at.x * m.a + m.e, y: at.y * m.d + m.f };
+  });
+  await page.mouse.click(point.x, point.y);
+  await expect(editorOf(canvas)).toBeVisible();
+  await expect(lineOf(canvas)).toHaveText("commitment × margin : decimal");
+  await expect(editorOf(canvas).getByRole("group", { name: "Expression tree" })).toHaveCount(0);
+  await expect(editorOf(canvas).getByRole("button", { name: "Line" })).toHaveAttribute("aria-pressed", "true");
+  // The form beside it shows the binding that states the expression.
+  await expect(page).toHaveURL(/fm-target$/);
+  await editorOf(canvas).getByRole("button", { name: "Done" }).click();
+  await expect(editorOf(canvas)).toHaveCount(0);
+  await canvas.locator(".onto-edge-label").filter({ hasText: "commitment × margin : decimal" }).click();
+  await expect(editorOf(canvas)).toBeVisible();
+
+  // The tree has a node for the product and one for each operand, each with its datatype, and no mark.
+  await editorOf(canvas).getByRole("button", { name: "Tree" }).click();
+  await expect(editorOf(canvas).locator(".expr-node")).toHaveCount(3);
+  await expect(rootNode(canvas)).toContainText("Product");
+  await expect(rootNode(canvas)).toHaveAttribute("data-datatype", "decimal");
+  await expect(exprNode(canvas, `${EXPR}fm-expression|https://www.nebularis.org/neuro-semantic/lattice/surface#leftOperand`)).toContainText("commitment");
+  await expect(editorOf(canvas).locator(".expr-mark")).toHaveCount(0);
+  // The choice of rendering is kept in this browser for the workspace.
+  expect(await page.evaluate((key) => localStorage.getItem(key), `lattice-studio:expression-view:${ws}`)).toBe("tree");
+
+  // The product becomes a quotient. Both operands stay, the line changes, and a quotient of two decimals is a decimal, so nothing is marked.
+  await rootNode(canvas).getByLabel("Kind").selectOption("quotient");
+  await expect(lineOf(canvas)).toHaveText("commitment ÷ margin : decimal");
+  await expect(rootNode(canvas)).toContainText("Quotient");
+  await expect(rootNode(canvas)).toHaveAttribute("data-datatype", "decimal");
+  await expect(editorOf(canvas).locator(".expr-mark")).toHaveCount(0);
+  // The author states another datatype, and the node marks where it disagrees with the rules, as the line changes with it.
+  await rootNode(canvas).getByLabel("Result datatype").selectOption({ label: "integer" });
+  await expect(rootNode(canvas).locator('.expr-mark[data-mark="disagrees"]')).toContainText("states integer, the operands give decimal");
+  await expect(rootNode(canvas).locator('.expr-mark[data-mark="result"]')).toContainText("the result binding states decimal");
+  await expect(lineOf(canvas)).toHaveText("commitment ÷ margin : integer");
+  await expect(rootNode(canvas)).toHaveAttribute("data-datatype", "integer");
+  // The mark offers the datatype that agrees, and using it is one edit too.
+  await rootNode(canvas).getByRole("button", { name: "Use decimal" }).click();
+  await expect(editorOf(canvas).locator(".expr-mark")).toHaveCount(0);
+  await expect(lineOf(canvas)).toHaveText("commitment ÷ margin : decimal");
+  // Each change was one edit, so three undos are the way back.
+  await undoEdit(page);
+  await expect(rootNode(canvas).locator('.expr-mark[data-mark="disagrees"]')).toBeVisible();
+  await undoEdit(page);
+  await expect(lineOf(canvas)).toHaveText("commitment ÷ margin : decimal");
+  await expect(editorOf(canvas).locator(".expr-mark")).toHaveCount(0);
+  await undoEdit(page);
+  await expect(lineOf(canvas)).toHaveText("commitment × margin : decimal");
+  await expect(rootNode(canvas)).toContainText("Product");
+  await expect(page.getByRole("button", { name: "Undo", exact: true })).toBeDisabled();
+
+  // The tree is what the editor opens as next time, and the line is one click away.
+  await editorOf(canvas).getByRole("button", { name: "Done" }).click();
+  await page.reload();
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Canvas" }).click();
+  await pickContract(page, "facility-margin");
+  await canvas.getByRole("button", { name: "Edit expression" }).click();
+  await expect(editorOf(canvas).getByRole("group", { name: "Expression tree" })).toBeVisible();
+  await expect(editorOf(canvas).getByRole("button", { name: "Tree" })).toHaveAttribute("aria-pressed", "true");
+  await editorOf(canvas).getByRole("button", { name: "Line" }).click();
+  await expect(editorOf(canvas).getByRole("group", { name: "Expression tree" })).toHaveCount(0);
+});
+
+test("a rounding of a sum is built from Add an expression, offering the contract's evidence and no cycle, and what a compilation sends is the expression", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilitySurfaceCanvas(page, fake);
+  await pickContract(page, "facility-margin");
+  await canvas.getByRole("button", { name: "Edit expression" }).click();
+  await editorOf(canvas).getByRole("button", { name: "Tree" }).click();
+  // The binding states an expression, so there is nothing to add until it is removed, which leaves the derivation with none.
+  await expect(editorOf(canvas).getByRole("group", { name: "Add an expression" })).toHaveCount(0);
+  await rootNode(canvas).getByRole("button", { name: "Remove the expression" }).click();
+  await expect(editorOf(canvas).locator(".expr-node")).toHaveCount(0);
+  await expect(lineOf(canvas)).toHaveCount(0);
+  const add = editorOf(canvas).getByRole("group", { name: "Add an expression" });
+  await expect(add).toBeVisible();
+
+  await add.getByLabel("Kind of the new expression").selectOption({ label: "Rounding" });
+  await add.getByRole("button", { name: "Add an expression" }).click();
+  await expect(lineOf(canvas)).toHaveText("round(…, …) : decimal");
+  await expect(rootNode(canvas)).toContainText("Rounding");
+  // Each missing part is a placeholder, marked.
+  await expect(editorOf(canvas).locator(".expr-node.missing")).toHaveCount(1);
+  await expect(editorOf(canvas).locator('.expr-mark[data-mark="no-scale"]')).toHaveText(/the scale is missing/);
+
+  // An operand is set to a new sum, which the editor names in the baseline's namespace.
+  await editorOf(canvas).locator(".expr-node.missing").getByLabel("Set the rounded operand").selectOption("new:sum");
+  await expect(lineOf(canvas)).toHaveText("round(… + …, …) : decimal");
+  // Only the contract's own evidence is offered, never its subject or its result target, and no expression that would be its own operand.
+  const left = editorOf(canvas).locator(".expr-node.missing").first().getByLabel("Set the left operand");
+  const offered = await left.locator("option").allTextContents();
+  expect(offered).toEqual(["choose…", "commitment : decimal", "margin : decimal", "Sum", "Difference", "Product", "Quotient", "Rounding", "Choice", "A typed literal…"]);
+  expect(await left.locator("option[value^=existing]").count()).toBe(0);
+  await left.selectOption({ label: "commitment : decimal" });
+  await editorOf(canvas).locator(".expr-node.missing").getByLabel("Set the right operand").selectOption({ label: "margin : decimal" });
+  await expect(lineOf(canvas)).toHaveText("round(commitment + margin, …) : decimal");
+  // A scale may be negative, and a value that is no whole number is refused where it is typed.
+  const scale = rootNode(canvas).getByLabel("Scale");
+  await scale.fill("two");
+  await expect(rootNode(canvas)).toContainText("a whole number");
+  await scale.fill("-2");
+  await scale.press("Enter");
+  await expect(lineOf(canvas)).toHaveText("round(commitment + margin, -2) : decimal");
+  await scale.fill("2");
+  await scale.press("Enter");
+  await expect(lineOf(canvas)).toHaveText("round(commitment + margin, 2) : decimal");
+  await expect(editorOf(canvas).locator(".expr-mark")).toHaveCount(0);
+  // A typed literal as the sum's right operand, with its value and datatype, and then the evidence again.
+  const sum = editorOf(canvas).locator(".expr-node.binary");
+  await expect(sum).toHaveCount(1);
+  await editorOf(canvas).locator('.expr-node.operand').filter({ hasText: "margin" }).getByLabel("Set the right operand").selectOption("literal");
+  await editorOf(canvas).getByLabel("Literal value").fill("abc");
+  await expect(editorOf(canvas).getByRole("button", { name: "Set", exact: true })).toBeDisabled();
+  await editorOf(canvas).getByLabel("Literal value").fill("1.5");
+  await editorOf(canvas).getByRole("button", { name: "Set", exact: true }).click();
+  await expect(lineOf(canvas)).toHaveText("round(commitment + 1.5, 2) : decimal");
+  await expect(editorOf(canvas).locator(".expr-node.literal")).toHaveAttribute("data-datatype", "decimal");
+  await undoEdit(page);
+  await expect(lineOf(canvas)).toHaveText("round(commitment + margin, 2) : decimal");
+
+  // What a compilation sends states the rounding of the sum, with the scale an integer, and the product the derivation started with is gone.
+  await editorOf(canvas).getByRole("button", { name: "Done" }).click();
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await expect.poll(() => fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").length).toBe(1);
+  const body = fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").pop()!.body;
+  expect(body).toContain("srf:RoundingExpression");
+  expect(body).toContain("srf:SumExpression");
+  expect(body).toContain('srf:roundingScale 2');
+  expect(body).toContain("ex:FacilityMarginExpression");
+  expect(body).not.toContain("srf:ProductExpression");
 });
 
 // --- the persistence simulator (SVA-P4) ---------------------------------------------------------------------------------------------------
