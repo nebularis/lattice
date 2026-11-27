@@ -2,7 +2,7 @@
 
 # The rig format's next version, key by key
 
-**Unit:** `v-rig`, prefix VR ([plan](../plans/v-rig.md), [status](../status/v-rig.md)). **Status:** drafted 2026-11-26, at the maintainer's request, outside any slice. It names keys and holds no content of any rig. VR-Q20 to VR-Q22 were answered on 2026-11-26, (a) each, and VR-Q23 and VR-Q24 are open. Nothing here is built.
+**Unit:** `v-rig`, prefix VR ([plan](../plans/v-rig.md), [status](../status/v-rig.md)). **Status:** drafted 2026-11-26, at the maintainer's request, outside any slice. It names keys and holds no content of any rig. VR-Q20 to VR-Q22 were answered on 2026-11-26 and VR-Q24 on 2026-11-27, (a) each, and VR-Q23 is open. Nothing here is built.
 
 ## 1. What this is
 
@@ -256,7 +256,7 @@ The competency questions do not change. A question that returns no row on a rig 
 
 **VR-Q23. How a party declared for the rig is carried in the representation.** The module has a carrier for a document, a programme and an event, each with the id the rig gives it, and a record for whatever a fact holds. A party declared once for the rig is none of these. (a) A class for a party, a carrier with the rig's id for it, as an event is. One class and one generic word, and the module's version moves with the property VR-Q22 adds. (b) One class for anything a rig declares at its own level, with the kind as a token, so that a later file of the same sort, for example the units a rig settles in, adds no class. It costs a token that a mapping must read before it knows what it holds. (c) No carrier of its own. The lifter copies each party into the programmes that name it, as a record, which needs no class and gives back what VR-Q21 (a) was chosen to avoid, one party as several nodes. *Leaning (a).* Party is a word as generic as programme, a second file of the sort is a guess today, and (b) can still replace (a) before the module's first release that carries either.
 
-**VR-Q24. How a rig states what it knows of a party's identity.** The answer to VR-Q21 has a party declared once, so that one party is one node. A rig's writer does not always know that. Two mentions in two documents may be one party or two, and a rig that gives them one id, or two, states more than its writer knows. Nothing in the draft lets a rig say so, and a question that counts the parties to a layer, or asks whose a line is, then answers with a confidence the rig does not have. A fact has three states (the plan's principle 3), and whether two parties are one is a fact.
+**VR-Q24. How a rig states what it knows of a party's identity.** The answer to VR-Q21 has a party declared once, so that one party is one node. A rig's writer does not always know that. Two mentions in two documents may be one party or two, and a rig that gives them one id, or two, states more than its writer knows. Nothing in the draft lets a rig say so, and a question that counts the parties to a layer, or asks whose a line is, then answers with a confidence the rig does not have. A fact has three states (the plan's principle 3), and whether two parties are one is a fact. The options follow the drawing. Answered 2026-11-27, (a), now the addendum of 2026-11-27 to ADR-A153. Decided by the maintainer.
 
 ```mermaid
 flowchart LR
@@ -279,7 +279,7 @@ Under any option a party's `name` is never required, and a rig may list it as no
 
 ## 7. Order of work
 
-1. The maintainer's answers to VR-Q20 to VR-Q22, given on 2026-11-26, and to VR-Q23 and VR-Q24.
+1. The maintainer's answers to VR-Q20 to VR-Q22, given on 2026-11-26, to VR-Q24, given on 2026-11-27, and to VR-Q23.
 2. This draft goes to the rig's owner through the maintainer, who may ask for a key (the [protocol](../notes/rig-run-protocol.md), section 3).
 3. What section 5 lists is built as VR-10 to VR-12 of the [plan](../plans/v-rig.md), with the synthetic rig of format 2 begun first.
 4. The rig is written once, to the list and to these keys.

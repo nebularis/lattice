@@ -48,3 +48,16 @@ The first format carries eleven keys the tracked scheme maps. Its next version c
 **A rig declares its parties once.** A party is declared in one file the rig's manifest names, and every other mention is its id, so a party named in two programmes is one node of the representation. How the representation carries that node is not decided here.
 
 **Consequences.** The module gains one property and moves its version when the first rule is built. A consumer that pinned the first release reads a run of the first format as before. Two runs of rigs in different format versions compare key by key wherever a key is in both, since no key of the first format changes its meaning.
+
+## Addendum (2026-11-27): a rig states where a party's identity holds
+
+**Status of this addendum:** Proposed 2026-11-27, drafted from the maintainer's decision of that day. Nothing in it is built.
+
+The addendum of 2026-11-26 has a rig declare a party once, so that one party is one node. A rig's writer does not always know whether two mentions are one party. A rig that gives them one id, or two, then states more than its writer knows, and a question that counts parties answers with a confidence the rig does not have. Whether two parties are one is a fact, and decision 3 gives a fact three states.
+
+**A party states where its identity holds, and which parties it may be.** A party may list the documents and programmes within which it has its id and no other, so that two ids listed for one of them are two parties there. It may list the parties it may be, where the writer cannot tell. A writer who knows two ids are one party gives them one id, so the format has no key that states sameness.
+
+**Where no carrier lists two ids together, the rig does not say whether they are one party.** No mapping and no question takes them for two. A question that counts parties, or joins on one, says which of its rows rest on a doubtful pair or on a pair no carrier lists together.
+
+**Consequences.** Both statements are lists of ids, so the tool carries them by resolving an id, as it does for any other. A party's name is never required, and a rig may state it as not known. A party may be given an identity within one document only, by listing that document alone. A count of parties is exact only within a carrier every counted party lists and where no counted party names another as doubtful.
+
