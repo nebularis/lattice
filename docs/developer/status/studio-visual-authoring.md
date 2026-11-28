@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** built 2026-11-28. SVA-Q1 to SVA-Q16 answered
+**Status:** building 2026-11-28. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** SVA-S1 is built and waits on the maintainer's review of part 4. SVA-S3, the surface simulator pane, has every slice it is blocked on built, and starts with its design questions once the maintainer chooses it. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** SVA-S3, the surface simulator pane, starting with its design questions for the maintainer. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -67,7 +67,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-S2i | expansion projections | built 2026-11-25 | SVA-S2f |
 | SVA-S2j | expansion combined with graph construction | built 2026-11-25 | SVA-S2i |
 | SVA-S2c | projections lowered and run in a surface step | built 2026-11-25 | SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j |
-| SVA-S3 | the surface simulator pane | planned | SVA-S1, SVA-S2, SVA-P4 |
+| SVA-S3 | the surface simulator pane | building 2026-11-28 | SVA-S1, SVA-S2, SVA-P4 |
 | SVA-M1 | the mapping schemes listed on the left | built 2026-11-12, building 2026-11-12 |  |
 | SVA-M2a | MORK's template library, with `mork_rdf` | planned |  |
 | SVA-M2b | template libraries in `mork2rml`, `mork_transforms` and MCN | planned | SVA-M2a |
@@ -304,3 +304,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-28: SVA-S1 built. Part 4 adds the construction, join and expansion editors and the node for each member, each opened from its statement on the canvas, each edit one change of the configuration, with the laws P10 to P25 marked as edited by the rules the shapes state and checked against pySHACL, and nothing a law forbids offered. A loop on every canvas leaves by a side across the flow, the one with fewer edge ends, with room left by the kit's layout, and the facility sample declares `ex:refinances`.
 - 2026-11-28: the maintainer asked for the labels of several loops on one node to be fixed. The loops of a node now lie side by side along their side, each label beside its own loop, since an outer loop of a nested stack crosses a wide label inside it.
 - 2026-11-28: the maintainer chose that removing a join pair, or changing a side, keeps its bindings, and the canvas marks an evidence binding no statement reads, since required evidence that nothing reads still excludes an instance. The maintainer asked that joins beyond equality be a design question for a later Surface slice, recorded as SVA-Q63 in the projection backend sketch and as BL-27.
+- 2026-11-28: SVA-S3 marked building, design questions first.

@@ -76,7 +76,7 @@ Every unit with a status record, its state from the record's Status line, and it
 | spc-package-split | unit |  | merged 2026-09-20 |  | [status](status/spc-package-split.md) |
 | studio-publication | multi-slice unit in four phases | PB | built 2026-10-31 | PB-1 | [plan](plans/studio-publication.md), [status](status/studio-publication.md) |
 | studio-quality | multi-slice unit | SQ | built 2026-10-31 | SQ-1 | [plan](plans/studio-quality.md), [status](status/studio-quality.md) |
-| studio-visual-authoring | multi-slice unit | SVA | built 2026-11-28 | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md), 50 Validation Packs |
+| studio-visual-authoring | multi-slice unit | SVA | building 2026-11-28 | SVA-R0 | [plan](plans/studio-visual-authoring.md), [status](status/studio-visual-authoring.md), 50 Validation Packs |
 | studio-worker-liveness | multi-slice unit | WL | built 2026-11-06 | WL-0 | [plan](plans/studio-worker-liveness.md), [status](status/studio-worker-liveness.md) |
 | surface-mork-unified-projection | unit |  | merged 2026-09-22 |  | [status](status/surface-mork-unified-projection.md) |
 | surface-outstanding-items | unit |  | merged 2026-09-22 |  | [status](status/surface-outstanding-items.md) |
@@ -562,7 +562,7 @@ Every slice on a board, keyed by its id, with the record and section it was read
 | SVA-S2i | expansion projections | studio-visual-authoring | built 2026-11-25 | SVA-S2f | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2j | expansion combined with graph construction | studio-visual-authoring | built 2026-11-25 | SVA-S2i | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-S2c | projections lowered and run in a surface step | studio-visual-authoring | built 2026-11-25 | SVA-S2g, SVA-S2h, SVA-S2i, SVA-S2j | docs/developer/status/studio-visual-authoring.md#slices |
-| SVA-S3 | the surface simulator pane | studio-visual-authoring | planned | SVA-S1, SVA-S2, SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |
+| SVA-S3 | the surface simulator pane | studio-visual-authoring | building 2026-11-28 | SVA-S1, SVA-S2, SVA-P4 | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M1 | the mapping schemes listed on the left | studio-visual-authoring | built 2026-11-12 |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M2a | MORK's template library, with `mork_rdf` | studio-visual-authoring | planned |  | docs/developer/status/studio-visual-authoring.md#slices |
 | SVA-M2b | template libraries in `mork2rml`, `mork_transforms` and MCN | studio-visual-authoring | planned | SVA-M2a | docs/developer/status/studio-visual-authoring.md#slices |
