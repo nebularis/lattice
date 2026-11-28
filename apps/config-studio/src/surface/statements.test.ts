@@ -12,7 +12,7 @@ import {
 import { addExpansion, expansionChoices, expansionMarks, propertiesRead, readExpansion, removeExpansion, setExpandsFrom, useNamedSource } from "./expansionEdit";
 import { addJoin, addPair, joinChoices, joinMarks, linksOf, matchesOf, readJoin, removeJoin, removePair, setCardinality, setPairDatatype, setPairSide, setSecondCarrier } from "./joinEdit";
 import { replaceNamedSource } from "./pathmode";
-import { statementContext } from "./statement";
+import { statementContext, unreadEvidence } from "./statement";
 import { drawContract } from "./drawing";
 import { ontologyOf, termsOf } from "./terms";
 
@@ -286,11 +286,11 @@ describe("a join", () => {
     expect([matchesOf(j), linksOf(j)]).toEqual([undefined, undefined]);
   });
 
-  it("is added as a minted statement that states nothing, and removed with its pairs and the bindings only they referred to", () => {
+  it("is added as a minted statement that states nothing, and removed with its pairs, its bindings staying and marked as read by nothing", () => {
     const bare = removeJoin(surface, ctx);
     expect(has(bare, at("fb-link"), SRF("joinedAs"))).toBe(false);
-    for (const b of ["fb-code", "fb-match"]) expect(bare.quads(at(b), null, null), b).toEqual([]);
-    expect(has(bare, at(BRANCH), SRF("hasRoleBinding"), at("fb-code"))).toBe(false);
+    for (const b of ["fb-code", "fb-match"]) expect(has(bare, at(BRANCH), SRF("hasRoleBinding"), at(b)), b).toBe(true);
+    expect(unreadEvidence(bare, at(BRANCH)).map((i) => i.focus).sort()).toEqual([at("fb-code"), at("fb-match")]);
     expect(has(bare, at(BRANCH), SRF("hasRoleBinding"), at("fb-link"))).toBe(true);
     expect(codes(joinMarks(bare, ctxOf(bare, BRANCH)))).toEqual(["required"]);
     const added = addJoin(bare, ctxOf(bare, BRANCH));
@@ -323,9 +323,39 @@ describe("a join", () => {
     expect(has(g, at(BRANCH), SRF("hasRoleBinding"), added.left!)).toBe(true);
     expect(has(g, at(BRANCH), SRF("hasRoleBinding"), added.right!)).toBe(true);
     expect(joinMarks(g, ctxOf(g, BRANCH))).toEqual([]);
-    // Removing it takes the pair and both bindings, which only it referred to, so adding and removing is no change.
+    // The facility sample's contracts read every evidence binding they state.
+    expect(unreadEvidence(surface, at(BRANCH))).toEqual([]);
+    // Removing the pair takes the pair alone. Its two bindings stay, so an author still wiring them up loses nothing, and each is marked as read by nothing.
     const back = removePair(g, ctxOf(g, BRANCH), added.key);
-    expect(back.toTurtle()).toBe(surface.toTurtle());
+    expect(readJoin(back, ctxOf(back, BRANCH))!.pairs).toHaveLength(1);
+    expect(has(back, at(BRANCH), SRF("hasRoleBinding"), added.left!)).toBe(true);
+    expect(back.value(added.right!, SRF("bindsCarrier"))).toBe(at("Branch"));
+    const unread = unreadEvidence(back, at(BRANCH));
+    expect(unread.map((i) => i.focus).sort()).toEqual([added.left!, added.right!].sort());
+    expect(unread.every((i) => i.severity === "Info" && i.code === "unread-evidence" && /excludes an instance that lacks the value/.test(i.message))).toBe(true);
+    // A pair that reads them again clears the marks.
+    const again = addPair(back, ctxOf(back, BRANCH), { left: { binding: added.left! }, right: { binding: added.right! } });
+    expect(unreadEvidence(again, at(BRANCH))).toEqual([]);
+  });
+
+  it("keeps the binding a pair stood on when one of its sides is changed, and marks it as read by nothing", () => {
+    const g = addPair(surface, ctx, { left: { property: at("facilityReference") }, right: { property: at("branchCode") } });
+    const added = readJoin(g, ctxOf(g, BRANCH))!.pairs.find((p) => p.left !== at("fb-code"))!;
+    const changed = setPairSide(g, ctxOf(g, BRANCH), added.key, "left", { property: at("bookingBranchCode") });
+    expect(has(changed, at(BRANCH), SRF("hasRoleBinding"), added.left!)).toBe(true);
+    expect(unreadEvidence(changed, at(BRANCH)).map((i) => i.focus)).toEqual([added.left!]);
+  });
+
+  it("says that a candidate-evidence binding read by nothing has no effect", () => {
+    const g = surface.edit((e) => {
+      e.add(at("fb-spare"), "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", SRF("ProjectionRoleBinding"));
+      e.add(at("fb-spare"), SRF("roleKind"), SRF("CandidateEvidenceRole"));
+      e.add(at("fb-spare"), SRF("bindsProperty"), at("facilityReference"));
+      e.add(at(BRANCH), SRF("hasRoleBinding"), at("fb-spare"));
+    });
+    const [mark] = unreadEvidence(g, at(BRANCH));
+    expect(mark.focus).toBe(at("fb-spare"));
+    expect(mark.message).toMatch(/has no effect/);
   });
 
   it("offers a left side of the contract's own carrier and a right side of the second, of the statement's evidence kind, and refuses a side the laws forbid", () => {
@@ -366,13 +396,13 @@ describe("a join", () => {
     expect(joinMarks(cured, ctxOf(cured, BRANCH))).toEqual([]);
   });
 
-  it("changes a side of a pair, and the binding it stood on goes where nothing refers to it", () => {
+  it("changes a side of a pair, and the binding it stood on stays, marked as read by nothing", () => {
     const [pair] = readJoin(surface, ctx)!.pairs;
     const g = setPairSide(surface, ctx, pair.key, "left", { property: at("facilityReference") });
     const [now] = readJoin(g, ctxOf(g, BRANCH))!.pairs;
     expect(now.left).toBe(at("FacilityBranchFacilityReference"));
-    expect(g.quads(at("fb-code"), null, null)).toEqual([]);
-    expect(has(g, at(BRANCH), SRF("hasRoleBinding"), at("fb-code"))).toBe(false);
+    expect(has(g, at(BRANCH), SRF("hasRoleBinding"), at("fb-code"))).toBe(true);
+    expect(unreadEvidence(g, at(BRANCH)).map((i) => i.focus)).toEqual([at("fb-code")]);
     // The only pair may take another second carrier, with its right side.
     const other = setPairSide(surface, ctx, pair.key, "right", { property: at("legalName") }, at("Lender"));
     expect(readJoin(other, ctxOf(other, BRANCH))!.secondCarrier).toBe(at("Lender"));

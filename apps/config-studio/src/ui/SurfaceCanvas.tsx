@@ -21,7 +21,7 @@ import { EDIT_WORDS, bindingsOf, contractOf, contractsOf, drawContracts, type Dr
 import { placeFindings, worst } from "../surface/findings";
 import { boxesFor, schemeOf, staleMark } from "../surface/scheme";
 import { ontologyOf, termsOf } from "../surface/terms";
-import { statementContext } from "../surface/statement";
+import { statementContext, unreadEvidence } from "../surface/statement";
 import { ConstructionEditor } from "./ConstructionEditor";
 import { ExpansionEditor } from "./ExpansionEditor";
 import { ExpressionEditor } from "./ExpressionEditor";
@@ -108,8 +108,9 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
   const studio = useStudio();
   const { id, model } = studio;
   const graph = model.state.configs.surface!.current;
-  const issues = model.issues.surface;
   const contracts = useMemo(() => contractsOf(graph), [graph]);
+  // The form's findings, and a mark on each evidence binding nothing reads, which the editors leave in place rather than remove.
+  const issues = useMemo(() => [...model.issues.surface, ...contracts.flatMap((c) => unreadEvidence(graph, c.iri))], [model.issues.surface, contracts, graph]);
   const picked = selected ? contractOf(graph, selected, contracts) : undefined;
   const [view, setView] = useState<"selected" | "all">("selected");
   const [focused, setFocused] = useState<string>();
@@ -175,7 +176,7 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
   );
   const drawn = useMemo(() => drawContracts(graph, shown, terms, boxes, { overview, expand: expanded }), [graph, shown.join("|"), terms, boxes, overview, expanded]); // eslint-disable-line react-hooks/exhaustive-deps
   const placement = useMemo(() => placeFindings(drawn, issues), [drawn, issues]);
-  const stillInList = useMemo(() => placement.unplaced.filter((i) => shown.some((c) => concerns(graph, c, i))), [placement, graph, shown.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
+  const stillInList = useMemo(() => placement.unplaced.filter((i) => i.code !== "unread-evidence" && shown.some((c) => concerns(graph, c, i))), [placement, graph, shown.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Path mode starts from a place that holds a path or a property, and shows the node of the configuration it writes in the form beside it.
   const begin = (place: PathPlace) => {

@@ -4,9 +4,11 @@
 // right one stating the datatype the left value is cast to. A composite key is several pairs. The laws the editor keeps while it edits are srf:P16 (a left binding names
 // no carrier but the contract's own, a right binding names the second carrier, the same in every pair) and srf:P17 (every binding of the statement is of one evidence
 // kind). The marks are the shapes' rules for srf:P14 to srf:P17. A rule that is left out means what the vocabulary says, so returning it to its default removes its triple.
+// Removing a pair, or changing one of its sides, never removes a binding, so work still being wired up is kept. A binding no statement reads is marked on the canvas instead
+// (`unreadEvidence`).
 
 import { Graph, SRF, TYPE, iri, localName, type GraphEditor, type Term } from "@lattice/authoring-domain";
-import { fresh, mark, minter, referencedBy, validIri, type Evidence, type LawMark, type StatementContext } from "./statement";
+import { fresh, mark, minter, validIri, type Evidence, type LawMark, type StatementContext } from "./statement";
 
 export type Cardinality = "AtMostOne" | "AnyNumber";
 export const CARDINALITIES: Record<Cardinality, string> = { AtMostOne: SRF("AtMostOne"), AnyNumber: SRF("AnyNumber") };
@@ -102,7 +104,7 @@ export function addJoin(g: Graph, ctx: StatementContext): Graph {
   });
 }
 
-/** Removes the statement and its pairs, and the bindings only they referred to, as removing each pair does. */
+/** Removes the statement and its pairs. Their bindings stay, as removing each pair leaves them. */
 export function removeJoin(g: Graph, ctx: StatementContext): Graph {
   const j = editable(g, ctx);
   if (!j) return g;
@@ -179,7 +181,7 @@ export function addPair(g: Graph, ctx: StatementContext, spec: { left: Side; rig
   });
 }
 
-/** Replaces one side of a pair, and the binding it stood on goes where nothing else refers to it. */
+/** Replaces one side of a pair. The binding it stood on stays, and is marked where nothing reads it. */
 export function setPairSide(g: Graph, ctx: StatementContext, key: string, which: "left" | "right", pick: Side, carrier?: string): Graph {
   const j = editable(g, ctx);
   const pair = j?.pairs.find((p) => p.key === key);
@@ -190,12 +192,10 @@ export function setPairSide(g: Graph, ctx: StatementContext, key: string, which:
   const view: Join = wasOnly ? { ...j, secondCarrier: undefined } : j;
   if (!sideAllowed(g, ctx, view, which, pick, wasOnly ? carrier ?? j.secondCarrier : second)) return g;
   const kind = joinChoices(g, ctx).kind;
-  const old = which === "left" ? pair.left : pair.right;
   const name = minter(g, ctx);
   return g.edit((editor) => {
     const next = "binding" in pick ? pick.binding : newBinding(editor, ctx, name(localName(pick.property)), pick.property, kind, which === "right" ? (wasOnly ? carrier ?? j.secondCarrier : second) : undefined);
     editor.setAll(pair.term, SRF(which === "left" ? "joinLeft" : "joinRight"), [iri(next)]);
-    if (old && old !== next && referencedBy(editor, old, ctx.contract) === 0) editor.remove(old);
   });
 }
 
@@ -209,17 +209,12 @@ export function setPairDatatype(g: Graph, ctx: StatementContext, key: string, da
   return g.edit((e) => e.setAll(pair.right!, SRF("bindsDatatype"), datatype ? [iri(datatype)] : []));
 }
 
-/** Removes a pair and each of its bindings that nothing else refers to, so a pair added by the editor leaves nothing behind when it goes. */
+/** Removes a pair. Its bindings stay, since an author may still be wiring them up, and one that nothing reads is marked (`unreadEvidence`). */
 export function removePair(g: Graph, ctx: StatementContext, key: string): Graph {
   const j = editable(g, ctx);
   const pair = j?.pairs.find((p) => p.key === key);
   if (!j || !pair) return g;
-  return g.edit((e) => {
-    e.remove(pair.term);
-    for (const b of [pair.left, pair.right]) {
-      if (b && ctx.evidence.some((x) => x.iri === b) && referencedBy(e, b, ctx.contract) === 0) e.remove(b);
-    }
-  });
+  return g.edit((e) => e.remove(pair.term));
 }
 
 // --- the marks -----------------------------------------------------------------------------------------------------------------------------

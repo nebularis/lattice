@@ -6,6 +6,7 @@
 // of the laws its statement is held to, computed by the rules the shapes state, as the expression editor marks its typing. Nothing here evaluates or lowers a contract.
 
 import { Graph, SRF, TYPE, XSD, iri, type GraphEditor, type Term } from "@lattice/authoring-domain";
+import type { Issue } from "../rdf/report";
 import { mint, nameOf } from "../rdf/editors";
 import { bindingsOf, type Binding } from "./drawing";
 
@@ -104,9 +105,26 @@ export function minter(g: Graph, ctx: StatementContext): (what: string) => strin
 
 export const objectsOf = (e: GraphEditor, s: Term | string, p: string): Term[] => e.store.getObjects(typeof s === "string" ? iri(s) : s, iri(p), null);
 
-/** The number of statements that refer to `node` other than the contract's own list of role bindings. */
-export const referencedBy = (e: GraphEditor, node: string, contract: string): number =>
-  e.store.getQuads(null, null, iri(node), null).filter((q) => !(q.subject.value === contract && q.predicate.value === SRF("hasRoleBinding"))).length;
+/**
+ * The evidence bindings of a contract that nothing reads: no expression, written value, key, join pair or expansion names them. The editors never
+ * remove a binding when a statement stops reading it, so partly wired work is kept, and this marks what is left instead. It is information and
+ * no law. Required evidence that nothing reads still excludes an instance that lacks the value, which narrows the contract, so the mark says so.
+ */
+export function unreadEvidence(g: Graph, contract: string): Issue[] {
+  if (!g.types(contract).includes(SRF("ProjectionContract"))) return [];
+  return bindingsOf(g, contract)
+    .filter((b) => (b.role === "required" || b.role === "candidate") && g.quads(null, null, iri(b.iri)).every((q) => q.predicate.value === SRF("hasRoleBinding")))
+    .map((b) => ({
+      severity: "Info" as const,
+      focus: b.iri,
+      path: SRF("roleKind"),
+      code: "unread-evidence",
+      source: "studio" as const,
+      message: b.role === "required"
+        ? "No statement reads this binding. As required evidence it still excludes an instance that lacks the value."
+        : "No statement reads this binding, so it has no effect.",
+    }));
+}
 
 export const isTyped = (g: Graph, node: Term | string, type: string): boolean => g.types(node).includes(type);
 

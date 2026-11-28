@@ -2776,7 +2776,7 @@ test("a keyed construction is built from Add a construction, with the key marked
   expect(body).toContain("srf:keyBinding ex:be-borrower");
 });
 
-test("a composite key pair is added to the facility join, a rule is set and returned to its default, and a removed pair leaves no binding", async ({ page }) => {
+test("a composite key pair is added to the facility join, a rule is set and returned to its default, and a removed pair leaves its bindings marked as read by nothing", async ({ page }) => {
   const fake = new FakeService();
   const { canvas } = await facilitySurfaceCanvas(page, fake);
   await pickContract(page, "facility-branch");
@@ -2805,15 +2805,16 @@ test("a composite key pair is added to the facility join, a rule is set and retu
   await canvas.getByRole("button", { name: "Edit join", exact: true }).click();
   await editor.getByLabel("One value finds").selectOption("default");
   await expect(editor.locator('[data-rule="matches"]')).toContainText("States nothing");
-  // Removing the added pair takes its two bindings, so the join is the facility's again, with its one pair.
+  // Removing the added pair takes the pair alone. Its two bindings stay, and the canvas marks each as read by nothing.
   await editor.locator("[data-pair$=FacilityBranchKey]").getByRole("button", { name: "Remove the key pair" }).click();
   await expect(editor.locator("[data-pair]")).toHaveCount(1);
   await editor.getByRole("button", { name: "Done" }).click();
+  await expect(canvas.locator(".surface-findings li").filter({ hasText: "No statement reads this binding. As required evidence it still excludes an instance that lacks the value." })).toHaveCount(2);
   await canvas.getByRole("button", { name: "Compile", exact: true }).click();
   await expect.poll(() => fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").length).toBe(2);
   body = fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").pop()!.body;
   expect(body).not.toContain("srf:joinMatches");
-  expect(body).not.toContain("FacilityBranchFacilityReference");
+  expect(body).toContain("FacilityBranchFacilityReference");
 });
 
 test("the facility expansion is changed from its named source to a path and given a node for each member with a stable name", async ({ page }) => {
