@@ -305,3 +305,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-28: the maintainer asked for the labels of several loops on one node to be fixed. The loops of a node now lie side by side along their side, each label beside its own loop, since an outer loop of a nested stack crosses a wide label inside it.
 - 2026-11-28: the maintainer chose that removing a join pair, or changing a side, keeps its bindings, and the canvas marks an evidence binding no statement reads, since required evidence that nothing reads still excludes an instance. The maintainer asked that joins beyond equality be a design question for a later Surface slice, recorded as SVA-Q63 in the projection backend sketch and as BL-27.
 - 2026-11-28: SVA-S3 marked building, design questions first.
+- 2026-11-28: the maintainer answered SVA-Q64 to SVA-Q69 as leaned, and chose that the facility sample gains a branch target. The build started.
