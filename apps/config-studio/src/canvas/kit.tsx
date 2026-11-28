@@ -31,7 +31,7 @@ import { clearPositions, readPositions, resolvePositions, writePositions, type C
 
 export type { Layout, LayoutEdge, LayoutNode, LayoutOptions } from "./layout";
 export type { Point, Positions } from "./positions";
-export { DEFAULT_NODE_SIZE, DEFAULT_ROUTE_OPTIONS, LABEL_CANDIDATES, LOOP_REACH, LOOP_STEP, acrossSides, chooseSides, curvePoint, loopRoom, loopSide, routeEdges } from "./edges";
+export { DEFAULT_NODE_SIZE, DEFAULT_ROUTE_OPTIONS, LABEL_CANDIDATES, LOOP_REACH, acrossSides, chooseSides, curvePoint, loopRoom, loopSide, loopSpan, routeEdges } from "./edges";
 export type { Box, EdgeRoute, RouteEdge, RouteOptions, Side } from "./edges";
 
 export interface MenuItem {

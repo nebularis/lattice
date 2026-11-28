@@ -10,7 +10,7 @@ import { Graph, PREFIXES, compact } from "@lattice/authoring-domain";
 import { LAYOUTS } from "../ui/OntologyCanvas";
 import { importGraph } from "../rdf/importGraph";
 import { classGraph, hierarchyGraph } from "../rdf/ontologyGraph";
-import { CLEARANCE, DEFAULT_NODE_SIZE, DEFAULT_ROUTE_OPTIONS, LABEL_CANDIDATES, LOOP_REACH, LOOP_STEP, acrossSides, chooseSides, curvePoint, labelWidth, loopRoom, loopSide, routeEdges, type Box, type Curve, type EdgeRoute, type RouteEdge } from "./edges";
+import { CLEARANCE, DEFAULT_NODE_SIZE, DEFAULT_ROUTE_OPTIONS, LABEL_CANDIDATES, LOOP_REACH, acrossSides, chooseSides, curvePoint, labelWidth, loopRoom, loopSide, loopSpan, routeEdges, type Box, type Curve, type EdgeRoute, type RouteEdge } from "./edges";
 import { layered, type LayoutEdge, type LayoutOptions } from "./layout";
 
 const box = (x: number, y: number, width = 100, height = 40): Box => ({ x, y, width, height });
@@ -190,18 +190,41 @@ describe("a loop, an edge from a node to itself", () => {
     expect(route(lr, "l").sourceSide).toBe("top");
   });
 
-  it("stacks the loops of one node on that side, each reaching further out than the one before and with its own label", () => {
+  it("lays the loops of one node side by side on that side, each with its own label, and no loop over another's label", () => {
     for (const direction of ["LR", "TB"] as const) {
-      const rs = one(direction, {}, [edge("e", "a", "a", label), edge("f", "a", "a", "ex:other"), edge("g", "a", "a", "ex:third")]);
+      // Labels as wide as the facility class graph's, which an outer loop of a nested stack would cross.
+      const rs = one(direction, {}, [edge("e", "a", "a", "ex:refinances"), edge("f", "a", "a", "ex:refinancesInChain"), edge("g", "a", "a", "ex:third")]);
       expect(new Set(rs.map((r) => r.sourceSide)).size).toBe(1);
-      const far = rs.map((r) => (direction === "LR" ? -curvePoint(r.curve, 0.5).y : -curvePoint(r.curve, 0.5).x));
-      expect(far[1]).toBeGreaterThan(far[0]);
-      expect(far[2]).toBeGreaterThan(far[1]);
-      expect(far[1] - far[0]).toBeCloseTo(0.75 * LOOP_STEP, 5);
+      const lr = direction === "LR";
+      const along = (p: { x: number; y: number }) => (lr ? p.x : p.y);
+      // Each loop has its own part of the side, in order of id, and reaches as far out as the others.
+      const spans = rs.map((r) => [along(r.curve[0].p0), along(r.curve[0].p3)].sort((x, y) => x - y));
+      for (let i = 1; i < spans.length; i++) expect(spans[i][0]).toBeGreaterThan(spans[i - 1][1]);
+      const far = rs.map((r) => (lr ? -curvePoint(r.curve, 0.5).y : -curvePoint(r.curve, 0.5).x));
+      for (const f of far) expect(f).toBeCloseTo(far[0], 5);
       for (const r of rs) expect(overlap(r.label!, box(0, 0))).toBe(0);
       for (let i = 0; i < rs.length; i++) for (let j = i + 1; j < rs.length; j++) expect(overlap(rs[i].label!, rs[j].label!)).toBe(0);
       expect(rs.every((r) => near(r, box(0, 0)) === 0)).toBe(true);
+      // No loop passes through the label of another.
+      for (const r of rs) {
+        for (const other of rs) {
+          if (other === r) continue;
+          for (let t = 0; t <= 1; t += 0.01) {
+            const p = curvePoint(r.curve, t);
+            const inside = p.x > other.label!.x && p.x < other.label!.x + other.label!.width && p.y > other.label!.y && p.y < other.label!.y + other.label!.height;
+            expect(inside, `${r.id} through the label of ${other.id} in ${direction}`).toBe(false);
+          }
+        }
+      }
     }
+  });
+
+  it("divides the side among its loops, one loop taking the middle half", () => {
+    expect(loopSpan(200, 1, 0)).toEqual([-50, 50]);
+    const two = [loopSpan(200, 2, 0), loopSpan(200, 2, 1)];
+    expect(two[0][0]).toBeCloseTo(-75 + 7.5, 5);
+    expect(two[0][1]).toBeLessThan(two[1][0]);
+    expect(two[1][1]).toBeCloseTo(75 - 7.5, 5);
   });
 
   it("puts the label of a loop just beyond the loop's far point, on the side it leaves by, and clear of the node", () => {
@@ -237,8 +260,8 @@ describe("a loop, an edge from a node to itself", () => {
   it("is given room by the layout, which reads the same numbers", () => {
     expect(loopRoom(0, 21)).toBe(0);
     expect(loopRoom(1, 21)).toBeCloseTo(0.75 * LOOP_REACH + 6 + 21 + CLEARANCE, 5);
-    // Each further loop reaches out by its step, and its label lies one label beyond the one before.
-    expect(loopRoom(2, 21) - loopRoom(1, 21)).toBeCloseTo(0.75 * LOOP_STEP + 21 + 6, 5);
+    // Each further loop beside it may put its label one label further out.
+    expect(loopRoom(2, 21) - loopRoom(1, 21)).toBeCloseTo(21 + 6, 5);
     expect(labelWidth("ex:a", DEFAULT_ROUTE_OPTIONS)).toBe(4 * DEFAULT_ROUTE_OPTIONS.labelCharWidth + 2 * DEFAULT_ROUTE_OPTIONS.labelPadding);
   });
 });
