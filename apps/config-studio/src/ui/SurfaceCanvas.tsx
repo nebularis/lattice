@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Handle, MarkerType, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
-import { Calculator, Pencil, Plus, Route } from "lucide-react";
+import { Calculator, Pencil, Plus, Route, Trash2 } from "lucide-react";
 import { Graph, PREFIXES, SRF, compact } from "@lattice/authoring-domain";
 import { api, awaitJob, jobId } from "../api";
 import { Canvas, RoutedEdge, type LayoutHints, type LayoutOptions, type RoutedEdgeData } from "../canvas/kit";
@@ -21,7 +21,7 @@ import { EDIT_WORDS, bindingsOf, contractOf, contractsOf, drawContracts, type Dr
 import { placeFindings, worst } from "../surface/findings";
 import { boxesFor, schemeOf, staleMark } from "../surface/scheme";
 import { ontologyOf, termsOf } from "../surface/terms";
-import { statementContext, unreadEvidence } from "../surface/statement";
+import { removeUnreadEvidence, statementContext, unreadEvidence } from "../surface/statement";
 import { ConstructionEditor } from "./ConstructionEditor";
 import { ExpansionEditor } from "./ExpansionEditor";
 import { ExpressionEditor } from "./ExpressionEditor";
@@ -255,6 +255,8 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
     if (!states("expandedAs")) return [t("expansion", "Add an expansion", true, "State the members this contract restates")];
     return [t("expansion", "Edit expansion", false, "Edit the expansion this contract states"), ...(states("constructedAs") ? [t("member", "Edit node for each member", false, "Edit the node made for each member")] : [])];
   }, [graph, subject, studio.baseline.namespace]);
+  // The evidence bindings of the contract in full that no statement reads, which one action removes.
+  const unread = useMemo(() => (subject ? unreadEvidence(graph, subject).length : 0), [graph, subject]);
   const choose = (node: Node) => {
     const n = (node.data as BoxData).node;
     setFocused(n.id);
@@ -300,6 +302,11 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
             {t.add ? <Plus size={13} /> : <Pencil size={13} />} {t.name}
           </button>
         ))}
+        {unread > 0 && !editor && !building && (
+          <button className="btn sm" title="Remove the evidence bindings of this contract that no statement reads" onClick={() => model.edit("surface", (g) => removeUnreadEvidence(g, subject!))}>
+            <Trash2 size={13} /> Remove unused bindings ({unread})
+          </button>
+        )}
         {derivation && !editor && !building && (
           <button className="btn sm" title="Edit the expression this derivation states" onClick={() => edit({ contract: derivation.contract, binding: bindingsOf(graph, derivation.contract).find((b) => b.role === "result")?.iri })}>
             <Calculator size={13} /> Edit expression

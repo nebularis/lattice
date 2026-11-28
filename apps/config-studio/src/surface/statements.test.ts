@@ -12,7 +12,7 @@ import {
 import { addExpansion, expansionChoices, expansionMarks, propertiesRead, readExpansion, removeExpansion, setExpandsFrom, useNamedSource } from "./expansionEdit";
 import { addJoin, addPair, joinChoices, joinMarks, linksOf, matchesOf, readJoin, removeJoin, removePair, setCardinality, setPairDatatype, setPairSide, setSecondCarrier } from "./joinEdit";
 import { replaceNamedSource } from "./pathmode";
-import { statementContext, unreadEvidence } from "./statement";
+import { removeUnreadEvidence, statementContext, unreadEvidence } from "./statement";
 import { drawContract } from "./drawing";
 import { ontologyOf, termsOf } from "./terms";
 
@@ -336,6 +336,10 @@ describe("a join", () => {
     // A pair that reads them again clears the marks.
     const again = addPair(back, ctxOf(back, BRANCH), { left: { binding: added.left! }, right: { binding: added.right! } });
     expect(unreadEvidence(again, at(BRANCH))).toEqual([]);
+    // Removing the unused bindings in one edit takes both and leaves the facility's join as it was.
+    const tidy = removeUnreadEvidence(back, at(BRANCH));
+    expect(tidy.toTurtle()).toBe(surface.toTurtle());
+    expect(removeUnreadEvidence(surface, at(BRANCH))).toBe(surface);
   });
 
   it("keeps the binding a pair stood on when one of its sides is changed, and marks it as read by nothing", () => {

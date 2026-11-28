@@ -2776,7 +2776,7 @@ test("a keyed construction is built from Add a construction, with the key marked
   expect(body).toContain("srf:keyBinding ex:be-borrower");
 });
 
-test("a composite key pair is added to the facility join, a rule is set and returned to its default, and a removed pair leaves its bindings marked as read by nothing", async ({ page }) => {
+test("a composite key pair is added to the facility join, a rule is set and returned to its default, and a removed pair leaves its bindings marked as read by nothing until they are removed in one action", async ({ page }) => {
   const fake = new FakeService();
   const { canvas } = await facilitySurfaceCanvas(page, fake);
   await pickContract(page, "facility-branch");
@@ -2810,11 +2810,15 @@ test("a composite key pair is added to the facility join, a rule is set and retu
   await expect(editor.locator("[data-pair]")).toHaveCount(1);
   await editor.getByRole("button", { name: "Done" }).click();
   await expect(canvas.locator(".surface-findings li").filter({ hasText: "No statement reads this binding. As required evidence it still excludes an instance that lacks the value." })).toHaveCount(2);
+  // One action removes both, and the marks go with them.
+  await canvas.getByRole("button", { name: "Remove unused bindings (2)" }).click();
+  await expect(canvas.locator(".surface-findings li").filter({ hasText: "No statement reads this binding." })).toHaveCount(0);
+  await expect(canvas.getByRole("button", { name: /^Remove unused bindings/ })).toHaveCount(0);
   await canvas.getByRole("button", { name: "Compile", exact: true }).click();
   await expect.poll(() => fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").length).toBe(2);
   body = fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").pop()!.body;
   expect(body).not.toContain("srf:joinMatches");
-  expect(body).toContain("FacilityBranchFacilityReference");
+  expect(body).not.toContain("FacilityBranchFacilityReference");
 });
 
 test("the facility expansion is changed from its named source to a path and given a node for each member with a stable name", async ({ page }) => {

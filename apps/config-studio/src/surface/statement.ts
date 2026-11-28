@@ -103,6 +103,15 @@ export function minter(g: Graph, ctx: StatementContext): (what: string) => strin
   };
 }
 
+/** Removes every evidence binding of the contract that nothing reads, in one edit, which the author asks for once a contract is wired up. A contract with none is returned as it was. */
+export function removeUnreadEvidence(g: Graph, contract: string): Graph {
+  const unread = unreadEvidence(g, contract).map((i) => i.focus!);
+  if (unread.length === 0) return g;
+  return g.edit((e) => {
+    for (const b of unread) e.remove(b);
+  });
+}
+
 export const objectsOf = (e: GraphEditor, s: Term | string, p: string): Term[] => e.store.getObjects(typeof s === "string" ? iri(s) : s, iri(p), null);
 
 /**
