@@ -717,3 +717,23 @@ table.axiom-rows.nested th { position: static; }
 .expr-bad { color: var(--bad); }
 .expr-remove { align-self: flex-start; height: 22px; padding: 0 6px; font-size: 11.5px; }
 .surface-node.path-option.given { border-style: dashed; cursor: default; }
+
+/* The construction, join and expansion editors (SVA-S1 part 4) */
+.statement-editor { padding: 2px 2px 14px; }
+.stmt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.stmt-label { flex: none; min-width: 108px; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
+.stmt-value { font-weight: 600; overflow-wrap: anywhere; }
+.stmt-choices { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.stmt-choice { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; cursor: pointer; }
+.stmt-picker { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.stmt-picker .select, .stmt-row .select { height: 26px; padding: 0 6px; font-size: 12.5px; max-width: 240px; }
+.stmt-picker .input { height: 26px; padding: 0 6px; font-size: 12.5px; }
+.stmt-undeclared { height: 18px; font-size: 10.5px; }
+.stmt-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; flex: 1 1 520px; min-width: 0; }
+.stmt-item { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); }
+.stmt-item.stmt-add { border-style: dashed; background: transparent; }
+.stmt-eq { font-weight: 700; color: var(--text-2); }
+.stmt-marks { display: flex; flex-direction: column; flex-basis: 100%; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.stmt-mark { height: auto; min-height: 18px; padding: 2px 8px; border-radius: 8px; white-space: normal; font-size: 11.5px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
+.stmt-findings { flex-basis: 100%; margin: 0; padding: 0; list-style: none; }
+.path-trail-hop.given .hop-name { font-style: italic; }

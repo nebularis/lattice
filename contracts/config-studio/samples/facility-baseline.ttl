@@ -150,6 +150,12 @@ ex:exposureOf a owl:ObjectProperty ;
     rdfs:domain ex:BorrowerExposure ;
     rdfs:range ex:Borrower .
 
+ex:refinances a owl:ObjectProperty ;
+    rdfs:label "refinances" ;
+    rdfs:comment "The facility this facility refinances directly, the property the expansion of the facility's refinancing chain reads." ;
+    rdfs:domain ex:Facility ;
+    rdfs:range ex:Facility .
+
 ex:refinancesInChain a owl:ObjectProperty ;
     rdfs:label "refinances in chain" ;
     rdfs:domain ex:Facility ;

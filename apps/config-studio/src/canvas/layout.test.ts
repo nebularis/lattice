@@ -230,6 +230,26 @@ describe("the layered layout", () => {
     expect(p.get("b")).toEqual({ x: 280, y: 0 });
   });
 
+  it("leaves room for a loop on the side across the flow, as an LR and a TB layout, and keeps a loop out of the ranks", () => {
+    const sized = (...ids: string[]) => ids.map((id) => ({ id, width: 100, height: 40 }));
+    const column = [edge("h", "a"), edge("h", "b"), edge("h", "c")];
+    const plain = layered(sized("h", "a", "b", "c"), column, { direction: "LR", columnGap: 100, rowGap: 10 });
+    const looped = layered(sized("h", "a", "b", "c"), [...column, { source: "b", target: "b", label: "ex:own" }], { direction: "LR", columnGap: 100, rowGap: 10 });
+    // The loop leaves the top of b, so b and c move down by the room it needs, and a and the hub stay.
+    expect(looped.get("a")).toEqual(plain.get("a"));
+    expect(looped.get("h")).toEqual(plain.get("h"));
+    expect(looped.get("b")!.x).toBe(plain.get("b")!.x);
+    expect(looped.get("b")!.y).toBeGreaterThan(plain.get("b")!.y);
+    expect(looped.get("c")!.y - plain.get("c")!.y).toBe(looped.get("b")!.y - plain.get("b")!.y);
+    const tb = layered(sized("h", "a", "b", "c"), [...column, { source: "b", target: "b", label: "ex:own" }], { direction: "TB", columnGap: 100, rowGap: 10 });
+    const tbPlain = layered(sized("h", "a", "b", "c"), column, { direction: "TB", columnGap: 100, rowGap: 10 });
+    expect(tb.get("b")!.y).toBe(tbPlain.get("b")!.y);
+    expect(tb.get("b")!.x).toBeGreaterThan(tbPlain.get("b")!.x);
+    // The order of the input does not matter.
+    const reversed = layered(sized("c", "b", "a", "h"), [{ source: "b", target: "b", label: "ex:own" }, ...column].reverse(), { direction: "LR", columnGap: 100, rowGap: 10 });
+    expect(entries(reversed)).toEqual(entries(looped));
+  });
+
   it("throws on a repeated id, and names it", () => {
     expect(() => layered(nodes("a", "b", "a"), [], LR)).toThrow(/"a" is given more than once/);
   });

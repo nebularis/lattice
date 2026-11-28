@@ -3,7 +3,7 @@
 # Baseline management, canvases and run panes for the studio - Status
 
 **Unit ID:** `studio-visual-authoring`
-**Status:** building 2026-11-25. SVA-Q1 to SVA-Q16 answered
+**Status:** built 2026-11-28. SVA-Q1 to SVA-Q16 answered
 **Last updated:** 2026-11-12
 **Plan:** [studio-visual-authoring.md](../plans/studio-visual-authoring.md)
 **Sketch:** [studio-visual-authoring.md](../sketches/studio-visual-authoring.md)
@@ -16,7 +16,7 @@ The sketch and the plan were written the same day from a reading of the studio's
 
 The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the sketch records, and asked for the unit to be built autonomously on its branch, committed and pushed there, with no merge from or into another branch. On SVA-Q3 the maintainer asked how many triples the body limit holds, how large a step is and whether the limit comes from the MQTT frames, which the sketch's section 8.2 now answers.
 
-**Next action:** SVA-S1 part 4, the construction, join and expansion editors, after the loop rule and `ex:refinances` declared, then a pause. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
+**Next action:** SVA-S1 is built and waits on the maintainer's review of part 4. SVA-S3, the surface simulator pane, has every slice it is blocked on built, and starts with its design questions once the maintainer chooses it. The unit is built one slice at a time, with one delegated developer at most and a pause after each.
 
 ## Slices
 
@@ -55,7 +55,7 @@ The maintainer answered every question but SVA-Q3 on 2026-11-12, each as the ske
 | SVA-P1c | a general class of landing place | built 2026-11-19, building 2026-11-19 | SVA-P1a |
 | SVA-P4 | the persistence simulator pane | built 2026-11-19, building 2026-11-19 | SVA-R4, SVA-P1, SVA-P3a |
 | SVA-P5 | an object generated from the boundary shape | built 2026-11-19, building 2026-11-19 | SVA-P4 |
-| SVA-S1 | the surface canvas | building 2026-11-25 | SVA-O2 |
+| SVA-S1 | the surface canvas | built 2026-11-28 | SVA-O2 |
 | SVA-S2 | the surface simulation executor | built 2026-11-23, building 2026-11-23 | SVA-P3 |
 | SVA-S2a | a promotion kept by the compiler's rule across graphs and subclasses | built 2026-11-23, building 2026-11-23 | SVA-S2 |
 | SVA-S2b | the first instance of a class names its contracts | built 2026-11-23, building 2026-11-23 | SVA-S2 |
@@ -301,3 +301,4 @@ Asked on 2026-11-12. It answered the studio's decisions and capabilities well (A
 - 2026-11-27: the maintainer chose that path mode never rewrites a named expansion source. It draws the path the name stands for, marked as given by the name, and an explicit action replaces the name with that path before it can be edited, so P20 holds. Part 3 started with it and the class graph's self-loop.
 - 2026-11-27: SVA-S1 part 3 built. An expression is edited as a tree on the canvas, beside its read-only infix line, with the rendering switchable, each edit one change of the configuration, its typing marked as edited by the rules the shapes state, and no operand that is not the contract's evidence or that would make a cycle offered. Path mode draws a named expansion source's path without rewriting it, with an action that replaces it, and the class graph draws a self-loop, so the facility sample's `refinancesInChain` has its range again.
 - 2026-11-27: the maintainer accepted a rule for drawing loops on every canvas: a loop on a side across the layout's flow, the one with fewer edge ends, with room left for it by the layout, so it never meets a neighbour. Part 4 started with it, and with `ex:refinances` declared in the facility sample.
+- 2026-11-28: SVA-S1 built. Part 4 adds the construction, join and expansion editors and the node for each member, each opened from its statement on the canvas, each edit one change of the configuration, with the laws P10 to P25 marked as edited by the rules the shapes state and checked against pySHACL, and nothing a law forbids offered. A loop on every canvas leaves by a side across the flow, the one with fewer edge ends, with room left by the kit's layout, and the facility sample declares `ex:refinances`.

@@ -666,10 +666,10 @@ test("the ontology drawing shows the classes of the baseline, what the shapes st
   const diagram = page.getByRole("region", { name: "Ontology diagram" });
   const nodes = diagram.locator(".react-flow__node-cls");
   await expect(nodes.filter({ hasText: "Facility" }).first()).toBeVisible();
-  // The sample's baseline declares twelve classes, and fourteen properties link them, one of which has the facility as its domain and its range.
+  // The sample's baseline declares twelve classes, and fifteen properties link them, two of which have the facility as their domain and their range.
   const status = diagram.getByRole("status");
-  await expect(status).toHaveText("12 classes and 14 links drawn.");
-  // That property is drawn as a loop on its class, the edge leaving and entering the facility on the same side.
+  await expect(status).toHaveText("12 classes and 15 links drawn.");
+  // Each is drawn as a loop on its class, the edge leaving and entering the facility on the same side, across the layout's flow.
   const loop = diagram.locator(".react-flow__edge").filter({ has: page.locator("title", { hasText: "ex:refinancesInChain, from Facility to Facility" }) });
   await expect(loop).toHaveCount(1);
   await expect(loop.locator("path.react-flow__edge-path")).toHaveAttribute("d", /./);
@@ -678,7 +678,7 @@ test("the ontology drawing shows the classes of the baseline, what the shapes st
 
   // The facility's shape states four of those links, so none is added and four name the shape.
   await diagram.getByLabel("Include shapes").check();
-  await expect(status).toHaveText("12 classes and 14 links, 4 stated by shapes drawn.");
+  await expect(status).toHaveText("12 classes and 15 links, 4 stated by shapes drawn.");
   await expect(diagram.locator(".onto-edge-label.dashed")).toHaveCount(0);
   await expect(diagram.locator(".react-flow__edge title").filter({ hasText: "stated by ex:FacilityShape" })).toHaveCount(4);
 
@@ -2722,6 +2722,157 @@ test("a rounding of a sum is built from Add an expression, offering the contract
   expect(body).toContain('srf:roundingScale 2');
   expect(body).toContain("ex:FacilityMarginExpression");
   expect(body).not.toContain("srf:ProductExpression");
+});
+
+// --- the construction, join and expansion editors (SVA-S1 part 4) ----------------------------------------------------------------------------
+
+const editorRegion = (canvas: Locator, name: string) => canvas.getByRole("region", { name });
+const compiledBody = async (fake: FakeService, canvas: Locator) => {
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await expect.poll(() => fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").length).toBeGreaterThan(0);
+  return fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").pop()!.body;
+};
+
+test("a keyed construction is built from Add a construction, with the key marked until it names a part, and what a compilation sends is the construction", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilitySurfaceCanvas(page, fake);
+  await pickContract(page, "borrower-exposure");
+  // The box of the statement and the toolbar both open the editor, which shows the statement's node in the form.
+  await surfaceNode(canvas, "statement").click();
+  const editor = editorRegion(canvas, "Construction editor");
+  await expect(editor).toBeVisible();
+  await expect(page).toHaveURL(/be-node$/);
+  await expect(editor.locator(".stmt-mark")).toHaveCount(0);
+  await editor.getByRole("button", { name: "Remove the construction" }).click();
+  await expect(editor.getByRole("group", { name: "Add a construction" })).toBeVisible();
+  await expect(editor.locator('.stmt-mark[data-mark="required"]')).toContainText("srf:P10");
+  await editor.getByRole("button", { name: "Add a construction", exact: true }).click();
+  // A node for each instance, the identity that merges nothing, with its class and values still to state.
+  await expect(editor.getByRole("radio", { name: "For each instance" })).toBeChecked();
+  await expect(editor.locator('.stmt-mark[data-mark="class"]')).toBeVisible();
+  await expect(editor.locator('.stmt-mark[data-mark="writes"]')).toBeVisible();
+  await editor.getByLabel("Class", { exact: true }).selectOption({ label: "Borrower exposure" });
+  await expect(editor.locator('.stmt-mark[data-mark="class"]')).toHaveCount(0);
+  // A key names required evidence, and a node by key that names no part is marked until it does.
+  await expect(editor.getByRole("group", { name: "Key" })).toHaveCount(0);
+  await editor.getByRole("radio", { name: "By a key" }).check();
+  await expect(editor.locator('.stmt-mark[data-mark="key-parts"]')).toContainText("srf:P24");
+  await expect(editor.getByRole("group", { name: "Key" }).getByRole("checkbox")).toHaveCount(1);
+  await editor.getByRole("checkbox", { name: /Key part borrower/ }).check();
+  await expect(editor.locator('.stmt-mark[data-mark="key-parts"]')).toHaveCount(0);
+  await editor.getByLabel("New property", { exact: true }).selectOption({ label: "exposure of" });
+  await editor.getByLabel("New value read from", { exact: true }).selectOption({ label: "borrower (required)" });
+  await editor.getByRole("button", { name: "Add a value" }).click();
+  await expect(editor.locator(".stmt-mark")).toHaveCount(0);
+  await expect(editor.getByRole("list", { name: "Values it writes" }).locator("[data-write]")).toHaveCount(1);
+  // The drawing follows, and a compilation sends the construction.
+  await editor.getByRole("button", { name: "Done" }).click();
+  await expect(surfaceNode(canvas, "statement")).toContainText("Borrower exposure");
+  await expect(surfaceNode(canvas, "statement")).toContainText("identity: by key (borrower)");
+  await expect(surfaceNode(canvas, "statement")).toContainText("exposure of ← borrower");
+  const body = await compiledBody(fake, canvas);
+  expect(body).toContain("srf:ByKey");
+  expect(body).toContain("ex:BorrowerExposureNode");
+  expect(body).toContain("srf:keyBinding ex:be-borrower");
+});
+
+test("a composite key pair is added to the facility join, a rule is set and returned to its default, and a removed pair leaves no binding", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilitySurfaceCanvas(page, fake);
+  await pickContract(page, "facility-branch");
+  await surfaceNode(canvas, "statement").getByRole("button", { name: /^Edit join/ }).click();
+  const editor = editorRegion(canvas, "Join editor");
+  await expect(editor.locator("[data-pair]")).toHaveCount(1);
+  await expect(editor.getByLabel("Second carrier", { exact: true })).toHaveValue(/#Branch$/);
+  await expect(editor.locator(".stmt-mark")).toHaveCount(0);
+  // The second carrier is never the contract's own, and the left side offers the first carrier's properties.
+  expect(await editor.getByLabel("Second carrier", { exact: true }).locator("option").allTextContents()).not.toContain("Facility");
+  await editor.getByLabel("New left binding").selectOption({ label: "facility reference" });
+  await editor.getByLabel("New right binding").selectOption({ label: "branch code" });
+  await editor.getByLabel("New pair compared as").selectOption({ label: "string" });
+  await editor.getByRole("button", { name: "Add a key pair" }).click();
+  await expect(editor.locator("[data-pair]")).toHaveCount(2);
+  await expect(editor.locator(".stmt-mark")).toHaveCount(0);
+  // The rules state their defaults, and an explicit choice is returned to its default.
+  await expect(editor.locator('[data-rule="matches"]')).toContainText("States nothing, which means at most one.");
+  await editor.getByLabel("One value finds").selectOption("AnyNumber");
+  await expect(editor.locator('[data-rule="matches"]')).toContainText("States any number. The default is at most one.");
+  await editor.getByRole("button", { name: "Done" }).click();
+  await expect(surfaceNode(canvas, "statement")).toContainText("one value finds: any number");
+  await expect(canvas.locator(".onto-edge-label").filter({ hasText: /^= : string$/ })).toHaveCount(1);
+  let body = await compiledBody(fake, canvas);
+  expect(body).toContain("srf:joinMatches srf:AnyNumber");
+  await canvas.getByRole("button", { name: "Edit join", exact: true }).click();
+  await editor.getByLabel("One value finds").selectOption("default");
+  await expect(editor.locator('[data-rule="matches"]')).toContainText("States nothing");
+  // Removing the added pair takes its two bindings, so the join is the facility's again, with its one pair.
+  await editor.locator("[data-pair$=FacilityBranchKey]").getByRole("button", { name: "Remove the key pair" }).click();
+  await expect(editor.locator("[data-pair]")).toHaveCount(1);
+  await editor.getByRole("button", { name: "Done" }).click();
+  await canvas.getByRole("button", { name: "Compile", exact: true }).click();
+  await expect.poll(() => fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").length).toBe(2);
+  body = fake.submitted.filter((s) => s.kind === "compile" && s.target === "surface").pop()!.body;
+  expect(body).not.toContain("srf:joinMatches");
+  expect(body).not.toContain("FacilityBranchFacilityReference");
+});
+
+test("the facility expansion is changed from its named source to a path and given a node for each member with a stable name", async ({ page }) => {
+  const fake = new FakeService();
+  const { canvas } = await facilitySurfaceCanvas(page, fake);
+  await pickContract(page, "facility-refinancing");
+  await surfaceNode(canvas, "class").filter({ hasText: "Members" }).getByRole("button", { name: /^Edit expansion/ }).click();
+  const editor = editorRegion(canvas, "Expansion editor");
+  await expect(editor.locator(".stmt-mark")).toHaveCount(0);
+  await expect(editor.getByLabel("Named source")).toHaveValue(/TransitiveClosure$/);
+  await expect(editor.getByRole("list", { name: "The path the name stands for" })).toContainText("refinances+");
+  // The property each member is written as is never the one the members are reached by (srf:P21).
+  await editor.getByRole("button", { name: "Pick the property each member is written as on the canvas" }).click();
+  await expect(canvas.getByRole("region", { name: "Path mode" })).toBeVisible();
+  await expect(canvas.locator('.path-option[data-property$="#refinances"]')).toHaveCount(0);
+  await expect(canvas.locator('.path-option[data-property$="#hasDrawdown"]')).toHaveCount(1);
+  await canvas.getByRole("region", { name: "Path mode" }).getByRole("button", { name: "Done" }).click();
+  await expect(editor).toBeVisible();
+  // The named source is replaced by the path it stands for, and then only evidence the path reads is offered.
+  await editor.getByRole("button", { name: "Replace the named source with a path" }).click();
+  await expect(editor.getByRole("list", { name: "Members path so far" })).toContainText("refinances+");
+  await expect(editor.getByLabel("Use a named source")).toBeVisible();
+  await expect(editor.locator(".stmt-mark")).toHaveCount(0);
+  // A node for each member opens its own editor, which keeps the key to what the law names.
+  await editor.getByRole("button", { name: "Add a node for each member" }).click();
+  const member = editorRegion(canvas, "Node for each member editor");
+  await expect(member).toBeVisible();
+  await expect(member.getByRole("radio", { name: "For each instance and member" })).toBeChecked();
+  await expect(member.getByRole("radio", { name: "The member itself" })).toBeVisible();
+  await member.getByLabel("Class", { exact: true }).selectOption({ label: "Facility" });
+  await member.getByLabel("Member name", { exact: true }).selectOption({ label: "facility reference" });
+  await member.getByLabel("New property", { exact: true }).selectOption({ label: "facility reference" });
+  await member.getByLabel("New value read from", { exact: true }).selectOption("member");
+  await member.getByRole("button", { name: "Add a value" }).click();
+  await expect(member.locator(".stmt-mark")).toHaveCount(0);
+  // The member itself takes the name out, since it spells nothing (srf:P24).
+  await member.getByRole("radio", { name: "The member itself" }).check();
+  await expect(member.getByLabel("Member name", { exact: true })).toHaveCount(0);
+  await member.getByRole("button", { name: "Done" }).click();
+  await expect(surfaceNode(canvas, "statement")).toContainText("identity: the member itself");
+  const body = await compiledBody(fake, canvas);
+  expect(body).toContain("srf:MemberNode");
+  expect(body).toContain("sh:oneOrMorePath");
+  // The expansion states its path and no name, though the covenant projection's expansion still names its source.
+  expect(body.match(/ex:fr-expansion a [^]*?\.\n/)![0]).not.toContain("srf:expansionSource");
+  expect(body.match(/ex:fr-expansion a [^]*?\.\n/)![0]).toContain("srf:membersPath");
+  expect(body).not.toContain("srf:memberName");
+});
+
+test("the loops of the class graph leave across the flow and the facility declares refinances", async ({ page }) => {
+  const fake = new FakeService();
+  const { ws } = await facilitySurfaceCanvas(page, fake);
+  await page.goto(`/#/w/${ws}/baseline`);
+  await page.getByRole("group", { name: "Detail pane" }).getByRole("button", { name: "Diagram" }).click();
+  const diagram = page.getByRole("region", { name: "Ontology diagram" });
+  for (const property of ["ex:refinances", "ex:refinancesInChain"]) {
+    await expect(diagram.locator(".react-flow__edge").filter({ has: page.locator("title", { hasText: `${property}, from Facility to Facility` }) })).toHaveCount(1);
+    await expect(diagram.locator(".onto-edge-label").filter({ hasText: new RegExp(`^${property}$`) })).toBeVisible();
+  }
 });
 
 // --- the persistence simulator (SVA-P4) ---------------------------------------------------------------------------------------------------

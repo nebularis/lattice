@@ -22,6 +22,14 @@ export interface Claim {
 
 export type NodeKind = "carrier" | "contract" | "class" | "evidence" | "statement" | "entries" | "target" | "scheme";
 
+/** The editor a statement's box opens on the canvas (SVA-Q57 (b)). A node for each member is a construction beside an expansion, and its box opens the editor of that node. */
+export interface EditTarget {
+  kind: "construction" | "member" | "join" | "expansion";
+  contract: string;
+}
+
+export const EDIT_WORDS: Record<EditTarget["kind"], string> = { construction: "construction", member: "node for each member", join: "join", expansion: "expansion" };
+
 export interface DrawNode {
   id: string;
   kind: NodeKind;
@@ -41,6 +49,8 @@ export interface DrawNode {
   scheme?: string;
   /** Where path mode starts from this element, where it holds a path or a property (SVA-Q60). */
   place?: PathPlace;
+  /** The editor the element opens, where it is the box of a statement that has one. */
+  edit?: EditTarget;
   claims: Claim[];
 }
 
@@ -57,6 +67,8 @@ export interface PathPlace {
   carrier?: string;
   /** What the author sees it called. */
   label: string;
+  /** Properties the place may not be given, which the laws forbid it, such as the property an expansion expands from for the one it writes (srf:P21). */
+  except?: string[];
 }
 
 export type EdgeKind = "read" | "hop" | "write" | "key" | "lowered";
@@ -406,7 +418,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
     const path = hops ?? (binding?.property ? [{ property: binding.property, inverse: false } as Hop] : []);
     if (path.length === 0) {
       memberNode = `${contract}|member`;
-      nodes.push({ id: memberNode, kind: "class", tag: "Members", title: "…", lines: [], rank: 1, contract, select: expansion, place: membersPlace, claims: [] });
+      nodes.push({ id: memberNode, kind: "class", tag: "Members", title: "…", lines: [], rank: 1, contract, select: expansion, place: membersPlace, edit: { kind: "expansion", contract }, claims: [] });
       edges.push({ id: `${contract}|e|hop|0`, source: from, target: memberNode, kind: "hop", label: "no members path", title: `${name} states no members path`, dashed: true, contract, claims });
     }
     path.forEach((hop, i) => {
@@ -414,7 +426,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
       const next = path[i + 1];
       const toLabel = last ? memberClass(terms, hop) : next?.property === RDF("rest") || hop.property === RDF("rest") ? "list" : reached(hop, terms);
       const to = last ? `${contract}|member` : `${contract}|hop|${i}`;
-      nodes.push({ id: to, kind: "class", tag: last ? "Members" : "Reached", title: toLabel, lines: [], rank: i + 1, contract, select: expansion, place: last ? membersPlace : undefined, claims: [] });
+      nodes.push({ id: to, kind: "class", tag: last ? "Members" : "Reached", title: toLabel, lines: [], rank: i + 1, contract, select: expansion, place: last ? membersPlace : undefined, edit: last ? { kind: "expansion", contract } : undefined, claims: [] });
       edges.push({
         id: `${contract}|e|hop|${i}`, source: from, target: to, kind: "hop", label: hopLabel(terms, hop), title: hopTitle(terms, fromLabel, hop, toLabel), dashed,
         inverse: hop.inverse, closure: hop.closure, contract, claims: i === 0 ? claims : [],
@@ -461,7 +473,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
     statement = {
       id: `${contract}|stmt`, kind: "statement", tag: expansion ? "Node for each member" : "Constructs", title: cls ? terms.label(cls) : "…",
       lines: [identityLine, ...(memberName ? [`name: ${terms.label(memberName)}`] : []), ...writes.map(writeLine)],
-      rank: Math.max(2, depth + 1), contract, select: constructed,
+      rank: Math.max(2, depth + 1), contract, select: constructed, edit: { kind: expansion ? "member" : "construction", contract },
       claims: [{ focus: constructed, paths: [SRF("constructedClass"), SRF("nodeIdentity"), SRF("keyBinding"), SRF("keyMember"), SRF("memberName"), SRF("writes")] }],
     };
     nodes.push(statement);
@@ -500,6 +512,7 @@ function projection(g: Graph, contract: string, name: string, terms: Terms): Con
     const pairs = join ? g.objects(join, SRF("joinsOn")) : [];
     const stmt: DrawNode = {
       id: `${contract}|stmt`, kind: "statement", tag: "Join", title: second?.carrier ? terms.label(second.carrier) : "…", rank: 2, contract, select: join ?? contract,
+      edit: { kind: "join", contract },
       lines: [`one value finds: ${rule(matches, "at most one")}`, `one instance links: ${rule(links, "any number")}`],
       claims: join ? [{ focus: join, paths: [SRF("joinMatches"), SRF("joinLinks"), SRF("joinsOn")] }] : [],
     };

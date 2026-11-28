@@ -390,6 +390,36 @@ function waypoints(c: Crossing, rank: Rank, lr: boolean): Anchor[] {
 const LOOP_LABEL_GAP = 6;
 /** How many places a loop's label is tried along its side, on each side of the first. */
 const LOOP_LABEL_STEPS = 6;
+/** How far the control points of the first loop on a side lie from it, and how much further each next loop's lie. A cubic reaches three quarters of that. */
+export const LOOP_REACH = 44;
+export const LOOP_STEP = 26;
+/** The room kept beside a loop and its label, so neither touches a neighbouring node. */
+const LOOP_MARGIN = CLEARANCE;
+
+/** The two sides across the layout's flow, the one a loop takes on a tie first. They are the top and the bottom in LR, and the left and the right in TB. */
+export const acrossSides = (direction: "LR" | "TB"): [Side, Side] => (direction === "LR" ? ["top", "bottom"] : ["left", "right"]);
+
+/**
+ * The side a loop leaves and enters by, which is across the flow of the layout (SVA-O4): the side of the two with fewer edge ends on the node,
+ * and the first, the top in LR and the left in TB, on a tie. Every loop on a node takes the same side and the loops stack on it.
+ */
+export function loopSide(direction: "LR" | "TB", first: number, second: number): Side {
+  const [a, b] = acrossSides(direction);
+  return second < first ? b : a;
+}
+
+/**
+ * How far from its node a stack of `count` loops and their labels reach, on the side the loops take. The last loop's far point lies three
+ * quarters of its reach out, its label lies beyond that, and a margin is kept past it. `label` is the extent of the widest label across the
+ * side, its height where the loops leave by the top or the bottom and its width where they leave by the left or the right.
+ */
+export function loopRoom(count: number, label: number): number {
+  if (count <= 0) return 0;
+  return 0.75 * (LOOP_REACH + LOOP_STEP * (count - 1)) + LOOP_LABEL_GAP + count * label + (count - 1) * LOOP_LABEL_GAP + LOOP_MARGIN;
+}
+
+/** The extent of a label's box along the line it is read on, from its text, as `routeEdges` sizes it. */
+export const labelWidth = (text: string, o: Pick<RouteOptions, "labelCharWidth" | "labelPadding"> = DEFAULT_ROUTE_OPTIONS) => text.length * o.labelCharWidth + 2 * o.labelPadding;
 
 interface End { id: string; end: "s" | "t"; key: number }
 
@@ -405,7 +435,9 @@ interface End { id: string; end: "s" | "t"; key: number }
  *   least intrusion is kept, so a route is always returned.
  * - Edges that leave or enter one side of a node share it, spread evenly between margins from its corners, in order of the position
  *   of their other end along the side's axis (the first waypoint where there is one, else the other node's centre), ties by id.
- * - An edge from a node to itself leaves and enters by the same side as a loop, the right in LR and the bottom in TB.
+ * - An edge from a node to itself, a loop, leaves and enters by the same side, across the layout's flow (`loopSide`). It takes the side of
+ *   the two, the top and the bottom in LR and the left and the right in TB, that has fewer edge ends on the node, and the top, or the left,
+ *   on a tie. The loops of one node stack on that side, each reaching `LOOP_STEP` further out than the one before.
  * Labels are then placed greedily in order of id. The label of a loop goes just beyond the loop's far point where that place is free. Otherwise a label takes the first of `LABEL_CANDIDATES` along its path whose box covers no
  * node and no label placed before. Where every candidate covers something it looks for a free place among finer fractions, nearest
  * the middle first, and where there is none it takes the candidate covering the least area, ties by the order of preference, so a
@@ -482,11 +514,14 @@ export function routeEdges(nodes: ReadonlyMap<string, Box>, edges: readonly Rout
     const s = nodes.get(e.source)!;
     const t = nodes.get(e.target)!;
     if (e.source === e.target) {
-      const sourceSide: Side = o.direction === "LR" ? "right" : "bottom";
+      // The side across the flow with fewer edge ends on the node, from the sides the other edges were given in step one.
+      const [low, high] = acrossSides(o.direction);
+      const ended = (side: Side) => sharing.get(`${e.source}\u0000${side}`)?.length ?? 0;
+      const sourceSide = loopSide(o.direction, ended(low), ended(high));
       const quarter = sideLength(s, sourceSide) / 4;
       const a = attach(s, sourceSide, -quarter);
       const b = attach(s, sourceSide, quarter);
-      const reach = 44 + 26 * loops.get(e.source)!.indexOf(e.id);
+      const reach = LOOP_REACH + LOOP_STEP * loops.get(e.source)!.indexOf(e.id);
       const n = NORMAL[sourceSide];
       const curve: Curve[] = [{ p0: a, p1: { x: a.x + n.x * reach, y: a.y + n.y * reach }, p2: { x: b.x + n.x * reach, y: b.y + n.y * reach }, p3: b }];
       return { id: e.id, path: pathOf(curve), sourceSide, targetSide: sourceSide, curve };
@@ -536,11 +571,17 @@ export function routeEdges(nodes: ReadonlyMap<string, Box>, edges: readonly Rout
       const farPoint = curvePoint(r.curve, 0.5);
       const n = NORMAL[r.sourceSide];
       const across = n.x !== 0 ? o.labelHeight : width;
-      for (let step = 0; step <= LOOP_LABEL_STEPS * 2; step++) {
-        const shift = (step % 2 === 0 ? 1 : -1) * Math.ceil(step / 2) * (across + LOOP_LABEL_GAP);
+      // A label is tried first just beyond its loop, then further out by whole labels, as many as the node has loops, so the labels of a stack lie one beyond the other
+      // and each stays by its own loop, and only then along the side.
+      const outward = n.x !== 0 ? width : o.labelHeight;
+      const count = loops.get(edge.source)!.length;
+      for (let step = 0; step < count + LOOP_LABEL_STEPS * 2; step++) {
+        const out = step < count ? step * (outward + LOOP_LABEL_GAP) : 0;
+        const k = step < count ? 0 : step - count + 1;
+        const shift = (k % 2 === 1 ? 1 : -1) * Math.ceil(k / 2) * (across + LOOP_LABEL_GAP);
         const box: Box = n.x !== 0
-          ? { x: n.x > 0 ? farPoint.x + LOOP_LABEL_GAP : farPoint.x - LOOP_LABEL_GAP - width, y: farPoint.y - o.labelHeight / 2 + shift, width, height: o.labelHeight }
-          : { x: farPoint.x - width / 2 + shift, y: n.y > 0 ? farPoint.y + LOOP_LABEL_GAP : farPoint.y - LOOP_LABEL_GAP - o.labelHeight, width, height: o.labelHeight };
+          ? { x: n.x > 0 ? farPoint.x + LOOP_LABEL_GAP + out : farPoint.x - LOOP_LABEL_GAP - width - out, y: farPoint.y - o.labelHeight / 2 + shift, width, height: o.labelHeight }
+          : { x: farPoint.x - width / 2 + shift, y: n.y > 0 ? farPoint.y + LOOP_LABEL_GAP + out : farPoint.y - LOOP_LABEL_GAP - o.labelHeight - out, width, height: o.labelHeight };
         if (obstacles.every((node) => overlapArea(box, node) === 0) && placed.every((other) => overlapArea(box, other) === 0)) {
           placed.push(box);
           return { ...r, label: box };

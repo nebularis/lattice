@@ -31,7 +31,7 @@ import { clearPositions, readPositions, resolvePositions, writePositions, type C
 
 export type { Layout, LayoutEdge, LayoutNode, LayoutOptions } from "./layout";
 export type { Point, Positions } from "./positions";
-export { DEFAULT_NODE_SIZE, DEFAULT_ROUTE_OPTIONS, LABEL_CANDIDATES, chooseSides, curvePoint, routeEdges } from "./edges";
+export { DEFAULT_NODE_SIZE, DEFAULT_ROUTE_OPTIONS, LABEL_CANDIDATES, LOOP_REACH, LOOP_STEP, acrossSides, chooseSides, curvePoint, loopRoom, loopSide, routeEdges } from "./edges";
 export type { Box, EdgeRoute, RouteEdge, RouteOptions, Side } from "./edges";
 
 export interface MenuItem {
@@ -180,13 +180,14 @@ export function Canvas(props: CanvasProps) {
 
   // The layout depends on the nodes' ids and hints and on the edges, and a new array with the same content does not lay out again.
   const shape = useMemo(
-    () => JSON.stringify([given.map((n) => [n.id, hints?.[n.id] ?? null]), edges.map((e) => [e.source, e.target])]),
+    // A loop's label sizes the room the layout leaves for it, so it is kept with the edge. No other edge's label is.
+    () => JSON.stringify([given.map((n) => [n.id, hints?.[n.id] ?? null]), edges.map((e) => [e.source, e.target, e.source === e.target && typeof e.data?.label === "string" ? e.data.label : null])]),
     [given, edges, hints],
   );
   const { direction, columnGap, rowGap } = options;
   const computed = useMemo(() => {
-    const [ns, es] = JSON.parse(shape) as [[string, Omit<LayoutNode, "id"> | null][], [string, string][]];
-    const laidOut = layout(ns.map(([id, h]) => ({ id, ...h })), es.map(([source, target]) => ({ source, target })), { direction, columnGap, rowGap });
+    const [ns, es] = JSON.parse(shape) as [[string, Omit<LayoutNode, "id"> | null][], [string, string, string | null][]];
+    const laidOut = layout(ns.map(([id, h]) => ({ id, ...h })), es.map(([source, target, label]) => ({ source, target, ...(label ? { label } : {}) })), { direction, columnGap, rowGap });
     return afterLayout ? afterLayout(laidOut) : laidOut;
   }, [shape, layout, direction, columnGap, rowGap, afterLayout]);
 

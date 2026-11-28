@@ -4,6 +4,8 @@
 // DOM, and deterministic. The same nodes and edges in any order give the same positions, since it sorts by id before it reads
 // anything and uses no randomness and no time.
 
+import { DEFAULT_NODE_SIZE, DEFAULT_ROUTE_OPTIONS, labelWidth, loopRoom } from "./edges";
+
 export interface LayoutNode {
   id: string;
   /** The size on the canvas, when the node's is known. A node with none takes no room beyond the gaps. */
@@ -20,6 +22,8 @@ export interface LayoutNode {
 export interface LayoutEdge {
   source: string;
   target: string;
+  /** The text of the edge's label, which a loop's room is sized from. Nothing else reads it. */
+  label?: string;
 }
 
 export interface LayoutOptions {
@@ -45,8 +49,13 @@ const given = (n: number | undefined): n is number => n !== undefined && Number.
  * an explicit order, or else are ordered by sweeps of the barycentre heuristic, a group first and ties by id. A node with no
  * edge and no rank of its own is not ranked. It goes in a compact block beside the drawing, on the side that does not extend the
  * layout direction (SVA-O4), in rows that wrap at the drawing's width in LR and in columns that wrap at its height in TB, sorted
- * by id. A graph of only such nodes is a plain grid. An edge to a node that is not given and an edge from a node to itself are
- * ignored, and a repeated id throws.
+ * by id. A graph of only such nodes is a plain grid. An edge to a node that is not given is ignored, and a repeated id throws.
+ *
+ * An edge from a node to itself, a loop, does not rank or order anything. It leaves room, though. The loops of a node leave it by the side
+ * across the flow with fewer edge ends, the top, or the left in TB, on a tie (`loopSide` of edges.ts), and the layout reads the ends from the
+ * edges between nodes of one rank, the only ones that end on those sides. A node's loops and their labels reach out from that side by
+ * `loopRoom`, and the gap to the node beside it on that side grows to hold them, so the loops and their labels never meet a neighbour
+ * whatever the row gap is. A node whose size is not given is taken as `DEFAULT_NODE_SIZE` for that, and nothing changes in a graph with no loop.
  */
 export const layered: Layout = (nodes, edges, options) => {
   const byId = new Map<string, LayoutNode>();
@@ -70,6 +79,16 @@ export const layered: Layout = (nodes, edges, options) => {
     pairs.push([s, t]);
   }
   pairs.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  // The loops of each node, and the widest label across the side they leave by.
+  const lr = options.direction === "LR";
+  const loops = new Array<number>(count).fill(0);
+  const loopLabel = new Array<number>(count).fill(0);
+  for (const e of edges) {
+    const s = index.get(e.source);
+    if (s === undefined || e.source !== e.target) continue;
+    loops[s]++;
+    if (e.label) loopLabel[s] = Math.max(loopLabel[s], lr ? DEFAULT_ROUTE_OPTIONS.labelHeight : labelWidth(e.label));
+  }
   const out: number[][] = node.map(() => []);
   const into: number[][] = node.map(() => []);
   for (const [s, t] of pairs) {
@@ -155,9 +174,30 @@ export const layered: Layout = (nodes, edges, options) => {
     for (const r of [...used].reverse()) if (!pinned.has(r)) sweep(r, down);
   }
 
+  // The room each node's loops need on the side they take. The ends on the two sides across the flow are those of the edges between nodes
+  // of one rank, a neighbour before the node, by its place in the rank, ending on its low side and one after it on its high side.
+  const low = new Array<number>(count).fill(0);
+  const high = new Array<number>(count).fill(0);
+  for (const e of edges) {
+    // Each edge counts, as the router counts the ends of an edge drawn twice or in each direction.
+    const s = index.get(e.source);
+    const t = index.get(e.target);
+    if (s === undefined || t === undefined || s === t || isAlone.has(s) || isAlone.has(t) || rank[s] !== rank[t]) continue;
+    const [first, second] = position[s] < position[t] ? [s, t] : [t, s];
+    high[first]++;
+    low[second]++;
+  }
+  const lead = new Array<number>(count).fill(0);
+  const trail = new Array<number>(count).fill(0);
+  for (let i = 0; i < count; i++) {
+    if (!loops[i]) continue;
+    const room = loopRoom(loops[i], loopLabel[i]);
+    if (high[i] < low[i]) trail[i] = room;
+    else lead[i] = room;
+  }
+
   // Coordinates. Along the ranks a rank's pitch is the columnGap, plus the widest node of each rank before it where sizes are
   // given, counted from rank 0. Across a rank a node's is its slot times the rowGap, plus the sizes of the nodes before it.
-  const lr = options.direction === "LR";
   const along = (i: number) => (lr ? node[i].width : node[i].height) ?? 0;
   const across = (i: number) => (lr ? node[i].height : node[i].width) ?? 0;
   const start = new Map<number, number>();
@@ -172,16 +212,29 @@ export const layered: Layout = (nodes, edges, options) => {
     start.set(r, r * options.columnGap - sum);
   }
 
+  // A node's extent across the rank where the loops are measured, as given and else as expected.
+  const reach = (i: number) => across(i) || (lr ? DEFAULT_NODE_SIZE.height : DEFAULT_NODE_SIZE.width);
   const place = new Array<{ x: number; y: number }>(count);
   for (const r of used) {
     const list = ranks.get(r)!;
     const slotted = pinned.has(r) && list.every((i) => given(node[i].order));
     let slot = -Infinity;
     let before = 0;
+    // Where loops stand between two nodes, the second is moved on until the room they need is between them, and each node after it with it.
+    let shift = 0;
+    let last: { at: number; node: number } | undefined;
     list.forEach((i, k) => {
       slot = slotted ? Math.max(node[i].order!, slot + 1) : k;
       const a = start.get(r)!;
-      const c = slot * options.rowGap + before;
+      let c = slot * options.rowGap + before + shift;
+      if (last && trail[last.node] + lead[i] > 0) {
+        const wanted = last.at + reach(last.node) + trail[last.node] + lead[i];
+        if (c < wanted) {
+          shift += wanted - c;
+          c = wanted;
+        }
+      }
+      last = { at: c, node: i };
       before += across(i);
       place[i] = lr ? { x: a, y: c } : { x: c, y: a };
     });
@@ -198,10 +251,11 @@ export const layered: Layout = (nodes, edges, options) => {
     const wide = Math.max(...alone.map(along));
     const deep = Math.max(...alone.map(across));
     const pitchA = options.columnGap + wide;
-    const pitchB = options.rowGap + deep;
+    // A node alone with a loop keeps the room the loop needs on its side of the pitch.
+    const pitchB = options.rowGap + deep + Math.max(0, ...alone.map((i) => lead[i])) + Math.max(0, ...alone.map((i) => trail[i]));
     const a0 = drawn.length ? Math.min(...drawn.map(aOf)) : 0;
     const extentA = drawn.length ? Math.max(...drawn.map((i) => aOf(i) + along(i))) - a0 : 0;
-    const b0 = drawn.length ? Math.max(...drawn.map((i) => bOf(i) + across(i))) + options.rowGap : 0;
+    const b0 = (drawn.length ? Math.max(...drawn.map((i) => bOf(i) + across(i) + trail[i])) + options.rowGap : 0) + Math.max(0, ...alone.map((i) => lead[i]));
     const perRow = drawn.length ? Math.max(1, Math.floor((extentA - wide) / pitchA) + 1) : Math.ceil(Math.sqrt(alone.length));
     alone.forEach((i, k) => {
       const a = a0 + (k % perRow) * pitchA;

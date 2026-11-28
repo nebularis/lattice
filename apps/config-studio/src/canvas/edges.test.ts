@@ -10,8 +10,8 @@ import { Graph, PREFIXES, compact } from "@lattice/authoring-domain";
 import { LAYOUTS } from "../ui/OntologyCanvas";
 import { importGraph } from "../rdf/importGraph";
 import { classGraph, hierarchyGraph } from "../rdf/ontologyGraph";
-import { CLEARANCE, DEFAULT_NODE_SIZE, LABEL_CANDIDATES, chooseSides, curvePoint, routeEdges, type Box, type Curve, type EdgeRoute, type RouteEdge } from "./edges";
-import { layered } from "./layout";
+import { CLEARANCE, DEFAULT_NODE_SIZE, DEFAULT_ROUTE_OPTIONS, LABEL_CANDIDATES, LOOP_REACH, LOOP_STEP, acrossSides, chooseSides, curvePoint, labelWidth, loopRoom, loopSide, routeEdges, type Box, type Curve, type EdgeRoute, type RouteEdge } from "./edges";
+import { layered, type LayoutEdge, type LayoutOptions } from "./layout";
 
 const box = (x: number, y: number, width = 100, height = 40): Box => ({ x, y, width, height });
 const nodesOf = (entries: Record<string, Box>) => new Map(Object.entries(entries));
@@ -123,34 +123,220 @@ describe("the sides an edge attaches by", () => {
     expect(end(r.path)).toEqual([50, 200]);
   });
 
-  it("draws an edge from a node to itself as a loop on one side", () => {
-    const [r] = routeEdges(nodesOf({ a: box(0, 0) }), [edge("e", "a", "a", "ex:self")], { direction: "LR" });
-    expect([r.sourceSide, r.targetSide]).toEqual(["right", "right"]);
-    expect(start(r.path)[0]).toBe(100);
-    expect(end(r.path)[0]).toBe(100);
-    expect(start(r.path)).not.toEqual(end(r.path));
-    expect(curvePoint(r.curve, 0.5).x).toBeGreaterThan(100);
-  });
-
-  it("puts the label of a loop just beyond the loop and clear of the node it leaves, on the side it leaves by", () => {
-    const label = "ex:refinancesInChain";
-    const [lr] = routeEdges(nodesOf({ a: box(0, 0) }), [edge("e", "a", "a", label)], { direction: "LR" });
-    const at = lr.label!;
-    // The node is 0 to 100 across and the loop leaves its right side, so the label starts to the right of the loop's far point and covers nothing of the node.
-    expect(at.x).toBeGreaterThan(curvePoint(lr.curve, 0.5).x);
-    expect(overlap(at, box(0, 0))).toBe(0);
-    expect(at.y + at.height / 2).toBeCloseTo(curvePoint(lr.curve, 0.5).y, 5);
-    const [tb] = routeEdges(nodesOf({ a: box(0, 0) }), [edge("e", "a", "a", label)], { direction: "TB" });
-    expect(tb.label!.y).toBeGreaterThan(curvePoint(tb.curve, 0.5).y);
-    expect(overlap(tb.label!, box(0, 0))).toBe(0);
-    // A second loop on the node leaves further out, and its label does not cover the first.
-    const two = routeEdges(nodesOf({ a: box(0, 0) }), [edge("e", "a", "a", label), edge("f", "a", "a", "ex:other")], { direction: "LR" });
-    expect(overlap(two[0].label!, two[1].label!)).toBe(0);
-    expect(two.every((r) => overlap(r.label!, box(0, 0)) === 0)).toBe(true);
-  });
-
   it("leaves out an edge whose node is not given", () => {
     expect(routeEdges(ns, [edge("e", "a", "ghost"), edge("f", "a", "b")]).map((r) => r.id)).toEqual(["f"]);
+  });
+});
+
+describe("a loop, an edge from a node to itself", () => {
+  const label = "ex:refinancesInChain";
+  const one = (direction: "LR" | "TB", extra: Record<string, Box> = {}, edges: RouteEdge[] = [edge("e", "a", "a", label)]) => routeEdges(nodesOf({ a: box(0, 0), ...extra }), edges, { direction });
+  /** The nearest the curve of a loop comes to a node, over points a pixel apart. */
+  const near = (r: EdgeRoute, b: Box) => Math.min(...along(r.curve).map((p) => distanceTo(p, b)));
+
+  it("leaves and enters by one side across the layout's flow, the top in LR and the left in TB on a tie", () => {
+    const [lr] = one("LR");
+    expect([lr.sourceSide, lr.targetSide]).toEqual(["top", "top"]);
+    expect(start(lr.path)[1]).toBe(0);
+    expect(end(lr.path)[1]).toBe(0);
+    expect(start(lr.path)).not.toEqual(end(lr.path));
+    expect(curvePoint(lr.curve, 0.5).y).toBeLessThan(0);
+    const [tb] = one("TB");
+    expect([tb.sourceSide, tb.targetSide]).toEqual(["left", "left"]);
+    expect(start(tb.path)[0]).toBe(0);
+    expect(end(tb.path)[0]).toBe(0);
+    expect(curvePoint(tb.curve, 0.5).x).toBeLessThan(0);
+    expect(acrossSides("LR")).toEqual(["top", "bottom"]);
+    expect(acrossSides("TB")).toEqual(["left", "right"]);
+  });
+
+  it("takes the side with fewer edge ends on the node, and the first on a tie, by a rule that reads the ends only", () => {
+    expect(loopSide("LR", 0, 0)).toBe("top");
+    expect(loopSide("LR", 1, 1)).toBe("top");
+    expect(loopSide("LR", 1, 2)).toBe("top");
+    expect(loopSide("LR", 2, 1)).toBe("bottom");
+    expect(loopSide("TB", 0, 0)).toBe("left");
+    expect(loopSide("TB", 3, 1)).toBe("right");
+  });
+
+  it("takes the bottom in LR where more edges end on the top of the node, as when other nodes of its rank lie above it", () => {
+    // Two nodes of a rank lie above the node, so two edges end on its top, and its loop takes the bottom.
+    const ns = nodesOf({ a: box(0, 200), b: box(0, 0), c: box(0, 100) });
+    const loops = routeEdges(ns, [edge("l", "a", "a", label), edge("ab", "a", "b"), edge("ac", "a", "c")], { direction: "LR" });
+    expect(route(loops, "ab").sourceSide).toBe("top");
+    expect(route(loops, "ac").sourceSide).toBe("top");
+    expect([route(loops, "l").sourceSide, route(loops, "l").targetSide]).toEqual(["bottom", "bottom"]);
+    expect(start(route(loops, "l").path)[1]).toBe(240);
+    // With one end on each side the loop is on the top, and with fewer on the top than the bottom it is on the top.
+    const tie = routeEdges(nodesOf({ a: box(0, 100), b: box(0, 0), c: box(0, 200) }), [edge("l", "a", "a", label), edge("ab", "a", "b"), edge("ac", "a", "c")], { direction: "LR" });
+    expect(route(tie, "l").sourceSide).toBe("top");
+    // An edge that ends on the node by the other end counts as an end there as well.
+    const into = routeEdges(ns, [edge("l", "a", "a", label), edge("ba", "b", "a"), edge("ca", "c", "a")], { direction: "LR" });
+    expect(route(into, "ba").targetSide).toBe("top");
+    expect(route(into, "l").sourceSide).toBe("bottom");
+  });
+
+  it("takes the right in TB where more edges end on the left of the node", () => {
+    const ns = nodesOf({ a: box(400, 0), b: box(0, 0), c: box(200, 0) });
+    const r = routeEdges(ns, [edge("l", "a", "a", label), edge("ab", "a", "b"), edge("ac", "a", "c")], { direction: "TB" });
+    expect(route(r, "ab").sourceSide).toBe("left");
+    expect([route(r, "l").sourceSide, route(r, "l").targetSide]).toEqual(["right", "right"]);
+    expect(curvePoint(route(r, "l").curve, 0.5).x).toBeGreaterThan(400 + 100);
+  });
+
+  it("is not moved by the edges that end on the sides along the flow, which are the sides edges between ranks use", () => {
+    const lr = routeEdges(nodesOf({ a: box(200, 0), b: box(0, 0), c: box(500, 0) }), [edge("l", "a", "a", label), edge("ab", "b", "a"), edge("ac", "a", "c")], { direction: "LR" });
+    expect([route(lr, "ab").targetSide, route(lr, "ac").sourceSide]).toEqual(["left", "right"]);
+    expect(route(lr, "l").sourceSide).toBe("top");
+  });
+
+  it("stacks the loops of one node on that side, each reaching further out than the one before and with its own label", () => {
+    for (const direction of ["LR", "TB"] as const) {
+      const rs = one(direction, {}, [edge("e", "a", "a", label), edge("f", "a", "a", "ex:other"), edge("g", "a", "a", "ex:third")]);
+      expect(new Set(rs.map((r) => r.sourceSide)).size).toBe(1);
+      const far = rs.map((r) => (direction === "LR" ? -curvePoint(r.curve, 0.5).y : -curvePoint(r.curve, 0.5).x));
+      expect(far[1]).toBeGreaterThan(far[0]);
+      expect(far[2]).toBeGreaterThan(far[1]);
+      expect(far[1] - far[0]).toBeCloseTo(0.75 * LOOP_STEP, 5);
+      for (const r of rs) expect(overlap(r.label!, box(0, 0))).toBe(0);
+      for (let i = 0; i < rs.length; i++) for (let j = i + 1; j < rs.length; j++) expect(overlap(rs[i].label!, rs[j].label!)).toBe(0);
+      expect(rs.every((r) => near(r, box(0, 0)) === 0)).toBe(true);
+    }
+  });
+
+  it("puts the label of a loop just beyond the loop's far point, on the side it leaves by, and clear of the node", () => {
+    const [lr] = one("LR");
+    const farLR = curvePoint(lr.curve, 0.5);
+    // The loop leaves the top, so the label lies above its far point and covers nothing of the node.
+    expect(lr.label!.y + lr.label!.height).toBeLessThan(farLR.y);
+    expect(lr.label!.x + lr.label!.width / 2).toBeCloseTo(farLR.x, 5);
+    expect(overlap(lr.label!, box(0, 0))).toBe(0);
+    const [tb] = one("TB");
+    const farTB = curvePoint(tb.curve, 0.5);
+    expect(tb.label!.x + tb.label!.width).toBeLessThan(farTB.x);
+    expect(tb.label!.y + tb.label!.height / 2).toBeCloseTo(farTB.y, 5);
+    expect(overlap(tb.label!, box(0, 0))).toBe(0);
+  });
+
+  it("puts a label over no node of the drawing, moving it along the side where a node is there", () => {
+    // A node above the loop's node, a little to its right, in the way of the label's first place.
+    const blocker = box(40, -150, 100, 60);
+    const [r] = routeEdges(nodesOf({ a: box(0, 0), z: blocker }), [edge("e", "a", "a", label)], { direction: "LR" });
+    expect(overlap(r.label!, blocker)).toBe(0);
+    expect(overlap(r.label!, box(0, 0))).toBe(0);
+    expect(r.label!.y + r.label!.height).toBeLessThan(0);
+  });
+
+  it("gives the same routes for any order of the nodes and the edges", () => {
+    const ns = nodesOf({ a: box(0, 200), b: box(0, 0), c: box(0, 100) });
+    const es = [edge("l", "a", "a", label), edge("m", "a", "a", "ex:two"), edge("ab", "a", "b"), edge("c", "c", "c", "ex:own")];
+    const first = routeEdges(ns, es, { direction: "LR" });
+    for (const seed of [1, 2, 3]) expect(routeEdges(new Map(shuffled([...ns.entries()], seed)), shuffled(es, seed + 9), { direction: "LR" })).toEqual(first);
+  });
+
+  it("is given room by the layout, which reads the same numbers", () => {
+    expect(loopRoom(0, 21)).toBe(0);
+    expect(loopRoom(1, 21)).toBeCloseTo(0.75 * LOOP_REACH + 6 + 21 + CLEARANCE, 5);
+    // Each further loop reaches out by its step, and its label lies one label beyond the one before.
+    expect(loopRoom(2, 21) - loopRoom(1, 21)).toBeCloseTo(0.75 * LOOP_STEP + 21 + 6, 5);
+    expect(labelWidth("ex:a", DEFAULT_ROUTE_OPTIONS)).toBe(4 * DEFAULT_ROUTE_OPTIONS.labelCharWidth + 2 * DEFAULT_ROUTE_OPTIONS.labelPadding);
+  });
+});
+
+describe("the layout leaves room for the loops", () => {
+  const label = "ex:refinancesInChain";
+  const SIZE = { width: 240, height: 51 };
+  /** A hub with a rank of `n` nodes after it, a column in LR and a row in TB, and the loops on some of them. */
+  function column(n: number, loops: Record<number, number>, options: LayoutOptions) {
+    const ids = Array.from({ length: n }, (_, i) => `n${i}`);
+    const nodes = [{ id: "hub", ...SIZE }, ...ids.map((id) => ({ id, ...SIZE }))];
+    const edges: (LayoutEdge & { id: string })[] = ids.map((id) => ({ id: `h-${id}`, source: "hub", target: id }));
+    ids.forEach((id, i) => {
+      for (let k = 0; k < (loops[i] ?? 0); k++) edges.push({ id: `l-${id}-${k}`, source: id, target: id, label: k === 0 ? label : `ex:loop${k}` });
+    });
+    const at = layered(nodes, edges, options);
+    const boxes = new Map(nodes.map((nd) => [nd.id, { ...at.get(nd.id)!, ...SIZE }]));
+    const routes = routeEdges(boxes, edges.map((e) => edge(e.id, e.source, e.target, e.label)), { direction: options.direction });
+    return { boxes, routes, edges, ids };
+  }
+  const gaps = [0, 14, 30, 84, 280];
+  const reaches = (r: EdgeRoute, b: Box) => Math.min(...along(r.curve).map((p) => distanceTo(p, b)));
+
+  for (const direction of ["LR", "TB"] as const) {
+    for (const rowGap of gaps) {
+      for (const columnGap of [14, 160]) {
+        it(`keeps every loop and its label clear of the other nodes, in ${direction} with a row gap of ${rowGap} and a column gap of ${columnGap}`, () => {
+          const { boxes, routes, ids } = column(6, { 1: 2, 3: 1, 4: 3 }, { direction, columnGap, rowGap });
+          const loops = routes.filter((r) => r.sourceSide === r.targetSide && r.id.startsWith("l-"));
+          expect(loops).toHaveLength(6);
+          for (const r of loops) {
+            const own = r.id.split("-")[1];
+            for (const [id, b] of boxes) {
+              if (id === own) continue;
+              expect(reaches(r, b), `the loop ${r.id} by ${id}`).toBeGreaterThanOrEqual(CLEARANCE - 1);
+              expect(overlap(r.label!, b), `the label of ${r.id} on ${id}`).toBe(0);
+            }
+          }
+          // And over no other label of the drawing.
+          const labels = routes.filter((r) => r.label).map((r) => r.label!);
+          for (let i = 0; i < labels.length; i++) for (let j = i + 1; j < labels.length; j++) expect(overlap(labels[i], labels[j])).toBe(0);
+          expect(ids).toHaveLength(6);
+        });
+      }
+    }
+  }
+
+  it("grows the gap on the loop's side by the loops' reach, and only there", () => {
+    const options: LayoutOptions = { direction: "LR", columnGap: 160, rowGap: 14 };
+    const plain = column(4, {}, options);
+    const looped = column(4, { 1: 2 }, options);
+    const top = (c: ReturnType<typeof column>, id: string) => c.boxes.get(id)!.y;
+    // n0 does not move, the gap above n1 holds its two loops and their labels, and the nodes after n1 move on with it.
+    expect(top(looped, "n0")).toBe(top(plain, "n0"));
+    const gap = top(looped, "n1") - (top(looped, "n0") + SIZE.height);
+    expect(gap).toBeGreaterThanOrEqual(loopRoom(2, DEFAULT_ROUTE_OPTIONS.labelHeight));
+    expect(top(looped, "n2") - top(looped, "n1")).toBe(top(plain, "n2") - top(plain, "n1"));
+    expect(top(looped, "n2") - top(plain, "n2")).toBe(top(looped, "n1") - top(plain, "n1"));
+    // A node with no loop leaves the gaps of a layout without loops as they were.
+    expect(top(plain, "n1") - (top(plain, "n0") + SIZE.height)).toBe(14);
+  });
+
+  it("is the layout it was where no node has a loop", () => {
+    const nodes = ["a", "b", "c", "d"].map((id) => ({ id, ...SIZE }));
+    const edges = [edge("1", "a", "b"), edge("2", "a", "c"), edge("3", "b", "d")].map(({ source, target }) => ({ source, target }));
+    const options: LayoutOptions = { direction: "LR", columnGap: 160, rowGap: 14 };
+    const before = layered(nodes, edges, options);
+    expect([...before.entries()]).toEqual([...layered(nodes, [...edges, { source: "z", target: "z" }], options).entries()]);
+  });
+
+  it("gives a node alone with a loop room for it among the nodes alone", () => {
+    const options: LayoutOptions = { direction: "LR", columnGap: 160, rowGap: 14 };
+    const nodes = ["a", "b", "c", "d"].map((id) => ({ id, ...SIZE }));
+    const edges: LayoutEdge[] = [{ source: "b", target: "b", label }, { source: "c", target: "c", label }];
+    const at = layered(nodes, edges, options);
+    const boxes = new Map(nodes.map((n) => [n.id, { ...at.get(n.id)!, ...SIZE }]));
+    const routes = routeEdges(boxes, edges.map((e, i) => edge(`l${i}`, e.source, e.target, e.label)), { direction: "LR" });
+    for (const r of routes) {
+      for (const [id, b] of boxes) {
+        if (id !== (r.id === "l0" ? "b" : "c")) expect(overlap(r.label!, b), `${r.id} on ${id}`).toBe(0);
+      }
+    }
+  });
+
+  it("holds at the persistence canvas's smallest row gap with the widest labels of the facility", () => {
+    const options: LayoutOptions = { direction: "LR", columnGap: 160, rowGap: 14 };
+    const { boxes, routes } = column(5, { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 }, options);
+    for (const r of routes.filter((x) => x.id.startsWith("l-"))) {
+      const own = r.id.split("-")[1];
+      for (const [id, b] of boxes) {
+        if (id === own) continue;
+        expect(overlap(r.label!, b)).toBe(0);
+        expect(reaches(r, b)).toBeGreaterThanOrEqual(CLEARANCE - 1);
+      }
+    }
+    // A column of nodes five deep, each with a loop, takes the room of five loops and no more than each needs.
+    const top = [...boxes.values()].filter((b) => b.x > 0).map((b) => b.y).sort((a, b) => a - b);
+    for (let i = 1; i < top.length; i++) expect(top[i] - top[i - 1]).toBeLessThanOrEqual(SIZE.height + loopRoom(1, DEFAULT_ROUTE_OPTIONS.labelHeight) + 1);
   });
 });
 
@@ -459,13 +645,28 @@ describe("the facility sample on the ontology canvas", () => {
   for (const d of drawings) {
     describe(d.name, () => {
       const layout = LAYOUTS[d.view];
-      const at = layered(d.nodes.map((id) => ({ id, ...d.size })), d.edges.map((e) => ({ source: e.source, target: e.target })), layout);
+      const at = layered(d.nodes.map((id) => ({ id, ...d.size })), d.edges.map((e) => ({ source: e.source, target: e.target, label: e.label })), layout);
       const boxes = new Map(d.nodes.map((id) => [id, { ...at.get(id)!, ...d.size }]));
       const routes = routeEdges(boxes, d.edges, { direction: layout.direction });
 
       it("has a route for every edge", () => {
         expect(routes).toHaveLength(d.edges.length);
         expect(routes.length).toBeGreaterThan(0);
+      });
+
+      it("draws the facility's two loops across the flow, clear of every other node", () => {
+        const loops = d.edges.filter((e) => e.source === e.target);
+        expect(loops).toHaveLength(d.view === "classes" ? 2 : 0);
+        for (const e of loops) {
+          const r = route(routes, e.id);
+          expect([r.sourceSide, r.targetSide]).toEqual([r.sourceSide, r.sourceSide]);
+          expect(["top", "bottom"]).toContain(r.sourceSide);
+          for (const [id, b] of boxes) {
+            if (id === e.source) continue;
+            expect(overlap(r.label!, b), `${e.id} label on ${id}`).toBe(0);
+            expect(distanceTo(curvePoint(r.curve, 0.5), b), `${e.id} by ${id}`).toBeGreaterThan(0);
+          }
+        }
       });
 
       it("passes within the clearance of no node but the two it joins", () => {

@@ -79,7 +79,13 @@ export function PathMode({ place, ontology, onClose }: { place: PathPlace; ontol
 
   const [query, setQuery] = useState("");
   const [everything, setEverything] = useState(false);
-  const every = useMemo(() => (value ? { forward: [], inverse: [] } : optionsAt(ontology, at)), [ontology, at, value]);
+  // A property the laws forbid the place is not offered, as the one an expansion expands from is not offered for the property it writes (srf:P21).
+  const every = useMemo(() => {
+    if (value) return { forward: [], inverse: [] };
+    const all = optionsAt(ontology, at);
+    const barred = new Set(place.except ?? []);
+    return barred.size === 0 ? all : { forward: all.forward.filter((o) => !barred.has(o.property)), inverse: all.inverse.filter((o) => !barred.has(o.property)) };
+  }, [ontology, at, value, place.except]);
   // A filter on the names, for a class with many properties or one that is not known, which offers them all.
   const offered = useMemo(() => {
     const q = query.trim().toLowerCase();

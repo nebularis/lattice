@@ -8,8 +8,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Handle, MarkerType, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
-import { Calculator, Route } from "lucide-react";
-import { Graph, PREFIXES, compact } from "@lattice/authoring-domain";
+import { Calculator, Pencil, Plus, Route } from "lucide-react";
+import { Graph, PREFIXES, SRF, compact } from "@lattice/authoring-domain";
 import { api, awaitJob, jobId } from "../api";
 import { Canvas, RoutedEdge, type LayoutHints, type LayoutOptions, type RoutedEdgeData } from "../canvas/kit";
 import { concerns } from "../rdf/editors";
@@ -17,11 +17,15 @@ import type { Issue } from "../rdf/report";
 import { fingerprint, readCompiled as readSent, writeCompiled } from "../persistence/landing";
 import { noteCompiled, useCompilationEpoch } from "../persistence/compilation";
 import { readSurface, type SurfaceLoad } from "../surface/compilation";
-import { bindingsOf, contractOf, contractsOf, drawContracts, type DrawEdge, type DrawNode, type PathPlace } from "../surface/drawing";
+import { EDIT_WORDS, bindingsOf, contractOf, contractsOf, drawContracts, type DrawEdge, type DrawNode, type EditTarget, type PathPlace } from "../surface/drawing";
 import { placeFindings, worst } from "../surface/findings";
 import { boxesFor, schemeOf, staleMark } from "../surface/scheme";
 import { ontologyOf, termsOf } from "../surface/terms";
+import { statementContext } from "../surface/statement";
+import { ConstructionEditor } from "./ConstructionEditor";
+import { ExpansionEditor } from "./ExpansionEditor";
 import { ExpressionEditor } from "./ExpressionEditor";
+import { JoinEditor } from "./JoinEditor";
 import { MappingCanvas } from "./MappingCanvas";
 import { PathMode } from "./PathMode";
 import { Modal, SeverityIcon, Spinner, ago, go } from "./kit";
@@ -32,13 +36,13 @@ import { PARTS } from "../state";
 const LAYOUT: LayoutOptions = { direction: "LR", columnGap: 130, rowGap: 30 };
 const EDGE_TYPES = { link: RoutedEdge };
 
-type BoxData = { node: DrawNode; issues: Issue[]; selected: boolean; stale: boolean; build?: (place: PathPlace) => void };
+type BoxData = { node: DrawNode; issues: Issue[]; selected: boolean; stale: boolean; build?: (place: PathPlace) => void; edit?: (target: EditTarget) => void };
 
 const WIDTH = 224;
 /** The size the layout reserves, counting the rows a long line wraps to. */
 const sizeOf = (n: DrawNode) => {
   const width = n.kind === "statement" || n.kind === "entries" ? 252 : WIDTH;
-  const build = n.place ? 1 : 0;
+  const build = n.place || n.edit ? 1 : 0;
   const rows = n.lines.reduce((sum, l) => sum + Math.max(1, Math.ceil(l.length / (width / 6.3))), 0) + Math.max(0, Math.ceil(n.title.length / (width / 7.5)) - 1);
   return { width, height: 46 + 17 * rows + 22 * build };
 };
@@ -65,6 +69,17 @@ function Box({ data }: NodeProps<Node<BoxData>>) {
       </div>
       <strong className="surface-title">{n.title}</strong>
       {n.lines.map((l, i) => <div key={i} className="small muted surface-line">{l}</div>)}
+      {n.edit && data.edit && (
+        <button
+          className="btn ghost sm surface-build nodrag" aria-label={`Edit ${EDIT_WORDS[n.edit.kind]} of ${n.title}`} title={`Edit the ${EDIT_WORDS[n.edit.kind]} on the canvas`}
+          onClick={(e) => {
+            e.stopPropagation();
+            data.edit!(n.edit!);
+          }}
+        >
+          <Pencil size={12} /> Edit
+        </button>
+      )}
       {n.place && data.build && (
         <button
           className="btn ghost sm surface-build nodrag" aria-label={`Build ${n.place.label} from ${n.title}`} title={`Build ${n.place.label} by clicking`}
@@ -100,7 +115,8 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
   const [focused, setFocused] = useState<string>();
   const [opened, setOpened] = useState<string>();
   const [building, setBuilding] = useState<PathPlace>();
-  const [editing, setEditing] = useState<string>();
+  // The editor open on the canvas, for the expression of a derivation or for a statement of a projection (SVA-Q57 (b)).
+  const [editor, setEditor] = useState<{ kind: "expression" | EditTarget["kind"]; contract: string }>();
   const [load, setLoad] = useState<SurfaceLoad>({ state: "loading" });
   const [reload, setReload] = useState(0);
   const compiledElsewhere = useCompilationEpoch();
@@ -163,20 +179,39 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
 
   // Path mode starts from a place that holds a path or a property, and shows the node of the configuration it writes in the form beside it.
   const begin = (place: PathPlace) => {
-    setEditing(undefined);
+    setEditor(undefined);
+    setBuilding(place);
+    studio.open("surface", place.node);
+  };
+  // An editor that starts path mode, for the link property or a members path, comes back to itself when path mode is done.
+  const buildFrom = (place: PathPlace) => {
     setBuilding(place);
     studio.open("surface", place.node);
   };
   // The expression editor opens from a derivation's result edge or its label, and shows the binding that states the expression in the form beside it.
   const edit = (target: { contract: string; binding?: string }) => {
     setBuilding(undefined);
-    setEditing(target.contract);
+    setEditor({ kind: "expression", contract: target.contract });
     studio.open("surface", target.binding ?? target.contract);
+  };
+  // Done goes back to the contract, which the form selects, since the statement the form showed may be gone, as when a construction is removed.
+  const closeEditor = () => {
+    const contract = editor?.contract;
+    setEditor(undefined);
+    if (contract) studio.open("surface", contract);
+  };
+  // A statement's editor opens from its box or the button on it, or from the toolbar, and shows the statement's node in the form beside it.
+  const editStatement = (target: EditTarget) => {
+    setBuilding(undefined);
+    setEditor({ kind: target.kind, contract: target.contract });
+    const ctx = statementContext(graph, target.contract, studio.baseline.namespace);
+    const predicate = target.kind === "join" ? "joinedAs" : target.kind === "expansion" ? "expandedAs" : "constructedAs";
+    studio.open("surface", (ctx.result && graph.value(ctx.result, SRF(predicate))) || ctx.result || target.contract);
   };
   const nodes = useMemo<Node[]>(
     () => drawn.nodes.map((n) => ({
       id: n.id, type: "box", position: { x: 0, y: 0 },
-      data: { node: n, issues: placement.byElement.get(n.id) ?? [], selected: n.id === focused || (n.select !== undefined && n.select === selected && n.kind !== "class"), stale: n.kind === "scheme" && boxes(n.scheme!)?.stale === true, build: begin } satisfies BoxData,
+      data: { node: n, issues: placement.byElement.get(n.id) ?? [], selected: n.id === focused || (n.select !== undefined && n.select === selected && n.kind !== "class"), stale: n.kind === "scheme" && boxes(n.scheme!)?.stale === true, build: begin, edit: editStatement } satisfies BoxData,
     })),
     [drawn, placement, focused, selected, boxes], // eslint-disable-line react-hooks/exhaustive-deps
   );
@@ -204,11 +239,27 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
   };
   // The derivation drawn in full, which the editor opens for from the controls as from its edge.
   const derivation = drawn.contracts.find((c) => c.kind === "derivation" && (c.contract === picked) && !overview);
+  // The statement the contract in full states or may state, which the toolbar edits or offers to add (SVA-Q57 (b)). A contract that states none offers the one its kind requires.
+  const subject = overview ? expanded : picked;
+  const statements = useMemo(() => {
+    if (!subject) return [];
+    const ctx = statementContext(graph, subject, studio.baseline.namespace);
+    if (!ctx.result || !ctx.kind || ctx.kind === "derivation") return [];
+    const states = (p: string) => graph.object(ctx.result!, SRF(p)) !== undefined;
+    const t = (kind: EditTarget["kind"], name: string, add: boolean, title: string) => ({ target: { kind, contract: subject }, name, add, title });
+    if (ctx.kind === "construction") {
+      return states("constructedAs") ? [t("construction", "Edit construction", false, "Edit the construction this contract states")] : [t("construction", "Add a construction", true, "State the node this contract writes")];
+    }
+    if (ctx.kind === "join") return states("joinedAs") ? [t("join", "Edit join", false, "Edit the join this contract states")] : [t("join", "Add a join", true, "State what relates an instance to the instance it names")];
+    if (!states("expandedAs")) return [t("expansion", "Add an expansion", true, "State the members this contract restates")];
+    return [t("expansion", "Edit expansion", false, "Edit the expansion this contract states"), ...(states("constructedAs") ? [t("member", "Edit node for each member", false, "Edit the node made for each member")] : [])];
+  }, [graph, subject, studio.baseline.namespace]);
   const choose = (node: Node) => {
     const n = (node.data as BoxData).node;
     setFocused(n.id);
     if (n.kind === "scheme") return n.scheme && boxes(n.scheme)?.state === "ready" && setOpened(n.scheme);
     if (n.kind === "contract") return n.select && studio.open("surface", n.select);
+    if (n.edit) return editStatement(n.edit);
     if (n.kind === "target") return n.target?.declared && go("w", id, "baseline", n.target.iri);
     if (n.select) studio.open("surface", n.select);
   };
@@ -243,7 +294,12 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
           {load.state === "none" && "There is no surface compilation yet, so the lowered schemes are not shown."}
           {load.state === "refused" && "The latest compilation was refused. Its findings are in Build."}
         </span>
-        {derivation && !editing && !building && (
+        {!editor && !building && statements.map((t) => (
+          <button key={t.name} className="btn sm" title={t.title} onClick={() => editStatement(t.target)}>
+            {t.add ? <Plus size={13} /> : <Pencil size={13} />} {t.name}
+          </button>
+        ))}
+        {derivation && !editor && !building && (
           <button className="btn sm" title="Edit the expression this derivation states" onClick={() => edit({ contract: derivation.contract, binding: bindingsOf(graph, derivation.contract).find((b) => b.role === "result")?.iri })}>
             <Calculator size={13} /> Edit expression
           </button>
@@ -263,8 +319,17 @@ export function SurfaceCanvas({ selected }: { selected?: string }) {
       <div className="landing-body">
         {building ? (
           <PathMode place={building} ontology={ontology} onClose={() => setBuilding(undefined)} />
-        ) : editing ? (
-          <ExpressionEditor contract={editing} terms={terms} onClose={() => setEditing(undefined)} />
+        ) : editor?.kind === "expression" ? (
+          <ExpressionEditor contract={editor.contract} terms={terms} onClose={closeEditor} />
+        ) : editor?.kind === "construction" || editor?.kind === "member" ? (
+          <ConstructionEditor
+            key={`${editor.kind}|${editor.contract}`} contract={editor.contract} member={editor.kind === "member"} ontology={ontology} terms={terms}
+            onClose={closeEditor} onBuild={buildFrom} onOpen={(kind) => editStatement({ kind, contract: editor.contract })}
+          />
+        ) : editor?.kind === "join" ? (
+          <JoinEditor key={editor.contract} contract={editor.contract} ontology={ontology} terms={terms} onClose={closeEditor} onBuild={buildFrom} />
+        ) : editor?.kind === "expansion" ? (
+          <ExpansionEditor key={editor.contract} contract={editor.contract} terms={terms} onClose={closeEditor} onBuild={buildFrom} onOpen={(kind) => editStatement({ kind, contract: editor.contract })} />
         ) : (
           <Canvas
             key={overview ? `all|${expanded ?? ""}` : picked}
